@@ -66,7 +66,8 @@
   margin-top: 0;
 }
 
-@media screen and (min-width: 37.5625em) { /* 601px */
+@media screen and (min-width: 37.5625em) {
+  /* 601px */
   .dropbutton li {
     display: inline-block;
   }
@@ -98,7 +99,7 @@
 .js .dropbutton-widget .dropbutton-action button {
   display: block;
   width: 100%;
-  padding: 4px 1.5em;
+  padding: 3px 1.5em;
   border-radius: 20em 0 0 20em; /* LTR */
 }
 [dir="rtl"].js .dropbutton-widget .dropbutton-action a,
@@ -120,7 +121,10 @@
   border-radius: 0.9em 0 0 0; /* LTR */
 }
 [dir="rtl"].js .dropbutton-multiple.open .dropbutton-action:first-child a,
-[dir="rtl"].js .dropbutton-multiple.open .dropbutton-action:first-child .button {
+[dir="rtl"].js
+  .dropbutton-multiple.open
+  .dropbutton-action:first-child
+  .button {
   border-radius: 0 0.9em 0 0;
 }
 .js .dropbutton-multiple.open .dropbutton-action:last-child a,
@@ -165,7 +169,14 @@
   position: static;
   display: inline-block;
   border: 0;
+  border-radius: 20em;
   background: transparent;
+}
+.dropbutton-single .dropbutton-widget .dropbutton-action a,
+.dropbutton-single .dropbutton-widget .dropbutton-action input,
+.dropbutton-single .dropbutton-widget .dropbutton-action button {
+  border: 1px solid #1e5c90;
+  border-radius: 20em;
 }
 .dropbutton-single .dropbutton-action a {
   width: auto !important;
@@ -228,20 +239,32 @@
   border-left: 1px solid #a6a6a6; /* LTR */
   outline: none;
 }
-[dir="rtl"].js .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button {
+[dir="rtl"].js
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button {
   border-right: 1px solid #a6a6a6;
   border-left: 0;
 }
 .js .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button {
   border-radius: 0 20em 20em 0; /* LTR */
 }
-[dir="rtl"].js .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button {
+[dir="rtl"].js
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button {
   border-radius: 20em 0 0 20em;
 }
 .dropbutton-multiple.open .dropbutton-widget .dropbutton-toggle button {
   border-radius: 0 1em 1em 0; /* LTR */
 }
-[dir="rtl"] .dropbutton-multiple.open .dropbutton-widget .dropbutton-toggle button {
+[dir="rtl"]
+  .dropbutton-multiple.open
+  .dropbutton-widget
+  .dropbutton-toggle
+  button {
   border-radius: 1em 0 0 1em;
 }
 .js .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button:hover,
@@ -296,35 +319,75 @@
   background-image: -webkit-linear-gradient(top, #007bc6, #0071b8);
   background-image: linear-gradient(to bottom, #007bc6, #0071b8);
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-action .button:hover,
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-action .button:focus {
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-action
+  .button:hover,
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-action
+  .button:focus {
   color: #fff;
   background-color: #2369a6;
   background-image: -webkit-linear-gradient(top, #0c97ed, #1f86c7);
   background-image: linear-gradient(to bottom, #0c97ed, #1f86c7);
   box-shadow: 0 1px 2px hsla(203, 10%, 10%, 0.25);
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-action .button:active {
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-action
+  .button:active {
   border-color: #144b78;
   background-image: -webkit-linear-gradient(top, #08639b, #0071b8);
   background-image: linear-gradient(to bottom, #08639b, #0071b8);
   box-shadow: inset 0 1px 3px hsla(0, 0%, 0%, 0.2);
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button,
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button,
 .form-actions .dropbutton .secondary-action {
   border-color: #1e5c90;
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button {
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button {
   background-image: -webkit-linear-gradient(top, #007bc6, #0071b8);
   background-image: linear-gradient(to bottom, #007bc6, #0071b8);
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button:hover,
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button:focus {
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button:hover,
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button:focus {
   background-color: #2369a6;
   background-image: -webkit-linear-gradient(top, #0c97ed, #1f86c7);
   background-image: linear-gradient(to bottom, #0c97ed, #1f86c7);
 }
-.js .form-actions .dropbutton-wrapper .dropbutton-widget .dropbutton-toggle button:active {
+.js
+  .form-actions
+  .dropbutton-wrapper
+  .dropbutton-widget
+  .dropbutton-toggle
+  button:active {
   border-color: #144b78;
   background-image: -webkit-linear-gradient(top, #08639b, #0071b8);
   background-image: linear-gradient(to bottom, #08639b, #0071b8);

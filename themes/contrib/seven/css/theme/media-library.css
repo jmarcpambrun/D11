@@ -112,7 +112,8 @@
 }
 
 /* Style the media add upload form. */
-.media-library-add-form--upload.media-library-add-form--without-input .form-item-upload {
+.media-library-add-form--upload.media-library-add-form--without-input
+  .form-item-upload {
   margin-bottom: 0;
 }
 
@@ -131,7 +132,8 @@
   }
 }
 
-.media-library-add-form--oembed.media-library-add-form--without-input .form-item-url {
+.media-library-add-form--oembed.media-library-add-form--without-input
+  .form-item-url {
   margin-bottom: 0;
 }
 
@@ -157,7 +159,10 @@
   padding: 0 10px 1em 10px;
 }
 
-.media-library-add-form__selected-media .media-library-item .field--name-thumbnail img {
+.media-library-add-form__selected-media
+  .media-library-item
+  .field--name-thumbnail
+  img {
   height: 100px;
 }
 
@@ -304,14 +309,17 @@
   background: #fff;
 }
 
-.media-library-item--grid:before {
+.media-library-item--grid::before {
   position: absolute;
   top: 7px;
   left: 7px;
   width: calc(100% - 16px);
   height: calc(100% - 16px);
   content: "";
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
   pointer-events: none;
   border: 1px solid #dbdbdb;
 }
@@ -406,9 +414,9 @@
   object-position: center center;
 }
 
-.media-library-item--grid.is-hover:before,
-.media-library-item--grid.checked:before,
-.media-library-item--grid.is-focus:before {
+.media-library-item--grid.is-hover::before,
+.media-library-item--grid.checked::before,
+.media-library-item--grid.is-focus::before {
   top: 5px;
   left: 5px;
   border-width: 3px;
@@ -416,7 +424,7 @@
   border-radius: 3px;
 }
 
-.media-library-item--grid.checked:before {
+.media-library-item--grid.checked::before {
   border-color: #0076c0;
 }
 
@@ -462,7 +470,9 @@
   cursor: move;
 }
 
-.field--widget-media-library-widget .js-media-library-item:only-child .media-library-item__preview {
+.field--widget-media-library-widget
+  .js-media-library-item:only-child
+  .media-library-item__preview {
   cursor: inherit;
 }
 
@@ -655,7 +665,8 @@
  * The first item doesn't have a top padding, change the location of the remove
  * button as well.
  */
-.media-library-add-form__media:first-child .media-library-add-form__remove-button[type="submit"] {
+.media-library-add-form__media:first-child
+  .media-library-add-form__remove-button[type="submit"] {
   top: 5px;
 }
 
@@ -693,7 +704,9 @@
   color: transparent;
   border: 0;
   border-radius: 0;
-  background: transparent url(../../images/icons/787878/ex.svg) right 2px no-repeat; /* LTR */
+  background: transparent url(../../images/icons/787878/ex.svg) right 2px
+    no-repeat; /* LTR */
+
   font-weight: normal;
   line-height: 16px;
 }
@@ -710,7 +723,8 @@
 .media-library-add-form__remove-button.button:focus {
   color: #787878;
   border: 0;
-  background: transparent url(../../images/icons/787878/ex.svg) right 2px no-repeat; /* LTR */
+  background: transparent url(../../images/icons/787878/ex.svg) right 2px
+    no-repeat; /* LTR */
 }
 [dir="rtl"] .media-library-add-form__remove-button:focus,
 [dir="rtl"] .media-library-add-form__remove-button.button:disabled,
@@ -723,7 +737,9 @@
 .media-library-add-form__remove-button.button:hover {
   color: #e00;
   border: 0;
-  background: transparent url(../../images/icons/ee0000/ex.svg) right 2px no-repeat; /* LTR */
+  background: transparent url(../../images/icons/ee0000/ex.svg) right 2px
+    no-repeat; /* LTR */
+
   box-shadow: none;
 }
 [dir="rtl"] .media-library-add-form__remove-button:hover,

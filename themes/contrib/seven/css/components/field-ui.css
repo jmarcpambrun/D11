@@ -18,11 +18,16 @@
 #field-display-overview .field-plugin-settings-edit-form .form-submit {
   margin-bottom: 0;
 }
-#field-display-overview .form-item-fields-field-image-settings-edit-form-settings-image-style .description {
+#field-display-overview
+  .form-item-fields-field-image-settings-edit-form-settings-image-style
+  .description {
   display: inline-block;
   margin-left: 1em; /* LTR */
 }
-[dir="rtl"] #field-display-overview .form-item-fields-field-image-settings-edit-form-settings-image-style .description {
+[dir="rtl"]
+  #field-display-overview
+  .form-item-fields-field-image-settings-edit-form-settings-image-style
+  .description {
   margin-right: 1em;
   margin-left: 0;
 }

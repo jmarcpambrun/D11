@@ -4,13 +4,11 @@
  */
 
 .tablesort {
-  float: right; /* LTR */
+  flex-shrink: 0;
   width: 10px;
   height: 10px;
   margin-top: 5px;
-}
-[dir="rtl"] .tablesort {
-  float: left;
+  background-repeat: no-repeat;
 }
 .tablesort--asc {
   background-image: url(../../images/icons/004875/twistie-down.svg);

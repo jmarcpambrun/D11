@@ -23,3 +23,6 @@
 .field--label-inline .field__label::after {
   content: ":";
 }
+.field--name-title {
+  word-break: break-word;
+}

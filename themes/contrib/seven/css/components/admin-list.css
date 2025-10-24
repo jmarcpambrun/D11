@@ -20,12 +20,14 @@ ul.admin-list {
   display: block;
   min-height: 0;
   padding: 14px 15px 14px 25px; /* LTR */
-  background: url(../../images/icons/bebebe/chevron-disc-right.svg) no-repeat 1px 16px; /* LTR */
+  background: url(../../images/icons/bebebe/chevron-disc-right.svg) no-repeat
+    1px 16px; /* LTR */
 }
 [dir="rtl"] .admin-list li a {
   padding-right: 25px;
   padding-left: 15px;
-  background: url(../../images/icons/bebebe/chevron-disc-left.svg) no-repeat right 16px;
+  background: url(../../images/icons/bebebe/chevron-disc-left.svg) no-repeat
+    right 16px;
 }
 .admin-list.compact li a {
   padding: 2px 0;
@@ -38,6 +40,7 @@ ul.admin-list {
 }
 .admin-list li a .label {
   font-size: 1.0769em;
+  font-weight: normal;
 }
 .admin-list li a:hover .label,
 .admin-list li a:focus .label,

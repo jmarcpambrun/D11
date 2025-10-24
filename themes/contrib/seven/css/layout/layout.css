@@ -12,3 +12,25 @@
   fill: #f5f5f2;
   stroke: #666;
 }
+
+.system-themes-list-uninstalled {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.system-themes-list__header {
+  width: 100%;
+}
+
+.system-themes-list-uninstalled .screenshot {
+  max-width: 280px;
+}
+
+@media screen and (max-width: 1024px) {
+  .system-themes-list-uninstalled .theme-selector {
+    width: 100%;
+  }
+  .system-themes-list-uninstalled .screenshot {
+    max-width: 100%;
+  }
+}

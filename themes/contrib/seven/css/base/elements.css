@@ -4,7 +4,13 @@
 body {
   color: #333;
   background: #fff;
-  font: normal 81.3%/1.538em "Lucida Grande", "Lucida Sans Unicode", "DejaVu Sans", "Lucida Sans", sans-serif;
+  font:
+    normal 100%/1.462em "Source Sans 3",
+    "Lucida Grande",
+    "Lucida Sans Unicode",
+    "DejaVu Sans",
+    "Lucida Sans",
+    sans-serif;
 }
 a,
 .link {
@@ -37,43 +43,43 @@ summary,
  */
 h1,
 .heading-a {
-  margin: 0;
+  margin: 0 0 15px;
   font-size: 1.625em;
   font-weight: bold;
   line-height: 1.875em;
 }
 h2,
 .heading-b {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 1.385em;
   font-weight: bold;
 }
 h3,
 .heading-c {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 1.231em;
   font-weight: bold;
 }
 h4,
 .heading-d {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 1.154em;
   font-weight: bold;
 }
 h5,
 .heading-e {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 1.077em;
   font-weight: bold;
 }
 h6,
 .heading-f {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 1.077em;
   font-weight: bold;
 }
 p {
-  margin: 1em 0;
+  margin: 0 0 10px;
 }
 dl {
   margin: 0 0 20px;
@@ -88,7 +94,7 @@ dl dl {
   margin-right: 20px;
 }
 blockquote {
-  margin: 1em 40px;
+  margin: 0;
 }
 address {
   font-style: italic;
@@ -124,7 +130,6 @@ acronym {
 }
 ul {
   margin: 0.25em 0 0.25em 1.5em; /* LTR */
-  list-style-type: disc;
   list-style-image: none;
 }
 [dir="rtl"] ul {
@@ -138,7 +143,6 @@ ul {
 ol {
   margin: 0.25em 0 0.25em 2em; /* LTR */
   padding: 0;
-  list-style-type: decimal;
 }
 [dir="rtl"] ol {
   margin-right: 2em;
@@ -159,6 +163,7 @@ details summary {
 }
 details summary:focus {
   outline: none;
+  background: #eee;
 }
 /**
  * Unfortunately, text-decoration for details summary is not supported on all
@@ -167,13 +172,21 @@ details summary:focus {
  * don't have the span, we provide text-decoration in the parent selector.
  * This provides maximum compatibility and coverage with minimal disruption.
  */
-details summary:not(.seven-details__summary):focus {
+details summary:not(.seven-details__summary):focus,
+details summary:not(.seven-details__summary):hover {
   text-decoration: underline;
 }
-details summary:focus span {
+details summary:focus span,
+details summary:hover span {
   text-decoration: underline;
 }
 img {
   max-width: 100%;
   height: auto;
+}
+.machine-name-label {
+  margin-left: 0.5em;
+}
+.machine-name-value {
+  margin-right: 0.5em;
 }

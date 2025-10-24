@@ -1,10 +1,9 @@
 name: Seven
 type: theme
 base theme: false
-description: 'The Seven theme from Drupal 8/9 moved to contrib'
-core_version_requirement: ^9 || ^10
+description: 'The Seven theme from Drupal 8/9 moved to contrib.'
+core_version_requirement: '^10.2 || ^11'
 
-# version: VERSION
 libraries:
   - seven/classy.messages
   - core/normalize
@@ -21,6 +20,10 @@ libraries-override:
     css:
       component:
         misc/vertical-tabs.css: false
+  core/internal.jquery_ui:
+    css:
+      theme:
+        assets/vendor/jquery.ui/themes/base/theme.css: false
   core/drupal.autocomplete:
     css:
       theme:
@@ -37,22 +40,21 @@ libraries-override:
         assets/vendor/jquery.ui/themes/base/theme.css: false
 
 libraries-extend:
-  core/ckeditor:
-    - seven/ckeditor-dialog
-    - seven/ckeditor-admin
   core/drupal.autocomplete:
-    - seven/seven.jquery.ui
+    - seven/autocomplete
   core/drupal.dialog:
     - seven/seven.drupal.dialog
-    - seven/seven.jquery.ui
   core/drupal.dropbutton:
     - seven/classy.dropbutton
   core/drupal.progress:
     - seven/classy.progress
   core/drupal.tabbingmanager:
-    - seven/seven.jquery.ui
+    - seven/tabbingmanager
   core/drupal.vertical-tabs:
     - seven/vertical-tabs
+  ckeditor/ckeditor:
+    - seven/ckeditor-dialog
+    - seven/ckeditor-admin
   file/drupal.file:
     - seven/classy.file
   filter/drupal.filter.admin:
@@ -70,25 +72,27 @@ libraries-extend:
   user/drupal.user:
     - seven/user
 
+ckeditor_stylesheets:
+  - css/classy/components/media-embed-error.css
+ckeditor5-stylesheets:
+  - css/classy/components/media-embed-error.css
 quickedit_stylesheets:
   - css/components/quickedit.css
+
 regions:
-  header: 'Header'
-  pre_content: 'Pre-content'
+  header: Header
+  pre_content: Pre-content
   breadcrumb: Breadcrumb
   highlighted: Highlighted
   help: Help
   content: Content
-  page_top: 'Page top'
-  page_bottom: 'Page bottom'
-  sidebar_first: 'First sidebar'
+  page_top: Page top
+  page_bottom: Page bottom
+  sidebar_first: First sidebar
 regions_hidden:
   - sidebar_first
 
-ckeditor_stylesheets:
-  - css/classy/components/media-embed-error.css
-
-# Information added by Drupal.org packaging script on 2023-05-09
-version: '1.0.0'
+# Information added by Drupal.org packaging script on 2025-08-29
+version: '2.0.0-beta1'
 project: 'seven'
-datestamp: 1683652108
+datestamp: 1756488863

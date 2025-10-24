@@ -1,10 +1,9 @@
 global-styling:
-  version: VERSION
+  version: '2.10.16'
   css:
     base:
       css/base/elements.css: {}
       css/base/typography.css: {}
-      css/base/print.css: {}
     component:
       css/classy/components/action-links.css: {}
       css/classy/components/breadcrumb.css: {}
@@ -28,6 +27,7 @@ global-styling:
       css/classy/components/tabs.css: {}
       css/classy/components/textarea.css: {}
       css/classy/components/ui-dialog.css: {}
+      css/components/action-links.css: {}
       css/components/admin-list.css: {}
       css/components/content-header.css: {}
       css/components/container-inline.css: {}
@@ -57,23 +57,35 @@ global-styling:
       css/components/system-status-counter.css: {}
       css/components/tabs.css: {}
       css/components/views-ui.css: {}
-    theme:
-      css/theme/colors.css: {}
     layout:
       css/layout/layout.css: {}
+    theme:
+      css/theme/colors.css: {}
+      css/base/print.css: {}
   dependencies:
     - system/admin
+    - seven/webfonts
 
 node-form:
-  version: VERSION
+  version: '2.2.10'
   css:
     layout:
       css/layout/node-add.css: {}
   dependencies:
     - node/form
 
+webfonts:
+  version: '2.0.10'
+  license:
+    name: 'SIL Open Font License, Version 1.1'
+    url: https://openfontlicense.org/documents/OFL.txt
+    gpl-compatible: false
+  css:
+    theme:
+      css/theme/fonts.css: {}
+
 maintenance-page:
-  version: VERSION
+  version: '2.0.10'
   js:
     js/mobile.install.js: {}
   css:
@@ -84,13 +96,13 @@ maintenance-page:
     - seven/global-styling
 
 update-report:
-  version: VERSION
+  version: '2.0.10'
   css:
     theme:
       css/theme/update-report.css: {}
 
 install-page:
-  version: VERSION
+  version: '2.0.10'
   js:
     js/mobile.install.js: {}
   css:
@@ -100,7 +112,7 @@ install-page:
     - seven/maintenance-page
 
 drupal.nav-tabs:
-  version: VERSION
+  version: '2.6.10'
   js:
     js/nav-tabs.js: {}
   dependencies:
@@ -111,7 +123,7 @@ drupal.nav-tabs:
     - core/collapse
 
 drupal.responsive-detail:
-  version: VERSION
+  version: '2.0.10'
   js:
     js/responsive-details.js: {}
   dependencies:
@@ -119,141 +131,145 @@ drupal.responsive-detail:
     - core/once
     - core/collapse
 
+autocomplete:
+  version: '2.0.10'
+  dependencies:
+    - seven/seven.jquery.ui
+
 vertical-tabs:
-  version: VERSION
+  version: '2.2.10'
   css:
     component:
       css/components/vertical-tabs.css: {}
 
 seven.jquery.ui:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/components/jquery.ui/theme.css: { weight: -1 }
 
 seven.drupal.dialog:
-  version: VERSION
+  version: '2.4.10'
   css:
     theme:
       css/components/dialog.css: {}
+  dependencies:
+    - seven/seven.jquery.ui
 
 ckeditor-admin:
-  version: VERSION
+  version: '2.2.10'
   css:
     theme:
       css/theme/ckeditor-admin.css: {}
 
 ckeditor-dialog:
-  version: VERSION
+  version: '2.0.10'
   css:
     theme:
       css/theme/ckeditor-dialog.css: {}
 
 tour-styling:
-  version: VERSION
+  version: '2.2.10'
   css:
     theme:
       css/components/tour.theme.css: {}
 
-media-form:
-  version: VERSION
-  css:
-    layout:
-      css/components/media.css: {}
-  dependencies:
-    - media/form
-
 media_library:
-  version: VERSION
+  version: '2.0.10'
   css:
     theme:
       css/theme/media-library.css: {}
 
 layout_builder_content_translation_admin:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/components/layout-builder-content-translation.css: {}
 
 user:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/components/user.css: { weight: -10 }
 
+tabbingmanager:
+  version: '2.4.10'
+  dependencies:
+    - seven/seven.jquery.ui
+
 filter:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/theme/filter.admin.css: {}
 
 classy.book-navigation:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/book-navigation.css: {}
 
 classy.dropbutton:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/dropbutton.css: { weight: -10 }
 
 classy.file:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/file.css: { weight: -10 }
 
 classy.forum:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/forum.css: { weight: -10 }
 
 classy.image-widget:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/image-widget.css: {}
 
 classy.indented:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/indented.css: {}
 
 classy.media_embed_ckeditor_theme:
-  version: VERSION
+  version: '2.0.10'
   js:
     js/classy/media_embed_ckeditor.theme.js: {}
 
 classy.media_embed_error:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/media-embed-error.css: {}
 
 classy.messages:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/messages.css: { weight: -10 }
 
 classy.node:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/node.css: { weight: -10 }
 
 classy.progress:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/progress.css: { weight: -10 }
 
 classy.search-results:
-  version: VERSION
+  version: '2.0.10'
   css:
     component:
       css/classy/components/search-results.css: {}

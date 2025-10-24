@@ -11,14 +11,17 @@
   background-image:
     url(../../images/noise-low.png),
     -webkit-radial-gradient(hsl(203, 80%, 45%), hsl(203, 80%, 32%));
-  background-image:
-    url(../../images/noise-low.png),
+  background-image: url(../../images/noise-low.png),
     radial-gradient(hsl(203, 80%, 45%), hsl(203, 80%, 32%));
   background-repeat: repeat;
-  background-position: left top, 50% 50%; /* LTR */
+  background-position:
+    left top,
+    50% 50%; /* LTR */
 }
 [dir="rtl"] .install-page {
-  background-position: right top, 50% 50%;
+  background-position:
+    right top,
+    50% 50%;
 }
 
 /**

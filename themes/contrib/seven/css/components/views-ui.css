@@ -34,7 +34,6 @@ details.fieldset-no-legend {
 .views-ui-dialog input.form-submit,
 .views-admin a.button,
 .views-ui-dialog a.button {
-  margin-top: 0;
   margin-right: 0; /* LTR */
   margin-bottom: 0;
 }
@@ -216,6 +215,10 @@ details.fieldset-no-legend {
  *
  * These are the individual "buckets," or boxes, inside the display settings area
  */
+
+.views-ui-display-tab-bucket .views-display-setting {
+  font-size: 0.875rem;
+}
 
 .views-ui-display-tab-bucket h3 {
   text-transform: uppercase;

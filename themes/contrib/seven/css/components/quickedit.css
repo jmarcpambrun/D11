@@ -58,6 +58,6 @@
  * The entity toolbar's "save" button's top margin shifts both buttons 2px down,
  * so we must compensate for that to achieve vertically centered positioning.
  */
-.quickedit .icon-close:before {
+.quickedit .icon-close::before {
   top: 8px;
 }

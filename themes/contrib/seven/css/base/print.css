@@ -1,12 +1,4 @@
 @media print {
-  * {
-    /* Black prints faster */
-    /* https://github.com/h5bp/main.css/blob/main/dist/_print.css#L14 */
-    color: #000 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
   body {
     padding-top: 0;
   }
@@ -46,9 +38,13 @@
   }
   .button,
   .button--primary {
-    background: none !important;
+    border-color: #999;
+    background-image: none;
+    font-weight: inherit;
   }
   .messages {
+    margin-right: auto;
+    margin-left: 0;
     border-width: 1px;
     border-color: #999;
   }

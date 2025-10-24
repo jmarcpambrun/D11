@@ -2,10 +2,10 @@
  * Messages.
  */
 .messages {
-  margin: 9px 0 10px 8px; /* LTR */
+  margin: 0 0 20px 8px; /* LTR */
 }
 [dir="rtl"] .messages {
-  margin: 9px 8px 10px 0;
+  margin: 0 8px 10px 0;
 }
 .messages pre {
   margin: 0;

@@ -3,6 +3,10 @@
  * Seven styles for the help component.
  */
 
-.help p {
-  margin: 0 0 10px;
+.help {
+  margin: 0 0 20px;
+}
+
+:where(:not(.region-breadcrumb)) + .help p:first-child {
+  margin-top: 10px;
 }

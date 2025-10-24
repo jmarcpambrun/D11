@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ecd52fe8e74ee4d36a55466102ab2c26",
+    "content-hash": "e38d9be549cc2efd0c967f086d5bb9e8",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2778,29 +2778,29 @@
         },
         {
             "name": "drupal/bartik",
-            "version": "1.0.0",
+            "version": "1.1.0-rc1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bartik.git",
-                "reference": "1.0.0"
+                "reference": "1.1.0-rc1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bartik-1.0.0.zip",
-                "reference": "1.0.0",
-                "shasum": "80bb1b772ea58dcafff8028ff8c8794fab0e591b"
+                "url": "https://ftp.drupal.org/files/projects/bartik-1.1.0-rc1.zip",
+                "reference": "1.1.0-rc1",
+                "shasum": "5c01f69122db0a62112df4d9a22f80d38c404321"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^10.3 || ^11.0"
             },
             "type": "drupal-theme",
             "extra": {
                 "drupal": {
-                    "version": "1.0.0",
-                    "datestamp": "1660754769",
+                    "version": "1.1.0-rc1",
+                    "datestamp": "1761315985",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "RC releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -4338,7 +4338,7 @@
         },
         {
             "name": "drupal/eca_modeller_bpmn",
-            "version": "2.1.14",
+            "version": "2.1.15",
             "require": {
                 "drupal/core": "^10.3 || ^11",
                 "drupal/eca": "^2",
@@ -4347,8 +4347,8 @@
             "type": "metapackage",
             "extra": {
                 "drupal": {
-                    "version": "2.1.14",
-                    "datestamp": "1758633835",
+                    "version": "2.1.15",
+                    "datestamp": "1761318766",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4433,7 +4433,7 @@
         },
         {
             "name": "drupal/eca_ui",
-            "version": "2.1.14",
+            "version": "2.1.15",
             "require": {
                 "drupal/core": "^10.3 || ^11",
                 "drupal/eca": "*"
@@ -4441,8 +4441,8 @@
             "type": "metapackage",
             "extra": {
                 "drupal": {
-                    "version": "2.1.14",
-                    "datestamp": "1758633835",
+                    "version": "2.1.15",
+                    "datestamp": "1761318766",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -8468,29 +8468,29 @@
         },
         {
             "name": "drupal/seven",
-            "version": "1.0.0",
+            "version": "2.0.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/seven.git",
-                "reference": "1.0.0"
+                "reference": "2.0.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/seven-1.0.0.zip",
-                "reference": "1.0.0",
-                "shasum": "88e86926388c7e6cf66b0502d13a0470ce2399cd"
+                "url": "https://ftp.drupal.org/files/projects/seven-2.0.0-beta1.zip",
+                "reference": "2.0.0-beta1",
+                "shasum": "f4ac4311644e502e4f6e3c9f2c85b83d2f088b4d"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^10.2 || ^11"
             },
             "type": "drupal-theme",
             "extra": {
                 "drupal": {
-                    "version": "1.0.0",
-                    "datestamp": "1758908691",
+                    "version": "2.0.0-beta1",
+                    "datestamp": "1756488859",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -8524,7 +8524,7 @@
                     "homepage": "https://www.drupal.org/user/305669"
                 }
             ],
-            "description": "The Seven theme from Drupal 8/9 moved to contrib",
+            "description": "The Seven theme from Drupal 8/9 moved to contrib.",
             "homepage": "https://www.drupal.org/project/seven",
             "support": {
                 "source": "https://git.drupalcode.org/project/seven"
@@ -20349,6 +20349,7 @@
     "stability-flags": {
         "drupal/advancedqueue": 5,
         "drupal/auto_translation": 10,
+        "drupal/bartik": 5,
         "drupal/book": 15,
         "drupal/computed_field": 15,
         "drupal/computed_field_ui": 15,
@@ -20370,6 +20371,7 @@
         "drupal/page_manager": 5,
         "drupal/pathologic": 15,
         "drupal/personal_notes": 15,
+        "drupal/seven": 10,
         "drupal/typed_data": 10,
         "drupal/webform": 10,
         "drupal/webform_deprecated": 10,

@@ -6,11 +6,13 @@
   position: absolute;
   z-index: 1260;
   padding: 0;
-  border: 0;
+  border-radius: 5px 5px 0 0;
   background: transparent;
+  box-shadow: 0 0 10px;
 }
 
-@media all and (max-width: 48em) { /* 768px */
+@media all and (max-width: 48em) {
+  /* 768px */
   .ui-dialog {
     min-width: 92%;
     max-width: 92%;
@@ -63,6 +65,7 @@
   overflow: auto;
   padding: 1em;
   background: #fff;
+  -webkit-overflow-scrolling: touch;
 }
 .views-ui-dialog .ui-widget-content.ui-dialog-content {
   padding: 0;

@@ -21,11 +21,11 @@
  * See https://www.drupal.org/node/2124251
  *
  */
-.button {
-  position: relative;  /* 1 */
+.button:not(.button--danger) {
+  position: relative; /* 1 */
   display: inline-block;
   box-sizing: border-box;
-  padding: 4px 1.5em;  /* 4 */
+  padding: 4px 1.5em; /* 4 */
   cursor: pointer;
   -webkit-transition: all 0.1s;
   transition: all 0.1s;
@@ -39,33 +39,38 @@
   background-image: linear-gradient(to bottom, #f6f6f3, #e7e7df);
   text-shadow: 0 1px hsla(0, 0%, 100%, 0.6);
   font-size: 14px;
-  font-size: 0.875rem;  /* 5 */
+  font-size: 0.875rem; /* 5 */
   font-weight: 600;
-  line-height: normal;  /* 2 */
-  -webkit-appearance: none;  /* 3 */
-  -moz-appearance: none;  /* 3 */
-  -webkit-font-smoothing: antialiased;  /* 6 */
+  line-height: normal; /* 2 */
+  -webkit-appearance: none; /* 3 */
+  -moz-appearance: none; /* 3 */
+  -webkit-font-smoothing: antialiased; /* 6 */
 }
-.button:hover,
-.button:focus {
+.button:hover:not(.button--danger),
+.button:focus:not(.button--danger) {
   text-decoration: none;
   color: #1a1a1a;
   outline: none;
   background-color: #f9f8f6;
   background-image: -webkit-linear-gradient(top, #fcfcfa, #e9e9dd);
   background-image: linear-gradient(to bottom, #fcfcfa, #e9e9dd);
+  font-weight: 600;
 }
-.button:hover {
+.button.button--danger:hover,
+.button.button--danger:focus {
+  font-weight: normal;
+}
+.button:hover:not(.button--danger) {
   box-shadow: 0 1px 2px hsla(0, 0%, 0%, 0.125);
 }
 
 /* Prevent focus ring being covered by next siblings. */
-.button:focus {
+.button:focus:not(.button--danger) {
   z-index: 10;
   border: 1px solid #3ab2ff;
   box-shadow: 0 0 0.5em 0.1em hsla(203, 100%, 60%, 0.7);
 }
-.button:active {
+.button:active:not(.button--danger) {
   -webkit-transition: none;
   transition: none;
   border: 1px solid #a6a6a6;
@@ -75,31 +80,31 @@
   box-shadow: inset 0 1px 3px hsla(0, 0%, 0%, 0.2);
 }
 
-.button--primary {
+.button.button--primary {
   color: #fff;
   border-color: #1e5c90;
   background-color: #0071b8;
   background-image: -webkit-linear-gradient(top, #007bc6, #0071b8);
   background-image: linear-gradient(to bottom, #007bc6, #0071b8);
   text-shadow: 0 1px hsla(0, 0%, 0%, 0.5);
-  font-weight: 700;
+  font-weight: 600;
   -webkit-font-smoothing: antialiased;
 }
-.button--primary:hover,
-.button--primary:focus {
+.button.button--primary:hover,
+.button.button--primary:focus {
   color: #fff;
   border-color: #1e5c90;
   background-color: #2369a6;
   background-image: -webkit-linear-gradient(top, #0c97ed, #1f86c7);
   background-image: linear-gradient(to bottom, #0c97ed, #1f86c7);
 }
-.button--primary:focus {
+.button.button--primary:focus {
   border: 1px solid #1280df;
 }
-.button--primary:hover {
+.button.button--primary:hover {
   box-shadow: 0 1px 2px hsla(203, 10%, 10%, 0.25);
 }
-.button--primary:active {
+.button.button--primary:active {
   border-color: #144b78;
   background-image: -webkit-linear-gradient(top, #08639b, #0071b8);
   background-image: linear-gradient(to bottom, #08639b, #0071b8);
@@ -109,15 +114,16 @@
 /**
  * Overrides styling from system.theme.
  */
-.button-action:before {
+.button-action::before {
   margin-left: -0.2em; /* LTR */
   padding-right: 0.2em; /* LTR */
   font-size: 14px;
   font-size: 0.875rem;
+  font-weight: 700;
   line-height: 16px;
   -webkit-font-smoothing: auto;
 }
-[dir="rtl"] .button-action:before {
+[dir="rtl"] .button-action::before {
   margin-right: -0.2em;
   margin-left: 0;
   padding-right: 0;
@@ -125,10 +131,10 @@
 }
 
 /**
- * 1. Use px units to ensure button text is centered vertically.
+ * Use px units to ensure button text is centered vertically.
  */
 .no-touchevents .button--small {
-  padding: 2px 1em;  /* 1 */
+  padding: 2px 1em; /* 1 */
   font-size: 13px;
   font-size: 0.813rem;
 }
@@ -176,38 +182,17 @@
  * See https://www.drupal.org/node/2123731
  */
 .button--danger {
-  display: inline;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
   color: #c72100;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  font-weight: 400;
-  -webkit-appearance: none;
-  -moz-appearance: none;
 }
 .button--danger:hover,
 .button--danger:focus,
 .button--danger:active {
-  padding: 0;
   text-decoration: underline;
-  color: #ff2a00;
-  border: 0;
-  background: none;
-  box-shadow: none;
-  text-shadow: none;
 }
 .button--danger:disabled,
 .button--danger.is-disabled {
-  padding: 0;
-  cursor: default;
   text-decoration: none;
   color: #737373;
-  border: 0;
   background: none;
-  box-shadow: none;
   -webkit-font-smoothing: antialiased;
 }

@@ -5,7 +5,7 @@
 
 table {
   width: 100%;
-  margin: 0 0 10px;
+  margin: 0 0 20px;
   border-collapse: collapse;
 }
 caption {
@@ -60,6 +60,8 @@ th {
 td {
   padding: 10px 12px;
   text-align: left; /* LTR */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 [dir="rtl"] td {
   text-align: right;
@@ -70,7 +72,7 @@ th > a {
 }
 
 /* 1. Must match negative bottom padding of the parent <th> */
-th > a:after {
+th > a::after {
   position: absolute;
   top: 0;
   right: 0;
@@ -83,7 +85,14 @@ th > a:after {
   border-bottom: 2px solid transparent;
 }
 th.is-active > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: #004875;
+}
+[dir="rtl"] th.is-active > a {
+  padding-right: 0;
+  padding-left: 15px;
 }
 th.is-active img {
   position: absolute;
@@ -94,7 +103,7 @@ th.is-active img {
   right: auto;
   left: 0;
 }
-th.is-active > a:after {
+th.is-active > a::after {
   border-bottom-color: #004875;
 }
 th > a:hover,
@@ -104,10 +113,10 @@ th.is-active > a:focus {
   text-decoration: none;
   color: #008ee6;
 }
-th > a:hover:after,
-th > a:focus:after,
-th.is-active > a:hover:after,
-th.is-active > a:focus:after {
+th > a:hover::after,
+th > a:focus::after,
+th.is-active > a:hover::after,
+th.is-active > a:focus::after {
   border-bottom-color: #008ee6;
 }
 td .item-list ul {
@@ -136,7 +145,8 @@ th.select-all {
 /**
  * Responsive tables.
  */
-@media screen and (max-width: 37.5em) { /* 600px */
+@media screen and (max-width: 37.5em) {
+  /* 600px */
   th.priority-low,
   td.priority-low,
   th.priority-medium,
@@ -145,10 +155,16 @@ th.select-all {
   }
 }
 
-@media screen and (max-width: 60em) { /* 920px */
+@media screen and (max-width: 60em) {
+  /* 920px */
   th.priority-low,
   td.priority-low {
     display: none;
+  }
+
+  table {
+    display: block;
+    overflow: auto;
   }
 }
 
@@ -159,4 +175,9 @@ th.select-all {
 td > .form-item > .form-text,
 td > .ajax-new-content > .form-item > .form-text {
   width: 100%;
+}
+
+td > .form-item,
+td > .ajax-new-content > .form-item {
+  width: max-content;
 }

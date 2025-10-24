@@ -6,13 +6,20 @@
 .maintenance-page {
   min-height: 100%;
   background-color: #e0e0d8;
-  background-image: -webkit-radial-gradient(hsl(203, 2%, 90%), hsl(203, 2%, 95%));
+  background-image: -webkit-radial-gradient(
+    hsl(203, 2%, 90%),
+    hsl(203, 2%, 95%)
+  );
   background-image: radial-gradient(hsl(203, 2%, 90%), hsl(203, 2%, 95%));
   background-repeat: repeat;
-  background-position: left top, 50% 50%; /* LTR */
+  background-position:
+    left top,
+    50% 50%; /* LTR */
 }
 [dir="rtl"] .maintenance-page {
-  background-position: right top, 50% 50%;
+  background-position:
+    right top,
+    50% 50%;
 }
 
 .page-title {
@@ -25,7 +32,8 @@
 /**
  * Task list & step indicator
  */
-@media all and (max-width: 48em) { /* 768px */
+@media all and (max-width: 48em) {
+  /* 768px */
   header[role="banner"] {
     position: relative;
   }
@@ -45,7 +53,8 @@
   }
 }
 
-@media all and (min-width: 48em) { /* 768px */
+@media all and (min-width: 48em) {
+  /* 768px */
   .step-indicator {
     display: none;
   }
@@ -71,7 +80,7 @@
     background: #ebeae4;
     font-weight: normal;
   }
-  .task-list .is-active:after {
+  .task-list .is-active::after {
     position: absolute;
     top: 50%;
     left: 100%; /* LTR */
@@ -85,7 +94,7 @@
     border-color: rgba(235, 234, 228, 0);
     border-left-color: #ebeae4; /* LTR */
   }
-  [dir="rtl"] .task-list .is-active:after {
+  [dir="rtl"] .task-list .is-active::after {
     right: 100%;
     left: auto;
     border-right-color: #ebeae4;
@@ -105,13 +114,15 @@
   margin-left: 1.25em;
   background: #fff;
 }
-.layout-container:after { /* no reason for a clearfix in the markup */
+.layout-container::after {
+  /* no reason for a clearfix in the markup */
   display: table;
   clear: both;
   content: "";
 }
 
-@media all and (max-width: 48em) { /* 768px */
+@media all and (max-width: 48em) {
+  /* 768px */
   .layout-container {
     margin: 1.25em;
     padding: 10px 20px;
@@ -126,7 +137,8 @@
   }
 }
 
-@media all and (min-width: 48em) { /* 768px */
+@media all and (min-width: 48em) {
+  /* 768px */
   html {
     display: table;
   }
