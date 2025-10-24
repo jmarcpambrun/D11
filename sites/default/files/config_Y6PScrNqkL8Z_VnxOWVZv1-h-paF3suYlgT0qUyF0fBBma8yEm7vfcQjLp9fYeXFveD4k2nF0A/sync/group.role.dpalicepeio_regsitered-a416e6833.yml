@@ -1,0 +1,17 @@
+uuid: f8b177fc-0998-43bd-916e-88166be9abdb
+langcode: fr
+status: true
+dependencies:
+  config:
+    - group.type.dpalicepeio_regsitered
+  enforced:
+    config:
+      - user.role.administrator
+id: dpalicepeio_regsitered-a416e6833
+label: Administrateur
+weight: 2
+group_type: dpalicepeio_regsitered
+permissions: {  }
+admin: true
+scope: outsider
+global_role: administrator

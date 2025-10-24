@@ -1,0 +1,11 @@
+langcode: en
+status: true
+dependencies: {}
+third_party_settings: {}
+name: entity_view_node_type
+type: entity_view_node_type
+description: ''
+help: ''
+new_revision: false
+preview_mode: 0
+display_submitted: false

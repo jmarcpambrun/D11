@@ -1,0 +1,97 @@
+drupal.burndown.toolbar:
+  version: VERSION
+  css:
+    component:
+      css/burndown.icons.admin.css: {}
+
+drupal.burndown.backlog:
+  version: VERSION
+  css:
+    component:
+      css/burndown.backlog.css: {}
+      css/burndown.task.css: {}
+      css/background-colors.css: {}
+  js:
+    js/burndown.backlog.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.form
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog.ajax
+    - core/drupal.ajax
+    - core/sortable
+
+drupal.burndown.board:
+  version: VERSION
+  css:
+    component:
+      css/burndown.board.css: {}
+      css/burndown.task.css: {}
+      css/background-colors.css: {}
+  js:
+    js/burndown.board.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.form
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog.ajax
+    - core/drupal.ajax
+    - core/sortable
+
+drupal.burndown.completed:
+  version: VERSION
+  css:
+    component:
+      css/burndown.completed.css: {}
+      css/burndown.task.css: {}
+      css/background-colors.css: {}
+
+drupal.burndown.project_cloud:
+  version: VERSION
+  css:
+    component:
+      css/burndown.project_cloud.css: {}
+      css/background-colors.css: {}
+
+drupal.burndown.sidebar_nav:
+  version: VERSION
+  css:
+    component:
+      css/burndown.sidebar_nav.css: {}
+
+drupal.burndown.task_edit:
+  version: VERSION
+  css:
+    component:
+      css/burndown.task.css: {}
+  js:
+    js/burndown.task_edit.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.form
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog.ajax
+    - core/drupal.ajax
+
+drupal.burndown.swimlanes:
+  version: VERSION
+  css:
+    component:
+      css/burndown.swimlanes.css: {}
+  js:
+    js/burndown.swimlanes.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.form
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog.ajax
+    - core/drupal.ajax
+    - core/sortable

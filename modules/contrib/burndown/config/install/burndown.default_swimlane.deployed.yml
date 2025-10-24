@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies: {  }
+id: deployed
+label: Deployed
+sort_order: 3
+show_backlog: false
+show_project_board: true
+show_completed: false

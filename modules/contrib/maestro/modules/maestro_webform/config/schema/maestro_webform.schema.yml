@@ -1,0 +1,22 @@
+maestro.task.MaestroWebform:
+  type: maestro.task.*
+  label: 'Maestro Webform Task Data'
+  mapping:
+    webform_machine_name:
+      type: string
+      label: 'Webform machine name'
+    skip_webform_handlers:
+      type: boolean
+      label: 'Skip webform handlers'
+    webform_nodes_attached_to:
+      type: string
+      label: 'Webform nodes attached to'
+    use_nodes_attached:
+      type: boolean
+      label: 'Use nodes attached'
+    webform_nodes_attached_variable:
+      type: string
+      label: 'Webform nodes attached variable'
+    show_edit_form:
+      type: boolean
+      label: 'Show edit form'

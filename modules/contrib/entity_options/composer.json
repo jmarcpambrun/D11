@@ -1,0 +1,14 @@
+{
+    "name": "drupal/entity_options",
+    "description": "Provides an API for managing entity options.",
+    "type": "drupal-module",
+    "authors": [
+        {
+            "name": "Eugene Kubovsky",
+            "email": "eugene.kubovsky@gmail.com"
+        }
+    ],
+    "require": {
+        "drupal/pluginformalter": "^1.0"
+    }
+}

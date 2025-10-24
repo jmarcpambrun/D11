@@ -1,0 +1,12 @@
+uuid: 5e616283-e3b0-438b-8748-befb91661fcc
+langcode: fr
+status: true
+dependencies: {  }
+id: dpalicepeio_regsitered
+label: dpalicepeio_enregistres
+description: 'utilisateurs enregistrés'
+new_revision: true
+creator_membership: true
+creator_wizard: true
+creator_roles:
+  - dpalicepeio_regsitered-admin

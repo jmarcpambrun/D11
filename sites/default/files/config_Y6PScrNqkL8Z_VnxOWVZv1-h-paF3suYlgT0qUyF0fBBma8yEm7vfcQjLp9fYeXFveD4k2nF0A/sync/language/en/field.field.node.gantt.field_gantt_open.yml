@@ -1,0 +1,4 @@
+label: Open
+settings:
+  on_label: 'On'
+  off_label: 'Off'

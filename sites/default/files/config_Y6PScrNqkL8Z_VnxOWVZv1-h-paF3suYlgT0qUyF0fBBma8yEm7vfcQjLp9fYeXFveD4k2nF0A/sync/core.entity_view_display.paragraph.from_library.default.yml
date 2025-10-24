@@ -1,0 +1,27 @@
+uuid: b1f3ed45-50ef-4fed-ac84-c9c1a4009a0e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.from_library.field_reusable_paragraph
+    - paragraphs.paragraphs_type.from_library
+_core:
+  default_config_hash: cwuIPYXF5vCbzfY8wjj_shzx513Cwc122DIqGh2Uqho
+id: paragraph.from_library.default
+targetEntityType: paragraph
+bundle: from_library
+mode: default
+content:
+  field_reusable_paragraph:
+    type: entity_reference_entity_view
+    label: above
+    settings:
+      view_mode: default
+      link: true
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true

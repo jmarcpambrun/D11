@@ -1,0 +1,27 @@
+uuid: 888526cd-1e24-43c6-9230-49cfb2808d72
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_progress
+    - node.type.gantt
+_core:
+  default_config_hash: UNl9vrVoC_Fq0DPJ4efQWHZpx7hD68pEZOFHlG6h79o
+id: node.gantt.field_gantt_progress
+field_name: field_gantt_progress
+entity_type: node
+bundle: gantt
+label: Progression
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0.0
+default_value_callback: ''
+settings:
+  min: 0.0
+  max: 1.0
+  prefix: ''
+  suffix: ''
+field_type: decimal

@@ -1,0 +1,14 @@
+uuid: 6dbaf227-4f01-4d20-8f1f-ea4a88c1161f
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: 7WOYGiZOrcZGzmVxjLQsnHhWfZf6HuFMQPZ1pqj7B3w
+id: drd_action_projects_update
+label: 'Update projects'
+type: drd_core
+plugin: drd_action_projects_update
+configuration:
+  terms: {  }

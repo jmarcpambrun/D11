@@ -1,0 +1,25 @@
+uuid: 025b61db-7f51-4868-be2b-915a5a0c373b
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_worker
+    - node.type.gantt
+_core:
+  default_config_hash: MgWViQdlThQneyYAgGZskRqiUQ5FuVa2JAvzZyv3cm0
+id: node.gantt.field_gantt_worker
+field_name: field_gantt_worker
+entity_type: node
+bundle: gantt
+label: Worker
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

@@ -1,0 +1,161 @@
+uuid: ff21e41e-f83f-4614-a877-f9f03d85ad0e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - feeds.feed_type.la_une_du_monde
+    - feeds.feed_type.la_une_science_du_monde
+    - filter.format.basic_html
+    - filter.format.full_html
+    - filter.format.restricted_html
+    - filter.format.webform_default
+    - node.type.article
+    - node.type.book
+    - node.type.forum
+    - node.type.page
+    - node.type.webform
+  module:
+    - actions_permissions
+    - book
+    - comment
+    - contact
+    - content_access
+    - content_moderation
+    - entity_browser
+    - entity_print
+    - entity_print_views
+    - feeds
+    - file
+    - filter
+    - group
+    - media
+    - message
+    - node
+    - private_message
+    - shortcut
+    - system
+    - webform
+    - webform_node
+_core:
+  default_config_hash: btW6TFHajhy7Eo6YUvdFiPh4TcPggo8GBXYctjV6zag
+id: authenticated
+label: 'Utilisateur authentifié'
+weight: 1
+is_admin: false
+permissions:
+  - 'access comments'
+  - 'access content'
+  - 'access content overview'
+  - 'access files overview'
+  - 'access group overview'
+  - 'access media overview'
+  - 'access paragraphs_library_items entity browser pages'
+  - 'access printer-friendly version'
+  - 'access shortcuts'
+  - 'access site-wide contact form'
+  - 'access user profiles'
+  - 'access webform submission user'
+  - 'add content to books'
+  - 'change own username'
+  - 'create article content'
+  - 'create book content'
+  - 'create forum content'
+  - 'create media'
+  - 'create new books'
+  - 'create page content'
+  - 'create webform'
+  - 'create webform content'
+  - 'delete media'
+  - 'delete own article content'
+  - 'delete own files'
+  - 'delete own forum content'
+  - 'delete own page content'
+  - 'delete own webform'
+  - 'delete own webform content'
+  - 'delete own webform submission'
+  - 'delete webform submissions own node'
+  - 'edit own article content'
+  - 'edit own book content'
+  - 'edit own forum content'
+  - 'edit own page content'
+  - 'edit own webform'
+  - 'edit own webform content'
+  - 'edit own webform submission'
+  - 'edit webform submissions own node'
+  - 'entity print access bundle article'
+  - 'entity print access bundle audio'
+  - 'entity print access bundle book'
+  - 'entity print access bundle comment'
+  - 'entity print access bundle comment_forum'
+  - 'entity print access bundle contact'
+  - 'entity print access bundle document'
+  - 'entity print access bundle forum'
+  - 'entity print access bundle forums'
+  - 'entity print access bundle group_content_type_45b2955d03aff'
+  - 'entity print access bundle group_content_type_4ddba62801d5d'
+  - 'entity print access bundle group_content_type_72ffa1a47c43e'
+  - 'entity print access bundle group_content_type_7c1df6d908df0'
+  - 'entity print access bundle group_content_type_96f5411c45aa8'
+  - 'entity print access bundle group_content_type_c10611ba5c4f2'
+  - 'entity print access bundle image'
+  - 'entity print access bundle page'
+  - 'entity print access bundle personal'
+  - 'entity print access bundle tags'
+  - 'entity print access bundle template_contact'
+  - 'entity print access bundle template_employee_evaluation'
+  - 'entity print access bundle template_feedback'
+  - 'entity print access bundle template_issue'
+  - 'entity print access bundle template_registration'
+  - 'entity print access bundle template_session_evaluation'
+  - 'entity print access bundle template_subscribe'
+  - 'entity print access bundle template_user_profile'
+  - 'entity print access bundle webform'
+  - 'entity print access type block_content'
+  - 'entity print access type comment'
+  - 'entity print access type contact_message'
+  - 'entity print access type content_moderation_state'
+  - 'entity print access type file'
+  - 'entity print access type group'
+  - 'entity print access type group_content'
+  - 'entity print access type message'
+  - 'entity print access type node'
+  - 'entity print access type paragraph'
+  - 'entity print access type paragraphs_library_item'
+  - 'entity print access type private_message'
+  - 'entity print access type private_message_thread'
+  - 'entity print access type user'
+  - 'entity print access type webform_submission'
+  - 'entity print views access'
+  - 'execute entity:publish_action comment'
+  - 'execute entity:publish_action group'
+  - 'execute entity:publish_action media'
+  - 'execute entity:publish_action node'
+  - 'execute entity:publish_action paragraph'
+  - 'execute entity:save_action comment'
+  - 'execute entity:save_action file'
+  - 'execute entity:save_action node'
+  - 'execute entity_print_download_action node'
+  - 'grant content access'
+  - 'grant own content access'
+  - 'overview messages'
+  - 'post comments'
+  - 'skip comment approval'
+  - 'use private messaging system'
+  - 'use text format basic_html'
+  - 'use text format full_html'
+  - 'use text format restricted_html'
+  - 'use text format webform_default'
+  - 'view all revisions'
+  - 'view any unpublished content'
+  - 'view forum revisions'
+  - 'view la_une_du_monde feeds'
+  - 'view la_une_science_du_monde feeds'
+  - 'view latest version'
+  - 'view media'
+  - 'view own la_une_du_monde feeds'
+  - 'view own la_une_science_du_monde feeds'
+  - 'view own unpublished content'
+  - 'view own unpublished media'
+  - 'view own webform submission'
+  - 'view user email addresses'
+  - 'view webform submissions own node'

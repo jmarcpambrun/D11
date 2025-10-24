@@ -1,0 +1,104 @@
+uuid: 99d2a297-113b-48e9-88b8-fbe87665be47
+langcode: fr
+status: true
+dependencies:
+  config:
+    - block_content.type.basic
+    - burndown.burndown_project_type.project
+    - burndown.burndown_task_type.task
+    - group.type.dpalicepeio_regsitered
+    - media.type.audio
+    - media.type.document
+    - media.type.image
+    - media.type.remote_video
+    - media.type.video
+    - node.type.article
+    - node.type.book
+    - node.type.forum
+    - node.type.page
+    - node.type.webform
+  module:
+    - burndown
+    - content_moderation
+    - paragraphs_library
+_core:
+  default_config_hash: Ln7YAg2WXZ-5wn9ib-v9qOKFxF2YZLnwSKtX-V455hE
+id: editorial
+label: Editorial
+type: content_moderation
+type_settings:
+  states:
+    archived:
+      label: Archived
+      weight: 5
+      published: false
+      default_revision: true
+    draft:
+      label: Draft
+      weight: -5
+      published: false
+      default_revision: false
+    published:
+      label: Published
+      weight: 0
+      published: true
+      default_revision: true
+  transitions:
+    archive:
+      label: Archive
+      from:
+        - published
+      to: archived
+      weight: 2
+    archived_draft:
+      label: 'Restore to Draft'
+      from:
+        - archived
+      to: draft
+      weight: 3
+    archived_published:
+      label: Restore
+      from:
+        - archived
+      to: published
+      weight: 4
+    create_new_draft:
+      label: 'Create New Draft'
+      from:
+        - draft
+        - published
+      to: draft
+      weight: 0
+    publish:
+      label: Publish
+      from:
+        - draft
+        - published
+      to: published
+      weight: 1
+  entity_types:
+    block_content:
+      - basic
+    burndown_project:
+      - project
+    burndown_sprint:
+      - burndown_sprint
+    burndown_task:
+      - task
+    group:
+      - dpalicepeio_regsitered
+    media:
+      - audio
+      - document
+      - image
+      - remote_video
+      - video
+    node:
+      - article
+      - book
+      - forum
+      - page
+      - webform
+    paragraphs_library_item:
+      - paragraphs_library_item
+  default_moderation_state: published

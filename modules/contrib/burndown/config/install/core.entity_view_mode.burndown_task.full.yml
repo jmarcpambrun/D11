@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - burndown
+id: burndown_task.full
+label: 'Full Content'
+targetEntityType: burndown_task
+cache: true

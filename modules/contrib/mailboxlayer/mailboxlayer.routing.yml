@@ -1,0 +1,15 @@
+mailboxlayer.main_config:
+  path: 'admin/config/mailboxlayer'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Mailboxlayer Configuration'
+  requirements:
+    _permission: 'administer site configuration'
+
+mailboxlayer.admin_config:
+  path: '/admin/config/mailboxlayer/settings'
+  defaults:
+    _form: 'Drupal\mailboxlayer\Form\MailboxlayerConfigForm'
+    _title: 'Mailboxlayer Configuration Form'
+  requirements:
+    _permission: 'administer site configuration'

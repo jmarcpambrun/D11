@@ -1,0 +1,32 @@
+entity.webform_quiz.quiz_settings:
+  path: '/admin/structure/webform/manage/{webform}/settings/webform_quiz'
+  defaults:
+    _entity_form: 'webform.webform_quiz_settings'
+    _title_callback: '\Drupal\webform\Controller\WebformEntityController::title'
+  requirements:
+    _entity_access: 'webform.update'
+
+webform_quiz.webform_quiz_add_form:
+  path: '/admin/structure/webform/webform_quiz/add'
+  defaults:
+    _entity_form: 'webform.webform_quiz_add_form'
+    _title: 'Add form'
+  requirements:
+    _entity_create_access: 'webform'
+
+entity.webform_ui.element.add_quiz_page:
+  path: '/admin/structure/webform/manage/{webform}/element/add/quiz_page'
+  defaults:
+    _form: '\Drupal\webform_ui\Form\WebformUiElementAddForm'
+    _title: 'Add Quiz page'
+    type: webform_quiz_wizard_page
+  requirements:
+    _custom_access: '\Drupal\webform_ui\Access\WebformUiAccess::checkWebformElementAccess'
+
+webform_quiz.download_results:
+  path: '/webform_quiz/submission-report/{webform_submission_id}'
+  defaults:
+    _controller: '\Drupal\webform_quiz\Controller\SubmissionReport::downloadSubmissionReport'
+    _title: 'Download Hello World'
+  requirements:
+    _permission: 'access content'

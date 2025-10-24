@@ -1,0 +1,32 @@
+uuid: fbf822b5-d327-46d6-81f1-a3226e8ebd18
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+    - options
+_core:
+  default_config_hash: hCSveM-_heHbxtwjMz-biSKEpta3yCw3C71sZ3v60Pk
+id: node.field_gantt_type
+field_name: field_gantt_type
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: project
+      label: Project
+    -
+      value: task
+      label: Task
+    -
+      value: milestone
+      label: Milestone
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

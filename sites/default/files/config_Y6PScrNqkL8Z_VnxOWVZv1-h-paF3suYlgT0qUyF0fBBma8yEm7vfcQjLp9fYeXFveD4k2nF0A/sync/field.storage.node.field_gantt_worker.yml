@@ -1,0 +1,22 @@
+uuid: 1149a6b6-47c5-4f2a-bdee-9454148d2e8c
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+_core:
+  default_config_hash: WY3k4E3upKowmMK_J4JFcSoPg5ECFxx3oeX_xazbELs
+id: node.field_gantt_worker
+field_name: field_gantt_worker
+entity_type: node
+type: integer
+settings:
+  unsigned: false
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

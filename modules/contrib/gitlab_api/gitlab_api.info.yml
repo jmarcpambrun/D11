@@ -1,0 +1,11 @@
+name: GitLab API
+type: module
+description: Integrates your Drupal site into GitLab using the GitLab API.
+package: Web services
+core_version_requirement: ^10.3 || ^11
+configure: entity.gitlab_server.collection
+
+# Information added by Drupal.org packaging script on 2024-06-20
+version: '2.3.0-beta1'
+project: 'gitlab_api'
+datestamp: 1718876280

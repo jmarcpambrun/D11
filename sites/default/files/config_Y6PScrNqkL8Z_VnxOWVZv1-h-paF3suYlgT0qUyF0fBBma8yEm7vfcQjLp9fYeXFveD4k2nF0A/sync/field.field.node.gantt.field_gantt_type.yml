@@ -1,0 +1,25 @@
+uuid: bdbf7798-89c8-4654-b240-f5cf5da47306
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_type
+    - node.type.gantt
+  module:
+    - options
+_core:
+  default_config_hash: 3MojQ8KpKOysFUn_wKkPRHbhgqfEvMXiveAVCPKFMAo
+id: node.gantt.field_gantt_type
+field_name: field_gantt_type
+entity_type: node
+bundle: gantt
+label: Type
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: task
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,936 @@
+body.drd .block-system-main-block {
+  text-align: center;
+}
+body.drd .block-system-main-block > * {
+  text-align: start;
+}
+body.drd .drd-dashboard {
+  display: inline-block;
+  max-width: 1368px;
+  margin: 0 auto;
+}
+body.drd .drd-dashboard .drd-widget {
+  float: left;
+  overflow-y: auto;
+  width: 300px;
+  height: 250px;
+  margin: 0.625rem 0.5rem;
+  padding: 0.625rem 0.75rem;
+  color: #fff;
+  background-color: #333;
+}
+body.drd .drd-dashboard .drd-widget a {
+  color: #2dab66;
+}
+body.drd .drd-dashboard .drd-widget .button a {
+  color: #333;
+}
+body.drd .drd-dashboard .drd-widget ul {
+  margin: 0;
+  padding-left: 1.5em;
+}
+body.drd .drd-dashboard .drd-widget label {
+  display: none;
+}
+body.drd .drd-dashboard .drd-widget select {
+  margin: 1em 0;
+  color: #333;
+}
+body.drd .drd-dashboard .drd-widget h2 {
+  margin-top: 0.125rem;
+  text-transform: uppercase;
+}
+body.drd .drd-dashboard .drd-widget p.action.critical em,
+body.drd .drd-dashboard .drd-widget p.message.critical em {
+  color: #e84e1b;
+}
+body.drd .drd-dashboard .drd-widget p.action.recommended em,
+body.drd .drd-dashboard .drd-widget p.message.recommended em {
+  color: #f8b133;
+}
+body.drd .drd-dashboard .drd-widget p.action {
+  margin-top: 1.875rem;
+}
+body.drd .drd-dashboard .drd-widget code {
+  padding: 0.1875rem;
+  color: #000;
+  background-color: #ccc;
+}
+
+.drd-domain-name.allow-wrap {
+  max-width: 280px;
+  white-space: normal;
+}
+.drd-domain-name > div {
+  display: inline-block;
+}
+.drd-domain-name > div.domain {
+  display: none;
+}
+.drd-domain-name.show-domain > div.name {
+  display: none;
+}
+.drd-domain-name.show-domain > div.domain {
+  display: inline-block;
+}
+.drd-domain-name div.token-widget {
+  display: inline;
+  text-decoration: underline;
+}
+.drd-domain-name div.token-widget span.message {
+  position: absolute;
+  display: inline-block;
+  margin-left: 0.3em;
+  padding: 0 0.3125rem;
+  transition: all 200ms ease-out;
+  transform: translateY(-12px);
+  opacity: 0;
+  color: #fff;
+  border-radius: 5px;
+  background: #000;
+  background: rgba(0, 0, 0, 0.5);
+  backface-visibility: hidden;
+}
+.drd-domain-name div.token-widget:hover {
+  cursor: copy;
+}
+.drd-domain-name div.token-widget:hover span.message {
+  transform: translateY(-2px);
+  opacity: 1;
+}
+
+body.path-drd .drd-host-form .field--name-terms,
+body.path-drd .drd-host-form .field--name-header,
+body.path-drd .drd-core-form .field--name-terms,
+body.path-drd .drd-core-form .field--name-header,
+body.path-drd .drd-domain-form .field--name-terms,
+body.path-drd .drd-domain-form .field--name-header {
+  float: left;
+  width: 50%;
+}
+body.path-drd .drd-host-form #edit-drd-update-method > .fieldset-wrapper,
+body.path-drd .drd-core-form #edit-drd-update-method > .fieldset-wrapper,
+body.path-drd .drd-domain-form #edit-drd-update-method > .fieldset-wrapper {
+  display: flex;
+  flex-flow: row wrap;
+}
+body.path-drd
+  .drd-host-form
+  #edit-drd-update-method
+  > .fieldset-wrapper
+  > fieldset,
+body.path-drd
+  .drd-core-form
+  #edit-drd-update-method
+  > .fieldset-wrapper
+  > fieldset,
+body.path-drd
+  .drd-domain-form
+  #edit-drd-update-method
+  > .fieldset-wrapper
+  > fieldset {
+  display: flex;
+  width: 25%;
+  margin: 0.625rem auto;
+}
+
+.drd-hacked-info {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/hacked.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+
+body.drd .region-header {
+  position: relative;
+}
+body.drd .region-header::before {
+  position: absolute;
+  right: 0;
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  content: "";
+  text-indent: -9999px;
+  background-image: url("../img/drd.svg");
+  background-repeat: no-repeat;
+  background-position: -240px 0;
+  background-size: 300px 60px;
+}
+
+.drd-icon.link a {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  margin-right: 0.1875rem;
+  text-indent: -9999px;
+  background-image: url("../img/link.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-icon.link a:hover {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/link.svg");
+  background-repeat: no-repeat;
+  background-position: -1.5em 0;
+  background-size: 4.5em 1.5em;
+}
+
+.drd-icon.session a {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  margin-right: 0.1875rem;
+  text-indent: -9999px;
+  background-image: url("../img/ssl.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-icon.session a:hover {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/ssl.svg");
+  background-repeat: no-repeat;
+  background-position: -1.5em 0;
+  background-size: 4.5em 1.5em;
+}
+
+.drd-locked-info {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/locked.svg");
+  background-repeat: no-repeat;
+  background-position: -1.5em 0;
+  background-size: 4.5em 1.5em;
+}
+
+.drd-monitoring-info.error span.drd-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-monitoring-info.warning span.drd-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -1.5em 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-monitoring-info.ok span.drd-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-monitoring-info > div {
+  display: inline-block;
+  margin-right: 0.1875rem;
+  text-indent: -999px;
+}
+
+.drd-ping-info.failure span.drd-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-ping-info.ok span.drd-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-ping-info > div {
+  display: inline-block;
+  margin-right: 0.1875rem;
+}
+
+.drd-remote-status {
+  width: 194px;
+}
+.drd-remote-status span {
+  margin: 0 0.1875rem;
+}
+.drd-remote-status span:first-of-type {
+  margin-left: 0;
+}
+.drd-remote-status span:last-of-type {
+  margin-right: 0;
+}
+.drd-remote-status span.health {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/health.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status span.other {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/other.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status span.secure {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/security.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status span.seo {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/seo.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status span.tuning {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/tuning.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status span.ok {
+  background-color: #2dab66;
+}
+.drd-remote-status span.warning {
+  background-color: #f8b133;
+}
+.drd-remote-status span.error {
+  background-color: #e84e1b;
+}
+
+.drd-remote-status-single span {
+  margin: 0 0.1875rem;
+}
+.drd-remote-status-single span:first-of-type {
+  margin-left: 0;
+}
+.drd-remote-status-single span:last-of-type {
+  margin-right: 0;
+}
+.drd-remote-status-single span.health {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/health.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status-single span.other {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/other.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status-single span.secure {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/security.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status-single span.seo {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/seo.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status-single span.tuning {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/tuning.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-remote-status-single span.ok {
+  background-color: #2dab66;
+}
+.drd-remote-status-single span.warning {
+  background-color: #f8b133;
+}
+.drd-remote-status-single span.error {
+  background-color: #e84e1b;
+}
+
+.drd-ssl {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/ssl.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 4.5em 1.5em;
+}
+.drd-ssl.yes {
+  background-color: #2dab66;
+}
+.drd-ssl.no {
+  background-color: #e84e1b;
+}
+
+body.drd.drd-main-level ul.tabs.primary li a {
+  position: relative;
+  padding-left: 2.5rem;
+}
+body.drd.drd-main-level ul.tabs.primary li a::before {
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  content: "";
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/drd.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 140px 28px;
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd/hosts"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/host.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 84px 28px;
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd/cores"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/core.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 84px 28px;
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd/domains"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/domain.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 84px 28px;
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd/projects"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/project.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 84px 28px;
+}
+body.drd.drd-main-level
+  ul.tabs.primary
+  li
+  a[data-drupal-link-system-path="drd/settings"]::before {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  text-indent: -9999px;
+  background-image: url("../img/settings.svg");
+  background-repeat: no-repeat;
+  background-position: -56px 0;
+  background-size: 84px 28px;
+}
+
+.toggle-domain-name {
+  position: absolute;
+  top: 0.6em;
+  left: 7em;
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  text-indent: -9999px;
+  background-image: url("../img/toggle.svg");
+  background-repeat: no-repeat;
+  background-position: -3em 0;
+  background-size: 4.5em 1.5em;
+}
+.toggle-domain-name:hover {
+  cursor: pointer;
+}
+
+.toolbar .toolbar-icon.toolbar-icon-drd-main {
+  padding-left: 3.1875rem;
+}
+.toolbar .toolbar-icon.toolbar-icon-drd-main::before {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/drd.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-position-y: 3px !important;
+  background-size: 170px 34px;
+}
+
+.drd-update-info.security span.drd-icon,
+.drd-update-info.unsupported span.drd-icon {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+}
+.drd-update-info.recommended span.drd-icon {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -34px 0;
+  background-size: 102px 34px;
+}
+.drd-update-info.ok span.drd-icon {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+.drd-update-info span.drd-icon {
+  line-height: 2.125rem;
+}
+.drd-update-info > div {
+  display: inline-block;
+  margin-right: 0.1875rem;
+}
+
+.drd-update-status {
+  position: absolute;
+  top: 10%;
+}
+.drd-update-status.security,
+.drd-update-status.unsupported {
+  left: 0;
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+}
+.drd-update-status.recommended {
+  left: 34px;
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: -34px 0;
+  background-size: 102px 34px;
+}
+.drd-update-status.ok {
+  left: 68px;
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  text-indent: -9999px;
+  background-image: url("../img/status.svg");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 102px 34px;
+}
+
+body.drd.drd-cores:not(.drd-main-level) h1::before {
+  display: inline-block;
+  padding-right: 0.25em;
+  padding-left: 2.75rem;
+  content: "Core:";
+  background-image: url("../img/core.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+  line-height: 2.125rem;
+}
+body.drd.drd-cores:not(.drd-main-level) h1 > div {
+  display: inline-block;
+}
+body.drd.drd-cores:not(.drd-main-level) table.cols-3 {
+  float: right;
+  width: auto;
+}
+body.drd.drd-cores:not(.drd-main-level) .views-form {
+  float: left;
+  width: auto;
+}
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  th:nth-child(5),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  th:nth-child(6),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  th:nth-child(7),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  td:nth-child(5),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  td:nth-child(6),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  td:nth-child(7),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  th:nth-child(5),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  th:nth-child(6),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  th:nth-child(7),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  td:nth-child(5),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  td:nth-child(6),
+body.drd.drd-cores:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  td:nth-child(7) {
+  display: none;
+}
+
+body.drd.drd-domains:not(.drd-main-level) h1::before {
+  display: inline-block;
+  padding-right: 0.25em;
+  padding-left: 2.75rem;
+  content: "Domain:";
+  background-image: url("../img/domain.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+  line-height: 2.125rem;
+}
+body.drd.drd-domains:not(.drd-main-level) h1 > div {
+  display: inline-block;
+}
+body.drd.drd-domains:not(.drd-main-level) table {
+  float: left;
+  width: auto;
+}
+body.drd.drd-domains:not(.drd-main-level) table.cols-3,
+body.drd.drd-domains:not(.drd-main-level) table.system-status-report {
+  float: right;
+  width: auto;
+}
+body.drd.drd-domains:not(.drd-main-level) fieldset.messages {
+  float: right;
+  width: 50%;
+  border: none;
+}
+
+body.drd.drd-hosts:not(.drd-main-level) h1::before {
+  display: inline-block;
+  padding-right: 0.25em;
+  padding-left: 2.75rem;
+  content: "Host:";
+  background-image: url("../img/host.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+  line-height: 2.125rem;
+}
+body.drd.drd-hosts:not(.drd-main-level) h1 > div {
+  display: inline-block;
+}
+body.drd.drd-hosts:not(.drd-main-level) .views-form {
+  float: right;
+  width: auto;
+}
+body.drd.drd-hosts:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  th:nth-child(4),
+body.drd.drd-hosts:not(.drd-main-level)
+  .views-form
+  table
+  thead
+  tr
+  td:nth-child(4),
+body.drd.drd-hosts:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  th:nth-child(4),
+body.drd.drd-hosts:not(.drd-main-level)
+  .views-form
+  table
+  tbody
+  tr
+  td:nth-child(4) {
+  display: none;
+}
+
+body.drd.drd-projects:not(.drd-main-level) h1::before {
+  display: inline-block;
+  padding-right: 0.25em;
+  padding-left: 2.75rem;
+  content: "Project:";
+  background-image: url("../img/project.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+  line-height: 2.125rem;
+}
+body.drd.drd-projects:not(.drd-main-level) h1 > div {
+  display: inline-block;
+}
+body.drd.drd-projects tbody .views-field-label span.name {
+  padding-left: 1em;
+  font-size: 0.7em;
+}
+body.drd.drd-projects tbody .views-field-label span.name::before {
+  content: "(";
+}
+body.drd.drd-projects tbody .views-field-label span.name::after {
+  content: ")";
+}
+
+body.drd.drd-cores tbody .views-field-label span.name,
+body.drd.drd-domains tbody .views-field-label span.name {
+  display: none;
+}
+
+#edit-drd-new-core-wrapper {
+  padding: 0.625rem;
+  border: 1px solid #000;
+  background-color: #999;
+}
+
+.view-drd-domain td {
+  white-space: nowrap;
+}
+.view-drd-domain td .drd-ping-info {
+  float: right;
+}
+.view-drd-domain td .drd-ping-info .label {
+  display: none;
+}
+
+body.drd th {
+  position: relative;
+}
+body.drd .toggle-filter {
+  display: inline-block;
+  width: 40px;
+  height: 36px;
+  margin: 1em 1em 1em 0;
+  padding: 0 0.625rem 0 3.0625rem;
+  padding-left: 2.125rem;
+  color: #999;
+  border: 1px solid #ccc;
+  border-radius: 20em;
+  background-color: #f2f1eb;
+  background-image: url("../img/filter.svg");
+  background-repeat: no-repeat;
+  background-position: -68px 0;
+  background-size: 102px 34px;
+  line-height: 2.125rem;
+}
+body.drd .toggle-filter:hover {
+  cursor: pointer;
+}
+body.drd .view-filters form {
+  display: inline-block;
+  vertical-align: top;
+}
+body.drd .view-filters:not(.visible) form {
+  display: none;
+}
+body.drd .views-form form #edit-header,
+body.drd .views-form form #edit-actions,
+body.drd .views-form form #edit-actions--1,
+body.drd .views-form form #edit-actions--2,
+body.drd .views-form form #edit-actions--3 {
+  display: none;
+}
+
+.view-drd-project .views-field-status-label {
+  position: relative;
+  width: 102px;
+  padding-right: 0;
+  padding-left: 0;
+}
+.view-drd-project thead tr th.views-field-id {
+  width: 5%;
+}
+.view-drd-project thead tr th.views-field-label {
+  width: auto;
+}
+.view-drd-project thead tr th.views-field-status-label {
+  width: 25%;
+}
+.view-drd-project thead tr th.views-field-coreversion {
+  width: 5%;
+}
+.view-drd-project thead tr th.views-field-operations {
+  width: 10%;
+}
+
+.view-drd-domains-per-project caption {
+  margin-top: 2em;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 3em;
+}
+.view-drd-domains-per-project thead tr th.views-field-status-label {
+  width: 30%;
+}
+.view-drd-domains-per-project thead tr th.views-field-domain {
+  width: 30%;
+}
+.view-drd-domains-per-project thead tr th.views-field-name-2 {
+  width: 30%;
+}
+.view-drd-domains-per-project thead tr th.views-field-name {
+  width: 5%;
+}
+.view-drd-domains-per-project thead tr th.views-field-name-1 {
+  width: 5%;
+}
+/*# sourceMappingURL=maps/drd.css.map */

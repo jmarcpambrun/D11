@@ -1,0 +1,149 @@
+administer burndown:
+  title: 'Administer burndown'
+  restrict access: true
+
+access burndown:
+  title: 'Access Burndown'
+
+access burndown backlog:
+  title: 'Access Burndown Backlog'
+
+reorder burndown backlog:
+  title: 'Reorder Burndown Backlog'
+
+send tasks to board:
+  title: 'Send Tasks to Board'
+
+modify sprint tasks:
+  title: 'Modify Tasks in a Sprint'
+
+burndown open sprint:
+  title: 'Open a Sprint'
+
+access burndown board:
+  title: 'Access Burndown Board'
+
+access completed board:
+  title: 'Access Completed Tasks Board'
+
+burndown close task:
+  title: 'Close a Task'
+
+burndown comment on task:
+  title: 'Comment on a Task'
+
+add project entities:
+  title: 'Create new Project entities'
+
+administer project entities:
+  title: 'Administer Project entities'
+  description: 'Allow to access the administration form to configure Project entities.'
+  restrict access: true
+
+delete project entities:
+  title: 'Delete Project entities'
+
+edit project entities:
+  title: 'Edit Project entities'
+
+view published project entities:
+  title: 'View published Project entities'
+
+view unpublished project entities:
+  title: 'View unpublished Project entities'
+
+view all project revisions:
+  title: 'View all Project revisions'
+
+revert all project revisions:
+  title: 'Revert all Project revisions'
+  description: 'Role requires permission <em>view Project revisions</em> and <em>edit rights</em> for project entities in question or <em>administer project entities</em>.'
+
+delete all project revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view Project revisions</em> and <em>delete rights</em> for project entities in question or <em>administer project entities</em>.'
+
+permission_callbacks:
+  - \Drupal\burndown\ProjectPermissions::generatePermissions
+
+add task entities:
+  title: 'Create new Task entities'
+
+administer task entities:
+  title: 'Administer Task entities'
+  description: 'Allow to access the administration form to configure Task entities.'
+  restrict access: true
+
+delete task entities:
+  title: 'Delete Task entities'
+
+edit task entities:
+  title: 'Edit Task entities'
+
+view published task entities:
+  title: 'View published Task entities'
+
+view unpublished task entities:
+  title: 'View unpublished Task entities'
+
+view all task revisions:
+  title: 'View all Task revisions'
+
+revert all task revisions:
+  title: 'Revert all Task revisions'
+  description: 'Role requires permission <em>view Task revisions</em> and <em>edit rights</em> for task entities in question or <em>administer task entities</em>.'
+
+delete all task revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view Task revisions</em> and <em>delete rights</em> for task entities in question or <em>administer task entities</em>.'
+
+add swimlane entities:
+  title: 'Create new Swimlane entities'
+
+administer swimlane entities:
+  title: 'Administer Swimlane entities'
+  description: 'Allow to access the administration form to configure Swimlane entities.'
+  restrict access: true
+
+delete swimlane entities:
+  title: 'Delete Swimlane entities'
+
+edit swimlane entities:
+  title: 'Edit Swimlane entities'
+
+view published swimlane entities:
+  title: 'View published Swimlane entities'
+
+view unpublished swimlane entities:
+  title: 'View unpublished Swimlane entities'
+
+add sprint entities:
+  title: 'Create new Sprint entities'
+
+administer sprint entities:
+  title: 'Administer Sprint entities'
+  description: 'Allow to access the administration form to configure Sprint entities.'
+  restrict access: true
+
+delete sprint entities:
+  title: 'Delete Sprint entities'
+
+edit sprint entities:
+  title: 'Edit Sprint entities'
+
+view published sprint entities:
+  title: 'View published Sprint entities'
+
+view unpublished sprint entities:
+  title: 'View unpublished Sprint entities'
+
+view all sprint revisions:
+  title: 'View all Sprint revisions'
+
+revert all sprint revisions:
+  title: 'Revert all Sprint revisions'
+  description: 'Role requires permission <em>view Sprint revisions</em> and <em>edit rights</em> for sprint entities in question or <em>administer sprint entities</em>.'
+
+delete all sprint revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view Sprint revisions</em> and <em>delete rights</em> for sprint entities in question or <em>administer sprint entities</em>.'

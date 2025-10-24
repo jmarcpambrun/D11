@@ -1,0 +1,17 @@
+label: Links
+settings:
+  first:
+    label: Target
+  second:
+    label: Loại
+    allowed_values:
+      -
+        label: 'Finish to start'
+      -
+        label: 'Start to start'
+      -
+        label: 'Finish to finish'
+      -
+        label: 'Start to finish'
+  third:
+    label: Lag

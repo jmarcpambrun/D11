@@ -1,0 +1,17 @@
+services:
+  burndown_service.next_id:
+    class: Drupal\burndown\Services\TaskIdService
+    arguments: ['@database']
+
+  burndown_service.project_cloud:
+    class: Drupal\burndown\Services\ProjectCloudService
+    arguments: []
+
+  burndown_service.change_diff_service:
+    class: Drupal\burndown\Services\ChangeDiffService
+    arguments: []
+
+  burndown_emailer_subscriber:
+    class: Drupal\burndown\EventSubscriber\TaskNotificationsSubscriber
+    tags:
+      - { name: 'event_subscriber' }

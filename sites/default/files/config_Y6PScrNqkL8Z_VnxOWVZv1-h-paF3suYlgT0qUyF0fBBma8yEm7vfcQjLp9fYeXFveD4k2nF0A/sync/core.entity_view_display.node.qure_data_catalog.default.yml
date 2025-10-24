@@ -1,0 +1,124 @@
+uuid: 545ad29a-bb86-449d-a707-9ced1d3f15a8
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.qure_data_catalog.body
+    - field.field.node.qure_data_catalog.field_businessconcept_globalid
+    - field.field.node.qure_data_catalog.field_businessconcept_term_name
+    - field.field.node.qure_data_catalog.field_businessconcept_termnamef
+    - field.field.node.qure_data_catalog.field_data_type
+    - field.field.node.qure_data_catalog.field_dataset_id
+    - field.field.node.qure_data_catalog.field_dataset_name
+    - field.field.node.qure_data_catalog.field_definitions
+    - field.field.node.qure_data_catalog.field_domain_name
+    - field.field.node.qure_data_catalog.field_physical_data
+    - field.field.node.qure_data_catalog.field_tbl_name
+    - node.type.qure_data_catalog
+  module:
+    - text
+    - user
+id: node.qure_data_catalog.default
+targetEntityType: node
+bundle: qure_data_catalog
+mode: default
+content:
+  body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  field_businessconcept_globalid:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 109
+    region: content
+  field_businessconcept_term_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 110
+    region: content
+  field_businessconcept_termnamef:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 111
+    region: content
+  field_data_type:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 107
+    region: content
+  field_dataset_id:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 102
+    region: content
+  field_dataset_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 103
+    region: content
+  field_definitions:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 108
+    region: content
+  field_domain_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 104
+    region: content
+  field_physical_data:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 106
+    region: content
+  field_tbl_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 105
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  private_message_link: true
+  search_api_excerpt: true

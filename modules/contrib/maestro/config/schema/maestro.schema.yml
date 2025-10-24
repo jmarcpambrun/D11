@@ -1,0 +1,549 @@
+# Schema for the configuration files of the Maestro Engine module.
+
+block.settings.maestro_process_status_block:
+  type: block_settings
+  label: 'Maestro status block settings'
+  mapping:
+    maestro_skip_execute_check:
+      type: boolean
+      label: 'Skip checking if the user is part of the process status bars shown'
+    maestro_filter_process_names:
+      type: string
+      label: 'Simple filter to filter on process name'
+    maestro_provide_link:
+      type: string
+      label: 'Make the Process Name a link to an URL'
+    maestro_link_tooltip:
+      type: label
+      label: 'Maestro link tooltip'
+
+maestro.maestro_template.*:
+  type: config_entity
+  label: 'Maestro Template'
+  mapping:
+    id:
+      type: string
+      label: 'Template id'
+    uuid:
+      type: string
+      label: 'UUID'
+    label:
+      type: label
+      label: 'Template Name'
+    description:
+      type: text
+      label: 'Description'
+    app_group:
+      type: integer
+      label: 'App Group'
+    pan_left:
+      type: integer
+      label: 'Pan Left'
+    pan_top:
+      type: integer
+      label: 'Pan Top'
+    zoom:
+      type: float
+      label: 'Zoom'
+    canvas_height:
+      type: integer
+      label: 'Canvas Height'
+    canvas_width:
+      type: integer
+      label: 'Canvas Width'
+    default_workflow_timeline_stage_count:
+      type: integer
+      label: 'Default workflow timeline stage count'
+    show_details:
+      type: boolean
+      label: 'Show process details in task console'
+    validated:
+      type: boolean
+      label: Validated
+    views_attached:
+      type: sequence
+      label: 'Views Attached to Task Console Details'
+      sequence:
+        type: mapping
+        label: 'View Attached'
+        mapping:
+          view_machine_name:
+            type: string
+            label: 'The View Machine Name'
+          view_weight:
+            type: integer
+            label: 'Weight order of the view'
+          view_display:
+            type: string
+            label: 'MachineName;Label of the display chosen for the view'
+    variables:
+      type: sequence
+      label: 'Template Variables'
+      sequence:
+        type: mapping
+        label: 'Variable'
+        mapping:
+          variable_id:
+            type: string
+            label: 'Template Machine Name'
+          variable_value:
+            type: text
+            label: 'Variable Value'
+    tasks:
+      type: sequence
+      label: 'Tasks'
+      sequence:
+        type: mapping
+        label: 'Task Settings'
+        mapping:
+          id:
+            type: string
+            label: 'Machine Name'
+          tasktype:
+            type: string
+            label: 'Task Type'
+          label:
+            type: string
+            label: 'Task Name'
+          nextstep:
+            type: string
+            label: 'Next Step'
+          nextfalsestep:
+            type: string
+            label: 'Next False Step'
+          runonce:
+            type: boolean
+            label: 'Run Once'
+          top:
+            type: string
+            label: 'Top of Task'
+          left:
+            type: string
+            label: 'Left edge of Task'
+          assignby:
+            type: string
+            label: 'variable or fixed value'
+          assignto:
+            type: string
+            label: 'engine, user, role, group, etc.'
+          assigned:
+            type: string
+            label: 'Assigned to'
+          handler:
+            type: string
+            label: 'Execution Handler'
+          showindetail:
+            type: boolean
+            label: 'Show in Detail Listings'
+          participate_in_workflow_status_stage:
+            type: boolean
+            label: 'Participate in setting the workflow stage and status'
+          workflow_status_stage_number:
+            type: integer
+            label: 'Workflow Status Stage Number'
+          workflow_status_stage_message:
+            type: string
+            label: 'Workflow Status Stage Message'
+          raphael:
+            type: string
+            label: 'Raphael'
+          to:
+            type: string
+            label: 'To'
+          pointedfrom:
+            type: string
+            label: 'Pointed from'
+          falsebranch:
+            type: string
+            label: 'False branch'
+          lines:
+            type: sequence
+            label: 'Lines'
+          data:
+            type: maestro.task.[%parent.tasktype]
+          notifications:
+            type: 'mapping'
+            label: 'notifications'
+            mapping:
+              notification_assignment:
+                type: string
+                label: 'Custom Assignment Notification'
+              notification_reminder:
+                type: string
+                label: 'Custom Reminder Notification'
+              notification_escalation:
+                type: string
+                label: 'Custom Escalation Notification'
+              escalation_after:
+                type: integer
+                label: 'Escalation after X days'
+              reminder_after:
+                type: integer
+                label: 'Reminder after X days'
+              assignment_enabled:
+                type: boolean
+                label: 'Assignment notification enabled'
+              reminder_enabled:
+                type: boolean
+                label: 'Reminder notification enabled'
+              escalation_enabled:
+                type: boolean
+                label: 'Reminder notification enabled'
+              notification_assignments:
+                type: string
+                label: 'The csv of assignment settings. e.g. user:fixed:admin:assignment  entity:how:who:notification_type,...'
+              notification_assignment_subject:
+                type: string
+                label: 'Notification assignment subject'
+              notification_reminder_subject:
+                type: string
+                label: 'Notification reminder subject'
+              notification_escalation_subject:
+                type: string
+                label: 'Notification escalation subject'
+
+maestro.task.*:
+  type: mapping
+  label: 'Maestro Task Data'
+  mapping:
+    unique_id:
+      type: string
+      label: 'Unique ID'
+    modal:
+      type: string
+      label: 'Modal'
+    redirect_to:
+      type: string
+      label: 'Redirect to'
+
+maestro.task.MaestroEcaEventTask:
+  type: mapping
+  label: 'Maestro ECA Task Settings'
+  mapping:
+   eca:
+    type: mapping
+    label: 'ECA'
+    mapping:
+      entity_identifier_source:
+        type: text
+        label: 'Entity Identifier Source'
+      entity_identifier_manual:
+        type: text
+        label: 'Entity Identifier Manual entry'
+      entity_identifier_variable:
+        type: text
+        label: 'Entity Identifier variable entry'
+      event_name:
+        type: text
+        label: 'Event Name'
+
+maestro.task.MaestroAITask:
+  type: mapping
+  label: 'Maestro AI Task Settings'
+  mapping:
+   ai:
+    type: mapping
+    label: 'AI'
+    mapping:
+      ai_prompt:
+        type: text
+        label: 'AI Prompt'
+      hold_task_on_null:
+        type: integer
+        label: 'Hold Task if AI Result is Null'
+      ai_provider:
+        type: string
+        label: 'AI Provider'
+      ai_return_format:
+        type: string
+        label: 'AI Return Format'
+      ai_return_custom_format:
+        type: string
+        label: 'AI Return Custom Format'
+      ai_return_into:
+        type: string
+        label: 'AI Return Into'
+      ai_return_into_process_variable:
+        type: string
+        label: 'AI Return Into Process Variable'
+      ai_return_into_ai_variable:
+        type: string
+        label: 'AI Return Into AI Variable'
+      log_ai_return:
+        type: integer
+        label: 'Log AI Return'
+      ai_testing:
+        type: integer
+        label: 'Enable AI Testing'
+      ai_testing_response:
+        type: text
+        label: 'AI Testing Response'
+      ai_vision_image_source:
+        type: string
+        label: 'AI Vision Image Source'
+      ai_vision_image_source_url:
+        type: string
+        label: 'AI Vision Image Source URL'
+      ai_vision_image_source_entity:
+        type: string
+        label: 'AI Vision Image Source Entity'
+      ai_vision_image_source_pv:
+        type: string
+        label: 'AI Vision Image Source PV'
+      ai_vision_image_source_file:
+        type: string
+        label: 'AI Vision Image Source File'
+      ai_speech_to_text_language:
+        type: string
+        label: 'Speech-to-Text Language'
+      ai_speech_to_text_language_missing:
+        type: string
+        label: 'Speech-to-Text Language Missing'
+      ai_speech_to_text_source:
+        type: string
+        label: 'Speech-to-Text Source'
+      ai_speech_to_text_source_url:
+        type: string
+        label: 'Speech-to-Text Source URL'
+      ai_speech_to_text_source_entity:
+        type: string
+        label: 'Speech-to-Text Source Entity'
+      ai_speech_to_text_source_entity_manual:
+        type: string
+        label: 'Speech-to-Text Source Entity Manual'
+      ai_speech_to_text_source_pv:
+        type: string
+        label: 'Speech-to-Text Source PV'
+      ai_speech_to_text_source_file:
+        type: string
+        label: 'Speech-to-Text Source File'
+      ai_text_to_image_file_storage:
+        type: string
+        label: 'Text-to-Image File Storage'
+      ai_text_to_image_filename:
+        type: string
+        label: 'Text-to-Image Filename'
+      ai_text_to_image_path:
+        type: string
+        label: 'Text-to-Image Path'
+      ai_text_to_image_url_or_path:
+        type: string
+        label: 'Text-to-Image URL or Path'
+
+
+maestro.task.MaestroIf:
+  type: maestro.task.*
+  label: 'Maestro Webform Task Data'
+  mapping:
+    if:
+      type: mapping
+      label: 'If'
+      mapping:
+        method:
+          type: string
+          label: 'Method'
+        variable:
+          type: string
+          label: 'Variable'
+        operator:
+          type: string
+          label: 'Operator'
+        variable_value:
+          type: string
+          label: 'Variable value'
+        status:
+          type: string
+          label: 'Status'
+
+maestro.task.MaestroContentType:
+  type: mapping
+  label: 'Maestro Content Type Task'
+  mapping:
+    unique_id:
+      type: string
+      label: 'Unique ID'
+    redirect_to:
+      type: string
+      label: 'Redirect to'
+    content_type:
+      type: string
+      label: 'Content type'
+    save_edit_later:
+      type: integer
+      label: 'Save and edit later'
+    link_to_edit:
+      type: integer
+      label: 'Link to edit'
+    show_maestro_buttons_on_view:
+      type: integer
+      label: 'Show Maestro buttons on view'
+    accept_label:
+      type: string
+      label: 'Accept button label'
+    reject_label:
+      type: string
+      label: 'Reject button label'
+    accept_redirect_to:
+      type: string
+      label: 'Redirect after accept'
+    reject_redirect_to:
+      type: string
+      label: 'Redirect after reject'
+    supply_maestro_ids_in_url:
+      type: integer
+      label: 'Supply Maestro IDs in URL'
+
+maestro.task.MaestroInteractive:
+  type: mapping
+  label: 'Maestro Interactive Task'
+  mapping:
+    modal:
+      type: string
+      label: 'Modal'
+    redirect_to:
+      type: string
+      label: 'Redirect To'
+
+maestro.task.MaestroSetProcessVariable:
+  type: mapping
+  label: 'Set Process Variable Task Settings'
+  mapping:
+    spv:
+      type: mapping
+      label: 'Set Process Variable Settings'
+      mapping:
+        variable:
+          type: string
+          label: 'Variable Name'
+        method:
+          type: string
+          label: 'Set method'
+        variable_value:
+          type: string
+          label: 'Value'
+        spv_plugin:
+          type: string
+          label: 'SPV Plugin'
+        entity_identifier:
+          type: string
+          label: 'Entity Identifier'
+        entity_type:
+          type: string
+          label: 'Entity Type'
+        entity_type_bundle:
+          type: string
+          label: 'Entity Type Bundle'
+        entity_type_field:
+          type: string
+          label: 'Entity Field'
+        delta_process_variable:
+          type: string
+          label: 'Delta Process Variable'
+        entity_type_property:
+          type: string
+          label: 'Entity Type Property'
+
+views.field.maestro_started_timestamp:
+  type: views_field
+  label: 'Completed'
+  mapping:
+    date_format:
+      type: string
+      label: 'Date format'
+
+views.field.completed:
+  type: views_field
+  label: 'Completed'
+  mapping:
+    date_format:
+      type: string
+      label: 'Date format'
+
+views.field.maestro_completed_timestamp:
+  type: views_field
+  label: 'Completed'
+  mapping:
+    date_format:
+      type: string
+      label: 'Date format'
+
+views.field.maestro_process_completed_time:
+  type: views_field
+  label: 'Process completed'
+  mapping:
+    date_format:
+      type: string
+      label: 'Date format'
+
+views.field.maestro_process_initiator_user:
+  type: views_field
+  label: 'Initiator user'
+  mapping:
+    show_as_link:
+      type: boolean
+      label: 'Display link to user account'
+
+views.field.maestro_process_process_details:
+  type: views_field
+  label: 'Process details'
+  mapping:
+    views_attached:
+      type: string
+      label: 'Still used?'
+
+views.field.maestro_active_assignments:
+  type: views_field
+  label: 'Active assignments'
+  mapping:
+    show_how_assigned:
+      type: boolean
+      label: 'How assigned (fixed or variable)'
+    separator_text:
+      type: string
+      label: 'Separator text'
+
+views.field.maestro_user_who_completed:
+  type: views_field
+  label: 'User who completed task'
+  mapping:
+    user_display_style:
+      type: string
+      label: 'User display style'
+    link_to_user:
+      type: integer
+      label: 'Display as link to the user'
+
+views.field.maestro_entity_identifiers_edit_link:
+  type: views_field
+  label: 'User who completed task'
+  mapping:
+    edit_text:
+      type: string
+      label: 'Link text'
+
+views.field.maestro_entity_identifiers_label:
+  type: views_field
+  label: 'User who completed task'
+  mapping:
+    link_to_entity:
+      type: boolean
+      label: 'Provide a link to the entity'
+
+views.filter.maestro_process_template_filter:
+  type: views.filter.in_operator
+  label: 'Template filter'
+
+views.field.default_argument_skip_url:
+  type: boolean
+  label: 'Skip URL for default argument'
+
+views.field.maestro_active_handler:
+  type: views_field
+  label: 'Maestro Active Handler field'
+  mapping:
+    show_as_link:
+      type: boolean
+      label: 'Show as link'
+    link_text:
+      type: text
+      label: 'Link text'

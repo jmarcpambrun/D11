@@ -1,0 +1,125 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the burndown module.
+ */
+
+use Drupal\user\Entity\Role;
+use Drupal\user\RoleInterface;
+use Drupal\burndown\Entity\Task;
+
+/**
+ * Implements hook_install().
+ *
+ * Set up default module permissions.
+ */
+function burndown_install() {
+  $roles = Role::loadMultiple([
+    RoleInterface::AUTHENTICATED_ID,
+  ]);
+
+  $issueAccessPermissions = [
+    'access burndown',
+    'access burndown backlog',
+    'access burndown board',
+    'access completed board',
+    'add project entities',
+    'add sprint entities',
+    'add swimlane entities',
+    'add task entities',
+    'burndown close task',
+    'burndown comment on task',
+    'burndown open sprint',
+    'edit project entities',
+    'edit sprint entities',
+    'edit swimlane entities',
+    'edit task entities',
+    'modify sprint tasks',
+    'reorder burndown backlog',
+    'search content',
+    'send tasks to board',
+    'view all project revisions',
+    'view all sprint revisions',
+    'view all task revisions',
+    'view published project entities',
+    'view published sprint entities',
+    'view published swimlane entities',
+    'view published task entities',
+  ];
+
+  foreach ($issueAccessPermissions as $permission) {
+    $roles[RoleInterface::AUTHENTICATED_ID]->grantPermission($permission);
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Updates burndown config to include the task relationship opposites.
+ */
+function burndown_update_8001() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('burndown.config_settings');
+  $config->set('relationship_opposites', "Blocked by|Blocks\r\nBlocks|Blocked by\r\nRelated to|Related to\r\nFollowed up by|Follows up\r\nFollows up|Followed up by");
+  $config->save(TRUE);
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Repairs task bundles caused by the relationship type field.
+ */
+function burndown_update_8002(&$sandbox) {
+  if (!isset($sandbox['total'])) {
+    $task_ids = \Drupal::entityQuery('burndown_task')
+      ->accessCheck(FALSE)
+      ->execute();
+    $sandbox['total'] = count($task_ids);
+    $sandbox['current'] = 0;
+
+    if (empty($sandbox['total'])) {
+      $sandbox['#finished'] = 1;
+      return;
+    }
+  }
+
+  $tasks_per_batch = 25;
+  $task_ids = \Drupal::entityQuery('burndown_task')
+    ->range($sandbox['current'], $tasks_per_batch)
+    ->accessCheck(FALSE)
+    ->execute();
+  if (empty($task_ids)) {
+    $sandbox['#finished'] = 1;
+    return;
+  }
+
+  foreach ($task_ids as $id) {
+    $task = Task::load($id);
+
+    // Get the entity's bundle.
+    $task_type = $task->get('type')->getValue();
+    $task_type = $task_type[0]['target_id'];
+
+    // Validate the bundle (this will help repair and data
+    // damaged by the now-renamed relationship-type field.
+    $type = Task::getValidTaskType($task_type);
+
+    if ($task_type !== $type) {
+      $task->get('type')->setValue($type);
+      $task->save();
+    }
+
+    $sandbox['current']++;
+  }
+
+  \Drupal::messenger()
+    ->addMessage($sandbox['current'] . ' users processed.');
+
+  if ($sandbox['current'] >= $sandbox['total']) {
+    $sandbox['#finished'] = 1;
+  }
+  else {
+    $sandbox['#finished'] = ($sandbox['current'] / $sandbox['total']);
+  }
+}

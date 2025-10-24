@@ -1,0 +1,18 @@
+uuid: 29ac2b1c-7339-4e1c-b18e-a41e3e837c99
+langcode: fr
+status: true
+dependencies:
+  config:
+    - group.type.dpalicepeio_regsitered
+id: group.dpalicepeio_regsitered.label
+field_name: label
+entity_type: group
+bundle: dpalicepeio_regsitered
+label: Enregistres
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

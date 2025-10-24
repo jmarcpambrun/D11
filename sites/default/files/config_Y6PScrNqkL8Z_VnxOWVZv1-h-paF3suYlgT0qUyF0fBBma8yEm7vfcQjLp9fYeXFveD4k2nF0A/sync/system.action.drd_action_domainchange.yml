@@ -1,0 +1,14 @@
+uuid: 8e30bbf4-99d7-4808-b0d5-b06bed4061c5
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: hSCL7AACzGZAv-86GzeBuwowbwcEUd0F50jxDTTS25c
+id: drd_action_domainchange
+label: 'Change domain settings'
+type: drd_domain
+plugin: drd_action_domainchange
+configuration:
+  terms: {  }

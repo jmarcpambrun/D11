@@ -1,0 +1,6 @@
+keyvaluefield-icon:
+  css:
+    theme:
+      css/keyvaluefield.icon.theme.css: {}
+  dependencies:
+    - field_ui/drupal.field_ui.manage_fields

@@ -1,0 +1,25 @@
+uuid: d395403a-1ea9-4ff0-9c77-be5d465c4d5f
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_open
+    - node.type.gantt
+_core:
+  default_config_hash: QOxDHSXJ1h6Bd1hZxA9L4P44VWGLC8pcE-uP5cchvz8
+id: node.gantt.field_gantt_open
+field_name: field_gantt_open
+entity_type: node
+bundle: gantt
+label: Ouvert
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 1
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

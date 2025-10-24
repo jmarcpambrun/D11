@@ -1,0 +1,71 @@
+<div class="priority priority-{{ priority }}"></div>
+
+<div class="ticket_id">
+  <a href="{{ url('<front>') }}burndown/task/{{ id }}/edit"
+    class="use-ajax task_id{% if is_completed %} completed{% endif %}"
+    data-dialog-type="modal"
+    data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+    {{ ticket_id }}
+  </a>
+</div>
+
+<div class="ticket_title">{{ name }}</div>
+
+{% if tags is not empty %}
+  <div class="tags">
+  {% for tag in tags[0:2] %}
+  <div class="tag letter-{{ tag.first_letter }}">
+    {{ tag.name }}
+  </div>
+  {% endfor %}
+  </div>
+{% endif %}
+
+{% if assigned_to %}
+  <div class="assigned_to user_circle circle">
+    {% if assigned_to_image %}
+      <img src="{{ assigned_to_image }}" alt="Assigned to {{ assigned_to }}" class="circle" />
+    {% else %}
+      <span class="letter-{{ assigned_to_first_letter }} circle">{{ assigned_to_first_letter }}</span>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if estimate is not empty %}
+  <div class="estimate estimate-type-{{ estimate_type }} estimate-{{ estimate }} circle">{{ estimate }}</div>
+{% endif %}
+
+<div class="action_link">
+  <a href="{{ url('<front>') }}burndown/task/{{ id }}/edit?destination={{ url('<front>') }}burndown/{% if is_completed %}completed{% else %}backlog{% endif %}/{{ shortcode }}"
+    title="Edit task"
+    class="use-ajax task_id{% if is_completed %} completed{% endif %} edit_task"
+    data-dialog-type="modal"
+    data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+    Edit task
+  </a>
+</div>
+
+{% if backlog and not sprint %}
+<div class="action_link">
+  <a href="{{ url('<front>') }}burndown/api/backlog/send_to_board/{{ ticket_id }}"
+    title="Send task to the board"
+    class="send_to_board"
+    data-ticket-id="{{ ticket_id }}">
+      Send to Board
+  </a>
+</div>
+{% endif %}
+
+{% if not is_completed %}
+  {% if backlog or board %}
+  <div class="action_link">
+    <a href="{{ url('<front>') }}burndown/close_task/{{ ticket_id }}/backlog"
+      title="Close the task (this will open a modal form)"
+      class="use-ajax close_task"
+      data-dialog-type="modal"
+      data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+      Close Task
+    </a>
+  </div>
+  {% endif %}
+{% endif %}

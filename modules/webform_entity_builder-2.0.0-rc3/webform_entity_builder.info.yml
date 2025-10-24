@@ -1,0 +1,8 @@
+name: 'Webform Entity Builder'
+type: module
+description: 'Provides support code for the generation and management of entities through webforms.'
+core_version_requirement: ^9 || ^10
+package: 'Webform'
+dependencies:
+  - universal_file_utils:universal_file_utils
+  - event_scheduler:event_scheduler

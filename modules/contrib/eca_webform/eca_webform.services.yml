@@ -1,0 +1,15 @@
+services:
+
+  eca_webform.subscriber:
+    class: Drupal\eca_webform\EventSubscriber\EcaWebform
+    parent: eca.execution.subscriber_parent
+    tags:
+      - { name: event_subscriber }
+
+  Drupal\eca\Event\TriggerEvent: '@eca.trigger_event'
+  Drupal\eca_webform\Hook\WebformHooks:
+    class: Drupal\eca_webform\Hook\WebformHooks
+    autowire: true
+
+parameters:
+  eca_webform.skip_procedural_hook_scan: true

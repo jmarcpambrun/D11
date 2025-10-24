@@ -1,0 +1,5 @@
+services:
+  burndown.commands:
+    class: \Drupal\burndown\Commands\BurndownDrushCommands
+    tags:
+      - { name: drush.command }

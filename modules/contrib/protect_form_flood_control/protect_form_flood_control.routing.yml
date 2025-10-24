@@ -1,0 +1,9 @@
+protect_form_flood_control.settings:
+  path: '/admin/config/user-interface/protect-form-flood-control'
+  defaults:
+    _form: '\Drupal\protect_form_flood_control\Form\ProtectFormFloodControlSettings'
+    _title: 'Protect Form Flood Control settings'
+  requirements:
+    _permission: 'administer protect form flood control'
+  options:
+    _admin_route: TRUE

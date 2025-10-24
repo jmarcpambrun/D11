@@ -1,0 +1,9 @@
+/.idea/
+/css/maps
+/vendor/
+/web/
+/.editorconfig
+/.env
+/.gitattributes
+composer.spoons.json
+composer.spoons.lock

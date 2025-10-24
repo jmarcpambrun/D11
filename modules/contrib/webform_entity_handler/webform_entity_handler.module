@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Code for the Webform Entity Handler module.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function webform_entity_handler_theme() {
+  return [
+    'webform_handler_webform_entity_handler_summary' => [
+      'variables' => [
+        'settings' => NULL,
+        'handler' => [],
+      ],
+    ],
+  ];
+}

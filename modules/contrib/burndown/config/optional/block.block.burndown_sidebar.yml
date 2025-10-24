@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  theme:
+    - bartik
+id: burndown_sidebar
+theme: bartik
+region: sidebar_first
+weight: -5
+provider: null
+plugin: burndown_project_nav_block
+settings:
+  id: null
+  label: 'Burndown Sidebar'
+  provider: null
+  label_display: '0'
+visibility:
+  user_role:
+    id: user_role
+    roles:
+      authenticated: authenticated
+      administrator: administrator
+    negate: false
+    context_mapping:
+      user: '@user.current_user_context:current_user'

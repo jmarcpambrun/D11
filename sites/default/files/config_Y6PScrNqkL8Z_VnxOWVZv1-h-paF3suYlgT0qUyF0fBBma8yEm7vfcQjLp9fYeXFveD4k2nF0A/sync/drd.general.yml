@@ -1,0 +1,14 @@
+_core:
+  default_config_hash: W_POoYkhMK-cltbo_cvvohhThlUxLIRSCdNKZXBm7-A
+debug: 1
+lock_hacked: 0
+cleanup:
+  releases: 0
+  majors: 0
+  projects: 0
+remote_blocks: {  }
+local:
+  db:
+    user: dpalicepeio
+    pass: def502009eaf711560d15acfad0760899d7fda83b6ef6370a968112904ee02dcba7c1274a7d72b30df2b71f7314ddccabacc5447aba66da8ad7eef4dd33ed7b01da4a76cd84e87d5abd50fa2eaaa2a09384cb4552a3821e4e0a84763490ca39a
+encryption_profile: myencryptedkey_aes

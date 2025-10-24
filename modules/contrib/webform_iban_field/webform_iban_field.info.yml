@@ -1,0 +1,12 @@
+name: 'Webform IBAN Field'
+type: module
+description: 'Provides an IBAN Field to collect a valid IBAN number.'
+package: Webform
+core_version_requirement: ^8 || ^9 || ^10 || ^11
+dependencies:
+  - 'webform:webform'
+
+# Information added by Drupal.org packaging script on 2025-10-07
+version: '2.0.3'
+project: 'webform_iban_field'
+datestamp: 1759815633

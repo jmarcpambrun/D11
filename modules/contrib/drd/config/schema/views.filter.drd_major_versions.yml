@@ -1,0 +1,3 @@
+views.filter.drd_major_versions:
+  type: views.filter.many_to_one
+  label: 'DRD Major Versions'

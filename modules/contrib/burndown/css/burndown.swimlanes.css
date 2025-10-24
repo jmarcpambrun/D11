@@ -1,0 +1,18 @@
+#board {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.swimlane {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 25%;
+  min-height: 50vh;
+  height: 90%;
+  border: 1px dotted rgba(0,0,0,0.05);
+  border-radius: 12px;
+  padding: 0.5em;
+  margin: 0.5em 0.5em 0.5em 0;
+  background-color: rgba(0,0,0,0.01);
+}

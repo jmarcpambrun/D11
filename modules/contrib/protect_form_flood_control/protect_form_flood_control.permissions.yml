@@ -1,0 +1,8 @@
+administer protect form flood control:
+  title: 'Administer protect form flood control'
+  restrict access: true
+bypass protect form flood control:
+  title: 'Bypass protect form flood control'
+view protect form flood control form ids:
+  title: 'View form Ids for protect form flood control configuration'
+  restrict access: true

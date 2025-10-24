@@ -1,0 +1,14 @@
+{
+  "name": "drupal/universal_file_utils",
+  "type": "drupal-module",
+  "description": "Provides code for handling file accesses and downloads better.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/universal_file_utils",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/universal_file_utils",
+    "source": "http://cgit.drupalcode.org/universal_file_utils"
+  },
+  "require": { }
+}

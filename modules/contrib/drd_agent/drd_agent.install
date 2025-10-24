@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Install file for the DRD Agent module.
+ */
+
+use Drupal\drd_agent\Agent\Remote\Requirements;
+
+/**
+ * Implements hook_requirements().
+ */
+function drd_agent_requirements(string $phase): array {
+  $requirements = [];
+  if (!empty($_SERVER['HTTP_X_DRD_VERSION']) && $phase === 'runtime') {
+    $requirements = Requirements::create(Drupal::getContainer())->collect();
+  }
+  return $requirements;
+}
+
+/**
+ * Migrate agent settings from config to state.
+ */
+function drd_agent_update_8001(mixed &$sandbox): void {
+  $config = \Drupal::service('config.factory')->getEditable('drd_agent.settings');
+  $ott = $config->get('ott');
+  $authorised = $config->get('authorised') ?? [];
+  $debug_mode = $config->get('debug_mode');
+
+  $state = \Drupal::state();
+  $state->set('drd_agent.ott', $ott);
+  $state->set('drd_agent.authorised', $authorised);
+  $state->set('drd_agent.debug_mode', $debug_mode);
+
+  $config->delete();
+}
+
+/**
+ * Update stored crypt methods after 4.1.3 update.
+ */
+function drd_agent_update_8002(): void {
+  $state = \Drupal::state();
+  $authorized = $state->get('drd_agent.authorised');
+
+  // Check if old state values exists.
+  if ($authorized !== NULL) {
+    foreach ($authorized as $uuid => $settings) {
+      match($settings['crypt']) {
+        'OpenSSL' => $authorized[$uuid]['crypt'] = 'OpenSsl',
+        'TLS' => $authorized[$uuid]['crypt'] = 'Tls',
+        default => NULL,
+      };
+    }
+
+    $state->set('drd_agent.authorised', $authorized);
+  }
+}

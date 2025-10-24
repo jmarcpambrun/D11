@@ -1,0 +1,12 @@
+name: 'ECA Active Trail'
+type: module
+description: 'Provides an ECA action plugin to set the menu active trail.'
+core_version_requirement: ^10.3 || ^11
+package: other
+dependencies:
+  - eca:eca
+
+# Information added by Drupal.org packaging script on 2024-06-26
+version: '2.0.0'
+project: 'eca_site_building'
+datestamp: 1719397941

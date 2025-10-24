@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - quiz_multichoice
+id: multichoice
+label: 'Multiple choice response'

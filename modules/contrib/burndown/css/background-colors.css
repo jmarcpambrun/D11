@@ -1,0 +1,120 @@
+/**
+ * Provide background colors for default user thumbnails, based on the
+ * first letter of their username.
+ *
+ * @see: https://www.color-hex.com/color-names.html
+ */
+
+.letter-A,
+.letter-1 {
+  background-color: #ffefdb;
+}
+
+.letter-B,
+.letter-2 {
+  background-color: #ffd39b;
+}
+
+.letter-C,
+.letter-3 {
+  background-color: #eee8cd;
+}
+
+.letter-D,
+.letter-4 {
+  background-color: #bcee68;
+}
+
+.letter-E,
+.letter-5 {
+  background-color: #b4eeb4;
+}
+
+.letter-F,
+.letter-6 {
+  background-color: #fffaf0;
+}
+
+.letter-G,
+.letter-7 {
+  background-color: #ffc125;
+}
+
+.letter-H,
+.letter-8 {
+  background-color: #e0eee0;
+}
+
+.letter-I,
+.letter-9 {
+  background-color: #cd5555;
+}
+
+.letter-J,
+.letter-0 {
+  background-color: #eeeee0;
+}
+
+.letter-K {
+  background-color: #eee685;
+}
+
+.letter-L {
+  background-color: #fff0f5;
+}
+
+.letter-M {
+  background-color: #e066ff;
+}
+
+.letter-N {
+  background-color: #eecfa1;
+}
+
+.letter-O {
+  background-color: #b3ee3a;
+}
+
+.letter-P {
+  background-color: #9aff9a;
+}
+
+.letter-Q {
+  background-color: #ffefd5;
+}
+
+.letter-R {
+  background-color: #ffc1c1;
+}
+
+.letter-S {
+  background-color: #54ff9f;
+}
+
+.letter-T {
+  background-color: #eed2ee;
+}
+
+.letter-U {
+  background-color: #40e0d0;
+}
+
+.letter-V {
+  background-color: #ee82ee;
+}
+
+.letter-W {
+  background-color: #eed8ae;
+}
+
+.letter-X {
+  background-color: #e1f1f1;
+}
+
+.letter-Y {
+  background-color: #cdcd00;
+}
+
+.letter-Z {
+  background-color: #9acd32;
+}

@@ -1,0 +1,9 @@
+uuid: 75d68d73-9fb9-40bd-92b1-75e2b7c1d286
+langcode: fr
+status: true
+dependencies: {  }
+id: dsn
+label: DSN
+plugin: dsn
+configuration:
+  dsn: 'smtp://dpalicepeio:dpRoger_1928@SSL0.OVH.NET:465'

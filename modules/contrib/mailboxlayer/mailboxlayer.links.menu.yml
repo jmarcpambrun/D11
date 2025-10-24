@@ -1,0 +1,12 @@
+mailboxlayer.admin:
+  title: 'Mailboxlayer Configuration'
+  description: 'List of available Configuration'
+  parent: system.admin_config_system
+  route_name: mailboxlayer.main_config
+  weight: 100
+
+mailboxlayer.admin.mailboxlayer:
+  title: 'Mailboxlayer Custom Configuration'
+  description: 'Define the preferred Configuration for mailboxlayer'
+  parent: mailboxlayer.admin
+  route_name: mailboxlayer.admin_config

@@ -1,0 +1,59 @@
+label: 'DRD Core'
+display:
+  default:
+    display_title: Master
+    display_options:
+      title: Cores
+      fields:
+        drd_entity_actions:
+          label: Actions
+        id:
+          label: ID
+          separator: ', '
+        name:
+          label: Core
+          separator: ', '
+        name_1:
+          label: Host
+          separator: ', '
+        version:
+          label: Version
+          separator: ', '
+        status_agg:
+          label: Status
+        operations:
+          label: Operations
+      pager:
+        options:
+          tags:
+            next: 'Next ›'
+            previous: '‹ Previous'
+            first: '« First'
+            last: 'Last »'
+          expose:
+            items_per_page_label: 'Items per page'
+            items_per_page_options_all_label: '- All -'
+            offset_label: Offset
+      exposed_form:
+        options:
+          submit_button: Apply
+          reset_button_label: Reset
+          exposed_sorts_label: 'Sort by'
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      filters:
+        id:
+          expose:
+            label: Host
+        majorversion:
+          expose:
+            label: 'Major version'
+  entity_view_1:
+    display_title: EVA
+    display_options:
+      arguments:
+        host:
+          exception:
+            title: All
+  page_1:
+    display_title: Page

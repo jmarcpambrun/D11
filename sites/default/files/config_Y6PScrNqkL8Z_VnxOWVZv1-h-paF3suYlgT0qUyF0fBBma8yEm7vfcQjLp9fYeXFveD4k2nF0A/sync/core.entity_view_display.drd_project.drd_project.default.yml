@@ -1,0 +1,50 @@
+uuid: 77316e5b-ad8d-4b57-b1ff-7126a5586b72
+langcode: en
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: qJa1aqVEveXrsapkMB7nt91D2Apgl-JyhbgyXLUq7zI
+id: drd_project.drd_project.default
+targetEntityType: drd_project
+bundle: drd_project
+mode: default
+content:
+  label:
+    label: hidden
+    type: string
+    weight: -4
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    region: content
+  name:
+    label: inline
+    type: string
+    weight: -3
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    region: content
+  terms:
+    label: inline
+    weight: -1
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  type:
+    label: inline
+    weight: -2
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  search_api_excerpt: true

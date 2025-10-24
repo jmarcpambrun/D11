@@ -1,0 +1,80 @@
+<div
+  {{ attributes.addClass('burndown_task', 'list-group-item', 'row') }}
+  data-ticket-id="{{ data.ticket_id }}">
+
+  <div class="action_links">
+    <div class="action_link">
+	  <a href="{{ url('<front>') }}burndown/close_task/{{ data.ticket_id }}/board"
+	    title="Close the task. This will open a modal form."
+	    class="use-ajax close_task"
+	    data-dialog-type="modal"
+	    data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+	    Close Task
+	  </a>
+    </div>
+
+    <div class="action_link">
+      <a href="{{ url('<front>') }}burndown/task/{{ data.id }}/edit"
+        title="Edit task"
+        class="use-ajax task_id{% if data.is_completed %} completed{% endif %} edit_task"
+        data-dialog-type="modal"
+        data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+        Edit task
+      </a>
+    </div>
+
+    {% if not data.sprint %}
+    <div class="action_link">
+      <a href="{{ url('<front>') }}burndown/api/board/send_to_backlog/{{ data.ticket_id }}"
+        title="Send task to backlog"
+        class="send_to_backlog"
+        data-ticket-id="{{ data.ticket_id }}">
+        Send Task to Backlog
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="ticket_title row">{{ data.name }}</div>
+
+  <div class="tags">
+  {% if data.tags is not empty %}
+    {% for tag in data.tags[0:2] %}
+    <div class="tag letter-{{ tag.first_letter }}">
+      {{ tag.name }}
+    </div>
+    {% endfor %}
+  {% endif %}
+  </div>
+
+  <div class="card_footer">
+
+      <div class="priority priority-{{ data.priority }}"></div>
+    
+      {% if estimate is not empty %}
+        <div class="estimate estimate-type-{{ data.estimate_type }} estimate-{{ data.estimate }} circle">{{ data.estimate }}</div>
+      {% endif %}
+
+      <div class="ticket_id">
+        <a href="{{ url('<front>') }}burndown/task/{{ data.id }}/edit"
+          class="use-ajax task_id{% if data.is_completed %} completed{% endif %}"
+          data-dialog-type="modal"
+          data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+          {{ data.ticket_id }}
+        </a>
+      </div>
+
+      {% if data.assigned_to %}
+        <div class="assigned_to user_circle circle">
+          {% if data.assigned_to_image %}
+            <img src="{{ data.assigned_to_image }}" alt="Assigned to {{ data.assigned_to }}" class="circle" />
+          {% else %}
+            <span class="letter-{{ data.assigned_to_first_letter }} circle">{{ data.assigned_to_first_letter }}</span>
+          {% endif %}
+        </div>
+      {% endif %}
+
+  </div>
+
+</div>

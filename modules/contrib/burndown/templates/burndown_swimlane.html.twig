@@ -1,0 +1,22 @@
+{#
+/**
+ * @file burndown_swimlane.html.twig
+ * Default theme implementation to present Swimlane data.
+ *
+ * This template is used when viewing Swimlane pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_burndown_swimlane()
+ *
+ * @ingroup themeable
+ */
+#}
+<div{{ attributes.addClass('burndown_swimlane') }}>
+  {% if content %}
+    {{- content -}}
+  {% endif %}
+</div>

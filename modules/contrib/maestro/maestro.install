@@ -1,0 +1,405 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Maestro module.
+ */
+
+use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\views\Entity\View;
+use Symfony\Component\Yaml\Yaml;
+use Drupal\maestro\Engine\MaestroEngine;
+
+
+/**
+ * Implements hook_install().
+ */
+function maestro_install() {
+  // Set the default Maestro sitewide token. Users should set this to something else.
+  \Drupal::service('config.factory')
+    ->getEditable('maestro.settings')
+    ->set('maestro_sitewide_token', 'maestro-token')
+    ->save();
+
+  // Create a default token for the orchestrator on install.
+  $uuid = Crypt::randomBytesBase64();
+  \Drupal::service('config.factory')
+    ->getEditable('maestro.settings')
+    ->set('maestro_orchestrator_token', $uuid)
+    ->save();
+}
+
+
+/**
+ * Update 8001 - Create maestro_process_status entity.
+ */
+function maestro_update_8001() {
+  // Check if the table exists first.  If not, then create the entity.
+  if (\Drupal::service('database')->schema()->tableExists('maestro_process_status') === FALSE) {
+    \Drupal::entityTypeManager()->clearCachedDefinitions();
+    \Drupal::entityDefinitionUpdateManager()
+      ->installEntityType(\Drupal::entityTypeManager()->getDefinition('maestro_process_status'));
+    // Now add the required variables to each of the templates.  Existing in-production templates will not be affected.
+    $templates = MaestroEngine::getTemplates();
+    foreach ($templates as $template) {
+      $variables = $template->variables;
+      if (!array_key_exists('workflow_timeline_stage_count', $variables)) {
+        $template->variables['workflow_timeline_stage_count'] = ['variable_id' => 'workflow_timeline_stage_count', 'variable_value' => ''];
+      }
+      if (!array_key_exists('workflow_current_stage', $variables)) {
+        $template->variables['workflow_current_stage'] = ['variable_id' => 'workflow_current_stage', 'variable_value' => ''];
+      }
+      if (!array_key_exists('workflow_current_stage_message', $variables)) {
+        $template->variables['workflow_current_stage_message'] = ['variable_id' => 'workflow_current_stage_message', 'variable_value' => ''];
+      }
+      $template->save();
+    }
+
+  }
+  else {
+    return 'Process Status entity already exists';
+  }
+}
+
+/**
+ * Update 8002 - Add timestamp field to maestro_process_status entity.
+ */
+function maestro_update_8002() {
+
+  if (!\Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('completed', 'maestro_process_status')) {
+    $storage_definition = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Completed'))
+      ->setDescription(t('The time that the task associated to this status was completed.'))
+      ->setSettings([
+        'default_value' => '0',
+      ]);
+
+    \Drupal::entityDefinitionUpdateManager()
+      ->installFieldStorageDefinition('completed', 'maestro_process_status', 'maestro_process_status', $storage_definition);
+  }
+  else {
+    return 'Completed field already exists in maestro_process_status';
+  }
+}
+
+/**
+ * Update 8003 - Create maestro_entity_identifiers entity.
+ */
+function maestro_update_8003() {
+  // Check if the table exists first.  If not, then create the entity.
+  if (\Drupal::service('database')->schema()->tableExists('maestro_entity_identifiers') === FALSE) {
+    \Drupal::entityTypeManager()->clearCachedDefinitions();
+    \Drupal::entityDefinitionUpdateManager()
+      ->installEntityType(\Drupal::entityTypeManager()->getDefinition('maestro_entity_identifiers'));
+
+    // Now to update the new entity identifiers entity with any existing entity_identifiers data.
+    // we will assume that all of the identifiers have an entity type of 'node'.
+    $query = \Drupal::entityQuery('maestro_process_variables')
+      ->condition('variable_name', 'entity_identifiers')
+      ->accessCheck(FALSE);
+    $entityIDs = $query->execute();
+    foreach ($entityIDs as $entity_id) {
+      $record = \Drupal::entityTypeManager()->getStorage('maestro_process_variables')->load($entity_id);
+      if ($record) {
+        // Inject into the new maestro_entity_identifiers entity.
+        if ($record->variable_value->getString() != '') {
+          // Parse out the entity entries.
+          $arr = explode(',', $record->variable_value->getString());
+          foreach ($arr as $eids) {
+            $entry = explode(':', $eids);
+            $entityType = $entry[0];
+            $uniqueID = $entry[1];
+            $entityID = $entry[2];
+            $values = [
+              'process_id' => $record->process_id->getString(),
+              'unique_id' => $uniqueID,
+              'entity_type' => $entityType,
+              'entity_id' => $entityID,
+            // we're forcing it to node as this is all we've had implemented as of this writing.
+              'bundle' => 'node',
+            ];
+            $new_entry = \Drupal::entityTypeManager()->getStorage('maestro_entity_identifiers')->create($values);
+            $new_entry->save();
+          }
+        }
+      }
+    }
+  }
+  else {
+    return 'Entity Identifiers entity already exists';
+  }
+}
+
+/**
+ * Update 8004 - Create new view for Maestro Completed Tasks.
+ */
+function maestro_update_8004() {
+  $message = NULL;
+  if (\Drupal::moduleHandler()->moduleExists('views') && !View::load('maestro_completed_tasks')) {
+    $config_path = \Drupal::service('extension.list.module')->getPath('maestro') . '/config/install/views.view.maestro_completed_tasks.yml';
+    $data = Yaml::parse(file_get_contents($config_path));
+    \Drupal::configFactory()->getEditable('views.view.maestro_completed_tasks')->setData($data)->save(TRUE);
+    $message = 'The new Maestro Completed Tasks view has been created.';
+  }
+  else {
+    $message = 'Not creating the Maestro Completed Tasks view since it already exists.';
+  }
+  return $message;
+}
+
+/**
+ * Update 8005 - Create new view for Maestro Entity Identifiers "Items Attached to Workflow" and configure each template to use 2 views.
+ */
+function maestro_update_8005() {
+  $message = NULL;
+  if (\Drupal::moduleHandler()->moduleExists('views') && !View::load('maestro_entity_identifiers')) {
+    $config_path = \Drupal::service('extension.list.module')->getPath('maestro') . '/config/install/views.view.maestro_entity_identifiers.yml';
+    $data = Yaml::parse(file_get_contents($config_path));
+    \Drupal::configFactory()->getEditable('views.view.maestro_entity_identifiers')->setData($data)->save(TRUE);
+    $message = 'The new Maestro Entity Identifiers view for the Task Console has been created.';
+  }
+  else {
+    $message = 'Not creating the Maestro Entity Identifiers "Items Attached to Workflow" view since it already exists.';
+  }
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+  $templates = MaestroEngine::getTemplates();
+  foreach ($templates as $template) {
+    $template->views_attached = [
+      'maestro_completed_tasks' => [
+        'view_machine_name' => 'maestro_completed_tasks',
+        'view_weight' => -9,
+        'view_display' => 'default;Master',
+      ],
+      'maestro_entity_identifiers' => [
+        'view_machine_name' => 'maestro_entity_identifiers',
+        'view_weight' => -10,
+        'view_display' => 'taskconsole_display;Task Console Display',
+      ],
+    ];
+    $template->save();
+  }
+
+  return $message;
+}
+
+/**
+ * Update 8006 - Create token field on Queue
+ */
+function maestro_update_8006() {
+  if (!\Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('token', 'maestro_queue')) {
+    $storage_definition = BaseFieldDefinition::create('string')
+      ->setLabel(t('Token'))
+      ->setDescription(t('A generated unique token that represents this queue task.'))
+      ->setSettings([
+        'default_value' => '',
+        'max_length' => 100,
+        ])
+      ->setReadOnly(TRUE);
+
+    \Drupal::entityDefinitionUpdateManager()
+      ->installFieldStorageDefinition('token', 'maestro_queue', 'maestro_queue', $storage_definition);
+  }
+  else {
+    return t('Token field already exists in maestro_queue.');
+  }
+}
+
+/**
+ * Update 8007 - Create index on queue token field
+ */
+function maestro_update_8007() {
+  $indexsql = "CREATE INDEX imaestro_queue_token ON {maestro_queue} (token) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+  $database = \Drupal::database();
+  $database->query($indexsql);
+}
+
+/**
+ * Update 8008 - Clear cache to pick up changes to router.
+ */
+function maestro_update_8008() {
+  drupal_flush_all_caches();
+}
+
+/**
+ * Update 8009 - Shrink queue token field size. This will remove all tokens. Tokens will be recreated. Flush all caches to pick up change.
+ */
+function maestro_update_8009() {
+  $storage_key = 'maestro.maestro_queue.token';
+  $storage_schema = \Drupal::keyValue('entity.storage_schema.sql');
+  $field_schema = $storage_schema->get($storage_key);
+  $field_schema['maestro_queue']['fields']['token']['length'] = 100;
+  $storage_schema->set($storage_key, $field_schema);
+  
+  $database = \Drupal::database();
+  $database->query("ALTER TABLE maestro_queue MODIFY token VARCHAR(100)");
+
+  $config = \Drupal::configFactory()->getEditable('maestro.maestro_queue.token');
+  $config->set('settings.max_length', 100);
+  $config->save(TRUE);
+
+  $field_storage =  FieldStorageConfig::loadByName('maestro_queue', 'token');
+  if($field_storage) {
+    $field_storage->save();
+  }
+  
+  try {
+    $indexsql = "CREATE INDEX imaestro_queue_token ON {maestro_queue} (token) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+    $database = \Drupal::database();
+    $database->query($indexsql);
+  }
+  catch(\Exception $e) {
+    //Ignore the error as the index already exists
+  }
+  
+  drupal_flush_all_caches();
+}
+
+/**
+ * Update 10001 - Set tokens on all tasks which are uncompleted and not in a completed process.
+ * This will not update tasks which are already complete or tasks in processes which are complete.
+ */
+function maestro_update_10001() {
+  // Please note that this will only set the queue tokens for open tasks in an open process.
+  // If you are manually enabling processes and tasks which were completed previously, you are responsible for tokens.
+  $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
+  $query->condition('archived', '0')
+    ->accessCheck(FALSE)
+    ->condition('status', '0')
+    ->condition('token', NULL, 'IS')
+    ->condition('process_id.entity.complete', '0'); 
+  $entity_ids = $query->execute();
+  foreach ($entity_ids as $queueID) {
+    $uuid = Crypt::randomBytesBase64();
+    $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
+    $queueRecord->set('token', $uuid);
+    $queueRecord->save();
+  }
+
+  return t('Tokens set on open tasks. If you are changing the status of tasks which have already completed, you must set the token on those tasks.');
+}
+
+/**
+ * Update 10002 - Add description field to maestro_template entity.
+ */
+function maestro_update_10002() {
+  $all_templates = \Drupal::entityTypeManager()
+    ->getStorage('maestro_template')
+    ->loadMultiple();
+
+  foreach ($all_templates as $template) {
+    if (!$template->get('description') === NULL) {
+      $template->set('description', ''); // Default value for the new field.
+      $template->save();
+    }
+  }
+
+  // Clear cache to ensure schema updates are recognized.
+  drupal_flush_all_caches();
+
+  \Drupal::logger('maestro')->info('Added description field to maestro_template config entities.');
+}
+
+/**
+ * Update views configuration for Maestro Views Based Task Console.
+ * A new view will be created for the Maestro Views Based Task Console. The discovery cache will be cleared to pick up changes.
+ * The view is is installed but is left disabled and permissions set to administrators only. Feel free to change this as needed.
+ */
+function maestro_update_10003() {
+  $module_path = \Drupal::service('extension.list.module')->getPath('maestro');
+  $views_files = [
+    'views.view.maestro_views_based_task_console.yml',
+  ];
+  foreach($views_files as $view_file) {
+    $view_yml_file = $module_path . '/config/install/' . $view_file;
+
+    // Check if the file exists.
+    if (file_exists($view_yml_file)) { 
+      // Load the YAML content.
+      $yaml_content = file_get_contents($view_yml_file);
+
+      try {
+        $view_config = Yaml::parse($yaml_content);
+        if ($view_config) {
+          // Gen a UUID if it doesn't exist.
+          if (empty($view_config['uuid'])) {
+            $view_config['uuid'] = \Drupal::service('uuid')->generate();
+          }
+          // Save the configuration to the active storage.
+          \Drupal::configFactory()->getEditable('views.view.' . $view_config['id'])
+            ->setData($view_config)
+            ->save();
+        }
+        else {
+          \Drupal::logger('maestro')->error('Failed to parse YAML file: @file', ['@file' => $view_yml_file]);
+        }
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('maestro')->error('Error parsing YAML file: @file. Message: @message', [
+          '@file' => $view_yml_file,
+          '@message' => $e->getMessage(),
+        ]);
+      }
+    }
+    else {
+      \Drupal::logger('maestro')->error('YAML file not found: @file', ['@file' => $view_yml_file]);
+    }
+  }
+
+  // Now clear the discovery cache to let views pick up the new filter plugin
+  \Drupal::cache('discovery')->deleteAll();
+
+}
+
+/**
+ * Update views configuration for Maestro Views Based Task Console.
+ * Update the Maestro Completed Tasks view to add in a proper reference to the Process Entity
+ */
+function maestro_update_10004() {
+  $module_path = \Drupal::service('extension.list.module')->getPath('maestro');
+  $views_files = [
+    'views.view.maestro_completed_tasks.yml',
+  ];
+  foreach($views_files as $view_file) {
+    $view_yml_file = $module_path . '/config/install/' . $view_file;
+
+    // Check if the file exists.
+    // Check if the file exists.
+    if (file_exists($view_yml_file)) { 
+      // Load the YAML content.
+      $yaml_content = file_get_contents($view_yml_file);
+
+      try {
+        // Remove the old view
+        $old_view = \Drupal::configFactory()->getEditable('views.view.maestro_completed_tasks');
+        if ($old_view) {
+          $old_view->delete();
+        }
+        $view_config = Yaml::parse($yaml_content);
+        if ($view_config) {
+          // Gen a UUID if it doesn't exist.
+          if (empty($view_config['uuid'])) {
+            $view_config['uuid'] = \Drupal::service('uuid')->generate();
+          }
+          // Save the configuration to the active storage.
+          \Drupal::configFactory()->getEditable('views.view.' . $view_config['id'])
+            ->setData($view_config)
+            ->save();
+        }
+        else {
+          \Drupal::logger('maestro')->error('Failed to parse YAML file: @file', ['@file' => $view_yml_file]);
+        }
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('maestro')->error('Error parsing YAML file: @file. Message: @message', [
+          '@file' => $view_yml_file,
+          '@message' => $e->getMessage(),
+        ]);
+      }
+    }
+    else {
+      \Drupal::logger('maestro')->error('YAML file not found: @file', ['@file' => $view_yml_file]);
+    }
+  }
+}

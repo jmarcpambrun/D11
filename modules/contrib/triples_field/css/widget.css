@@ -1,0 +1,7 @@
+.triples-field-widget-inline {
+  display: flex;
+}
+
+.triples-field-widget-inline > div {
+  margin-right: 0.75em;
+}

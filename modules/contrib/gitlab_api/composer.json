@@ -1,0 +1,33 @@
+{
+  "name": "drupal/gitlab_api",
+  "type": "drupal-module",
+  "description": "Integrates your Drupal site into GitLab using the GitLab API.",
+  "keywords": [
+    "Drupal",
+    "GitLab",
+    "API"
+  ],
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/gitlab_api",
+  "authors": [
+    {
+      "name": "Jürgen Haas",
+      "homepage": "https://www.drupal.org/u/jurgenhaas"
+    }
+  ],
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/gitlab_api",
+    "source": "https://git.drupal.org/project/gitlab_api"
+  },
+  "require": {
+    "php": ">=8.1",
+    "zeichen32/gitlabapibundle": "^6.0",
+    "symfony/http-client": "^5.4 | ^6.2",
+    "nyholm/psr7": "^1.4"
+  },
+  "require-dev": {
+    "drupal/eca": "^2.0",
+    "drupal/webform": "^6.2",
+    "roave/security-advisories": "dev-latest"
+  }
+}

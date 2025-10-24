@@ -1,0 +1,19 @@
+uuid: a6c62301-0ee3-4de3-b9f9-dcb20b5f3835
+langcode: fr
+status: true
+dependencies:
+  module:
+    - menu_ui
+third_party_settings:
+  menu_ui:
+    available_menus: {  }
+    parent: ''
+_core:
+  default_config_hash: X-4kw_9pw9EzJy6e7JaGr1lf4mS-_vGt4vaKDb1SeSg
+name: Gantt
+type: gantt
+description: 'Task gantt'
+help: null
+new_revision: false
+preview_mode: 0
+display_submitted: false

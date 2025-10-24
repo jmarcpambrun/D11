@@ -1,0 +1,103 @@
+<?php
+
+/**
+ * @file
+ * Code for personal_notes module.
+ */
+
+use Drupal\Core\Render\Element;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_help().
+ */
+function personal_notes_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.personal_notes':
+      $output = '';
+      $variables = [
+        ':view_all' => Url::fromRoute('entity.personal_notes.collection')
+          ->toString(),
+        ':view_notes' => Url::fromRoute('view.user_personal_notes.page_1', [
+          'user' => Drupal::currentUser()->id(),
+        ])->toString(),
+      ];
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Personal notes consist of entities. The notes are specific to each authenticated user on the site and can be added and deleted.') . '</p>';
+      $output .= '<h3>' . t('Configuring Personal Notes') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Viewing Personal Notes') . '</dt>';
+      $output .= '<dd>' . t('You can view all personal notes by going to the page <a href=":view_all">View All Personal Notes</a>.', $variables) . '</dd>';
+      $output .= '<dd>' . t('You can view the personal notes of a user by going to the user\'s notes page at <a href=":view_notes">View Personal Notes</a>.', $variables) . '</dd>';
+      $output .= '<dt>' . t('Adding Personal Notes') . '</dt>';
+      $output .= '<dd>' . t('Permitted users can add Personal Notes by going to <a href="/admin/structure/personal_note/add">Add a Personal Note</a>.', $variables) . '</dd>';
+      $output .= '<dd>' . t('You can also add a note by clicking the Add Note button on the user\'s notes page. <a href=":view_notes">View Personal Notes</a>.', $variables) . '</dd>';
+      $output .= '</dl>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ *
+ * This stops the block from being cached.  Otherwise, the personal notes won't
+ * update in the display consistently.
+ */
+function personal_notes_preprocess_block(&$vars): void {
+  if ($vars['plugin_id'] == 'block_personal_notesblk') {
+    $vars['#cache']['max-age'] = 0;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function personal_notes_theme($existing, $type, $theme, $path): array {
+  return [
+    'block--personal_notes' => [
+      'variables' => [
+        'notes' => NULL,
+      ],
+    ],
+    'personal_note' => [
+      'render element' => 'elements',
+    ],
+  ];
+}
+
+/**
+ * Prepares variables for personal note templates.
+ *
+ * Default template: personal-note.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An array of elements to display in view mode.
+ *   - note: The personal note object.
+ *   - label: The title.
+ *   - url: Link to note.
+ *
+ * @see hook_entity_type_build()
+ * @see \Drupal\Core\Field\BaseFieldDefinition::setDisplayConfigurable()
+ */
+function template_preprocess_personal_note(&$variables) {
+
+  // Helpful $content variable for templates.
+  $variables['content'] = [];
+
+  /** @var \Drupal\personal_notes\Entity\PersonalNote $note */
+  $variables['personal_note'] = $variables['elements']['#personal_note'];
+
+  $note = $variables['personal_note'];
+
+  $variables['label'] = $note->label();
+  unset($variables['elements']['title']);
+
+  $variables['url'] = $note->toUrl()->toString();
+
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['content'][$key] = $variables['elements'][$key];
+  }
+}

@@ -1,0 +1,132 @@
+field.storage_settings.key_value:
+  type: mapping
+  mapping:
+    key_max_length:
+      type: integer
+      label: Key maximum length
+    key_is_ascii:
+      type: boolean
+    max_length:
+      type: integer
+      label: Max length
+    is_ascii:
+      type: boolean
+    case_sensitive:
+      type: boolean
+
+field.storage_settings.key_value_long:
+  type: mapping
+  mapping:
+    key_max_length:
+      type: integer
+      label: Key maximum length
+    key_is_ascii:
+      type: boolean
+
+field.field_settings.key_value:
+  type: mapping
+  mapping: {}
+
+field.field_settings.key_value_long:
+  type: field.field_settings.text_long
+  mapping:
+    default_format:
+      type: string
+      label: Default text format
+
+field.value.key_value:
+  type: mapping
+  label: 'Default value'
+  mapping:
+    value:
+      type: string
+      label: 'Value'
+    key:
+      type: string
+      label: 'Key'
+    description:
+      type: text
+      label: 'Value'
+
+field.value.key_value_long:
+  type: mapping
+  label: 'Default value'
+  mapping:
+    value:
+      type: string
+      label: 'Value'
+    key:
+      type: string
+      label: 'Key'
+    format:
+      type: string
+      label: 'Format'
+    description:
+      type: text
+      label: 'Value'
+
+field.widget.settings.key_value_textfield:
+  type: field.widget.settings.string_textfield
+  label: 'Key / Value (multiple rows)'
+  mapping:
+    key_label:
+      type: label
+      label: 'Key label'
+    value_label:
+      type: label
+      label: 'Value label'
+    description_label:
+      type: label
+      label: 'Description label'
+    description_rows:
+      type: integer
+      label: 'Description rows'
+    key_size:
+      type: integer
+      label: 'Size of key textfield'
+    key_placeholder:
+      type: string
+      label: 'Key placeholder'
+    description_enabled:
+      type: boolean
+      label: 'Description enabled'
+    description_placeholder:
+      type: string
+      label: 'Description placeholder'
+
+field.widget.settings.key_value_textarea:
+  type: field.widget.settings.string_textarea
+  label: 'Key / Value (multiple rows)'
+  mapping:
+    key_size:
+      type: integer
+      label: 'Size of key textfield'
+    key_label:
+      type: string
+      label: 'Label of field.'
+    key_placeholder:
+      type: string
+      label: 'Key placeholder'
+    value_label:
+      type: string
+      label: 'Value label'
+    description_enabled:
+      type: boolean
+      label: 'Description enabled'
+    description_label:
+      type: string
+      label: 'Description label'
+    description_rows:
+      type: integer
+      label: 'Row count of description'
+    description_placeholder:
+      type: string
+      label: 'Description placeholder'
+
+field.formatter.settings.key_value:
+  type: mapping
+  label: 'Key / Value'
+  mapping:
+    value_only:
+      type: boolean
+      label: 'Value only'

@@ -1,0 +1,7 @@
+<div class="assigned_to user_circle circle">
+  {% if assigned_to_image %}
+	<img src="{{ assigned_to_image }}" alt="Assigned to {{ assigned_to }}" class="circle" />
+  {% else %}
+	<span class="letter-{{ assigned_to_first_letter }} circle">{{ assigned_to_first_letter }}</span>
+  {% endif %}
+</div>

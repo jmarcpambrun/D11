@@ -1,0 +1,77 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: steve
+ * Date: 23/08/18
+ * Time: 14:03
+ */
+
+
+/**
+ * Implements hook_schema().
+ */
+function event_scheduler_schema(): array {
+  return [
+      'event_scheduler' => [
+          'description' => 'Holds the events that will be launched at a later time.',
+          'fields' => [
+              'id' => [
+                  'description' => 'The scheduled event unique id.',
+                  'type' => 'serial',
+                  'unsigned' => TRUE,
+                  'not null' => TRUE,
+              ],
+              'name' => [
+                  'description' => 'The name of the scheduled event.',
+                  'type' => 'varchar_ascii',
+                  'length' => 96,
+                  'not null' => TRUE,
+                  'default' => '',
+              ],
+              'class' => [
+                  'description' => 'The class of the scheduled event, used for deserializing.',
+                  'type' => 'varchar_ascii',
+                  'length' => 96,
+                  'not null' => TRUE,
+                  'default' => '',
+              ],
+              'tag' => [
+                  'description' => 'A client tag for the scheduled event to help identify what the scheduled event is related to.',
+                  'type' => 'varchar_ascii',
+                  'length' => 64,
+                  'not null' => TRUE,
+                  'default' => '',
+              ],
+              'event' => [
+                  'description' => 'The scheduled event in serialized form.',
+                  'type' => 'blob',
+                  'not null' => FALSE,
+                  'size' => 'big',
+              ],
+              'launch' => [
+                  'description' => 'The launch timestamp of the scheduled event.',
+                  'type' => 'int',
+                  'unsigned' => TRUE,
+                  'not null' => TRUE,
+              ],
+              'processed' => [
+                  'description' => 'Whether this scheduled event has been processed (but not yet deleted).',
+                  'type' => 'int',
+                  'size' => 'tiny',
+                  'unsigned' => TRUE,
+                  'not null' => TRUE,
+                  'default' => 0,
+              ],
+          ],
+          'primary key' => ['id'],
+          'indexes' => [
+              'name' => ['name'],
+              'class' => ['class'],
+              'tag' => ['tag'],
+              'classtag' => ['class', 'tag'],
+              'launch' => ['launch'],
+              'launched' => ['launch', 'processed'],
+          ],
+        ],
+      ];
+}

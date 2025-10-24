@@ -1,0 +1,261 @@
+burndown.admin_config_burndown:
+  path: '/admin/config/burndown'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Burndown'
+  requirements:
+    _permission: 'administer site configuration'
+
+burndown.burndown_settings:
+  path: '/admin/config/burndown/settings'
+  defaults:
+    _form: '\Drupal\burndown\Form\SettingsForm'
+    _title: 'Burndown Settings'
+  requirements:
+    _permission: 'administer site configuration'
+
+burndown.dashboard:
+  path: '/burndown'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Project Dashboard'
+  requirements:
+    _permission: 'access burndown'
+
+burndown.structure:
+  path: '/admin/structure/burndown'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Burndown'
+  requirements:
+    _permission: 'administer burndown'
+
+burndown.backlog:
+  path: '/burndown/backlog/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::getBacklog'
+    _title: 'Backlog'
+    shortcode: ''
+  requirements:
+    _permission: 'access burndown backlog'
+  options:
+    no_cache: 'TRUE'
+
+burndown.backlog_reorder:
+  path: '/burndown/api/backlog_reorder'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::reorderBacklog'
+  methods:  [POST]
+  requirements:
+    _permission: 'reorder burndown backlog'
+
+burndown.backlog_send_to_board:
+  path: '/burndown/api/backlog/send_to_board/{ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::sendToBoard'
+    ticket_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'send tasks to board'
+
+burndown.backlog_sprint_status:
+  path: '/burndown/api/backlog/sprint_status/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::sprintStatus'
+    shortcode: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'access burndown backlog'
+
+burndown.backlog_change_sprint:
+  path: '/burndown/api/change_sprint'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::changeSprint'
+  methods:  [POST]
+  requirements:
+    _permission: 'modify sprint tasks'
+
+burndown.backlog_open_sprint:
+  path: '/burndown/api/open_sprint'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BacklogController::openSprint'
+  methods:  [POST]
+  requirements:
+    _permission: 'burndown open sprint'
+
+burndown.board:
+  path: '/burndown/board/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BoardController::getBoard'
+    _title: 'Board'
+    shortcode: ''
+  requirements:
+    _permission: 'access burndown board'
+  options:
+    no_cache: 'TRUE'
+
+burndown.board_change_swimlane:
+  path: '/burndown/api/change_swimlane'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BoardController::changeSwimlane'
+  methods:  [POST]
+  requirements:
+    _permission: 'access burndown board'
+
+burndown.board_reorder:
+  path: '/burndown/api/board_reorder'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BoardController::reorderBoard'
+  methods:  [POST]
+  requirements:
+    _permission: 'access burndown board'
+
+burndown.board_send_to_backlog:
+  path: '/burndown/api/board/send_to_backlog/{ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\BoardController::sendToBacklog'
+    ticket_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'access burndown backlog'
+
+burndown.completed:
+  path: '/burndown/completed/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\CompletedController::getCompleted'
+    _title: 'Completed Tasks'
+    shortcode: ''
+  requirements:
+    _permission: 'access completed board'
+  options:
+    no_cache: 'TRUE'
+
+burndown.close_task:
+  path: '/burndown/close_task/{ticket_id}/{board}'
+  defaults:
+    _form: '\Drupal\burndown\Form\TaskCloseForm'
+    _title: 'Close Task'
+    ticket_id: ''
+    board: 'board'
+  requirements:
+    _permission: 'burndown close task'
+
+burndown.reopen_task:
+  path: '/burndown/reopen_task/{ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::reopenTask'
+    _title: 'Task Log'
+  requirements:
+    _permission: 'burndown close task'
+
+burndown.get_task_log:
+  path: '/burndown/api/task_log/{ticket_id}/{type}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::getTaskLog'
+    _title: 'Task Log'
+    ticket_id: ''
+    type: 'all'
+  requirements:
+    _permission: 'access burndown'
+
+burndown.task_add_comment:
+  path: '/burndown/api/task/add_comment'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addComment'
+  methods:  [POST]
+  requirements:
+    _permission: 'burndown comment on task'
+
+burndown.task_add_work:
+  path: '/burndown/api/task/add_work'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addWork'
+  methods:  [POST]
+  requirements:
+    _permission: 'burndown comment on task'
+
+burndown.task_add_to_watchlist:
+  path: '/burndown/api/task/add_to_watchlist/{ticket_id}/{user_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addToWatchlist'
+    ticket_id: ''
+    user_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'edit task entities'
+
+burndown.task_remove_from_watchlist:
+  path: '/burndown/api/task/remove_from_watchlist/{ticket_id}/{user_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::removeFromWatchlist'
+    ticket_id: ''
+    user_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'edit task entities'
+
+burndown.task_get_relationships:
+  path: '/burndown/api/task/get_relationships/{ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::getRelationships'
+    ticket_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'edit task entities'
+  options:
+    no_cache: 'TRUE'
+
+burndown.task_add_relationship:
+  path: '/burndown/api/task/add_relationship'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addRelationship'
+  methods:  [POST]
+  requirements:
+    _permission: 'edit task entities'
+
+burndown.task_remove_relationship:
+  path: '/burndown/api/task/remove_relationship/{from_ticket_id}/{to_ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::removeRelationship'
+    from_ticket_id: ''
+    to_ticket_id: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'edit task entities'
+    
+burndown.task_add_multi_bundle:
+  path: '/burndown/task_add_multi_bundle/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addBundleSelect'
+    shortcode: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'add task entities'
+
+burndown.close_sprint:
+  path: '/burndown/close_sprint/{sprint_id}'
+  defaults:
+    _form: '\Drupal\burndown\Form\SprintCloseForm'
+    _title: 'Close Sprint'
+    sprint_id: ''
+  requirements:
+    _permission: 'burndown open sprint'
+
+burndown.project_swimlanes:
+  path: '/burndown/reorder_swimlanes/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\SwimlaneController::getSwimlanes'
+    _title: 'Reorder Swimlanes'
+    shortcode: ''
+  requirements:
+    _permission: 'administer burndown'
+  options:
+    no_cache: 'TRUE'
+
+burndown.reorder_project_swimlanes:
+  path: '/burndown/api/swimlane_reorder'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\SwimlaneController::reorderBoard'
+  methods:  [POST]
+  requirements:
+    _permission: 'administer burndown'

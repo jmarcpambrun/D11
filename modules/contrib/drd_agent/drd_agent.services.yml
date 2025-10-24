@@ -1,0 +1,7 @@
+services:
+  drd_agent.setup:
+    class: Drupal\drd_agent\Setup
+    arguments: ['@state', '@datetime.time', '@request_stack']
+  plugin.manager.drd_pi_auth:
+    class: Drupal\drd_agent\DrdPiAuthManager
+    parent: default_plugin_manager

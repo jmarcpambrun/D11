@@ -1,0 +1,5 @@
+entity.personal_notes.collection:
+  title: "Personal Notes"
+  route_name: entity.personal_notes.collection
+  description: "List Personal Notes"
+  parent: system.admin_structure

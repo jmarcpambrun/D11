@@ -1,0 +1,14 @@
+name: Webform Entity Handler
+description: Create or update an entity with the webform submission values.
+package: Webform
+
+core_version_requirement: ^10.1 || ^11
+type: module
+
+dependencies:
+  - webform:webform
+
+# Information added by Drupal.org packaging script on 2025-05-13
+version: '2.0.4'
+project: 'webform_entity_handler'
+datestamp: 1747130499

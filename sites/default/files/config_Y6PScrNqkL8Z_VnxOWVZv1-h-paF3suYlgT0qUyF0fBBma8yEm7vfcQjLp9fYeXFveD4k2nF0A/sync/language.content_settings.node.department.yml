@@ -1,0 +1,11 @@
+uuid: 8d1c6622-1d23-4ae9-9366-507605e9282a
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.department
+id: node.department
+target_entity_type_id: node
+target_bundle: department
+default_langcode: site_default
+language_alterable: false

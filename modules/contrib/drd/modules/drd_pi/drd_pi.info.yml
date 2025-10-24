@@ -1,0 +1,13 @@
+name: DRD Platform Integration
+type: module
+description: An abstract module that provides services for other modules to integrate with hosting platforms
+package: DRD
+dependencies:
+  - drd:drd
+core_version_requirement: ^10 || ^11
+# project: drd
+
+# Information added by Drupal.org packaging script on 2025-03-07
+version: '4.1.7'
+project: 'drd'
+datestamp: 1741339424

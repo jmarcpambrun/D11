@@ -1,0 +1,179 @@
+uuid: 0e144dcc-c587-4737-91c0-e4e248152c62
+langcode: fr
+status: true
+dependencies:
+  config:
+    - burndown.burndown_task_type.task
+    - core.entity_view_mode.burndown_task.full
+  module:
+    - image
+    - options
+    - text
+    - user
+_core:
+  default_config_hash: 4JIcClXwcZYhiuXlRLElsZ8oe3AJgPWKIjrqt636jx0
+id: burndown_task.task.full
+targetEntityType: burndown_task
+bundle: task
+mode: full
+content:
+  assigned_to:
+    type: author
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  changed:
+    type: timestamp
+    label: inline
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+      tooltip:
+        date_format: ''
+        custom_date_format: ''
+      time_diff:
+        enabled: false
+        future_format: '@interval hence'
+        past_format: '@interval ago'
+        granularity: 2
+        refresh: 60
+    third_party_settings: {  }
+    weight: 8
+    region: content
+  content_moderation_control:
+    weight: -20
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+  created:
+    type: timestamp
+    label: inline
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+      tooltip:
+        date_format: ''
+        custom_date_format: ''
+      time_diff:
+        enabled: false
+        future_format: '@interval hence'
+        past_format: '@interval ago'
+        granularity: 2
+        refresh: 60
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  description:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 9
+    region: content
+  estimate:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 12
+    region: content
+  images:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 25
+    region: content
+  name:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  priority:
+    type: list_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: -5
+    region: content
+  project:
+    type: entity_reference_label
+    label: inline
+    settings:
+      link: false
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  relationships:
+    type: entity_reference_entity_view
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+    weight: 28
+    region: content
+  sprint:
+    type: entity_reference_label
+    label: inline
+    settings:
+      link: false
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  swimlane:
+    type: entity_reference_label
+    label: inline
+    settings:
+      link: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  tags:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 14
+    region: content
+  ticket_id:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  user_id:
+    type: author
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    weight: 6
+    region: content
+hidden:
+  backlog_sort: true
+  board_sort: true
+  completed: true
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  link: true
+  log: true
+  resolution: true
+  search_api_excerpt: true
+  watch_list: true

@@ -1,0 +1,22 @@
+uuid: 009911de-690e-4be5-ae6b-9e5cddda9061
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.qure_inputs
+id: node.qure_inputs.promote
+field_name: promote
+entity_type: node
+bundle: qure_inputs
+label: 'Promoted to front page'
+description: ''
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

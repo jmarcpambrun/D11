@@ -1,0 +1,14 @@
+uuid: d9bc8514-fcbc-453e-9981-bc8272e172d6
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: mi8CXfRE_1XDg06vWDy7CPmikUBbORb3ViiQLpjE0O8
+id: drd_action_job_scheduler
+label: 'Rebuild job schedulers'
+type: drd_domain
+plugin: drd_action_job_scheduler
+configuration:
+  terms: {  }

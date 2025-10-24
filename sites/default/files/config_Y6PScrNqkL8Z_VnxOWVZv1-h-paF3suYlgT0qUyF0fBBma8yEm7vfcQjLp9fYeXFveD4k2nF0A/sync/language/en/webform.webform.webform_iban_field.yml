@@ -1,0 +1,10 @@
+title: 'webform_iban_field: Webform Element to collect an IBAN number'
+description: 'A webform element that collects and validates an IBAN number.'
+elements: |
+  webform_iban_field:
+    '#type': webform_iban_field
+    '#title': 'Webform IBAN field'
+  webform_iban_field_multiple:
+    '#type': webform_iban_field
+    '#title': 'Webform IBAN field Multiple'
+    '#multiple': true

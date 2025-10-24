@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.content
+    - node.type.mail_box_content
+  module:
+    - text
+id: node.mail_box_content.content
+field_name: content
+entity_type: node
+bundle: mail_box_content
+label: Body
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: 0
+  required_summary: false
+  allowed_formats: {  }
+field_type: text_with_summary

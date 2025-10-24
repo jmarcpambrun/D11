@@ -1,0 +1,81 @@
+.color-Almond { color: white; background-color: #EFDECD !important; }
+.color-Amaranth { color: white; background-color: #E52B50 !important; }
+.color-Amber { color: white; background-color: #FFBF00 !important; }
+.color-Amethyst { color: white; background-color: #9966CC !important; }
+.color-Apricot { color: white; background-color: #FBCEB1 !important; }
+.color-Aqua { color: white; background-color: #00FFFF !important; }
+.color-Aquamarine { color: white; background-color: #7FFFD4 !important; }
+.color-Azure { color: white; background-color: #007FFF !important; }
+.color-Beige { color: black; background-color: #F5F5DC !important; }
+.color-Black { color: white; background-color: #000000 !important; }
+.color-Blue { color: white; background-color: #0000FF !important; }
+.color-Blush { color: white; background-color: #DE5D83 !important; }
+.color-Bronze { color: white; background-color: #CD7F32 !important; }
+.color-Brown { color: white; background-color: #A52A2A !important; }
+.color-Burgundy { color: white; background-color: #800020 !important; }
+.color-Carmine { color: white; background-color: #960018 !important; }
+.color-Cerise { color: white; background-color: #DE3163 !important; }
+.color-Cerulean { color: white; background-color: #007BA7 !important; }
+.color-Chartreuse { color: white; background-color: #7FFF00 !important; }
+.color-Cherry { color: white; background-color: #DE3163 !important; }
+.color-Chestnut { color: white; background-color: #954535 !important; }
+.color-Coral { color: white; background-color: #FF7F50 !important; }
+.color-Crimson { color: white; background-color: #DC143C !important; }
+.color-Cyan { color: white; background-color: #00FFFF !important; }
+.color-Denim { color: white; background-color: #1560BD !important; }
+.color-Emerald { color: white; background-color: #50C878 !important; }
+.color-Fuchsia { color: white; background-color: #FF00FF !important; }
+.color-Gold { color: white; background-color: #FFD700 !important; }
+.color-Gray { color: white; background-color: #808080 !important; }
+.color-Green { color: white; background-color: #008000 !important; }
+.color-Harlequin { color: white; background-color: #3FFF00 !important; }
+.color-Indigo { color: white; background-color: #4B0082 !important; }
+.color-Ivory { color: white; background-color: #FFFFF0 !important; }
+.color-Jade { color: white; background-color: #00A86B !important; }
+.color-Jasmine { color: white; background-color: #F8DE7E !important; }
+.color-Khaki { color: white; background-color: #C3B091 !important; }
+.color-Lavender { color: white; background-color: #E6E6FA !important; }
+.color-Lemon { color: white; background-color: #FFF700 !important; }
+.color-Lilac { color: white; background-color: #C8A2C8 !important; }
+.color-Lime { color: white; background-color: #00FF00 !important; }
+.color-Magenta { color: white; background-color: #FF00FF !important; }
+.color-Maroon { color: white; background-color: #800000 !important; }
+.color-Mauve { color: white; background-color: #E0B0FF !important; }
+.color-Mint { color: white; background-color: #98FF98 !important; }
+.color-Mustard { color: white; background-color: #FFDB58 !important; }
+.color-Navy { color: white; background-color: #000080 !important; }
+.color-Ochre { color: white; background-color: #CC7722 !important; }
+.color-Olive { color: white; background-color: #808000 !important; }
+.color-Orange { color: white; background-color: #FFA500 !important; }
+.color-Orchid { color: white; background-color: #DA70D6 !important; }
+.color-Peach { color: white; background-color: #FFE5B4 !important; }
+.color-Pear { color: white; background-color: #D1E231 !important; }
+.color-Periwinkle { color: black; background-color: #CCCCFF !important; }
+.color-Pink { color: white; background-color: #FFC0CB !important; }
+.color-Plum { color: white; background-color: #DDA0DD !important; }
+.color-Prussian-Blue { color: white; background-color: #003153 !important; }
+.color-Purple { color: white; background-color: #800080 !important; }
+.color-Red { color: white; background-color: #FF0000 !important; }
+.color-Rose { color: white; background-color: #FF007F !important; }
+.color-Ruby { color: white; background-color: #E0115F !important; }
+.color-Russet { color: white; background-color: #80461B !important; }
+.color-Saffron { color: white; background-color: #F4C430 !important; }
+.color-Salmon { color: white; background-color: #FA8072 !important; }
+.color-Sapphire { color: white; background-color: #0F52BA !important; }
+.color-Scarlet { color: white; background-color: #FF2400 !important; }
+.color-Silver { color: white; background-color: #C0C0C0 !important; }
+.color-Teal { color: white; background-color: #008080 !important; }
+.color-Turquoise { color: white; background-color: #40E0D0 !important; }
+.color-Ultramarine { color: white; background-color: #3F00FF !important; }
+.color-Vermilion { color: white; background-color: #E34234 !important; }
+.color-Violet { color: white; background-color: #8F00FF !important; }
+.color-White { color: black; background-color: #FFFFFF !important; }
+.color-Yellow { color: white; background-color: #FFFF00 !important; }
+.color-Quick-Silver{color: black; background-color: #A6A6A6 !important; }
+.color-Zambezi{color: white; background-color: #685558 !important;}
+
+.path-mailbox-management{
+  .page-title{
+    display: none;
+  }
+}

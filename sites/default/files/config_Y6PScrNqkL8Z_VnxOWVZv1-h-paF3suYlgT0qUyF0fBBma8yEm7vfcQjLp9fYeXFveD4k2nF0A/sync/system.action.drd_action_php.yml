@@ -1,0 +1,14 @@
+uuid: 799fc820-72b4-4932-a0fb-0ec3ee88b34f
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: AtQzShyREuZ2wASStzp3W92UDS9d8K3xB7CLPXiUV1U
+id: drd_action_php
+label: 'Execute arbitrary PHP code'
+type: drd_domain
+plugin: drd_action_php
+configuration:
+  terms: {  }

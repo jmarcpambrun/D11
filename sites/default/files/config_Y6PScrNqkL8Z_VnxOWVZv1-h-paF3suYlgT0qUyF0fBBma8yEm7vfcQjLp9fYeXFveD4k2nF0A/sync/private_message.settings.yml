@@ -1,0 +1,17 @@
+_core:
+  default_config_hash: snqBxBQGNsaDOan-G1cZB9s6ttD3TeMgT_e0GqRODB8
+langcode: fr
+enable_notifications: true
+notify_by_default: true
+notify_when_using: 'no'
+number_of_seconds_considered_away: 120
+hide_recipient_field_when_prefilled: false
+create_message_label: 'Create Private Message'
+save_message_label: Send
+ban_mode: passive
+ban_message: 'User is unable to receive your message'
+ban_label: Block
+unban_label: Débloquer
+autofocus_enable: true
+keys_send: 'Enter, 13'
+remove_css: false

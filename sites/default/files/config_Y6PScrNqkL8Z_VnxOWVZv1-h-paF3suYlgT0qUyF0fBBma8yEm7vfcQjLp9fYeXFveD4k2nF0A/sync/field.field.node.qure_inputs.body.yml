@@ -1,0 +1,24 @@
+uuid: 4441ebf2-4884-4185-acbd-1ae3088838c4
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - node.type.qure_inputs
+  module:
+    - text
+id: node.qure_inputs.body
+field_name: body
+entity_type: node
+bundle: qure_inputs
+label: Body
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+  allowed_formats: {  }
+field_type: text_with_summary

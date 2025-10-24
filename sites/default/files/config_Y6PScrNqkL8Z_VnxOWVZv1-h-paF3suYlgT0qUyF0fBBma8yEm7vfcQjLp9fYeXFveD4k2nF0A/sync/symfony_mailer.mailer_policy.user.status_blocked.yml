@@ -1,0 +1,16 @@
+uuid: fa57c1d4-0369-4ff9-bbcb-df634df0c8f3
+langcode: fr
+status: true
+dependencies:
+  module:
+    - user
+_core:
+  default_config_hash: 3yUtSQjcpqSnAVeK6Y20OcEB1yK_wreyaIw9L2T8B0E
+id: user.status_blocked
+configuration:
+  email_subject:
+    value: 'Account details for [user:display-name] at [site:name] (blocked)'
+  email_body:
+    content:
+      value: "[user:display-name],\r\n\r\nVotre compte sur [site:name] a été bloqué.\r\n\r\n-- L'équipe [site:name]"
+      format: plain_text

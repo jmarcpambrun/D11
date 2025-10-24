@@ -1,0 +1,11 @@
+name: 'Computed Field'
+type: module
+description: 'Provides a UI to add computed fields to entities.'
+core_version_requirement: '^10.2 || ^11'
+dependencies:
+  - drupal:field
+
+# Information added by Drupal.org packaging script on 2025-07-11
+version: '4.0.0-beta3'
+project: 'computed_field'
+datestamp: 1752249667

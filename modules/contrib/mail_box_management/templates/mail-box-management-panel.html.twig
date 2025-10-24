@@ -1,0 +1,455 @@
+<div class="container-mail-box" id="mail-box-container-full">
+  <div class="sidebar">
+    <div class="sidebar-body">
+      <label class="sidebar-label">Mailboxes</label>
+      <nav class="nav flex-column mb-5">
+        {% if content.mailbox.imap.mailboxes %}
+          {% for key, box in content.mailbox.imap.mailboxes %}
+            {% if content.mailbox.imap.active_box[key] %}
+           <a href="#" box-path="{{ box }}" data-name="{{ key }}" class="nav-link active mailboxes">
+             <i class="ri-inbox-line"></i>
+             <span>{{ key }}</span>
+             <small>{{ content.mailbox.imap.mailboxes_statuses[key].messages }}</small>
+           </a>
+            {% else %}
+              <a href="#" box-path="{{ box }}" data-name="{{ key }}" class="nav-link mailboxes">
+                <i class="{{ box_icon(key) }}"></i>
+                <span>{{ key }}</span>
+                <small>{{ content.mailbox.imap.mailboxes_statuses[key].messages }}</small>
+              </a>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        <a href="" class="nav-link create-mailbox" data-boxtype="main"><i class="ri-folder-4-line"></i> <span>Create Mailbox</span></a>
+      </nav>
+
+      <label class="sidebar-label">Labels</label>
+      <nav class="nav flex-column mb-5">
+        {% for key, box in content.mailbox.imap.labels %}
+        <a href="" class="nav-link mailboxes" box-path="{{ box }}" data-name="{{ key }}">
+          <i class="ri-price-tag-line"></i>
+          <span>{{ key }}</span>
+          <small>{{ content.mailbox.imap.mailboxes_statuses[key].messages }}</small>
+        </a>
+        {% endfor %}
+        <a href="" class="nav-link create-mailbox" data-boxtype="label"><i class="ri-folder-4-line"></i><span>Create Label</span></a>
+      </nav>
+
+      <label class="sidebar-label">Background tasks</label>
+      <nav class="nav flex-column mb-5" id="background-tasks-triggers">
+        <a href="" class="nav-link" data-action="refresh-content"><i class="ri-play-circle-line"></i><span>Reload Content</span></a>
+        <a href="" class="nav-link" data-action="refresh-mails"><i class="ri-play-circle-line"></i><span>Reload Mailboxes</span></a>
+      </nav>
+      <label class="sidebar-label">Ongoing tasks</label>
+      <nav class="nav flex-column mb-5" id="ongoing-background-tasks">
+      </nav>
+    </div><!-- sidebar-body -->
+  </div><!-- sidebar -->
+
+  <div class="mailbox">
+    <div class="mailbox-header">
+      <a href="#" class="mailbox-menu"><i class="ri-menu-2-fill"></i></a>
+      <div class="mailbox-search">
+        <i class="ri-search-line"></i>
+        <input id="search-box" type="search" class="form-control" placeholder="Search mail">
+      </div><!-- mailbox-search -->
+      <a href="#" class="mail-avatar"><span>{{ content.mailbox.connection.title|slice(0,1)|upper }}</span></a>
+    </div><!-- mailbox-header -->
+
+    <div class="mailbox-option">
+      <div class="mailbox-select dropdown">
+        <a href="" class="dropdown-check">
+          <i class="ri-checkbox-blank-line"></i>
+          <i class="ri-checkbox-fill"></i>
+          <i class="ri-checkbox-indeterminate-fill"></i>
+        </a>
+        <a href="" class="dropdown-link" data-bs-toggle="dropdown"><i class="ri-arrow-down-s-line"></i></a>
+        <div class="dropdown-menu">
+          <a href="" class="dropdown-item all"><i class="ri-check-fill"></i> All</a>
+          <a href="" class="dropdown-item none active"><i class="ri-check-line"></i> None</a>
+          <a href="" class="dropdown-item read"><i class="ri-check-line"></i> Read</a>
+          <a href="" class="dropdown-item unread"><i class="ri-check-line"></i> Unread</a>
+          <a href="" class="dropdown-item starred"><i class="ri-check-line"></i> Starred</a>
+          <a href="" class="dropdown-item custom"><i class="ri-check-line"></i> Custom</a>
+        </div><!-- dropdown-menu -->
+      </div><!-- mailbox-select -->
+
+      {% if(content.mailbox.imap.range) %}
+        {% for range_key, range_data in content.mailbox.imap.range %}
+          {% if content.mailbox.imap.active_box[range_key] %}
+            <div class="ms-auto d-flex align-items-center navigation-mailbox " data-pager-name="{{ range_key }}">
+              <span>1-20 of {{ range_data.pages }}</span>
+              <a href="" class="pager prev"><i class="ri-arrow-left-s-line"></i></a>
+              <a href="" class="pager next"><i class="ri-arrow-right-s-line"></i></a>
+              <div data-pager="{{ range_key }}" class="d-none">
+                {{ json(range_data) }}
+              </div>
+            </div>
+          {% else %}
+            <div class="ms-auto d-flex align-items-center d-none navigation-mailbox " data-pager-name="{{ range_key }}">
+              <span>1-20 of {{ range_data.pages }}</span>
+              <a href="" class="pager prev"><i class="ri-arrow-left-s-line"></i></a>
+              <a href="" class="pager next"><i class="ri-arrow-right-s-line"></i></a>
+              <div data-pager="{{ range_key }}" class="d-none">
+                {{ json(range_data) }}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </div><!-- mailbox-option -->
+    {% if content.mailbox.imap.headers_content %}
+
+      {% for box_key, content_box in content.mailbox.imap.headers_content  %}
+        {% if content.mailbox.imap.active_box[box_key] %}
+
+          <ul id="mailGroup" data-name="{{ box_key }}" class="mail-group mailboxes-headers">
+            {% for header in content_box %}
+              {% if   is_unseen(header.Unseen) or is_recent(header.Recent) %}
+                <li class="mail-item" data-message="{{ header.Msgno }}">
+                  <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                  <div class="mail-item-body">
+                    <div class="d-flex align-items-center">
+                      <span class="mail-sender">{{ header.from_name }}</span>
+                      <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                      {% if  is_flagged(header.Flagged) %}
+                        <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% else %}
+                        <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% endif %}
+                    </div>
+                    <h6 class="mail-subject">{{ header.Subject }}</h6>
+                    <p class="mail-text">{{ header.from_mail }}</p>
+                  </div><!-- mail-item-body -->
+                </li>
+              {% else %}
+                <li class="mail-item unread" data-message="{{ header.Msgno }}">
+                  <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                  <div class="mail-item-body">
+                    <div class="d-flex align-items-center">
+                      <span class="mail-sender">{{ header.from_name }}</span>
+                      <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                      {% if is_flagged(header.Flagged) %}
+                        <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% else %}
+                        <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% endif %}
+                    </div>
+                    <h6 class="mail-subject">{{ header.Subject }}</h6>
+                    <p class="mail-text">{{ header.from_mail }}</p>
+                  </div><!-- mail-item-body -->
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ul><!-- mail-group -->
+
+        {% else %}
+          <ul data-name="{{ box_key }}" class="mail-group mailboxes-headers d-none">
+           {% if content_box %}
+             {% for header in content_box %}
+
+               {% if  is_unseen(header.Unseen) or is_recent(header.Recent) %}
+                 <li class="mail-item" data-message="{{ header.Msgno }}">
+                   <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                   <div class="mail-item-body">
+                     <div class="d-flex align-items-center">
+                       <span class="mail-sender">{{ header.from_name }}</span>
+                       <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                       {% if  is_flagged(header.Flagged) %}
+                         <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                       {% else %}
+                         <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                       {% endif %}
+                     </div>
+                     <h6 class="mail-subject">{{ header.Subject }}</h6>
+                     <p class="mail-text">{{ header.from_mail }}</p>
+                   </div><!-- mail-item-body -->
+                 </li>
+               {% else %}
+                 <li class="mail-item unread" data-message="{{ header.Msgno }}">
+                   <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                   <div class="mail-item-body">
+                     <div class="d-flex align-items-center">
+                       <span class="mail-sender">{{ header.from_mail }}</span>
+                       <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                       {% if is_flagged(header.Flagged) %}
+                         <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                       {% else %}
+                         <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                       {% endif %}
+                     </div>
+                     <h6 class="mail-subject">{{ header.Subject }}</h6>
+                     <p class="mail-text">{{ header.from_mail }}</p>
+                   </div><!-- mail-item-body -->
+                 </li>
+               {% endif %}
+             {% endfor %}
+           {% endif %}
+          </ul><!-- mail-group -->
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+  </div><!-- mailbox -->
+
+  <div id="mailContent" class="mailcontent">
+    <div class="mailcontent-placeholder">
+      <i class="ri-mail-send-line"></i>
+      <h5>No email has been selected</h5>
+    </div><!-- mailcontent-placeholder -->
+  </div><!-- mailcontent -->
+
+  <a href="" class="menu-compose"><i class="ri-pencil-line"></i></a>
+
+  <div class="compose d-none" id="compose-mail-form">
+    <form method="post" class="compose-content" id="mail-form">
+      <div class="compose-header">
+        <h6 class="compose-title">New Message</h6>
+        <nav class="nav">
+          <a href="#" class="nav-link nav-link-minimize"><i class="ri-subtract-line"></i></a>
+          <a href="#" class="nav-link nav-link-fullscreen">
+            <i class="ri-fullscreen-line"></i>
+            <i class="ri-fullscreen-exit-line"></i>
+          </a>
+          <a href="#" class="nav-link nav-link-close"><i class="ri-close-line"></i></a>
+        </nav>
+      </div><!-- compose-header -->
+      <div class="compose-body" id="composer-form">
+        <div class="form-group"><input name="to_email" type="text" class="form-control" placeholder="Enter receipient's email address"></div>
+        <div class="form-group"><input name="subject" type="text" class="form-control" placeholder="Enter subject"></div>
+        <div class="form-group"><textarea name="content" id="editor1" class="editor"></textarea></div>
+        <input type="file" name="attachments[]" multiple id="file-input" style="display: none;">
+      </div><!-- compose-body -->
+      <nav class="nav nav-toolbar">
+        <a href="" class="nav-link" id="add-attachment"><i class="ri-attachment-2"></i></a>
+        <a href="" class="nav-link d-none" id="add-attachment-loading"><i class="ri-refresh-line"></i></a>
+      </nav><!-- nav-toolbar -->
+      <nav class="nav nav-toolbar d-block" id="attachments-files">
+
+      </nav>
+      <div class="compose-footer">
+        <button type="submit" id="send-email" class="btn btn-primary btn-icontext"><i class="ri-send-plane-fill me-2"></i> Send</button>
+        <button class="btn btn-white btn-icon"><i class="ri-delete-bin-line"></i></button>
+      </div><!-- compose-footer -->
+    </form><!-- compose-content -->
+  </div><!-- compose -->
+
+  <div class="reply-compose d-none" id="reply-compose-mail-form">
+    <form method="post" class="compose-content" id="reply-form">
+      <div class="compose-header">
+        <h6 class="compose-title">Replay Message</h6>
+        <nav class="nav">
+          <a href="#" class="nav-link nav-link-minimize"><i class="ri-subtract-line"></i></a>
+          <a href="#" class="nav-link nav-link-fullscreen">
+            <i class="ri-fullscreen-line"></i>
+            <i class="ri-fullscreen-exit-line"></i>
+          </a>
+          <a href="#" class="nav-link nav-link-close"><i class="ri-close-line"></i></a>
+        </nav>
+      </div><!-- compose-header -->
+      <div class="compose-body" id="reply-composer-form">
+        <div class="form-group"><input name="message_id" type="hidden" class="form-control"></div>
+        <div class="form-group"><input name="subject" type="text" class="form-control" placeholder="Enter subject"></div>
+        <div class="form-group"><input name="msgno" type="hidden" class="form-control" placeholder="Enter subject"></div>
+        <div class="form-group"><input name="to_mail" type="hidden" class="form-control" placeholder="Enter subject"></div>
+        <div class="form-group"><input name="box_name" type="hidden" class="form-control" placeholder="Enter subject"></div>
+        <div class="form-group"><textarea name="content" id="editor" class="editor" rows="10"></textarea></div>
+        <input type="file" name="attachments[]" multiple id="file-input" style="display: none;">
+      </div><!-- compose-body -->
+      <nav class="nav nav-toolbar">
+        <a href="" class="nav-link" id="add-attachment-reply"><i class="ri-attachment-2"></i></a>
+        <a href="" class="nav-link d-none" id="add-attachment-loading-reply"><i class="ri-refresh-line"></i></a>
+      </nav><!-- nav-toolbar -->
+      <nav class="nav nav-toolbar d-block" id="attachments-files-replay">
+
+      </nav>
+      <div class="compose-footer">
+        <button type="submit" id="send-email-reply" class="btn btn-primary btn-icontext"><i class="ri-send-plane-fill me-2"></i> Send</button>
+        <button class="btn btn-white btn-icon"><i class="ri-delete-bin-line"></i></button>
+      </div><!-- compose-footer -->
+    </form><!-- compose-content -->
+  </div><!-- compose -->
+
+  <div class="backdrop"></div>
+  <div id="toast" class="toast"></div>
+</div>
+<div style="display: none;" data-error="error">
+  <div class="mailcontent-placeholder">
+    <i class="ri-mail-send-line"></i>
+    <h5>Error happened during email fetching</h5>
+  </div><!-- mailcontent-placeholder -->
+</div>
+
+<div style="display: none;" data-loading="loading">
+  <div class="mailcontent-placeholder">
+    <i class="ri-mail-send-line"></i>
+    <h5>Loading..</h5>
+    <div aria-busy="true" aria-describedby="progress-bar">
+      <!-- content is for this region is loading -->
+    </div>
+
+    <!-- ... -->
+
+    <progress id="progress-bar" aria-label="Content loading…"></progress>
+
+  </div>
+</div>
+
+<dialog class="bordered rounded w-50 p-4 bg-light border-light" id="create-box">
+  <button class="btn btn-outline-danger float-end mb-5">&times;</button>
+  <form class="form" action="" method="post">
+    <div class="form-group mt-5">
+      <label for="create-box-title">Title</label>
+      <input class="form-control" id="create-box-title" name="title" type="text" placeholder="Enter title" required>
+    </div>
+    <div class="form-group mt-3">
+      <label for="create-box-parent">Parent</label>
+      <select name="parent" id="create-box-parent" class="form-control">
+        <option value="">Select a parent</option>
+        {% for key, box in content.mailbox.imap.mailboxes %}
+        <option value="{{ box }}">{{ key }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group mt-3">
+      <input type="submit" value="Submit" class="btn btn-outline-primary">
+    </div>
+  </form>
+</dialog>
+<dialog id="top-actions" class="bordered rounded w-50 p-4 bg-light border-light">
+  <button class="btn btn-outline-danger float-end mb-5">&times;</button>
+  <form class="form" action="" method="post">
+    <div class="form-group mt-3">
+      <label for="destination">Destination</label>
+      <select name="destination" id="destination" class="form-control">
+        <option value="">Select a parent</option>
+        {% for key, box in content.mailbox.imap.mailboxes %}
+          <option value="{{ box }}">{{ key }}</option>
+        {% endfor %}
+        {% for key, box in content.mailbox.imap.labels %}
+          <option value="{{ box }}">{{ key }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group mt-3">
+      <input type="submit" value="Submit" class="btn btn-outline-primary">
+    </div>
+  </form>
+</dialog>
+
+<script type="importmap">
+  {
+      "imports": {
+          "ckeditor5": "/modules/contrib/mail_box_management/assets/ckeditor5-44.1.0/ckeditor5/ckeditor5.js",
+          "ckeditor5/": "/modules/contrib/mail_box_management/assets/ckeditor5-44.1.0/ckeditor5/"
+      }
+  }
+</script>
+
+<script type="module">
+  import {
+    ClassicEditor,
+    Essentials,
+    Paragraph,
+    Bold,
+    Italic,
+    Underline,
+    Strikethrough,
+    Font,
+    Highlight,
+    List,
+    TodoList,
+    Link,
+    AutoLink,
+    Table,
+    TableToolbar,
+    MediaEmbed,
+    SourceEditing,
+    CodeBlock,
+    WordCount,
+    FullPage
+  } from 'ckeditor5';
+
+  ClassicEditor
+    .create(document.querySelector('#editor'), {
+      plugins: [
+        Essentials,
+        Paragraph,
+        Bold, Italic, Underline, Strikethrough, Font, Highlight,
+        List, TodoList,
+        Link, AutoLink,
+        Table, TableToolbar,
+        MediaEmbed,
+        SourceEditing, CodeBlock, WordCount, FullPage
+      ],
+      toolbar: [
+        'undo', 'redo', '|',
+        'bold', 'italic', 'underline', 'strikethrough', '|',
+        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
+        'bulletedList', 'numberedList', 'todoList', '|',
+        'link', 'insertTable', 'mediaEmbed', '|',
+        'sourceEditing', 'codeBlock', '|',
+        'alignLeft', 'alignCenter', 'alignRight', 'alignJustify'
+      ],
+      table: {
+        contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+      },
+      mediaEmbed: {
+        previewsInData: true
+      },
+      wordCount: {
+        showWordCount: true,
+        showCharCount: true
+      },
+      licenseKey: 'GPL'
+    })
+    .then(editor => {
+      window.editor = editor;
+      console.log('CKEditor initialized successfully');
+    })
+    .catch(error => {
+      console.error('Error initializing CKEditor:', error);
+    });
+
+  ClassicEditor
+    .create(document.querySelector('#editor1'), {
+      plugins: [
+        Essentials,
+        Paragraph,
+        Bold, Italic, Underline, Strikethrough, Font, Highlight,
+        List, TodoList,
+        Link, AutoLink,
+        Table, TableToolbar,
+        MediaEmbed,
+        SourceEditing, CodeBlock, WordCount, FullPage
+      ],
+      toolbar: [
+        'undo', 'redo', '|',
+        'bold', 'italic', 'underline', 'strikethrough', '|',
+        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
+        'bulletedList', 'numberedList', 'todoList', '|',
+        'link', 'insertTable', 'mediaEmbed', '|',
+        'sourceEditing', 'codeBlock', '|',
+        'alignLeft', 'alignCenter', 'alignRight', 'alignJustify'
+      ],
+      table: {
+        contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+      },
+      mediaEmbed: {
+        previewsInData: true
+      },
+      wordCount: {
+        showWordCount: true,
+        showCharCount: true
+      },
+      licenseKey: 'GPL'
+    })
+    .then(editor => {
+      window.editor = editor;
+      console.log('CKEditor initialized successfully');
+    })
+    .catch(error => {
+      console.error('Error initializing CKEditor:', error);
+    });
+</script>
+

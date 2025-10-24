@@ -1,0 +1,20 @@
+{
+    "name": "burndown",
+    "type": "drupal-module",
+    "description": "Burndown Project Management",
+    "keywords": [
+    ],
+    "homepage": "https://www.drupal.org/project/burndown",
+    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/burndown",
+        "source": "http://cgit.drupalcode.org/burndown"
+    },
+    "extra": {
+      "drush": {
+        "services": {
+          "drush.services.yml": "^9 || ^10"
+        }
+      }
+    }
+}

@@ -1,0 +1,23 @@
+uuid: 6702903e-7f12-4569-a2b9-436aa4390bbd
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_fichier_optionnel
+    - node.type.qure_inputs
+id: node.qure_inputs.field_fichier_optionnel
+field_name: field_fichier_optionnel
+entity_type: node
+bundle: qure_inputs
+label: 'Fichier optionnel'
+description: 'Permet de spécifier si un fichier est forcement présent.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'True'
+  off_label: 'False'
+field_type: boolean

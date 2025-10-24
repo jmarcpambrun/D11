@@ -1,0 +1,7 @@
+services:
+  menu_active_trail_override.base:
+    class: Drupal\eca_active_trail\MenuActiveTrailOverride
+    decorates: menu.active_trail
+    decoration_priority: 9
+    public: false
+    arguments: ['@menu_active_trail_override.base.inner', '@plugin.manager.menu.link', '@current_route_match', '@cache.menu', '@lock']

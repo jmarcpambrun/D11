@@ -1,0 +1,247 @@
+<?php
+
+/**
+ * @file
+ * ECA Webform submodule.
+ */
+
+use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\eca_webform\Hook\WebformHooks;
+use Drupal\webform\Plugin\WebformHandlerInterface;
+use Drupal\webform\WebformSubmissionInterface;
+
+/**
+ * Implements hook_webform_element_info_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_info_alter(array &$definitions): void {
+  \Drupal::service(WebformHooks::class)->elementInfoAlter($definitions);
+}
+
+/**
+ * Implements hook_webform_handler_info_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_handler_info_alter(array &$handlers): void {
+  \Drupal::service(WebformHooks::class)->handlerInfoAlter($handlers);
+}
+
+/**
+ * Implements hook_webform_variant_info_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_variant_info_alter(array &$variants): void {
+  \Drupal::service(WebformHooks::class)->variantInfoAlter($variants);
+}
+
+/**
+ * Implements hook_webform_source_entity_info_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_source_entity_info_alter(array &$definitions): void {
+  \Drupal::service(WebformHooks::class)->sourceEntityInfoAlter($definitions);
+}
+
+/**
+ * Implements hook_webform_element_default_properties_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_default_properties_alter(array &$properties, array &$definition): void {
+  \Drupal::service(WebformHooks::class)->elementDefaultPropertiesAlter($properties, $definition);
+}
+
+/**
+ * Implements hook_webform_element_translatable_properties_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_translatable_properties_alter(array &$properties, array &$definition): void {
+  \Drupal::service(WebformHooks::class)->elementTranslatablePropertiesAlter($properties, $definition);
+}
+
+/**
+ * Implements hook_webform_element_configuration_form_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_configuration_form_alter(array &$form, FormStateInterface $form_state): void {
+  \Drupal::service(WebformHooks::class)->elementConfigurationFormAlter($form, $form_state);
+}
+
+/**
+ * Implements hook_webform_element_alter().
+ *
+ * @see hook_webform_element_ELEMENT_TYPE_alter
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_alter(array &$element, FormStateInterface $form_state, array $context): void {
+  \Drupal::service(WebformHooks::class)->elementAlter($element, $form_state, $context);
+}
+
+/**
+ * Implements hook_webform_element_access().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_access(string $operation, array &$element, ?AccountInterface $account = NULL, array $context = []): AccessResultInterface {
+  return \Drupal::service(WebformHooks::class)->elementAccess($operation, $element, $account, $context);
+}
+
+/**
+ * Implements hook_webform_element_input_masks().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_hook_webform_element_input_masks(): array {
+  return \Drupal::service(WebformHooks::class)->elementInputMasks();
+}
+
+/**
+ * Implements hook_webform_element_input_masks_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_element_input_masks_alter(array &$input_masks): void {
+  \Drupal::service(WebformHooks::class)->elementInputMasksAlter($input_masks);
+}
+
+/**
+ * Implements hook_webform_options_alter().
+ *
+ * @see hook_webform_options_WEBFORM_OPTIONS_ID_alter()
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_options_alter(array &$options, array &$element, ?string $options_id = NULL): void {
+  \Drupal::service(WebformHooks::class)->optionsAlter($options, $element, $options_id);
+}
+
+/**
+ * Implements hook_webform_submissions_pre_purge().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_submissions_pre_purge(array $webform_submissions): void {
+  \Drupal::service(WebformHooks::class)->submissionsPrePurge($webform_submissions);
+}
+
+/**
+ * Implements hook_webform_submissions_post_purge().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_submissions_post_purge(array $webform_submissions): void {
+  \Drupal::service(WebformHooks::class)->submissionsPostPurge($webform_submissions);
+}
+
+/**
+ * Implements hook_webform_submission_form_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_submission_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  \Drupal::service(WebformHooks::class)->submissionFormAlter($form, $form_state, $form_id);
+}
+
+/**
+ * Implements hook_webform_admin_third_party_settings_form_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_admin_third_party_settings_form_alter(array &$form, FormStateInterface $form_state): void {
+  \Drupal::service(WebformHooks::class)->adminThirdPartySettingsFormAlter($form, $form_state);
+}
+
+/**
+ * Implements hook_webform_third_party_settings_form_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_third_party_settings_form_alter(array &$form, FormStateInterface $form_state): void {
+  \Drupal::service(WebformHooks::class)->thirdPartySettingsFormAlter($form, $form_state);
+}
+
+/**
+ * Implements hook_webform_handler_invoke_alter().
+ *
+ * @see hook_webform_handler_invoke_METHOD_NAME_alter()
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_handler_invoke_alter(WebformHandlerInterface $handler, string $method_name, array &$args): void {
+  \Drupal::service(WebformHooks::class)->handlerInvokeAlter($handler, $method_name, $args);
+}
+
+/**
+ * Implements hook_webform_help_info().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_help_info(): array {
+  return \Drupal::service(WebformHooks::class)->helpInfo();
+}
+
+/**
+ * Implements hook_webform_help_info_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_help_info_alter(array &$help): void {
+  \Drupal::service(WebformHooks::class)->helpInfoAlter($help);
+}
+
+/**
+ * Implements hook_webform_access_rules().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_access_rules(): array {
+  return \Drupal::service(WebformHooks::class)->accessRules();
+}
+
+/**
+ * Implements hook_webform_access_rules_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_access_rules_alter(array &$access_rules): void {
+  \Drupal::service(WebformHooks::class)->accessRulesAlter($access_rules);
+}
+
+/**
+ * Implements hook_webform_submission_access().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_submission_access(WebformSubmissionInterface $webform_submission, string $operation, AccountInterface $account): AccessResultInterface {
+  return \Drupal::service(WebformHooks::class)->submissionAccess($webform_submission, $operation, $account);
+}
+
+/**
+ * Implements hook_webform_submission_query_access_alter().
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_submission_query_access_alter(AlterableInterface $query, array $webform_submission_tables): void {
+  \Drupal::service(WebformHooks::class)->submissionQueryAccessAlter($query, $webform_submission_tables);
+}
+
+/**
+ * Implements hook_webform_image_select_images_alter().
+ *
+ * @see hook_webform_image_select_images_WEBFORM_IMAGE_SELECT_IMAGES_ID_alter()
+ *
+ * @phpstan-ignore-next-line
+ */
+function eca_webform_webform_image_select_images_alter(array &$images, array &$element, ?string $images_id = NULL): void {
+  \Drupal::service(WebformHooks::class)->imageSelectImagesAlter($images, $element, $images_id);
+}

@@ -1,0 +1,14 @@
+name: Maestro Engine Module
+description: Provides the engine and API for Maestro.
+core_version_requirement: ^10 || ^11
+configure: maestro.maestro_admin_settings
+package: Maestro
+type: module
+dependencies:
+  - drupal:views
+scripts:
+
+# Information added by Drupal.org packaging script on 2025-09-25
+version: '4.2.3'
+project: 'maestro'
+datestamp: 1758818078

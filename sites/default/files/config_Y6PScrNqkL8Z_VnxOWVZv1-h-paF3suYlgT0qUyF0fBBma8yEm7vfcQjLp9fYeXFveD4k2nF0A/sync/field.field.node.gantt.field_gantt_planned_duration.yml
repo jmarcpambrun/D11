@@ -1,0 +1,25 @@
+uuid: 4757093f-1458-4e2d-985f-60604a18d913
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_planned_duration
+    - node.type.gantt
+_core:
+  default_config_hash: idAy6p0Mynndf5tdqKDoopZXJgyfCMCo_tuPqgrMDtk
+id: node.gantt.field_gantt_planned_duration
+field_name: field_gantt_planned_duration
+entity_type: node
+bundle: gantt
+label: 'Planned duration'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

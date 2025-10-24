@@ -1,0 +1,69 @@
+uuid: e839ea03-244d-4290-8cd6-c4bdfa2e1c9b
+langcode: fr
+status: true
+dependencies:
+  config:
+    - group.type.dpalicepeio_regsitered
+id: dpalicepeio_regsitered-membre_wi
+label: membre_with-private_message
+weight: 101
+group_type: dpalicepeio_regsitered
+permissions:
+  - 'access group_node overview'
+  - 'access group_webform overview'
+  - 'create group_node:article entity'
+  - 'create group_node:book content'
+  - 'create group_node:book entity'
+  - 'create group_node:forum content'
+  - 'create group_node:forum entity'
+  - 'create group_node:page content'
+  - 'create group_node:page entity'
+  - 'create group_node:webform content'
+  - 'create group_node:webform entity'
+  - 'create group_webform:webform content'
+  - 'create group_webform:webform entity'
+  - 'delete own group_node:article content'
+  - 'delete own group_node:article entity'
+  - 'delete own group_node:book content'
+  - 'delete own group_node:book entity'
+  - 'delete own group_node:forum content'
+  - 'delete own group_node:forum entity'
+  - 'delete own group_node:page content'
+  - 'delete own group_node:page entity'
+  - 'delete own group_node:webform content'
+  - 'delete own group_node:webform entity'
+  - 'delete own group_webform:webform content'
+  - 'delete own group_webform:webform entity'
+  - 'leave group'
+  - 'update own group_membership content'
+  - 'update own group_node:article content'
+  - 'update own group_node:article entity'
+  - 'update own group_node:book content'
+  - 'update own group_node:book entity'
+  - 'update own group_node:forum content'
+  - 'update own group_node:forum entity'
+  - 'update own group_node:page content'
+  - 'update own group_node:page entity'
+  - 'update own group_node:webform content'
+  - 'update own group_node:webform entity'
+  - 'update own group_webform:webform content'
+  - 'update own group_webform:webform entity'
+  - 'view download group_webform:webform entity'
+  - 'view group'
+  - 'view group_membership content'
+  - 'view group_node:article content'
+  - 'view group_node:article entity'
+  - 'view group_node:book content'
+  - 'view group_node:book entity'
+  - 'view group_node:forum content'
+  - 'view group_node:forum entity'
+  - 'view group_node:page content'
+  - 'view group_node:page entity'
+  - 'view group_node:webform content'
+  - 'view group_node:webform entity'
+  - 'view group_webform:webform entity'
+  - 'view group_webform:webform submissions'
+  - 'view latest group version'
+  - 'view own unpublished group'
+admin: false
+scope: individual

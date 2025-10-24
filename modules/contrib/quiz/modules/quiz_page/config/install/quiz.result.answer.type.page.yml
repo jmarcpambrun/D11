@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - quiz_page
+id: page
+label: 'Quiz page response'

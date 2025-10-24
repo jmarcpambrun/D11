@@ -1,0 +1,46 @@
+{% if data is not empty %}
+
+  <div class="relationships">
+
+  {% for relationship in data %}
+
+    <div
+      class="relationship"
+      data-local="{{ relationship.local }}"
+      data-from-task-id="{{ relationship.from_task_id }}"
+      data-from-ticket-id="{{ relationship.from_ticket_id }}"
+      data-to-task-id="{{ relationship.to_task_id }}"
+      data-to-ticket-id="{{ relationship.to_ticket_id }}">
+
+      <span class="remove_link">
+        <a
+          href="#"
+          class="remove_relationship"
+          title="Remove this relationship">
+          X
+        </a>
+      </span>
+
+      <span class="from_ticket_id{% if relationship.from_task_completed %} completed{% endif %}">
+        {{ relationship.from_ticket_id }}
+      </span>
+
+      {% if relationship.local %}
+        {{ 'is'|t([], {'langcode': currentLanguageCode, 'context':'Indicates relationship between two tasks' }) }}
+      {% endif %}
+
+      <span class="type">
+        {{ relationship.type|lower }}
+      </span>
+
+      <span class="to_ticket_id {% if relationship.to_task_completed %} completed{% endif %}">
+        {{ relationship.to_ticket_id }}
+      </span>
+
+    </div>
+  
+  {% endfor %}
+
+  </div>
+
+{% endif %}

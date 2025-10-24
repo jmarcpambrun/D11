@@ -1,0 +1,40 @@
+{{ data.add_link }}
+
+<a
+  href="{{ url('<front>') }}burndown/sprint/add?shortcode={{ data.project }}&destination={{ url('<front>') }}burndown/backlog/{{ data.project }}"
+  class="button button-action">
+  Add a Sprint
+</a>
+
+<div id="backlog" class="row" data-project-shortcode={{ data.project }}>
+
+  {% for key, sprint in data.sprints %}
+    {{ sprint }}
+
+    <div
+      class="list-group col sprint_tasks"
+      data-sprint-id="{{ key }}">
+
+      {% if data.sprint_tasks[ key ] is defined %}
+        {{ data.sprint_tasks[ key ] }}
+      {% endif %}
+
+    </div>
+
+  {% endfor %}
+
+  <div id="backlog_label" class="backlog col">
+    <h3>Backlog</h3>
+  </div>
+
+  <div
+    id="backlog_items"
+    class="list-group col sprint_tasks"
+    data-sprint-id="0"
+    data-status="backlog">
+
+    {{ data.tasks }}
+
+  </div>
+
+</div>

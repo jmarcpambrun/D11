@@ -1,0 +1,16 @@
+
+event_scheduler.scheduled_events_form:
+  path: '/event_scheduler/form/scheduled_events'
+  defaults:
+    _form: '\Drupal\event_scheduler\Form\ScheduledEventsForm'
+    _title: 'Scheduled Events'
+  requirements:
+    _permission: 'manage event scheduler'
+
+event_scheduler.settings:
+  path: '/admin/config/development/event_scheduler_settings'
+  defaults:
+    _form: '\Drupal\event_scheduler\Form\EventSchedulerSettingsForm'
+    _title: 'Event Scheduler Settings'
+  requirements:
+    _permission: 'manage event scheduler'

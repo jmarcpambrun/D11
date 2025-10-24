@@ -1,0 +1,16 @@
+uuid: 137fb5e7-23dd-407f-ac7e-f239604ecf75
+langcode: fr
+status: true
+dependencies:
+  module:
+    - user
+_core:
+  default_config_hash: e3qTwxRAHjmbcqptGzsrULaqgYtmKu6qEB84Tp5ny7I
+id: user.cancel_confirm
+configuration:
+  email_subject:
+    value: 'Account cancellation request for [user:display-name] at [site:name]'
+  email_body:
+    content:
+      value: "[user:display-name]\r\n\r\nUne requête pour supprimer votre compte a été déposée sur [site:name].\r\n\r\nVous pouvez désormais supprimer votre compte sur [site:url-brief] en cliquant sur ce lien ou en copiant cette adresse dans un navigateur :\r\n\r\n[user:cancel-url]\r\n\r\nÀ noter : la suppression de votre compte n'est pas réversible.\r\n\r\nCe lien expire dans un délai d'une journée et rien ne se passera si vous ne l'utilisez pas.\r\n\r\n--  L'équipe de [site:name]"
+      format: plain_text

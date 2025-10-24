@@ -1,0 +1,44 @@
+uuid: 937ff717-2500-46b9-8035-cc38fc31f031
+langcode: fr
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.remote_video.field_media_oembed_video
+    - image.style.medium
+    - media.type.remote_video
+  module:
+    - image
+_core:
+  default_config_hash: sLyo3lc_eX4-C1Jv0ivqjuORGfdclLsX09tZf7K3EVM
+id: media.remote_video.media_library
+targetEntityType: media
+bundle: remote_video
+mode: media_library
+content:
+  content_moderation_control:
+    weight: -20
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+  thumbnail:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  field_media_oembed_video: true
+  langcode: true
+  name: true
+  search_api_excerpt: true
+  uid: true

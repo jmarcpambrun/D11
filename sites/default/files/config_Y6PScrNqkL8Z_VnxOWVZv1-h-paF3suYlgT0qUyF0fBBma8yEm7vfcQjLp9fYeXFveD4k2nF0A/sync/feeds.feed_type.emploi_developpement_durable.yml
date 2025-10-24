@@ -1,0 +1,95 @@
+uuid: 7b299272-7c50-467d-bd14-334304bb5460
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.article.body
+    - field.field.node.article.feeds_item
+    - field.field.node.article.field_tags
+    - node.type.article
+  module:
+    - feeds_log
+    - node
+third_party_settings:
+  feeds_log:
+    status: true
+    operations:
+      created: created
+      updated: updated
+      deleted: deleted
+      skipped: skipped
+      failed: failed
+      cleaned: cleaned
+    items:
+      created: created
+      updated: updated
+      deleted: deleted
+      skipped: skipped
+      failed: failed
+    source: true
+label: 'Emploi developpement durable'
+id: emploi_developpement_durable
+description: 'Emploi développement durable'
+help: ''
+import_period: 3600
+fetcher: http
+fetcher_configuration:
+  auto_detect_feeds: true
+  use_pubsubhubbub: false
+  always_download: true
+  fallback_hub: ''
+  request_timeout: 30
+parser: syndication
+parser_configuration: {  }
+processor: 'entity:node'
+processor_configuration:
+  values:
+    type: article
+  langcode: fr
+  insert_new: 1
+  update_existing: 1
+  update_non_existent: node_unpromote_action
+  skip_hash_check: false
+  authorize: true
+  revision: false
+  expire: -1
+  owner_feed_author: false
+  owner_id: 1
+custom_sources:
+  '':
+    value: ''
+    label: ''
+    machine_name: ''
+    type: blank
+mappings:
+  -
+    target: title
+    map:
+      value: 'parent:title'
+    settings:
+      language: null
+    unique: {  }
+  -
+    target: body
+    map:
+      value: content
+      summary: description
+    settings:
+      language: ''
+      format: full_html
+  -
+    target: feeds_item
+    map:
+      url: url
+      guid: guid
+    settings: {  }
+    unique: {  }
+  -
+    target: field_tags
+    map:
+      target_id: 'parent:type'
+    settings:
+      language: ''
+      reference_by: name
+      autocreate: 1
+      autocreate_bundle: tags

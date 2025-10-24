@@ -1,0 +1,34 @@
+webform.handler.webform_entity_handler:
+  type: mapping
+  label: Entity
+  mapping:
+    operation:
+      type: string
+      label: Operation
+    skip_if_exists:
+      type: boolean
+      label: Skip
+    entity_properties:
+      type: text
+      label: Entity properties
+    entity_type_id:
+      type: string
+      label: Entity type ID
+    entity_values:
+      type: sequence
+      label: Entity values
+      sequence:
+        type: sequence
+        label: Field name
+        sequence:
+          type: string
+          label: Field value
+    entity_revision:
+      type: boolean
+      label: New revision
+    states:
+      type: sequence
+      label: States
+      sequence:
+        type: string
+        label: State

@@ -1,0 +1,11 @@
+{
+  "name": "drupal/maestro_webform",
+  "type": "drupal-module",
+  "description": "Integration between Maestro and Webform.",
+  "require": {
+      "drupal/webform": "^6.0",
+      "drupal/maestro": "^4.0"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

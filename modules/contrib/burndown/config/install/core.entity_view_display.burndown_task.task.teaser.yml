@@ -1,0 +1,65 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - burndown.burndown_task_type.task
+    - core.entity_view_mode.burndown_task.teaser
+_core:
+  default_config_hash: eUdc82APEvtuHVBQddTMlPthcWuGs1xEREv7WrteBK0
+id: burndown_task.task.teaser
+targetEntityType: burndown_task
+bundle: task
+mode: teaser
+content:
+  assigned_to:
+    label: hidden
+    type: entity_reference_entity_view
+    weight: 3
+    region: content
+    settings:
+      view_mode: compact
+      link: false
+    third_party_settings: {  }
+  changed:
+    label: hidden
+    type: timestamp
+    weight: 4
+    region: content
+    settings:
+      date_format: short
+      custom_date_format: ''
+      timezone: ''
+    third_party_settings: {  }
+  name:
+    label: hidden
+    type: string
+    weight: 1
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  ticket_id:
+    label: hidden
+    type: string
+    weight: 0
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  user_id:
+    label: hidden
+    type: entity_reference_entity_view
+    weight: 2
+    region: content
+    settings:
+      view_mode: compact
+      link: false
+    third_party_settings: {  }
+hidden:
+  backlog_sort: true
+  board_sort: true
+  created: true
+  description: true
+  project: true
+  sprint: true
+  swimlane: true

@@ -1,0 +1,183 @@
+uuid: 97df4edf-55d7-4a24-ac11-1bcf9f6d181a
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.qure_data_catalog.body
+    - field.field.node.qure_data_catalog.field_businessconcept_globalid
+    - field.field.node.qure_data_catalog.field_businessconcept_term_name
+    - field.field.node.qure_data_catalog.field_businessconcept_termnamef
+    - field.field.node.qure_data_catalog.field_data_type
+    - field.field.node.qure_data_catalog.field_dataset_id
+    - field.field.node.qure_data_catalog.field_dataset_name
+    - field.field.node.qure_data_catalog.field_definitions
+    - field.field.node.qure_data_catalog.field_domain_name
+    - field.field.node.qure_data_catalog.field_physical_data
+    - field.field.node.qure_data_catalog.field_tbl_name
+    - node.type.qure_data_catalog
+  module:
+    - content_moderation
+    - path
+    - text
+id: node.qure_data_catalog.default
+targetEntityType: node
+bundle: qure_data_catalog
+mode: default
+content:
+  body:
+    type: text_textarea_with_summary
+    weight: 121
+    region: content
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+      show_summary: false
+    third_party_settings: {  }
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_businessconcept_globalid:
+    type: string_textfield
+    weight: 129
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_businessconcept_term_name:
+    type: string_textfield
+    weight: 130
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_businessconcept_termnamef:
+    type: string_textfield
+    weight: 131
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_data_type:
+    type: string_textfield
+    weight: 127
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_dataset_id:
+    type: string_textfield
+    weight: 122
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_dataset_name:
+    type: string_textfield
+    weight: 123
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_definitions:
+    type: string_textfield
+    weight: 128
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_domain_name:
+    type: string_textfield
+    weight: 124
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_physical_data:
+    type: string_textfield
+    weight: 126
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_tbl_name:
+    type: string_textfield
+    weight: 125
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  moderation_state:
+    type: moderation_state_default
+    weight: 100
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  promote:
+    type: boolean_checkbox
+    weight: 15
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 120
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  sticky:
+    type: boolean_checkbox
+    weight: 16
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  publish_on: true
+  unpublish_on: true

@@ -1,0 +1,19 @@
+uuid: 6c6b5f19-1df5-42d0-864b-a10c3cfe4825
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_domain_name
+    - node.type.qure_data_catalog
+id: node.qure_data_catalog.field_domain_name
+field_name: field_domain_name
+entity_type: node
+bundle: qure_data_catalog
+label: domain_name
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

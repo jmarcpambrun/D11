@@ -1,0 +1,22 @@
+enabled_webforms:
+  example_options_custom: 1
+  ma_premiere_webform: 1
+  proto_ui_fuzzy: 1
+  proto_ui_fuzzy_2: 1
+  webform_iban_field: 1
+  jmp: 1
+  fuzzy_matching_proto: 1
+  test: 1
+  evol_projet: 1
+  qure_ui_poc: 1
+  qu: 1
+  qure_ui_home: 1
+  donnees_en_entree: 1
+  liste_des_donnees_en_entree: 1
+  job: 1
+_core:
+  default_config_hash: 3Ybdds1NRrtR0rqZug464LQ4cuV_LOvcwCr5DD9zblc
+langcode: fr
+mailbox_layer:
+  api_key: drupbuilder
+  email_expire: '30'

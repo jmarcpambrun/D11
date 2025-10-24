@@ -1,0 +1,31 @@
+#burndown_project_cloud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.tag_cloud_item {
+  margin: 0.25em;
+  padding: 0.25em 0.5em;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+}
+
+.tag_cloud_item a {
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  outline: 0;
+  border-bottom: 0;
+  font-weight: 300;
+  font-family: sans-serif;
+  font-style: italic;
+}
+
+.tag_cloud_item a:hover,
+.tag_cloud_item a:visited,
+.tag_cloud_item a:link,
+.tag_cloud_item a:active {
+  color: black;
+}

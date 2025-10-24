@@ -1,0 +1,8 @@
+settings:
+  allowed_values:
+    -
+      label: Project
+    -
+      label: Task
+    -
+      label: Milestone

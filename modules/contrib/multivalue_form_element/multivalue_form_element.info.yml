@@ -1,0 +1,9 @@
+name: Multi-value form element
+description: Provides a multi-value form element that wraps any number of form elements.
+type: module
+core_version_requirement: ^10 || ^11
+
+# Information added by Drupal.org packaging script on 2025-02-17
+version: '1.0.0-beta7'
+project: 'multivalue_form_element'
+datestamp: 1739788830

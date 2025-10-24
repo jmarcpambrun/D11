@@ -1,0 +1,10 @@
+name: Personal Notes
+description: Allow registered users to create and delete notes to themselves which display on a block.
+core_version_requirement: ^9 || ^10
+package: Custom
+type: module
+
+# Information added by Drupal.org packaging script on 2023-05-09
+version: '3.1.0-alpha4'
+project: 'personal_notes'
+datestamp: 1683644080

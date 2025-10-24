@@ -1,0 +1,50 @@
+uuid: 7c3eb073-1c30-4349-ba67-9c7237e8eea6
+langcode: fr
+status: true
+dependencies:
+  module:
+    - burndown
+    - datetime
+_core:
+  default_config_hash: ciJdESjGrBRx5-6x2pAvWfSxDB0G5y3h4HZzAwOhQSo
+id: burndown_sprint.burndown_sprint.default
+targetEntityType: burndown_sprint
+bundle: burndown_sprint
+mode: default
+content:
+  end_date:
+    type: datetime_default
+    label: inline
+    settings:
+      timezone_override: ''
+      format_type: short
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  name:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  start_date:
+    type: datetime_default
+    label: inline
+    settings:
+      timezone_override: ''
+      format_type: short
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  project: true
+  search_api_excerpt: true
+  sort_order: true
+  status: true
+  user_id: true

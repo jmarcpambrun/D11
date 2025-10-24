@@ -1,0 +1,16 @@
+maestro_template_builder_diagram:
+  js:
+    js/MaestroTemplateBuilder.js: {}
+    js/template_builder.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog
+    - core/jquery.once
+
+maestro_template_css:
+  css:
+    theme:
+      css/template.css: {}
+      css/diagram.css: {}

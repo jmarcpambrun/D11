@@ -1,0 +1,35 @@
+entity.burndown_project.add_form:
+  route_name: entity.burndown_project.add_page
+  title: 'Add Project'
+  appears_on:
+    - entity.burndown_project.collection
+entity.burndown_project_type.add_form:
+  route_name: entity.burndown_project_type.add_form
+  title: 'Add Project type'
+  appears_on:
+    - entity.burndown_project_type.collection
+entity.burndown_task.add_form:
+  route_name: entity.burndown_task.add_page
+  title: 'Add Task'
+  appears_on:
+    - entity.burndown_task.collection
+entity.burndown_task_type.add_form:
+  route_name: entity.burndown_task_type.add_form
+  title: 'Add Task type'
+  appears_on:
+    - entity.burndown_task_type.collection
+entity.burndown_swimlane.add_form:
+  route_name: entity.burndown_swimlane.add_form
+  title: 'Add Swimlane'
+  appears_on:
+    - entity.burndown_swimlane.collection
+entity.burndown_sprint.add_form:
+  route_name: entity.burndown_sprint.add_form
+  title: 'Add Sprint'
+  appears_on:
+    - entity.burndown_sprint.collection
+entity.default_swimlane.add_form:
+  route_name: entity.default_swimlane.add_form
+  title: 'Add Default Swimlane'
+  appears_on:
+    - entity.default_swimlane.collection

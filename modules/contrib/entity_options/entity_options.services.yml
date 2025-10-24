@@ -1,0 +1,5 @@
+services:
+  plugin.manager.entity_options:
+    class: Drupal\entity_options\Service\EntityOptionsPluginManager
+    arguments: [ '@keyvalue']
+    parent: default_plugin_manager

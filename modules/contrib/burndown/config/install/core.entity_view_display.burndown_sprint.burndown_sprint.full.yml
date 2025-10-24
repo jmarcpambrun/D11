@@ -1,0 +1,44 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.burndown_sprint.full
+  module:
+    - burndown
+    - datetime
+id: burndown_sprint.burndown_sprint.full
+targetEntityType: burndown_sprint
+bundle: burndown_sprint
+mode: full
+content:
+  end_date:
+    label: inline
+    type: datetime_default
+    settings:
+      timezone_override: ''
+      format_type: short
+    weight: 2
+    region: content
+    third_party_settings: {  }
+  name:
+    label: hidden
+    type: string
+    weight: 0
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  start_date:
+    label: inline
+    type: datetime_default
+    settings:
+      timezone_override: ''
+      format_type: short
+    weight: 1
+    region: content
+    third_party_settings: {  }
+hidden:
+  project: true
+  sort_order: true
+  status: true
+  user_id: true

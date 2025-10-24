@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.attachment
+    - node.type.mail_box_content
+  module:
+    - file
+id: node.mail_box_content.attachment
+field_name: attachment
+entity_type: node
+bundle: mail_box_content
+label: Attachment
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  file_extensions: txt
+  file_directory: '[date:custom:Y]-[date:custom:m]'
+  max_filesize: ''
+  description_field: 0
+  handler: 'default:file'
+  handler_settings: {  }
+field_type: file

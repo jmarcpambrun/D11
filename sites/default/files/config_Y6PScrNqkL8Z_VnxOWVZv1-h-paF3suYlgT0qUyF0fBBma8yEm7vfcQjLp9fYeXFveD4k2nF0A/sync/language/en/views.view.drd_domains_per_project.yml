@@ -1,0 +1,36 @@
+label: 'DRD Domains per Project'
+display:
+  default:
+    display_title: Master
+    display_options:
+      exposed_form:
+        options:
+          submit_button: Apply
+          reset_button_label: Reset
+          exposed_sorts_label: 'Sort by'
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      fields:
+        version:
+          label: Version
+          separator: ', '
+        status_label:
+          label: 'Update Status'
+        domain:
+          label: Domains
+          separator: ', '
+        name_2:
+          label: Name
+        name:
+          label: Core
+          separator: ', '
+        name_1:
+          label: Host
+          separator: ', '
+      arguments:
+        id:
+          exception:
+            title: All
+      title: 'Versions and Domains'
+  entity_view_1:
+    display_title: EVA

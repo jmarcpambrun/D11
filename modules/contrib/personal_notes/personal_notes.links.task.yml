@@ -1,0 +1,27 @@
+personal_notes.notes_tab:
+  route_name: view.user_personal_notes.page_1
+  title: 'Notes'
+  base_route: entity.user.canonical
+  class: '\Drupal\personal_notes\Plugin\Menu\UserNotesTab'
+  weight: 14
+
+personal_notes.settings_tab:
+  route_name: entity.personal_notes.collection
+  title: 'Collection'
+  base_route: entity.personal_notes.collection
+
+personal_notes.canonical:
+  title: 'View'
+  route_name: entity.personal_note.canonical
+  base_route: entity.personal_note.canonical
+
+personal_notes.edit_form:
+  title: 'Edit'
+  route_name: entity.personal_note.edit_form
+  base_route: entity.personal_note.canonical
+
+personal_notes.delete_form:
+  title: 'Delete'
+  route_name: entity.personal_note.delete_form
+  base_route: entity.personal_note.canonical
+  weight: 10

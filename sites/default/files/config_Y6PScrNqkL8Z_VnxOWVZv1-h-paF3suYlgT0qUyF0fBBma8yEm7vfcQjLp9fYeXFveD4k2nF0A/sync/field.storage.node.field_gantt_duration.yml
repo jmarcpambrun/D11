@@ -1,0 +1,22 @@
+uuid: 01cd8a3f-bbe0-49a0-ab0b-c73187bc872d
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+_core:
+  default_config_hash: Bnfk6C8mz4NJgwSimPCCH6THh-r1h9T4Y0AeAbsXCv0
+id: node.field_gantt_duration
+field_name: field_gantt_duration
+entity_type: node
+type: integer
+settings:
+  unsigned: false
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

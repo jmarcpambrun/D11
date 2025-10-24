@@ -1,0 +1,11 @@
+uuid: 05262474-4125-4023-9573-316f4b247693
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.users_by_department
+id: node.users_by_department
+target_entity_type_id: node
+target_bundle: users_by_department
+default_langcode: site_default
+language_alterable: false

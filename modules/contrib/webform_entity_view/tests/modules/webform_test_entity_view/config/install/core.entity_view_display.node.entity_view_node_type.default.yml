@@ -1,0 +1,36 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.entity_view_node_type.field_one
+    - field.field.node.entity_view_node_type.field_two
+    - node.type.entity_view_node_type
+  module:
+    - user
+id: node.entity_view_node_type.default
+targetEntityType: node
+bundle: entity_view_node_type
+mode: default
+content:
+  field_one:
+    weight: 0
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_two:
+    weight: 1
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  addtoany: true
+  created: true
+  langcode: true
+  links: true
+  search_api_excerpt: true

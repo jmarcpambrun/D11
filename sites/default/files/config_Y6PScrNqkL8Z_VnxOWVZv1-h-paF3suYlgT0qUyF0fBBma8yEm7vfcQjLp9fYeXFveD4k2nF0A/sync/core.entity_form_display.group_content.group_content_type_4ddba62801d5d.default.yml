@@ -1,0 +1,47 @@
+uuid: 0a5657a8-9c53-49bd-8a6e-7ab4e8a07e9c
+langcode: fr
+status: true
+dependencies:
+  config:
+    - group.content_type.group_content_type_4ddba62801d5d
+  module:
+    - path
+id: group_content.group_content_type_4ddba62801d5d.default
+targetEntityType: group_content
+bundle: group_content_type_4ddba62801d5d
+mode: default
+content:
+  entity_id:
+    type: entity_reference_autocomplete
+    weight: 1
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 0
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 3
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden: {  }

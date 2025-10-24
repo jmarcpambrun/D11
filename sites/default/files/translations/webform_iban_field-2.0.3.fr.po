@@ -1,0 +1,18 @@
+# French translation of Webform IBAN field (2.0.3)
+# Copyright (c) 2025 by the French translation team
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Webform IBAN field (2.0.3)\n"
+"POT-Creation-Date: 2025-10-07 06:46+0000\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Language-Team: French\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+msgid "Webform"
+msgstr "Webform"
+msgid "Advanced elements"
+msgstr "Éléments avancés"

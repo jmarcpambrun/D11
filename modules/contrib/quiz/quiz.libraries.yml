@@ -1,0 +1,29 @@
+styles:
+  css:
+    theme:
+      css/quiz.css: {}
+confirm:
+  js:
+    js/confirm.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
+jumper:
+  js:
+    js/jumper.js: {}
+countdown:
+  remote: https://github.com/hilios/jQuery.countdown
+  version: 2.2.0
+  js:
+    /libraries/jquery-countdown/dist/jquery.countdown.min.js: { minified: true }
+    js/countdown.timer.js: {}
+  license:
+    name: MIT
+    url: https://github.com/hilios/jQuery.countdown/blob/master/LICENSE.md
+    gpl-compatible: true
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once

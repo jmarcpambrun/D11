@@ -1,0 +1,18 @@
+uuid: 1fab77a7-37df-4c45-84e1-06a66a126c4e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.qure_inputs
+id: node.qure_inputs.title
+field_name: title
+entity_type: node
+bundle: qure_inputs
+label: 'Qure Inputs'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

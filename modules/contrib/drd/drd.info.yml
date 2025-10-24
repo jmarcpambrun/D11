@@ -1,0 +1,27 @@
+name: Drupal Remote Dashboard
+type: module
+description: Dashboard to monitor and manage any number of remote Drupal 6, 7 or 8 sites
+package: DRD
+dependencies:
+  - advancedqueue:advancedqueue
+  - drd_agent:drd_agent
+  - drupal:taxonomy
+  - drupal:update
+  - drupal:views
+  - encrypt:encrypt
+  - eva:eva
+  - key_value_field:key_value_field
+recommends:
+  - extlink:extlink
+  - hacked:hacked
+  - monitoring:monitoring
+  - real_aes:real_aes
+  - security_review:security_review
+configure: drd.main
+core_version_requirement: ^10 || ^11
+# project: drd
+
+# Information added by Drupal.org packaging script on 2025-03-07
+version: '4.1.7'
+project: 'drd'
+datestamp: 1741339424

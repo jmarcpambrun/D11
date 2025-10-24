@@ -1,0 +1,12 @@
+name: Webform Entity View
+description: Displays an entity selected in a webform element.
+package: Webform
+core_version_requirement: ^10.1 || ^11
+type: module
+dependencies:
+  - webform:webform
+
+# Information added by Drupal.org packaging script on 2025-05-12
+version: '1.0.4'
+project: 'webform_entity_view'
+datestamp: 1747060996

@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Contains protect_form_flood_control.module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function protect_form_flood_control_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the protect_form_flood_control module.
+    case 'help.page.protect_form_flood_control':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provide flood control protection on any form.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function protect_form_flood_control_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  /** @var \Drupal\protect_form_flood_control\ManagerInterface $manager */
+  $manager = \Drupal::service('protect_form_flood_control.manager');
+  $manager->alterForm($form, $form_state, $form_id);
+}
+
+/**
+ * Custom callback to validate submissions based on flood control.
+ * @See Manager->alterForm().
+ */
+function _protect_form_flood_control_validate_element(array &$element, FormStateInterface $form_state, array &$complete_form) {
+  /** @var \Drupal\protect_form_flood_control\ManagerInterface $manager */
+  $manager = \Drupal::service('protect_form_flood_control.manager');
+  $form_id = $form_state->getValue('form_id');
+  $configuration = $manager->getFormConfiguration($form_state, $form_id);
+  $window = $configuration['window'];
+  $threshold = $configuration['threshold'];
+  $form_id_truncated = $manager->truncateFormId($form_id);
+  if (!empty($window) && !empty($threshold)) {
+    if (!$manager->getFlood()->isAllowed($form_id_truncated, $threshold, $window)) {
+      $form_state->setError($complete_form, t('You cannot submit the form more than @threshold times in @window. Please, try again later.', [
+        '@threshold' => $threshold,
+        '@window' => $manager->getDateFormatter()->formatInterval($window),
+      ]));
+      if ($manager->shouldLogBlockedSubmissions()) {
+        $manager->logBlockedSubmission($form_id, (int) $window, (int) $threshold);
+      }
+    }
+    else {
+      $manager->getFlood()->register($form_id_truncated, $window);
+    }
+  }
+}

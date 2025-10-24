@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - burndown
+id: burndown_task.teaser
+label: Teaser
+targetEntityType: burndown_task
+cache: true

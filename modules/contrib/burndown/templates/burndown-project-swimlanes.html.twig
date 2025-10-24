@@ -1,0 +1,23 @@
+
+<a
+  class="button button-action"
+  href="{{ url('<front>') }}burndown/swimlane/add?shortcode={{ data.shortcode }}&destination={{ url('<front>') }}burndown/reorder_swimlanes/{{ data.shortcode }}">
+  Add Swimlane to {{ data.shortcode }}
+</a>
+
+<div id="board" class="row">
+
+  {% for swimlane in data.swimlanes %}
+    <div class="col swimlane" data-swimlane-id="{{ swimlane.swimlane_id }}">
+      <span class="label">
+        <a
+          title="Edit Swimlane"
+          href="{{ url('<front>') }}burndown/swimlane/{{ swimlane.swimlane_id }}/edit?destination={{ url('<front>') }}burndown/reorder_swimlanes/{{ data.shortcode }}">
+        {{ swimlane.swimlane_name }}
+        </a>
+      </span>
+    </div>
+
+  {% endfor %}
+
+</div>

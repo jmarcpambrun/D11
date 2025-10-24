@@ -1,0 +1,11 @@
+# Define the event_scheduler config file data structure.
+event_scheduler.settings:
+  type: config_object
+  label: 'Event scheduler'
+  mapping:
+    enabled:
+      type: bool
+      label: 'Enabled'
+    logging:
+      type: bool
+      label: 'Logging'

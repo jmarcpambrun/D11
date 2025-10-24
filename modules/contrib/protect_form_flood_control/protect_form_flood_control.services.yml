@@ -1,0 +1,7 @@
+services:
+  logger.channel.protect_form_flood_control:
+    parent: logger.channel_base
+    arguments: ['protect_form_flood_control']
+  protect_form_flood_control.manager:
+    class: Drupal\protect_form_flood_control\Manager
+    arguments: ['@flood', '@config.factory', '@datetime.time', '@date.formatter', '@request_stack', '@current_user', '@path.matcher', '@messenger', '@logger.channel.protect_form_flood_control']

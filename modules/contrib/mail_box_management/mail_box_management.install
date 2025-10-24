@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * @file
+ * File mail_box_management.install file.
+ *
+ * File mail_box_management.install file.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function mail_box_management_schema(): array {
+  $schema = [];
+
+  $schema['mail_box_local_storage'] = [
+    'description' => 'All mail address in mailbox',
+    'fields' => [
+      'lid' => [
+        'type' => 'serial',
+        'description' => 'mail address id',
+        'unique' => TRUE,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'mailbox_namespace' => [
+        'type' => 'varchar',
+        'description' => 'email address',
+        'unique' => TRUE,
+        'not null' => TRUE,
+        'length' => 255,
+      ],
+      'content_yml' => [
+        'type' => 'text',
+        'description' => 'contents',
+        'unique' => FALSE,
+        'not null' => TRUE,
+      ],
+      'message_no' => [
+        'type' => 'int',
+        'description' => 'msgno value',
+        'unique' => FALSE,
+        'not null' => FALSE,
+        'length' => 5,
+      ],
+      'owner_id' => [
+        'type' => 'int',
+        'description' => 'uid value',
+        'unique' => FALSE,
+        'not null' => FALSE,
+        'length' => 5,
+      ],
+    ],
+    'primary key' => ['lid'],
+  ];
+
+  return $schema;
+}

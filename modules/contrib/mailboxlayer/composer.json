@@ -1,0 +1,21 @@
+{
+  "name": "drupal/mailboxlayer",
+  "description": "Integrate the mailboxlayer in webform email fields.",
+  "type": "drupal-module",
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/mailboxlayer",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Kunal Singh",
+      "homepage": "https://www.drupal.org/u/kunal_singh"
+    }
+  ],
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/mailboxlayer",
+    "source": "https://git.drupalcode.org/project/mailboxlayer"
+  },
+  "require": {
+    "drupal/webform": "^5.0 || ^6.0"
+  }
+}

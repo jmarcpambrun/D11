@@ -1,0 +1,16 @@
+/**
+ * @file
+ * Styling for Burndown module icons.
+ */
+
+/**
+ * Toolbar tab icon.
+ */
+.toolbar-bar .toolbar-icon-burndown-dashboard:before {
+  background-image: url('../icons/787878_burndown.png');
+}
+.toolbar-bar .toolbar-icon-burndown-dashboard:active:before,
+.toolbar-bar .toolbar-icon-burndown-dashboard:hover:before,
+.toolbar-bar .toolbar-icon-burndown-dashboard.is-active:before {
+  background-image: url('../icons/787878_burndown.png');
+}

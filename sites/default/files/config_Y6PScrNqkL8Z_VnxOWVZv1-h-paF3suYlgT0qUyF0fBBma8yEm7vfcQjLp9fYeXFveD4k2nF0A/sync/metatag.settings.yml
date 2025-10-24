@@ -1,0 +1,343 @@
+entity_type_groups:
+  aggregator_feed:
+    aggregator_feed:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  burndown_sprint:
+    burndown_sprint:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  burndown_task:
+    task:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  burndown_swimlane:
+    burndown_swimlane:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  burndown_project:
+    project:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  content_kanban_log:
+    content_kanban_log:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  group:
+    dpalicepeio_regsitered:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  group_content:
+    group_content_type_45b2955d03aff:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_4ddba62801d5d:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_72ffa1a47c43e:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_7c1751c3df908:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_7c1df6d908df0:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_96f5411c45aa8:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    group_content_type_c10611ba5c4f2:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  media:
+    audio:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    document:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    image:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    remote_video:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    video:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  node:
+    article:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    book:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    forum:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    page:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    webform:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  paragraphs_library_item:
+    paragraphs_library_item:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  path_alias:
+    path_alias:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  private_message_thread:
+    private_message_thread:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  private_message:
+    private_message:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  quiz_question:
+    directions:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    long_answer:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    matching:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    multichoice:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    page:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    short_answer:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    truefalse:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  quiz_question_relationship:
+    quiz_question_relationship:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  quiz_result_answer:
+    directions:
+      basic: basic
+      google_plus: google_plus
+      site_verification: site_verification
+      google_cse: google_cse
+    long_answer:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    matching:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    multichoice:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    page:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    short_answer:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    truefalse:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  quiz:
+    quiz:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  quiz_result:
+    quiz_result:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  taxonomy_term:
+    forums:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    tags:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  user:
+    user:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+  webform_submission:
+    contact:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    example_options_custom:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    ma_premiere_webform:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_contact:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_employee_evaluation:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_feedback:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_issue:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_job_application:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_job_seeker_profile:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_medical_appointment:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_registration:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_session_evaluation:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_subscribe:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+    template_user_profile:
+      basic: basic
+      site_verification: site_verification
+      google_cse: google_cse
+      mobile: mobile
+tag_trim_method: beforeValue
+tag_trim_maxlength:
+  metatag_maxlength_abstract: null
+  metatag_maxlength_title: null
+  metatag_maxlength_description: null
+  metatag_maxlength_google_plus_name: null
+  metatag_maxlength_google_plus_description: null
+  metatag_maxlength_og_title: null
+  metatag_maxlength_og_site_name: null
+  metatag_maxlength_og_description: null

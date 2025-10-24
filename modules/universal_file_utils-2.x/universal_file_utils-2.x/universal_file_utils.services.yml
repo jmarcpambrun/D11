@@ -1,0 +1,4 @@
+services:
+  universal_file_utils.operations:
+    class: Drupal\universal_file_utils\UniversalFileOperations
+    arguments: ['@entity_type.manager', '@file.usage', '@datetime.time', '@file_system']
