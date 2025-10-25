@@ -28,6 +28,14 @@ class ApiSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+	  
+	$form['api_org'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Organization ID'),
+      '#default_value' => $this->config('openai.settings')->get('api_org'),
+      '#description' => $this->t('The organization ID on your OpenAI account. This is required for some OpenAI services to work correctly.'),
+    ];
+	
     $form['api_key'] = [
       '#required' => TRUE,
       '#type' => 'textfield',
@@ -36,13 +44,6 @@ class ApiSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.', [':link' => 'https://openai.com/api']),
 	   '#maxlength' => 256, // Set the maximum length of the input field to 256 characters
 	];
-
-    $form['api_org'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Organization ID'),
-      '#default_value' => $this->config('openai.settings')->get('api_org'),
-      '#description' => $this->t('The organization ID on your OpenAI account. This is required for some OpenAI services to work correctly.'),
-    ];
 
     $form['message'] = [
       '#markup' => '<p>If you recently renewed or added more funds to OpenAI, please note that it can take a few hours for API access to be restored.</p>',
@@ -59,6 +60,9 @@ class ApiSettingsForm extends ConfigFormBase {
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_org', $form_state->getValue('api_org'))
       ->save();
+	  
+	\Drupal::service('page_cache_kill_switch')->trigger();
+	  
     parent::submitForm($form, $form_state);
   }
 

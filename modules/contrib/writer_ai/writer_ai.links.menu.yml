@@ -1,0 +1,5 @@
+writer_ai.settings_menu:
+  title: "Writer AI Authentication"
+  description: "Setup Writer AI"
+  route_name: writer_ai.settings_form
+  parent: ai.admin_providers

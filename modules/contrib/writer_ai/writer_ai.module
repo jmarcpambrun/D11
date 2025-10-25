@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ * Writer AI module hooks and functions.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function writer_ai_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.writer_ai':
+      return '<p>' . t('Writer AI provider for the AI module, including vision capabilities for image analysis and alt text generation.') . '</p>';
+  }
+}

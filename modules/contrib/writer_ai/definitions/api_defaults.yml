@@ -1,0 +1,88 @@
+chat:
+  input:
+    description: 'Messages sent to the Writer model.'
+    type: 'array'
+    default:
+      - { role: "system", content: "You are a helpful assistant." }
+      - { role: "user", content: "Introduce yourself!" }
+    required: true
+  authentication:
+    description: 'Writer API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    model:
+      label: 'Model'
+      description: 'The Writer AI model to use.'
+      type: 'string'
+      default: 'palmyra-x5'
+      required: true
+    max_tokens:
+      label: 'Max Tokens'
+      description: 'Maximum tokens to generate.'
+      type: 'integer'
+      default: 512
+      required: false
+      constraints:
+        min: 1
+        max: 4096
+    temperature:
+      label: 'Temperature'
+      description: 'Sampling temperature 0-1.'
+      type: 'float'
+      default: 0.7
+      required: false
+      constraints:
+        min: 0
+        max: 2
+        step: 0.1
+    top_p:
+      label: 'Top P'
+      description: 'Nucleus sampling parameter.'
+      type: 'float'
+      default: 1
+      required: false
+      constraints:
+        min: 0
+        max: 1
+        step: 0.1
+
+chat_with_image_vision:
+  input:
+    description: 'Messages with images sent to the Writer vision model.'
+    type: 'array'
+    default:
+      - { role: "user", content: "Describe this image." }
+    required: true
+  authentication:
+    description: 'Writer API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    model:
+      label: 'Model'
+      description: 'The Writer AI model to use for vision tasks.'
+      type: 'string'
+      default: 'palmyra-x5'
+      required: true
+    max_tokens:
+      label: 'Max Tokens'
+      description: 'Maximum tokens to generate.'
+      type: 'integer'
+      default: 512
+      required: false
+      constraints:
+        min: 1
+        max: 4096
+    temperature:
+      label: 'Temperature'
+      description: 'Sampling temperature 0-1.'
+      type: 'float'
+      default: 0.7
+      required: false
+      constraints:
+        min: 0
+        max: 2
+        step: 0.1
