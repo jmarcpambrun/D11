@@ -4,13 +4,6 @@ parameters:
   level: 6
   # Unfortunately some doc types are not correct in Views.
   treatPhpDocTypesAsCertain: false
-  ergebnis:
-    noParameterPassedByReference:
-      enabled: false
-    final:
-      enabled: false
-    noAssignByReference:
-      enabled: false
   fileExtensions:
     - php
     - module

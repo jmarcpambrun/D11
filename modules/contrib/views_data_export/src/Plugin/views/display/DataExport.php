@@ -615,12 +615,7 @@ class DataExport extends RestExport {
     $clone->setArguments($this->view->args);
     $clone->setDisplay($this->display['id']);
     $clone->buildTitle();
-    $displays = $clone->storage->get('display');
     $title = $clone->getTitle();
-
-    if (!empty($displays[$this->display['id']])) {
-      $title = $displays[$this->display['id']]['display_title'];
-    }
 
     if ($plugin = $clone->display_handler->getPlugin('style')) {
       if ($clone->hasUrl()) {

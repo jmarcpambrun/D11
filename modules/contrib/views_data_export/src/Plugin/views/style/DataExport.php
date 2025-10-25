@@ -297,6 +297,7 @@ class DataExport extends Serializer {
       '#theme' => 'export_icon',
       '#url' => $url,
       '#format' => mb_strtoupper($format),
+      '#title' => $title,
       '#theme_wrappers' => [
         'container' => [
           '#attributes' => [

@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 /**
  * Defines VBO action processor.
  */
-final class ViewsBulkOperationsActionProcessor implements ViewsBulkOperationsActionProcessorInterface {
+class ViewsBulkOperationsActionProcessor implements ViewsBulkOperationsActionProcessorInterface {
 
   use StringTranslationTrait;
 

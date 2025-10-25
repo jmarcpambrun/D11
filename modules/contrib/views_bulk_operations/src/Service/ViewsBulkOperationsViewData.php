@@ -20,7 +20,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * Gets Views data needed by VBO.
  */
-final class ViewsBulkOperationsViewData implements ViewsBulkOperationsViewDataInterface {
+class ViewsBulkOperationsViewData implements ViewsBulkOperationsViewDataInterface {
 
   use ViewsBulkOperationsBulkFormKeyTrait;
 

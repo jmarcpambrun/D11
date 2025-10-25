@@ -864,7 +864,7 @@ class ViewsBulkOperationsBulkForm extends FieldPluginBase implements CacheableDe
    * @return array
    *   An associative array of operations, suitable for a select element.
    */
-  private function getBulkOptions(): array {
+  protected function getBulkOptions(): array {
     if ($this->bulkOptions !== NULL) {
       return $this->bulkOptions;
     }

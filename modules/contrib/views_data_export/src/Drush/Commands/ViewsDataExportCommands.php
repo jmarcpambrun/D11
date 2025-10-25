@@ -13,16 +13,14 @@ use Drupal\views\Views;
 use Drupal\views_data_export\BatchProcessingAdapterDrush;
 use Drupal\views_data_export\Plugin\views\display\DataExport;
 use Drush\Attributes as CLI;
-use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Provides Drush commands for exporting views.
  */
 class ViewsDataExportCommands extends DrushCommands {
-
-  use AutowireTrait;
 
   /**
    * Constructs a new ViewsDataExportCommands object.
@@ -32,6 +30,22 @@ class ViewsDataExportCommands extends DrushCommands {
     protected AccountSwitcherInterface $accountSwitcher,
   ) {
     parent::__construct();
+  }
+
+  /**
+   * Instantiates a new instance of this class.
+   *
+   * @param \Psr\Container\ContainerInterface $container
+   *   The service container this instance should use.
+   *
+   * @return static
+   *   A new class instance.
+   */
+  public static function create(ContainerInterface $container): static {
+    return new static(
+      $container->get('file_system'),
+      $container->get('account_switcher'),
+    );
   }
 
   /**

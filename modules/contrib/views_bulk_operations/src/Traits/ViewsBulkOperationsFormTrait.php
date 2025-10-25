@@ -43,7 +43,7 @@ trait ViewsBulkOperationsFormTrait {
   /**
    * Add data needed for entity list rendering.
    */
-  private function addListData(array &$form_data): void {
+  protected function addListData(array &$form_data): void {
     $form_data['entity_labels'] = [];
     if (\count($form_data['list']) !== 0) {
       $form_data['selected_count'] = \count($form_data['list']);
@@ -71,7 +71,7 @@ trait ViewsBulkOperationsFormTrait {
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup | null
    *   The selection info title.
    */
-  private function getSelectionInfoTitle(array $tempstore_data): ?TranslatableMarkup {
+  protected function getSelectionInfoTitle(array $tempstore_data): ?TranslatableMarkup {
     if (\count($tempstore_data['list']) !== 0) {
       $exclude_mode = \array_key_exists('exclude_mode', $tempstore_data) && $tempstore_data['exclude_mode'] === TRUE;
       return $exclude_mode ? $this->t('Selected all items except:') : $this->t('Items selected:');
@@ -88,7 +88,7 @@ trait ViewsBulkOperationsFormTrait {
    * @return array
    *   Renderable array of the item list.
    */
-  private function getMultipageList(array $tempstore_data): array {
+  protected function getMultipageList(array $tempstore_data): array {
     $this->addListData($tempstore_data);
     $list = $this->getListRenderable($tempstore_data);
     return $list;
@@ -103,7 +103,7 @@ trait ViewsBulkOperationsFormTrait {
    * @return array
    *   Renderable list array.
    */
-  private function getListRenderable(array $form_data): array {
+  protected function getListRenderable(array $form_data): array {
     $renderable = [
       '#theme' => 'item_list',
       '#items' => $form_data['entity_labels'],
@@ -139,7 +139,7 @@ trait ViewsBulkOperationsFormTrait {
    * @return array
    *   Entity list item.
    */
-  private function getListItem($bulkFormKey): ?array {
+  protected function getListItem($bulkFormKey): ?array {
     $decoded = \base64_decode($bulkFormKey, TRUE);
     if ($decoded === FALSE) {
       return NULL;
@@ -157,7 +157,7 @@ trait ViewsBulkOperationsFormTrait {
    * @param array $form
    *   The form definition.
    */
-  private function addCancelButton(array &$form): void {
+  protected function addCancelButton(array &$form): void {
     $form['actions']['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),

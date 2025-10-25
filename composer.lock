@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e38d9be549cc2efd0c967f086d5bb9e8",
+    "content-hash": "9c81e22794050f977fb8f1f75c222e7c",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -1588,16 +1588,16 @@
         },
         {
             "name": "doctrine/collections",
-            "version": "2.3.0",
+            "version": "2.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/collections.git",
-                "reference": "2eb07e5953eed811ce1b309a7478a3b236f2273d"
+                "reference": "9acfeea2e8666536edff3d77c531261c63680160"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/collections/zipball/2eb07e5953eed811ce1b309a7478a3b236f2273d",
-                "reference": "2eb07e5953eed811ce1b309a7478a3b236f2273d",
+                "url": "https://api.github.com/repos/doctrine/collections/zipball/9acfeea2e8666536edff3d77c531261c63680160",
+                "reference": "9acfeea2e8666536edff3d77c531261c63680160",
                 "shasum": ""
             },
             "require": {
@@ -1606,11 +1606,11 @@
                 "symfony/polyfill-php84": "^1.30"
             },
             "require-dev": {
-                "doctrine/coding-standard": "^12",
+                "doctrine/coding-standard": "^14",
                 "ext-json": "*",
-                "phpstan/phpstan": "^1.8",
-                "phpstan/phpstan-phpunit": "^1.0",
-                "phpunit/phpunit": "^10.5"
+                "phpstan/phpstan": "^2.1.30",
+                "phpstan/phpstan-phpunit": "^2.0.7",
+                "phpunit/phpunit": "^10.5.58 || ^11.5.42 || ^12.4"
             },
             "type": "library",
             "autoload": {
@@ -1654,7 +1654,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/collections/issues",
-                "source": "https://github.com/doctrine/collections/tree/2.3.0"
+                "source": "https://github.com/doctrine/collections/tree/2.4.0"
             },
             "funding": [
                 {
@@ -1670,7 +1670,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-03-22T10:17:19+00:00"
+            "time": "2025-10-25T09:18:13+00:00"
         },
         {
             "name": "doctrine/common",
@@ -2396,35 +2396,36 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.1.1",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.1.1"
+                "reference": "1.2.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.1.1.zip",
-                "reference": "1.1.1",
-                "shasum": "bd01919cc1432337c2e090a2a442b408df0c7a77"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.2.1.zip",
+                "reference": "1.2.1",
+                "shasum": "1d80e4bc9f6c263f0abf0ca0a7f97a57e746c13a"
             },
             "require": {
-                "drupal/core": "^10.2 || ^11",
+                "drupal/core": "^10.4 || ^11",
                 "drupal/key": "^1.18",
                 "league/html-to-markdown": "^5.1",
+                "openai-php/client": ">=v0.10.1",
                 "yethee/tiktoken": "^0.5.1"
             },
             "require-dev": {
                 "allanpichardo/mysql-vector": "^2.0",
                 "drupal/ai_assistant_api": "*",
-                "drupal/ai_search-ai_search": "*",
                 "drupal/eca": "^2.0",
                 "drupal/eca_content-eca_content": "*",
                 "drupal/field_validation": "^3.0@beta",
                 "drupal/key": "*",
                 "drupal/search_api": "^1.x-dev",
                 "drupal/search_api_solr": "^4.0",
-                "drupal/token": "^1.14"
+                "drupal/token": "^1.14",
+                "drush/drush": "^12|^13"
             },
             "suggest": {
                 "league/commonmark": "Allows previewing of chunked content when configuring the fields to be indexed in AI Search, and formats messages in the AI Chatbot module."
@@ -2432,8 +2433,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.1",
-                    "datestamp": "1752063616",
+                    "version": "1.2.1",
+                    "datestamp": "1760514350",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -2474,6 +2475,10 @@
                     "homepage": "https://www.drupal.org/user/385947"
                 },
                 {
+                    "name": "murz",
+                    "homepage": "https://www.drupal.org/user/157092"
+                },
+                {
                     "name": "scott_euser",
                     "homepage": "https://www.drupal.org/user/3267594"
                 },
@@ -2502,29 +2507,28 @@
         },
         {
             "name": "drupal/ai_provider_openai",
-            "version": "1.0.1",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_provider_openai.git",
-                "reference": "1.0.1"
+                "reference": "1.2.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_provider_openai-1.0.1.zip",
-                "reference": "1.0.1",
-                "shasum": "a29de1c00963d018430320a3b8202f100f9b7c81"
+                "url": "https://ftp.drupal.org/files/projects/ai_provider_openai-1.2.0.zip",
+                "reference": "1.2.0",
+                "shasum": "de8caa2a9adb0cece69d2f36b27afaeeb1c3eadf"
             },
             "require": {
-                "drupal/ai": "^1.0.0",
+                "drupal/ai": "^1.2.0",
                 "drupal/core": "^10.3 || ^11",
-                "drupal/key": "^1.18",
-                "openai-php/client": ">=v0.10.1"
+                "drupal/key": "^1.18"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.1",
-                    "datestamp": "1736872381",
+                    "version": "1.2.0",
+                    "datestamp": "1760354152",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -2889,17 +2893,17 @@
         },
         {
             "name": "drupal/bpmn_io",
-            "version": "2.0.10",
+            "version": "2.0.11",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bpmn_io.git",
-                "reference": "2.0.10"
+                "reference": "2.0.11"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bpmn_io-2.0.10.zip",
-                "reference": "2.0.10",
-                "shasum": "3068bbb5ea4df08279390d5749d62b3b1bcda654"
+                "url": "https://ftp.drupal.org/files/projects/bpmn_io-2.0.11.zip",
+                "reference": "2.0.11",
+                "shasum": "14dc9b46f136a8b0fbd5966d24930e66df3acbe1"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -2910,8 +2914,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.10",
-                    "datestamp": "1751531607",
+                    "version": "2.0.11",
+                    "datestamp": "1761319344",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4271,17 +4275,17 @@
         },
         {
             "name": "drupal/eca",
-            "version": "2.1.10",
+            "version": "2.1.15",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "2.1.10"
+                "reference": "2.1.15"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-2.1.10.zip",
-                "reference": "2.1.10",
-                "shasum": "eaae440d51c17178340cebc21af62f5792b7026b"
+                "url": "https://ftp.drupal.org/files/projects/eca-2.1.15.zip",
+                "reference": "2.1.15",
+                "shasum": "3fe29c622a04a4b5d7de69684bf861f3081b8cee"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
@@ -4292,19 +4296,21 @@
                 "php": ">=8.1"
             },
             "require-dev": {
+                "drupal/ai": "^1.2",
+                "drupal/ai_agents": "^1.2",
                 "drupal/eca_ui": "*",
                 "drupal/entity_reference_revisions": "^1.12",
                 "drupal/inline_entity_form": "^3.0",
                 "drupal/paragraphs": "^1.18",
                 "drupal/project_browser": "^2.0",
                 "drupal/token": "^1.15",
-                "drupal/webform": "dev-3465838-drupal-11-compatibility"
+                "drupal/webform": "^6.3"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.1.10",
-                    "datestamp": "1751524996",
+                    "version": "2.1.15",
+                    "datestamp": "1761318766",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -9074,17 +9080,17 @@
         },
         {
             "name": "drupal/views_bulk_operations",
-            "version": "4.4.3",
+            "version": "4.4.4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/views_bulk_operations.git",
-                "reference": "4.4.3"
+                "reference": "4.4.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/views_bulk_operations-4.4.3.zip",
-                "reference": "4.4.3",
-                "shasum": "127b21b2d72fef9afb41fd839fb06d0e31d52827"
+                "url": "https://ftp.drupal.org/files/projects/views_bulk_operations-4.4.4.zip",
+                "reference": "4.4.4",
+                "shasum": "bd8e9c1af14526cd67be91390696b0e0d614ca7e"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11"
@@ -9093,8 +9099,8 @@
                 "drush/drush": "<12.5.1"
             },
             "require-dev": {
+                "drupal/coder": "^8.3.16",
                 "drush/drush": "^12 || ^13",
-                "ergebnis/phpstan-rules": "^2",
                 "phpstan/phpstan-deprecation-rules": "^2",
                 "phpstan/phpstan-strict-rules": "^2"
             },
@@ -9104,8 +9110,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.4.3",
-                    "datestamp": "1761141954",
+                    "version": "4.4.4",
+                    "datestamp": "1761317826",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -9140,31 +9146,36 @@
         },
         {
             "name": "drupal/views_data_export",
-            "version": "1.4.0",
+            "version": "1.8.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/views_data_export.git",
-                "reference": "8.x-1.4"
+                "reference": "8.x-1.8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/views_data_export-8.x-1.4.zip",
-                "reference": "8.x-1.4",
-                "shasum": "70dede9fdf50601232f068e67309d361341e88c5"
+                "url": "https://ftp.drupal.org/files/projects/views_data_export-8.x-1.8.zip",
+                "reference": "8.x-1.8",
+                "shasum": "4a82d6defc226f208193fe3632253db2a2113608"
             },
             "require": {
-                "drupal/core": "^9 || ^10",
-                "drupal/csv_serialization": "~1.4 || ~2.0 || ~3 || ~4"
+                "drupal/core": "^9 || ^10 || ^11",
+                "drupal/csv_serialization": "~1.4 || ~2.0 || ~3 || ~4",
+                "php": ">=8.1"
+            },
+            "conflict": {
+                "phpoffice/phpspreadsheet": "<1.23.0"
             },
             "require-dev": {
+                "drupal/facets": "~3.0",
                 "drupal/search_api": "~1.12",
                 "drupal/xls_serialization": "~1.0"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.4",
-                    "datestamp": "1698948991",
+                    "version": "8.x-1.8",
+                    "datestamp": "1761320258",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -9173,7 +9184,7 @@
             },
             "notification-url": "https://packages.drupal.org/8/downloads",
             "license": [
-                "GPL-2.0+"
+                "GPL-2.0-or-later"
             ],
             "authors": [
                 {

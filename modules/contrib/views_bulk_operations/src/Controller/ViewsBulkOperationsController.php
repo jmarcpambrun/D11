@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * Defines VBO controller class.
  */
-final class ViewsBulkOperationsController extends ControllerBase implements ContainerInjectionInterface {
+class ViewsBulkOperationsController extends ControllerBase implements ContainerInjectionInterface {
 
   use ViewsBulkOperationsFormTrait;
 
