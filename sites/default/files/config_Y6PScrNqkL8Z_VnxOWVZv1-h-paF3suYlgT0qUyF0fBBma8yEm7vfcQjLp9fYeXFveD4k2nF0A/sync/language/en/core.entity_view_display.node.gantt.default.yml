@@ -1,7 +1,0 @@
-content:
-  field_gantt_date:
-    settings:
-      separator: '-'
-  field_gantt_planned_date:
-    settings:
-      separator: '-'

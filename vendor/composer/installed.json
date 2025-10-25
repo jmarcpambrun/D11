@@ -10526,6 +10526,65 @@
             "install-path": "../../modules/contrib/webform_views"
         },
         {
+            "name": "drupal/writer_ai",
+            "version": "1.0.0-alpha2",
+            "version_normalized": "1.0.0.0-alpha2",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/writer_ai.git",
+                "reference": "1.0.0-alpha2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/writer_ai-1.0.0-alpha2.zip",
+                "reference": "1.0.0-alpha2",
+                "shasum": "cfa515e314b6d1ecd4836f96092542867038c32b"
+            },
+            "require": {
+                "drupal/ai": "*",
+                "drupal/core": "^10 || ^11",
+                "drupal/key": "*",
+                "php": ">=8.1"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.0-alpha2",
+                    "datestamp": "1755605468",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Drupal\\writer_ai\\": "src/"
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "anjaliprasannan",
+                    "homepage": "https://www.drupal.org/user/3637917"
+                },
+                {
+                    "name": "guptahemant",
+                    "homepage": "https://www.drupal.org/user/3278073"
+                }
+            ],
+            "description": "AI Provider for Writer.com API",
+            "homepage": "https://www.drupal.org/project/writer_ai",
+            "support": {
+                "source": "https://git.drupalcode.org/project/writer_ai"
+            },
+            "install-path": "../../modules/contrib/writer_ai"
+        },
+        {
             "name": "drupal/xmlsitemap",
             "version": "1.5.0",
             "version_normalized": "1.5.0.0",

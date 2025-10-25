@@ -1,7 +1,0 @@
-uuid: 16afde01-33ff-4e5c-bcf5-66ef890acc66
-langcode: fr
-status: true
-dependencies: {  }
-id: article
-label: Article
-color: '#0074bd'
