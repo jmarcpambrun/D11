@@ -1,21 +1,13 @@
 /**
  * @file
- * Seven styles for the System Status general info.
+ * Styles for the system status general info.
  */
-
-.system-status-general-info {
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
 
 .system-status-general-info__header {
   overflow: hidden;
   margin: 0;
   padding: 10px;
   text-transform: uppercase;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
-  background-color: #f5f5f2;
   font-size: 14px;
 }
 
@@ -33,6 +25,7 @@
   height: 45px;
   vertical-align: top;
 }
+
 .system-status-general-info__item-icon::before {
   display: block;
   width: 100%;
@@ -42,19 +35,24 @@
   background-position: 50% center;
   background-size: 35px;
 }
+
 .system-status-general-info__item-icon--drupal::before {
   background-image: url(../../images/logo/drupal-logo.svg);
 }
+
 .system-status-general-info__item-icon--clock::before {
   background-image: url(../../images/icons/cccccc/clock.svg);
 }
+
 .system-status-general-info__item-icon--server::before {
   background-image: url(../../images/icons/cccccc/server.svg);
 }
+
 .system-status-general-info__item-icon--php::before {
   background-image: url(../../images/icons/cccccc/php-logo.svg);
   background-size: 45px;
 }
+
 .system-status-general-info__item-icon--database::before {
   background-image: url(../../images/icons/cccccc/database.svg);
   background-size: 30px;
@@ -67,6 +65,7 @@
   width: calc(100% - 60px);
   padding-left: 10px; /* LTR */
 }
+
 [dir="rtl"] .system-status-general-info__item-details {
   padding-right: 10px;
   padding-left: 0;
@@ -97,7 +96,6 @@
     overflow-x: hidden;
     flex-wrap: wrap;
   }
-
   .system-status-general-info__item {
     flex: 1;
     flex-basis: 33%;
@@ -120,7 +118,6 @@
   [dir="rtl"] .system-status-general-info__item:nth-child(5) {
     border-left: 0;
   }
-
   .system-status-general-info__run-cron {
     margin: 15px 0 5px;
   }
@@ -137,7 +134,6 @@
   .system-status-general-info__item-icon--php::before {
     background-size: 55px;
   }
-
   .system-status-general-info__run-cron {
     position: absolute;
     top: 1em;

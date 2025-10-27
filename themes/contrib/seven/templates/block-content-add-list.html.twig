@@ -17,10 +17,13 @@
  * @see seven_preprocess_block_content_add_list()
  */
  #}
-<ul class="admin-list">
+<ul class="admin-entity-list">
   {% for type in types %}
     <li class="clearfix">
-      <a href="{{ type.url }}"><span class="label">{{ type.label }}</span><div class="description">{{ type.description }}</div></a>
+      <a href="{{ type.url }}">
+        <span class="label">{{ type.label }}</span>
+      </a>
+      <div class="description">{{ type.description }}</div>
     </li>
   {% endfor %}
 </ul>

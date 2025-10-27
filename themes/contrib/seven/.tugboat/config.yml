@@ -31,10 +31,15 @@ services:
         # Add tugboat URLs to the Drupal trusted host patterns.
         echo "\$settings['trusted_host_patterns'] = ['\.tugboatqa\.com\$'];" >> $DOCROOT/sites/default/settings.php
 
-        # Enable the theme.
+        # Enable the Seven theme.
         vendor/bin/drush --yes theme:enable seven
         # Make it the default admin theme.
         vendor/bin/drush --yes config-set system.theme admin seven
+        # Enable the Media Library module.
+        vendor/bin/drush --yes pm:enable media media_library
+
+        # Disable aggregation, markup cache, Twig cache; enable Twig debug.
+        vendor/bin/drush --yes theme:dev on
         # Rebuild cache.
         vendor/bin/drush cache:rebuild
 

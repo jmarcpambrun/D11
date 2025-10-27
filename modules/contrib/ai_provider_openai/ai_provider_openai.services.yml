@@ -1,4 +1,9 @@
 services:
   ai_provider_openai.helper:
-    class: \Drupal\ai_provider_openai\OpenAiHelper
+    class: Drupal\ai_provider_openai\OpenAiHelper
     arguments: ['@messenger', '@config.factory']
+  ai_provider_openai.event_subscriber:
+    class: Drupal\ai_provider_openai\EventSubscriber\AiProviderOpenaiSubscriber
+    tags:
+      - { name: event_subscriber }
+

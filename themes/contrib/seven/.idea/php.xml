@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="MessDetector">
+    <phpmd_settings>
+      <phpmd_by_interpreter asDefaultInterpreter="true" interpreter_id="31054666-0c8c-4452-9c3e-f80a3773d7b8" timeout="30000" />
+    </phpmd_settings>
+  </component>
   <component name="MessDetectorOptionsConfiguration">
     <option name="transferred" value="true" />
   </component>
@@ -12,12 +17,12 @@
   </component>
   <component name="PhpCodeSniffer">
     <phpcs_settings>
-      <phpcs_by_interpreter asDefaultInterpreter="true" interpreter_id="3201fe50-61f1-42cd-b950-4d3e3b686cbf" timeout="30000" />
+      <phpcs_by_interpreter asDefaultInterpreter="true" interpreter_id="31054666-0c8c-4452-9c3e-f80a3773d7b8" timeout="30000" />
     </phpcs_settings>
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="$PROJECT_DIR$/../drupal/core" />
+      <path value="$PROJECT_DIR$/../../core/11.x/core" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.3">

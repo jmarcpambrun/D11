@@ -68,6 +68,9 @@ class SevenLayoutBuilderTest extends BrowserTestBase {
   /**
    * Tests the layout builder has expected contextual links with Seven.
    *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   *   An error occurred when creating the account.
+   *
    * @see seven.theme
    */
   public function testContextualLinks() {

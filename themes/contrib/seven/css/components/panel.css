@@ -1,6 +1,6 @@
 /**
  * @file
- * Panel styling. Panels are used to visually group items together.
+ * Styles for panels.
  */
 
 .panel {
@@ -9,6 +9,7 @@
   border: 1px solid #ccc;
   background: #f8f8f8;
 }
+
 .panel__title {
   margin: 0;
   padding-bottom: 9px;

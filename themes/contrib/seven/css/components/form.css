@@ -1,6 +1,8 @@
 /**
- * Form elements.
+ * @file
+ * Styles for form elements.
  */
+
 form {
   margin: 0;
   padding: 0;
@@ -14,16 +16,19 @@ button:not(.button),
 input:not([type="file"], .form-text, .form-textarea) {
   line-height: 1.25em;
 }
+
 textarea,
 input[type="search"],
 input[type="number"],
 input[type="email"] {
   line-height: normal;
 }
+
 select {
   font-size: 0.8125rem;
   line-height: 1.42902em;
 }
+
 details select {
   line-height: 1.20324em;
 }
@@ -37,6 +42,7 @@ fieldset {
   padding: 0.35em 0.625em 0.75em;
   border: 1px solid #c0c0c0;
 }
+
 fieldset:not(.fieldgroup) {
   position: relative;
   min-width: 0;
@@ -45,6 +51,7 @@ fieldset:not(.fieldgroup) {
   border-radius: 2px;
   background-color: #fcfcfa;
 }
+
 fieldset:not(.fieldgroup) > legend {
   position: relative;
   float: left;
@@ -55,15 +62,19 @@ fieldset:not(.fieldgroup) > legend {
   font-size: 1em;
   font-weight: bold;
 }
+
 .fieldgroup {
   min-width: 0;
 }
+
 .form-item {
   margin: 0 0 20px;
 }
+
 .form-wrapper .container-inline {
   margin-bottom: 0.75em;
 }
+
 /**
  * When a table row has a single form item, prevent it from adding unnecessary
  * extra spacing. If it has multiple form items, allow spacing between them,
@@ -74,42 +85,53 @@ tr.even .form-item {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
 }
+
 td > .form-item:only-child {
   margin-top: 0;
   margin-bottom: 0;
 }
+
 .layout-region-node-secondary .form-item {
   margin: 0 0 10px;
 }
+
 .form-type-checkbox {
   margin-bottom: 10px;
   padding: 0;
 }
+
 .form-actions {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
 label {
   display: table;
   margin: 0 0 0.1em;
   padding: 0;
   font-weight: bold;
 }
+
 label.error {
   color: #a51b00;
 }
+
 label[for] {
   cursor: pointer;
 }
+
 .form-item label.option {
   text-transform: none;
 }
+
 .form-item label.option input {
   vertical-align: middle;
 }
+
 .form-disabled label {
   color: #686868;
 }
+
 .form-disabled input.form-date,
 .form-disabled input.form-text,
 .form-disabled input.form-tel,
@@ -124,25 +146,29 @@ label[for] {
 .form-disabled textarea.form-textarea,
 .form-disabled select.form-select {
   border-color: #d4d4d4;
-  background-color: hsla(0, 0%, 0%, 0.08);
+  background-color: hsl(0, 0%, 0%, 0.08);
   box-shadow: none;
 }
+
 .form-item input.error,
 .form-item textarea.error,
 .form-item select.error {
   color: #a51b00;
   border-width: 1px;
   border-color: #e62600;
-  background-color: hsla(15, 75%, 97%, 1);
+  background-color: hsl(15, 75%, 97%, 1);
   box-shadow: inset 0 5px 5px -5px #b8b8b8;
 }
+
 .form-item textarea.error + .cke {
   border-width: 1px;
   border-color: #e62600;
 }
+
 .form-item textarea.error + .ck-editor > .ck-editor__main {
   border: 1px solid #e62600;
 }
+
 .form-item input.error:focus,
 .form-item textarea.error:focus,
 .form-item select.error:focus {
@@ -150,21 +176,25 @@ label[for] {
   outline: 0;
   background-color: #fcf4f2;
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 3px rgb(0, 0, 0, 0.05),
     0 0 8px 1px #e62600;
 }
+
 .form-required::after {
   width: 7px;
   height: 7px;
   background-size: 7px 7px;
 }
+
 .form-item--error-message {
   margin-top: 0.15em;
   color: #e32700;
 }
+
 .fieldset-wrapper > .form-item--error-message {
   margin-top: 0;
 }
+
 .text-format-wrapper .form-item--error-message {
   margin: 0;
   padding: 0.25em 0.666em 0;
@@ -172,7 +202,7 @@ label[for] {
   border-width: 0 1px;
 }
 
-/* Filter */
+/* Filter styles. */
 ul.tips,
 div.description,
 .form-item .description {
@@ -180,12 +210,12 @@ div.description,
   color: #595959;
   font-size: 0.95em;
 }
+
 .form-item .description.error {
   margin-top: 0;
   color: #a51b00;
 }
 
-/* Restricted HTML */
 .filter-guidelines-restricted_html ul.tips li {
   margin: 0.25em 0 0.25em 1.5em; /* LTR */
 }
@@ -193,18 +223,22 @@ div.description,
 ul.tips ul > li {
   margin: 0.25em 0 0.25em -2.7em; /* LTR */
 }
+
 [dir="rtl"] ul.tips li {
   margin: 0.25em 1.5em 0.25em 0;
 }
+
 .form-type-radio .description,
 .form-type-checkbox .description {
   margin-left: 1.5em; /* LTR */
 }
+
 [dir="rtl"] .form-type-radio .description,
 [dir="rtl"] .form-type-checkbox .description {
   margin-right: 1.5em;
   margin-left: 0;
 }
+
 .form-text,
 .form-textarea {
   border-radius: 2px;
@@ -226,7 +260,7 @@ input.form-time,
 textarea.form-textarea {
   box-sizing: border-box;
   max-width: 100%;
-  padding: 0.3em 0.4em 0.3em 0.5em; /* LTR */
+  padding: 0.33em 0.4em 0.3em 0.5em; /* LTR */
   -webkit-transition:
     border linear 0.2s,
     box-shadow linear 0.2s;
@@ -238,12 +272,14 @@ textarea.form-textarea {
   border-top-color: #999;
   border-radius: 2px;
   background: #fcfcfa;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.125);
+  box-shadow: inset 0 1px 2px rgb(0, 0, 0, 0.125);
   font-size: 1em;
 }
+
 [dir="rtl"] textarea.form-textarea {
-  padding: 0.3em 0.5em 0.3em 0.4em;
+  padding: 0.33em 0.5em 0.3em 0.4em;
 }
+
 .form-text:focus,
 .form-tel:focus,
 .form-email:focus,
@@ -259,7 +295,7 @@ textarea.form-textarea {
   outline: 0;
   background-color: #fff;
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 3px rgb(0, 0, 0, 0.05),
     0 0 8px #40b6ff;
 }
 
@@ -275,15 +311,15 @@ textarea.form-textarea {
 }
 
 /**
- * Limits extra long instances of select elements to the max width allowed
- * to avoid breaking layouts.
+ * Limit extra long instances of select elements to the max width allowed to
+ * avoid breaking layouts.
  */
 select {
   max-width: 100%;
 }
 
 /**
- * Select elements - Webkit only.
+ * Select element styles only for Webkit.
  */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   .form-select {
@@ -297,17 +333,17 @@ select {
       url(../../images/icons/333333/caret-down.svg) no-repeat 99% 63%,
       -webkit-linear-gradient(top, #f6f6f3, #e7e7df); /* LTR */
 
-    text-shadow: 0 1px hsla(0, 0%, 100%, 0.6);
-    font-size: 0.875rem;
+    text-shadow: 0 1px hsl(0, 0%, 100%, 0.6);
+    font-size: 1em;
     -webkit-appearance: none;
     -webkit-font-smoothing: antialiased;
+    line-height: 1.85em;
   }
   [dir="rtl"] select {
     padding: 1px 0.714em 1px 1.571em;
     background-position:
       1% 63%,
       0 0;
-    line-height: 1.53;
   }
   .form-select:hover {
     color: #1a1a1a;
@@ -316,7 +352,7 @@ select {
       -webkit-linear-gradient(top, #fcfcfa, #e9e9dd);
   }
   .form-select:hover {
-    box-shadow: 0 1px 2px hsla(0, 0%, 0%, 0.125);
+    box-shadow: 0 1px 2px hsl(0, 0%, 0%, 0.125);
   }
   select[multiple],
   select[multiple]:focus,
@@ -332,10 +368,12 @@ select {
 #edit-cancel {
   margin-left: 10px; /* LTR */
 }
+
 [dir="rtl"] #edit-cancel {
   margin-right: 10px;
   margin-left: 0;
 }
+
 @media screen and (max-width: 62em) {
   /* 992px */
   input.form-autocomplete,
@@ -442,7 +480,7 @@ select {
   }
 }
 
-/* Exceptions */
+/* Exceptions. */
 #diff-inline-form select,
 div.filter-options select {
   padding: 0;
@@ -457,12 +495,11 @@ div.filter-options select {
   }
 }
 
-/* Force fields inside multiple-cardinality tables inside vertical tabs to scale
+/**
+ * Force fields inside multiple-cardinality tables inside vertical tabs to scale
  * correctly.
  */
-.vertical-tabs
-  .field-multiple-table
-  input:not(.form-checkbox, .form-radio, .form-submit),
+.vertical-tabs .field-multiple-table input:not(.form-checkbox, .form-radio, .form-submit),
 .vertical-tabs .field-multiple-table select,
 .vertical-tabs .field-multiple-table textarea {
   width: 100%;

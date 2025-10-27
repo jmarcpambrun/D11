@@ -118,6 +118,12 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
         unset($generalConfig['max_tokens']);
       }
     }
+    if (str_starts_with($model_id, 'o1')) {
+      if (array_key_exists('max_tokens', $generalConfig)) {
+        $generalConfig['max_completion_tokens'] = $generalConfig['max_tokens'];
+        unset($generalConfig['max_tokens']);
+      }
+    }
     // Handle image generation models.
     if (($model_id == 'dall-e-3') || strpos($model_id, 'gpt-image') === 0) {
       $generalConfig['quality'] = [

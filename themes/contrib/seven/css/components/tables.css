@@ -1,6 +1,6 @@
 /**
  * @file
- * Seven styles for Tables.
+ * Styles for tables.
  */
 
 table {
@@ -8,19 +8,24 @@ table {
   margin: 0 0 20px;
   border-collapse: collapse;
 }
+
 caption {
   text-align: left; /* LTR */
 }
+
 [dir="rtl"] caption {
   text-align: right;
 }
+
 th {
   padding: 10px 12px;
   text-align: left; /* LTR */
 }
+
 [dir="rtl"] th {
   text-align: right;
 }
+
 thead th {
   text-transform: uppercase;
   color: #333;
@@ -28,22 +33,27 @@ thead th {
   border-width: 1px 0;
   background: #f5f5f2;
 }
+
 tr {
   padding: 0.1em 0.6em;
   border-bottom: 1px solid #e6e4df;
 }
+
 thead > tr {
   border-bottom: 1px solid #000;
 }
+
 tbody tr:hover,
 tbody tr:focus {
   background: #f7fcff;
 }
-/* See colors.css */
+
+/* See colors.css. */
 tbody tr.color-warning:hover,
 tbody tr.color-warning:focus {
   background: #fdf8ed;
 }
+
 tbody tr.color-error:hover,
 tbody tr.color-error:focus {
   background: #fcf4f2;
@@ -57,21 +67,24 @@ td,
 th {
   vertical-align: middle;
 }
+
 td {
   padding: 10px 12px;
   text-align: left; /* LTR */
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+
 [dir="rtl"] td {
   text-align: right;
 }
+
 th > a {
   position: relative;
   display: block;
 }
 
-/* 1. Must match negative bottom padding of the parent <th> */
+/* It must match negative bottom padding of the parent <th>. */
 th > a::after {
   position: absolute;
   top: 0;
@@ -84,28 +97,34 @@ th > a::after {
   transition: all 0.1s;
   border-bottom: 2px solid transparent;
 }
+
 th.is-active > a {
   display: flex;
   align-items: center;
   justify-content: space-between;
   color: #004875;
 }
+
 [dir="rtl"] th.is-active > a {
   padding-right: 0;
   padding-left: 15px;
 }
+
 th.is-active img {
   position: absolute;
   top: 50%;
   right: 0; /* LTR */
 }
+
 [dir="rtl"] th.is-active img {
   right: auto;
   left: 0;
 }
+
 th.is-active > a::after {
   border-bottom-color: #004875;
 }
+
 th > a:hover,
 th > a:focus,
 th.is-active > a:hover,
@@ -113,19 +132,23 @@ th.is-active > a:focus {
   text-decoration: none;
   color: #008ee6;
 }
+
 th > a:hover::after,
 th > a:focus::after,
 th.is-active > a:hover::after,
 th.is-active > a:focus::after {
   border-bottom-color: #008ee6;
 }
+
 td .item-list ul {
   margin: 0;
 }
-/* This is required to win over specificity of [dir="rtl"] .item-list ul */
+
+/* This is required to win over specificity of [dir="rtl"] .item-list ul. */
 [dir="rtl"] td .item-list ul {
   margin: 0;
 }
+
 td.is-active {
   background: none;
 }
@@ -135,16 +158,10 @@ th.select-all {
   width: 1px;
 }
 
-/**
- * Captions.
- */
 .caption {
   margin-bottom: 1.2em;
 }
 
-/**
- * Responsive tables.
- */
 @media screen and (max-width: 37.5em) {
   /* 600px */
   th.priority-low,
@@ -161,7 +178,6 @@ th.select-all {
   td.priority-low {
     display: none;
   }
-
   table {
     display: block;
     overflow: auto;
@@ -179,5 +195,5 @@ td > .ajax-new-content > .form-item > .form-text {
 
 td > .form-item,
 td > .ajax-new-content > .form-item {
-  width: max-content;
+  width: auto;
 }

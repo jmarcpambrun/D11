@@ -1,16 +1,12 @@
 /**
- * Views styling
+ * @file
+ * Styles for views.
  */
 
-/* @group Forms */
-
 /**
- * Seven positions the summary absolutely, but does not have a way to ignore
+ * Seven positions the summary absolutely, but it does not have a way to ignore
  * details without a summary so we make one up.
  *
- * @todo Neither a fieldset without legend nor a details without summary is
- *   valid HTML markup in any way. Refactor Views UI to not produce such invalid
- *   markup.
  */
 details.fieldset-no-legend {
   padding-top: 0;
@@ -37,6 +33,7 @@ details.fieldset-no-legend {
   margin-right: 0; /* LTR */
   margin-bottom: 0;
 }
+
 [dir="rtl"] .views-admin input.form-submit,
 [dir="rtl"] .views-ui-dialog input.form-submit,
 [dir="rtl"] .views-admin a.button,
@@ -44,6 +41,7 @@ details.fieldset-no-legend {
   margin-right: 1em;
   margin-left: 0;
 }
+
 [dir="rtl"] .views-admin input.form-submit:first-child,
 [dir="rtl"] .views-ui-dialog input.form-submit:first-child,
 [dir="rtl"] .views-admin a.button:first-child,
@@ -55,11 +53,9 @@ details.fieldset-no-legend {
   margin-top: 3px;
 }
 
-/* @group Dependent options
- */
-
-/* This is necessary to supersede the Seven .form-item
- * reset declaration that sets the margin to zero.
+/*
+ * This is necessary to supersede the .form-item reset declaration that sets the
+ * margin to zero.
  */
 .form-item-options-expose-required,
 .form-item-options-expose-label,
@@ -67,6 +63,7 @@ details.fieldset-no-legend {
 .form-item-options-expose-description {
   margin-left: 1.5em; /* LTR */
 }
+
 [dir="rtl"] .form-item-options-expose-required,
 [dir="rtl"] .form-item-options-expose-label,
 [dir="rtl"] .form-item-options-expose-field-identifier,
@@ -93,10 +90,6 @@ details.fieldset-no-legend {
   margin-bottom: 2px;
 }
 
-/* @end */
-
-/* @group Lists */
-
 .views-admin ul.secondary,
 .views-admin .item-list ul {
   margin: 0;
@@ -121,6 +114,7 @@ details.fieldset-no-legend {
 .views-admin .links li {
   padding-right: 0; /* LTR */
 }
+
 [dir="rtl"] .views-admin .links li {
   padding-left: 0;
 }
@@ -128,6 +122,7 @@ details.fieldset-no-legend {
 .views-admin .button .links li {
   padding-right: 12px; /* LTR */
 }
+
 [dir="rtl"] .views-admin .button .links li {
   padding-left: 12px;
 }
@@ -136,6 +131,7 @@ details.fieldset-no-legend {
   float: left; /* LTR */
   background-color: transparent;
 }
+
 [dir="rtl"] .views-display-top ul.secondary {
   float: right;
 }
@@ -145,29 +141,16 @@ details.fieldset-no-legend {
   margin: 0;
 }
 
-/* @end */
-
-/* @group Tables */
-
 .views-ui-rearrange-filter-form table td,
 .views-ui-rearrange-filter-form table th {
   vertical-align: top;
 }
 
-/* @end */
-
-/* @group Attachment details */
-
 #edit-display-settings-title {
   color: #008bcb;
 }
 
-/* @end */
-
-/* @group Attachment details tabs
- *
- * The tabs that switch between sections
- */
+/* The tabs that switch between sections. */
 
 .views-displays .secondary {
   text-align: left; /* LTR */
@@ -209,13 +192,10 @@ details.fieldset-no-legend {
   color: #008bcb;
 }
 
-/* @end */
-
-/* @group Attachment buckets
- *
- * These are the individual "buckets," or boxes, inside the display settings area
+/*
+ * These are the individual "buckets," or boxes, inside the display settings
+ * area.
  */
-
 .views-ui-display-tab-bucket .views-display-setting {
   font-size: 0.875rem;
 }
@@ -236,9 +216,7 @@ details.fieldset-no-legend {
   margin-left: 0;
 }
 
-/* @end */
-
-/* @group Rearrange filter criteria */
+/* Rearrange filter criteria. */
 
 .views-ui-rearrange-filter-form .action-links {
   float: left;
@@ -261,6 +239,7 @@ details.fieldset-no-legend {
 .views-ui-rearrange-filter-form tr td:last-child {
   border-right: medium none; /* LTR */
 }
+
 [dir="rtl"] .views-ui-rearrange-filter-form tr td:last-child {
   border-right: initial;
   border-left: medium none;
@@ -279,16 +258,14 @@ details.fieldset-no-legend {
   background-color: #ffb !important;
 }
 
-/* @end */
-
-/* @group Live preview elements */
+/* Live preview elements. */
 
 .views-query-info pre {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-/* @group Query info table */
+/* Query info table. */
 
 .views-query-info table {
   border-radius: 7px;
@@ -297,31 +274,21 @@ details.fieldset-no-legend {
 }
 
 .views-query-info table tr td:last-child {
-  /* Fixes a Seven style that bleeds down into this table unnecessarily */
+  /* It fixes a style that bleeds down into this table unnecessarily. */
   border-right: 0 none; /* LTR */
 }
+
 [dir="rtl"] .views-query-info table tr td:last-child {
   border-right: initial;
   border-left: 0 none;
 }
-
-/* @end */
-
-/* @end */
-
-/* @group Add view */
 
 .form-item-page-create,
 .form-item-block-create {
   margin-top: 13px;
 }
 
-/* @end */
-
-/* @group Modal dialog box
- *
- * The contents of the popup dialog on the views edit form.
- */
+/* Modal dialog box. */
 
 .filterable-option .form-item.form-type-checkbox {
   padding-top: 4px;
@@ -329,9 +296,8 @@ details.fieldset-no-legend {
   padding-bottom: 4px;
   padding-left: 4px; /* LTR */
 }
-[dir="rtl"] .filterable-option .form-item.form-type-checkbox {
+
+[dir="rtl"] .filterable-option .form-item .form-type-checkbox {
   padding-right: 4px;
   padding-left: 8px;
 }
-
-/* @end */

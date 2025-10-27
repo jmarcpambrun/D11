@@ -1,23 +1,24 @@
 /**
  * @file
- * Installation styling.
+ * Styles for the installation page.
  *
- * Unfortunately we have to make our styling quite strong, to override the
+ * Unfortunately, we have to make our styling quite strong, to override the
  * .maintenance-page styling.
  */
+
 .install-page {
   min-height: 100%;
   background-color: #1275b2;
   background-image:
     url(../../images/noise-low.png),
     -webkit-radial-gradient(hsl(203, 80%, 45%), hsl(203, 80%, 32%));
-  background-image: url(../../images/noise-low.png),
-    radial-gradient(hsl(203, 80%, 45%), hsl(203, 80%, 32%));
+  background-image: url(../../images/noise-low.png), radial-gradient(hsl(203, 80%, 45%), hsl(203, 80%, 32%));
   background-repeat: repeat;
   background-position:
     left top,
     50% 50%; /* LTR */
 }
+
 [dir="rtl"] .install-page {
   background-position:
     right top,
@@ -25,16 +26,18 @@
 }
 
 /**
- * Password widget
+ * Password widget.
  */
 .install-page .password-parent,
 .install-page .confirm-parent {
   width: auto;
 }
+
 .install-page .form-item .password-suggestions {
   float: none;
   width: auto;
 }
+
 .install-page table td {
   word-break: break-all;
 }
