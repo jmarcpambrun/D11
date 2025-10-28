@@ -4,7 +4,8 @@ description: A set of modules to enable OpenAI integration with Drupal and augme
 package: OpenAI
 core_version_requirement: ^10 || ^11
 configure: openai.api_settings
-
+dependencies:
+  - key:key
 # Information added by Drupal.org packaging script on 2024-07-03
 version: '1.0.0-beta6'
 project: 'openai'

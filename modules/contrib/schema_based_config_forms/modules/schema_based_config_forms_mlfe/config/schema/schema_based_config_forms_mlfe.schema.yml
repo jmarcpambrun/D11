@@ -1,0 +1,8 @@
+media_reference_id:
+  type: integer
+  label: Media Reference ID
+
+media_references:
+  type: sequence
+  sequence:
+    type: media_reference_id

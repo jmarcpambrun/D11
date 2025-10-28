@@ -5913,7 +5913,7 @@
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/gantt.git",
-                "reference": "7766e866a22d438c25a4c44cb817305380b60934"
+                "reference": "b613161900fa7bb02e8cdfa1e467d69bc0c2bf81"
             },
             "require": {
                 "drupal/core": "^9 || ^10 || ^11 || ^12"
@@ -5927,8 +5927,8 @@
                     "dev-1.x": "1.x-dev"
                 },
                 "drupal": {
-                    "version": "1.0.17+16-dev",
-                    "datestamp": "1742379995",
+                    "version": "1.0.18+3-dev",
+                    "datestamp": "1761573198",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Dev releases are not covered by Drupal security advisories."
@@ -8595,6 +8595,57 @@
             "install-path": "../../modules/contrib/scheduler"
         },
         {
+            "name": "drupal/schema_based_config_forms",
+            "version": "1.0.0-beta6",
+            "version_normalized": "1.0.0.0-beta6",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/schema_based_config_forms.git",
+                "reference": "1.0.0-beta6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/schema_based_config_forms-1.0.0-beta6.zip",
+                "reference": "1.0.0-beta6",
+                "shasum": "296cf89c1730da06c4a253a4f96108543a2e40f8"
+            },
+            "require": {
+                "drupal/core": "^10.2 || ^11"
+            },
+            "require-dev": {
+                "drupal/linkit": "^6.0.0-rc1",
+                "drupal/media_library_form_element": "*"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.0-beta6",
+                    "datestamp": "1752271074",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Project has not opted into security advisory coverage!"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "bvoynick",
+                    "homepage": "https://www.drupal.org/user/3308129"
+                }
+            ],
+            "description": "Provides a foundation for building schema-based config forms.",
+            "homepage": "https://www.drupal.org/project/schema_based_config_forms",
+            "support": {
+                "source": "https://git.drupalcode.org/project/schema_based_config_forms"
+            },
+            "install-path": "../../modules/contrib/schema_based_config_forms"
+        },
+        {
             "name": "drupal/search_api",
             "version": "1.31.0",
             "version_normalized": "1.31.0.0",
@@ -11113,17 +11164,17 @@
         },
         {
             "name": "google/cloud-core",
-            "version": "v1.68.1",
-            "version_normalized": "1.68.1.0",
+            "version": "v1.68.2",
+            "version_normalized": "1.68.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-cloud-php-core.git",
-                "reference": "fef35bddabc292eb1758cafc70cb3526703f57a5"
+                "reference": "f33d7c3e912d83ea731d08975e79de1c3b8c19d1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-cloud-php-core/zipball/fef35bddabc292eb1758cafc70cb3526703f57a5",
-                "reference": "fef35bddabc292eb1758cafc70cb3526703f57a5",
+                "url": "https://api.github.com/repos/googleapis/google-cloud-php-core/zipball/f33d7c3e912d83ea731d08975e79de1c3b8c19d1",
+                "reference": "f33d7c3e912d83ea731d08975e79de1c3b8c19d1",
                 "shasum": ""
             },
             "require": {
@@ -11151,7 +11202,7 @@
                 "opis/closure": "May be used to serialize closures to process jobs in the batch daemon. Please require version ^3.",
                 "symfony/lock": "Required for the Spanner cached based session pool. Please require the following commit: 3.3.x-dev#1ba6ac9"
             },
-            "time": "2025-10-21T22:33:33+00:00",
+            "time": "2025-10-25T01:16:28+00:00",
             "bin": [
                 "bin/google-cloud-batch"
             ],
@@ -11176,7 +11227,7 @@
             ],
             "description": "Google Cloud PHP shared dependency, providing functionality useful to all components.",
             "support": {
-                "source": "https://github.com/googleapis/google-cloud-php-core/tree/v1.68.1"
+                "source": "https://github.com/googleapis/google-cloud-php-core/tree/v1.68.2"
             },
             "install-path": "../google/cloud-core"
         },
@@ -12821,17 +12872,17 @@
         },
         {
             "name": "league/csv",
-            "version": "9.27.0",
-            "version_normalized": "9.27.0.0",
+            "version": "9.27.1",
+            "version_normalized": "9.27.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/csv.git",
-                "reference": "cb491b1ba3c42ff2bcd0113814f4256b42bae845"
+                "reference": "26de738b8fccf785397d05ee2fc07b6cd8749797"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/csv/zipball/cb491b1ba3c42ff2bcd0113814f4256b42bae845",
-                "reference": "cb491b1ba3c42ff2bcd0113814f4256b42bae845",
+                "url": "https://api.github.com/repos/thephpleague/csv/zipball/26de738b8fccf785397d05ee2fc07b6cd8749797",
+                "reference": "26de738b8fccf785397d05ee2fc07b6cd8749797",
                 "shasum": ""
             },
             "require": {
@@ -12859,7 +12910,7 @@
                 "ext-pgsql": "Requiered to use the package with the PgSQL extension",
                 "ext-sqlite3": "Required to use the package with the SQLite3 extension"
             },
-            "time": "2025-10-16T08:22:09+00:00",
+            "time": "2025-10-25T08:35:20+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -16424,17 +16475,17 @@
         },
         {
             "name": "psy/psysh",
-            "version": "v0.12.13",
-            "version_normalized": "0.12.13.0",
+            "version": "v0.12.14",
+            "version_normalized": "0.12.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bobthecow/psysh.git",
-                "reference": "d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e"
+                "reference": "95c29b3756a23855a30566b745d218bee690bef2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e",
-                "reference": "d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e",
+                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/95c29b3756a23855a30566b745d218bee690bef2",
+                "reference": "95c29b3756a23855a30566b745d218bee690bef2",
                 "shasum": ""
             },
             "require": {
@@ -16455,10 +16506,9 @@
             "suggest": {
                 "composer/class-map-generator": "Improved tab completion performance with better class discovery.",
                 "ext-pcntl": "Enabling the PCNTL extension makes PsySH a lot happier :)",
-                "ext-pdo-sqlite": "The doc command requires SQLite to work.",
                 "ext-posix": "If you have PCNTL, you'll want the POSIX extension as well."
             },
-            "time": "2025-10-20T22:48:29+00:00",
+            "time": "2025-10-27T17:15:31+00:00",
             "bin": [
                 "bin/psysh"
             ],
@@ -16501,7 +16551,7 @@
             ],
             "support": {
                 "issues": "https://github.com/bobthecow/psysh/issues",
-                "source": "https://github.com/bobthecow/psysh/tree/v0.12.13"
+                "source": "https://github.com/bobthecow/psysh/tree/v0.12.14"
             },
             "install-path": "../psy/psysh"
         },

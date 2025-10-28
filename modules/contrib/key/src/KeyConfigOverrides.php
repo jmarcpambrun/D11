@@ -86,8 +86,8 @@ class KeyConfigOverrides implements ConfigFactoryOverrideInterface {
       $override = [];
 
       foreach ($mapping[$name] as $config_item => $key_id) {
-        $key_value = $storage->load($key_id)->getKeyValue();
-
+		$key_storage = $storage->load($key_id);
+		$key_value = $key_storage ? $key_storage->getKeyValue() : NULL;
         if (!isset($key_value)) {
           continue;
         }

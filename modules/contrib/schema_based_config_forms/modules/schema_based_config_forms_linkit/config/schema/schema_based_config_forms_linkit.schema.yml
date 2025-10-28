@@ -1,0 +1,7 @@
+linkit_url:
+  type: string
+  label: Linkit URL
+
+linkit_uri:
+  type: uri
+  label: Linkit URI

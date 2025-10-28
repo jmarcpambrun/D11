@@ -1,0 +1,10 @@
+name: Schema Based Config Forms Entity Reference
+type: module
+description: 'Provides ''entity_reference_id'' and ''entity_reference_id_int'' schema types for use with config forms.'
+core_version_requirement: ^10 || ^11
+package: Config
+
+# Information added by Drupal.org packaging script on 2025-07-11
+version: '1.0.0-beta6'
+project: 'schema_based_config_forms'
+datestamp: 1752271076

@@ -4,7 +4,7 @@ services:
     factory: ['@openai.client_factory', create]
   openai.client_factory:
     class: Drupal\openai\Http\ClientFactory
-    arguments: ['@config.factory']
+    arguments: ['@config.factory', '@module_handler', '@key.repository']
   openai.api:
     class: Drupal\openai\OpenAIApi
     arguments: ['@openai.client', '@cache.default', '@logger.factory']

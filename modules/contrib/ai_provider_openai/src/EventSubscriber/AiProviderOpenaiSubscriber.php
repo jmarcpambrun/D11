@@ -1,9 +1,9 @@
-+<?php
-+
-+declare(strict_types=1);
-+
-+namespace Drupal\ai_provider_openai\EventSubscriber;
-+
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\ai_provider_openai\EventSubscriber;
+
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
