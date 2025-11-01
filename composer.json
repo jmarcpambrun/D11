@@ -24,7 +24,7 @@
         "drupal/action": "0.2.1",
         "drupal/address": "2.0",
         "drupal/advancedqueue": "1.0-rc7",
-        "drupal/ai": "1.2.1",
+        "drupal/ai": "1.2.2",
         "drupal/ai_provider_openai": "1.2",
         "drupal/auto_translation": "1.5-beta7",
         "drupal/avatars": "1.3",

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "573717a5af4c7384951eea339f9d098e",
+    "content-hash": "29802f84423e3d8d4549400425c1f812",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2396,17 +2396,17 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.2.1",
+            "version": "1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.2.1"
+                "reference": "1.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.2.1.zip",
-                "reference": "1.2.1",
-                "shasum": "1d80e4bc9f6c263f0abf0ca0a7f97a57e746c13a"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.2.2.zip",
+                "reference": "1.2.2",
+                "shasum": "761bbf7578a26ea4ef122b76f0e82a10254f9df1"
             },
             "require": {
                 "drupal/core": "^10.4 || ^11",
@@ -2433,8 +2433,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.2.1",
-                    "datestamp": "1760514350",
+                    "version": "1.2.2",
+                    "datestamp": "1761744723",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
