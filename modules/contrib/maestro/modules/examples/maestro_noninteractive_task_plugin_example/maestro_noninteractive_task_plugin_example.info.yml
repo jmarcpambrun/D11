@@ -1,0 +1,15 @@
+name: Maestro Non Interactive Plugin Task Example
+description: Example of a simple bare-bones NON INTERACTIVE task plugin.
+# core: 8.x
+core_version_requirement: ^10 || ^11
+package: Maestro Examples
+type: module
+scripts:
+dependencies:
+  - maestro:maestro
+  - maestro:maestro_taskconsole
+
+# Information added by Drupal.org packaging script on 2025-10-28
+version: '4.2.4'
+project: 'maestro'
+datestamp: 1761674032

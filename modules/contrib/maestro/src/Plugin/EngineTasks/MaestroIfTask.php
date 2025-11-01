@@ -183,7 +183,7 @@ class MaestroIfTask extends PluginBase implements MaestroEngineTaskInterface {
       }
       else {
         // again, nothing unusual.  just set the task status.
-        $this->executionStatus = TASK_STATUS_SUCCESS;
+        $this->executionStatus = TASK_STATUS_FALSE_BRANCH;
         // ahh.. last status doesn't equal what we tested for.  Use the false branch for nextstep.
         $this->completionStatus = MAESTRO_TASK_COMPLETION_USE_FALSE_BRANCH;
       }

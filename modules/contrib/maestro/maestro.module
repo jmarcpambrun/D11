@@ -28,6 +28,8 @@ const TASK_STATUS_SUCCESS = 1;
 const TASK_STATUS_CANCEL = 2;
 const TASK_STATUS_HOLD = 3;
 const TASK_STATUS_ABORTED = 4;
+const TASK_STATUS_FALSE_BRANCH = 5;
+
 
 // Maestro archive flag value for tasks.
 const TASK_ARCHIVE_ACTIVE = 0;

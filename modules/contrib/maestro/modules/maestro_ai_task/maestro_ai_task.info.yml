@@ -1,0 +1,15 @@
+name: Maestro AI Task
+type: module
+description: 'AI Task for the Maestro Workflow Engine.'
+package: Maestro (Experimental)
+core_version_requirement: ^10 || ^11
+lifecycle: experimental
+dependencies:
+  - maestro:maestro
+  - key:key
+  - ai:ai
+
+# Information added by Drupal.org packaging script on 2025-10-28
+version: '4.2.4'
+project: 'maestro'
+datestamp: 1761674032

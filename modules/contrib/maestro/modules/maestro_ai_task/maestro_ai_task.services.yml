@@ -1,0 +1,4 @@
+services:
+  plugin.manager.maestro_ai_task_capabilities:
+    class: Drupal\maestro_ai_task\MaestroAiTaskCapabilitiesPluginManager
+    arguments: ['@container.namespaces', '@cache.default', '@module_handler']

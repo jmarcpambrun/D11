@@ -281,6 +281,52 @@ class MaestroEngine {
   }
 
   /**
+   * Determines which FALSE IF task(s) branch(es) point to the task in question.
+   *
+   * @param string $templateMachineName
+   *   The template of the task you wish to investigate.
+   * @param string $taskMachineName
+   *   The task you want to know WHO points to it.
+   *
+   * @return array
+   *   Returns an array of resulting task machine names (IDs) or empty array.
+   */
+  public static function getTaskFalsePointersFromTemplate($templateMachineName, $taskMachineName) {
+    $template = MaestroEngine::getTemplate($templateMachineName);
+    $pointers = [];
+    foreach ($template->tasks as $task) {
+      $nextFalseSteps = explode(',', $task['nextfalsestep']);
+      if (array_search($taskMachineName, $nextFalseSteps) !== FALSE) {
+        $pointers[] = $task['id'];
+      }
+    }
+    return $pointers;
+  }
+
+  /**
+   * Determines which TRUE IDF task(s) branch(es) point to the task in question.
+   *
+   * @param string $templateMachineName
+   *   The template of the task you wish to investigate.
+   * @param string $taskMachineName
+   *   The task you want to know WHO points to it.
+   *
+   * @return array
+   *   Returns an array of resulting task machine names (IDs) or empty array.
+   */
+  public static function getTaskTruePointersFromTemplate($templateMachineName, $taskMachineName) {
+    $template = MaestroEngine::getTemplate($templateMachineName);
+    $pointers = [];
+    foreach ($template->tasks as $task) {
+      $nextSteps = explode(',', $task['nextstep']);
+      if (array_search($taskMachineName, $nextSteps) !== FALSE) {
+        $pointers[] = $task['id'];
+      }
+    }
+    return $pointers;
+  }
+
+  /**
    * Get the template's machine name from the queue ID.
    *
    * @param int $queueID
@@ -855,6 +901,7 @@ class MaestroEngine {
     $arr[TASK_STATUS_CANCEL] = t('Cancelled');
     $arr[TASK_STATUS_HOLD] = t('On Hold');
     $arr[TASK_STATUS_ABORTED] = t('Aborted');
+    $arr[TASK_STATUS_FALSE_BRANCH] = t('False Branch Completed');
     return $arr;
   }
 
@@ -1677,10 +1724,9 @@ class MaestroEngine {
           // so we have to first find all AND tasks, and then determine who points to them and leave their archive condition alone.
           $noRegenStatusArray = [];
           // So first, search for open AND tasks:
-
-          // Race condition?  what if its complete and not archived, yet a loopback happens?  Leave for now.
           $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
-          $query->condition('archived', '1')
+          $query
+            ->condition('archived', TASK_ARCHIVE_REGEN, '<>')
             ->accessCheck(FALSE)
             ->condition('status', '0')
             ->condition('process_id', $processID)
@@ -1694,17 +1740,19 @@ class MaestroEngine {
           foreach ($andIDs as $entityID) {
             // Load the entity from the queue.
             $queueRecord = MaestroEngine::getQueueEntryById($entityID);
-            $pointers = MaestroEngine::getTaskPointersFromTemplate(MaestroEngine::getTemplateIdFromProcessId($processID), $queueRecord->task_id->getValue());
+            $pointers = MaestroEngine::getTaskPointersFromTemplate(MaestroEngine::getTemplateIdFromProcessId($processID), $queueRecord->task_id->getString());
             // Now we query the queue to add the pointers to the noRegenStatusArray.
             $query = \Drupal::entityQuery('maestro_queue')
               ->accessCheck(FALSE);
             $andMainConditions = $query->andConditionGroup()
               ->condition('process_id', $processID);
             $orConditionGroup = $query->orConditionGroup();
-            foreach ($pointers as $taskID) {
-              $orConditionGroup->condition('task_id', $taskID);
+            foreach ($pointers as $pointer) {
+              $orConditionGroup->condition('task_id', $pointer);
             }
-            $andMainConditions->condition($orConditionGroup);
+            if(count($pointers)) {
+              $andMainConditions->condition($orConditionGroup);
+            }
             $query->condition($andMainConditions);
             $pointerIDs = $query->execute();
             if (is_array($pointerIDs)) {
@@ -1755,6 +1803,7 @@ class MaestroEngine {
    *   The ID of the queue entity this task belongs to.
    */
   protected function productionAssignments($templateMachineName, $taskID, $queueID) {
+    $config = \Drupal::config('maestro.settings');
     $task = $this->getTemplateTaskByID($templateMachineName, $taskID);
     $executableTask = MaestroEngine::getPluginTask($task['tasktype']);
     $assigned = '';
@@ -1801,19 +1850,23 @@ class MaestroEngine {
         // Now to use the information supplied to us from [0] to determine is this a user or role and then also let other modules do their own thing here.
         $assignmentsByVar = explode(',', $var);
         foreach ($assignmentsByVar as $assignTo) {
-          if ($assignTo != '') {
-            $values = [
-              'queue_id' => $queueID,
-              'assign_type' => $thisAssignment[0],
-              'by_variable' => 1,
-              'assign_id' => $assignTo,
-              'process_variable' => $varID,
-              'assign_back_id' => 0,
-              'task_completed' => 0,
-            ];
-            $prodAssignments = \Drupal::entityTypeManager()->getStorage('maestro_production_assignments')->create($values);
-            $prodAssignments->save();
+          // What if the variable is blank?  This is an assignment to a variable that may have gone wrong and this could orphan a task.
+          // Let's create the task, assign it to a very specific non-user so that it is visible in the assignments and views.
+          if ($assignTo == '') {
+            $assignTo = 'unable-to-assign'; // We force it to a non-user. If a user is actually named "unable-to-assign", well...
           }
+          $values = [
+            'queue_id' => $queueID,
+            'assign_type' => $thisAssignment[0],
+            'by_variable' => 1,
+            'assign_id' => $assignTo,
+            'process_variable' => $varID,
+            'assign_back_id' => 0,
+            'task_completed' => 0,
+          ];
+          $prodAssignments = \Drupal::entityTypeManager()->getStorage('maestro_production_assignments')->create($values);
+          $prodAssignments->save();
+          
         }
 
       }

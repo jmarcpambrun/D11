@@ -80,22 +80,30 @@ class MaestroAndTask extends PluginBase implements MaestroEngineTaskInterface {
    * {@inheritdoc}.
    */
   public function execute() {
-    // Determine who is pointing at me.
+    $queueIdCount = 0;
+
     $templateMachineName = MaestroEngine::getTemplateIdFromProcessId($this->processID);
     $taskMachineName = MaestroEngine::getTaskIdFromQueueId($this->queueID);
+    // Determine who is pointing at me. Specifically, IF tasks will show up in either true or false branches.
+    // All other task types will be true pointers.
+    $truePointers = MaestroEngine::getTaskTruePointersFromTemplate($templateMachineName, $taskMachineName);
+    $falsePointers = MaestroEngine::getTaskFalsePointersFromTemplate($templateMachineName, $taskMachineName);
+    // Let's just keep a count of all pointers for counting purposes.
     $pointers = MaestroEngine::getTaskPointersFromTemplate($templateMachineName, $taskMachineName);
-    // Now that we have pointers, let's determine if they're all complete
-    // otherwise, return false.
+
+    // We now detect if all the true pointers and all the false pointers have been completed
+
+    // TRUE pointers:
     $query = \Drupal::entityQuery('maestro_queue')
       ->accessCheck(FALSE);
 
     $andMainConditions = $query->andConditionGroup()
-      ->condition('status', '1')
+      ->condition('status', TASK_STATUS_SUCCESS) // This is a true branch (default for all tasks other than IF)
       ->condition('archived', '2', '!=')
       ->condition('process_id', $this->processID);
 
     $orConditionGroup = $query->orConditionGroup();
-    foreach ($pointers as $taskID) {
+    foreach ($truePointers as $taskID) {
       $orConditionGroup->condition('task_id', $taskID);
     }
 
@@ -104,7 +112,29 @@ class MaestroAndTask extends PluginBase implements MaestroEngineTaskInterface {
 
     $queueIdCount = $query->count()->execute();
 
-    if (count($pointers) == $queueIdCount) {
+
+    // FALSE pointers:
+    if ($falsePointers) {
+      $query = \Drupal::entityQuery('maestro_queue')
+        ->accessCheck(FALSE);
+
+      $andMainConditions = $query->andConditionGroup()
+        ->condition('status', TASK_STATUS_FALSE_BRANCH) // This is specifically for tasks that follow a false branch like IF
+        ->condition('archived', '2', '!=')
+        ->condition('process_id', $this->processID);
+
+      $orConditionGroup = $query->orConditionGroup();
+      foreach ($falsePointers as $taskID) {
+        $orConditionGroup->condition('task_id', $taskID);
+      }
+
+      $andMainConditions->condition($orConditionGroup);
+      $query->condition($andMainConditions);
+
+      $queueIdCount += $query->count()->execute(); // Add them up.
+    }
+
+    if (count($pointers) == $queueIdCount) { // The total count should equate to the true and false pointers
       return TRUE;
     }
 

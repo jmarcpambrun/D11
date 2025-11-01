@@ -1,0 +1,7 @@
+maestro_ai_task.maestro_ai_admin_settings:
+  path: '/admin/config/workflow/maestro_ai'
+  defaults:
+    _form: '\Drupal\maestro_ai_task\Form\MaestroAITaskSettings'
+    _title: 'Maestro AI Task Settings'
+  requirements:
+    _permission: 'administer site configuration'

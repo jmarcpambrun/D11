@@ -1,0 +1,364 @@
+<?php
+
+/**
+ * @file
+ * maestro_ai_task.module
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\maestro\Engine\MaestroEngine;
+use Drupal\maestro_ai_task\MaestroAiTaskAPI\MaestroAiTaskAPI;
+use Drupal\maestro_ai_task\MaestroAiTaskCapabilitiesPluginBase;
+use Drupal\webform\Entity\WebformSubmission;
+
+
+
+/**
+ * Implements hook_entity_delete().
+ */
+function maestro_ai_task_entity_delete(EntityInterface $entity) {
+  // If this is our maestro process entity.
+  if ($entity->getEntityTypeId() == 'maestro_process') {
+    // Using the maestro AI Task API, delete all of the entities associated with this process.
+    $process_id = $entity->process_id->value ?? NULL;
+    if($process_id) {
+      // For this process, do an entity query for any maestro_ai_storage entities that have a
+      // process_id that matches this one and delete it
+      $query = \Drupal::entityQuery('maestro_ai_storage')
+        ->accessCheck(FALSE)
+        ->condition('process_id', $process_id);
+      $entity_ids = $query->execute();
+      if(count($entity_ids)) {
+        $storage_entities = \Drupal::entityTypeManager()->getStorage('maestro_ai_storage')->loadMultiple($entity_ids);
+        foreach($storage_entities as $entity) {
+          $entity->delete();
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function maestro_ai_task_entity_presave(EntityInterface $entity) {
+  // If this is our maestro template entity.
+  if ($entity->getEntityTypeId() == 'maestro_template') {
+    $config = \Drupal::config('maestro_ai_task.settings');
+    // Check each task in the template for AI tasks and force set some of the core
+    // values if they've not been set.
+    $tasks = $entity->get('tasks') ?? [];
+    foreach ($tasks as $task_id => $task) {
+      if ($task['tasktype'] == 'MaestroAITask') {
+        // Check if 'ai_prompt' is set.  If not, set it to the base prompt.
+        if (!isset($task['data']['ai']['ai_prompt'])) {
+          $config = \Drupal::config('maestro_ai_task.settings');
+          $base_prompt = $config->get('base_prompt');
+          if (empty($base_prompt)) {
+            $base_prompt = 'You are a knowledgeable and helpful office administrator who reviews documents.';
+          }
+          $tasks[$task_id]['data']['ai']['ai_prompt'] = $base_prompt;
+          $entity->tasks = $tasks;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_token_info_alter().
+ */
+function maestro_ai_task_token_info_alter(&$data) {
+  // Add the rendering token for the AI task entity.
+  $existing_description = $data['tokens']['maestro']['render-entity-identifier']['description'];
+  $data['tokens']['maestro']['render-entity-identifier']['description'] = 
+    $existing_description . ' ' .
+    t('Use the Render Maestro AI Task Entity for Maestro AI Task entities.');
+
+  $data['tokens']['maestro']['render_ai_task_entity'] = [
+    'name' => t('Render Maestro AI Task Entity'),
+    'description' => 
+      t('Renders a Maestro AI task entity. Example: maestro:ai_task_entity:unique_id_ai_task_entity:render_as:optional_process_id. ') . 
+      t('"render_as" can be "text", "base_64_image_url" or have a custom written mechanism. "text" should be used for default. "optional_process_id" is only required if you need to explicitly pull from an existing process.') .
+      t('If you render an entity and send it to a chatbot or image processor as Base64, you will most likely exceed your AI provider\'s allowable token size.'),
+  ];
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function maestro_ai_task_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
+  $url_options = ['absolute' => TRUE];
+  if (isset($options['langcode'])) {
+    $url_options['language'] = \Drupal::languageManager()->getLanguage($options['langcode']);
+    $langcode = $options['langcode'];
+  }
+  else {
+    $langcode = NULL;
+  }
+  $replacements = [];
+
+  if ($type == 'maestro' && !empty($data['maestro'])) {
+    $queueID = $data['maestro']['queueID'];
+    $processID = MaestroEngine::getProcessIdFromQueueId($queueID);
+    $replace = '';
+    foreach ($tokens as $name => $original) {
+      $token_parts = explode(':', $name);
+      if (count($token_parts) > 1 && $token_parts[0] == 'render_ai_task_entity') {
+        $unique_id = $token_parts[1];
+        $render_as = $token_parts[2];
+        $processID = $token_parts[3] ?? $processID; // Optional, if not provided, use the process ID from the queue ID.
+        $storage_entity = MaestroAiTaskAPI::getAiStorageEntityByUniqueId($unique_id, $processID);
+        if ($storage_entity) {
+          $entity = current($storage_entity);
+          $entity_value = MaestroAiTaskAPI::getAiStorageValueByUniqueId($unique_id, $processID);
+          if($entity_value) {
+            if($render_as == 'text') {
+              $replace = $entity_value;
+              $replacements[$original] = $replace;
+            }
+            elseif($render_as == 'base_64_image_url') {
+              $file_info = MaestroAiTaskAPI::convertBase64AiStorageImageToFile($unique_id, $processID);
+              if(count($file_info)) {
+                $replace = $file_info['file'];
+              }
+              $replacements[$original] = $replace;
+            }
+            else {
+              // Offload to a maestro ai task hook to render the entity.
+              $replace = \Drupal::moduleHandler()->invokeAll('maestro_ai_task_render_ai_entity', [$entity, $render_as, $queueID]);
+              $replacements[$original] = $replace;
+            }
+          }
+        }
+      }
+    }
+    
+  }
+  return $replacements;
+}
+
+
+function maestro_ai_task_form_alter(&$form, &$form_state, $form_id) {
+  if($form_id == 'template_builder') {
+    $markup = $form['task_legend']['#markup'];
+    $markup .= '<div class="legend-task legend-ai-task"></div>' .
+        '<div class="legend-information clearfix">' .
+        '<div class="legend-information-title">' . t('Maestro AI Task') . '</div>' .
+        '<div class="legend-information-explanation">' . t('AI-enabled task allowing Maestro to use AI to execute configured prompts.') . '</div>' .
+        '</div>';
+    $form['task_legend']['#markup'] = $markup;
+    $form['#attached']['library'][] = 'maestro_ai_task/maestro_ai_task_css';
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().  
+ * We are targetting the template edit task form and managing the AI task capabilities.
+ */
+function maestro_ai_task_form_template_edit_task_alter(&$form, &$form_state) {
+  // Make sure this is a Maestro AI Task.
+  $taskID = $form['task_id']['#default_value'] ?? NULL;
+  $templateMachineName = $form['template_machine_name']['#default_value'] ?? NULL;
+  // getTemplateTaskByID returns FALSE if the templateMachineName is NULL/blank.
+  $template_task = MaestroEngine::getTemplateTaskByID($templateMachineName, $taskID);
+  if($template_task) {
+    $taskType = $template_task['tasktype'] ?? NULL;
+    if($taskType == 'MaestroAITask') {
+      // See if this is an ajax operation for the ai provider field
+      $triggering_element = $form_state->getTriggeringElement();
+      if($triggering_element && $triggering_element['#name'] == 'ai_provider') {
+        $selected_provider = $triggering_element['#value'];
+        $form['ai_provider']['#value'] = $selected_provider;
+        $form['ai_provider']['#default_value'] = $selected_provider;
+        
+        // For potential use in our Maestro AI Task Capabilites plugins, we can 
+        // store the template task and template machine name in the form state storage.
+        /** @var FormStateInterface $form_state */
+        $storage = $form_state->getStorage();
+        $storage['templateTask'] = $template_task;
+        $storage['templateMachineName'] = $templateMachineName;
+        $form_state->setStorage($storage);
+
+        // Blank out the capabilities wrapper
+        $form['capabilities_wrapper'] = [
+          '#type' => 'fieldset',
+          '#prefix' => '<div id="ai-provider-ajax-refresh-wrapper"',
+          '#suffix' => '</div>',
+        ];
+    
+        $selected_provider = $form['ai_provider']['#value'];
+        $form_state_storage = $form_state->getStorage();
+        $task = $form_state_storage['templateTask'] ?? NULL;
+        $templateMachineName = $form_state_storage['templateMachineName'] ?? NULL;
+
+        /** @var MaestroAiTaskCapabilitiesPluginBase $maestro_capability */
+        $maestro_capability = MaestroAiTaskAPI::createMaestroAiTaskCapabilityPlugin(
+          $selected_provider,
+          [
+            'task' => $task,
+            'templateMachineName' => $templateMachineName,
+            'form_state' => $form_state, 
+            'form' => $form,
+          ] 
+        );
+        if($maestro_capability) {
+          // We have a valid Maestro AI Task capability.  Let's execute and add to our capabilities wrapper.
+          $ai_capability_form_elements = $maestro_capability->getMaestroAiTaskConfigFormElements();
+          
+          // Let the chosen Maestro AI Task Capability determine if we can have a response set.
+          $allow_return_format = $maestro_capability->allowConfigurableReturnFormat();
+          if($allow_return_format) {
+            $options = _maestroAiTaskReturnFormatOptions();
+            $ai_capability_form_elements['ai_return_format'] = [
+              '#type' => 'select',
+              '#title' => t('Return format from the AI Call'),
+              '#description' => t('Default is JSON as a Yes/No string. See documentation for more examples'),
+              '#options' => $options,
+              '#required' => TRUE,
+              '#default_value' => $task['data']['ai']['ai_return_format'] ?? 'json_yes_no',
+            ];
+
+            $ai_capability_form_elements['ai_return_custom_format'] = [
+              '#type' => 'textarea',
+              '#title' => t('Custom return format'),
+              '#default_value' => $task['data']['ai']['ai_return_custom_format'] ?? '',
+              '#required' => FALSE,
+              '#description' => t('The custom format that you wish to return the information as. <strong>Please note that the return format you specify may not be supported by the AI Configuration you\'ve chosen.</strong>'),
+              '#states' => [
+                // Show this textfield only if the select box above has 'custom' chosen.
+                'visible' => [
+                  ':input[name="ai_return_format"]' => ['value' => 'custom'],
+                ],
+              ],
+            ];
+          }
+          else {
+            $ai_capability_form_elements['ai_return_format'] = [
+              '#type' => 'hidden',
+              '#value' => '',
+              '#default_value' => '',
+            ];
+
+            $ai_capability_form_elements['ai_return_custom_format'] = [
+              '#type' => 'hidden',
+              '#value' => '',
+              '#default_value' => '',
+            ];
+          }
+
+          $form['capabilities_wrapper'] += $ai_capability_form_elements;
+        }
+        
+      } // End of ajax operation for the ai provider field
+    }
+  }
+}
+
+/**
+ * Internal method that returns our options.
+ */
+function _maestroAiTaskReturnFormatOptions() {
+  return [
+    'json_yes_no' => t('Response will be a single JSON encoded string specifying a YES or NO response'),
+    'json_true_false' => t('Response will be a single JSON encoded string specifying a TRUE or FALSE response'),
+    'custom' => t('A custom response format specified'),
+  ];
+}
+
+/**
+ * Set Process Variable function. Allows you to set a process variable to the 
+ * number of items in a field
+ *
+ * This function requires that the maestro_entity_identifiers entity actually be set
+ * with an appropriate entity ID inside of it for a webform submission.
+ *
+ * @param string $uniqueIdentifier
+ *   The unique identifier set by the task for the entity identifiers entity.
+ * @param string $field
+ *   The field name of the node in question.
+ * @param int $queueID
+ *   The queue ID of the task calling this function.
+ * @param int $processID
+ *   The process ID of the tatsk calling this function.
+ *
+ * @return string
+ *   The resulting value that the set process variable custom function requires
+ */
+function maestro_ai_task_spv_webform_field_count($uniqueIdentifier, $field, $queueID, $processID) {
+  $returnValue = 0;
+
+  $entityID = intval(MaestroEngine::getEntityIdentiferByUniqueID($processID, $uniqueIdentifier));
+  $webform_submission = WebformSubmission::load($entityID);
+
+  if ($webform_submission) {
+    // Submission found.  Get the number of entries on this field.
+    $submission_data = $webform_submission->getData();
+    if(array_key_exists($field, $submission_data)) {
+      $returnValue = count($submission_data[$field]);
+    }
+  }
+
+  return $returnValue;
+}
+
+
+/**
+ * Set Process Variable function. Allows you to set a process variable to the 
+ * number of items in a field
+ *
+ * This function requires that the maestro_entity_identifiers entity actually be set
+ * with an appropriate entity ID inside of it for a webform submission.
+ *
+ * @param string $uniqueIdentifier
+ *   The unique identifier set by the task for the entity identifiers entity.
+ * @param string $field
+ *   The field name of the node in question.
+ * @param string $field_property
+ *   The field property. This is used for composite fields.
+ *  @param string $field_delta
+ *   The field delta value to retrieve.
+ * @param int $queueID
+ *   The queue ID of the task calling this function.
+ * @param int $processID
+ *   The process ID of the tatsk calling this function.
+ *
+ * @return string
+ *   The resulting value that the set process variable custom function requires
+ */
+function maestro_ai_task_spv_webform_field_delta_retrieve($uniqueIdentifier, $field, $field_property, $field_delta, $queueID, $processID) {
+  $returnValue = NULL;
+
+  $entityID = intval(MaestroEngine::getEntityIdentiferByUniqueID($processID, $uniqueIdentifier));
+  $webform_submission = WebformSubmission::load($entityID);
+
+  // Test if the $field_delta is an integer or not.  If not, it's likely the name of a PV.
+  if($field_delta != intval($field_delta)) {
+    $field_delta = MaestroEngine::getProcessVariable($field_delta, $processID);
+  }
+  
+
+  if ($webform_submission && $field_delta !== FALSE) {
+    // Submission found.  Get the entriy of this field.
+    $submission_data = $webform_submission->getData();
+    if(array_key_exists($field, $submission_data)) {
+      // Now fetch off the field delta value.
+      if(is_array($submission_data[$field])) {
+        if($field_property != '') {
+          $returnValue = $submission_data[$field][$field_delta][$field_property] ?? NULL;
+        }
+        else {
+          $returnValue = $submission_data[$field][$field_delta] ?? NULL;
+        }
+        
+      }
+    }
+  }
+  else {
+    $returnValue = 'error';
+  }
+
+  return $returnValue;
+}

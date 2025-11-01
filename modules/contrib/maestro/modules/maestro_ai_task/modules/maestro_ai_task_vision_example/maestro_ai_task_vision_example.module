@@ -1,0 +1,129 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\maestro\Engine\MaestroEngine;
+use Drupal\webform\Entity\WebformSubmission;
+
+/**
+ * Implements hook_form_alter().
+ */
+function maestro_ai_task_vision_example_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Attach css to our specific expense report form
+  if(
+    $form_id == 'webform_submission_maestro_ai_expense_rcpt_complex_add_form' ||
+    $form_id == 'webform_submission_maestro_ai_expense_rcpt_complex_edit_form '
+  ) {
+    $form['#attached']['library'][] = 'maestro_ai_task_vision_example/maestro_ai_task_vision_example_css';
+  }
+}
+
+/**
+ * Implements hook_maestro_batch_handlers().
+ *
+ * Array of function names and help text that will be displayed
+ * in the edit task form under the handler field.
+ */
+function maestro_ai_task_vision_example_maestro_batch_handlers() {
+  return [
+    'maestro_ai_task_vision_example_set_webform_composite_value_with_pv' => t('Sets the webform composite field value for Rejection Reason with the "message" process variable value.'),
+    'maestro_ai_task_vision_example_set_webform_has_issues_with_pv' => t('Set the webform field for "Has Receipt Issues" with the process variable value'),
+    'maestro_ai_task_vision_example_set_webform_value_with_pv' => t('Set the singlular "Rejection Reason" webform field value with the "message" process variable.')
+  ];
+}
+
+
+/**
+ * Batch function handler that sets a single field value in a webform submission.  
+ * We assume that the webform is held in the "submission" entity identifier and that  
+ * the value we're setting is in the "message" process variable. 
+ *
+ * @param int $processID
+ *   The Maestro process ID.
+ * @param int $queueID
+ *   The Maestro queue ID.
+ */
+function maestro_ai_task_vision_example_set_webform_value_with_pv($processID, $queueID) {
+  $submission_id = MaestroEngine::getEntityIdentiferByUniqueID($processID, 'submission');
+  $webform_submission = WebformSubmission::load($submission_id);
+  if($webform_submission) {
+    $webform = $webform_submission->getWebform();
+    if($webform->id() == 'simple_expense_report_example') {
+      // We're targetting the right webform submission.
+      // Now get the message PV
+      $message = MaestroEngine::getProcessVariable('message', $processID);
+      if($message === FALSE) {
+        $message = 'General error';
+      }
+      $values = $webform_submission->getData();
+      // Set the webform submission field value.
+      $values['rejection_reason'] = $message;
+      // Update the submission with the rejection reason
+      $webform_submission->setData($values);
+      $webform_submission->save();
+    }
+  }
+  return TRUE; // Optimistic here that this finishes.
+}
+
+/**
+ * Batch function handler that sets a composite field value in a webform submission.  
+ * We assume that the webform is held in the "submission" entity identifier and that  
+ * the value we're setting is in the "message" process variable. The field "delta" is  
+ * in the "number_of_receipts" process variable.
+ *
+ * @param int $processID
+ *   The Maestro process ID.
+ * @param int $queueID
+ *   The Maestro queue ID.
+ */
+function maestro_ai_task_vision_example_set_webform_composite_value_with_pv($processID, $queueID) {
+  $submission_id = MaestroEngine::getEntityIdentiferByUniqueID($processID, 'submission');
+  $webform_submission = WebformSubmission::load($submission_id);
+  if($webform_submission) {
+    $webform = $webform_submission->getWebform();
+    if($webform->id() == 'maestro_ai_expense_rcpt_complex') {
+      // We're targetting the right webform submission.
+      // Now get the message PV
+      $message = MaestroEngine::getProcessVariable('message', $processID);
+      $delta = MaestroEngine::getProcessVariable('number_of_receipts', $processID);
+      if($message === FALSE) {
+        $message = 'General error';
+      }
+      $values = $webform_submission->getData();
+      // Set the composite field value.
+      $values['receipt_upload'][$delta]['rejection_reason'] = $message;
+      // Update the submission with the rejection reason
+      $webform_submission->setData($values);
+      $webform_submission->save();
+    }
+  }
+  return TRUE; // Optimistic here that this finishes.
+}
+
+/**
+ * Batch function handler that sets a field value in a webform submission.  
+ *
+ * @param int $processID
+ *   The Maestro process ID.
+ * @param int $queueID
+ *   The Maestro queue ID.
+ */
+function maestro_ai_task_vision_example_set_webform_has_issues_with_pv($processID, $queueID) {
+  $submission_id = MaestroEngine::getEntityIdentiferByUniqueID($processID, 'submission');
+  $webform_submission = WebformSubmission::load($submission_id);
+  if($webform_submission) {
+    $webform = $webform_submission->getWebform();
+    if($webform->id() == 'maestro_ai_expense_rcpt_complex') {
+      // We're targetting the right webform submission.
+      // Now get the receipts_have_issues PV
+      $receipts_have_issues = MaestroEngine::getProcessVariable('receipts_have_issues', $processID);
+      $values = $webform_submission->getData();
+      // Set the composite field value.
+      $values['has_receipt_issues'] = $receipts_have_issues;
+      // Update the submission with the rejection reason
+      $webform_submission->setData($values);
+      $webform_submission->save();
+    }
+  }
+  return TRUE; // Optimistic here that this finishes.
+}

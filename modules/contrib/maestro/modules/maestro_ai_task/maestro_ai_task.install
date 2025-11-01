@@ -1,0 +1,89 @@
+<?php
+
+use Drupal\maestro\Engine\MaestroEngine;
+
+/**
+ * Implements hook_install().
+ */
+function maestro_ai_task_install() {
+  $schema = \Drupal::database()->schema();
+  $table = 'maestro_ai_storage';
+
+  // Set Default Settings
+  /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+  $config_factory = \Drupal::service('config.factory');
+  $config = $config_factory->getEditable('maestro_ai_task.settings');
+  // Set the base prompt.  Just to have something started for people to use.
+  $config->set('base_prompt', 'You are a knowledgeable and helpful office administrator who reviews documents.')->save();
+  $config->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function maestro_ai_task_uninstall() {
+  // Remove our config
+  $config_factory = \Drupal::service('config.factory');
+  $config_factory->getEditable('maestro_ai_task.settings')->delete();
+}
+
+
+
+/**
+ * Update 10000 - Move the AI Task's configuration under task_data to clean up schema.
+ */
+function maestro_ai_task_update_10000() {
+  // Load all templates and find ones that contain AI tasks and transpose their data
+  $ai_config_fields = [
+    'ai_prompt',
+    'hold_task_on_null',
+    'ai_provider',
+    'ai_return_format',
+    'ai_return_custom_format',
+    'ai_return_into',
+    'ai_return_into_process_variable',
+    'ai_return_into_ai_variable',
+    'log_ai_return',
+    'ai_testing',
+    'ai_testing_response',
+    'ai_vision_image_source',
+    'ai_vision_image_source_url',
+    'ai_vision_image_source_entity',
+    'ai_vision_image_source_pv',
+    'ai_vision_image_source_file',
+    'ai_speech_to_text_language',
+    'ai_speech_to_text_language_missing',
+    'ai_speech_to_text_source',
+    'ai_speech_to_text_source_url',
+    'ai_speech_to_text_source_entity',
+    'ai_speech_to_text_source_entity_manual',
+    'ai_speech_to_text_source_pv',
+    'ai_speech_to_text_source_file',
+    'ai_text_to_image_file_storage',
+    'ai_text_to_image_filename',
+    'ai_text_to_image_path',
+    'ai_text_to_image_url_or_path',
+    'ai_return_format',
+  ];
+  $templates = MaestroEngine::getTemplates(); // template_id => tasks
+  foreach($templates as $template_id => &$settings) {
+    $change = FALSE;
+    $tasks = &$settings->tasks ?? [];
+    foreach($tasks as &$task) {
+      if($task['tasktype'] == 'MaestroAITask') {
+        // Transpose all AI fields into the ['data']['ai'] key
+        foreach($ai_config_fields as $field) {
+          if(array_key_exists($field, $task)) {
+            $task['data']['ai'][$field] = $task[$field];
+            $change = TRUE;
+          }
+          unset($task[$field]);
+        }
+      }
+    }
+    if($change) {
+      $templates[$template_id]->save();
+    }
+  }
+
+}

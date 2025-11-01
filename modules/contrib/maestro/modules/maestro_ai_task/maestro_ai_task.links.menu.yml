@@ -1,0 +1,6 @@
+maestro_ai.admin:
+  title: Maestro AI Task Settings
+  description: Configure the Maestro AI Task Module
+  parent: system.admin_config_workflow
+  route_name: maestro_ai_task.maestro_ai_admin_settings
+  menu_name: workflow

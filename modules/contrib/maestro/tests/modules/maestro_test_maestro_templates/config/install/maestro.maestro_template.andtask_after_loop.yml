@@ -1,0 +1,198 @@
+langcode: en
+status: true
+dependencies: {  }
+id: andtask_after_loop
+label: 'AndTask after loop'
+description: null
+app_group: 0
+pan_left: -134
+pan_top: 8
+zoom: 1.0
+canvas_height: 900
+canvas_width: 800
+default_workflow_timeline_stage_count: 0
+show_details: false
+validated: true
+views_attached:
+  maestro_entity_identifiers:
+    view_machine_name: maestro_entity_identifiers
+    view_weight: -10
+    view_display: 'taskconsole_display;Task Console Display'
+  maestro_completed_tasks:
+    view_machine_name: maestro_completed_tasks
+    view_weight: -9
+    view_display: default;Master
+variables:
+  initiator:
+    variable_id: initiator
+    variable_value: '0'
+  workflow_timeline_stage_count:
+    variable_id: workflow_timeline_stage_count
+    variable_value: ''
+  workflow_current_stage:
+    variable_id: workflow_current_stage
+    variable_value: ''
+  workflow_current_stage_message:
+    variable_id: workflow_current_stage_message
+    variable_value: ''
+  loop-count:
+    variable_id: loop-count
+    variable_value: '0'
+tasks:
+  start:
+    id: start
+    tasktype: MaestroStart
+    label: Start
+    nextstep: 'wait,task1'
+    nextfalsestep: ''
+    top: '40'
+    left: '110'
+    assignby: fixed
+    assignto: engine
+  end:
+    id: end
+    tasktype: MaestroEnd
+    label: End
+    nextstep: ''
+    nextfalsestep: ''
+    top: '370'
+    left: '110'
+    assignby: fixed
+    assignto: engine
+  task1:
+    id: task1
+    tasktype: MaestroBatchFunction
+    label: 'dummy task1'
+    nextstep: counter
+    nextfalsestep: ''
+    runonce: false
+    top: '40'
+    left: '280'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: maestro_dummy_batch_function
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  wait:
+    id: wait
+    tasktype: MaestroAnd
+    label: 'AndTask wait'
+    nextstep: end
+    nextfalsestep: ''
+    runonce: false
+    top: '240'
+    left: '110'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  counter:
+    id: counter
+    tasktype: MaestroSetProcessVariable
+    label: 'loop-count +1'
+    nextstep: loop
+    nextfalsestep: ''
+    runonce: false
+    top: '40'
+    left: '450'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      spv:
+        variable: loop-count
+        method: addsubtract
+        variable_value: '1'
+        spv_plugin: ''
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  loop:
+    id: loop
+    tasktype: MaestroIf
+    label: 'loop-count = 1'
+    nextstep: task1
+    nextfalsestep: wait
+    runonce: false
+    top: '240'
+    left: '450'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      if:
+        method: byvariable
+        variable: loop-count
+        operator: '='
+        variable_value: '1'
+        status: '1'
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
