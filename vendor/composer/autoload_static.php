@@ -81,7 +81,6 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'W' => 
         array (
             'Wikimedia\\Composer\\Merge\\V2\\' => 28,
-            'Webmozart\\Assert\\' => 17,
         ),
         'T' => 
         array (
@@ -344,10 +343,6 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'Wikimedia\\Composer\\Merge\\V2\\' => 
         array (
             0 => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src',
-        ),
-        'Webmozart\\Assert\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/webmozart/assert/src',
         ),
         'Twig\\' => 
         array (
@@ -636,7 +631,8 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         ),
         'Nette\\' => 
         array (
-            0 => __DIR__ . '/..' . '/nette/utils/src',
+            0 => __DIR__ . '/..' . '/nette/schema/src',
+            1 => __DIR__ . '/..' . '/nette/utils/src',
         ),
         'Mtownsend\\XmlToArray\\' => 
         array (
