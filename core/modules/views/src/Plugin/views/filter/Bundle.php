@@ -134,9 +134,7 @@ class Bundle extends InOperator {
     $bundle_entity_type = $this->entityType->getBundleEntityType();
     $bundle_entity_storage = $this->entityTypeManager->getStorage($bundle_entity_type);
 
-    /*JMP_DBG foreach (array_keys($this->value) as $bundle) { JMP_DBG*/
-    $keys = isset($this->value) && is_array($this->value) ? array_keys($this->value) : [];
-    foreach ($keys as $bundle) {
+    foreach (array_keys($this->value) as $bundle) {
       if ($bundle_entity = $bundle_entity_storage->load($bundle)) {
         $dependencies[$bundle_entity->getConfigDependencyKey()][] = $bundle_entity->getConfigDependencyName();
       }

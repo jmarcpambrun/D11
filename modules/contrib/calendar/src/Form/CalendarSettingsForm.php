@@ -76,7 +76,6 @@ class CalendarSettingsForm extends ConfigFormBase {
       ->set('track_date', $form_state->getValue('track_date'))
       ->set('add_colorbox', $form_state->getValue('add_colorbox'))
       ->save();
-
   }
 
 }

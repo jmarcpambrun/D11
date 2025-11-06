@@ -9,9 +9,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Psr\Log\LoggerInterface;
-/* JMP_DBG RAJOUT DES 2 USE SUIVANGTS */
-use Drupal\Core\Url;
-use Drupal\symfony_mailer\Email;
+
 /**
  * Provides a class for handling assembly and dispatch of contact mail messages.
  */
@@ -113,13 +111,11 @@ class MailHandler implements MailHandlerInterface {
 
     // Send email to the recipient(s).
     $key_prefix = $message->isPersonal() ? 'user' : 'page';
-    /*JMP_DBG $this->mailManager->mail('contact', $key_prefix . '_mail', $to, $recipient_langcode, $params, $sender_cloned->getEmail()); JMP_DBG*/
-	$this->sendMail($key_prefix . '_mail', $to, $recipient_langcode, $params, $sender_cloned->getEmail());
+    $this->mailManager->mail('contact', $key_prefix . '_mail', $to, $recipient_langcode, $params, $sender_cloned->getEmail());
 
     // If requested, send a copy to the user, using the current language.
     if ($message->copySender()) {
-      /*JMP_DBG $this->mailManager->mail('contact', $key_prefix . '_copy', $sender_cloned->getEmail(), $current_langcode, $params, $sender_cloned->getEmail()); JMP_DBG*/
-	  $this->sendMail($key_prefix . '_copy', $sender_cloned->getEmail(), $current_langcode, $params, $sender_cloned->getEmail());
+      $this->mailManager->mail('contact', $key_prefix . '_copy', $sender_cloned->getEmail(), $current_langcode, $params, $sender_cloned->getEmail());
     }
 
     // If configured, send an auto-reply, using the current language.
@@ -132,8 +128,7 @@ class MailHandler implements MailHandlerInterface {
         ]);
       }
       else {
-        /*JMP_DBG $this->mailManager->mail('contact', 'page_autoreply', $sender_cloned->getEmail(), $current_langcode, $params); JMP_DBG */
-		$this->sendMail('page_autoreply', $sender_cloned->getEmail(), $current_langcode, $params);
+        $this->mailManager->mail('contact', 'page_autoreply', $sender_cloned->getEmail(), $current_langcode, $params);
       }
     }
 
@@ -151,70 +146,6 @@ class MailHandler implements MailHandlerInterface {
         '%recipient-name' => $message->getPersonalRecipient()->getAccountName(),
       ]);
     }
-  }
-  /**
-   * Sends a single mail.
-   */
-  protected function sendMail($key, $to, $langcode, $params, $reply = NULL) {
-    $message = (new Email("contact.$key"))->to($to);
-    if ($reply) {
-      $message->addReplyTo($reply);
-    }
-   $contact_message = $params['contact_message'];
-    /** @var \Drupal\user\UserInterface $sender */
-    $sender = $params['sender'];
-    $language = \Drupal::languageManager()->getLanguage($langcode);
-
-    $variables = [
-      '@site-name' => \Drupal::config('system.site')->get('name'),
-      '@subject' => $contact_message->getSubject(),
-      '@form' => !empty($params['contact_form']) ? $params['contact_form']->label() : NULL,
-      '@form-url' => Url::fromRoute('<current>', [], ['absolute' => TRUE, 'language' => $language])->toString(),
-      '@sender-name' => $sender->getDisplayName(),
-    ];
-    if ($sender->isAuthenticated()) {
-      $variables['@sender-url'] = $sender->toUrl('canonical', ['absolute' => TRUE, 'language' => $language])->toString();
-    }
-    else {
-      $variables['@sender-url'] = $params['sender']->getEmail();
-    }
-
-    $message->data($variables);
-    $options = ['langcode' => $language->getId()];
-
-    switch ($key) {
-      case 'page_mail':
-      case 'page_copy':
-        $message->subject($this->t('[@form] @subject', $variables, $options));+        $message->appendParagraph($this->t("@sender-name (@sender-url) sent a message using the contact form at @form-url.", $variables, $options));
-        $build = \Drupal::entityTypeManager()
-          ->getViewBuilder('contact_message')
-          ->view($contact_message, 'mail');
-        $message->appendContent($build);
-        break;
-
-      case 'page_autoreply':
-        $message->subject($this->t('[@form] @subject', $variables, $options));
-        $message->content($params['contact_form']->getReply());
-        break;
-
-      case 'user_mail':
-      case 'user_copy':
-        $variables += [
-          '@recipient-name' => $params['recipient']->getDisplayName(),
-          '@recipient-edit-url' => $params['recipient']->toUrl('edit-form', ['absolute' => TRUE, 'language' => $language])->toString(),
-        ];
-        $message->subject($this->t('[@site-name] @subject', $variables, $options));
-        $message->appendParagraph($this->t('Hello @recipient-name,', $variables, $options));
-        $message->appendParagraph($this->t("@sender-name (@sender-url) has sent you a message via your contact form at @site-name.", $variables, $options));
-        $message->appendParagraph($this->t("If you don't want to receive such emails, you can change your settings at @recipient-edit-url.", $variables, $options));
-        $build = \Drupal::entityTypeManager()
-          ->getViewBuilder('contact_message')
-          ->view($contact_message, 'mail');
-        $message->appendContent($build);
-        break;
-    }
-
-    \Drupal::service('symfony_mailer')->send($message);
   }
 
 }

@@ -28,7 +28,6 @@ use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\user\RoleInterface;
 use Drupal\user\UserInterface;
-use Drupal\symfony_mailer\Email;
 
 /**
  * Implements hook_help().
@@ -1072,45 +1071,14 @@ function _user_mail_notify($op, AccountInterface $account) {
     if (empty($site_mail)) {
       $site_mail = ini_get('sendmail_from');
     }
-    /*JMP_DBG $mail = \Drupal::service('plugin.manager.mail')->mail('user', $op, $account->getEmail(), $account->getPreferredLangcode(), $params, $site_mail); JMP_DBG*/
-
-    $mailer = \Drupal::service('symfony_mailer');
-    $mail_config = \Drupal::config('user.mail');
-    $subject = $mail_config->get("$op.subject");
-    $content = [
-      '#type' => 'processed_text',
-      '#text' => $mail_config->get("$op.body"),
-      '#format' => $mail_config->get('text_format'),
-    ];
-    $data = ['user' => $account];
-    $token_options = ['langcode' => $langcode, 'callback' => 'user_mail_tokens', 'clear' => TRUE];
-
-    $message = (new Email("user.$op"))
-      ->addTo($account->getEmail())
-      ->subject($subject)
-      ->content($content)
-      ->addReplyTo($site_mail)
-      ->data($data)
-      ->enableTokenReplace($token_options);
-    $result = $mailer->send($message);
-
-	if ($op == 'register_pending_approval') {
+    $mail = \Drupal::service('plugin.manager.mail')->mail('user', $op, $account->getEmail(), $account->getPreferredLangcode(), $params, $site_mail);
+    if ($op == 'register_pending_approval') {
       // If a user registered requiring admin approval, notify the admin, too.
       // We use the site default language for this.
-      /*JMP_DBG \Drupal::service('plugin.manager.mail')->mail('user', 'register_pending_approval_admin', $site_mail, \Drupal::languageManager()->getDefaultLanguage()->getId(), $params); JMP_DBG */
-      $token_options['langcode'] = \Drupal::languageManager()->getDefaultLanguage()->getId();
-      $message = (new Email("user.$op"))
-        ->addTo($site_mail)
-        ->subject($subject)
-        ->content($content)
-        ->addReplyTo($site_mail)
-        ->data($data)
-        ->enableTokenReplace($token_options);
-      $mailer->send($message);	  
+      \Drupal::service('plugin.manager.mail')->mail('user', 'register_pending_approval_admin', $site_mail, \Drupal::languageManager()->getDefaultLanguage()->getId(), $params);
     }
   }
-  /*JMP_DBG return empty($mail) ? NULL : $mail['result'];JMP_DBG */
-  return $result;
+  return empty($mail) ? NULL : $mail['result'];
 }
 
 /**

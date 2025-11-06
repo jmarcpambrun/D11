@@ -11,31 +11,23 @@ class DateArgumentWrapper {
 
   /**
    * The date object.
-   *
-   * @var \Drupal\views\Plugin\views\argument\Date
    */
-  protected $dateArg;
+  protected Date $dateArg;
 
   /**
    * The variable declaration of type DateTime.
-   *
-   * @var \DateTime
    */
-  protected $minDate;
+  protected ?\DateTimeInterface $minDate = NULL;
 
   /**
    * The variable declaration of type DateTime.
-   *
-   * @var \DateTime
    */
-  protected $maxDate;
+  protected ?\DateTimeInterface $maxDate = NULL;
 
   /**
    * The variable declaration of type int.
-   *
-   * @var int
    */
-  protected $position;
+  protected int $position;
 
   /**
    * Function to get the position.
@@ -85,15 +77,14 @@ class DateArgumentWrapper {
 
     // Remove method_exists() check once committed in
     // https://www.drupal.org/project/drupal/issues/2325899#comment-15653541.
-    if (method_exists($class, 'getFormat')) {
+    if (method_exists($class, 'getArgFormat')) {
       return $this->dateArg->getArgFormat();
     }
 
     $formats = [
       'YearMonthDate' => 'Ym',
+      'FullDate' => 'Ymd',
       'YearDate' => 'Y',
-      // @todo Consider reverting b387a84 to 'YW' but with tests to cover the
-      // bug it fixes.
       'YearWeekDate' => 'oW',
       'WeekDate' => 'W',
       'MonthDate' => 'm',
@@ -158,6 +149,16 @@ class DateArgumentWrapper {
    * {@inheritdoc}
    */
   public function getGranularity() {
+    // Prefer the argument plugin's explicit granularity getter when available.
+    if (method_exists($this->dateArg, 'getGranularity')) {
+      $granularity = $this->dateArg->getGranularity();
+      if (!empty($granularity)) {
+        return $granularity;
+      }
+    }
+
+    // Fallback: derive the granularity from the Views plugin ID.
+    // Example IDs: "datetime_full_date", "date_year_week", "datetime_year".
     $plugin_id = $this->dateArg->getPluginId();
     $plugin_granularity = str_replace('datetime_', '', $plugin_id);
     $plugin_granularity = str_replace('date_', '', $plugin_granularity);
@@ -242,7 +243,7 @@ class DateArgumentWrapper {
       }
 
       // Find the max week for a year. Some years start a 53rd week.
-      $max_week = gmdate("W", strtotime("28 December {$info['year']}"));
+      $max_week = gmdate('W', strtotime("28 December {$info['year']}"));
       return $info['week'] >= 1 && $info['week'] <= $max_week;
 
     }
@@ -262,7 +263,7 @@ class DateArgumentWrapper {
    * @return array|bool
    *   Returns an array with 'year' and 'week' if valid, FALSE otherwise.
    */
-  protected function getYearWeek($value) {
+  protected function getYearWeek(string $value) {
     if (is_numeric($value) && strlen($value) == 6) {
       $return['year'] = (int) substr($value, 0, 4);
       $return['week'] = (int) substr($value, 4, 2);

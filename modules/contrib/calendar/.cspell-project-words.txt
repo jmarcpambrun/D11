@@ -6,7 +6,6 @@ colpos
 curday
 datebox
 dayview
-iehint
 monthview
 multiday
 multirow
@@ -21,6 +20,10 @@ wday
 weekno
 weekview
 ydate
+
+# Recurring Date words.
+wkst
+byday
 
 # Drupal words
 grippie
