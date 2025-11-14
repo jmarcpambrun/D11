@@ -14,7 +14,6 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\Component\Utility\Html;
-use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -468,7 +467,7 @@ class WebformContentCreatorEntity extends ConfigEntityBase implements WebformCon
     $field_mapping->mapEntityField($content, $webform_element, $fields[$field_id], $values, $mapping);
 
     // When saving a password User requires a specific method.
-    if (($attributes[$field_id][WebformContentCreatorInterface::TYPE] === 'password') && ($content instanceof UserInterface)) {
+    if ($attributes[$field_id][WebformContentCreatorInterface::TYPE] == 'password') {
       $content->setPassword($webform_submission->{$mapping[WebformContentCreatorInterface::WEBFORM_FIELD]}->value);
     }
 
