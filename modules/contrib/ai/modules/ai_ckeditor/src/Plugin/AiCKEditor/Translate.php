@@ -153,10 +153,8 @@ final class Translate extends AiCKEditorPluginBase {
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
-    $autocreate = $this->configuration['autocreate'] && $this->configuration['language_source'] == 'tax';
-
     $form['language'] = [
-	  '#type' => $autocreate ? 'entity_autocomplete' : 'select',
+      '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
       '#title' => $this->t('Choose language'),
       '#tags' => FALSE,
       '#required' => TRUE,
@@ -164,7 +162,7 @@ final class Translate extends AiCKEditorPluginBase {
       '#description' => $this->t('Selecting one of the options will translate the selected text.'),
     ];
 
-    if ($autocreate) {
+    if ($this->configuration['autocreate']) {
       $form['language']['#target_type'] = 'taxonomy_term';
       $form['language']['#selection_settings'] = [
         'target_bundles' => [$this->configuration['translate_vocabulary']],
@@ -177,20 +175,7 @@ final class Translate extends AiCKEditorPluginBase {
       }
     }
     else {
-      if ($this->configuration['language_source'] == 'tax') {
-        $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
-      }
-      else {
-        $site_languages = $this->languageManager->getLanguages();
-        $form['language']['#options'] = [];
-        foreach ($site_languages as $langcode => $language) {
-          $form['language']['#options'][$langcode] = $language->getName();
-        }
-        // Set default value if only one language is available.
-        if (count($form['language']['#options']) === 1) {
-          $form['language']['#default_value'] = key($form['language']['#options']);
-        }
-      }
+      $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
     }
 
     return $form;
