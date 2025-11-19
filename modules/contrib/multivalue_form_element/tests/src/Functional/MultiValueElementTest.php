@@ -120,13 +120,13 @@ class MultiValueElementTest extends BrowserTestBase {
 
     // Test that the max weight reflects the numbers of items available.
     $expected_weight_range = range(-1, 1);
-    $this->assertEquals($expected_weight_range, array_keys($this->getOptions($assert_session->selectExists('foo[0][_weight]'))));
-    $this->assertEquals($expected_weight_range, array_keys($this->getOptions($assert_session->selectExists('foo[1][_weight]'))));
+    $this->assertSelectOptions($expected_weight_range, 'foo[0][_weight]');
+    $this->assertSelectOptions($expected_weight_range, 'foo[1][_weight]');
     $assert_session->buttonExists('foo_add_more')->press();
     $expected_weight_range = range(-2, 2);
-    $this->assertEquals($expected_weight_range, array_keys($this->getOptions($assert_session->selectExists('foo[0][_weight]'))));
-    $this->assertEquals($expected_weight_range, array_keys($this->getOptions($assert_session->selectExists('foo[1][_weight]'))));
-    $this->assertEquals($expected_weight_range, array_keys($this->getOptions($assert_session->selectExists('foo[2][_weight]'))));
+    $this->assertSelectOptions($expected_weight_range, 'foo[0][_weight]');
+    $this->assertSelectOptions($expected_weight_range, 'foo[1][_weight]');
+    $this->assertSelectOptions($expected_weight_range, 'foo[2][_weight]');
 
     // Reset all the default values.
     $this->setFormDefaultValues([]);
@@ -228,6 +228,26 @@ class MultiValueElementTest extends BrowserTestBase {
     // Make sure to reset the cache to get fresh values from state.
     \Drupal::service('state')->resetCache();
     return \Drupal::state()->get('multivalue_form_element_test_submitted_values', []);
+  }
+
+  /**
+   * Assert that a select element contains the expected options.
+   *
+   * @param array $expected_options
+   *   The expected option values.
+   * @param string $selector
+   *   The select element selector.
+   */
+  protected function assertSelectOptions(array $expected_options, string $selector): void {
+    $select_element = $this->assertSession()->selectExists($selector);
+    $options = [];
+    /** @var \Behat\Mink\Element\NodeElement $option */
+    foreach ($select_element->findAll('xpath', '//option') as $option) {
+      $label = $option->getText();
+      $value = $option->getAttribute('value') ?: $label;
+      $options[$value] = $label;
+    }
+    $this->assertEquals($expected_options, array_keys($options));
   }
 
 }

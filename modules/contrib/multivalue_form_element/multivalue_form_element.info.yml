@@ -3,7 +3,7 @@ description: Provides a multi-value form element that wraps any number of form e
 type: module
 core_version_requirement: ^10 || ^11
 
-# Information added by Drupal.org packaging script on 2025-02-17
-version: '1.0.0-beta7'
+# Information added by Drupal.org packaging script on 2025-11-17
+version: '1.0.0-beta8'
 project: 'multivalue_form_element'
-datestamp: 1739788830
+datestamp: 1763385945
