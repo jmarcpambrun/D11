@@ -48,7 +48,7 @@ class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
    */
   public function testApplies(
     bool $expected,
-    string $route_name = NULL,
+    ?string $route_name = NULL,
     array $parameter_map = [],
     bool $inject_node_mock = FALSE,
   ): void {

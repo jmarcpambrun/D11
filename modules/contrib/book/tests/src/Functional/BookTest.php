@@ -73,8 +73,13 @@ class BookTest extends BookTestBase {
     // Log in as a user with access to the book outline and save the form.
     $this->drupalLogin($this->adminUser);
     $this->drupalGet('admin/structure/book/' . $book->id());
+    $this->assertSession()->statusCodeEquals(200);
     $this->submitForm([], 'Save book pages');
     $this->assertSession()->pageTextContains('Updated book ' . $book->label() . '.');
+
+    // Test book that does not exist.
+    $this->drupalGet('admin/structure/book/9999');
+    $this->assertSession()->statusCodeEquals(404);
   }
 
   /**

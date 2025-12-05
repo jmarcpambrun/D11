@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -72,6 +73,8 @@ class BookManager implements BookManagerInterface {
    *   The book memory cache service.
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The route match.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
+   *   The logger.factory service.
    */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
@@ -84,6 +87,7 @@ class BookManager implements BookManagerInterface {
     protected CacheBackendInterface $backendChainedCache,
     protected CacheBackendInterface $memoryCache,
     protected RouteMatchInterface $route_match,
+    protected LoggerChannelFactoryInterface $loggerFactory,
   ) {
     $this->stringTranslation = $translation;
   }
@@ -323,6 +327,13 @@ class BookManager implements BookManagerInterface {
     }
     else {
       $i = 1;
+      if (!isset($parent['depth'])) {
+        $this->loggerFactory->get('book')->warning(
+          'Parent book link @pid is missing or invalid for node @nid. Using depth 0 as fallback.',
+          ['@pid' => $item['pid'], '@nid' => $item['nid']]
+        );
+        $parent['depth'] = 0;
+      }
       $book['depth'] = $parent['depth'] + 1;
       while ($i < $book['depth']) {
         $p = 'p' . $i++;
@@ -860,10 +871,24 @@ class BookManager implements BookManagerInterface {
         elseif (($parent_link = $this->loadBookLink($link['pid'], FALSE)) && $parent_link['bid'] != $link['bid']) {
           $link['pid'] = $link['bid'];
           $parent = $this->loadBookLink($link['pid'], FALSE);
+          if (!isset($parent['depth'])) {
+            $this->loggerFactory->get('book')->warning(
+              'Parent book link @pid is missing or invalid for node @nid. Using depth 0 as fallback.',
+              ['@pid' => $link['pid'], '@nid' => $link['nid']]
+            );
+            $parent['depth'] = 0;
+          }
           $link['depth'] = $parent['depth'] + 1;
         }
         else {
           $parent = $this->loadBookLink($link['pid'], FALSE);
+          if (!isset($parent['depth'])) {
+            $this->loggerFactory->get('book')->warning(
+              'Parent book link @pid is missing or invalid for node @nid. Using depth 0 as fallback.',
+              ['@pid' => $link['pid'], '@nid' => $link['nid']]
+            );
+            $parent['depth'] = 0;
+          }
           $link['depth'] = $parent['depth'] + 1;
         }
         $this->setParents($link, $parent);
@@ -960,10 +985,7 @@ class BookManager implements BookManagerInterface {
    *   failure.
    */
   protected function updateOriginalParent(array $original): bool {
-    if (!array_key_exists('pid', $original)) {
-      throw new \InvalidArgumentException('Missing key "pid" in original book item.');
-    }
-    if ($original['pid'] == 0) {
+    if (empty($original['pid'])) {
       // There were no parents of this link. Nothing to update.
       return TRUE;
     }

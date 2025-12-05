@@ -16,6 +16,7 @@ use Drupal\book\BookManager;
 use Drupal\book\BookManagerInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides a form for administering a single book's hierarchy.
@@ -76,6 +77,10 @@ class BookAdminEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?NodeInterface $node = NULL): array {
+    if (empty($node->book)) {
+      throw new NotFoundHttpException();
+    }
+
     $form['#title'] = $this->t('Edit %parent book outline', ['%parent' => $node->label()]);
     $form['#node'] = $node;
     $this->bookAdminTable($node, $form);
@@ -83,6 +88,8 @@ class BookAdminEditForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Save book pages'),
     ];
+
+    $form['#attached']['library'][] = 'book/book-edit-form';
 
     return $form;
   }
@@ -180,7 +187,7 @@ class BookAdminEditForm extends FormBase {
       '#header' => [
         $title_field_definition->getLabel(),
         $this->t('Weight'),
-        $this->t('Parent'),
+        $this->t('Hidden Book Information'),
         $this->t('Operations'),
       ],
       '#empty' => $this->t('No book content available.'),
@@ -217,7 +224,7 @@ class BookAdminEditForm extends FormBase {
         '#type' => 'value',
         '#value' => $hash,
       ];
-      $this->bookAdminTableTree($tree['below'], $form['table']);
+      $this->bookAdminTableTree($tree['below'], $form['table'], (int) ($tree['link']['depth'] ?? 0));
     }
   }
 
@@ -228,10 +235,12 @@ class BookAdminEditForm extends FormBase {
    *   A subtree of the book menu hierarchy.
    * @param array $form
    *   The form that is being modified, passed by reference.
+   * @param int $depth
+   *   The initial depth of the book node.
    *
    * @see self::buildForm()
    */
-  protected function bookAdminTableTree(array $tree, array &$form): void {
+  protected function bookAdminTableTree(array $tree, array &$form, int $depth): void {
     // The delta must be big enough to give each node a distinct value.
     $count = count($tree);
     $delta = ($count < 30) ? 50 : intval($count / 2) + 1;
@@ -248,17 +257,12 @@ class BookAdminEditForm extends FormBase {
       $form[$id]['#attributes']['class'][] = 'draggable';
       $form[$id]['#weight'] = $data['link']['weight'];
 
-      /* Indentation stylings break the child ordering admin form,
-      so check the route. */
-      $route_name = $this->current_route_match->getRouteName();
-
-      if ($route_name != 'book.node_child_ordering') {
-        if (isset($data['link']['depth']) && $data['link']['depth'] > 2) {
-          $indentation = [
-            '#theme' => 'indentation',
-            '#size' => $data['link']['depth'] - 2,
-          ];
-        }
+      $supported_depth = max($depth + 1, 2);
+      if (isset($data['link']['depth']) && $data['link']['depth'] > $supported_depth) {
+        $indentation = [
+          '#theme' => 'indentation',
+          '#size' => $data['link']['depth'] - $supported_depth,
+        ];
       }
 
       /** @var \Drupal\node\NodeInterface $node */
@@ -272,6 +276,7 @@ class BookAdminEditForm extends FormBase {
           '#required' => $title_field_definition->isRequired(),
           '#title' => $title_field_definition->getLabel(),
           '#title_display' => 'hidden',
+          '#wrapper_attributes' => ['class' => ['container-inline']],
           '#default_value' => $data['link']['title'],
         ];
       }
@@ -343,7 +348,7 @@ class BookAdminEditForm extends FormBase {
       }
 
       if ($data['below']) {
-        $this->bookAdminTableTree($data['below'], $form);
+        $this->bookAdminTableTree($data['below'], $form, $depth);
       }
     }
   }

@@ -71,6 +71,8 @@ class BookNavigationBlockTest extends BookTestBase {
     $this->drupalGet($nodes[0]->toUrl());
     $this->assertSession()->statusCodeEquals(403);
     $this->drupalGet($this->book->toUrl());
+
+    $this->assertSession()->elementTextContains('css', 'h2.visually-hidden#book-label-' . $this->book->id(), 'Book traversal links for ' . $this->book->label());
     $this->assertSession()->responseNotContains($nodes[0]->getTitle());
     $this->assertSession()->responseNotContains($nodes[1]->getTitle());
     $this->assertSession()->responseNotContains($nodes[2]->getTitle());

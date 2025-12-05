@@ -11,7 +11,7 @@ dependencies:
 package: Forum
 configure: forum.overview
 
-# Information added by Drupal.org packaging script on 2024-07-17
-version: '1.0.2'
+# Information added by Drupal.org packaging script on 2025-12-02
+version: '1.0.3'
 project: 'forum'
-datestamp: 1721256611
+datestamp: 1764715045

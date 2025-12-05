@@ -72,8 +72,28 @@ class BookLayoutBuilderTest extends BookTestBase {
 
     $this->assertTrue($node->isPublished());
 
+    // Confirm that we can save a draft from layout builder override form for
+    // a node of our test content type, which does not have book outlines
+    // enabled.
     $this->drupalGet("node/{$node->id()}/layout");
     $this->assertEquals('Current state Published', $this->cssSelect('#edit-moderation-state-0-current')[0]->getText());
+
+    $this->submitForm([
+      'moderation_state[0][state]' => 'draft',
+    ], 'Save layout');
+
+    $this->assertSession()->pageTextContains('The layout override has been saved.');
+
+    // Now enable book for the content type and confirm we can still save
+    // another draft.
+    $book_config = $this->config('book.settings');
+    $allowed_types = $book_config->get('allowed_types');
+    $allowed_types[] = 'test_content_type';
+    $book_config->set('allowed_types', $allowed_types)->save();
+    $this->resetAll();
+
+    $this->drupalGet("node/{$node->id()}/layout");
+    $this->assertEquals('Current state Draft', $this->cssSelect('#edit-moderation-state-0-current')[0]->getText());
 
     $this->submitForm([
       'moderation_state[0][state]' => 'draft',

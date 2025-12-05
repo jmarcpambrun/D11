@@ -71,9 +71,13 @@ book.node_child_ordering:
   defaults:
     _form: 'Drupal\book\Form\BookAdminEditForm'
     _title: 'Re-order book pages and change titles'
+    parameters:
+      node:
+        type: entity:node
   options:
     _admin_route: TRUE
   requirements:
     _permission: 'administer book outlines'
     _entity_access: 'node.view'
     _custom_access: '\Drupal\book\Controller\RouteAccessController::access'
+    node: \d+

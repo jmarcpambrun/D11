@@ -51,6 +51,18 @@ class BookJavascriptTest extends WebDriverTestBase {
       'book' => ['bid' => $book->id(), 'pid' => $book->id(), 'weight' => 1],
     ]);
     $page2->save();
+    $page3 = Node::create([
+      'type' => 'book',
+      'title' => '3rd level page',
+      'book' => ['bid' => $book->id(), 'pid' => $page2->id(), 'weight' => 1],
+    ]);
+    $page3->save();
+    $page4 = Node::create([
+      'type' => 'book',
+      'title' => '4th level page',
+      'book' => ['bid' => $book->id(), 'pid' => $page3->id(), 'weight' => 1],
+    ]);
+    $page4->save();
 
     // Head to admin screen and attempt to re-order.
     $this->drupalLogin($this->drupalCreateUser(['administer book outlines']));
@@ -60,16 +72,20 @@ class BookJavascriptTest extends WebDriverTestBase {
 
     $weight_select1 = $page->findField("table[book-admin-{$page1->id()}][weight]");
     $weight_select2 = $page->findField("table[book-admin-{$page2->id()}][weight]");
+    $weight_select3 = $page->findField("table[book-admin-{$page3->id()}][weight]");
+    $weight_select4 = $page->findField("table[book-admin-{$page4->id()}][weight]");
 
     // Check that rows weight selects are hidden.
     $this->assertFalse($weight_select1->isVisible());
     $this->assertFalse($weight_select2->isVisible());
+    $this->assertFalse($weight_select3->isVisible());
+    $this->assertFalse($weight_select4->isVisible());
 
     // Check that '2nd page' row is heavier than '1st page' row.
     $this->assertGreaterThan($weight_select1->getValue(), $weight_select2->getValue());
 
     // Check that '1st page' precedes the '2nd page'.
-    $this->assertOrderInPage(['1st page', '2nd page']);
+    $this->assertOrderInPage(['1st page', '2nd page', '3rd level page', '4th level page']);
 
     // Check that the 'unsaved changes' text is not present in the message area.
     $this->assertSession()->pageTextNotContains('You have unsaved changes.');
@@ -85,8 +101,9 @@ class BookJavascriptTest extends WebDriverTestBase {
     // Check that the 'unsaved changes' text appeared in the message area.
     $this->assertSession()->pageTextContains('You have unsaved changes.');
 
-    // Check that '2nd page' page precedes the '1st page'.
-    $this->assertOrderInPage(['2nd page', '1st page']);
+    // Check that '2nd page' page precedes the '1st page'. But has 3rd level
+    // as sibling and 4th page as a child.
+    $this->assertOrderInPage(['2nd page', '1st page', '3rd level page', '4th level page']);
 
     $this->submitForm([], 'Save book pages');
     $this->assertSession()->pageTextContains(new FormattableMarkup('Updated book @book.', ['@book' => $book->getTitle()]));
@@ -94,10 +111,10 @@ class BookJavascriptTest extends WebDriverTestBase {
     // Check that page reordering was done in the backend for drag-n-drop.
     $page1 = Node::load($page1->id());
     $page2 = Node::load($page2->id());
-    $this->assertGreaterThan($page2->book['weight'], $page1->book['weight']);
+    $this->assertLessThan($page2->book['weight'], $page1->book['weight']);
 
     // Check again that '2nd page' is on top after form submit in the UI.
-    $this->assertOrderInPage(['2nd page', '1st page']);
+    $this->assertOrderInPage(['2nd page', '1st page', '3rd level page', '4th level page']);
 
     // Toggle row weight selects as visible.
     $page->findButton('Show row weights')->click();
@@ -105,9 +122,11 @@ class BookJavascriptTest extends WebDriverTestBase {
     // Check that rows weight selects are visible.
     $this->assertTrue($weight_select1->isVisible());
     $this->assertTrue($weight_select2->isVisible());
+    $this->assertTrue($weight_select3->isVisible());
+    $this->assertTrue($weight_select4->isVisible());
 
     // Check that '1st page' row became heavier than '2nd page' row.
-    $this->assertGreaterThan($weight_select2->getValue(), $weight_select1->getValue());
+    $this->assertLessThan($weight_select2->getValue(), $weight_select1->getValue());
 
     // Reverse again using the weight fields. Use the current values so the test
     // doesn't rely on knowing the values in the select boxes.
@@ -122,18 +141,28 @@ class BookJavascriptTest extends WebDriverTestBase {
     // Check that rows weight selects are hidden again.
     $this->assertFalse($weight_select1->isVisible());
     $this->assertFalse($weight_select2->isVisible());
+    $this->assertFalse($weight_select3->isVisible());
+    $this->assertFalse($weight_select4->isVisible());
 
     $this->submitForm([], 'Save book pages');
     $this->assertSession()->pageTextContains(new FormattableMarkup('Updated book @book.', ['@book' => $book->getTitle()]));
 
     // Check that the '1st page' is first again.
-    $this->assertOrderInPage(['1st page', '2nd page']);
+    $this->assertOrderInPage(['2nd page', '3rd level page', '4th level page', '1st page']);
 
     // Check that page reordering was done in the backend for manual weight
     // field usage.
     $page1 = Node::load($page1->id());
     $page2 = Node::load($page2->id());
-    $this->assertGreaterThan($page2->book['weight'], $page1->book['weight']);
+
+    $major = (int) explode('.', \Drupal::VERSION)[0];
+    // @todo remove with D10 support.
+    if ($major <= 10) {
+      $this->assertGreaterThan($page1->book['weight'], $page2->book['weight']);
+    }
+    else {
+      $this->assertLessThan($page1->book['weight'], $page2->book['weight']);
+    }
   }
 
   /**

@@ -12,3 +12,9 @@ book.styling:
   css:
     theme:
       css/book.css: { }
+
+book-edit-form:
+  version: VERSION
+  css:
+    theme:
+      css/book-edit-form.css: {}

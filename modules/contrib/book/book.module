@@ -358,6 +358,14 @@ function book_node_prepare_form(NodeInterface $node, $operation, FormStateInterf
   /** @var \Drupal\book\BookManagerInterface $book_manager */
   $book_manager = \Drupal::service('book.manager');
 
+  // Avoid layout builder form as it won't have the book widget on it.
+  // If we set defaults on this form, it will interfere with the
+  // BookOutlineConstraintValidator and prevent saving layouts on nodes using
+  // content moderation and book.
+  if ($operation === 'layout_builder') {
+    return;
+  }
+
   // Prepare defaults for the add/edit form.
   $book_access = \Drupal::service('access_check.book.node_outline')->access($node);
   if (empty($node->book) && $book_access instanceof AccessResultAllowed) {
@@ -455,9 +463,13 @@ function template_preprocess_book_all_books_block(array &$variables): void {
 function template_preprocess_book_navigation(array &$variables): void {
   $book_link = $variables['book_link'];
 
+  // Load the top item in the book so we can get the title.
+  $book_manager = \Drupal::service('book.manager');
+  $book_top = $book_manager->loadBookLink($book_link['bid']);
+
   // Provide extra variables for themers. Not needed by default.
   $variables['book_id'] = $book_link['bid'];
-  $variables['book_title'] = $book_link['bid'] ?? '';
+  $variables['book_title'] = $book_top['title'] ?? '';
   $variables['book_url'] = Url::fromRoute('entity.node.canonical', ['node' => $book_link['bid']])->toString();
   $variables['current_depth'] = $book_link['depth'] ?? 0;
   $variables['tree'] = '';
@@ -481,7 +493,6 @@ function template_preprocess_book_navigation(array &$variables): void {
     }
 
     /** @var \Drupal\book\BookManagerInterface $book_manager */
-    $book_manager = \Drupal::service('book.manager');
     if ($book_link['pid'] && $parent = $book_manager->loadBookLink($book_link['pid'])) {
       $parent_href = Url::fromRoute('entity.node.canonical', ['node' => $book_link['pid']])->toString();
       $build['#attached']['html_head_link'][][] = [

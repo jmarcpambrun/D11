@@ -1,0 +1,4 @@
+.book-admin-edit [data-drupal-selector="edit-table"] tr td:nth-child(3),
+.book-admin-edit [data-drupal-selector="edit-table"] thead th:nth-child(3) {
+  display: none;
+}
