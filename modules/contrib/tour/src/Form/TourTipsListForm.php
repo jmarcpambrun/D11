@@ -58,6 +58,7 @@ class TourTipsListForm extends EntityForm {
       '#type' => 'table',
       '#header' => [
         $this->t('Label'),
+        $this->t('Type'),
         $this->t('Weight'),
         $this->t('Operations'),
       ],
@@ -86,6 +87,11 @@ class TourTipsListForm extends EntityForm {
         $form['tips'][$tip_id]['#attributes']['class'][] = 'draggable';
         $form['tips'][$tip_id]['label'] = [
           '#plain_text' => $tip->get('label'),
+        ];
+
+        $tip_definition = $this->tipPluginManager->getDefinition($tip->getPluginId());
+        $form['tips'][$tip_id]['plugin_id'] = [
+          '#plain_text' => $tip_definition['title'] ?? $tip->getPluginId(),
         ];
 
         $form['tips'][$tip_id]['weight'] = [
@@ -148,6 +154,7 @@ class TourTipsListForm extends EntityForm {
       '#options' => $tip_definition_options,
       '#empty_option' => $this->t('Select a new tip'),
     ];
+    $form['tips']['new']['plugin_id'] = [];
     $form['tips']['new']['weight'] = [
       '#type' => 'weight',
       '#title' => $this->t('Weight for new tip'),

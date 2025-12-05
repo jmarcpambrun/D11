@@ -141,12 +141,21 @@ final class EcaCommands extends DrushCommands {
   #[Usage(name: 'eca:update', description: 'Update all models if plugins got changed.')]
   public function updateAllModels(): void {
     $this->ecaUpdate->updateAllModels();
-    if ($infos = $this->ecaUpdate->getInfos()) {
+    $infos = $this->ecaUpdate->getInfos();
+    $errors = $this->ecaUpdate->getErrors();
+    $warnings = $this->ecaUpdate->getWarnings();
+    if ($infos) {
       $this->io()->info(implode(PHP_EOL, $infos));
     }
-    if ($errors = $this->ecaUpdate->getErrors()) {
+    if ($errors) {
       $this->io()->error(implode(PHP_EOL, $errors));
     }
+    if ($warnings) {
+      $this->io()->warning(implode(PHP_EOL, $warnings));
+    }
+    $this->io()->info("Models not requiring updates: " . count($infos));
+    $this->io()->info("Models updated: " . count($warnings));
+    $this->io()->info("Errors reported: " . count($errors));
   }
 
   /**

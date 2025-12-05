@@ -26,7 +26,7 @@ interface TourInterface extends ConfigEntityInterface {
    *   Associative array of raw route params.
    *
    * @return bool
-   *   TRUE if the tour matches the route parameters.
+   *   TRUE if the tour matches any route and their route parameters.
    */
   public function hasMatchingRoute(string $route_name, array $route_params): bool;
 

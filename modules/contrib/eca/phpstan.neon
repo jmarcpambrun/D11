@@ -14,6 +14,7 @@ parameters:
     - '#^Dead catch - AssertionError is never thrown in the try block.#'
     - '#^Dead catch - Drupal\\Component\\Plugin\\Exception\\PluginException is never thrown in the try block.#'
     - '#^Class Drupal\\eca_render\\Element\\EcaLazy extends @internal class Drupal\\Core\\Render\\Element\\RenderElementBase.#'
+    - '#^Call to deprecated method get\(\) of class Symfony\\Component\\HttpFoundation\\Request#'
   excludePaths:
     - '*/tests/*.php'
   stubFiles:

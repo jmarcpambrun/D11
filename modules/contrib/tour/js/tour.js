@@ -1,14 +1,9 @@
-/* eslint import/no-unresolved: 0 */
+/* global offsetFloating */
 /**
  * @file
  * Attaches behaviors for the Tour module's toolbar tab.
  */
-
-import Shepherd from 'shepherd.js';
-import { offset } from '@floating-ui/dom';
-import 'shepherd.js/dist/css/shepherd.css';
-
-(($, Backbone, Drupal, settings, document, once) => {
+(($, Backbone, Shepherd, offsetFloating, Drupal, settings, document, once) => {
   const queryString = decodeURI(window.location.search);
 
   /**
@@ -242,7 +237,7 @@ import 'shepherd.js/dist/css/shepherd.css';
                 classes: tourStepConfig.classes,
                 index,
                 floatingUIOptions: {
-                  middleware: [offset({ mainAxis: 20, crossAxis: 0 })],
+                  middleware: [offsetFloating({ mainAxis: 20, crossAxis: 0 })],
                 },
               };
 
@@ -488,4 +483,13 @@ import 'shepherd.js/dist/css/shepherd.css';
    */
   Drupal.theme.tourItemContent = (tourStepConfig) =>
     `${tourStepConfig.body}<div class="tour-progress">${tourStepConfig.counter}</div>`;
-})(jQuery, Backbone, Drupal, drupalSettings, document, once);
+})(
+  jQuery,
+  Backbone,
+  Shepherd,
+  offsetFloating,
+  Drupal,
+  drupalSettings,
+  document,
+  once,
+);

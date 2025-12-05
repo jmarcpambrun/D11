@@ -403,3 +403,29 @@ function maestro_update_10004() {
     }
   }
 }
+
+
+/**
+ * Update 10005 - Increase the Mestro process variables value column to 10000 and clear all caches
+ */
+function maestro_update_10005() {
+  $storage_key = 'maestro.maestro_process_variables.variable_value';
+  $storage_schema = \Drupal::keyValue('entity.storage_schema.sql');
+  $field_schema = $storage_schema->get($storage_key);
+  $field_schema['maestro_process_variables']['fields']['variable_value']['length'] = 10000;
+  $storage_schema->set($storage_key, $field_schema);
+  
+  $database = \Drupal::database();
+  $database->query("ALTER TABLE maestro_process_variables MODIFY variable_value VARCHAR(10000)");
+
+  $config = \Drupal::configFactory()->getEditable('maestro.maestro_process_variables.variable_value');
+  $config->set('settings.max_length', 10000);
+  $config->save(TRUE);
+
+  $field_storage =  FieldStorageConfig::loadByName('maestro_process_variables', 'variable_value');
+  if($field_storage) {
+    $field_storage->save();
+  }
+  
+  drupal_flush_all_caches();
+}

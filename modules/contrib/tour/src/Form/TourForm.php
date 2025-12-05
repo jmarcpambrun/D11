@@ -9,6 +9,7 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\tour\TipPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 
 /**
  * Form controller for the tour entity edit forms.
@@ -23,7 +24,8 @@ class TourForm extends EntityForm {
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('language_manager'),
-      $container->get('plugin.manager.tour.tip')
+      $container->get('plugin.manager.tour.tip'),
+      $container->get('cache_tags.invalidator')
     );
   }
 
@@ -34,10 +36,13 @@ class TourForm extends EntityForm {
    *   The Language Manager service.
    * @param \Drupal\tour\TipPluginManager $tipPluginManager
    *   The Tip Plugin Manager service.
+   * @param \Drupal\Core\Cache\CacheTagsInvalidatorInterface $cacheTagsInvalidator
+   *   The Cache Tags Invalidator service.
    */
   public function __construct(
     protected LanguageManagerInterface $languageManager,
     protected TipPluginManager $tipPluginManager,
+    protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
   ) {
   }
 
@@ -198,7 +203,26 @@ class TourForm extends EntityForm {
       $this->messenger()->addMessage($this->t('The tour %tour has been created.', ['%tour' => $form_state->getValue('label')]));
     }
 
+    // Capture original routes BEFORE saving (only if not new).
+    $original_routes = NULL;
+    $entity_id = $this->entity->id();
+    if (!$this->entity->isNew()) {
+      $original_config = $this->configFactory()->get('tour.tour.' . $entity_id);
+      if ($original_config) {
+        $original_routes = $original_config->get('routes');
+      }
+    }
+
     parent::submitForm($form, $form_state);
+
+    // Compare pre/post routes; if changed, invalidate relevant cache tags.
+    $new_routes = $this->entity->get('routes') ?? [];
+    if ($original_routes !== $new_routes) {
+      $this->cacheTagsInvalidator->invalidateTags([
+        'config:tour.tour.' . $entity_id,
+        'tour_settings',
+      ]);
+    }
 
     $form_state->setRedirect('entity.tour.edit_form', ['tour' => $this->entity->id()]);
   }

@@ -27,28 +27,23 @@ class MaestroCommands extends DrushCommands {
     $lockDuration = intval($config->get('maestro_orchestrator_lock_execution_time')) ?: 30;
     $lock = Drupal::lock();
 
-    try {
-      if ($lock->acquire('maestro_orchestrator', $lockDuration)) {
-        if ($config->get('maestro_orchestrator_development_mode') == '1') {
-          $engine->enableDevelopmentMode();
-          $this->logger()->notice('Development mode enabled.');
-        }
-
-        $engine->cleanQueue();
-        $lock->release('maestro_orchestrator');
-
-        $this->logger()->success('Maestro orchestrator finished.');
-        return 0;
+    if ($lock->acquire('maestro_orchestrator', $lockDuration)) {
+      if ($config->get('maestro_orchestrator_development_mode') == '1') {
+        $engine->enableDevelopmentMode();
+        $this->logger()->notice('Development mode enabled.');
       }
-      else {
-        $this->logger()->warning('Could not acquire maestro_orchestrator lock. Another process may be running.');
-        return 1;
-      }
+
+      $engine->cleanQueue();
+      $lock->release('maestro_orchestrator');
+
+      $this->logger()->success('Maestro orchestrator finished.');
+      return DrushCommands::EXIT_SUCCESS;
     }
-    catch (\Throwable $e) {
-      $this->logger()->error('Exception while running orchestrator: ' . $e->getMessage());
-      return 1;
+    else {
+      $this->logger()->warning('Could not acquire maestro_orchestrator lock. Another process may be running.');
+      return DrushCommands::EXIT_FAILURE;
     }
+
   }
 
   /**
@@ -71,16 +66,16 @@ class MaestroCommands extends DrushCommands {
         $config = \Drupal::config('maestro.settings');
         // Run the orchestrator for us once on process kickoff.
         $this->orchestrate();
-        return 0;
+        return DrushCommands::EXIT_SUCCESS;
       }
       else {
         $this->logger()->error('Error!  Process unable to start!');
-        return 1;
+        return DrushCommands::EXIT_FAILURE;
       }
     }
     else {
       $this->logger()->error('Error!  No template by that name exists!');
-      return 1;
+      return DrushCommands::EXIT_FAILURE;
     }
   }
 

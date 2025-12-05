@@ -25,18 +25,25 @@ final class EcaUpdate {
   protected EntityStorageInterface $configStorage;
 
   /**
-   * List of errors.
-   *
-   * @var array
-   */
-  protected array $errors;
-
-  /**
    * List of info messages.
    *
    * @var array
    */
   protected array $infos;
+
+  /**
+   * List of warning messages.
+   *
+   * @var array
+   */
+  protected array $warnings;
+
+  /**
+   * List of errors.
+   *
+   * @var array
+   */
+  protected array $errors;
 
   /**
    * Constructs an EcaUpdate object.
@@ -57,6 +64,7 @@ final class EcaUpdate {
    */
   public function updateAllModels(): void {
     $this->errors = [];
+    $this->warnings = [];
     $this->infos = [];
     /** @var \Drupal\eca\Entity\Eca $eca */
     foreach ($this->configStorage->loadMultiple() as $eca) {
@@ -75,7 +83,7 @@ final class EcaUpdate {
           }
           try {
             $modeller->save($model->getModeldata(), $filename);
-            $this->infos[] = '[' . $eca->label() . '] Model has been updated.';
+            $this->warnings[] = '[' . $eca->label() . '] Model has been updated.';
           }
           catch (\LogicException | EntityStorageException $e) {
             $this->errors[] = '[' . $eca->label() . '] Error while updating this model: ' . $e->getMessage();
@@ -112,7 +120,7 @@ final class EcaUpdate {
         }
         if ($changed) {
           $eca->save();
-          $this->infos[] = '[' . $eca->label() . '] Model has been updated.';
+          $this->warnings[] = '[' . $eca->label() . '] Model has been updated.';
         }
         else {
           $this->infos[] = '[' . $eca->label() . '] Model does not require any updates.';
@@ -132,6 +140,16 @@ final class EcaUpdate {
   }
 
   /**
+   * Gets the list of all collected warning messages.
+   *
+   * @return array
+   *   The list of all collected warning messages.
+   */
+  public function getWarnings(): array {
+    return $this->warnings;
+  }
+
+  /**
    * Gets the list of all collected info messages.
    *
    * @return array
@@ -142,15 +160,21 @@ final class EcaUpdate {
   }
 
   /**
-   * Outputs all messages (info and error) to the user.
+   * Outputs all warning and error messages to user, plus a summary.
    */
   public function displayMessages(): void {
     foreach ($this->infos ?? [] as $info) {
       $this->messenger->addMessage($info);
     }
+    foreach ($this->warnings ?? [] as $warning) {
+      $this->messenger->addWarning($warning);
+    }
     foreach ($this->errors ?? [] as $error) {
       $this->messenger->addError($error);
     }
+    $this->messenger->addMessage("Models not requiring updates: " . count($this->infos ?? []));
+    $this->messenger->addMessage("Models updated: " . count($this->warnings ?? []));
+    $this->messenger->addMessage("Errors reported: " . count($this->errors ?? []));
   }
 
 }

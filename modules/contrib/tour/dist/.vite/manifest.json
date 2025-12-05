@@ -1,11 +1,8 @@
 {
-  "js/tour.js": {
-    "file": "tour.js",
-    "name": "tour",
-    "src": "js/tour.js",
-    "isEntry": true,
-    "css": [
-      "tour.css"
-    ]
+  "js/third-party.js": {
+    "file": "third-party.js",
+    "name": "third-party",
+    "src": "js/third-party.js",
+    "isEntry": true
   }
 }

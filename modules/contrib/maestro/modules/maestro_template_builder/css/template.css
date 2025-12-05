@@ -179,3 +179,74 @@
   box-shadow: none;
   border: none;
 }
+
+
+/* Zoom controls in palette */
+.maestro-palette-zoom.entry  {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.maestro-palette-zoom.entry:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.maestro-palette-zoom.entry:active {
+  background-color: rgba(0, 0, 0, 0.15);
+  transform: scale(0.95);
+}
+
+.maestro-palette-zoom.entry > svg {
+  border: dotted #333 1px;
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.maestro-palette-zoom svg {
+  pointer-events: none;
+  color: #333;
+}
+
+/* Zoom level indicator styling */
+.maestro-palette-zoom-indicator.entry {
+  padding: 6px 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 4px;
+  cursor: default;
+}
+
+.maestro-palette-zoom-indicator .entry:hover {
+  background-color: rgba(76, 175, 80, 0.15);
+}
+
+#maestro-palette-zoom-level {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+}
+
+div[data-group="zoom"] {
+  margin-top: 10px;
+  float: left;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+div[data-group="zoom"] hr.separator {
+  width: 100%;
+  padding: 1px;
+}
+
+div[data-group="zoom"] .maestro-palette-zoom {
+  width: 50%;          /* Make each entry take half the container's width */
+  box-sizing: border-box; /* Optional: ensures padding/border are included in the 50% width */
+}

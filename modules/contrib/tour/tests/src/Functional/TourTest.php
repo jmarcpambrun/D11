@@ -220,7 +220,18 @@ class TourTest extends TourTestBase {
       'type' => 'text',
       'title' => 'The first tip',
     ]);
-    $this->assertCount(1, $elements, 'Found English variant of tip 1.');
+    $this->assertCount(1, $elements, 'Found foo variant of tip 1.');
+
+    // Navigate to tour-test-3 and verify the tour_test_1 tip is found with
+    // appropriate classes.
+    $this->drupalGet('tour-test-3/baz');
+
+    $elements = $this->findTip([
+      'id' => 'tour-test-1',
+      'type' => 'text',
+      'title' => 'The first tip',
+    ]);
+    $this->assertCount(1, $elements, 'Found baz variant of tip 1.');
 
     // Navigate to tour-test-3 and verify the tour_test_1 tip is not found with
     // appropriate classes.
@@ -231,7 +242,7 @@ class TourTest extends TourTestBase {
       'type' => 'text',
       'title' => 'The first tip',
     ]);
-    $this->assertCount(0, $elements, 'Did not find English variant of tip 1.');
+    $this->assertCount(0, $elements, 'Did not find bar variant of tip 1.');
   }
 
   /**

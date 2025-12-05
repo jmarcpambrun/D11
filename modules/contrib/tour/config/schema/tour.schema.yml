@@ -11,12 +11,12 @@ tour.settings:
       type: boolean
       label: 'Display custom labels'
     tour_avail_text:
-      type: string
+      type: label
       label: 'Tour available text'
       constraints:
         NotNull: []
     tour_no_avail_text:
-      type: string
+      type: label
       label: 'Tour not available text'
       constraints:
         NotNull: []
@@ -38,7 +38,7 @@ tour.tour.*:
       label: 'Label'
     routes:
       type: sequence
-      label: 'Route settings'
+      label: 'A sequence of any routes that match and their required route parameters.'
       sequence:
         type: route_tour
         label: 'Route'

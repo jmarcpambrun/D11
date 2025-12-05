@@ -11,9 +11,10 @@ entity.tour.edit_form_tips:
 tour.settings_tab:
   route_name: tour.tour_settings
   title: Settings
-  base_route: entity.tour.collection
+  base_route: tour.tour_settings
 
 tour.list_tab:
   route_name: entity.tour.collection
   title: List
-  base_route: entity.tour.collection
+  base_route: tour.tour_settings
+  weight: -100

@@ -208,7 +208,13 @@ class GetWebformSubmissionElementValue extends MaestroSetProcessVariablePluginBa
     if($entity && $entity_bundle == $spv['entity_type_bundle']) {
       $submission_data = $entity->getData();
       if(array_key_exists($field, $submission_data)) {
-        $returnValue = $submission_data[$field];
+        if(is_array($submission_data[$field])) {
+          $returnValue = implode(',', $submission_data[$field]);
+        }
+        else {
+          $returnValue = $submission_data[$field];
+        }
+        
       }
     }
     // Fire a hook to allow devs to manage the return value if for some reason there's an entity that doesn't

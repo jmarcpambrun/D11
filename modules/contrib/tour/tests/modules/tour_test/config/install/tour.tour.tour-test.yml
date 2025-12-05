@@ -11,10 +11,15 @@ routes:
     route_name: tour_test.1
   -
     route_name: tour_test.1_no_action
+  # Test the same route with different parameters:
   -
     route_name: tour_test.3
     route_params:
       locale: foo
+  -
+    route_name: tour_test.3
+    route_params:
+      locale: baz
   -
     route_name: node.add
 tips:

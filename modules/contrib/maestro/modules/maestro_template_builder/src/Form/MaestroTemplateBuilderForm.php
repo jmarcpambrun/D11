@@ -402,7 +402,7 @@ class MaestroTemplateBuilderForm extends FormBase {
     $manager = \Drupal::service('plugin.manager.maestro_tasks');
     $plugins = $manager->getDefinitions();
     foreach ($plugins as $key => $taskPlugin) {
-      $task = $manager->createInstance($taskPlugin['id'], [0, 0]);
+      $task = $manager->createInstance($key, [0, 0]);
       $taskColours[$key] = $task->getTaskColours();
     }
 
@@ -696,20 +696,20 @@ class MaestroTemplateBuilderForm extends FormBase {
     $plugins = $manager->getDefinitions();
 
     $task_types = [];
-    foreach ($plugins as $plugin) {
-      if ($plugin['id'] != 'MaestroStart') {
+    foreach ($plugins as $plugin_id => $plugin) {
+      if ($plugin_id != 'MaestroStart') {
         
-        $task = $manager->createInstance($plugin['id'], [0, 0]);
-        $task_types[$task->getPluginId()] = $task->shortDescription();
+        $task = $manager->createInstance($plugin_id, [0, 0]);
+        $task_types[$plugin_id] = $task->shortDescription();
       }
     }
     asort($task_types); // Get the tasks listed in alphabetical order
 
     // Task Type Capabilities
     $capabilities = [];
-    foreach ($plugins as $plugin) {
-      if ($plugin['id'] != 'MaestroStart') {
-        $task = $manager->createInstance($plugin['id'], [0, 0]);
+    foreach ($plugins as $plugin_id => $plugin) {
+      if ($plugin_id != 'MaestroStart') {
+        $task = $manager->createInstance($plugin_id, [0, 0]);
         $pluginCapabilies = $task->getTemplateBuilderCapabilities();
         $prefix = 'maestro_template_';
         // This prefix exists on each of our Maestro Task Menu buttons.  The buttons represent any of the 
@@ -718,7 +718,7 @@ class MaestroTemplateBuilderForm extends FormBase {
         $prefixedCapabilities = array_map(function($value) {
             return 'maestro_template_' . $value;
         }, $pluginCapabilies);
-        $capabilities[$task->getPluginId()] = $prefixedCapabilities;
+        $capabilities[$plugin_id] = $prefixedCapabilities;
       }
     }
 

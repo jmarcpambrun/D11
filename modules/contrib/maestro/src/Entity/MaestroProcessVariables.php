@@ -147,7 +147,7 @@ class MaestroProcessVariables extends ContentEntityBase implements MaestroProces
       ->setDescription(t('The value of the variable.'))
       ->setSettings([
         'default_value' => '',
-        'max_length' => 255,
+        'max_length' => 10000,
         'text_processing' => 0,
       ]);
 
