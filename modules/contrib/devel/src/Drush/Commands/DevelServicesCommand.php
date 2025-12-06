@@ -8,7 +8,7 @@ use Consolidation\OutputFormatters\FormatterManager;
 use Consolidation\OutputFormatters\StructuredData\RowsOfFields;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
-use Drush\Formatters\FormatterTrait;
+#use Drush\Formatters\FormatterTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -28,7 +28,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class DevelServicesCommand extends Command {
 
   use AutowireTrait;
-  use FormatterTrait;
+  #use FormatterTrait;
 
   public const string NAME = 'devel:services';
 

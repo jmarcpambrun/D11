@@ -9,7 +9,7 @@ use Consolidation\OutputFormatters\StructuredData\RowsOfFields;
 use Drupal\Core\Utility\Token;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
-use Drush\Formatters\FormatterTrait;
+#use Drush\Formatters\FormatterTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,7 +26,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class DevelTokenCommand extends Command {
 
   use AutowireTrait;
-  use FormatterTrait;
+  #use FormatterTrait;
 
   public const NAME = 'devel:token';
 
