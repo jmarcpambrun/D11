@@ -104,8 +104,10 @@ class MaestroInteractiveFormBase extends FormBase {
       }
     }
 
-    // Rebuild the form.
-    $form_state->setRebuild(TRUE);
+    if(!$form_state->getRedirect()) {
+      // Rebuild the form if no redirect is set.
+      $form_state->setRebuild(TRUE);
+    }
   }
 
   /**

@@ -45,6 +45,9 @@ maestro.maestro_template.*:
     zoom:
       type: float
       label: 'Zoom'
+    private:
+      type: boolean
+      label: 'Zoom'
     canvas_height:
       type: integer
       label: 'Canvas Height'

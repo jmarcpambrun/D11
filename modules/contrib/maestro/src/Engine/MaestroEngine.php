@@ -883,6 +883,10 @@ class MaestroEngine {
 
         break;
 
+      case TASK_STATUS_FALSE_BRANCH:
+        $return_status = t('False Branch Completed');
+        break;
+
       default:
         $return_status = t('Unknown');
         break;
@@ -1300,6 +1304,114 @@ class MaestroEngine {
       $processRecord->delete();
     }
   }
+  
+  /**
+   * getQueueItemTaskData  
+   * Provide a Maestro Queue ID and this method will return to you the LIVE queue item's task data as an array.
+   * The task data is seeded by the task's configuration settings upon creation.
+   * @param  int $queueID  
+   *   The integer Queue ID you wish to load  
+   * @param  string|null $configuration_key  
+   *   Optional.  Some tasks save their data within a sub-array. For example, the Maestro Webform task does not use a 
+   *   sub-array, however, the Set Process Variable task does use an "spv" sub-array.  
+   *   If you omit the configuration key, the return array will be zero-keyed. For example:  
+   *   <pre>
+   * &nbsp;Array [  
+   * &nbsp;&nbsp;&nbsp;&nbsp;[0] => [  
+   * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;....  
+   * &nbsp;&nbsp;&nbsp;&nbsp;]  
+   * &nbsp;]  
+   * </pre>
+   * @return array  
+   *   Returns an empty array when the queue item is not able to be loaded.  Otherwise an array of the task data.
+   */
+  public static function getQueueItemTaskData($queueID, $configuration_key = NULL) {
+    $maestro_queue = MaestroEngine::getQueueEntryById($queueID);
+    $queue_task_data = [];
+    if($maestro_queue)   {
+      if($configuration_key) {
+        $queue_task_data = $maestro_queue->get('task_data')->{$configuration_key} ?? []; // This is LIVE data vs. config data  
+      }
+      else {
+        $queue_task_data = $maestro_queue->get('task_data')->getValue() ?? []; // This is LIVE data vs. config data
+      }
+    }  
+    return $queue_task_data;
+  }
+  
+  /**
+   * setQueueItemTaskData  
+   * Sets the $taskDataKey key to the $value provided.  If your task data lives under a sub-array key, 
+   * specify the key with $configuration_key.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @param  string $taskDataKey  
+   *   The key you are trying to set to $value  
+   * @param  mixed $value  
+   *   The value you are setting to the $taskDataKey  
+   * @param  string $configuration_key  
+   *   Optional.  Some tasks save their data within a sub-array. For example, the Maestro Webform task does not use a 
+   *   sub-array, however, the Set Process Variable task does use an "spv" sub-array.  
+   * @return void
+   */
+  public static function setQueueItemTaskData($queueID, $taskDataKey, $value = NULL, $configuration_key = NULL) {
+    $maestro_queue = MaestroEngine::getQueueEntryById($queueID);
+    $queue_task_data = MaestroEngine::getQueueItemTaskData($queueID, $configuration_key);
+    if($configuration_key !== NULL) { // Could be a 0!
+      $queue_task_data[0][$configuration_key][$taskDataKey] = $value;
+    }
+    else {
+      $queue_task_data[0][$taskDataKey] = $value;
+    }
+    $maestro_queue->set('task_data', $queue_task_data);
+    $maestro_queue->save();
+  }
+  
+  /**
+   * setSuspensionFlag  
+   * Provide a Maestro Queue ID and the suspension flag and this will set the 
+   * task's queue entry inside of the task_data column's value to the 
+   * specified value.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @param  mixed $suspension_flag  
+   *   The suspension flag value. The built in values are  
+   *   MAESTRO_UNSUSPENDED  
+   *   MAESTRO_SUSPEND  
+   *   MAESTRO_ALLOW_SUSPENDED_COMPLETION 
+   * @return void
+   */
+  public static function setSuspensionFlag($queueID, $suspension_flag = MAESTRO_SUSPEND) {
+    MaestroEngine::setQueueItemTaskData($queueID, 'maestro_engine_suspend', $suspension_flag);
+    if($suspension_flag == MAESTRO_SUSPEND) {
+      MaestroEngine::setTaskStatus($queueID, TASK_STATUS_HOLD);
+    }
+    else {
+      MaestroEngine::setTaskStatus($queueID, TASK_STATUS_ACTIVE);
+    }
+    
+  }
+
+  /**
+   * getSuspensionFlag  
+   * Provide a Maestro Queue ID and this method will return the suspension flag
+   * value.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID.  
+   * @return int  
+   *   Returns one of the Maestro suspension flag values:  
+   *   MAESTRO_UNSUSPENDED  
+   *   MAESTRO_SUSPEND  
+   *   MAESTRO_ALLOW_SUSPENDED_COMPLETION
+   */
+  public static function getSuspensionFlag($queueID) {
+    $task_data = MaestroEngine::getQueueItemTaskData($queueID);
+    $suspension_flag = $task_data[0]['maestro_engine_suspend'] ?? 0;
+    return $suspension_flag;
+  }
 
   /*
    *************************************
@@ -1507,8 +1619,9 @@ class MaestroEngine {
       $taskClassName = $queueRecord->task_class_name->getString();
       $taskID = $queueRecord->task_id->getString();
       $templateMachineName = $processRecord->template_id->getString();
-
-      if ($processRecord->complete->getString() == '0') {
+      $suspension_flag = MaestroEngine::getSuspensionFlag($queueID);
+      // If the process is not complete AND the task is not suspended
+      if ($processRecord->complete->getString() == '0' && $suspension_flag != MAESTRO_SUSPEND) {
         // Execute it!
         $task = $this->getPluginTask($taskClassName, $processID, $queueID);
         // Its a task and not an interactive task.

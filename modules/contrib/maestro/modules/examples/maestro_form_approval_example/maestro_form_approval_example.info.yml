@@ -8,7 +8,7 @@ dependencies:
   - maestro:maestro
   - maestro:maestro_taskconsole
 
-# Information added by Drupal.org packaging script on 2025-11-25
-version: '4.2.5'
+# Information added by Drupal.org packaging script on 2025-12-09
+version: '4.3.0'
 project: 'maestro'
-datestamp: 1764081303
+datestamp: 1765316054

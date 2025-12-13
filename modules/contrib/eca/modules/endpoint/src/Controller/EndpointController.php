@@ -342,14 +342,17 @@ final class EndpointController implements ContainerInjectionInterface {
     // we catch the current route match from the global container instead.
     $route = $this->routeMatch->getRouteObject();
     if ($route && ($route->getDefault('_controller') === 'Drupal\eca_endpoint\Controller\EndpointController::handle')) {
-      // Let ::handle decide whether access is allowed.
-      return AccessResult::allowed()
-        ->addCacheContexts([
-          'url.path',
-          'url.query_args',
-          'user',
-          'user.permissions',
-        ]);
+      $given_arguments = $this->routeMatch->getRawParameters()->all();
+      if ($eca_endpoint_argument_1 === ($given_arguments['eca_endpoint_argument_1'] ?? NULL) && $eca_endpoint_argument_2 === ($given_arguments['eca_endpoint_argument_2'] ?? NULL)) {
+        // Let ::handle decide whether access is allowed.
+        return AccessResult::allowed()
+          ->addCacheContexts([
+            'url.path',
+            'url.query_args',
+            'user',
+            'user.permissions',
+          ]);
+      }
     }
 
     $account = $account ?? $this->currentUser;

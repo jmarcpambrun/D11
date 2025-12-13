@@ -429,3 +429,24 @@ function maestro_update_10005() {
   
   drupal_flush_all_caches();
 }
+
+/**
+ * Update 10006 - Add private field to maestro_template entity.
+ */
+function maestro_update_10006() {
+  $all_templates = \Drupal::entityTypeManager()
+    ->getStorage('maestro_template')
+    ->loadMultiple();
+
+  foreach ($all_templates as $template) {
+    if ($template->get('private') === NULL) {
+      $template->set('private', '1'); // Default value for the new field.
+      $template->save();
+    }
+  }
+
+  // Clear cache to ensure schema updates are recognized.
+  drupal_flush_all_caches();
+
+  \Drupal::logger('maestro')->info('Added private field to maestro_template config entities.');
+}

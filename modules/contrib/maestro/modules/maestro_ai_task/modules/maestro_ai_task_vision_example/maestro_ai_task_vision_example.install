@@ -20,7 +20,6 @@ function maestro_ai_task_vision_example_requirements($phase) {
 
     // Check if chat_with_image_vision is one of the default providers configured
     if (!array_key_exists('chat_with_image_vision', $default_providers)) {
-      $link_to_ai_module_settings = Link::createFromRoute(t('Configure the AI module\'s providers here'),'ai.settings_form')->toString();
       $requirements['maestro_ai_task_vision_example_requires_ai_setting'] = [
         'title' => t('Maestro AI Task Vision Example Module'),
         'value' => t('Missing'),

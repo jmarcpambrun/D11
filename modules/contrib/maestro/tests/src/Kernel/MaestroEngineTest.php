@@ -760,4 +760,31 @@ class MaestroEngineTest extends KernelTestBase {
     $this->assertEmpty($process, 'The process should be empty.');
   }
 
+  public function testTaskDataFetchAndSet() {
+    $process_id = $this->maestroEngine->newProcess($this->template_machine_name);
+    $this->maestroEngine->cleanQueue(); // We run the orchestrator one time
+    // Based on our template, we know that the second set of tasks will be assigned to the initiator
+    // These two tasks are interactive tasks which save the task data without a sub-array
+    $queue_task_data = MaestroEngine::getQueueItemTaskData(2);
+    $this->assertIsArray($queue_task_data, 'The task data return should be an array.');
+
+    // The array of task data should also contain 2 keys: modal and redirect_to
+    $this->assertArrayHasKey('modal', $queue_task_data[0], 'The modal key should exist in task data.');
+    $this->assertArrayHasKey('redirect_to', $queue_task_data[0], 'The redirect_to key should exist in task data.');
+
+    // We now set a value
+    MaestroEngine::setQueueItemTaskData(2, 'testkey', 'testvalue');
+    $queue_task_data = MaestroEngine::getQueueItemTaskData(2);
+    $this->assertIsArray($queue_task_data, 'After setting the task data, the task data return should be an array.');
+    // The array of task data should now contain 3 keys: modal, redirect_to and testkey
+    $this->assertArrayHasKey('modal', $queue_task_data[0], 'The modal key should exist in task data.');
+    $this->assertArrayHasKey('redirect_to', $queue_task_data[0], 'The redirect_to key should exist in task data.');
+    $this->assertArrayHasKey('testkey', $queue_task_data[0], 'The testkey key was not successfully created.');
+
+    // Now set a value in a sub array
+    MaestroEngine::setQueueItemTaskData(2, 'testkey2', 'testvalue', 'sub_config');
+    $queue_task_data = MaestroEngine::getQueueItemTaskData(2, 'sub_config');
+    $this->assertIsArray($queue_task_data, 'After setting the sub_config task data, the task data return should be an array.');
+    $this->assertArrayHasKey('testkey2', $queue_task_data, 'The testkey2 key should exist in sub-config task data.');
+  }
 }

@@ -40,6 +40,11 @@ const TASK_ARCHIVE_REGEN = 2;
 const PROCESS_STATUS_COMPLETED = 1;
 const PROCESS_STATUS_ABORTED = 2;
 
+// Maestro suspension flags
+const MAESTRO_UNSUSPENDED = 0;
+const MAESTRO_SUSPEND = 1;
+const MAESTRO_ALLOW_SUSPENDED_COMPLETION = 2;
+
 /**
  * Implements hook_theme().
  */

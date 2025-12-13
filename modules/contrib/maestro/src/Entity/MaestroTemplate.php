@@ -57,6 +57,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "canvas_width",
  *     "pan_top",
  *     "pan_left",
+ *     "private",
  *     "zoom",
  *     "default_workflow_timeline_stage_count",
  *     "show_details",
@@ -144,6 +145,13 @@ class MaestroTemplate extends ConfigEntityBase {
    * @var string
    */
   public $zoom;
+
+  /**
+   * The Privacy setting.
+   *
+   * @var bool
+   */
+  public $private;
 
 
   public function getDescription() {

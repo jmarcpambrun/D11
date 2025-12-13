@@ -62,6 +62,14 @@ class MaestroTemplateFormBase extends EntityForm {
       // '#disabled' => !$Template->isNew(),  //I believe we should keep the machine name editable
     ];
 
+    // Default is to not be private.
+    $form['private'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t("Flag template as private?"),
+      '#description' => $this->t('When checked, modules which interface with Maestro should obey this setting to not reveal it to external systems.'),
+      '#default_value' => isset($Template->private) ? $Template->private : 1,
+    ];
+
     $form['description'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
