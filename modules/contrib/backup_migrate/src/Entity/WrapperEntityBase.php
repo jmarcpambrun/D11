@@ -111,7 +111,6 @@ abstract class WrapperEntityBase extends ConfigEntityBase implements EntityWithP
   /**
    * {@inheritdoc}
    */
-  /*JMP_DBG public function access($operation, AccountInterface $account = NULL, $return_as_object = FALSE) { JMP_DBG*/
   public function access($operation, AccountInterface|null $account = NULL, $return_as_object = FALSE) {
     if ($operation == "update" || $operation == "delete") {
       $info = $this->getPluginDefinition();

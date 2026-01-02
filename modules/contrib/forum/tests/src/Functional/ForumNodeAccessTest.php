@@ -4,7 +4,24 @@ namespace Drupal\Tests\forum\Functional;
 
 use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\node\Entity\NodeType;
+use Drupal\node\NodeTypeInterface;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\node\Traits\NodeAccessTrait;
+
+// @phpcs:disable
+trait NodeAccessBcTrait {
+
+  public function addPrivateField(NodeTypeInterface $type): void {
+    // @phpstan-ignore-next-line
+    node_access_test_add_field($type);
+  }
+
+}
+
+if (!trait_exists(NodeAccessTrait::class)) {
+  class_alias(NodeAccessBcTrait::class, NodeAccessTrait::class);
+}
+// @phpcs:enable
 
 /**
  * Tests forum block view for private node access.
@@ -12,6 +29,8 @@ use Drupal\Tests\BrowserTestBase;
  * @group forum
  */
 class ForumNodeAccessTest extends BrowserTestBase {
+
+  use NodeAccessTrait;
 
   /**
    * Modules to enable.
@@ -38,7 +57,7 @@ class ForumNodeAccessTest extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
     node_access_rebuild();
-    node_access_test_add_field(NodeType::load('forum'));
+    $this->addPrivateField(NodeType::load('forum'));
     \Drupal::state()->set('node_access_test.private', TRUE);
   }
 

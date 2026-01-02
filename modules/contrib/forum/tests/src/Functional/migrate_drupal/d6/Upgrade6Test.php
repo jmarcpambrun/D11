@@ -62,7 +62,12 @@ class Upgrade6Test extends MigrateUpgradeExecuteTestBase {
         fn() => 27,
       ),
       'base_field_override' => 22,
-      'block' => 48,
+      'block' => DeprecationHelper::backwardsCompatibleCall(
+        \Drupal::VERSION,
+        '11.2',
+        fn() => 46,
+        fn() => 48,
+      ),
       'block_content' => 1,
       'block_content_type' => 1,
       'comment' => 4,

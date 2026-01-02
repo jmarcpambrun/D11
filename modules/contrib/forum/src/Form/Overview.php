@@ -20,6 +20,13 @@ class Overview extends OverviewTerms {
   /**
    * {@inheritdoc}
    */
+  public function getBaseFormId() {
+    return 'forum_overview_form';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getFormId() {
     return 'forum_overview';
   }

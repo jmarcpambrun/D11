@@ -49,6 +49,7 @@ class MigrateBlockTest extends MigrateDrupal6TestBase {
       'block_content_body_field',
       'd6_custom_block',
       'd6_user_role',
+      'd6_menu',
       'd6_block',
     ]);
   }

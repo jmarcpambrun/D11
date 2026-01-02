@@ -36,8 +36,7 @@ class PluginManager implements PluginManagerInterface, ConfigurableInterface {
    * @param \Drupal\backup_migrate\Core\Service\ServiceManagerInterface $services
    * @param \Drupal\backup_migrate\Core\Config\ConfigInterface $config
    */
-  /*JMP_DBG public function __construct(ServiceManagerInterface $services = NULL, ConfigInterface $config = NULL) { JMP_DBG */
-	public function __construct(ServiceManagerInterface|null $services = NULL, ConfigInterface $config = NULL) { 
+  public function __construct(ServiceManagerInterface|null $services = NULL, ConfigInterface|null $config = NULL) {
     // Add the injected service locator for dependency injection into plugins.
     $this->setServiceManager($services ? $services : new ServiceManager());
 
