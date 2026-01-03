@@ -6,8 +6,10 @@
     "build": "vite build"
   },
   "dependencies": {
+    "backbone": "^1.6.1",
     "shepherd.js": "^13.0.3",
-    "vite": "^5.4.9"
+    "underscore": "^1.13.7",
+    "vite": "^7.0.0"
   },
   "devDependencies": {
     "prettier": "^3.3.3"

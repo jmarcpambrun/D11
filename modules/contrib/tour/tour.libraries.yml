@@ -8,15 +8,13 @@ tour:
     }
   dependencies:
     - core/jquery
-    # @todo Remove this in https://www.drupal.org/project/drupal/issues/3204011
-    - core/internal.backbone
-    - tour/shepherd
+    - tour/third-party
     - core/drupal
     - core/drupalSettings
     - core/once
     - tour/tour-styling
 
-shepherd:
+third-party:
   version: VERSION
   js:
     dist/third-party.js: { weight: -2 }
@@ -28,7 +26,6 @@ tour-styling:
   version: VERSION
   css:
     component:
-      assets/shepherd/css/shepherd.css: { media: screen }
       css/tour.module.css: { media: screen }
 
 tour-block-styling:
