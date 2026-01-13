@@ -2,6 +2,7 @@
 
 namespace Drupal\backup_migrate\Entity;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
 use Drupal\Core\Plugin\DefaultSingleLazyPluginCollection;
@@ -115,7 +116,7 @@ abstract class WrapperEntityBase extends ConfigEntityBase implements EntityWithP
     if ($operation == "update" || $operation == "delete") {
       $info = $this->getPluginDefinition();
       if (!empty($info['locked'])) {
-        return FALSE;
+        return AccessResult::forbidden();
       }
     }
 
