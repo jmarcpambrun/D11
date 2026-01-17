@@ -135,12 +135,12 @@ class FormFieldSetValue extends ConfigurableActionBase {
     }
     $this->filterFormFieldValue($value);
 
+    $original_field_name = $this->configuration['field_name'];
+    $this->configuration['field_name'] = (string) $this->tokenService->replace($original_field_name);
+
     if ($element = &$this->getTargetElement()) {
       $element['#value'] = $value;
     }
-
-    $original_field_name = $this->configuration['field_name'];
-    $this->configuration['field_name'] = (string) $this->tokenService->replace($original_field_name);
 
     $found = FALSE;
     $existing_value = &$this->getSubmittedValue($found);

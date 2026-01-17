@@ -202,6 +202,12 @@ trait FormFieldPluginTrait {
           // a form field element here, catch the first defined child element.
           $element = &$this->jumpToFirstFieldChild($element);
         }
+        elseif (isset($element[$key])) {
+          // If the element contains a children element with the same key, then
+          // the found element is a container, and the children element should
+          // be returned.
+          $element = $element[$key];
+        }
 
         return $element;
       }
