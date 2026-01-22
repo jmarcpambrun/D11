@@ -2,6 +2,7 @@
 
 namespace Drupal\computed_field\Field;
 
+use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\Core\TypedData\ComputedItemListTrait;
 
@@ -12,10 +13,12 @@ use Drupal\Core\TypedData\ComputedItemListTrait;
  *
  * @see computed_field_entity_view_alter()
  */
-class ComputedFieldEntityReferenceClass extends EntityReferenceFieldItemList {
+class ComputedFieldEntityReferenceClass extends EntityReferenceFieldItemList implements CacheableDependencyInterface {
 
   use ComputedItemListTrait;
 
   use ComputedFieldComputeValueTrait;
+
+  use ComputedFieldCacheableDependencyTrait;
 
 }

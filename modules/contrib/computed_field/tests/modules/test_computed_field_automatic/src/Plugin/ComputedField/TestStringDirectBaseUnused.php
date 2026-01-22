@@ -13,7 +13,7 @@ use Drupal\Core\Entity\EntityInterface;
  * Automatic base field which should not appear in the test.
  */
 #[ComputedField(
-  id: 'test_string_automatic_base',
+  id: 'test_string_automatic_base_unused',
   label: new TranslatableMarkup('Test String Automatic'),
   field_type: 'string',
   no_ui: TRUE,

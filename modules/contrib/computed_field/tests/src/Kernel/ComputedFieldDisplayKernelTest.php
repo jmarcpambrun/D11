@@ -2,15 +2,26 @@
 
 namespace Drupal\Tests\computed_field\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\DependencyInjection\ServiceModifierInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Render\Element;
+use Drupal\dynamic_page_cache\PageCache\RequestPolicy\DefaultRequestPolicy as DynamicPageCacheDefaultRequestPolicy;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\user\Traits\UserCreationTrait;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
  * Tests output and caching of computed fields.
  *
  * @group computed_field
  */
-class ComputedFieldDisplayKernelTest extends KernelTestBase {
+class ComputedFieldDisplayKernelTest extends KernelTestBase implements ServiceModifierInterface {
+
+  use UserCreationTrait;
 
   /**
    * The modules to enable.
@@ -19,6 +30,7 @@ class ComputedFieldDisplayKernelTest extends KernelTestBase {
    */
   protected static $modules = [
     'system',
+    'dynamic_page_cache',
     'user',
     'field',
     'entity_test',
@@ -50,6 +62,19 @@ class ComputedFieldDisplayKernelTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
+  public function alter(ContainerBuilder $container) {
+    // @todo Remove these and rework other parts of this test when
+    // https://www.drupal.org/project/drupal/issues/3390193 is fixed.
+    $service_definition = $container->getDefinition('dynamic_page_cache_request_policy');
+    $service_definition->setClass(KernelTestDynamicPageCacheRequestPolicy::class);
+
+    // Enable the 'x-drupal-cache-tags' response header.
+    $container->setParameter('http.response.debug_cacheability_headers', TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp(): void {
     parent::setUp();
 
@@ -70,14 +95,30 @@ class ComputedFieldDisplayKernelTest extends KernelTestBase {
     $field_definitions = $this->entityFieldManager->getFieldDefinitions('entity_test', 'entity_test');
     $this->assertArrayHasKey('test_string', $field_definitions);
     $this->assertArrayHasKey('test_current_user', $field_definitions);
+    $this->assertArrayHasKey('test_cache_tags', $field_definitions);
     $this->assertArrayHasKey('test_request_timestamp', $field_definitions);
     $this->assertArrayHasKey('test_empty', $field_definitions);
+
+    // Create a current user with a role.
+    $role_alpha = $this->createRole(['view test entity'], rid: 'alpha');
+    $user_alpha = $this->createUser(name: 'Alpha user', values: ['roles' => [$role_alpha]]);
+    $this->container->get('current_user')->setAccount($user_alpha);
 
     $entity_test_storage = $this->entityTypeManager->getStorage('entity_test');
     $view_builder = $this->entityTypeManager->getHandler('entity_test', 'view_builder');
 
     $alpha_entity = $entity_test_storage->create([]);
     $alpha_entity->save();
+
+    $http_kernel = $this->container->get('http_kernel');
+    $request = Request::create('/entity_test/' . $alpha_entity->id());
+    $request->setSession(new Session(new MockArraySessionStorage()));
+    $response = $http_kernel->handle($request);
+    $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+
+    // The cache tag from the test_cache_tags plugin is present in the page's
+    // cache tags.
+    $this->assertStringContainsString('banana', $response->headers->get('x-drupal-cache-tags'));
 
     // Build the entity view render array, including the pre_render callback to
     // fill in the fields' render arrays.
@@ -100,9 +141,34 @@ class ComputedFieldDisplayKernelTest extends KernelTestBase {
     // Render the build array.
     $html = $this->render($build);
 
-    // Can't test test_current_user as we've not set one up!
     $this->assertStringContainsString('cake!', $html);
+    $this->assertStringContainsString('Alpha user', $html);
     $this->assertStringContainsString((string) \Drupal::time()->getRequestTime(), $html);
+  }
+
+  /**
+   * Reloads the given entity from the storage and returns it.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to be reloaded.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The reloaded entity.
+   */
+  protected function reloadEntity(EntityInterface $entity) {
+    $controller = $this->entityTypeManager->getStorage($entity->getEntityTypeId());
+    $controller->resetCache([$entity->id()]);
+    return $controller->load($entity->id());
+  }
+
+}
+
+/**
+ * Replaces the dynamic_page_cache module's default request policy.
+ */
+class KernelTestDynamicPageCacheRequestPolicy extends DynamicPageCacheDefaultRequestPolicy {
+
+  public function __construct() {
   }
 
 }
