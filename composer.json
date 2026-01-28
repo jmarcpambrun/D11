@@ -81,6 +81,7 @@
         "drupal/ip2country": "2.1",
         "drupal/jquery_ui_accordion": "2.0",
         "drupal/key": "1.21",
+        "drupal/klaro": "3.0.8",
         "drupal/ludwig": "2.0.6",
         "drupal/maestro": "4.3",
         "drupal/mail_box_management": "1.0.1-beta1",
