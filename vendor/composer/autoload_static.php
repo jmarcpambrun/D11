@@ -74,6 +74,11 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         array (
             'dekor\\' => 6,
         ),
+        'c' => 
+        array (
+            'chillerlan\\Settings\\' => 20,
+            'chillerlan\\QRCode\\' => 18,
+        ),
         'Y' => 
         array (
             'Yethee\\Tiktoken\\' => 16,
@@ -167,6 +172,7 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         ),
         'O' => 
         array (
+            'Otp\\' => 4,
             'OpenAI\\' => 7,
             'OomphInc\\ComposerInstallersExtender\\' => 36,
         ),
@@ -249,6 +255,7 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
             'FontLib\\' => 8,
             'Flow\\JSONPath\\' => 14,
             'Firebase\\JWT\\' => 13,
+            'Faker\\' => 6,
         ),
         'E' => 
         array (
@@ -335,6 +342,14 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'dekor\\' => 
         array (
             0 => __DIR__ . '/..' . '/dekor/php-array-table/src',
+        ),
+        'chillerlan\\Settings\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-settings-container/src',
+        ),
+        'chillerlan\\QRCode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-qrcode/src',
         ),
         'Yethee\\Tiktoken\\' => 
         array (
@@ -617,6 +632,10 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         array (
             0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
         ),
+        'Otp\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/christian-riesen/otp/src',
+        ),
         'OpenAI\\' => 
         array (
             0 => __DIR__ . '/..' . '/openai-php/client/src',
@@ -861,6 +880,10 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'Firebase\\JWT\\' => 
         array (
             0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
+        'Faker\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
         'Egulias\\EmailValidator\\' => 
         array (

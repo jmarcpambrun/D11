@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.42.0](https://github.com/googleapis/gax-php/compare/v1.41.0...v1.42.0) (2026-01-22)
+
+
+### Features
+
+* Support grpc-status-details-bin for ApiException::getErrorDetails ([#614](https://github.com/googleapis/gax-php/issues/614)) ([c44ad0c](https://github.com/googleapis/gax-php/commit/c44ad0c068586b635a3f6b325e157c116f68065e))
+
+## [1.41.0](https://github.com/googleapis/gax-php/compare/v1.40.1...v1.41.0) (2026-01-16)
+
+
+### Features
+
+* Add ApiException::getErrorDetails() for retrieval of additional exception info ([#611](https://github.com/googleapis/gax-php/issues/611)) ([be7402a](https://github.com/googleapis/gax-php/commit/be7402a94d1c4201e1ca03cdd3bab6c01adb0c24))
+
 ## [1.40.1](https://github.com/googleapis/gax-php/compare/v1.40.0...v1.40.1) (2026-01-16)
 
 
