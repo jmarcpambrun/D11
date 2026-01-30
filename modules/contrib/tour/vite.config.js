@@ -13,6 +13,12 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      lib: {
+        entry: 'js/third-party.js',
+        name: 'ThirdPartyLib',
+        formats: ['iife'],
+        fileName: () => 'js/third-party.js',
+      },
     },
     css: { devSourcemap: true },
     define: {

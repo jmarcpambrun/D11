@@ -6,7 +6,7 @@ dependencies:
   - tour
   - tourauto 
 
-# Information added by Drupal.org packaging script on 2026-01-02
-version: '2.0.16'
+# Information added by Drupal.org packaging script on 2026-01-30
+version: '2.0.17'
 project: 'tour'
-datestamp: 1767391850
+datestamp: 1769735181

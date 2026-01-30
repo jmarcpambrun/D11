@@ -62,6 +62,7 @@
         "drupal/entity_reference_revisions": "1.13",
         "drupal/entity_update": "3.0",
         "drupal/entity_usage": "2.0-beta12",
+        "drupal/eu_cookie_compliance": "1.29",
         "drupal/event_scheduler": "2.3-RC3",
         "drupal/feeds": "3.0.0-beta4",
         "drupal/feeds_ex": "1.0-beta3",

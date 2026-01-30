@@ -18,12 +18,12 @@ use Drupal\views_templates\Plugin\ViewsDuplicateBuilderBase;
  *  }
  * )
  */
-class ViewDuplicatorTest extends ViewsDuplicateBuilderBase {
+class ViewDuplicator extends ViewsDuplicateBuilderBase {
 
   /**
    * {@inheritdoc}
    */
-  public function alterViewTemplateAfterCreation(array &$view_template, $options = NULL) {
+  public function alterViewTemplateAfterCreation(array &$view_template, ?array $options = NULL) {
     parent::alterViewTemplateAfterCreation($view_template, $options);
     // Make a simple change. This one goes to 11!
     $view_template['display']['default']['display_options']['pager']['options']['items_per_page'] = $options['pager_count'];
