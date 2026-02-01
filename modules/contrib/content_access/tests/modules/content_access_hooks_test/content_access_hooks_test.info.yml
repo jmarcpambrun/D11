@@ -1,12 +1,11 @@
-name: Content Access
+name: Content Access Test
 type: module
-description: 'Provides flexible content access control.'
+description: 'Test module for testing.'
+package: Testing
 core_version_requirement: ^9.4 || ^10 || ^11
-package: 'Access control'
 dependencies:
-  - drupal:node
-test_dependencies:
-  - acl:acl
+  - content_access:content_access
+hidden: true
 
 # Information added by Drupal.org packaging script on 2026-01-31
 version: '2.1.0-rc2'

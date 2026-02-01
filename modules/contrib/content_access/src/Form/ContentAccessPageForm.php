@@ -8,7 +8,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Template\Attribute;
-use Drupal\Core\Url;
 use Drupal\node\NodeGrantDatabaseStorageInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -66,7 +65,7 @@ class ContentAccessPageForm extends FormBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('module_handler'),
-      $container->get('node.grant_storage')
+      $container->get('node.grant_storage'),
     );
   }
 
@@ -190,8 +189,8 @@ class ContentAccessPageForm extends FormBase {
     // xxxx
     // route: node.configure_rebuild_confirm:
     // path:  '/admin/reports/status/rebuild'.
-    $this->messenger()->addMessage($this->t('Your changes have been saved. You may have to <a href=":rebuild">rebuild permissions</a> for your changes to take effect.',
-      [':rebuild' => Url::fromRoute('node.configure_rebuild_confirm')->toString()]));
+    $this->messenger()->addMessage($this->t('Your changes have been saved.'));
+    node_access_needs_rebuild(TRUE);
   }
 
   /**

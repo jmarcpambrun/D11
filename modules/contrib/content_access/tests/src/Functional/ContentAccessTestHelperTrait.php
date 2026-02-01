@@ -115,4 +115,18 @@ trait ContentAccessTestHelperTrait {
     return $entity->label() . ' (' . $entity->id() . ')';
   }
 
+  /**
+   * Enables content access with base settings.
+   */
+  public function enableContentAccessWithBaseSettings(): void {
+    // Restrict access to this content type.
+    // Enable per node access control.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'per_node' => TRUE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+  }
+
 }

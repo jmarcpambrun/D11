@@ -4,6 +4,7 @@ namespace Drupal\content_access\Form;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Drupal\Core\Render\Element\Checkboxes;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\user\Entity\Role;
@@ -59,11 +60,10 @@ trait ContentAccessRoleBasedFormTrait {
 
       $form['per_role'][$op]['#process'] = [
         [
-          '\Drupal\Core\Render\Element\Checkboxes',
-          'processCheckboxes',
+          Checkboxes::class, 'processCheckboxes',
         ],
         [
-          '\Drupal\content_access\Form\ContentAccessRoleBasedFormTrait',
+          $this,
           'disableCheckboxes',
         ],
       ];
@@ -84,7 +84,7 @@ trait ContentAccessRoleBasedFormTrait {
    * Form API #process callback, that disables checkboxes for roles without
    * access to content.
    */
-  public static function disableCheckboxes(&$element, FormStateInterface $form_state, &$complete_form) {
+  public function disableCheckboxes(&$element, FormStateInterface $form_state, &$complete_form) {
     $access_roles = content_access_get_permission_access('access content');
     $admin_roles = content_access_get_permission_access('bypass node access');
 

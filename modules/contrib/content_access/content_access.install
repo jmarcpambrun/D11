@@ -5,6 +5,7 @@
  * Content access install file.
  */
 
+use Drupal\node\Entity\NodeType;
 use Drupal\user\Entity\Role;
 
 /**
@@ -76,4 +77,44 @@ function content_access_update_9201() {
       ->condition('nid', $setting->nid, '=')
       ->execute();
   }
+}
+
+/**
+ * Move node types configurations into third party settings.
+ *
+ * @throws \Drupal\Core\Entity\EntityStorageException
+ */
+function content_access_update_9202(): void {
+  // Load current config data.
+  $config = \Drupal::configFactory()->getEditable('content_access.settings');
+  $config_data = $config->get('content_access_node_type');
+  if (empty($config_data)) {
+    return;
+  }
+
+  foreach ($config_data as $node_type_id => $serialized_data) {
+    $node_type = NodeType::load($node_type_id);
+    if ($node_type === NULL) {
+      continue;
+    }
+    $unserialized_data = unserialize($serialized_data, ['allowed_classes' => FALSE]);
+    // It is stored as integer 0/1. According to the schema it is boolean
+    // now.
+    if (isset($unserialized_data['per_node'])) {
+      $unserialized_data['per_node'] = (bool) $unserialized_data['per_node'];
+    }
+    // It is stored as integer string "0", "1", "-1", etc.
+    if (isset($unserialized_data['priority'])) {
+      $unserialized_data['priority'] = (int) $unserialized_data['priority'];
+    }
+    foreach ($unserialized_data as $key => $setting_value) {
+      $node_type->setThirdPartySetting('content_access', $key, $setting_value);
+    }
+    $node_type->save();
+  }
+  // Remove moved data and save config.
+  $raw_data = $config->getRawData();
+  unset($raw_data['content_access_node_type']);
+  $config->setData($raw_data);
+  $config->save();
 }

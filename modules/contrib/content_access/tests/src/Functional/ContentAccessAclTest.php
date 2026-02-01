@@ -95,14 +95,7 @@ class ContentAccessAclTest extends BrowserTestBase {
    * Test Viewing accessibility with permissions for single users.
    */
   public function testViewAccess() {
-    // Restrict access to this content type.
-    // Enable per node access control.
-    $accessPermissions = [
-      'view[anonymous]' => FALSE,
-      'view[authenticated]' => FALSE,
-      'per_node' => TRUE,
-    ];
-    $this->changeAccessContentType($accessPermissions);
+    $this->enableContentAccessWithBaseSettings();
 
     // Allow access for test user.
     $edit = [

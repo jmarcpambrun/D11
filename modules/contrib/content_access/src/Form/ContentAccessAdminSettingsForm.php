@@ -39,7 +39,10 @@ class ContentAccessAdminSettingsForm extends FormBase {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler service.
    */
-  public function __construct(PermissionHandlerInterface $permission_handler, ModuleHandlerInterface $module_handler) {
+  public function __construct(
+    PermissionHandlerInterface $permission_handler,
+    ModuleHandlerInterface $module_handler,
+  ) {
     $this->permissionHandler = $permission_handler;
     $this->moduleHandler = $module_handler;
   }
@@ -50,7 +53,7 @@ class ContentAccessAdminSettingsForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('user.permissions'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
     );
   }
 
@@ -181,13 +184,8 @@ class ContentAccessAdminSettingsForm extends FormBase {
       }
 
       if (content_access_mass_update([$node_type])) {
-        $node_types = node_type_get_names();
-        // This does not guarantee a rebuild.
-        $this->messenger()->addMessage($this->t('Permissions have been changed for the content type @types.<br />You may have to <a href=":rebuild">rebuild permissions</a> for your changes to take effect.',
-        [
-          '@types' => $node_types[$node_type],
-          ':rebuild' => Url::fromRoute('node.configure_rebuild_confirm')->toString(),
-        ]));
+        $this->messenger()
+          ->addMessage($this->t('Permissions have been changed.'));
       }
     }
     else {
