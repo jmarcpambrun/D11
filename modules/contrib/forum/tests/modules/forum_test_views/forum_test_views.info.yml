@@ -7,7 +7,7 @@ dependencies:
   - drupal:forum
   - drupal:views
 
-# Information added by Drupal.org packaging script on 2025-12-21
-version: '1.0.4'
+# Information added by Drupal.org packaging script on 2026-02-01
+version: '1.0.5'
 project: 'forum'
-datestamp: 1766360744
+datestamp: 1769982780

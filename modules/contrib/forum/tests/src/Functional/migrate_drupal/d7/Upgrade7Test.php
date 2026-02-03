@@ -65,7 +65,7 @@ class Upgrade7Test extends MigrateUpgradeExecuteTestBase {
    * {@inheritdoc}
    */
   protected function getEntityCounts() {
-    return [
+    $counts = [
       'action' => DeprecationHelper::backwardsCompatibleCall(
         \Drupal::VERSION,
         '10.3',
@@ -83,8 +83,6 @@ class Upgrade7Test extends MigrateUpgradeExecuteTestBase {
       'block_content_type' => 1,
       'comment' => 0,
       'comment_type' => 7,
-      'contact_form' => 2,
-      'contact_message' => 0,
       'date_format' => 12,
       'editor' => 2,
       'entity_form_display' => 16,
@@ -110,6 +108,20 @@ class Upgrade7Test extends MigrateUpgradeExecuteTestBase {
       'user_role' => 4,
       'view' => 14,
     ];
+
+    // Contact module was removed from the standard install profile, which is
+    // responsible for all the entity types here.
+    DeprecationHelper::backwardsCompatibleCall(
+        \Drupal::VERSION,
+        '11.3.0',
+        function () {},
+        function () use (&$counts) {
+          $counts['contact_form'] = 2;
+          $counts['contact_message'] = 0;
+        },
+    );
+
+    return $counts;
   }
 
   /**

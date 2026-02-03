@@ -3,6 +3,7 @@
 namespace Drupal\Tests\forum\Kernel\Migrate\d6;
 
 use Drupal\block\Entity\Block;
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Tests\migrate_drupal\Kernel\d6\MigrateDrupal6TestBase;
 
 /**
@@ -43,7 +44,7 @@ class MigrateBlockTest extends MigrateDrupal6TestBase {
     $config->set('default', 'olivero');
     $config->save();
 
-    $this->executeMigrations([
+    $migrations = [
       'd6_filter_format',
       'block_content_type',
       'block_content_body_field',
@@ -51,7 +52,18 @@ class MigrateBlockTest extends MigrateDrupal6TestBase {
       'd6_user_role',
       'd6_menu',
       'd6_block',
-    ]);
+    ];
+
+    DeprecationHelper::backwardsCompatibleCall(
+      \Drupal::VERSION,
+      '11.3.0',
+      function () use (&$migrations) {
+        $migrations[] = 'block_content_body_field_storage';
+      },
+      function () {},
+    );
+
+    $this->executeMigrations($migrations);
   }
 
   /**
