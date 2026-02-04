@@ -5,6 +5,7 @@
  * This is the Calendar module for calendar filtering and display in views.
  */
 
+use Drupal\calendar\DateArgumentWrapper;
 use Drupal\Component\Datetime\DateTimePlus;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\datetime\Plugin\views\argument\Date;
@@ -24,22 +25,38 @@ function calendar_views_pre_render(ViewExecutable $view) {
  * navigation through the calendar.
  */
 function _calendar_views_track_current_date(ViewExecutable $view): void {
-  $user = \Drupal::currentUser();
-
   $tracking = \Drupal::config('calendar.settings')->get('track_date');
-  if (!empty($tracking) && ($tracking == 2 || !empty($user->uid))) {
-    foreach ($view->argument as $argument) {
+  if (empty($tracking)) {
+    return;
+  }
 
-      // If this is not a default date, i.e. we have browsed to a new calendar
-      // period on a display we were already on, store the midpoint of the
-      // current view as the current date in a session.
-      if ($argument instanceof Date && empty($argument->is_default)) {
-        $date_range = $argument->date_handler->arg_range($argument->argument);
-        $session_date = $date_range[0];
-        $days = intval(($date_range[1]->format('U') - $date_range[0]->format('U')) / 3600 / 24 / 2);
-        date_modify($session_date, "+$days days");
-        $_SESSION[$view->name]['default_date'] = $session_date;
-      }
+  $current_user = \Drupal::currentUser();
+  if ($tracking != 2 && $current_user->isAnonymous()) {
+    return;
+  }
+
+  foreach ($view->argument as $argument) {
+    // If this is not a default date we have browsed to a new calendar period.
+    if (!($argument instanceof Date) || !empty($argument->is_default)) {
+      continue;
+    }
+
+    $wrapper = new DateArgumentWrapper($argument);
+    $min = $wrapper->getMinDate();
+    $max = $wrapper->getMaxDate();
+    if (!$min || !$max) {
+      continue;
+    }
+
+    $session_date = clone $min;
+    $seconds = (int) floor(($max->getTimestamp() - $min->getTimestamp()) / 2);
+    if ($seconds > 0) {
+      $session_date->modify(sprintf('+%d seconds', $seconds));
+    }
+
+    $view_id = $view->id() ?? $view->storage->id();
+    if ($view_id) {
+      $_SESSION[$view_id]['default_date'] = $session_date;
     }
   }
 }
@@ -63,14 +80,6 @@ function calendar_theme() {
     'calendar_mini' => [
       'variables' => ['view' => NULL, 'options' => [], 'rows' => []],
       'file' => 'calendar.theme.inc',
-    ],
-    'calendar_month_multiple_entity' => [
-      'variables' => [
-        'curday' => NULL,
-        'count' => NULL,
-        'view' => NULL,
-        'ids' => NULL,
-      ],
     ],
     'calendar_datebox' => [
       'variables' => [

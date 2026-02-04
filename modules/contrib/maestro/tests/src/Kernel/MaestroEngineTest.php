@@ -760,7 +760,13 @@ class MaestroEngineTest extends KernelTestBase {
     $this->assertEmpty($process, 'The process should be empty.');
   }
 
-  public function testTaskDataFetchAndSet() {
+  /**
+   * Tests getQueueItemTaskData() and setQueueItemTaskData() static methods.
+   * 
+   * Start a Maestro process. Then set task data in the first open task.
+   * 
+   */
+    public function testTaskDataFetchAndSet() {
     $process_id = $this->maestroEngine->newProcess($this->template_machine_name);
     $this->maestroEngine->cleanQueue(); // We run the orchestrator one time
     // Based on our template, we know that the second set of tasks will be assigned to the initiator

@@ -11,7 +11,7 @@
     ],
     "support": {
         "issues": "https://www.drupal.org/project/issues/quiz",
-        "source": "http://git.drupal.org/project/quiz.git"
+        "source": "https://git.drupal.org/project/quiz.git"
     },
     "minimum-stability": "dev",
     "require": {
@@ -20,7 +20,7 @@
         "drupal/entity": "^1.5",
         "drupal/paragraphs": "^1.18",
         "drupal/range": "^1.6",
-        "drupal/rules": "^4.0",
+        "drupal/rules": "^4.0.1",
         "drupal/views_bulk_operations": "^4.2"
     },
     "require-dev": {

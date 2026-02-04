@@ -13,15 +13,6 @@ class QuizQuestionTypeListBuilder extends ConfigEntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function render(): array {
-    $build = parent::render();
-    $build['table']['#caption'] = $this->t('Question types.');
-    return $build;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function buildHeader(): array {
     $header['type'] = $this->t('Question type');
     return $header + parent::buildHeader();

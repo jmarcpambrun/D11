@@ -36,6 +36,12 @@
     }
   }
 
+  // Ensure the namespace and prototype exist immediately
+  Drupal.AjaxCommands = Drupal.AjaxCommands || {};
+  if (!Drupal.AjaxCommands.prototype) {
+    Drupal.AjaxCommands.prototype = {};
+  }
+  
   // Drupal AjaxCommands
   Drupal.AjaxCommands.prototype.addNewTask = function(ajax, response, status) {
     task = {};

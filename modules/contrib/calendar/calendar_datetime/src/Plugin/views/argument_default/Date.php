@@ -65,7 +65,12 @@ class Date extends ArgumentDefaultPluginBase implements CacheableDependencyInter
 
     // The Date argument handlers provide their own format strings, otherwise
     // use a default.
-    $format = $this->argument instanceof DateArgument ? $this->argument->getArgFormat() : 'Y-m-d';
+    if ($this->argument instanceof DateArgument && method_exists($this->argument, 'getArgFormat')) {
+      $format = $this->argument->getArgFormat();
+    }
+    else {
+      $format = 'Y-m-d';
+    }
 
     $request_time = $this->time->getRequestTime();
 

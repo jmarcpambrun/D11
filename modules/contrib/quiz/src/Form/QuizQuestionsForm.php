@@ -248,6 +248,24 @@ class QuizQuestionsForm extends FormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    $question_list = $form_state->getValue('question_list');
+    // Return if question list is empty.
+    if (!$question_list) {
+      return;
+    }
+    foreach ($question_list as $index => $row) {
+      foreach ($row as $name => $value) {
+        if ($name == 'max_score' && (!isset($value) || $value === '')) {
+          $form_state->setError($form['question_list'][$index]['max_score'], $this->t('Max score cannot be empty.'));
+        }
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $question_list = $form_state->getValue('question_list');
     // Return if question list is empty.
@@ -287,7 +305,7 @@ class QuizQuestionsForm extends FormBase {
         'query' => $this->destination->getAsArray(),
       ])->toString();
       $form['revision_help'] = [
-        '#markup' => $this->t('This quiz has been answered. To make changes to the quiz you must either <a href="@results_url">delete all results</a> or <a href="@quiz_url">create a new revision</a>.', [
+        '#markup' => $this->t('This quiz has been answered. To make changes to the quiz you must either <a href="@results_url">delete all results</a> or <a href="@quiz_url">create a new revision</a>. This includes deleting any questions.', [
           '@results_url' => $results_url,
           '@quiz_url' => $quiz_url,
         ]),
@@ -391,10 +409,8 @@ class QuizQuestionsForm extends FormBase {
       $table[$id]['max_score'] = [
         '#type' => $quiz_question->isGraded() ? 'textfield' : 'hidden',
         '#size' => 2,
-        '#disabled' => (bool) $question_relationship->get('auto_update_max_score')
-          ->getString(),
-        '#default_value' => $question_relationship->get('max_score')
-          ->getString(),
+        '#disabled' => (bool) $question_relationship->get('auto_update_max_score')->getString(),
+        '#default_value' => $question_relationship->get('max_score')->getString(),
         '#states' => [
           'disabled' => [
             "#edit-question-list-$id-auto-update-max-score" => ['checked' => TRUE],
@@ -447,12 +463,15 @@ class QuizQuestionsForm extends FormBase {
             'title' => $this->t('Edit'),
             'url' => $edit_url,
           ],
-          [
-            'title' => $this->t('Remove'),
-            'url' => $remove_url,
-          ],
         ],
       ];
+
+      if (!$quiz->hasAttempts()) {
+        $table[$id]['operations']['#links'][] = [
+          'title' => $this->t('Remove'),
+          'url' => $remove_url,
+        ];
+      }
 
       $table[$id]['#weight'] = (int) $question_relationship->get('weight')
         ->getString();

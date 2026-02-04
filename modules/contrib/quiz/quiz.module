@@ -655,7 +655,7 @@ function quiz_views_pre_view(ViewExecutable $view, $display_id, array &$args): v
   $fields = $view->getHandlers('field');
 
   foreach ($fields as $field_name => $field) {
-    if ($field['id'] == 'quiz_result_answers') {
+    if (!empty($args[0]) && $field['id'] === 'quiz_result_answers') {
       $quiz = Drupal::service('entity_type.manager')
         ->getStorage('quiz')
         ->load($args[0]);

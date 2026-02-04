@@ -32,5 +32,5 @@ admin_review_options_question:
   question_feedback: false
   solution: false
   quiz_feedback: false
-override_admin_feedback: 0
+override_admin_feedback: false
 '\Drupal\quiz\Util\QuizUtil::getQuizName()': Quiz

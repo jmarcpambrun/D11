@@ -289,7 +289,7 @@ display:
           admin_label: ''
           entity_type: quiz_result
           entity_field: qid
-          plugin_id: numeric
+          plugin_id: entity_target_id
           default_action: 'not found'
           exception:
             value: ''
@@ -314,7 +314,7 @@ display:
             type: 'entity:quiz'
             fail: 'not found'
           validate_options:
-            bundles: {  }
+            bundles: { }
             access: true
             operation: view
             multiple: 0
@@ -329,7 +329,7 @@ display:
           admin_label: ''
           entity_type: quiz_result
           entity_field: uid
-          plugin_id: numeric
+          plugin_id: entity_target_id
           default_action: default
           exception:
             value: ''

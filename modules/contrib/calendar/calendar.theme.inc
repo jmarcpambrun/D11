@@ -10,7 +10,6 @@ use Drupal\calendar\Plugin\views\row\Calendar as CalendarRow;
 use Drupal\Component\Datetime\DateTimePlus;
 use Drupal\Core\Datetime\Entity\DateFormat;
 use Drupal\Core\Link;
-use Drupal\Core\Url;
 use Drupal\calendar\CalendarHelper;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\views\Views;
@@ -20,6 +19,7 @@ use Drupal\views\Views;
  */
 function template_preprocess_calendar_month(&$vars) {
   $view = $vars['view'];
+  /** @phpstan-var object{dateInfo:\Drupal\calendar\CalendarDateInfo, styleInfo:\Drupal\calendar\CalendarStyleInfo} $view */
   $rows = $vars['rows'];
   if (empty($rows)) {
     $rows = [];
@@ -97,6 +97,7 @@ function template_preprocess_calendar_year(&$vars) {
   // Construct a calendar for each month, adjusting the $view passed to the
   // theme so it will produce the right results.
   $view = clone($vars['view']);
+  /** @phpstan-var object{dateInfo:\Drupal\calendar\CalendarDateInfo, styleInfo:\Drupal\calendar\CalendarStyleInfo} $view */
   $view->styleInfo->setShowWeekNumbers(FALSE);
   $rows = $vars['rows'];
   $months = [];
@@ -112,7 +113,8 @@ function template_preprocess_calendar_year(&$vars) {
     $view->styleInfo->setShowNavigation(FALSE);
     $view->styleInfo->setShowTitle(TRUE);
     $view->dateInfo->setMinDate(new DateTime($view->dateInfo->getMinYear() . '-' . DateTimePlus::datePad($month) . '-01 00:00:00', $view->dateInfo->getTimezone()));
-    $maxDate = clone($view->dateInfo->getMinDate());
+    $minDateObject = $view->dateInfo->getMinDate();
+    $maxDate = ($minDateObject instanceof DateTime) ? clone $minDateObject : DateTime::createFromInterface($minDateObject);
     $maxDate->modify('+1 month');
     $maxDate->modify('-1 second');
     $view->dateInfo->setMaxDate($maxDate);
@@ -528,14 +530,18 @@ function template_preprocess_calendar_week(&$vars) {
             $item['class'] = '';
           }
           if (!empty($group_time) && $divisor) {
+            $event_item = $item['item'];
+            if (!$event_item instanceof CalendarEvent) {
+              continue;
+            }
             $start_minute = intval(substr($start_time, 3, 2));
-            $offset = round((date_format($item['item']->getStartDate(), 'i') - $start_minute) / $divisor);
-            $duration = round(($item['item']->getEndDate()->format('U') - $item['item']->getStartDate()->format('U')) / 60 / $divisor);
-            $max_depth_class = min($item['item']->max_depth, 5);
-            if (!empty($item['item']->lead_overlap) && $item['item']->indent === 0) {
+            $offset = round((date_format($event_item->getStartDate(), 'i') - $start_minute) / $divisor);
+            $duration = round(($event_item->getEndDate()->format('U') - $event_item->getStartDate()->format('U')) / 60 / $divisor);
+            $max_depth_class = min($event_item->max_depth, 5);
+            if (!empty($event_item->lead_overlap) && $event_item->indent === 0) {
               $max_depth_class = 0;
             }
-            $item['class'] = 'd_' . $duration . ' o_' . $offset . ' i_' . $item['item']->indent . ' md_' . $max_depth_class;
+            $item['class'] = 'd_' . $duration . ' o_' . $offset . ' i_' . $event_item->indent . ' md_' . $max_depth_class;
           }
         }
       }
@@ -574,17 +580,34 @@ function template_preprocess_calendar_item(&$vars) {
   /** @var \Drupal\calendar\CalendarEvent $item */
   $item = $vars['item'];
 
-  $multiday_hidden = !empty($vars['view']->style_options['multiday_hidden']) ? $vars['view']->style_options['multiday_hidden'] : [];
+  $multiday_hidden = $vars['view']->style_plugin->options['multiday_hidden'] ?? [];
 
-  if (!empty($item->getRenderedFields()) && empty($item->getIsMultiDay())) {
-    $vars['rendered_fields'] = [$item->getRenderedFields()];
-  }
-  foreach ($vars['view']->field as $id => $field) {
-    if ($field->options['exclude'] || (!empty($item->getIsMultiDay()) && in_array($id, $multiday_hidden))) {
-      unset($vars['rendered_fields'][0][$id]);
-    }
+  $rendered_fields = $item->getRenderedFields();
+  if (empty($rendered_fields)) {
+    return;
   }
 
+  $is_multiday = $item->isMultiDay;
+
+  // Render array from views_view_fields: render it as a whole.
+  if ($is_multiday && !empty($multiday_hidden)) {
+    $rendered_fields['#options']['calendar_hidden_fields'] = $multiday_hidden;
+    $rendered_fields['#options']['calendar_is_multiday'] = TRUE;
+  }
+  $vars['rendered_fields'] = [[$rendered_fields]];
+}
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ */
+function calendar_preprocess_views_view_fields(array &$vars): void {
+  if (empty($vars['options']['calendar_hidden_fields']) || empty($vars['options']['calendar_is_multiday']) || empty($vars['fields'])) {
+    return;
+  }
+
+  foreach ($vars['options']['calendar_hidden_fields'] as $field_id) {
+    unset($vars['fields'][$field_id]);
+  }
 }
 
 /**
@@ -622,29 +645,6 @@ function template_preprocess_calendar_datebox(&$vars) {
   else {
     $vars['class'] = 'day';
   }
-}
-
-/**
- * Format an calendar month node for display.
- */
-function template_preprocess_calendar_month_multiple_entity(&$vars) {
-  $view = $vars['view'];
-  $curday = $vars['curday'];
-  $date = $vars['date'];
-
-  // Get the year month and date.
-  $parts = explode('-', substr($curday, 0, 10));
-  $year = $parts[0];
-  $month = intval($parts[1]);
-  $day = intval($parts[2]);
-
-  // Create the link to the day.
-  $full_date_arg = str_replace('-', '', $date);
-  $month_path = CalendarHelper::getUrlForGranularity($view, 'month', [$full_date_arg]);
-  $day_path = CalendarHelper::getUrlForGranularity($view, 'day', [$full_date_arg]);
-  // Generate the URL for the day.
-  $url = Url::fromRoute('view.calendar.page_1', ['date' => DateTimePlus::datePad($year, 4) . '-' . DateTimePlus::datePad($month) . '-' . DateTimePlus::datePad($day)]);
-  $vars['link'] = str_replace($month_path, $day_path, $url->toString());
 }
 
 /**

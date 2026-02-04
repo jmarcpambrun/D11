@@ -17,17 +17,17 @@ class DateArgumentWrapper {
   /**
    * The variable declaration of type DateTime.
    */
-  protected ?\DateTimeInterface $minDate = NULL;
+  protected ?\DateTime $minDate = NULL;
 
   /**
    * The variable declaration of type DateTime.
    */
-  protected ?\DateTimeInterface $maxDate = NULL;
+  protected ?\DateTime $maxDate = NULL;
 
   /**
    * The variable declaration of type int.
    */
-  protected int $position;
+  protected int $position = 0;
 
   /**
    * Function to get the position.
@@ -35,7 +35,7 @@ class DateArgumentWrapper {
    * @return int
    *   Returns position.
    */
-  public function getPosition() {
+  public function getPosition(): int {
     return $this->position;
   }
 
@@ -45,7 +45,7 @@ class DateArgumentWrapper {
    * @param int $position
    *   The position.
    */
-  public function setPosition($position) {
+  public function setPosition(int $position): void {
     $this->position = $position;
   }
 
@@ -55,7 +55,7 @@ class DateArgumentWrapper {
    * @return \Drupal\views\Plugin\views\argument\Date
    *   Returns date.
    */
-  public function getDateArg() {
+  public function getDateArg(): Date {
     return $this->dateArg;
   }
 
@@ -77,7 +77,7 @@ class DateArgumentWrapper {
 
     // Remove method_exists() check once committed in
     // https://www.drupal.org/project/drupal/issues/2325899#comment-15653541.
-    if (method_exists($class, 'getArgFormat')) {
+    if (method_exists($this->dateArg, 'getArgFormat')) {
       return $this->dateArg->getArgFormat();
     }
 
@@ -104,20 +104,21 @@ class DateArgumentWrapper {
   /**
    * {@inheritdoc}
    */
-  public function createDateTime() {
-    if ($value = $this->dateArg->getValue()) {
-      if (!$this->validateValue()) {
-        return FALSE;
-      }
-      return $this->createFromFormat($value);
+  public function createDateTime(?string $value = NULL): ?\DateTime {
+    $value = $value ?? $this->dateArg->getValue();
+    if ($value === NULL || $value === '') {
+      return NULL;
     }
-    return NULL;
+    if (!$this->validateValue($value)) {
+      return NULL;
+    }
+    return $this->createFromFormat($value);
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function createFromFormat($value) {
+  protected function createFromFormat(string $value): ?\DateTime {
     $format = $this->getArgFormat();
     if ($format == 'oW') {
       $date = new \DateTime();
@@ -131,6 +132,9 @@ class DateArgumentWrapper {
       // 31 days.
       $format = '!' . $this->getArgFormat();
       $date = \DateTime::createFromFormat($format, $value);
+      if ($date === FALSE) {
+        return NULL;
+      }
     }
     return $date;
   }
@@ -138,7 +142,7 @@ class DateArgumentWrapper {
   /**
    * {@inheritdoc}
    */
-  public function format($format) {
+  public function format(string $format): ?string {
     if ($date = $this->createDateTime()) {
       return $date->format($format);
     }
@@ -176,9 +180,12 @@ class DateArgumentWrapper {
    * @return \DateTime|null
    *   Returns the minimum date as a DateTime object or NULL if not set.
    */
-  public function getMinDate() {
+  public function getMinDate(): ?\DateTime {
     if (!$this->minDate) {
       $date = $this->createDateTime();
+      if (!$date) {
+        return NULL;
+      }
       $granularity = $this->getGranularity();
       if ($granularity == 'month') {
         $date->modify("first day of this month");
@@ -190,7 +197,7 @@ class DateArgumentWrapper {
         $date->modify("first day of January");
       }
       $date->setTime(0, 0, 0);
-      $this->minDate = $date;
+      $this->minDate = \DateTime::createFromInterface($date);
     }
     return $this->minDate;
   }
@@ -201,9 +208,12 @@ class DateArgumentWrapper {
    * @return \DateTime|null
    *   Returns the maximum date as a DateTime object or NULL if not set.
    */
-  public function getMaxDate() {
+  public function getMaxDate(): ?\DateTime {
     if (!$this->maxDate) {
       $date = $this->createDateTime();
+      if (!$date) {
+        return NULL;
+      }
       $granularity = $this->getGranularity();
       if ($granularity == 'month') {
         $date->modify("last day of this month");
@@ -215,7 +225,7 @@ class DateArgumentWrapper {
         $date->modify("last day of December");
       }
       $date->setTime(23, 59, 59);
-      $this->maxDate = $date;
+      $this->maxDate = \DateTime::createFromInterface($date);
     }
     return $this->maxDate;
   }
@@ -229,9 +239,9 @@ class DateArgumentWrapper {
    * @return bool
    *   Returns TRUE if the value is valid, FALSE otherwise.
    */
-  public function validateValue() {
-    $value = $this->dateArg->getValue();
-    if (empty($value)) {
+  public function validateValue(?string $value = NULL): bool {
+    $value = $value ?? $this->dateArg->getValue();
+    if ($value === NULL || $value === '') {
       return FALSE;
     }
     if ($this->getArgFormat() == 'oW') {
@@ -249,7 +259,7 @@ class DateArgumentWrapper {
     }
     else {
       $created_date = $this->createFromFormat($value);
-      return $created_date && $created_date->format($this->getArgFormat()) == $value;
+      return $created_date !== NULL && $created_date->format($this->getArgFormat()) === $value;
     }
 
   }
@@ -263,7 +273,7 @@ class DateArgumentWrapper {
    * @return array|bool
    *   Returns an array with 'year' and 'week' if valid, FALSE otherwise.
    */
-  protected function getYearWeek(string $value) {
+  protected function getYearWeek(string $value): array|bool {
     if (is_numeric($value) && strlen($value) == 6) {
       $return['year'] = (int) substr($value, 0, 4);
       $return['week'] = (int) substr($value, 4, 2);

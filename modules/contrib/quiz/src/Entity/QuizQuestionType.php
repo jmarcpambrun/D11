@@ -40,7 +40,6 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *     },
  *   },
  *   links = {
- *     "add-form" = "/admin/quiz/quiz-question-types/add",
  *     "edit-form" = "/admin/quiz/quiz-question-types/manage/{quiz_question_type}",
  *     "delete-form" = "/admin/quiz/quiz-question-types/manage/{quiz_question_type}/delete",
  *     "collection" = "/admin/quiz/quiz-question-types"

@@ -6,8 +6,6 @@ calendar.settings:
   mapping:
     track_date:
       type: integer
-    add_colorbox:
-      type: integer
 
 block.settings.calendar_legend_block:
   type: block_settings

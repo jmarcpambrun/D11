@@ -596,10 +596,14 @@ class MaestroEngine {
    *
    * @param int $queueID
    *   The Maestro Queue ID.
+   * @param int $archiveStatus
+   *   The archive status you wish to set. Default is TASK_ARCHIVE_NORMAL.
+   *   Use TASK_ARCHIVE_NORMAL, TASK_ARCHIVE_ACTIVE or TASK_ARCHIVE_REGEN.
+   * 
    */
-  public static function archiveTask($queueID) {
+  public static function archiveTask($queueID, $archiveStatus = TASK_ARCHIVE_NORMAL) {
     $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
-    $queueRecord->set('archived', 1);
+    $queueRecord->set('archived',  $archiveStatus);
     $queueRecord->save();
   }
 
@@ -1412,6 +1416,76 @@ class MaestroEngine {
     $suspension_flag = $task_data[0]['maestro_engine_suspend'] ?? 0;
     return $suspension_flag;
   }
+  
+  /**
+   * getAncestryInformation  
+   * Provide a Maestro Queue ID and this method will return the ancestry
+   * data stored in the task_data blob.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @return array  
+   *   An array of populated data holding this task's ancestry.  
+   *   Key => value return value is queueID => maestroTaskMachineName.  
+   *   Returns an empty array if no ancestry data exists.
+   */
+  public static function getAncestryInformation($queueID) {
+    $task_data = MaestroEngine::getQueueItemTaskData($queueID);
+    $ancestry = $task_data[0]['maestro_ancestry_data'] ?? [];
+    return $ancestry;
+  }
+  
+  /**
+   * setAncestryInformation  
+   * Provide an array of ancestry data and this method will set the task_data
+   * blob.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @param  array $ancestry  
+   *   Array of keyed data that is in the format of 
+   *   queueID=>maestroTaskMachineName
+   * @return void
+   */
+  public static function setAncestryInformation($queueID, array $ancestry) {
+    MaestroEngine::setQueueItemTaskData($queueID, 'maestro_ancestry_data', $ancestry);
+  }
+
+  /**
+   * getRegenCount  
+   * Provide a Maestro Queue ID and this method will return the regen
+   * loop count.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @return int  
+   *   Returns the current Regen loop count. 0 by default.
+   */
+  public static function getRegenCount($queueID) {
+    $regenCount = 0;
+    $queueEntity = MaestroEngine::getQueueEntryById($queueID);
+    if($queueEntity) {
+      $regenCount = $queueEntity->regen_count->value ?? 0;
+    }
+    return $regenCount;
+  }
+  
+  /**
+   * setRegenCount  
+   * Provide an int to set the regen count loop to.
+   *
+   * @param  int $queueID  
+   *   The Maestro Queue ID  
+   * @param  int $regenCount  
+   *   The integer count of the current regeneration loop.
+   * @return void
+   */
+  public static function setRegenCount($queueID, $regenCount) {
+    $queueEntity = MaestroEngine::getQueueEntryById($queueID);
+    $queueEntity->set('regen_count', $regenCount);
+    $queueEntity->save();
+
+  }
 
   /*
    *************************************
@@ -1532,6 +1606,8 @@ class MaestroEngine {
 
         // Now to add the initiating task.
         $start_task = $template->tasks[$startTask];
+        $pointers_to_task = MaestroEngine::getTaskPointersFromTemplate($templateName, $startTask);
+        $regen_pointers = count($pointers_to_task) ?? 0;
         if (is_array($start_task)) {
           $values = [
             'process_id' => $process_id,
@@ -1545,6 +1621,8 @@ class MaestroEngine {
             'task_data' => isset($start_task['data']) ? $start_task['data'] : '',
             'status' => 0,
             'run_once' => isset($start_task['runonce']) ? $start_task['runonce'] : 0,
+            'regen_count' => 0,
+            'regen_pointers' => $regen_pointers,
             'uid' => \Drupal::currentUser()->id(),
             'archived' => 0,
             'started_date' => time(),
@@ -1564,8 +1642,9 @@ class MaestroEngine {
           }
         }
         else {
-          // We have an issue here.  Throw some sort of exception that we can catch.
-          // for now, ignore this case.
+          // We have an issue here.
+          // Throw some sort of exception that we can catch.
+          // For now, ignore this case.
           throw new MaestroGeneralException('Start task for template ' . $template->id . ' may be corrupt.');
         }
       }
@@ -1632,15 +1711,15 @@ class MaestroEngine {
             $queueRecord->set('status', $task->getExecutionStatus());
             $queueRecord->set('completed', time());
             $queueRecord->save();
-            $this->nextStep($templateMachineName, $taskID, $processID, $task->getCompletionStatus());
-            $this->archiveTask($queueID);
+            $archive_status = $this->nextStep($templateMachineName, $taskID, $processID, $queueID, $task->getCompletionStatus());
+            $this->archiveTask($queueID, $archive_status);
           }
         }
         else {
           // If it IS an interactive task.
           if ($task && $task->isInteractive()) {
-            $this->nextStep($templateMachineName, $taskID, $processID, $task->getCompletionStatus());
-            $this->archiveTask($queueID);
+            $archive_status = $this->nextStep($templateMachineName, $taskID, $processID, $queueID, $task->getCompletionStatus());
+            $this->archiveTask($queueID, $archive_status);
           }
           else {
             // This plugin task definition doesn't exist and its not interactive, however, throwing an exception will lock up the engine.
@@ -1743,8 +1822,8 @@ class MaestroEngine {
 
   /**
    * NextStep
-   * Engine method that determines which is the next step based on the current step
-   * and does all assignments as necessary.
+   * Engine method that determines which is the next step based on the
+   * current step and does all assignments as necessary.
    *
    * @param string $template
    *   The Maestro template.
@@ -1752,12 +1831,21 @@ class MaestroEngine {
    *   The machine name of the task.
    * @param int $processID
    *   The Maestro Process ID.
+   * @param int $currentQueueID
+   *   The Maestro Queue ID of the current step.
    * @param int $completionStatus
    *   The completion status being set.  Definitions found in maestro.module.
+   * @return int
+   *   Returns either TASK_ARCHIVE_NORMAL or TASK_ARCHIVE_REGEN based on whether
+   *   the task caused a regeneration or not.
    */
-  protected function nextStep($template, $templateTaskID, $processID, $completionStatus) {
+    protected function nextStep($template, $templateTaskID, $processID, $currentQueueID, $completionStatus) {
+    // The return status will allow us to archive the task with the
+    // appropriate setting based on regen or no regen.
+    $return_status = TASK_ARCHIVE_NORMAL; // No regen is the default.
     $templateTask = $this->getTemplateTaskByID($template, $templateTaskID);
     $regenerationFlag = FALSE;
+    $regen_count = MaestroEngine::getRegenCount($currentQueueID);
     // Nextstep or nextfalsestep is a comma separated string of next task machine names to point to.
     $nextSteps = $templateTask['nextstep'];
     // Completion status tells us to point to the false branch.
@@ -1777,11 +1865,13 @@ class MaestroEngine {
         // we also filter for the tasks not being an OR or AND task.
         $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
         // Race condition?  what if its complete and not archived, yet a loopback happens?  Leave for now.
-        $query->condition('archived', TASK_ARCHIVE_REGEN, '<>')
+        $query
           ->accessCheck(FALSE)
+          ->condition('archived', TASK_ARCHIVE_REGEN, '<>')
           ->condition('status', TASK_STATUS_ACTIVE, '<>')
           ->condition('process_id', $processID)
           ->condition('task_id', $taskID)
+          ->condition('regen_count', $regen_count) // Lock to the current regen.
         // Task is not an OR.
           ->condition('task_class_name', 'MaestroOr', '<>')
         // Task is not an AND.
@@ -1815,23 +1905,50 @@ class MaestroEngine {
                 ->condition('task_id', $taskID);
               $entity_ids = $query->execute();
               if (count($entity_ids) == 0) {
-                $queueID = $this->createProductionTask($taskID, $template, $processID);
+                $queueID = $this->createProductionTask($taskID, $template, $processID, $currentQueueID, $regen_count);
               }
             }
             else {
-              $queueID = $this->createProductionTask($taskID, $template, $processID);
+              $queueID = $this->createProductionTask($taskID, $template, $processID, $currentQueueID, $regen_count);
             }
-
           }
         }
         // REGENERATION.
         else {
-          // It is in this area where we are doing a complete loopback over our existing template
-          // after years of development experience and creating many business logic templates, we've found that
-          // the overwhelming majority (like 99%) of all templates really do a regeneration of all
-          // in-production tasks and that people really do want to do a regeneration.
-          // Thus the regen flags have been omitted.  Now we just handle everything with status flags and keep the same
-          // process ID.
+          // It is in this area where we are doing a complete loopback over our
+          // existing template. After years of development experience and
+          // creating many business logic templates, we've found that the
+          // overwhelming majority (like 99%) of all templates really do a
+          // regeneration of all in-production tasks and that people really
+          // do want to do a regeneration.
+          // Thus the regen flags have been omitted.  Now we just handle
+          // everything with status flags and keep the same process ID.
+
+          // What we do first is to gather all the open tasks.  We will NOT
+          // regenerate any of the tasks which share an ancestor that is
+          // THIS next task (shares THIS $taskID).
+
+          // Set the task return status to regen archive status.
+          $return_status = TASK_ARCHIVE_REGEN;
+          $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
+          $query->condition('archived', TASK_ARCHIVE_ACTIVE)
+            ->condition('status', TASK_STATUS_ACTIVE)
+            ->condition('process_id', $processID)
+            ->accessCheck(FALSE);
+          $entity_ids = $query->execute();
+          // We now have a list of all open tasks.  
+            foreach($entity_ids as $open_task_id) {
+              $task_ancestors = MaestroEngine::getAncestryInformation($open_task_id);
+              // Does this task have any ancestors which match the $taskID?
+              if(array_search($taskID, $task_ancestors) !== FALSE) {
+                // Set these to non active status
+                $queueRecord = MaestroEngine::getQueueEntryById($open_task_id);
+                $queueRecord->set('archived', TASK_ARCHIVE_REGEN);
+                $queueRecord->set('status', TASK_STATUS_SUCCESS);
+                $queueRecord->save();
+              } 
+            }
+
           // The biggest issue are the AND tasks.  We need to know which tasks the AND has pointing to it and keep those
           // tasks hanging around in the queue in either a completed and archived state or in their fully open, executable state.
           // so we have to first find all AND tasks, and then determine who points to them and leave their archive condition alone.
@@ -1843,6 +1960,7 @@ class MaestroEngine {
             ->accessCheck(FALSE)
             ->condition('status', '0')
             ->condition('process_id', $processID)
+            ->condition('regen_count', $regen_count)
           // Task is an AND.
             ->condition('task_class_name', 'MaestroAnd');
           // Going to use these IDs to determine who points to them.
@@ -1875,7 +1993,9 @@ class MaestroEngine {
           }
           // now, we have a list of noRegenStatusArray which are entity IDs in the maestro_queue for which we do NOT change the archive flag for.
           $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
-          $query->condition('status', '0', '<>')
+          $query->condition('status', TASK_STATUS_ACTIVE, '<>')
+            ->condition('archived', TASK_ARCHIVE_REGEN, '<>')
+            ->condition('regen_count', $regen_count)
             ->accessCheck(FALSE)
           // All completed tasks that haven't been regen'd.
             ->condition('process_id', $processID);
@@ -1883,16 +2003,16 @@ class MaestroEngine {
           foreach ($regenIDs as $entityID) {
             // Set this queue record to regenerated IF it doesn't exist in the noRegenStatusArray.
             if (array_search($entityID, $noRegenStatusArray) === FALSE) {
-              $queueRecord = MaestroEngine::getQueueEntryById($entityID);
-              $queueRecord->set('archived', TASK_ARCHIVE_REGEN);
-              $queueRecord->save();
+              MaestroEngine::archiveTask($entityID, TASK_ARCHIVE_REGEN);
             }
           }
+
           // And now we create the task being looped back over to:
-          $queueID = $this->createProductionTask($taskID, $template, $processID);
+          $queueID = $this->createProductionTask($taskID, $template, $processID, $currentQueueID, $regen_count + 1);
         }
       }//end foreach next task
-    }
+        
+      }
     else {
       // This is the condition where there isn't a next step listed in the task
       // this doesn't necessarily suggest an end of process though, as that's what
@@ -1902,6 +2022,75 @@ class MaestroEngine {
       // We will consider this a NOOP condition and do nothing.
     }
 
+    // If we've regenerated at any point
+    if($return_status == TASK_ARCHIVE_REGEN) {
+      // Now we update all open tasks to the current regen count + 1
+      $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
+      $query
+        ->accessCheck(FALSE)
+        ->condition('status', TASK_STATUS_ACTIVE)
+        ->condition('archived', TASK_ARCHIVE_ACTIVE)
+        ->condition('process_id', $processID);
+      $activeIDs = $query->execute();
+      foreach ($activeIDs as $entityID) {
+        $queueRecord = MaestroEngine::getQueueEntryById($entityID);
+        $queueRecord->set('regen_count', $regen_count + 1);
+        $queueRecord->save();
+      }
+
+      // Now for any task that has regen_pointers > 1, we move those
+      // to the current regen_count and set their archive status.
+      // This allows the engine to know that there are tasks that have multiple
+      // pointers, that they have been created previously and that if they
+      // are being pointed BACK to, we will trigger a regeneration routine.
+      // You may run into situations where a closer-to-Start task loop back
+      // happens, which in turn closes any tasks which may have parallel regen
+      // branches themselves.  When you eventually hit those further-down-the-
+      // chain tasks which have multiple pointers, they too with trigger a
+      // "regen".  This is because the tasks have multiple pointers, have been
+      // created in the queue before, so the engine **thinks** they're
+      // being looped back over.  This is a false positive that has no
+      // effect on the processing of tasks.
+
+      // Query to get all tasks which are successfully completed (1) AND are
+      // normally archived (1) within this process.
+      // We also look at ONLY the last regen count. This helps focus the query
+      // to the last round of regeneration.
+      $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
+      $query
+        ->accessCheck(FALSE)
+        ->condition('regen_pointers', '1', '>')
+        ->condition('regen_count', $regen_count)
+        ->condition('process_id', $processID)
+        ->condition('status', TASK_STATUS_ACTIVE, '<>')
+        ->condition('archived', TASK_ARCHIVE_ACTIVE, '<>')
+        ->sort('id', 'DESC');
+      $regen_pointer_entities = $query->execute();
+      foreach($regen_pointer_entities as $entityID) {
+        $queueRecord = MaestroEngine::getQueueEntryById($entityID);
+        $task_id = $queueRecord->task_id->value ?? '';
+        // Does this task already exist as having a regen count we're setting?
+        // If so, skip it.
+        $query = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery();
+        $query
+          ->accessCheck(FALSE)
+          ->condition('regen_count', $regen_count + 1)
+          ->condition('process_id', $processID)
+          ->condition('task_id', $task_id);
+        $existing_queue_entries = $query->execute();
+        if(count($existing_queue_entries) == 0) {
+          $queueRecord->set('regen_count', $regen_count + 1);
+          // Set the archive status to normal archive as the orchestrator
+          // is set to ignore regenerated tasks on purpose.
+          // We need tasks to exist in normal archive status to be able to
+          // detect a loop back condition.
+          $queueRecord->set('archived', TASK_ARCHIVE_NORMAL);
+          $queueRecord->save();
+        }
+      }
+    }
+
+    return $return_status;
   }//end nextStep
 
   /**
@@ -2000,11 +2189,15 @@ class MaestroEngine {
    *   The machine name of the template.
    * @param int $processID
    *   The Maestro Process ID.
+   * @param int $lastTaskQueueID
+   *   The last task's Maestro Queue ID.
+   * @param int $regenCount
+   *   Default 0. Sets the new task's regen count to this value.
    *
    * @return int|bool
    *   Returns FALSE on no queue entry.  Returns the QueueID upon success.
    */
-  protected function createProductionTask($taskMachineName, $templateMachineName, $processID) {
+  protected function createProductionTask($taskMachineName, $templateMachineName, $processID, $lastTaskQueueID, $regenCount = 0) {
     $config = \Drupal::config('maestro.settings');
     $queueID = FALSE;
     $nextTask = $this->getTemplateTaskByID($templateMachineName, $taskMachineName);
@@ -2022,6 +2215,9 @@ class MaestroEngine {
       $escalationInterval = $nextTask['notifications']['escalation_after'];
     }
 
+    $pointers_to_task = MaestroEngine::getTaskPointersFromTemplate($templateMachineName, $taskMachineName);
+    $regen_pointers = count($pointers_to_task) ?? 0;
+
     $values = [
       'process_id' => $processID,
       'task_class_name' => $nextTask['tasktype'],
@@ -2034,6 +2230,8 @@ class MaestroEngine {
       'task_data' => isset($nextTask['data']) ? $nextTask['data'] : '',
       'status' => 0,
       'run_once' => $executableTask->isInteractive() ? 1 : 0,
+      'regen_count' => $regenCount,
+      'regen_pointers' => $regen_pointers,
     // This should probably be 0 to signify the engine.
       'uid' => 0,
       'archived' => 0,
@@ -2049,6 +2247,14 @@ class MaestroEngine {
     $queue->save();
     // Now to do assignments if the queue ID has been set.
     if ($queue->id()) {
+      // Save the new task's ancestry information based on the
+      // previous tasks's ancestry information.
+      $ancestry = MaestroEngine::getAncestryInformation($lastTaskQueueID);
+      $last_task = MaestroEngine::getTemplateTaskByQueueID($lastTaskQueueID);
+      // Now add our new task to the ancestry information for THIS task
+      $ancestry[$lastTaskQueueID] = $last_task['id'];
+      MaestroEngine::setAncestryInformation($queue->id(), $ancestry);
+
       // Perform maestro assignments.
       $this->productionAssignments($templateMachineName, $taskMachineName, $queue->id());
       $queueID = $queue->id();

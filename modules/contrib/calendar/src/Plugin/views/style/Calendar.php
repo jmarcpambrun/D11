@@ -28,6 +28,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Views style plugin for the Calendar module.
  *
  * @ingroup views_style_plugins
+ *
+ * @phpstan-property \Drupal\views\ViewExecutable&object{dateInfo:\Drupal\calendar\CalendarDateInfo, styleInfo:\Drupal\calendar\CalendarStyleInfo} $view
  */
 #[ViewsStyle(
   id: 'calendar',
@@ -101,7 +103,7 @@ class Calendar extends StylePluginBase {
   /**
    * The current day date object.
    */
-  protected ?\DateTimeInterface $currentDay = NULL;
+  protected ?\DateTime $currentDay = NULL;
 
   /**
    * The time interface.
@@ -138,11 +140,21 @@ class Calendar extends StylePluginBase {
   public function init(ViewExecutable $view, DisplayPluginBase $display, ?array &$options = NULL) {
     parent::init($view, $display, $options);
     if (empty($view->dateInfo)) {
+      /** @phpstan-ignore-next-line */
       $this->view->dateInfo = new CalendarDateInfo();
+      /** @phpstan-ignore-next-line */
       $this->view->styleInfo = new CalendarStyleInfo();
     }
-    $this->dateInfo = &$this->view->dateInfo;
-    $this->styleInfo = &$this->view->styleInfo;
+    $dateInfo = $this->view->dateInfo;
+    $styleInfo = $this->view->styleInfo;
+    if (!($dateInfo instanceof CalendarDateInfo)) {
+      throw new \UnexpectedValueException('Calendar date info is missing.');
+    }
+    if (!($styleInfo instanceof CalendarStyleInfo)) {
+      throw new \UnexpectedValueException('Calendar style info is missing.');
+    }
+    $this->dateInfo = $dateInfo;
+    $this->styleInfo = $styleInfo;
   }
 
   /**
@@ -446,7 +458,7 @@ class Calendar extends StylePluginBase {
       '#default_value' => $this->options['multiday_hidden'],
       '#type' => 'checkboxes',
       '#options' => $field_options,
-      '#description' => $this->t('Choose fields to hide when displayed in multi-day rows. Usually you only want to see the title or Colorbox selector in multi-day rows and would hide all other fields.'),
+      '#description' => $this->t('Choose fields to hide when displayed in multi-day rows. Usually you only want to see the title or a single primary link field in multi-day rows and would hide all other fields.'),
       '#states' => [
         'visible' => [
           ':input[name="style_options[calendar_type]"]' => [
@@ -615,21 +627,28 @@ class Calendar extends StylePluginBase {
     $display_timezone = date_timezone_get($this->dateInfo->getMinDate());
     $this->dateInfo->setTimezone($display_timezone);
 
-    // Let views render fields the way it thinks they should look before we
-    // start massaging them.
+    // Prime Views field rendering/cache like core styles do.
     $this->renderFields($this->view->result);
+
+    /** @var \Drupal\calendar\Plugin\views\row\Calendar $row_plugin */
+    $row_plugin = $this->view->rowPlugin;
 
     // Invoke the row plugin to massage each result row into calendar items.
     // Gather the row items into an array grouped by date and time.
     $items = [];
     foreach ($this->view->result as $row_index => $row) {
       $this->view->row_index = $row_index;
-      $events = $this->view->rowPlugin->render($row);
+      if (!isset($row->index)) {
+        // Ensure hook_preprocess_views_view_fields can look up fields by index.
+        $row->index = $row_index;
+      }
+      $events = $row_plugin->buildCalendarEvents($row);
+      $render_array = $row_plugin->render($row);
       /** @var \Drupal\calendar\CalendarEvent $event_info */
       foreach ($events as $event_info) {
         $item_start = $event_info->calendar_start_date->format('Y-m-d');
         $time_start = $event_info->calendar_start_date->format('H:i:s');
-        $event_info->setRenderedFields($this->rendered_fields[$row_index]);
+        $event_info->setRenderedFields($render_array);
         $items[$item_start][$time_start][] = $event_info;
       }
     }
@@ -637,7 +656,8 @@ class Calendar extends StylePluginBase {
     ksort($items);
 
     $rows = [];
-    $this->currentDay = clone($this->dateInfo->getMinDate());
+    $minDate = $this->dateInfo->getMinDate();
+    $this->currentDay = ($minDate instanceof \DateTime) ? clone $minDate : \DateTime::createFromInterface($minDate);
     $this->items = $items;
 
     // Retrieve results array using method for the granularity of the display.
@@ -1454,7 +1474,7 @@ class Calendar extends StylePluginBase {
                     // Add continuation attributes.
                     $item->continuation = $item->getStartDate() < $this->currentDay;
                     $item->continues = $days > $bucket_cnt;
-                    $item->is_multi_day = TRUE;
+                    $item->isMultiDay = TRUE;
                     // Get new floor index available.
                     $tr_floor = $this->findEmptyCellFloor($day_value - 1, $bucket_cnt + 1);
                     $this->setCellSlot($tr_floor, $day_value - 1, $bucket_cnt + 1, $item->getEntityId());
@@ -1489,7 +1509,7 @@ class Calendar extends StylePluginBase {
                       // Add continuation attributes.
                       $item->continuation = $item->getStartDate() < $this->currentDay;
                       $item->continues = $days > $bucket_cnt;
-                      $item->is_multi_day = TRUE;
+                      $item->isMultiDay = TRUE;
 
                       // Assign the item to the available bucket.
                       $multiday_buckets[$wday][$tr_floor] = [
@@ -1544,24 +1564,29 @@ class Calendar extends StylePluginBase {
                   $current_count++;
                   // Assign to single day bucket using the start time in
                   // display timezone.
-                  $displayStart = clone $item->getStartDate();
-                  $displayStart->setTimezone($this->dateInfo->getTimezone());
-                  $bucket = $this->bucketFloor($displayStart);
-                  // Ensure overlap properties exist for theming.
-                  $singleday_buckets[$wday][$bucket][] = [
-                    'entry' => [
-                      '#theme' => 'calendar_item',
-                      '#view' => $this->view,
-                      '#rendered_fields' => $item->getRenderedFields(),
-                      '#item' => $item,
-                    ],
-                    'item' => $item,
-                    'colspan' => 1,
-                    'rowspan' => 1,
-                    'filled' => TRUE,
-                    'avail' => FALSE,
-                    'wday' => $wday,
-                  ];
+                  $start = $item->getStartDate();
+                  if ($start) {
+                    $displayStart = ($start instanceof \DateTime)
+                      ? clone $start
+                      : \DateTime::createFromInterface($start);
+                    $displayStart->setTimezone($this->dateInfo->getTimezone());
+                    $bucket = $this->bucketFloor($displayStart);
+                    // Ensure overlap properties exist for theming.
+                    $singleday_buckets[$wday][$bucket][] = [
+                      'entry' => [
+                        '#theme' => 'calendar_item',
+                        '#view' => $this->view,
+                        '#rendered_fields' => $item->getRenderedFields(),
+                        '#item' => $item,
+                      ],
+                      'item' => $item,
+                      'colspan' => 1,
+                      'rowspan' => 1,
+                      'filled' => TRUE,
+                      'avail' => FALSE,
+                      'wday' => $wday,
+                    ];
+                  }
                 }
 
               }
@@ -1638,15 +1663,20 @@ class Calendar extends StylePluginBase {
             $ids[$item->getEntityTypeId()] = $item;
             if (empty($this->styleInfo->isMini()) && ($max_events == static::CALENDAR_SHOW_ALL || $count <= $max_events || ($count > 0 && $max_events == static::CALENDAR_HIDE_ALL))) {
               if ($item->isAllDay()) {
-                $item->setIsMultiDay(TRUE);
+                $item->isMultiDay = TRUE;
                 $all_day[] = $item;
               }
               else {
                 // Key by bucket floor from the event start in display timezone.
-                $displayStart = clone $item->getStartDate();
-                $displayStart->setTimezone($this->dateInfo->getTimezone());
-                $bucket = $this->bucketFloor($displayStart);
-                $inner[$bucket][] = $item;
+                $start = $item->getStartDate();
+                if ($start) {
+                  $displayStart = ($start instanceof \DateTime)
+                    ? clone $start
+                    : \DateTime::createFromInterface($start);
+                  $displayStart->setTimezone($this->dateInfo->getTimezone());
+                  $bucket = $this->bucketFloor($displayStart);
+                  $inner[$bucket][] = $item;
+                }
               }
             }
           }

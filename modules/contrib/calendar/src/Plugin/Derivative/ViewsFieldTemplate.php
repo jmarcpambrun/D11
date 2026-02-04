@@ -99,7 +99,7 @@ class ViewsFieldTemplate implements ContainerDeriverInterface {
    * Set all derivatives for an entity type.
    */
   protected function setConfigurableFieldsDerivatives(EntityTypeInterface $entity_type, array $base_plugin_definition): void {
-    /** @var \Drupal\Core\Field\FieldStorageDefinitionInterface $field_storage */
+    /** @var \Drupal\Core\Field\FieldStorageDefinitionInterface[] $field_storages */
     $field_storages = $this->fieldManager->getFieldStorageDefinitions($entity_type->id());
 
     foreach ($field_storages as $field_id => $field_storage) {

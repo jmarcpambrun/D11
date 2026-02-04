@@ -2,9 +2,11 @@
 
 namespace Drupal\calendar\Plugin\views\row;
 
+use Drupal\calendar\CalendarDateInfo;
 use Drupal\calendar\CalendarEvent;
 use Drupal\calendar\CalendarHelper;
 use Drupal\calendar\CalendarViewsTrait;
+use Drupal\date_recur\Plugin\Field\FieldType\DateRecurItem;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -26,13 +28,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin that creates a view and formats it as a Calendar entity.
+ *
+ * @phpstan-property \Drupal\views\ViewExecutable&object{dateInfo:\Drupal\calendar\CalendarDateInfo} $view
  */
 #[ViewsRow(
   id: 'calendar_row',
   title: new TranslatableMarkup('Calendar entities'),
   help: new TranslatableMarkup('Display the content as calendar entities.'),
-  theme: 'views_view_row_calendar',
-  register_theme: FALSE,
+  display_types: ['normal'],
+  theme: 'views_view_fields',
+  register_theme: FALSE
 )]
 class Calendar extends RowPluginBase {
 
@@ -40,6 +45,38 @@ class Calendar extends RowPluginBase {
   use StringTranslationTrait;
 
   public const CALENDAR_EMPTY_STRIPE = '#ffffff';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $usesFields = TRUE;
+
+  /**
+   * Returns views_view_fields options with safe defaults.
+   */
+  protected function getViewsFieldsOptions(): array {
+    $defaults = [
+      'inline' => [],
+      'separator' => '',
+      'hide_empty' => FALSE,
+      'default_field_elements' => TRUE,
+    ];
+
+    return $this->options + $defaults;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function render($row) {
+    return [
+      '#theme' => $this->themeFunctions(),
+      '#view' => $this->view,
+      '#options' => $this->getViewsFieldsOptions(),
+      '#row' => $row,
+      '#field_alias' => $this->field_alias ?? '',
+    ];
+  }
 
   /**
    * Tracks rendered entity IDs to avoid duplicate rendering.
@@ -121,7 +158,6 @@ class Calendar extends RowPluginBase {
         'taxonomy_field' => ['default' => ''],
         'calendar_colors_vocabulary' => ['default' => []],
         'calendar_colors_taxonomy' => ['default' => []],
-        'calendar_colors_group' => ['default' => []],
       ],
     ];
     return $options;
@@ -364,16 +400,23 @@ class Calendar extends RowPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Builds calendar events for a single view row.
+   *
+   * @param object $row
+   *   A single row of the query result.
+   *
+   * @return \Drupal\calendar\CalendarEvent[]
+   *   Calendar events derived from the row.
    */
-  public function render($row) {
+  public function buildCalendarEvents($row): array {
     $id = $row->_entity->id();
     if (!is_numeric($id) || $this->isEntityAlreadyRendered($id)) {
       return [];
     }
 
-    /** @var \Drupal\calendar\CalendarDateInfo $dateInfo */
-    $dateInfo = $this->dateArgument->view->dateInfo;
+    $view = $this->dateArgument->view;
+    /** @phpstan-var object{dateInfo:\Drupal\calendar\CalendarDateInfo} $view */
+    $dateInfo = $view->dateInfo;
     $rows = [];
     $dateRecurEnabled = $this->moduleHandler->moduleExists('date_recur');
 
@@ -454,7 +497,7 @@ class Calendar extends RowPluginBase {
         // formatted display of the row. We save it here and switch it in
         // template_preprocess_calendar_item().
         /** @var \Drupal\calendar\CalendarEvent[] $events */
-        $events = $this->splitEventByDay($event);
+        $events = $this->splitEventByDay($event, $dateInfo);
         foreach ($events as $event) {
           switch ($this->options['colors']['legend']) {
             case 'type':
@@ -497,11 +540,11 @@ class Calendar extends RowPluginBase {
    *
    * @throws \Exception
    */
-  public function splitEventByDay(CalendarEvent $event): array {
+  public function splitEventByDay(CalendarEvent $event, CalendarDateInfo $dateInfo): array {
     $rows = [];
     $events = [];
-    $dateInfo = $this->dateArgument->view->dateInfo;
-    if (isset($event->recurring)) {
+    $dateRecurItemAvailable = class_exists(DateRecurItem::class);
+    if ($dateRecurItemAvailable && $event->recurring instanceof DateRecurItem) {
       $occurrenceHandler = $event->recurring->getHelper();
       $occurrences = $occurrenceHandler->getOccurrences($dateInfo->getMinDate(), $dateInfo->getMaxDate(), NULL);
       foreach ($occurrences as $occurrence) {
@@ -516,7 +559,7 @@ class Calendar extends RowPluginBase {
     }
 
     foreach ($events as $event) {
-      $rows = array_merge($rows, $this->buildEventRowsForDays($event));
+      $rows = array_merge($rows, $this->buildEventRowsForDays($event, $dateInfo));
     }
 
     return $rows;
@@ -525,21 +568,26 @@ class Calendar extends RowPluginBase {
   /**
    * Builds one calendar row per day covered by the event.
    */
-  protected function buildEventRowsForDays(CalendarEvent $event): array {
+  protected function buildEventRowsForDays(CalendarEvent $event, CalendarDateInfo $dateInfo): array {
     $rows = [];
-    $item_start_date = $event->getStartDate()->getTimestamp();
-    $item_end_date = $event->getEndDate()->getTimestamp();
+    $startDateObject = $event->getStartDate();
+    if (!$startDateObject) {
+      return [];
+    }
+    $endDateObject = $event->getEndDate() ?? $startDateObject;
+    $item_start_date = $startDateObject->getTimestamp();
+    $item_end_date = $endDateObject->getTimestamp();
 
     // Now that we have an 'entity' for each view result, we need to remove
     // anything outside the view date range, and possibly create additional
     // nodes so that we have a 'node' for each day that this item occupies in
     // this view.
-    $now = $event->getStartDate()->format('Y-m-d');
-    $to = $event->getEndDate()->format('Y-m-d');
+    $now = $startDateObject->format('Y-m-d');
+    $to = $endDateObject->format('Y-m-d');
     $next = new \DateTime();
-    $next->setTimestamp($event->getStartDate()->getTimestamp());
+    $next->setTimestamp($startDateObject->getTimestamp());
 
-    if ($this->dateArgument->view->dateInfo->getTimezone()->getName() != $event->getTimezone()->getName()) {
+    if ($dateInfo->getTimezone()->getName() != $event->getTimezone()->getName()) {
       // Make $start and $end (derived from $node) use the timezone $to_zone,
       // just as the original dates do.
       $next->setTimezone($event->getTimezone());
@@ -571,13 +619,13 @@ class Calendar extends RowPluginBase {
       $start_string = max($item_start, $start);
       $end_string = !empty($item_end) ? (min($item_end, $end)) : NULL;
       $entity->calendar_start_date = (new \DateTime($start_string));
-      $entity->calendar_end_date = (new \DateTime($end_string));
+      $entity->calendar_end_date = $end_string ? (new \DateTime($end_string)) : NULL;
 
       $granularity = 'day';
       $increment = 1;
       $entity->setAllDay(CalendarHelper::dateIsAllDay($entity->getStartDate()->format('Y-m-d H:i:s'), $entity->getEndDate()->format('Y-m-d H:i:s'), $granularity, $increment));
 
-      $calendar_start = $this->dateFormatter->format($entity->calendar_start_date->getTimestamp(), 'custom', 'Y-m-d H:i:s');
+      $calendar_start = $entity->calendar_start_date ? $this->dateFormatter->format($entity->calendar_start_date->getTimestamp(), 'custom', 'Y-m-d H:i:s') : '';
 
       if (!empty($calendar_start)) {
         $entity->date_id .= '.' . $position;

@@ -144,7 +144,7 @@ class QuizViewBuilder extends EntityViewBuilder {
       ];
       $stats[] = [
         ['header' => TRUE, 'data' => $this->t('Closes')],
-        $this->dateFormatter->format($quiz_date->start_date->getTimestamp()),
+        $this->dateFormatter->format($quiz_date->end_date->getTimestamp()),
       ];
     }
 

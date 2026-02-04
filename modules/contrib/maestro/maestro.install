@@ -450,3 +450,131 @@ function maestro_update_10006() {
 
   \Drupal::logger('maestro')->info('Added private field to maestro_template config entities.');
 }
+
+/**
+ * Update 10007 - Create the Regeneration Count (regen_count) field on Queue
+ */
+function maestro_update_10007() {
+  $message = '';
+  if (!\Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('regen_count', 'maestro_queue')) {
+    $storage_definition = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Regeneration Count'))
+      ->setDescription(t('The regeneration count.'))
+      ->setSettings([
+        'default_value' => '0',
+        ])
+      ->setReadOnly(FALSE);
+
+    \Drupal::entityDefinitionUpdateManager()
+      ->installFieldStorageDefinition('regen_count', 'maestro_queue', 'maestro_queue', $storage_definition);
+    
+    // Clear cache to ensure entity updates are recognized.
+    drupal_flush_all_caches();
+  }
+  else {
+    $message = t('Reneration Count field already exists in maestro_queue.');
+  }
+
+  try {
+    $indexsql = "CREATE INDEX imaestro_queue_regen_count ON {maestro_queue} (regen_count) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+    $database = \Drupal::database();
+    $database->query($indexsql);
+    $message .= t('Added an index to the new regen_count column.');
+  }
+  catch(\Exception $e) {
+    //Ignore the error as the index already exists
+  }
+
+  try {
+    $database = \Drupal::database();
+    $database->query("UPDATE {maestro_queue} SET regen_count = 0");
+    $message .= t('Set regen count column to 0 for all rows.');
+   }
+  catch(\Exception $e) {
+    $message .= t('Error setting regen_count column values to 0.');
+  }
+  return $message;
+}
+
+/**
+ * Update 10008 - Make sure Indexes exist on Queue columns
+ */
+function maestro_update_10008() {
+  $message = '';
+  try {
+    $indexsql = "CREATE INDEX imaestro_queue_token ON {maestro_queue} (token) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+    $database = \Drupal::database();
+    $database->query($indexsql);
+    $message .= t('Added an index to the token column.');
+  }
+  catch(\Exception $e) {
+    //Ignore the error as the index already exists
+  }
+
+  try {
+    $indexsql = "CREATE INDEX imaestro_queue_regen_count ON {maestro_queue} (regen_count) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+    $database = \Drupal::database();
+    $database->query($indexsql);
+    $message .= t('Added an index to the regen_count column.');
+  }
+  catch(\Exception $e) {
+    //Ignore the error as the index already exists
+  }
+
+  return $message;
+}
+
+
+/**
+ * Update 10009 - Create the Regeneration Pointers (regen_pointers)
+ * field on Queue
+ */
+function maestro_update_10009() {
+  $message = '';
+  if (!\Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('regen_pointers', 'maestro_queue')) {
+    $storage_definition = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Regeneration Pointers'))
+      ->setDescription(t('The regeneration Pointers count.'))
+      ->setSettings([
+        'default_value' => '0',
+        ])
+      ->setReadOnly(FALSE);
+
+    \Drupal::entityDefinitionUpdateManager()
+      ->installFieldStorageDefinition('regen_pointers', 'maestro_queue', 'maestro_queue', $storage_definition);
+    
+    
+    // Clear cache to ensure entity updates are recognized.
+    drupal_flush_all_caches();
+  }
+  else {
+    $message = t('Reneration Pointers field already exists in maestro_queue.');
+  }
+
+  try {
+    // Now for each open process and all queue items, let's populate the regen
+    // pointers and count. Just set all regen counts to 0.
+    $database = \Drupal::database();
+    $database->query("UPDATE {maestro_queue} SET regen_count=0");
+
+    // For the purposes of getting this update to behave with existing
+    // in-production flows, we're just going to set the regen_pointers to '2'
+    // as this will carry forward all tasks to the next regen count.
+    $database->query("UPDATE {maestro_queue} SET regen_pointers=2");
+  }
+  catch(\Exception $e) {
+    //Ignore the error as there may have been an issue with the field creation.
+  }
+
+  try {
+    $indexsql = "CREATE INDEX imaestro_queue_regen_pointers ON {maestro_queue} (regen_pointers) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT";
+    $database = \Drupal::database();
+    $database->query($indexsql);
+    $message .= t('Added an index to the new regen_pointers column.');
+  }
+  catch(\Exception $e) {
+    //Ignore the error as the index already exists
+  }
+
+  
+}

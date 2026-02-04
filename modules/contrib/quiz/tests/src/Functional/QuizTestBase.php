@@ -20,8 +20,6 @@ abstract class QuizTestBase extends BrowserTestBase {
    *
    * @var bool
    * @see ConfigSchemaChecker
-   *
-   * @todo Remove once there is 8.x-3.0-alpha6 which fixes a schema issue.
    */
   protected $strictConfigSchema = FALSE;
 

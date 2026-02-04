@@ -25,6 +25,7 @@ use Drupal\quiz\Form\QuizQuestionsForm;
 use Drupal\quiz\Services\QuizSessionInterface;
 use Drupal\quiz\Util\QuizUtil;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Controller for quiz actions.
@@ -48,6 +49,8 @@ class QuizController extends EntityController {
    *   The URL generator.
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The route match.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
    * @param \Drupal\quiz\Services\QuizSessionInterface $quizSession
    *   The quiz session service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
@@ -69,6 +72,7 @@ class QuizController extends EntityController {
     TranslationInterface $string_translation,
     UrlGeneratorInterface $url_generator,
     RouteMatchInterface $route_match,
+    RequestStack $request_stack,
     protected QuizSessionInterface $quizSession,
     protected MessengerInterface $messenger,
     protected AccountProxyInterface $currentUser,
@@ -76,13 +80,22 @@ class QuizController extends EntityController {
     protected FormBuilderInterface $formBuilder,
     protected EntityFormBuilderInterface $entityFormBuilder,
   ) {
-    parent::__construct($entity_type_manager, $entity_type_bundle_info, $entity_repository, $renderer, $string_translation, $url_generator, $route_match);
+    parent::__construct(
+      $entity_type_manager,
+      $entity_type_bundle_info,
+      $entity_repository,
+      $renderer,
+      $string_translation,
+      $url_generator,
+      $route_match,
+      $request_stack,
+    );
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('entity_type.bundle.info'),
@@ -91,6 +104,7 @@ class QuizController extends EntityController {
       $container->get('string_translation'),
       $container->get('url_generator'),
       $container->get('current_route_match'),
+      $container->get('request_stack'),
       $container->get('quiz.session'),
       $container->get('messenger'),
       $container->get('current_user'),

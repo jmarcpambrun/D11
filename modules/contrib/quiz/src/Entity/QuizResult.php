@@ -44,7 +44,7 @@ use function quiz_get_feedback_options;
  *     "uuid" = "uuid",
  *   },
  *   handlers = {
- *     "list_builder" = "Drupal\quiz\Entity\QuizResultListBuilder",
+ *     "list_builder" = "Drupal\quiz\Config\Entity\QuizResultListBuilder",
  *     "view_builder" = "Drupal\quiz\View\QuizResultViewBuilder",
  *     "access" = "Drupal\quiz\Access\QuizResultAccessControlHandler",
  *     "permission_provider" = "Drupal\entity\UncacheableEntityPermissionProvider",

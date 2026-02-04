@@ -10,7 +10,7 @@ package: Date/Time
 core_version_requirement: ^10.3 || ^11
 configure: 'calendar.admin_form'
 
-# Information added by Drupal.org packaging script on 2025-11-05
-version: '8.x-1.0-beta4'
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '8.x-1.0-beta5'
 project: 'calendar'
-datestamp: 1762324330
+datestamp: 1770138155

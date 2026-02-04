@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\calendar\Functional;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\date_recur\Plugin\Field\FieldType\DateRecurItem;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\views\Functional\ViewTestBase;
-use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\field\Entity\FieldConfig;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\node\Entity\NodeType;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\views\Views;
 
 /**
@@ -170,7 +171,7 @@ class DateRecurIntegrationTest extends ViewTestBase {
     $node = $this->createRecurringEvent();
 
     $field_item = $node->get('field_event_date')->first();
-    $this->assertNotNull($field_item, 'Date recur field item exists.');
+    $this->assertInstanceOf(DateRecurItem::class, $field_item, 'Date recur field item exists.');
     $this->assertSame('FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;UNTIL=20250410T065959Z;WKST=SU', $field_item->rrule);
 
     $helper = $field_item->getHelper();

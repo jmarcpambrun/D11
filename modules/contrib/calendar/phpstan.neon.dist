@@ -2,7 +2,7 @@ includes:
   # This placeholder filename will be replaced with the value of variable $_PHPSTAN_BASELINE_FILENAME
   - phpstan-baseline.neon
 parameters:
-  level: 1
+  level: 2
   fileExtensions:
       - php
       - module

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\quiz;
+namespace Drupal\quiz\Config\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;

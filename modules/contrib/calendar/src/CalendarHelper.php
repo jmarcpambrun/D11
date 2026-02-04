@@ -19,13 +19,15 @@ class CalendarHelper extends DateHelper {
   /**
    * Formats the weekday information into a table header format.
    *
+   * @phpstan-param object{styleInfo:\Drupal\calendar\CalendarStyleInfo} $view
+   *
    * @return array
    *   An array with weekday table header data.
    */
   public static function weekHeader($view): array {
     $row = [];
     $nameSize = $view->styleInfo->getNameSize();
-    $len = isset($nameSize) ? $view->styleInfo->getNameSize() : (!empty($view->styleInfo->isMini()) ? 1 : 3);
+    $len = $nameSize !== NULL ? $view->styleInfo->getNameSize() : (!empty($view->styleInfo->isMini()) ? 1 : 3);
     $with_week = !empty($view->styleInfo->isShowWeekNumbers());
 
     // Create week header.
@@ -110,10 +112,14 @@ class CalendarHelper extends DateHelper {
    *   The difference between the 2 dates in the given measure.
    */
   public static function difference(\DateTimeInterface $start_date, \DateTimeInterface $stop_date, $measure = 'seconds', $absolute = TRUE) {
-    // Create cloned objects or original dates will be impacted by the
+    // Create mutable clones or original dates will be impacted by the
     // date_modify() operations done in this code.
-    $date1 = clone($start_date);
-    $date2 = clone($stop_date);
+    $date1 = ($start_date instanceof \DateTime)
+      ? clone $start_date
+      : \DateTime::createFromInterface($start_date);
+    $date2 = ($stop_date instanceof \DateTime)
+      ? clone $stop_date
+      : \DateTime::createFromInterface($stop_date);
     if (is_object($date1) && is_object($date2)) {
       $diff = (int) $date2->format('U') - (int) $date1->format('U');
       if ($diff == 0) {
@@ -226,7 +232,10 @@ class CalendarHelper extends DateHelper {
       $date = new \DateTime();
     }
 
-    if (!is_object($date)) {
+    if ($date instanceof \DateTimeInterface && !($date instanceof \DateTime)) {
+      $date = \DateTime::createFromInterface($date);
+    }
+    elseif (!is_object($date)) {
       $date = new \DateTime($date);
     }
 
@@ -428,7 +437,7 @@ class CalendarHelper extends DateHelper {
       [$table_name, $field_name] = explode('.', $name, 2);
 
       // If we don't have a filter handler, we don't need to do anything more.
-      $filterHandler = Views::handlerManager('filter');
+      $filterHandler = \Drupal::service('plugin.manager.views.filter');
       $handler = $filterHandler->getHandler([
         'table' => $table_name,
         'field' => $field_name,

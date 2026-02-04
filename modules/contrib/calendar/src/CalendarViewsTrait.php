@@ -14,6 +14,7 @@ trait CalendarViewsTrait {
    * {@inheritdoc}
    */
   protected function getTableEntityType($table) {
+    /** @var int $recursion */
     static $recursion = 0;
     if ($table = Views::viewsData()->get($table)) {
       if (!empty($table['table']['entity type'])) {

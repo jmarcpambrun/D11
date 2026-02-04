@@ -4,6 +4,7 @@ maestro_template_builder_diagram:
     js/template_builder.js: {}
   dependencies:
     - core/jquery
+    - core/drupal.ajax
     - core/drupal
     - core/drupalSettings
     - core/drupal.dialog

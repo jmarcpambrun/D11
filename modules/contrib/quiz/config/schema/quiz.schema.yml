@@ -151,6 +151,12 @@ quiz.settings:
       sequence:
         type: boolean
         label: 'Option'
+    override_admin_feedback:
+      type: boolean
+      label: 'Override administrator review options'
+    \Drupal\quiz\Util\QuizUtil::getQuizName():
+      type: string
+      label: 'Display name'
 
 quiz.defaults:
   type: config_object

@@ -6,6 +6,7 @@ use Drupal\calendar\CalendarHelper;
 use Drupal\calendar\DateArgumentWrapper;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\GeneratedUrl;
+use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\views\Attribute\ViewsPager;
@@ -27,6 +28,7 @@ use Drupal\views\ViewExecutable;
   register_theme: FALSE,
 )]
 class CalendarPager extends PagerPluginBase {
+  use LoggerChannelTrait;
 
   const NEXT = '+';
   const PREVIOUS = '-';
@@ -70,6 +72,15 @@ class CalendarPager extends PagerPluginBase {
    */
   protected function getPagerArgValue(string $mode): string {
     $datetime = $this->argument->createDateTime();
+    if (!$datetime) {
+      $view_id = $this->view->id() ?? $this->view->storage->id();
+      $this->getLogger('calendar')->notice('Unable to build calendar pager argument from contextual filter value for view %view.', [
+        '%view' => $view_id ?? 'unknown',
+      ]);
+
+      // Fallback to the raw argument value to avoid rendering pager errors.
+      return (string) ($this->argument->getDateArg()->getValue() ?? '');
+    }
     $datetime->modify($mode . '1 ' . $this->argument->getGranularity());
     return $datetime->format($this->argument->getArgFormat());
   }

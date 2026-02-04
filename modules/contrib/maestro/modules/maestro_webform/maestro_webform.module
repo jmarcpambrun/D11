@@ -15,7 +15,7 @@ use Drupal\Core\Url;
 /**
  * Implements hook_help().
  */
-function maestro_webform_help($route_name = '', RouteMatchInterface $route_match = NULL) {
+function maestro_webform_help($route_name = '', ?RouteMatchInterface $route_match = NULL) {
   switch ($route_name) {
     // Main module help for the maestro_webform module.
     case 'help.page.maestro_webform':

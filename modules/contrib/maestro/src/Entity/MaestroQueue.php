@@ -35,9 +35,15 @@ use Drupal\Core\Entity\EntityChangedTrait;
  *   },
  *   list_cache_contexts = { "user" },
  *   base_table = "maestro_queue",
+ *   indexes = {
+ *     "imaestro_queue_token" = {"token"},
+ *     "imaestro_queue_regen_count" = {"regen_count"},
+ *     "imaestro_queue_regen_pointers" = {"regen_pointers"}
+ *   },
  *   admin_permission = "administer maestro queue entities",
  *   entity_keys = {
  *     "id" = "id",
+ *     "uuid" = "token"
  *   },
  *   config_export = {
  *     "id",
@@ -45,7 +51,6 @@ use Drupal\Core\Entity\EntityChangedTrait;
  *     "uid",
  *     "process_id",
  *     "task_id",
- *     "task_label",
  *     "status",
  *     "created",
  *     "started_date",
@@ -222,6 +227,20 @@ class MaestroQueue extends ContentEntityBase implements MaestroProcessInterface 
     $fields['archived'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Archived'))
       ->setDescription(t('0 is default meaning not archived.'))
+      ->setSettings([
+        'default_value' => '0',
+      ]);
+
+    $fields['regen_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Regeneration Count'))
+      ->setDescription(t('The regeneration count.'))
+      ->setSettings([
+        'default_value' => '0',
+      ]);
+
+    $fields['regen_pointers'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Regeneration Pointers'))
+      ->setDescription(t('The Regeneration Pointers count.'))
       ->setSettings([
         'default_value' => '0',
       ]);

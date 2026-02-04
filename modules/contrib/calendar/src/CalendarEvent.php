@@ -3,6 +3,7 @@
 namespace Drupal\calendar;
 
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 
@@ -55,6 +56,23 @@ class CalendarEvent {
    */
   protected array $legacyProperties = [];
 
+  /**
+   * Calendar-aware start date for legacy property access.
+   */
+  // phpcs:ignore Drupal.NamingConventions.ValidVariableName.LowerCamelName
+  public ?\DateTime $calendar_start_date = NULL;
+
+  /**
+   * Calendar-aware end date for legacy property access.
+   */
+  // phpcs:ignore Drupal.NamingConventions.ValidVariableName.LowerCamelName
+  public ?\DateTime $calendar_end_date = NULL;
+
+  /**
+   * Legacy recurrence field item reference.
+   */
+  public ?FieldItemInterface $recurring = NULL;
+
 
   /**
    * The start date of the event.
@@ -84,7 +102,7 @@ class CalendarEvent {
   /**
    * An array of the fields to render.
    *
-   * @var string[]
+   * @var array<string, mixed>
    */
   protected array $renderedFields = [];
 
@@ -105,7 +123,7 @@ class CalendarEvent {
   /**
    * Whether this event covers multiple days.
    */
-  protected bool $isMultiDay = FALSE;
+  public bool $isMultiDay = FALSE;
 
   /**
    * CalendarEvent constructor.
@@ -296,23 +314,12 @@ class CalendarEvent {
   }
 
   /**
-   * The getter which indicates whether an event covers multiple days.
-   */
-  public function getIsMultiDay(): bool {
-    return $this->isMultiDay;
-  }
-
-  /**
-   * The setter to indicate whether an event covers multiple days.
-   */
-  public function setIsMultiDay(bool $is_multi_day): void {
-    $this->isMultiDay = $is_multi_day;
-  }
-
-  /**
    * Magic getter maintaining backwards compatibility for legacy property names.
    */
   public function __get(string $name): mixed {
+    if (property_exists($this, $name)) {
+      return $this->$name;
+    }
     return $this->legacyProperties[$name] ?? NULL;
   }
 
@@ -320,6 +327,10 @@ class CalendarEvent {
    * Magic setter maintaining backwards compatibility for legacy property names.
    */
   public function __set(string $name, mixed $value): void {
+    if (property_exists($this, $name)) {
+      $this->$name = $value;
+      return;
+    }
     $this->legacyProperties[$name] = $value;
   }
 
@@ -327,6 +338,9 @@ class CalendarEvent {
    * Magic isset handler for legacy property names.
    */
   public function __isset(string $name): bool {
+    if (property_exists($this, $name)) {
+      return $this->$name !== NULL;
+    }
     return array_key_exists($name, $this->legacyProperties);
   }
 

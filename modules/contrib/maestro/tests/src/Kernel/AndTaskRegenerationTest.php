@@ -12,7 +12,7 @@ use const TASK_STATUS_FALSE_BRANCH;
 use const TASK_STATUS_SUCCESS;
 
 /**
- * Test description.
+ * And Task regeneration test.
  *
  * @group maestro
  */
@@ -28,8 +28,6 @@ final class AndTaskRegenerationTest extends KernelTestBase {
   ];
 
   protected MaestroEngine $maestroEngine;
-
-  protected string $test_template_name = 'maestroandtask_in_a_loop';
 
   /**
    * {@inheritdoc}

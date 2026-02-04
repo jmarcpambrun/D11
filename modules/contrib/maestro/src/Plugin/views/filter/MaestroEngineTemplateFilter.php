@@ -19,7 +19,7 @@ class MaestroEngineTemplateFilter extends InOperator {
   /**
    * {@inheritdoc}
    */
-  public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
+  public function init(ViewExecutable $view, DisplayPluginBase $display, ?array &$options = NULL) {
     parent::init($view, $display, $options);
     $this->valueTitle = $this->t('Templates to Filter On');
     $this->definition['options callback'] = [$this, 'generateTemplateOptions'];
