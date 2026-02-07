@@ -65,6 +65,7 @@ global-styling:
   dependencies:
     - system/admin
     - seven/webfonts
+    - core/internal.jquery.form
 
 node-form:
   version: '2.2.10'
