@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\private_message\Plugin\Field\FieldWidget;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\Attribute\FieldWidget;
@@ -15,6 +14,7 @@ use Drupal\Core\Field\Plugin\Field\FieldWidget\EntityReferenceAutocompleteWidget
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\private_message\Traits\PrivateMessageSettingsTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -31,12 +31,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 )]
 class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget implements ContainerFactoryPluginInterface {
 
-  /**
-   * The configuration factory.
-   *
-   * @var \Drupal\Core\Config\Config
-   */
-  protected Config $config;
+  use PrivateMessageSettingsTrait;
 
   public function __construct(
     string $plugin_id,
@@ -44,19 +39,17 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
     FieldDefinitionInterface $field_definition,
     array $settings,
     array $third_party_settings,
-    protected RequestStack $requestStack,
-    protected EntityTypeManagerInterface $entityTypeManager,
-    ConfigFactoryInterface $config_factory,
+    protected readonly RequestStack $requestStack,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected readonly ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-
-    $this->config = $config_factory->get('private_message.settings');
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): PrivateMessageThreadMemberWidget {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $plugin_id,
       $plugin_definition,
@@ -97,7 +90,6 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
     $summary = parent::settingsSummary();
 
     unset($summary[0]);
-
     $summary[] = $this->t('Maximum thread members: @count', ['@count' => $this->getSetting('max_members')]);
 
     return $summary;
@@ -132,9 +124,13 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
     $element['target_id']['#title'] = $this->t('To');
     $element['target_id']['#required'] = TRUE;
     $element['target_id']['#default_value'] = $items->referencedEntities();
-    $element['target_id']['#selection_handler'] = 'private_message:not_blocked_user';
+    $element['target_id']['#selection_handler'] = 'default:user';
     $element['target_id']['#selection_settings'] = [
       'include_anonymous' => FALSE,
+      // @see \private_message_entity_query_user_alter()
+      'private_message' => [
+        'active_users_selection' => TRUE,
+      ],
     ];
     $element['target_id']['#validate_reference'] = TRUE;
 
@@ -143,7 +139,7 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
       $element['target_id']['#default_value'] = $recipient;
     }
 
-    if ($recipient && $this->config->get('hide_recipient_field_when_prefilled')) {
+    if ($recipient && $this->getPrivateMessageSettings()->get('hide_recipient_field_when_prefilled')) {
       $maxMembers = 1;
     }
 
@@ -192,8 +188,8 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
   /**
    * {@inheritdoc}
    */
-  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
-    return $values['target_id'];
+  public function massageFormValues(array $values, array $form, FormStateInterface $form_state): array {
+    return $values['target_id'] ?? [];
   }
 
 }

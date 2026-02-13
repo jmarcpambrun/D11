@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Entity;
 
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\user\Entity\User;
 use Drupal\user\EntityOwnerInterface;
+use Drupal\user\UserInterface;
 
 /**
  * The Private Message Ban entity interface.
@@ -28,15 +29,14 @@ interface PrivateMessageBanInterface extends ContentEntityInterface, EntityOwner
    * @param int $timestamp
    *   The Private Message Ban creation timestamp.
    *
-   * @return \Drupal\private_message\Entity\PrivateMessageBanInterface
-   *   The called Private Message Ban entity.
+   * @return $this
    */
-  public function setCreatedTime($timestamp);
+  public function setCreatedTime(int $timestamp): self;
 
   /**
    * Gets banned user.
    */
-  public function getTarget(): User;
+  public function getTarget(): UserInterface;
 
   /**
    * Gets target id.
@@ -46,6 +46,6 @@ interface PrivateMessageBanInterface extends ContentEntityInterface, EntityOwner
   /**
    * Sets banned user.
    */
-  public function setTarget(AccountInterface $user): self;
+  public function setTarget(UserInterface $user): self;
 
 }

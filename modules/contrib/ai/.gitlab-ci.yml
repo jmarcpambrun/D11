@@ -30,7 +30,6 @@ variables:
   COMPOSER_IGNORE_PLATFORM_REQS: 'ext-ffi'
 
 phpunit (previous major):
-  allow_failure: true
   before_script:
     # We need to build 8.1 with the FFI extension enabled.
     # Install dependencies.
@@ -58,8 +57,6 @@ phpunit (previous major):
 js_build:
   stage: build
   image: node:20.14.0-alpine
-  only:
-    - /^[0-9]+\.[0-9]+\.x$/
   variables:
     GIT_STRATEGY: fetch
     GIT_CHECKOUT: "true"

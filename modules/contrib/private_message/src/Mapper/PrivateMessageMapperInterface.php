@@ -2,11 +2,18 @@
 
 namespace Drupal\private_message\Mapper;
 
+@trigger_error(__NAMESPACE__ . '\PrivateMessageMapperInterface is deprecated in private_message:4.0.0 and is removed from private_message:5.0.0. No replacement is provided. See https://www.drupal.org/node/3490530', E_USER_DEPRECATED);
+
 use Drupal\private_message\Entity\PrivateMessageInterface;
 use Drupal\user\UserInterface;
 
 /**
  * Interface for the Private Message Thread mapper class.
+ *
+ * @deprecated in private_message:4.0.0 and is removed from
+ *   private_message:5.0.0. No replacement is provided.
+ *
+ * @see https://www.drupal.org/node/3490530
  */
 interface PrivateMessageMapperInterface {
 

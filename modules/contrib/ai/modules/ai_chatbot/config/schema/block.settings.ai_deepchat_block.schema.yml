@@ -9,13 +9,13 @@ block.settings.ai_deepchat_block:
       type: string
       label: Bot Name
     bot_image:
-      type: text
+      type: string
       label: Bot Image
     use_username:
       type: integer
       label: Use Username
     default_username:
-      type: text
+      type: string
       label: Default Username
     use_avatar:
       type: integer
@@ -24,7 +24,7 @@ block.settings.ai_deepchat_block:
       type: string
       label: Default Avatar
     first_message:
-      type: text
+      type: label
       label: First Message
     stream:
       type: integer

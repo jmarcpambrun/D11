@@ -1,22 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Controller;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\SettingsCommand;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\private_message\Ajax\PrivateMessageInboxInsertThreadsCommand;
 use Drupal\private_message\Ajax\PrivateMessageInboxUpdateCommand;
 use Drupal\private_message\Ajax\PrivateMessageInsertNewMessagesCommand;
 use Drupal\private_message\Ajax\PrivateMessageInsertPreviousMessagesCommand;
 use Drupal\private_message\Ajax\PrivateMessageInsertThreadCommand;
 use Drupal\private_message\Ajax\PrivateMessageUpdateUnreadItemsCountCommand;
+use Drupal\private_message\Entity\PrivateMessageThreadInterface;
 use Drupal\private_message\Service\PrivateMessageServiceInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -24,149 +23,50 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class AjaxController extends ControllerBase implements AjaxControllerInterface {
 
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * The request stack.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
-   */
-  protected $requestStack;
-
-  /**
-   * The entity manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The configuration factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The private message service.
-   *
-   * @var \Drupal\private_message\Service\PrivateMessageServiceInterface
-   */
-  protected $privateMessageService;
-
   public function __construct(
-    RendererInterface $renderer,
-    RequestStack $requestStack,
-    EntityTypeManagerInterface $entityTypeManager,
-    ConfigFactoryInterface $configFactory,
-    AccountProxyInterface $currentUser,
-    PrivateMessageServiceInterface $privateMessageService,
-  ) {
-    $this->renderer = $renderer;
-    $this->requestStack = $requestStack;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->configFactory = $configFactory;
-    $this->currentUser = $currentUser;
-    $this->privateMessageService = $privateMessageService;
-  }
+    protected readonly RendererInterface $renderer,
+    protected readonly RequestStack $requestStack,
+    protected readonly PrivateMessageServiceInterface $privateMessageService,
+  ) {}
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('renderer'),
-      $container->get('request_stack'),
-      $container->get('entity_type.manager'),
-      $container->get('config.factory'),
-      $container->get('current_user'),
-      $container->get('private_message.service'),
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function ajaxCallback($op) {
-    $response = new AjaxResponse();
-
-    switch ($op) {
-
-      case 'get_new_messages':
-        $this->getNewPrivateMessages($response);
-
-        break;
-
-      case 'get_old_messages':
-        $this->getOldPrivateMessages($response);
-
-        break;
-
-      case 'get_old_inbox_threads':
-        $this->getOldInboxThreads($response);
-
-        break;
-
-      case 'get_new_inbox_threads':
-        $this->getNewInboxThreads($response);
-
-        break;
-
-      case 'get_new_unread_thread_count':
-        $this->getNewUnreadThreadCount($response);
-
-        break;
-
-      case 'get_new_unread_message_count':
-        $this->getNewUnreadMessageCount($response);
-
-        break;
-
-      case 'load_thread':
-        $this->loadThread($response);
-
-        break;
-    }
-
-    return $response;
+  public function ajaxCallback(string $op): AjaxResponse {
+    return match($op) {
+      'get_new_messages' => $this->getNewPrivateMessages(),
+      'get_old_messages' => $this->getOldPrivateMessages(),
+      'get_old_inbox_threads' => $this->getOldInboxThreads(),
+      'get_new_inbox_threads' => $this->getNewInboxThreads(),
+      'get_new_unread_thread_count' => $this->getNewUnreadThreadCount(),
+      'get_new_unread_message_count' => $this->getNewUnreadMessageCount(),
+      'load_thread' => $this->loadThread(),
+    };
   }
 
   /**
    * Creates an Ajax Command containing new private message.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getNewPrivateMessages(AjaxResponse $response) {
+  protected function getNewPrivateMessages(): AjaxResponse {
+    $response = new AjaxResponse();
     $thread_id = $this->requestStack->getCurrentRequest()->get('threadid');
     $message_id = $this->requestStack->getCurrentRequest()->get('messageid');
-    $count = 0;
+
     if (is_numeric($thread_id) && is_numeric($message_id)) {
-      /** @var \Drupal\private_message\Entity\PrivateMessageThreadInterface $thread */
-      $thread = $this->entityTypeManager
-        ->getStorage('private_message_thread')
+      $thread = $this->entityTypeManager()->getStorage('private_message_thread')
         ->load($thread_id);
-      if ($thread) {
+      if ($thread instanceof PrivateMessageThreadInterface) {
         $new_messages = $this->privateMessageService->getNewMessages($thread_id, $message_id);
         $this->privateMessageService->updateThreadAccessTime($thread);
         $count = count($new_messages);
         if ($count) {
           $messages = [];
-          $view_builder = $this->entityTypeManager->getViewBuilder('private_message');
+          $view_builder = $this->entityTypeManager()->getViewBuilder('private_message');
           foreach ($new_messages as $message) {
-            if ($message->access('view', $this->currentUser)) {
+            if ($message->access('view', $this->currentUser())) {
               $message_view = $view_builder->view($message);
               $message_view['#prefix'] = '<div class="private-message-wrapper field__item">';
               $message_view['#suffix'] = '</div>';
@@ -178,18 +78,22 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
           $messages['#attached']['drupalSettings']['privateMessageThread']['threadId'] = (int) $thread->id();
         }
 
-        $response->addCommand(new PrivateMessageInsertNewMessagesCommand($this->renderer->renderRoot($messages), $count));
+        $response->addCommand(new PrivateMessageInsertNewMessagesCommand((string) $this->renderer->renderRoot($messages), $count));
       }
     }
+
+    return $response;
   }
 
   /**
    * Create an Ajax Command containing old private messages.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getOldPrivateMessages(AjaxResponse $response) {
+  protected function getOldPrivateMessages(): AjaxResponse {
+    $response = new AjaxResponse();
+
     $current_request = $this->requestStack->getCurrentRequest();
     $thread_id = $current_request->get('threadid');
     $message_id = $current_request->get('messageid');
@@ -198,10 +102,10 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
 
       if (count($message_info['messages'])) {
         $messages = [];
-        $view_builder = $this->entityTypeManager->getViewBuilder('private_message');
+        $view_builder = $this->entityTypeManager()->getViewBuilder('private_message');
         $has_next = $message_info['next_exists'];
         foreach ($message_info['messages'] as $message) {
-          if ($message->access('view', $this->currentUser)) {
+          if ($message->access('view', $this->currentUser())) {
             $message_view = $view_builder->view($message);
             $message_view['#prefix'] = '<div class="private-message-wrapper field__item">';
             $message_view['#suffix'] = '</div>';
@@ -209,31 +113,35 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
           }
         }
 
-        $response->addCommand(new PrivateMessageInsertPreviousMessagesCommand($this->renderer->renderRoot($messages), count($message_info['messages']), $has_next));
+        $response->addCommand(new PrivateMessageInsertPreviousMessagesCommand((string) $this->renderer->renderRoot($messages), count($message_info['messages']), $has_next));
       }
       else {
         $response->addCommand(new PrivateMessageInsertPreviousMessagesCommand('', 0, FALSE));
       }
     }
+
+    return $response;
   }
 
   /**
    * Creates and Ajax Command containing old threads for the inbox.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getOldInboxThreads(AjaxResponse $response) {
+  protected function getOldInboxThreads(): AjaxResponse {
+    $response = new AjaxResponse();
+
     $timestamp = $this->requestStack->getCurrentRequest()->get('timestamp');
-    $thread_count = $this->requestStack->getCurrentRequest()->get('count');
+    $thread_count = (int) $this->requestStack->getCurrentRequest()->get('count');
     if (is_numeric($timestamp)) {
-      $thread_info = $this->privateMessageService->getThreadsForUser($thread_count, $timestamp);
+      $thread_info = $this->privateMessageService->getThreadsForUser($thread_count, intval($timestamp));
       $has_next = FALSE;
       if (count($thread_info['threads'])) {
-        $view_builder = $this->entityTypeManager->getViewBuilder('private_message_thread');
+        $view_builder = $this->entityTypeManager()->getViewBuilder('private_message_thread');
         $threads = [];
         foreach ($thread_info['threads'] as $thread) {
-          if ($thread->access('view', $this->currentUser)) {
+          if ($thread->access('view', $this->currentUser())) {
             $has_next = $thread_info['next_exists'];
             $threads[] = $view_builder->view($thread, 'inbox');
           }
@@ -244,15 +152,19 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
         $response->addCommand(new PrivateMessageInboxInsertThreadsCommand('', FALSE));
       }
     }
+
+    return $response;
   }
 
   /**
    * Creates an Ajax Command with new threads for the private message inbox.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getNewInboxThreads(AjaxResponse $response) {
+  protected function getNewInboxThreads(): AjaxResponse {
+    $response = new AjaxResponse();
+
     $info = $this->requestStack->getCurrentRequest()->get('ids');
 
     // Check to see if any thread IDs were POSTed.
@@ -263,18 +175,19 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
     else {
       // No IDs were posted, so the maximum possible number of threads to be
       // returned is retrieved from the block settings.
-      $thread_count = $this->configFactory->get('block.block.privatemessageinbox')->get('settings.thread_count');
+      $thread_count = $this->config('block.block.privatemessageinbox')
+        ->get('settings.thread_count');
       $inbox_threads = $this->privateMessageService->getUpdatedInboxThreads([], $thread_count);
     }
 
     // Only need to do something if any thread IDS were found.
     if (count($inbox_threads['thread_ids'])) {
-      $view_builder = $this->entityTypeManager->getViewBuilder('private_message_thread');
+      $view_builder = $this->entityTypeManager()->getViewBuilder('private_message_thread');
 
       // Render any new threads as HTML to be sent to the browser.
       $rendered_threads = [];
       foreach (array_keys($inbox_threads['new_threads']) as $thread_id) {
-        if ($inbox_threads['new_threads'][$thread_id]->access('view', $this->currentUser)) {
+        if ($inbox_threads['new_threads'][$thread_id]->access('view', $this->currentUser())) {
           $renderable = $view_builder->view($inbox_threads['new_threads'][$thread_id], 'inbox');
           $rendered_threads[$thread_id] = $this->renderer->renderRoot($renderable);
         }
@@ -283,6 +196,8 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
       // Add the command that will tell the inbox which thread items to update.
       $response->addCommand(new PrivateMessageInboxUpdateCommand($inbox_threads['thread_ids'], $rendered_threads));
     }
+
+    return $response;
   }
 
   /**
@@ -291,13 +206,14 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
    * Only messages created since the current user last visited the private
    * message page are shown.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getNewUnreadThreadCount(AjaxResponse $response) {
+  protected function getNewUnreadThreadCount(): AjaxResponse {
+    $response = new AjaxResponse();
     $unread_thread_count = $this->privateMessageService->getUnreadThreadCount();
-
     $response->addCommand(new PrivateMessageUpdateUnreadItemsCountCommand($unread_thread_count));
+    return $response;
   }
 
   /**
@@ -306,32 +222,35 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
    * Only messages created since the current user last visited the private
    * message page are shown.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function getNewUnreadMessageCount(AjaxResponse $response) {
+  protected function getNewUnreadMessageCount(): AjaxResponse {
+    $response = new AjaxResponse();
     $unread_message_count = $this->privateMessageService->getUnreadMessageCount();
-
     $response->addCommand(new PrivateMessageUpdateUnreadItemsCountCommand($unread_message_count));
+    return $response;
   }
 
   /**
    * Load a private message thread to be dynamically inserted into the page.
    *
-   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   * @return \Drupal\Core\Ajax\AjaxResponse
    *   The response to which any commands should be attached.
    */
-  protected function loadThread(AjaxResponse $response) {
+  protected function loadThread(): AjaxResponse {
+    $response = new AjaxResponse();
+
     $thread_id = $this->requestStack->getCurrentRequest()->get('id');
     if ($thread_id) {
-      $thread = $this->entityTypeManager->getStorage('private_message_thread')->load($thread_id);
+      $thread = $this->entityTypeManager()->getStorage('private_message_thread')->load($thread_id);
 
-      if ($thread && $thread->access('view', $this->currentUser)) {
+      if ($thread && $thread->access('view', $this->currentUser())) {
         $this->privateMessageService->updateLastCheckTime();
 
-        $view_builder = $this->entityTypeManager->getViewBuilder('private_message_thread');
+        $view_builder = $this->entityTypeManager()->getViewBuilder('private_message_thread');
         $renderable = $view_builder->view($thread);
-        $rendered_thread = $this->renderer->renderRoot($renderable);
+        $rendered_thread = (string) $this->renderer->renderRoot($renderable);
 
         $response->addCommand(new SettingsCommand($renderable['#attached']['drupalSettings'], TRUE));
         $response->addCommand(new PrivateMessageInsertThreadCommand($rendered_thread));
@@ -339,6 +258,8 @@ class AjaxController extends ControllerBase implements AjaxControllerInterface {
         $response->addCommand(new PrivateMessageUpdateUnreadItemsCountCommand($unread_thread_count));
       }
     }
+
+    return $response;
   }
 
 }

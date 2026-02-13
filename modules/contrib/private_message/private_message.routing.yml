@@ -7,7 +7,7 @@ private_message.private_message_page:
     _permission: 'use private messaging system,access user profiles'
     _user_is_logged_in: 'TRUE'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 entity.private_message_thread.canonical:
   path: '/private-messages/{private_message_thread}'
@@ -147,6 +147,7 @@ private_message.ban_user_form:
   requirements:
     _permission: 'use private messaging system,access user profiles'
     _user_is_logged_in: 'TRUE'
+    user: \d+
   options:
     parameters:
       user:

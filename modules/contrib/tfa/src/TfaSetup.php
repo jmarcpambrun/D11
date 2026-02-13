@@ -7,15 +7,17 @@ use Drupal\tfa\Plugin\TfaSetupInterface;
 
 /**
  * TFA Setup.
+ *
+ * @internal
  */
-class TfaSetup {
+final class TfaSetup {
 
   /**
    * Current setup plugin.
    *
    * @var \Drupal\tfa\Plugin\TfaSetupInterface
    */
-  protected $setupPlugin;
+  protected TfaSetupInterface $setupPlugin;
 
   /**
    * TFA Setup constructor.
@@ -50,7 +52,7 @@ class TfaSetup {
    * @return array
    *   Form API array.
    */
-  public function getForm(array $form, FormStateInterface &$form_state, $reset = 0) {
+  public function getForm(array $form, FormStateInterface &$form_state, $reset = 0): array {
     return $this->setupPlugin->getSetupForm($form, $form_state, $reset);
   }
 
@@ -65,7 +67,7 @@ class TfaSetup {
    * @return bool
    *   TRUE if setup completed otherwise FALSE.
    */
-  public function validateForm(array $form, FormStateInterface &$form_state) {
+  public function validateForm(array $form, FormStateInterface &$form_state): bool {
     return $this->setupPlugin->validateSetupForm($form, $form_state);
   }
 
@@ -75,7 +77,7 @@ class TfaSetup {
    * @return string[]
    *   An array containing the setup errors.
    */
-  public function getErrorMessages() {
+  public function getErrorMessages(): array {
     return $this->setupPlugin->getErrorMessages();
   }
 
@@ -90,7 +92,7 @@ class TfaSetup {
    * @return bool
    *   TRUE if no errors occur when saving the data.
    */
-  public function submitForm(array $form, FormStateInterface &$form_state) {
+  public function submitForm(array $form, FormStateInterface &$form_state): bool {
     return $this->setupPlugin->submitSetupForm($form, $form_state);
   }
 
@@ -100,7 +102,7 @@ class TfaSetup {
    * @return string[]
    *   An array containing messages to be used during plugin setup.
    */
-  public function getSetupMessages() {
+  public function getSetupMessages(): array {
     return $this->setupPlugin->getSetupMessages();
   }
 

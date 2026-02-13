@@ -32,7 +32,7 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
   /**
    * {@inheritdoc}
    */
-  public function encrypt($text, $key) {
+  public function encrypt($text, $key): string {
     // Backwards compatibility with Mcrypt.
     if (!extension_loaded('openssl') && extension_loaded('mcrypt')) {
       return $this->encryptWithMcrypt($text, $key);
@@ -62,7 +62,7 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
    *
    * @noinspection PhpDeprecationInspection
    */
-  private function encryptWithMcrypt($text, $key) {
+  private function encryptWithMcrypt(string $text, string $key): string {
     // Key cannot be too long for this encryption.
     $key = mb_substr($key, 0, 32);
 
@@ -79,7 +79,7 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
   /**
    * {@inheritdoc}
    */
-  public function decrypt($text, $key) {
+  public function decrypt($text, $key): string {
     $crypto_data = Json::decode($text);
     if (empty($crypto_data['version']) || empty($crypto_data['iv_base64']) || empty($crypto_data['ciphertext_base64'])) {
       // Backwards compatibility with the old Mcrypt scheme.
@@ -100,10 +100,10 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
    * @param string $key
    *   The key to decrypt the text with.
    *
-   * @return string|bool
+   * @return string|false
    *   The decrypted text, or FALSE on failure.
    */
-  private function decryptLegacyDataWithOpenSsl($text, $key) {
+  private function decryptLegacyDataWithOpenSsl(string $text, string $key): string|FALSE {
     $key = mb_substr($key, 0, 32);
     $text = base64_decode($text);
 
@@ -123,7 +123,7 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
    *
    * @noinspection PhpDeprecationInspection
    */
-  private function decryptLegacyDataWithMcrypt($text, $key) {
+  private function decryptLegacyDataWithMcrypt(string $text, string $key): string {
     // Key cannot be too long for this encryption.
     $key = mb_substr($key, 0, 32);
 
@@ -147,7 +147,7 @@ class McryptAES128Encryption extends EncryptionMethodBase implements EncryptionM
    * @return array
    *   An array of error messages, providing info on missing dependencies.
    */
-  public function checkDependencies($text = NULL, $key = NULL) {
+  public function checkDependencies($text = NULL, $key = NULL): array {
     $errors = [];
 
     if (!extension_loaded('openssl') && !extension_loaded('mcrypt')) {

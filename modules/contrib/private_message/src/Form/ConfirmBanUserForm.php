@@ -1,79 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Form;
 
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\private_message\Model\BlockType;
 use Drupal\private_message\Service\PrivateMessageBanManagerInterface;
 use Drupal\user\UserInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * The User Ban confirmation form.
+ * The user block confirmation form.
  */
 class ConfirmBanUserForm extends ConfirmFormBase {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
-   * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The Private Message Ban manager.
-   *
-   * @var \Drupal\private_message\Service\PrivateMessageBanManagerInterface
-   */
-  protected PrivateMessageBanManagerInterface $privateMessageBanManager;
+  use AutowireTrait;
 
   /**
    * The user to block.
-   *
-   * @var \Drupal\user\UserInterface|null
    */
-  protected ?UserInterface $user;
+  protected UserInterface $user;
 
-  /**
-   * Constructs a ConfirmBanUserForm object.
-   *
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager service.
-   * @param \Drupal\private_message\Service\PrivateMessageBanManagerInterface $privateMessageBanManager
-   *   The Private Message Ban manager.
-   */
   public function __construct(
-    AccountProxyInterface $currentUser,
-    EntityTypeManagerInterface $entityTypeManager,
-    PrivateMessageBanManagerInterface $privateMessageBanManager,
-  ) {
-    $this->currentUser = $currentUser;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->privateMessageBanManager = $privateMessageBanManager;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('current_user'),
-      $container->get('entity_type.manager'),
-      $container->get('private_message.ban_manager'),
-    );
-  }
+    protected readonly AccountProxyInterface $currentUser,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected readonly PrivateMessageBanManagerInterface $privateMessageBanManager,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -85,28 +43,19 @@ class ConfirmBanUserForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $user = NULL): array {
-    if (is_scalar($user)) {
-      @trigger_error('Passing $user as ' . gettype($user) . ' is deprecated in private_message:3.0.3 and is removed from private_message:4.0.0. The $user parameter should be of type UserInterface. See https://www.drupal.org/node/3484561', E_USER_DEPRECATED);
-      $this->user = $this->entityTypeManager->getStorage('user')->load($user);
-    }
-    elseif ($user instanceof UserInterface) {
-      $this->user = $user;
-    }
-    elseif ($user === NULL) {
-      return [];
-    }
-
+  public function buildForm(array $form, FormStateInterface $form_state, ?UserInterface $user = NULL): array {
+    $this->user = $user;
     return parent::buildForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Add a security if the user id is unknown.
     if (empty($this->user)) {
       $form_state->setError($form, $this->t('The user id is unknown.'));
+      return;
     }
 
     // Add security to prevent blocking ourselves.
@@ -118,7 +67,7 @@ class ConfirmBanUserForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $form_state->setRedirect('private_message.private_message_page');
 
     // If user is already banned, do nothing.
@@ -135,17 +84,17 @@ class ConfirmBanUserForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getQuestion() {
+  public function getQuestion(): TranslatableMarkup {
     return $this->t('Are you sure you want to block user <em>%user</em>?', ['%user' => $this->user->getDisplayName()]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDescription() {
+  public function getDescription(): TranslatableMarkup {
     $config = $this->config('private_message.settings');
 
-    if ($config->get('ban_mode') == ConfigForm::PASSIVE) {
+    if ($config->get('ban_mode') === BlockType::Passive->value) {
       return $this->t('By confirming, you will no longer be able to send messages to this user.');
     }
     else {
@@ -156,7 +105,7 @@ class ConfirmBanUserForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
+  public function getCancelUrl(): Url {
     return new Url('private_message.ban_page');
   }
 

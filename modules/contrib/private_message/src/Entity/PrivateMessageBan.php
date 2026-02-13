@@ -1,22 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\user\Entity\User;
+use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
 /**
  * Defines the Private Message Ban entity type.
  *
  * This is a lightweight entity type used to store banned users.
- *
- * @ingroup private_message
  *
  * @ContentEntityType(
  *   id = "private_message_ban",
@@ -41,7 +39,7 @@ use Drupal\user\UserInterface;
  *   entity_keys = {
  *     "id" = "id",
  *     "uuid" = "uuid",
- *     "uid" = "owner",
+ *     "owner" = "owner",
  *   },
  *   links = {
  *     "add-form" = "/admin/structure/private_message_ban/add",
@@ -51,32 +49,24 @@ use Drupal\user\UserInterface;
  *   },
  *   constraints = {
  *     "UniquePrivateMessageBan" = {}
- *   }
+ *   },
  * )
  */
 class PrivateMessageBan extends ContentEntityBase implements PrivateMessageBanInterface {
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
-    parent::preCreate($storage_controller, $values);
-    $values += [
-      'owner' => \Drupal::currentUser()->id(),
-    ];
-  }
+  use EntityOwnerTrait;
 
   /**
    * {@inheritdoc}
    */
   public function getCreatedTime(): int {
-    return $this->get('created')->value;
+    return (int) $this->get('created')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setCreatedTime($timestamp) {
+  public function setCreatedTime(int $timestamp): PrivateMessageBanInterface {
     $this->set('created', $timestamp);
     return $this;
   }
@@ -84,61 +74,34 @@ class PrivateMessageBan extends ContentEntityBase implements PrivateMessageBanIn
   /**
    * {@inheritdoc}
    */
-  public function getOwner() {
-    return $this->get('owner')->entity;
+  public function getTarget(): UserInterface {
+    $targetUser = $this->get('target')->entity;
+    assert($targetUser instanceof UserInterface);
+    return $targetUser;
   }
 
   /**
    * {@inheritdoc}
-   */
-  public function getOwnerId() {
-    return $this->get('owner')->target_id;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwnerId($uid) {
-    $this->set('owner', $uid);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('owner', $account->id());
-    return $this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getTarget(): User {
-    return $this->get('target')->entity;
-  }
-
-  /**
-   * {@inheritDoc}
    */
   public function getTargetId(): int {
-    return $this->get('target')->target_id;
+    return (int) $this->get('target')->target_id;
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
-  public function setTarget(AccountInterface $user): PrivateMessageBanInterface {
+  public function setTarget(UserInterface $user): PrivateMessageBanInterface {
     return $this->set('target', $user->id());
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type): array {
     $fields = parent::baseFieldDefinitions($entity_type);
+    $fields += static::ownerBaseFieldDefinitions($entity_type);
 
-    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
+    $fields['owner']
       ->setLabel(t('Owned by'))
       ->setDescription(t('The ID of user who performed the ban.'))
       ->setSetting('target_type', 'user')
@@ -182,8 +145,10 @@ class PrivateMessageBan extends ContentEntityBase implements PrivateMessageBanIn
   /**
    * {@inheritdoc}
    */
-  public function label() {
-    return new TranslatableMarkup('Private Message Ban by @username', ['@username' => $this->getOwner()->getDisplayName()]);
+  public function label(): TranslatableMarkup {
+    return new TranslatableMarkup('Private Message Ban by @username', [
+      '@username' => $this->getOwner()->getDisplayName(),
+    ]);
   }
 
 }

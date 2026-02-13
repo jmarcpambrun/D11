@@ -3,9 +3,6 @@ parameters:
 	ignoreErrors:
 		- '#Unsafe usage of new static\(\)#'
 		- identifier: missingType.iterableValue
-	excludePaths:
-		- services_tfa/*
-		- src/Controller/TfaUserControllerDeprecated.php
 	scanDirectories:
 		- ../../../../vendor/drush/drush/src-symfony-compatibility
 includes:

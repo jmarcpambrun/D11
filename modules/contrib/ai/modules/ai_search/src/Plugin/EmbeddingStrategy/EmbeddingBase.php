@@ -118,14 +118,10 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       if ($chunk) {
         // Normalize the chunk before embedding it.
         $input = new EmbeddingsInput($chunk);
-        $tags = ['ai_search'];
-        if ($this->skipModeration) {
-          $tags[] = 'skip_moderation';
-        }
         $raw_embeddings[] = $embedding_llm->embeddings(
           $input,
           $this->modelId,
-          $tags,
+          ['ai_search'],
         )->getNormalized();
       }
     }
@@ -317,8 +313,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    */
   public function buildBaseMetadata(array $fields, IndexInterface $index): array {
     $metadata = [];
-    $index_config = $this->configFactory->get('ai_search.index.' . $index->id())
-      ->getRawData();
+    $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
     $indexing_options = $index_config['indexing_options'];
     foreach ($fields as $field) {
 
@@ -351,8 +346,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *   The metadata to attach to the vector database record.
    */
   public function addContentToMetadata(array $metadata, string $content, IndexInterface $index): array {
-    $ai_search_index_config = $this->configFactory->get('ai_search.index.' . $index->id())
-      ->getRawData();
+    $ai_search_index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
     if (
       !isset($ai_search_index_config['exclude_chunk_from_metadata'])
       || !$ai_search_index_config['exclude_chunk_from_metadata']

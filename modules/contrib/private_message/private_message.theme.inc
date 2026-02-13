@@ -5,13 +5,15 @@
  * Contains preprocess functions for the private message module.
  */
 
+declare(strict_types=1);
+
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 
 /**
  * Implements hook_preprocess_private_message_notification_block().
  */
-function template_preprocess_private_message_notification_block(&$vars) {
+function template_preprocess_private_message_notification_block(array &$vars): void {
   $vars['notification_image_path'] = base_path() . \Drupal::service('extension.list.module')->getPath('private_message') . '/images/private-message-notification-icon.png';
 
   switch ($vars['count_method']) {

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Drush\Commands;
 
-use Drupal\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\private_message\Service\PrivateMessageUninstallerInterface;
 use Drush\Attributes as CLI;
@@ -13,21 +15,13 @@ use Drush\Commands\DrushCommands;
  */
 final class PrivateMessageCommands extends DrushCommands {
 
+  use AutowireTrait;
   use StringTranslationTrait;
 
   public function __construct(
     protected readonly PrivateMessageUninstallerInterface $privateMessageUninstaller,
   ) {
     parent::__construct();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container): self {
-    return new static(
-      $container->get('private_message.uninstaller')
-    );
   }
 
   /**

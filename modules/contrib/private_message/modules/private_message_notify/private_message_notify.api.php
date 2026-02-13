@@ -5,6 +5,8 @@
  * Hook documentation for Private Message Notify module hooks.
  */
 
+declare(strict_types=1);
+
 use Drupal\private_message\Entity\PrivateMessageInterface;
 use Drupal\private_message\Entity\PrivateMessageThreadInterface;
 

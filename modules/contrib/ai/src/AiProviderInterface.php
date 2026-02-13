@@ -12,8 +12,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
   /**
    * Provides associative array with a list of models' IDs.
    *
-   * Keyed with model IDs, valued with human-readable names
-   * and optionally filtered by type.
+   * Keyed with human-readable names and optionally filtered by typ.
    *
    * @param string|null $operation_type
    *   The operation type.

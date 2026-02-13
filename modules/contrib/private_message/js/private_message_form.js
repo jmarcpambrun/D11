@@ -20,8 +20,10 @@
       // If it is the send key, just remove that character from the textarea.
       const { value } = el;
 
-      // @todo Move this in the backend to avoid screen flicker.
-      el.value = value.substring(0, value.length - 1);
+      if (el.value.endsWith(key)) {
+        // @todo Move this in the backend to avoid screen flicker.
+        el.value = value.substring(0, value.length - 1);
+      }
 
       if (el.value !== '') {
         el.closest('.private-message-add-form')

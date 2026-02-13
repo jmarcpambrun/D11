@@ -7,6 +7,8 @@ namespace Drupal\tfa;
  *
  * @package Drupal\tfa
  *
+ * @api
+ *
  * cSpell:ignore abcdefghijkmnopqrstuvwxyz ABCDEFGHJKLMNPQRSTUVWXYZ
  */
 trait TfaRandomTrait {
@@ -19,7 +21,7 @@ trait TfaRandomTrait {
    *
    * @var string
    */
-  protected $allowedRandomNumbers = '23456789';
+  protected string $allowedRandomNumbers = '23456789';
 
   /**
    * Letters allowed during random string generation.
@@ -29,7 +31,7 @@ trait TfaRandomTrait {
    *
    * @var string
    */
-  protected $allowedRandomLetters = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+  protected string $allowedRandomLetters = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
 
   /**
    * Generate a random integer of the given character length.
@@ -42,8 +44,8 @@ trait TfaRandomTrait {
    *
    * @throws \Exception
    */
-  public function randomInteger($length) {
-    return $this->randomCharacters($length, $this->allowedRandomNumbers);
+  public function randomInteger(int $length): int {
+    return (int) $this->randomCharacters($length, $this->allowedRandomNumbers);
   }
 
   /**
@@ -57,7 +59,7 @@ trait TfaRandomTrait {
    *
    * @throws \Exception
    */
-  public function randomString($length) {
+  public function randomString(int $length): string {
     return $this->randomCharacters($length, $this->allowedRandomLetters);
   }
 
@@ -74,7 +76,7 @@ trait TfaRandomTrait {
    *
    * @throws \Exception
    */
-  protected function randomCharacters($length, $allowable_characters) {
+  protected function randomCharacters(int $length, string $allowable_characters): string {
     // Zero-based count of characters in the allowable list:
     $len = strlen($allowable_characters) - 1;
 

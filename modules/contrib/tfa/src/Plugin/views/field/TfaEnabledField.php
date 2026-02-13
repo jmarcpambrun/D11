@@ -2,6 +2,7 @@
 
 namespace Drupal\tfa\Plugin\views\field;
 
+use Drupal\Component\Render\MarkupInterface;
 use Drupal\Component\Utility\Xss as UtilityXss;
 use Drupal\user\UserDataInterface;
 use Drupal\views\Plugin\views\field\Boolean;
@@ -16,19 +17,19 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @ViewsField("tfa_enabled_field")
  */
-class TfaEnabledField extends Boolean {
+final class TfaEnabledField extends Boolean {
 
   /**
    * Provides the user data service object.
    *
    * @var \Drupal\user\UserDataInterface
    */
-  protected $userData;
+  protected UserDataInterface $userData;
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('user.data'));
   }
 
@@ -44,7 +45,7 @@ class TfaEnabledField extends Boolean {
    * @param \Drupal\user\UserDataInterface $user_data
    *   User data object to store user specific information.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
+  public function __construct(array $configuration, string $plugin_id, $plugin_definition, UserDataInterface $user_data) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->userData = $user_data;
@@ -53,7 +54,7 @@ class TfaEnabledField extends Boolean {
   /**
    * {@inheritdoc}
    */
-  public function render(ResultRow $values) {
+  public function render(ResultRow $values): string|MarkupInterface {
     $uid = $this->getValue($values);
     $data = $this->userData->get('tfa', $uid, 'tfa_user_settings');
     $value = $data['saved'] ?? FALSE;

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Drupal\Tests\private_message\Functional;
 
 use Drupal\Tests\BrowserTestBase;
-use Drupal\private_message\Entity\PrivateMessage;
+use Drupal\Tests\private_message\Traits\PrivateMessageTestTrait;
 use Drupal\private_message\Entity\PrivateMessageBan;
-use Drupal\private_message\Entity\PrivateMessageThread;
 
 /**
  * Tests for the uninstallation process.
@@ -15,6 +14,8 @@ use Drupal\private_message\Entity\PrivateMessageThread;
  * @group private_message
  */
 class PrivateMessageUninstallTest extends BrowserTestBase {
+
+  use PrivateMessageTestTrait;
 
   /**
    * {@inheritdoc}
@@ -43,46 +44,25 @@ class PrivateMessageUninstallTest extends BrowserTestBase {
    * Tests deletion of all private message content from the system.
    */
   public function testUninstallation(): void {
-    $owner = $this->DrupalCreateUser();
-    $guest = $this->DrupalCreateUser();
+    $this->createTestingUsers();
     $adminUser = $this->DrupalCreateUser([
       'administer site configuration',
       'administer private message module',
     ]);
 
-    PrivateMessageThread::create([
-      'members' => [$owner, $adminUser],
-      'subject' => $this->getRandomGenerator()->word(10),
-      'updated' => \Drupal::time()->getRequestTime() - 3600,
-      'private_messages' => [
-        PrivateMessage::create([
-          'owner' => $owner,
-          'message' => [
-            'value' => $this->getRandomGenerator()->sentences(5),
-            'format' => 'plain_text',
-          ],
-        ]),
-      ],
-    ])->save();
+    $this->createThreadWithMessages(
+      [$this->users['a'], $adminUser],
+      $this->users['a']
+    );
 
-    PrivateMessageThread::create([
-      'members' => [$guest, $adminUser],
-      'subject' => $this->getRandomGenerator()->word(10),
-      'updated' => \Drupal::time()->getRequestTime() - 3600,
-      'private_messages' => [
-        PrivateMessage::create([
-          'owner' => $guest,
-          'message' => [
-            'value' => $this->getRandomGenerator()->sentences(5),
-            'format' => 'plain_text',
-          ],
-        ]),
-      ],
-    ])->save();
+    $this->createThreadWithMessages(
+      [$this->users['b'], $adminUser],
+      $this->users['b']
+    );
 
     PrivateMessageBan::create([
-      'owner' => $owner,
-      'target' => $guest,
+      'owner' => $this->users['a'],
+      'target' => $this->users['b'],
     ]
     )->save();
 

@@ -3,121 +3,150 @@
  * JavaScript functionality for the private message notification block.
  */
 
-Drupal.PrivateMessageNotificationBlock = {};
-
-(($, Drupal, drupalSettings, window) => {
-  let initialized;
-  let notificationWrapper;
-  let refreshRate;
-  let checkingCount;
+((Drupal, drupalSettings, window) => {
+  let checkingCountInProgress = false;
+  let updateTimeoutId = null;
 
   /**
-   * Trigger Ajax Commands.
-   * @param {Object} data The data.
+   * Private message notification block.
    */
-  function triggerCommands(data) {
-    const ajaxObject = Drupal.ajax({
-      url: '',
-      base: false,
-      element: false,
-      progress: false,
-    });
-
-    // Trigger any ajax commands in the response.
-    ajaxObject.success(data, 'success');
-  }
-
-  function updateCount(unreadItemsCount) {
-    notificationWrapper = document.querySelector(
-      '.private-message-notification-wrapper',
-    );
-
-    if (unreadItemsCount) {
-      notificationWrapper.classList.add('unread-threads');
-    } else {
-      notificationWrapper.classList.remove('unread-threads');
-    }
-
-    notificationWrapper.querySelector(
-      '.private-message-page-link',
-    ).textContent = unreadItemsCount;
-
-    const pageTitle = document.querySelector('head title');
-
-    // Check if there are any unread threads.
-    if (unreadItemsCount) {
-      // Check if the unread thread count is already in the page title.
-      if (pageTitle.textContent.match(/^\(\d+\)\s/)) {
-        // Update the unread thread count in the page title.
-        pageTitle.textContent = pageTitle.textContent.replace(
-          /^\(\d+\)\s/,
-          `(${unreadItemsCount}) `,
-        );
-      } else {
-        // Add the unread thread count to the URL.
-        pageTitle.textContent = `(${unreadItemsCount}) ${pageTitle.textContent}`;
+  Drupal.privateMessageNotificationBlock = {
+    /**
+     * Triggers AJAX to get the new unread thread count from the server.
+     */
+    triggerCountCallback() {
+      if (checkingCountInProgress) {
+        return;
       }
-    }
-    // No unread messages. Check if thread count exists in the page title.
-    else if (pageTitle.textContent.match(/^\(\d+\)\s/)) {
-      // Remove the unread thread count from the page title.
-      pageTitle.textContent = pageTitle.textContent.replace(/^\(\d+\)\s/, '');
-    }
-  }
 
-  /**
-   * Retrieve the new unread thread count from the server using AJAX.
-   */
-  function getUnreadItemsCount() {
-    if (!checkingCount) {
-      checkingCount = true;
-
-      $.ajax({
+      checkingCountInProgress = true;
+      Drupal.ajax({
         url: drupalSettings.privateMessageNotificationBlock
           .newMessageCountCallback,
-        success(data) {
-          triggerCommands(data);
-
-          checkingCount = false;
-          if (refreshRate) {
-            window.setTimeout(getUnreadItemsCount, refreshRate);
-          }
+        error: (err) => {
+          window.location.reload();
+          console.error(err);
         },
-      });
-    }
-  }
+      }).execute();
+    },
 
-  Drupal.PrivateMessageNotificationBlock.getUnreadItemsCount = () => {
-    getUnreadItemsCount();
+    /**
+     * Updates the page.
+     *
+     * @param {number} unreadItemsCount
+     *   Unread items.
+     */
+    triggerPageUpdate(unreadItemsCount) {
+      this.updateNotificationBlock(unreadItemsCount);
+      this.updatePageTitle(unreadItemsCount);
+    },
+
+    /**
+     * Updates notification block.
+     *
+     * @param {number} unreadItemsCount
+     *   Unread items.
+     */
+    updateNotificationBlock(unreadItemsCount) {
+      const notificationWrapper = document.querySelector(
+        '.private-message-notification-wrapper',
+      );
+
+      if (!notificationWrapper) {
+        return;
+      }
+
+      if (unreadItemsCount) {
+        notificationWrapper.classList.add('unread-threads');
+      } else {
+        notificationWrapper.classList.remove('unread-threads');
+      }
+
+      const notificationLink = notificationWrapper.querySelector(
+        '.private-message-page-link',
+      );
+      if (notificationLink) {
+        notificationLink.textContent = unreadItemsCount;
+      }
+    },
+
+    /**
+     * Updates page title.
+     *
+     * @param {number} unreadItemsCount
+     *   Unread items.
+     */
+    updatePageTitle(unreadItemsCount) {
+      const pageTitle = document.querySelector('head title');
+      const titlePattern = /^\(\d+\)\s/;
+
+      if (!pageTitle) {
+        return;
+      }
+
+      if (unreadItemsCount > 0) {
+        pageTitle.textContent = pageTitle.textContent.replace(titlePattern, '');
+        pageTitle.textContent = `(${unreadItemsCount}) ${pageTitle.textContent}`;
+      } else {
+        pageTitle.textContent = pageTitle.textContent.replace(titlePattern, '');
+      }
+    },
+
+    /**
+     * Sets a timeout for count updates.
+     */
+    scheduleCountUpdate() {
+      if (updateTimeoutId) {
+        window.clearTimeout(updateTimeoutId);
+      }
+
+      const refreshRate =
+        drupalSettings.privateMessageNotificationBlock.ajaxRefreshRate * 1000;
+      if (refreshRate) {
+        updateTimeoutId = window.setTimeout(
+          Drupal.privateMessageNotificationBlock.triggerCountCallback,
+          refreshRate,
+        );
+      }
+    },
   };
 
   /**
-   * Initializes the script.
+   * Attaches the batch behavior to notification block.
+   *
+   * @type {Drupal~behavior}
    */
-  function init() {
-    if (!initialized) {
-      initialized = true;
-
-      if (drupalSettings.privateMessageNotificationBlock.ajaxRefreshRate) {
-        refreshRate =
-          drupalSettings.privateMessageNotificationBlock.ajaxRefreshRate * 1000;
-        if (refreshRate) {
-          window.setTimeout(getUnreadItemsCount, refreshRate);
-        }
-      }
-    }
-  }
-
   Drupal.behaviors.privateMessageNotificationBlock = {
-    attach() {
-      init();
+    attach(context) {
+      const notificationWrapper = once(
+        'private-message-notification-block',
+        '.private-message-notification-wrapper',
+        context,
+      ).shift();
 
-      Drupal.AjaxCommands.prototype.privateMessageUpdateUnreadItemsCount = (
-        ajax,
-        response,
-      ) => {
-        updateCount(response.unreadItemsCount);
-      };
+      if (notificationWrapper) {
+        Drupal.privateMessageNotificationBlock.scheduleCountUpdate();
+      }
     },
   };
-})(jQuery, Drupal, drupalSettings, window);
+
+  /**
+   * Ajax command to update the unread items count.
+   *
+   * @param {Drupal.Ajax} ajax
+   *   {@link Drupal.Ajax} object created by {@link Drupal.ajax}.
+   * @param {object} response
+   *   JSON response from the Ajax request.
+   */
+  Drupal.AjaxCommands.prototype.privateMessageUpdateUnreadItemsCount = (
+    ajax,
+    response,
+  ) => {
+    Drupal.privateMessageNotificationBlock.triggerPageUpdate(
+      response.unreadItemsCount,
+    );
+
+    checkingCountInProgress = false;
+    Drupal.privateMessageNotificationBlock.scheduleCountUpdate();
+  };
+})(Drupal, drupalSettings, window);

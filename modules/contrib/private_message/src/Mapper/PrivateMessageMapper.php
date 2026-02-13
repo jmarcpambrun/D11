@@ -2,6 +2,8 @@
 
 namespace Drupal\private_message\Mapper;
 
+@trigger_error(__NAMESPACE__ . '\PrivateMessageMapper is deprecated in private_message:4.0.0 and is removed from private_message:5.0.0. No replacement is provided. See https://www.drupal.org/node/3490530', E_USER_DEPRECATED);
+
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -10,35 +12,18 @@ use Drupal\user\UserInterface;
 
 /**
  * Interface for the Private Message Mapper class.
+ *
+ * @deprecated in private_message:4.0.0 and is removed from
+ *   private_message:5.0.0. No replacement is provided.
+ *
+ * @see https://www.drupal.org/node/3490530
  */
 class PrivateMessageMapper implements PrivateMessageMapperInterface {
 
-  /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected Connection $database;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
-   * Constructs a PrivateMessageMapper object.
-   *
-   * @param \Drupal\Core\Database\Connection $database
-   *   The database connection.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   */
-  public function __construct(Connection $database, AccountProxyInterface $currentUser) {
-    $this->database = $database;
-    $this->currentUser = $currentUser;
-  }
+  public function __construct(
+    protected readonly Connection $database,
+    protected readonly AccountProxyInterface $currentUser,
+  ) {}
 
   /**
    * {@inheritdoc}

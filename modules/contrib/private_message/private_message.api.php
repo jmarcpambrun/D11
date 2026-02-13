@@ -5,6 +5,8 @@
  * Hook documentation for Private Message module hooks.
  */
 
+declare(strict_types=1);
+
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\private_message\Entity\PrivateMessageInterface;
 use Drupal\private_message\Entity\PrivateMessageThreadInterface;
@@ -19,7 +21,7 @@ use Drupal\private_message\Entity\PrivateMessageThreadInterface;
  * @param string $viewMode
  *   The view mode being rendered on the private message.
  */
-function hook_private_message_view_alter(array &$build, EntityInterface $privateMessage, $viewMode) {
+function hook_private_message_view_alter(array &$build, EntityInterface $privateMessage, string $viewMode): void {
   // Create a new class specific to the author of the message.
   $class = 'private-message-author-' . $privateMessage->getOwnerId();
   // Add the class to the wrapper.

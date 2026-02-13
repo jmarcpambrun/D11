@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\private_message\Entity\PrivateMessageBanInterface;
@@ -16,62 +17,16 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
 
   use StringTranslationTrait;
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The database.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  private Connection $database;
-
-  /**
-   * The messenger service.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  private MessengerInterface $messenger;
-
-  /**
-   * Constructs a PrivateMessageBanManager object.
-   *
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager interface.
-   * @param \Drupal\Core\Database\Connection $database
-   *   The database.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger service.
-   */
   public function __construct(
-    AccountProxyInterface $currentUser,
-    EntityTypeManagerInterface $entityTypeManager,
-    Connection $database,
-    MessengerInterface $messenger,
-  ) {
-    $this->currentUser = $currentUser;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->database = $database;
-    $this->messenger = $messenger;
-  }
+    protected readonly AccountProxyInterface $currentUser,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected readonly Connection $database,
+  ) {}
 
   /**
    * {@inheritdoc}
    */
-  public function isBanned(int $user_id): bool {
+  public function isBanned(int|string $user_id): bool {
     $select = $this
       ->database
       ->select('private_message_ban', 'pmb');
@@ -88,6 +43,8 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
    * {@inheritdoc}
    */
   public function isCurrentUserBannedByUser(int $user_id): bool {
+    @trigger_error(__METHOD__ . '() is deprecated in private_message:4.0.0 and is removed from private_message:5.0.0. No replacement is provided. See https://www.drupal.org/node/3490530', E_USER_DEPRECATED);
+
     $select = $this
       ->database
       ->select('private_message_ban', 'pmb');
@@ -103,7 +60,7 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getBannedUsers(int $user_id): array {
+  public function getBannedUsers(int|string $user_id): array {
     return $this
       ->database
       ->select('private_message_ban', 'pmb')
@@ -116,8 +73,8 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function unbanUser(int $user_id) {
-    $ban = $this->findBanEntity($this->currentUser->id(), $user_id);
+  public function unbanUser(int|string $user_id): void {
+    $ban = $this->findBanEntity((int) $this->currentUser->id(), (int) $user_id);
     if (!$ban) {
       // The user is not banned; just return.
       return;
@@ -130,8 +87,8 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function banUser(int $user_id) {
-    $ban = $this->findBanEntity($this->currentUser->id(), $user_id);
+  public function banUser(int|string $user_id): void {
+    $ban = $this->findBanEntity((int) $this->currentUser->id(), (int) $user_id);
     if ($ban) {
       // The user is already banned; just return.
       return;
@@ -169,7 +126,9 @@ class PrivateMessageBanManager implements PrivateMessageBanManagerInterface {
 
     // reset() returns the first element of the array or FALSE if the array is
     // empty, but we want the return value to be NULL if the array is empty.
-    return reset($bans) ?: NULL;
+    $ban = reset($bans) ?: NULL;
+    assert($ban === NULL || $ban instanceof PrivateMessageBanInterface);
+    return $ban;
   }
 
 }

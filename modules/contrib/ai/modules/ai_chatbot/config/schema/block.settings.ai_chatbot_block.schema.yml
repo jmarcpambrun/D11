@@ -6,7 +6,7 @@ block.settings.ai_chatbot_block:
       type: string
       label: AI Assistant
     bot_name:
-      type: text
+      type: string
       label: Bot Name
     bot_image:
       type: string
@@ -15,7 +15,7 @@ block.settings.ai_chatbot_block:
       type: integer
       label: Use Username
     default_username:
-      type: text
+      type: string
       label: Default Username
     use_avatar:
       type: integer
@@ -24,7 +24,7 @@ block.settings.ai_chatbot_block:
       type: string
       label: Default Avatar
     first_message:
-      type: text
+      type: label
       label: First Message
     stream:
       type: integer

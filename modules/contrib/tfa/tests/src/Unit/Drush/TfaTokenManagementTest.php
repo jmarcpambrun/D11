@@ -11,6 +11,7 @@ use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 use Drupal\user\UserStorageInterface;
 use Drush\Exceptions\UserAbortException;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 require_once __DIR__ . '/../../../../../../../../vendor/drush/drush/includes/output.inc';
@@ -26,45 +27,33 @@ final class TfaTokenManagementTest extends UnitTestCase {
 
   /**
    * Mock user.data service.
-   *
-   * @var \Drupal\user\UserDataInterface&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $userDataMock;
+  protected UserDataInterface&MockObject $userDataMock;
 
   /**
    * Mock logger.channel.tfa service.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $loggerChannelMock;
+  protected LoggerChannelInterface&MockObject $loggerChannelMock;
 
   /**
    * Mock User Storage.
-   *
-   * @var \Drupal\user\UserStorageInterface&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $userStorageMock;
+  protected UserStorageInterface&MockObject $userStorageMock;
 
   /**
    * Mock MailManager service.
-   *
-   * @var \Drupal\Core\Mail\MailManagerInterface&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $mailManagerMock;
+  protected MailManagerInterface&MockObject $mailManagerMock;
 
   /**
    * Mock Drush IO service.
-   *
-   * @var \Symfony\Component\Console\Style\SymfonyStyle&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $ioMock;
+  protected SymfonyStyle&MockObject $ioMock;
 
   /**
    * Mock Valid user.
-   *
-   * @var \Drupal\user\UserInterface&\PHPUnit\Framework\MockObject\MockObject
    */
-  protected $validUserMock;
+  protected UserInterface&MockObject $validUserMock;
 
   /**
    * {@inheritdoc}
@@ -124,19 +113,19 @@ final class TfaTokenManagementTest extends UnitTestCase {
     yield 'Successful reset by username' => [
       function (self $context) {
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('loadByProperties')
           ->with(['name' => 'valid_user'])
           ->willReturn([$context->validUserMock]);
         $context->ioMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('confirm')
           ->with("Are you sure you want to reset TFA for valid_user (UID: 10)'s data?", FALSE)
           ->willReturn(TRUE);
-        $context->ioMock->expects(self::once())->method('writeln')->with('TFA has been disabled.');
-        $context->userDataMock->expects(self::once())->method('delete')->with('tfa', 10, NULL);
+        $context->ioMock->expects($context->once())->method('writeln')->with('TFA has been disabled.');
+        $context->userDataMock->expects($context->once())->method('delete')->with('tfa', 10, NULL);
         $context->loggerChannelMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('notice')
           ->with(
             "TFA deleted and reset for user @name (UID: @uid).",
@@ -152,19 +141,19 @@ final class TfaTokenManagementTest extends UnitTestCase {
     yield 'Successful reset by uid' => [
       function (self $context) {
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('load')
           ->with('10')
           ->willReturn($context->validUserMock);
         $context->ioMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('confirm')
           ->with("Are you sure you want to reset TFA for valid_user (UID: 10)'s data?", FALSE)
           ->willReturn(TRUE);
-        $context->ioMock->expects(self::once())->method('writeln')->with('TFA has been disabled.');
-        $context->userDataMock->expects(self::once())->method('delete')->with('tfa', 10, NULL);
-        $context->loggerChannelMock->expects(self::once())->method('notice');
-        $context->mailManagerMock->expects(self::never())->method('mail');
+        $context->ioMock->expects($context->once())->method('writeln')->with('TFA has been disabled.');
+        $context->userDataMock->expects($context->once())->method('delete')->with('tfa', 10, NULL);
+        $context->loggerChannelMock->expects($context->once())->method('notice');
+        $context->mailManagerMock->expects($context->never())->method('mail');
       },
       ['name' => NULL, 'uid' => '10', 'mail' => NULL],
     ];
@@ -173,20 +162,20 @@ final class TfaTokenManagementTest extends UnitTestCase {
       function (self $context) {
         $context->validUserMock->method('getEmail')->willReturn('valid@example.org');
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('loadByProperties')
           ->with(['mail' => 'valid@example.org'])
           ->willReturn([$context->validUserMock]);
         $context->ioMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('confirm')
           ->with("Are you sure you want to reset TFA for valid_user (UID: 10)'s data?", FALSE)
           ->willReturn(TRUE);
-        $context->ioMock->expects(self::once())->method('writeln')->with('TFA has been disabled.');
-        $context->userDataMock->expects(self::once())->method('delete')->with('tfa', 10, NULL);
-        $context->loggerChannelMock->expects(self::once())->method('notice');
+        $context->ioMock->expects($context->once())->method('writeln')->with('TFA has been disabled.');
+        $context->userDataMock->expects($context->once())->method('delete')->with('tfa', 10, NULL);
+        $context->loggerChannelMock->expects($context->once())->method('notice');
         $context->mailManagerMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('mail')
           ->with('tfa', 'tfa_disabled_configuration', 'valid@example.org', 'EN', ['account' => $context->validUserMock]);
       },
@@ -198,13 +187,13 @@ final class TfaTokenManagementTest extends UnitTestCase {
         $context->expectException(\Exception::class);
         $context->expectExceptionMessage('Unable to load user by name: InvalidUser');
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('loadByProperties')
           ->with(['name' => 'InvalidUser'])
           ->willReturn([]);
-        $context->userDataMock->expects(self::never())->method('delete');
-        $context->mailManagerMock->expects(self::never())->method('mail');
-        $context->ioMock->expects(self::never())->method('writeln');
+        $context->userDataMock->expects($context->never())->method('delete');
+        $context->mailManagerMock->expects($context->never())->method('mail');
+        $context->ioMock->expects($context->never())->method('writeln');
       },
       ['name' => 'InvalidUser', 'uid' => NULL, 'mail' => NULL],
     ];
@@ -214,13 +203,13 @@ final class TfaTokenManagementTest extends UnitTestCase {
         $context->expectException(\Exception::class);
         $context->expectExceptionMessage('Unable to load user by uid: 32');
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('load')
           ->with(32)
           ->willReturn(NULL);
-        $context->userDataMock->expects(self::never())->method('delete');
-        $context->mailManagerMock->expects(self::never())->method('mail');
-        $context->ioMock->expects(self::never())->method('writeln');
+        $context->userDataMock->expects($context->never())->method('delete');
+        $context->mailManagerMock->expects($context->never())->method('mail');
+        $context->ioMock->expects($context->never())->method('writeln');
       },
       ['name' => NULL, 'uid' => 32, 'mail' => NULL],
     ];
@@ -230,13 +219,13 @@ final class TfaTokenManagementTest extends UnitTestCase {
         $context->expectException(\Exception::class);
         $context->expectExceptionMessage('Unable to load user by mail: invalid_email');
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('loadByProperties')
           ->with(['mail' => 'invalid_email'])
           ->willReturn([]);
-        $context->userDataMock->expects(self::never())->method('delete');
-        $context->mailManagerMock->expects(self::never())->method('mail');
-        $context->ioMock->expects(self::never())->method('writeln');
+        $context->userDataMock->expects($context->never())->method('delete');
+        $context->mailManagerMock->expects($context->never())->method('mail');
+        $context->ioMock->expects($context->never())->method('writeln');
       },
       ['name' => NULL, 'uid' => NULL, 'mail' => 'invalid_email'],
     ];
@@ -246,22 +235,23 @@ final class TfaTokenManagementTest extends UnitTestCase {
         $context->expectException(UserAbortException::class);
         $context->expectExceptionMessage('Command cancelled.');
         $context->userStorageMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('load')
           ->with('10')
           ->willReturn($context->validUserMock);
         $context->ioMock
-          ->expects(self::once())
+          ->expects($context->once())
           ->method('confirm')
           ->with("Are you sure you want to reset TFA for valid_user (UID: 10)'s data?", FALSE)
           ->willReturn(FALSE);
-        $context->ioMock->expects(self::never())->method('writeln');
-        $context->userDataMock->expects(self::never())->method('delete');
-        $context->loggerChannelMock->expects(self::never())->method('notice');
-        $context->mailManagerMock->expects(self::never())->method('mail');
+        $context->ioMock->expects($context->never())->method('writeln');
+        $context->userDataMock->expects($context->never())->method('delete');
+        $context->loggerChannelMock->expects($context->never())->method('notice');
+        $context->mailManagerMock->expects($context->never())->method('mail');
       },
       ['name' => NULL, 'uid' => '10', 'mail' => NULL],
     ];
+
   }
 
 }

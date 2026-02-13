@@ -142,13 +142,13 @@ class AutoTranslatorSettingsForm extends ConfigFormBase {
 
     if ($this->moduleHandler->moduleExists('taxonomy')) {
       $taxonomy_types = $this->entityTypeManager
-        ->getStorage('taxonomy_term')
+        ->getStorage('taxonomy_vocabulary')
         ->loadMultiple();
       if ($taxonomy_types) {
         foreach ($taxonomy_types as $type) {
           if ($type->id()) {
-            $taxonomy_options['taxonomy_term:' . $type->id()] = Html::escape($type->label()) . ' (' . $this->t('Taxonomy') . ')';
-            $taxonomy_options_default['taxonomy_term:' . $type->id()] = 'taxonomy_term:' . $type->id();
+            $taxonomy_options['taxonomy_vocabulary:' . $type->id()] = Html::escape($type->label()) . ' (' . $this->t('Taxonomy') . ')';
+            $taxonomy_options_default['taxonomy_vocabulary:' . $type->id()] = 'taxonomy_vocabulary:' . $type->id();
           }
         }
         $node_options_default = array_merge($taxonomy_options_default, $node_options_default);
@@ -223,7 +223,7 @@ class AutoTranslatorSettingsForm extends ConfigFormBase {
       'google' => $this->t('Google Translate API'),
       'libretranslate' => $this->t('Libre Translate API'),
       'deepl' => $this->t('DeepL API'),
-      'amazon' => $this->t('Amazon Translate API'),
+      'amazon' => $this->t('Amazon Translate')
     ];
     if ($this->moduleHandler->moduleExists('ai') && $this->moduleHandler->moduleExists('ai_translate')) {
       $provider_options['drupal_ai'] = $this->t('Drupal AI');

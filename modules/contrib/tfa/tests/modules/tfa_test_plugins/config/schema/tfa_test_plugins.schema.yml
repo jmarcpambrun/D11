@@ -1,0 +1,7 @@
+tfa.login.config.tfa_test_login_plugin:
+  type: string
+  label: 'Tfa test login plugin'
+
+tfa.send.config.tfa_test_plugins_send_false:
+  type: string
+  label: 'Tfa test send plugin'

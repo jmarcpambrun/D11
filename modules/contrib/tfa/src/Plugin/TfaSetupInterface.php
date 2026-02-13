@@ -10,6 +10,8 @@ use Drupal\Core\Form\FormStateInterface;
  * Setup plugins are used by TfaSetup for configuring a plugin.
  *
  * Implementations of a begin plugin should also be a validation plugin.
+ *
+ * @api
  */
 interface TfaSetupInterface {
 
@@ -24,7 +26,7 @@ interface TfaSetupInterface {
    * @return array
    *   Form API array.
    */
-  public function getSetupForm(array $form, FormStateInterface $form_state);
+  public function getSetupForm(array $form, FormStateInterface $form_state): array;
 
   /**
    * Validate the setup data.
@@ -37,7 +39,7 @@ interface TfaSetupInterface {
    * @return bool
    *   Whether or not form passes validation.
    */
-  public function validateSetupForm(array $form, FormStateInterface $form_state);
+  public function validateSetupForm(array $form, FormStateInterface $form_state): bool;
 
   /**
    * Submit the setup form.
@@ -50,23 +52,7 @@ interface TfaSetupInterface {
    * @return bool
    *   TRUE if no errors occur when saving the data.
    */
-  public function submitSetupForm(array $form, FormStateInterface $form_state);
-
-  /**
-   * Returns a list of links containing helpful information for plugin use.
-   *
-   * @return string[]
-   *   An array containing help links for e.g., OTP generation.
-   */
-  public function getHelpLinks();
-
-  /**
-   * Returns a list of messages for plugin step.
-   *
-   * @return string[]
-   *   An array containing messages to be used during plugin setup.
-   */
-  public function getSetupMessages();
+  public function submitSetupForm(array $form, FormStateInterface $form_state): bool;
 
   /**
    * Return process error messages.
@@ -74,7 +60,7 @@ interface TfaSetupInterface {
    * @return string[]
    *   An array containing the setup errors.
    */
-  public function getErrorMessages();
+  public function getErrorMessages(): array;
 
   /**
    * Plugin overview page.
@@ -85,6 +71,6 @@ interface TfaSetupInterface {
    * @return array
    *   The overview form.
    */
-  public function getOverview(array $params);
+  public function getOverview(array $params): array;
 
 }

@@ -6,11 +6,8 @@ use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\tfa\TfaLoginPluginManager;
-use Drupal\tfa\TfaSendPluginManager;
-use Drupal\tfa\TfaSetupPluginManager;
+use Drupal\tfa\TfaPluginManager;
 use Drupal\tfa\TfaUserDataTrait;
-use Drupal\tfa\TfaValidationPluginManager;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,43 +15,22 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * TFA account setup overview page.
  */
-class TfaOverviewForm extends FormBase {
+final class TfaOverviewForm extends FormBase {
   use TfaUserDataTrait;
 
   /**
-   * The setup plugin manager to fetch setup information.
+   * The TFA plugin manager.
    *
-   * @var \Drupal\tfa\TfaLoginPluginManager
+   * @var \Drupal\tfa\TfaPluginManager
    */
-  protected $tfaSetup;
-
-  /**
-   * Validation plugin manager.
-   *
-   * @var \Drupal\tfa\TfaValidationPluginManager
-   */
-  protected $tfaValidation;
-
-  /**
-   * Login plugin manager.
-   *
-   * @var \Drupal\tfa\TfaLoginPluginManager
-   */
-  protected $tfaLogin;
-
-  /**
-   * Send plugin manager.
-   *
-   * @var \Drupal\tfa\TfaSendPluginManager
-   */
-  protected $tfaSend;
+  protected TfaPluginManager $tfaPluginManager;
 
   /**
    * The date formatter service.
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected $dateFormatter;
+  protected DateFormatterInterface $dateFormatter;
 
   /**
    * TFA Overview form constructor.
@@ -63,49 +39,37 @@ class TfaOverviewForm extends FormBase {
    *   The user data service.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date formatter service.
-   * @param \Drupal\tfa\TfaSetupPluginManager $tfa_setup_manager
-   *   The setup plugin manager.
-   * @param \Drupal\tfa\TfaValidationPluginManager $tfa_validation_manager
-   *   The validation plugin manager.
-   * @param \Drupal\tfa\TfaLoginPluginManager $tfa_login_manager
-   *   The login plugin manager.
-   * @param \Drupal\tfa\TfaSendPluginManager $tfa_send_manager
-   *   The send plugin manager.
+   * @param \Drupal\tfa\TfaPluginManager $tfa_plugin_manager
+   *   The TFA plugin manager.
    */
-  public function __construct(UserDataInterface $user_data, DateFormatterInterface $date_formatter, TfaSetupPluginManager $tfa_setup_manager, TfaValidationPluginManager $tfa_validation_manager, TfaLoginPluginManager $tfa_login_manager, TfaSendPluginManager $tfa_send_manager) {
+  public function __construct(UserDataInterface $user_data, DateFormatterInterface $date_formatter, TfaPluginManager $tfa_plugin_manager) {
     $this->userData = $user_data;
     $this->dateFormatter = $date_formatter;
-    $this->tfaSetup = $tfa_setup_manager;
-    $this->tfaValidation = $tfa_validation_manager;
-    $this->tfaLogin = $tfa_login_manager;
-    $this->tfaSend = $tfa_send_manager;
+    $this->tfaPluginManager = $tfa_plugin_manager;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('user.data'),
       $container->get('date.formatter'),
-      $container->get('plugin.manager.tfa.setup'),
-      $container->get('plugin.manager.tfa.validation'),
-      $container->get('plugin.manager.tfa.login'),
-      $container->get('plugin.manager.tfa.send')
+      $container->get('plugin.manager.tfa')
     );
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
-    return 'tfa_base_overview';
+  public function getFormId(): string {
+    return 'tfa_overview';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, UserInterface $user = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?UserInterface $user = NULL): array {
     $output['info'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('Two-factor authentication (TFA) provides
@@ -115,7 +79,7 @@ class TfaOverviewForm extends FormBase {
     ];
     // $form_state['storage']['account'] = $user;.
     $config = $this->config('tfa.settings');
-    $user_tfa = $this->tfaGetTfaData($user->id(), $this->userData);
+    $user_tfa = $this->tfaGetTfaData($user->id());
     $enabled = isset($user_tfa['status']) && $user_tfa['status'];
 
     if (!empty($user_tfa)) {
@@ -149,7 +113,7 @@ class TfaOverviewForm extends FormBase {
       $enabled = isset($user_tfa['status'], $user_tfa['data']) && !empty($user_tfa['data']['plugins']) && $user_tfa['status'];
       $enabled_plugins = $user_tfa['data']['plugins'] ?? [];
 
-      $validation_plugins = $this->tfaValidation->getDefinitions();
+      $validation_plugins = $this->tfaPluginManager->getValidationDefinitions();
       if ($validation_plugins) {
         $output['validation'] = [
           '#type' => 'details',
@@ -165,7 +129,7 @@ class TfaOverviewForm extends FormBase {
       }
 
       if ($enabled) {
-        $login_plugins = $this->tfaLogin->getDefinitions();
+        $login_plugins = $this->tfaPluginManager->getLoginDefinitions();
         if ($login_plugins) {
           $output['login'] = [
             '#type' => 'details',
@@ -175,14 +139,12 @@ class TfaOverviewForm extends FormBase {
           ];
 
           foreach ($login_plugins as $plugin_id => $plugin) {
-            if (!empty($config->get('login_plugins')[$plugin_id])) {
-              $output['login'][$plugin_id] = $this->tfaPluginSetupFormOverview($plugin, $user, TRUE);
-              $output['login']['#access'] = TRUE;
-            }
+            $output['login'][$plugin_id] = $this->tfaPluginSetupFormOverview($plugin, $user, TRUE);
+            $output['login']['#access'] = TRUE;
           }
         }
 
-        $send_plugins = $this->tfaSend->getDefinitions();
+        $send_plugins = $this->tfaPluginManager->getSendDefinitions();
         if ($send_plugins) {
           $output['send'] = [
             '#type' => 'details',
@@ -234,7 +196,7 @@ class TfaOverviewForm extends FormBase {
    *
    * @param array $plugin
    *   Plugin definition.
-   * @param object $account
+   * @param \Drupal\user\UserInterface $account
    *   Current user account.
    * @param bool $enabled
    *   Tfa data for current user.
@@ -242,15 +204,16 @@ class TfaOverviewForm extends FormBase {
    * @return array
    *   Render array
    */
-  protected function tfaPluginSetupFormOverview(array $plugin, $account, $enabled) {
+  protected function tfaPluginSetupFormOverview(array $plugin, UserInterface $account, bool $enabled): array {
     $params = [
       'enabled' => $enabled,
       'account' => $account,
       'plugin_id' => $plugin['id'],
     ];
     try {
-      return $this->tfaSetup
-        ->createInstance($plugin['setupPluginId'], ['uid' => $account->id()])
+      // @todo check if plugin is a TfaSetupInterface.
+      return $this->tfaPluginManager
+        ->createInstance($plugin['id'], ['uid' => $account->id()])
         ->getOverview($params);
     }
     catch (\Exception $e) {
@@ -261,13 +224,7 @@ class TfaOverviewForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
   }
 
   /**
@@ -278,11 +235,11 @@ class TfaOverviewForm extends FormBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    */
-  public function resetSkipValidationAttempts(array $form, FormStateInterface $form_state) {
+  public function resetSkipValidationAttempts(array $form, FormStateInterface $form_state): void {
     $account = $form_state->getValue('account');
-    $tfa_data = $this->tfaGetTfaData($account->id(), $this->userData);
+    $tfa_data = $this->tfaGetTfaData($account->id());
     $tfa_data['validation_skipped'] = 0;
-    $this->tfaSaveTfaData($account->id(), $this->userData, $tfa_data);
+    $this->tfaSaveTfaData($account->id(), $tfa_data);
     $this->messenger()->addMessage($this->t('Validation attempts have been reset for user @name.', [
       '@name' => $account->getDisplayName(),
     ]));
@@ -301,7 +258,7 @@ class TfaOverviewForm extends FormBase {
    * @return bool
    *   Whether the user can perform a TFA reset.
    */
-  protected function canPerformReset(UserInterface $account) {
+  protected function canPerformReset(UserInterface $account): bool {
     $current_user = $this->currentUser();
     return $current_user->hasPermission('administer tfa for other users')
       // Disallow users from resetting their own.

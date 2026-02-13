@@ -3,19 +3,35 @@
 namespace Drupal\tfa\Controller;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\PrivateKey;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\tfa\TfaLoginTrait;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides access control on the verification form.
  *
  * @package Drupal\tfa\Controller
  */
-class TfaLoginController {
+final class TfaLoginController implements ContainerInjectionInterface {
   use TfaLoginTrait;
+
+  public function __construct(PrivateKey $private_key) {
+    $this->setPrivateKey($private_key);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): self {
+    return new self(
+      $container->get('private_key'),
+    );
+  }
 
   /**
    * Denies access unless user matches hash value.
@@ -28,7 +44,7 @@ class TfaLoginController {
    * @return \Drupal\Core\Access\AccessResult
    *   The access result.
    */
-  public function access(RouteMatchInterface $route, AccountInterface $account) {
+  public function access(RouteMatchInterface $route, AccountInterface $account): AccessResult {
     // Start with a positive access check which is cacheable for the current
     // route, which includes both route name and parameters.
     $access = AccessResult::allowed();
@@ -90,7 +106,7 @@ class TfaLoginController {
    * @return \Drupal\Core\Access\AccessResult
    *   The access result.
    */
-  public function accessSelfOrAdmin(RouteMatchInterface $route, AccountInterface $account) {
+  public function accessSelfOrAdmin(RouteMatchInterface $route, AccountInterface $account): AccessResult {
     $target_user = $route->getParameter('user');
     $permission = $route->getRouteObject()?->getOption('_tfa_permission');
 
@@ -121,7 +137,7 @@ class TfaLoginController {
     if (!$is_self) {
       $method = $route->getParameter('method');
       if (!empty($method)) {
-        $plugin = \Drupal::service('plugin.manager.tfa.validation')->createInstance($method, ['uid' => $target_user->id()]);
+        $plugin = \Drupal::service('plugin.manager.tfa')->createInstance($method, ['uid' => $target_user->id()]);
         if (method_exists($plugin, 'allowUserSetupAccess')) {
           $ret = $plugin->allowUserSetupAccess($route, $account);
           if ($ret === FALSE) {

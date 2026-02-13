@@ -3,8 +3,8 @@
 /.gitattributes
 /.prettierignore
 /.prettierrc.json
-/phpcs.xml.dist
 /phpstan-baseline.neon
 /phpstan.neon
+/recipes/
 /vendor/
 /web/

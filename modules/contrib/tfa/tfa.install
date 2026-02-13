@@ -3,19 +3,15 @@
 /**
  * @file
  * Installation related functions for TFA module.
- *
- * phpcs:ignore
- * cSpell:ignore riesen
  */
 
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\Role;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 /**
  * Implements hook_requirements().
  */
-function tfa_requirements($phase) {
+function tfa_requirements(string $phase): array {
   $requirements = [];
   if ($phase == 'runtime') {
     if (!extension_loaded('openssl')) {
@@ -39,118 +35,24 @@ function tfa_requirements($phase) {
     $requirements['tfa_libraries'] = [
       'title' => t('Two-factor authentication'),
     ];
-    if (class_exists('\Otp\Otp')) {
-      $version = method_exists('\Otp\OtpInterface', 'checkHotpResync') ? '2.1.0 or newer' : '2.0.0';
-
+    if (class_exists('\OTPHP\OTP')) {
       $requirements['tfa_libraries']['severity'] = REQUIREMENT_OK;
       $requirements['tfa_libraries']['value'] = t('Third-party libraries');
-      $requirements['tfa_libraries']['description'] = t('One Time Passwords (christian-riesen/otp) @version is installed', ['@version' => $version]);
+      $requirements['tfa_libraries']['description'] = t('One Time Passwords (spomky-labs/otphp) is installed');
     }
     else {
       $requirements['tfa_libraries']['severity'] = REQUIREMENT_ERROR;
       $requirements['tfa_libraries']['value'] = t('Third-party libraries');
-      $requirements['tfa_libraries']['description'] = t("Please install the 'christian-riesen/otp' library via composer. See the module README for instructions.");
+      $requirements['tfa_libraries']['description'] = t("Please install the 'spomky-labs/otphp' library via composer. See the module README for instructions.");
     }
-
-    $route_validation_report = _tfa_route_validation();
-    if (!empty($route_validation_report)) {
-      $requirements += $route_validation_report;
-    }
-
   }
   return $requirements;
 }
 
 /**
- * Validates routes are correct for TFA operations.
- */
-function _tfa_route_validation(): array {
-
-  $route_status = [];
-  try {
-    $route_provider = \Drupal::service('router.route_provider');
-    $route_user_login = $route_provider->getRouteByName('user.login');
-    $route_user_login_http = $route_provider->getRouteByName('user.login.http');
-    $route_user_reset_login = $route_provider->getRouteByName('user.reset.login');
-    $route_user_reset = $route_provider->getRouteByName('user.reset');
-  }
-  catch (RouteNotFoundException $e) {
-    return [
-      'tfa.route.missing' => [
-        'title' => t('TFA route missing'),
-        'value' => $e->getMessage(),
-        'description' => t('An expected route utilized by TFA was not found'),
-        'severity' => REQUIREMENT_ERROR,
-      ],
-    ];
-  }
-
-  if ($route_user_login->getDefault('_form') !== '\Drupal\tfa\Form\TfaLoginForm') {
-    $route_status['tfa.route.user.login'] = [
-      'title' => t("Route 'user.login' not TFA protected"),
-      'value' => t(
-        "Route is served by '@controller'",
-        [
-          '@controller' => $route_user_login->getDefault('_form'),
-        ]
-      ),
-      'description' => t('For the TFA module to properly function it must process login routes.'),
-      'severity' => REQUIREMENT_ERROR,
-    ];
-  }
-
-  if (
-    $route_user_reset_login->getDefault('_controller') !== '\Drupal\tfa\Controller\TfaUserController::resetPassLogin'
-    && $route_user_reset_login->getDefault('_controller') !== '\Drupal\tfa\Controller\TfaUserControllerDeprecated::resetPassLogin'
-  ) {
-    $route_status['tfa.route.user.reset.login'] = [
-      'title' => t("Route 'user.reset.login' not TFA protected"),
-      'value' => t(
-        "Route is served by '@controller'",
-        [
-          '@controller' => $route_user_reset_login->getDefault('_controller'),
-        ]
-      ),
-      'description' => t('For the TFA module to properly function it must process login routes.'),
-      'severity' => REQUIREMENT_ERROR,
-    ];
-  }
-
-  if ($route_user_login_http->getDefault('_controller') !== '\Drupal\tfa\Controller\TfaUserAuthenticationController::login') {
-    $route_status['tfa.route.user.login.http'] = [
-      'title' => t("Route 'user.login.http' not TFA protected"),
-      'value' => t(
-        "Route is served by '@controller'",
-        [
-          '@controller' => $route_user_login_http->getDefault('_controller'),
-        ]
-      ),
-      'description' => t('For the TFA module to properly function it must process login routes.'),
-      'severity' => REQUIREMENT_ERROR,
-    ];
-  }
-
-  if ($route_user_reset->getDefault('_controller') !== '\Drupal\user\Controller\UserController::resetPass') {
-    $route_status['tfa.route.user.reset'] = [
-      'title' => t("Route 'user.reset' not TFA protected"),
-      'value' => t(
-        "Route is served by '@controller'",
-        [
-          '@controller' => $route_user_login_http->getDefault('_controller'),
-        ]
-      ),
-      'description' => t('For the TFA module to properly function it must process login routes.'),
-      'severity' => REQUIREMENT_ERROR,
-    ];
-  }
-
-  return $route_status;
-}
-
-/**
  * Clear plugin cache as validation plugins moved to ga_login module.
  */
-function tfa_update_8001() {
+function tfa_update_8001(): void {
   \Drupal::cache('discovery')
     ->invalidateMultiple(['tfa_setup', 'tfa_validation']);
 }
@@ -158,7 +60,7 @@ function tfa_update_8001() {
 /**
  * Add new email configuration values.
  */
-function tfa_update_8002() {
+function tfa_update_8002(): void {
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
   $config
     ->set('mail.tfa_enabled_configuration.subject', "Your [site:name] account now has two-factor authentication")
@@ -171,7 +73,7 @@ function tfa_update_8002() {
 /**
  * Move old 'require tfa' permissions into tfa.settings.
  */
-function tfa_update_8003() {
+function tfa_update_8003(): void {
   $required_roles = [];
   $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
   foreach ($role_storage->loadMultiple() as $role) {
@@ -194,7 +96,7 @@ function tfa_update_8003() {
 /**
  * Set the enabled validation plugin to an allowed validation plugin.
  */
-function tfa_update_8004() {
+function tfa_update_8004(): void {
   // Update configuration with new property values.
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
   $validation_plugin = $config->get('validation_plugin');
@@ -232,7 +134,7 @@ function tfa_update_8004() {
 /**
  * Convert tfa_recovery_code from a fallback plugin into validation plugin.
  */
-function tfa_update_8005() {
+function tfa_update_8005(): void {
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
 
   if (!empty($config->get('fallback_plugins'))) {
@@ -268,7 +170,7 @@ function tfa_update_8005() {
 /**
  * Update plugin names from ga_login prefix to tfa.
  */
-function tfa_update_8006() {
+function tfa_update_8006(): void {
   /** @var \Drupal\Core\Config\Config $config */
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
 
@@ -311,7 +213,7 @@ function tfa_update_8006() {
 /**
  * Update plugin names from ga_login prefix to tfa in users_data.
  */
-function tfa_update_8007(&$sandbox) {
+function tfa_update_8007(array &$sandbox): void {
   /** @var \Drupal\user\UserData $user_data */
   $user_data = \Drupal::service('user.data');
   $tfa_settings = $user_data->get('tfa', NULL, 'tfa_user_settings');
@@ -359,7 +261,7 @@ function tfa_update_8007(&$sandbox) {
 /**
  * Uninstall the ga_login module.
  */
-function tfa_update_8008(&$sandbox) {
+function tfa_update_8008(array &$sandbox): void {
   \Drupal::cache('discovery')
     ->invalidateMultiple(['tfa_setup', 'tfa_validation']);
 
@@ -371,7 +273,7 @@ function tfa_update_8008(&$sandbox) {
 /**
  * Grant users with new "administer tfa for other users" permission.
  */
-function tfa_update_8009() {
+function tfa_update_8009(): void {
   if ($roles = Role::loadMultiple()) {
     foreach ($roles as $role) {
       if ($role->hasPermission('administer users')) {
@@ -385,7 +287,7 @@ function tfa_update_8009() {
 /**
  * Changes type of 'enabled' config schema from int to bool.
  */
-function tfa_update_8010() {
+function tfa_update_8010(): void {
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
   $config->set('enabled', boolval($config->get('enabled')))
     ->save();
@@ -394,7 +296,7 @@ function tfa_update_8010() {
 /**
  * Rename the cookie_name setting, and set new default value.
  */
-function tfa_update_8012() {
+function tfa_update_8012(): void {
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
   $cookie_name = $config->get('cookie_name');
   $value = (empty($cookie_name) || ($cookie_name === 'TFA')) ? 'tfa-trusted-browser' : $cookie_name;
@@ -407,7 +309,7 @@ function tfa_update_8012() {
 /**
  * Move trusted browser settings to login_plugin_settings.tfa_trusted_browser.
  */
-function tfa_update_8013() {
+function tfa_update_8013(): void {
   $config = \Drupal::configFactory()->getEditable('tfa.settings');
   $value = [
     'cookie_expiration' => $config->get('trust_cookie_expiration') ? $config->get('trust_cookie_expiration') / 86400 : 30,

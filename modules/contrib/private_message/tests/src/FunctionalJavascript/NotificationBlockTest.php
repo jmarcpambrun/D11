@@ -6,6 +6,7 @@ namespace Drupal\Tests\private_message\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\private_message\Entity\PrivateMessageBan;
+use Drupal\Tests\private_message\Traits\NotificationBlockTrait;
 use Drupal\Tests\private_message\Traits\PrivateMessageTestTrait;
 
 /**
@@ -16,6 +17,7 @@ use Drupal\Tests\private_message\Traits\PrivateMessageTestTrait;
 class NotificationBlockTest extends WebDriverTestBase {
 
   use PrivateMessageTestTrait;
+  use NotificationBlockTrait;
 
   /**
    * {@inheritdoc}
@@ -53,9 +55,17 @@ class NotificationBlockTest extends WebDriverTestBase {
     ];
     $this->drupalPlaceBlock('private_message_notification_block', $settings);
 
+    // I should not see a notification for my own message.
+    $this->drupalLogin($this->users['b']);
+    $this->assertUnreadNotifications('0');
+    // When going to a different page, I should still not see a notification for
+    // my own message.
+    $this->drupalGet('<front>');
+    $this->assertUnreadNotifications('0');
+
+    // User should see a notification.
     $this->drupalLogin($this->users['a']);
-    $this->assertSession()
-      ->elementTextContains('css', 'a.private-message-page-link', $initialCount);
+    $this->assertUnreadNotifications($initialCount);
 
     // Add more messages.
     $this->createThreadWithMessages([
@@ -63,8 +73,8 @@ class NotificationBlockTest extends WebDriverTestBase {
       $this->users['c'],
     ], $this->users['c'], 2);
     $this->assertSession()->assertWaitOnAjaxRequest();
-    $this->assertSession()
-      ->elementTextContains('css', 'a.private-message-page-link', $ajaxCount);
+    // Notification number should be updated.
+    $this->assertUnreadNotifications($ajaxCount);
     $this->assertStringContainsString(
       '(' . $ajaxCount . ')',
       $this->getSession()->getDriver()->getWebDriverSession()->title(),
@@ -72,12 +82,16 @@ class NotificationBlockTest extends WebDriverTestBase {
 
     // Reset count.
     $this->drupalGet('private-messages');
-    $this->assertSession()
-      ->elementTextContains('css', 'a.private-message-page-link', '0');
+    $this->assertUnreadNotifications('0');
     $this->assertEquals(
       'Private Messages | Drupal',
       $this->getSession()->getDriver()->getWebDriverSession()->title(),
     );
+
+    // When going to a different page, I should still not see a notification for
+    // my own message.
+    $this->drupalGet('<front>');
+    $this->assertUnreadNotifications('0');
   }
 
   /**
@@ -92,9 +106,9 @@ class NotificationBlockTest extends WebDriverTestBase {
     ];
     $this->drupalPlaceBlock('private_message_notification_block', $settings);
 
+    // User should see a notification.
     $this->drupalLogin($this->users['a']);
-    $this->assertSession()
-      ->elementTextContains('css', 'a.private-message-page-link', $initialCount);
+    $this->assertUnreadNotifications($initialCount);
 
     PrivateMessageBan::create([
       'owner' => $this->users['a'],
@@ -104,8 +118,8 @@ class NotificationBlockTest extends WebDriverTestBase {
     // User should not see a notification.
     $this->drupalGet('<front>');
     $this->assertSession()->assertWaitOnAjaxRequest();
-    $this->assertSession()
-      ->elementTextContains('css', 'a.private-message-page-link', '0');
+    $this->assertUnreadNotifications('0');
+
   }
 
   /**

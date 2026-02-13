@@ -8,7 +8,7 @@
 /**
  * Implements hook_views_data_alter().
  */
-function tfa_views_data_alter(array &$data) {
+function tfa_views_data_alter(array &$data): void {
   $data['users']['tfa_enabled_field'] = [
     'title' => t('TFA enabled'),
     'real field' => 'uid',

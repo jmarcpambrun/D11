@@ -9,6 +9,8 @@ namespace Drupal\tfa\Plugin;
  * during the start of the TFA process.
  *
  * Implementations of a send plugin should also be a validation plugin.
+ *
+ * @api
  */
 interface TfaSendInterface {
 

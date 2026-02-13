@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Plugin\views\filter;
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\views\Attribute\ViewsFilter;
 use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -11,44 +14,24 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Filters threads by the fact they are not cleared.
  *
  * @ingroup views_filter_handlers
- *
- * @ViewsFilter("private_message_thread_has_history")
  */
+#[ViewsFilter('private_message_thread_has_history')]
 class PrivateMessageThreadCleanHistory extends FilterPluginBase {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
-
-  /**
-   * Views Handler Plugin Manager.
-   *
-   * @var \Drupal\views\Plugin\ViewsHandlerManager
-   */
-  protected $joinHandler;
-
-  /**
-   * Creates an instance of PrivateMessageThreadCleanHistory.
-   */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    AccountInterface $current_user,
-    ViewsHandlerManager $join_handler,
+    protected readonly AccountInterface $currentUser,
+    protected readonly ViewsHandlerManager $joinHandler,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->currentUser = $current_user;
-    $this->joinHandler = $join_handler;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $configuration,
       $plugin_id,
@@ -63,7 +46,7 @@ class PrivateMessageThreadCleanHistory extends FilterPluginBase {
    *
    * No filtering takes place if the user doesn't select any options.
    */
-  public function query() {
+  public function query(): void {
     $current_user_id = $this->currentUser->id();
 
     $definition = [
@@ -87,12 +70,14 @@ class PrivateMessageThreadCleanHistory extends FilterPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function adminSummary() {}
+  public function adminSummary(): \Stringable|string {
+    return '';
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function canExpose() {
+  public function canExpose(): bool {
     return FALSE;
   }
 

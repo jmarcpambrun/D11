@@ -5,14 +5,16 @@
  * Holds install and update hooks for the Private Message module.
  */
 
+declare(strict_types=1);
+
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\private_message\Form\ConfigForm as Config;
+use Drupal\private_message\Model\BlockType;
 
 /**
  * Implements hook_install().
  */
-function private_message_install() {
+function private_message_install(): void {
   $messenger = \Drupal::messenger();
   $messenger->addStatus(t('Make sure you granted "use private messaging system" and "access user profiles" permissions for roles you want to provide access to use private messages.'));
   $messenger->addStatus(t('Enable "Private Message Actions" and "Private Message Inbox" block to have simple private message UI from the box.'));
@@ -21,7 +23,7 @@ function private_message_install() {
 /**
  * Implements hook_uninstall().
  */
-function private_message_uninstall() {
+function private_message_uninstall(): void {
   \Drupal::configFactory()->getEditable('core.entity_view_display.user.user.private_message_author')->delete();
   \Drupal::configFactory()->getEditable('core.entity_view_mode.user.private_message_author')->delete();
   \Drupal::configFactory()->getEditable('message.template.private_message_notification')->delete();
@@ -32,40 +34,9 @@ function private_message_uninstall() {
 }
 
 /**
- * Implements hook_update_n().
- */
-function private_message_update_8001() {
-  $config_factory = \Drupal::configFactory();
-
-  $config_factory->getEditable('private_message.settings')
-    ->set('enable_email_notifications', TRUE)
-    ->set('send_by_default', TRUE)
-    ->save(TRUE);
-
-  $message_notification_mail_map = [
-    'subject' => 'Private message at [site:name]',
-    'body' => "[user:display-name],\n\nYou have received a private message at [site:name] from [private_message:author_name]\n\nThe message is as follows:\n\n[private_message:message]\n\nYou can view the entire thread and reply to this message at:\n\n[private_message_thread:url]\n\n\nThank you,\n\n--  [site:name]",
-  ];
-
-  $config_factory->getEditable('private_message.mail')
-    ->set('message_notification', $message_notification_mail_map)
-    ->save(TRUE);
-}
-
-/**
- * Add the create private message label.
- */
-function private_message_update_8002() {
-  $config_factory = \Drupal::configFactory();
-  $config_factory->getEditable('private_message.settings')
-    ->set('create_message_label', 'Create Private Message')
-    ->save(TRUE);
-}
-
-/**
  * Implements hook_schema().
  */
-function private_message_schema() {
+function private_message_schema(): array {
   $schema['pm_thread_history'] = [
     'description' => 'A record of which {users} have read which {node}s.',
     'fields' => [
@@ -105,9 +76,40 @@ function private_message_schema() {
 }
 
 /**
+ * Implements hook_update_n().
+ */
+function private_message_update_8001(): void {
+  $config_factory = \Drupal::configFactory();
+
+  $config_factory->getEditable('private_message.settings')
+    ->set('enable_email_notifications', TRUE)
+    ->set('send_by_default', TRUE)
+    ->save(TRUE);
+
+  $message_notification_mail_map = [
+    'subject' => 'Private message at [site:name]',
+    'body' => "[user:display-name],\n\nYou have received a private message at [site:name] from [private_message:author_name]\n\nThe message is as follows:\n\n[private_message:message]\n\nYou can view the entire thread and reply to this message at:\n\n[private_message_thread:url]\n\n\nThank you,\n\n--  [site:name]",
+  ];
+
+  $config_factory->getEditable('private_message.mail')
+    ->set('message_notification', $message_notification_mail_map)
+    ->save(TRUE);
+}
+
+/**
  * Add the create private message label.
  */
-function private_message_update_8003() {
+function private_message_update_8002(): void {
+  $config_factory = \Drupal::configFactory();
+  $config_factory->getEditable('private_message.settings')
+    ->set('create_message_label', 'Create Private Message')
+    ->save(TRUE);
+}
+
+/**
+ * Add the create private message label.
+ */
+function private_message_update_8003(): void {
   $config_factory = \Drupal::configFactory();
   $config_factory->getEditable('private_message.settings')
     ->set('create_message_label', 'Create Private Message')
@@ -117,7 +119,7 @@ function private_message_update_8003() {
 /**
  * Install the module schema.
  */
-function private_message_update_8004() {
+function private_message_update_8004(): void {
   $database = \Drupal::database();
 
   // Create database table.
@@ -162,7 +164,7 @@ function private_message_update_8004() {
 /**
  * Migrate the records into a new table.
  */
-function private_message_update_8005(&$sandbox) {
+function private_message_update_8005(?array &$sandbox = NULL): void {
   // Store last processed thread ID, so the sites with a huge amount of threads
   // will have at least some chances to complete this update in a few runs.
   $last_processed = \Drupal::state()->get('scalable_bridge_last', 0);
@@ -259,7 +261,7 @@ function private_message_update_8005(&$sandbox) {
 /**
  * Drop the old entity types and field definitions.
  */
-function private_message_update_8006(&$sandbox) {
+function private_message_update_8006(?array &$sandbox = NULL): void {
   $entity_update_manager = \Drupal::entityDefinitionUpdateManager();
   foreach (['pm_thread_access_time', 'pm_thread_delete_time'] as $entity_type_id) {
     if ($entity_type = $entity_update_manager->getEntityType($entity_type_id)) {
@@ -276,7 +278,7 @@ function private_message_update_8006(&$sandbox) {
 /**
  * Enable notifications submodule.
  */
-function private_message_update_8007() {
+function private_message_update_8007(): void {
   // Delete the configs that will be migrated to private_message_notify.
   // Only delete configurations if private_message_notify is not installed
   // already.
@@ -361,7 +363,7 @@ function private_message_update_8008() {
 /**
  * Skip update because of unnecessary.
  */
-function private_message_update_8009() {
+function private_message_update_8009(): void {
   // Leave this hook update empty because it already passed who applied patch
   // from issue https://www.drupal.org/project/private_message/issues/3265901
 }
@@ -369,7 +371,7 @@ function private_message_update_8009() {
 /**
  * Skip update because of unnecessary.
  */
-function private_message_update_8010() {
+function private_message_update_8010(): void {
   // Leave this hook update empty because it already passed who applied patch
   // from issue https://www.drupal.org/project/private_message/issues/3265901
 }
@@ -377,24 +379,21 @@ function private_message_update_8010() {
 /**
  * Install the private_message_ban entity type.
  */
-function private_message_update_8011() {
-
-  if (!\Drupal::database()->schema()->tableExists('private_message_ban')) {
-    \Drupal::entityTypeManager()->clearCachedDefinitions();
-    \Drupal::entityDefinitionUpdateManager()->installEntityType(\Drupal::entityTypeManager()->getDefinition('private_message_ban'));
-  }
-  else {
+function private_message_update_8011(): string {
+  if (\Drupal::database()->schema()->tableExists('private_message_ban')) {
     return 'Private Message Ban entity already exists';
   }
-
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+  \Drupal::entityDefinitionUpdateManager()->installEntityType(\Drupal::entityTypeManager()->getDefinition('private_message_ban'));
+  return 'Installed Private Message Ban entity';
 }
 
 /**
  * Sets default values for the block functionality.
  */
-function private_message_update_8012() {
+function private_message_update_8012(): void {
   \Drupal::configFactory()->getEditable('private_message.settings')
-    ->set('ban_mode', Config::PASSIVE)
+    ->set('ban_mode', BlockType::Passive->value)
     ->set('ban_message', 'User is unable to receive your message')
     ->set('ban_label', 'Block')
     ->set('unban_label', 'Unblock')
@@ -404,7 +403,7 @@ function private_message_update_8012() {
 /**
  * Install the `subject` field to 'private_message_thread' entity.
  */
-function private_message_update_8013() {
+function private_message_update_8013(): void {
   $storage_definition = BaseFieldDefinition::create('string')
     ->setLabel(t('Subject'))
     ->setSetting('max_length', 64)
@@ -422,7 +421,7 @@ function private_message_update_8013() {
 /**
  * Show input formats functionality.
  */
-function private_message_update_8014() {
+function private_message_update_8014(): void {
   $config = \Drupal::configFactory()
     ->getEditable('private_message.settings');
   $rows = $config->getRawData();

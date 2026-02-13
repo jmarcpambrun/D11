@@ -2,14 +2,16 @@
 
 namespace Drupal\Tests\tfa\Functional;
 
-use Drupal\Core\Site\Settings;
+use Drupal\tfa\Plugin\Tfa\TfaRecoveryCode;
+use Drupal\tfa\TfaPluginManager;
+use Drupal\user\UserInterface;
 
 /**
  * Class TfaRecoveryCodeSetupPluginTest.
  *
  * @group tfa
  *
- * @ingroup Tfa
+ * @ingroup tfa
  */
 class TfaRecoveryCodePluginTest extends TfaTestBase {
 
@@ -18,42 +20,35 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
    *
    * @var string
    */
-  protected $validationPluginId = 'tfa_recovery_code';
+  protected string $validationPluginId = 'tfa_recovery_code';
 
   /**
    * Non-admin user account. Standard tfa user.
    *
    * @var \Drupal\user\UserInterface
    */
-  public $userAccount;
+  public UserInterface $userAccount;
 
   /**
-   * Setup plugin manager.
+   * Tfa plugin manager.
    *
-   * @var \Drupal\tfa\TfaSetupPluginManager
+   * @var \Drupal\tfa\TfaPluginManager
    */
-  public $tfaSetupManager;
-
-  /**
-   * Validation plugin manager.
-   *
-   * @var \Drupal\tfa\TfaValidationPluginManager
-   */
-  public $tfaValidationManager;
-
-  /**
-   * Instance of the setup plugin for the $validationPluginId.
-   *
-   * @var \Drupal\tfa\Plugin\TfaSetup\TfaRecoveryCodeSetup
-   */
-  public $setupPlugin;
+  public TfaPluginManager $tfaValidationManager;
 
   /**
    * Instance of the validation plugin for the $validationPluginId.
    *
-   * @var \Drupal\tfa\Plugin\TfaValidation\TfaRecoveryCode
+   * @var \Drupal\tfa\Plugin\Tfa\TfaRecoveryCode
    */
-  public $validationPlugin;
+  public TfaRecoveryCode $validationPlugin;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = [
+    'tfa_test_user',
+  ];
 
   /**
    * {@inheritdoc}
@@ -76,27 +71,26 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
 
     $permissions = ['setup own tfa', 'disable own tfa'];
     $user_account = $this->createUser($permissions);
-    $this->assertNotFalse($user_account);
+    assert($user_account !== FALSE);
     $this->userAccount = $user_account;
 
-    $this->tfaSetupManager = \Drupal::service('plugin.manager.tfa.setup');
-    $this->setupPlugin = $this->tfaSetupManager->createInstance($this->validationPluginId . '_setup', ['uid' => $this->userAccount->id()]);
-
-    $this->tfaValidationManager = \Drupal::service('plugin.manager.tfa.validation');
-    $this->validationPlugin = $this->tfaValidationManager->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
+    $this->tfaValidationManager = \Drupal::service('plugin.manager.tfa');
+    $validation_plugin = $this->tfaValidationManager->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
+    assert($validation_plugin instanceof TfaRecoveryCode);
+    $this->validationPlugin = $validation_plugin;
   }
 
   /**
    * Test that we can enable the plugin.
    */
-  public function testEnableValidationPlugin() {
+  public function testEnableValidationPlugin(): void {
     $this->canEnableValidationPlugin($this->validationPluginId);
   }
 
   /**
    * Check that recovery code plugin appear on the user overview page.
    */
-  public function testRecoveryCodeOverviewExists() {
+  public function testRecoveryCodeOverviewExists(): void {
     $this->drupalLogin($this->userAccount);
     $this->drupalGet('user/' . $this->userAccount->id() . '/security/tfa');
     $assert = $this->assertSession();
@@ -107,7 +101,7 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
   /**
    * Check that the user can setup recovery codes.
    */
-  public function testRecoveryCodeSetup() {
+  public function testRecoveryCodeSetup(): void {
     $this->drupalLogin($this->userAccount);
     $this->drupalGet('user/' . $this->userAccount->id() . '/security/tfa/' . $this->validationPluginId . '/1');
     $assert = $this->assertSession();
@@ -140,7 +134,7 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
   /**
    * Check that the user can login with recovery codes.
    */
-  public function testRecoveryCodeValidation() {
+  public function testRecoveryCodeValidation(): void {
     // Login the user, generate and save some codes, then log back out.
     $this->drupalLogin($this->userAccount);
     $assert = $this->assertSession();
@@ -172,14 +166,7 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
     $assert->pageTextContains($this->userAccount->getDisplayName());
     $this->assertTrue($this->userAccount->isAuthenticated(), 'User is logged in.');
 
-    // Check for replay attack.
-    $current_settings = file_get_contents("$this->siteDirectory/settings.php");
-    $current_settings .= "\n \$settings['hash_salt'] = '12345';\n";
-    $current_settings .= "\n \$settings['tfa.previous_hash_salts'] = ['" . Settings::getHashSalt() . "'];\n";
-    chmod("$this->siteDirectory/settings.php", 0644);
-    file_put_contents("$this->siteDirectory/settings.php", $current_settings);
-    chmod("$this->siteDirectory/settings.php", 0444);
-
+    // Try replay attack with a valid code that has already been used.
     $this->drupalLogout();
     $edit = [
       'name' => $this->userAccount->getAccountName(),
@@ -193,7 +180,6 @@ class TfaRecoveryCodePluginTest extends TfaTestBase {
     $edit = ['code' => $codes[0]];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
-    $assert->pageTextNotContains('Invalid application code.');
     $assert->pageTextContains('Invalid recovery code.');
   }
 

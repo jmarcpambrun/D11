@@ -5,88 +5,35 @@
  * Contains hooks for the private message module.
  */
 
+declare(strict_types=1);
+
+use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Hook\Attribute\LegacyHook;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 use Drupal\private_message\Entity\PrivateMessage;
+use Drupal\private_message\Hook\ViewsHooks;
 use Drupal\user\Entity\User;
+use Drupal\user\Plugin\EntityReferenceSelection\UserSelection;
+use Drupal\user\RoleInterface;
 
 /**
  * Implements hook_views_data().
  */
-function private_message_views_data() {
-  $data['private_message_threads']['has_history'] = [
-    'title' => t('Clean history'),
-    'group' => t('Private Message Thread'),
-    'filter' => [
-      'title' => t('Thread has history'),
-      'help' => t('Filter threads by existing history.'),
-      'field' => 'title',
-      'id' => 'private_message_thread_has_history',
-    ],
-  ];
-  $data['private_message_threads']['is_unread'] = [
-    'title' => t('Thread is unread'),
-    'group' => t('Private Message Thread'),
-    'filter' => [
-      'title' => t('Thread is unread'),
-      'help' => t('Filter threads by the fact it is unread.'),
-      'field' => 'title',
-      'id' => 'private_message_thread_is_unread',
-    ],
-  ];
-
-  $data['private_message_thread__members']['members_filter'] = [
-    'title' => t('Member(s) filter'),
-    'group' => t('Private Message Thread'),
-    'filter' => [
-      'title' => t('Thread members'),
-      'help' => t("Filter threads by it's members."),
-      'id' => 'user_name',
-      'field' => 'members_target_id',
-    ],
-  ];
-
-  $data['private_message_threads']['has_new_message_marker'] = [
-    'title' => t('Has new message marker'),
-    'group' => t('Private Message Thread'),
-    'field' => [
-      'title' => t('Has new message marker'),
-      'help' => t('Outputs new message marker.'),
-      'id' => 'private_message_thread_has_new_message_marker',
-    ],
-  ];
-
-  $data['private_message_threads']['new_messages_count'] = [
-    'title' => t('New messages count'),
-    'group' => t('Private Message Thread'),
-    'field' => [
-      'title' => t('New messages count'),
-      'help' => t('Outputs new message count.'),
-      'id' => 'private_message_thread_new_messages_count',
-    ],
-  ];
-
-  $data['private_message_threads']['all_messages_number'] = [
-    'title' => t('All messages number'),
-    'group' => t('Private Message Thread'),
-    'field' => [
-      'title' => t('All messages number'),
-      'help' => t('Outputs simple messages count.'),
-      'id' => 'private_message_thread_all_messages_number',
-    ],
-  ];
-
-  return $data;
+#[LegacyHook]
+function private_message_views_data(): array {
+  return \Drupal::service(ViewsHooks::class)->viewsData();
 }
 
 /**
  * Implements hook_entity_extra_field_info().
  */
-function private_message_entity_extra_field_info() {
+function private_message_entity_extra_field_info(): array {
   $fields = [];
 
   $private_message_thread_bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('private_message_thread');
@@ -206,7 +153,7 @@ function private_message_entity_extra_field_info() {
  *
  * @see hook_entity_view()
  */
-function private_message_private_message_thread_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+function private_message_private_message_thread_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
   if ($display->getComponent('last_message')) {
     $messages = $entity->getMessages();
     if ($messages) {
@@ -276,8 +223,7 @@ function private_message_private_message_thread_view(array &$build, EntityInterf
  *
  * @see hook_entity_view()
  */
-function private_message_user_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
-
+function private_message_user_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
   if ($display->getComponent('linked_username')) {
     if (\Drupal::currentUser()->hasPermission('access user profiles')) {
       $url = Url::fromRoute('entity.user.canonical', ['user' => $entity->id()]);
@@ -347,7 +293,7 @@ function private_message_user_view(array &$build, EntityInterface $entity, Entit
  *
  * @see hook_entity_view()
  */
-function private_message_node_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+function private_message_node_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
   \Drupal::service('private_message.service')->createRenderablePrivateMessageThreadLink($build, $entity, $display, $view_mode);
 }
 
@@ -358,7 +304,7 @@ function private_message_node_view(array &$build, EntityInterface $entity, Entit
  *
  * @see hook_entity_view()
  */
-function private_message_comment_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+function private_message_comment_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
   \Drupal::service('private_message.service')->createRenderablePrivateMessageThreadLink($build, $entity, $display, $view_mode);
 }
 
@@ -369,14 +315,14 @@ function private_message_comment_view(array &$build, EntityInterface $entity, En
  *
  * @see hook_entity_view()
  */
-function private_message_profile_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+function private_message_profile_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
   \Drupal::service('private_message.service')->createRenderablePrivateMessageThreadLink($build, $entity, $display, $view_mode);
 }
 
 /**
  * Implements hook_form_alter().
  */
-function private_message_form_alter(&$form, FormStateInterface $formState, $form_id) {
+function private_message_form_alter(array &$form, FormStateInterface $formState, string $form_id): void {
   // Act on any implementation of the private message entity form. This form
   // can potentially exist multiple times on a page, so the form ID will be
   // dynamic in such a case.
@@ -403,8 +349,7 @@ function private_message_form_alter(&$form, FormStateInterface $formState, $form
  *
  * @see hook_form_alter()
  */
-function private_message_form_user_form_alter(array &$form, FormStateInterface $formState) {
-
+function private_message_form_user_form_alter(array &$form, FormStateInterface $formState): void {
   $config = \Drupal::config('private_message.settings');
 
   // Get the user whose account is being modified.
@@ -503,7 +448,7 @@ function private_message_form_user_form_alter(array &$form, FormStateInterface $
  *
  * @see private_message_form_user_form_alter()
  */
-function private_message_user_form_submit(array &$form, FormStateInterface $formState) {
+function private_message_user_form_submit(array &$form, FormStateInterface $formState): void {
   // Get the user whose account object is being modified.
   $user = $formState->getFormObject()->getEntity();
   $user_data = \Drupal::service('user.data');
@@ -525,7 +470,7 @@ function private_message_user_form_submit(array &$form, FormStateInterface $form
 /**
  * Implements hook_theme().
  */
-function private_message_theme() {
+function private_message_theme(): array {
   return [
     'private_message_thread' => [
       'render element' => 'elements',
@@ -557,7 +502,7 @@ function private_message_theme() {
  *   - private_message_thread: The private message thread object.
  *   - view_mode: View mode; e.g., 'full', 'teaser', etc.
  */
-function template_preprocess_private_message_thread(array &$variables) {
+function template_preprocess_private_message_thread(array &$variables): void {
   $variables['view_mode'] = $variables['elements']['#view_mode'];
   // Provide a distinct $teaser boolean.
   $variables['private_message_thread'] = $variables['elements']['#private_message_thread'];
@@ -587,7 +532,7 @@ function template_preprocess_private_message_thread(array &$variables) {
  *   - private_message: The private message object.
  *   - view_mode: View mode; e.g., 'full', 'teaser', etc.
  */
-function template_preprocess_private_message(array &$variables) {
+function template_preprocess_private_message(array &$variables): void {
   $variables['view_mode'] = $variables['elements']['#view_mode'];
   // Provide a distinct $teaser boolean.
   $variables['private_message'] = $variables['elements']['#private_message'];
@@ -608,7 +553,7 @@ function template_preprocess_private_message(array &$variables) {
 /**
  * Implements hook_help().
  */
-function private_message_help($route_name, RouteMatchInterface $route_match) {
+function private_message_help($route_name, RouteMatchInterface $route_match): string|array|MarkupInterface {
   switch ($route_name) {
     case 'help.page.private_message':
       return t(
@@ -619,6 +564,7 @@ function private_message_help($route_name, RouteMatchInterface $route_match) {
         ]
       );
   }
+  return [];
 }
 
 /**
@@ -628,7 +574,7 @@ function private_message_help($route_name, RouteMatchInterface $route_match) {
  * may be altered in themes/templates, and therefore should not be depended
  * upon.
  */
-function private_message_preprocess_field__private_message_thread__private_messages(&$vars) {
+function private_message_preprocess_field__private_message_thread__private_messages(array &$vars): void {
   foreach (array_keys($vars['items']) as $index) {
     $vars['items'][$index]['attributes']->setAttribute('class', 'private-message-wrapper');
   }
@@ -641,7 +587,7 @@ function private_message_preprocess_field__private_message_thread__private_messa
  * classes may be altered in themes/templates, and therefore should not be
  * depended upon.
  */
-function private_message_preprocess_container(&$vars) {
+function private_message_preprocess_container(array &$vars): void {
   if (!empty($vars['element']['#id'])) {
     if (str_starts_with($vars['element']['#id'], 'edit-members-wrapper')) {
       // Add a custom class to the private message members widget container.
@@ -659,7 +605,7 @@ function private_message_preprocess_container(&$vars) {
  *
  * Swaps out tokens with values.
  */
-function private_message_message_view_alter(array &$build) {
+function private_message_message_view_alter(array &$build): void {
   if ($build['#message']->bundle() == 'private_message_notification') {
     $data = [
       'private_message' => $build['#message']->get('field_message_private_message')->entity,
@@ -679,13 +625,69 @@ function private_message_message_view_alter(array &$build) {
 /**
  * Implements hook_suggestions_HOOK_alter().
  */
-function private_message_theme_suggestions_private_message_thread_alter(&$suggestions, &$vars) {
+function private_message_theme_suggestions_private_message_thread_alter(array &$suggestions, array &$vars): void {
   $suggestions[] = 'private_message_thread__' . $vars['elements']['#view_mode'];
 }
 
 /**
  * Implements hook_suggestions_HOOK_alter().
  */
-function private_message_theme_suggestions_private_message_alter(&$suggestions, &$vars) {
+function private_message_theme_suggestions_private_message_alter(array &$suggestions, array &$vars): void {
   $suggestions[] = 'private_message__' . $vars['elements']['#view_mode'];
+}
+
+/**
+ * Implements hook_entity_query_ENTITY_TYPE_alter().
+ */
+function private_message_entity_query_user_alter(QueryInterface $query): void {
+  if (!$handler = $query->getMetadata('entity_reference_selection_handler')) {
+    return;
+  }
+  if (!$handler instanceof UserSelection) {
+    return;
+  }
+
+  // Filter out blocked users.
+  $config = $handler->getConfiguration();
+  if (empty($config['private_message']['active_users_selection'])) {
+    return;
+  }
+
+  $roles = array_filter(
+    \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple(),
+    fn(RoleInterface $role): bool => $role->hasPermission('use private messaging system'),
+  );
+
+  if (!$rids = array_keys($roles)) {
+    // Provide condition which will not return any results.
+    $query->condition('uid');
+    return;
+  }
+
+  $current_user_id = \Drupal::currentUser()->id();
+  $subquery = \Drupal::database()->select('private_message_ban', 'pmb')
+    ->fields('pmb', ['target']);
+  $subquery->condition('owner', $current_user_id);
+
+  $query->condition('uid', $subquery, 'NOT IN');
+  if (!in_array('authenticated', $rids)) {
+    $query->condition('roles', $rids, 'IN');
+  }
+
+  $query->condition('uid', $current_user_id, '<>');
+}
+
+/**
+ * Implements hook_config_schema_info_alter().
+ */
+function private_message_config_schema_info_alter(array &$definitions): void {
+  if (isset($definitions['entity_reference_selection.default:user'])) {
+    // Required to pass config_inspector validation.
+    $definitions['entity_reference_selection.default:user']['mapping']['private_message'] = [
+      'active_users_selection' => [
+        'type' => 'boolean',
+        'label' => 'Whether to filter out blocked user on member selection widget',
+      ],
+    ];
+  }
 }

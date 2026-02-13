@@ -302,6 +302,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
         'data-widget-id' => $this->getPluginId(),
         'data-widget-field' => $fieldName,
         'data-widget-delta' => $context['delta'] ?? '',
+        'data-widget-settings' => json_encode($this->getConfiguration()),
       ],
       '#field_widget_action_field_name' => $fieldName,
       // When called from hook_field_widget_complete_form, delta is not present.
@@ -441,7 +442,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
     }
     $response->addCommand(new OpenModalDialogCommand($this->t('Suggestions'), $message, [
       'width' => '80%',
-      'classes' => ['ui-dialog' => 'ui-dialog-fwa-suggestions'],
+      'dialogClass' => 'ui-dialog-fwa-suggestions',
     ]));
     return $response;
   }

@@ -110,7 +110,7 @@ class PrivateMessageUninstaller implements PrivateMessageUninstallerInterface {
    *   Thread id.
    */
   public static function deleteThread(int $threadId): void {
-    /** @var \Drupal\private_message\Entity\PrivateMessageThreadInterface $thread */
+    /** @var \Drupal\private_message\Entity\PrivateMessageThreadInterface|null $thread */
     $thread = \Drupal::entityTypeManager()
       ->getStorage('private_message_thread')
       ->load($threadId);

@@ -7,51 +7,41 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Password\PasswordInterface;
 use Drupal\tfa\TfaUserDataTrait;
-use Drupal\tfa\TfaValidationPluginManager;
-use Drupal\user\Entity\User;
 use Drupal\user\UserDataInterface;
+use Drupal\user\UserInterface;
 use Drupal\user\UserStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * TFA disable form router.
  */
-class TfaDisableForm extends FormBase {
+final class TfaDisableForm extends FormBase {
   use TfaUserDataTrait;
-
-  /**
-   * The validation plugin manager.
-   *
-   * @var \Drupal\tfa\TfaValidationPluginManager
-   */
-  protected $manager;
 
   /**
    * The password hashing service.
    *
    * @var \Drupal\Core\Password\PasswordInterface
    */
-  protected $passwordChecker;
+  protected PasswordInterface $passwordChecker;
 
   /**
    * The mail manager.
    *
    * @var \Drupal\Core\Mail\MailManagerInterface
    */
-  protected $mailManager;
+  protected MailManagerInterface $mailManager;
 
   /**
    * The user storage.
    *
    * @var \Drupal\user\UserStorageInterface
    */
-  protected $userStorage;
+  protected UserStorageInterface $userStorage;
 
   /**
    * TFA disable form constructor.
    *
-   * @param \Drupal\tfa\TfaValidationPluginManager $manager
-   *   The validation plugin manager.
    * @param \Drupal\user\UserDataInterface $user_data
    *   The user data object to store user information.
    * @param \Drupal\Core\Password\PasswordInterface $password_checker
@@ -61,8 +51,7 @@ class TfaDisableForm extends FormBase {
    * @param \Drupal\user\UserStorageInterface $user_storage
    *   The user storage.
    */
-  public function __construct(TfaValidationPluginManager $manager, UserDataInterface $user_data, PasswordInterface $password_checker, MailManagerInterface $mail_manager, UserStorageInterface $user_storage) {
-    $this->manager = $manager;
+  public function __construct(UserDataInterface $user_data, PasswordInterface $password_checker, MailManagerInterface $mail_manager, UserStorageInterface $user_storage) {
     $this->userData = $user_data;
     $this->passwordChecker = $password_checker;
     $this->mailManager = $mail_manager;
@@ -72,9 +61,8 @@ class TfaDisableForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
-      $container->get('plugin.manager.tfa.validation'),
       $container->get('user.data'),
       $container->get('password'),
       $container->get('plugin.manager.mail'),
@@ -85,14 +73,14 @@ class TfaDisableForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'tfa_disable';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, User $user = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?UserInterface $user = NULL): array {
     /** @var \Drupal\user\Entity\User $account */
     $account = $this->userStorage->load($this->currentUser()->id());
 
@@ -153,7 +141,7 @@ class TfaDisableForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     /** @var \Drupal\user\Entity\User $user */
     $user = $this->userStorage->load($this->currentUser()->id());
     $storage = $form_state->getStorage();
@@ -172,7 +160,7 @@ class TfaDisableForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $storage = $form_state->getStorage();
     $values = $form_state->getValues();
     $account = $storage['account'];
@@ -183,7 +171,7 @@ class TfaDisableForm extends FormBase {
     }
 
     // Delete all user data.
-    $this->deleteUserData('tfa', NULL, $account->id(), $this->userData);
+    $this->deleteUserData('tfa', NULL, $account->id());
 
     $this->logger('tfa')->notice('TFA disabled for user @name UID @uid', [
       '@name' => $account->getAccountName(),
@@ -208,7 +196,7 @@ class TfaDisableForm extends FormBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
    */
-  public function cancelForm(array &$form, FormStateInterface $form_state) {
+  public function cancelForm(array &$form, FormStateInterface $form_state): void {
     $account = $form_state->get('account');
     $this->messenger()->addWarning($this->t('TFA Disable cancelled.'));
     $form_state->setRedirect('tfa.overview', ['user' => $account->id()]);

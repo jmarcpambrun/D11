@@ -275,7 +275,7 @@ class Utility {
    */
   private function translateHtmlSafely($html, $source_language, $target_language, $provider) {
     // Use the existing safe text extraction method
-    return $this->translateHtmlWithSafeTextExtraction($html, $source_language, $target_language);
+    return $this->translateHtmlWithSafeTextExtraction($html, $source_language, $target_language, $provider);
   }
 
   /**
@@ -1619,12 +1619,21 @@ class Utility {
    */
   private function translateParagraphs($entity, &$form, $field_name, $d_lang, $t_lang, $excludedFields) {
     $paragraphItems = $entity->get($field_name);
+    $layout = NULL;
     foreach ($paragraphItems as $index => $paragraphItem) {
       if ($paragraphItem->entity instanceof \Drupal\paragraphs\ParagraphInterface) {
         if (isset($form[$field_name]['widget'][$index]['subform'])) {
+          // Standard paragraphs widget: translate via form subform.
           $this->processParagraphTranslation($paragraphItem->entity, $form[$field_name]['widget'][$index]['subform'], $d_lang, $t_lang, $excludedFields);
         }
+        elseif ($layout = $form[$field_name]['widget']['layout_paragraphs_builder']['#layout_paragraphs_layout'] ?? NULL) {
+          // Layout Paragraphs widget: translate via entity (no subform available).
+          self::batchProcessParagraphTranslation($paragraphItem->entity, $d_lang, $t_lang, $excludedFields);
+        }
       }
+    }
+    if (!empty($layout)) {
+      \Drupal::service('layout_paragraphs.tempstore_repository')->set($layout);
     }
   }
 
@@ -1927,7 +1936,7 @@ class Utility {
     }
 
     // Always use the secure text extraction method for all providers
-    return $this->translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang);
+    return $this->translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang, $provider);
   }
 
   /**
@@ -2130,7 +2139,7 @@ class Utility {
    * This method NEVER sends raw HTML to the API. Instead, it extracts text,
    * translates it safely, and reconstructs the HTML with proper formatting.
    */
-  private function translateHtmlForGoogleBrowser($html, $s_lang, $t_lang) {
+  private function translateHtmlForGoogleBrowser($html, $s_lang, $t_lang, $provider = 'google') {
     $logger = $this->loggerFactory->get('auto_translation');
     $config = $this->configFactory->get('auto_translation.settings');
     $enable_debug = $config->get('enable_debug');
@@ -2140,7 +2149,7 @@ class Utility {
     }
 
     // NEVER use direct HTML translation - always extract text first
-    return $this->translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang);
+    return $this->translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang, $provider);
   }
 
   /**
@@ -2149,7 +2158,7 @@ class Utility {
    * This method extracts text content, preserves HTML structure, translates
    * only the text, and reconstructs HTML with proper capitalization and spacing.
    */
-  private function translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang) {
+  private function translateHtmlWithSafeTextExtraction($html, $s_lang, $t_lang, $provider) {
     $logger = $this->loggerFactory->get('auto_translation');
     $config = $this->configFactory->get('auto_translation.settings');
     $enable_debug = $config->get('enable_debug');
@@ -2212,7 +2221,7 @@ class Utility {
 
       try {
         // Translate ONLY the plain text (never HTML)
-        $translated = $this->callProviderTranslationApi($segment['text'], $s_lang, $t_lang, 'google');
+        $translated = $this->callProviderTranslationApi($segment['text'], $s_lang, $t_lang, $provider);
         if ($translated && !empty(trim($translated))) {
           // Apply capitalization fixes
           $translated = $this->fixCapitalization($translated, $segment['text'], $segment['context']);

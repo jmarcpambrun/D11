@@ -46,9 +46,6 @@ tfa.settings:
     users_without_tfa_redirect:
       type: boolean
       label: 'Redirect user directly to the TFA account setup overview page on login.'
-    reset_pass_skip_enabled:
-      type: boolean
-      label: 'Allow super administrator to skip TFA when resetting password.'
     encryption:
       type: string
       label: 'The id of the encryption profile.'

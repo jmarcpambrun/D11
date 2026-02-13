@@ -2,13 +2,14 @@
 
 namespace Drupal\Tests\tfa\Functional;
 
-use Drupal\Core\Site\Settings;
-use ParagonIE\ConstantTime\Encoding;
+use Drupal\tfa\Plugin\Tfa\TfaTotp;
+use Drupal\user\Entity\User;
+use OTPHP\TOTP;
 
 /**
  * TfaTotpValidation plugin test.
  *
- * @group Tfa
+ * @group tfa
  */
 class TfaTotpValidationPluginTest extends TfaTestBase {
 
@@ -17,28 +18,28 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
    *
    * @var \Drupal\user\Entity\User
    */
-  public $userAccount;
+  public User $userAccount;
 
   /**
    * Validation plugin ID.
    *
    * @var string
    */
-  public $validationPluginId = 'tfa_totp';
+  public string $validationPluginId = 'tfa_totp';
 
   /**
    * Instance of the validation plugin for the $validationPluginId.
    *
-   * @var \Drupal\tfa\Plugin\TfaValidation\TfaTotpValidation
+   * @var \Drupal\tfa\Plugin\Tfa\TfaTotp
    */
-  public $validationPlugin;
+  public TfaTotp $validationPlugin;
 
   /**
    * The secret.
    *
-   * @var string
+   * @var non-empty-string
    */
-  public $seed;
+  public string $seed;
 
   /**
    * {@inheritdoc}
@@ -61,7 +62,7 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
       'setup own tfa',
       'disable own tfa',
     ]);
-    $this->validationPlugin = \Drupal::service('plugin.manager.tfa.validation')->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
+    $this->validationPlugin = \Drupal::service('plugin.manager.tfa')->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
     $this->drupalLogin($this->userAccount);
     $this->setupUserTotp();
     $this->drupalLogout();
@@ -70,7 +71,7 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
   /**
    * Setup the user's Validation plugin.
    */
-  public function setupUserTotp() {
+  public function setupUserTotp(): void {
     $edit = [
       'current_pass' => $this->userAccount->passRaw,
     ];
@@ -84,10 +85,12 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
       return;
     }
 
+    $this->assertIsString($result[0]->getValue());
+    $this->assertNotEmpty($result[0]->getValue());
     $this->seed = $result[0]->getValue();
     $this->validationPlugin->storeSeed($this->seed);
     $edit = [
-      'code' => $this->validationPlugin->auth->otp->totp(Encoding::base32DecodeUpper($this->seed)),
+      'code' => TOTP::createFromSecret($this->seed)->now(),
     ];
     $this->submitForm($edit, 'Verify and save');
 
@@ -97,7 +100,7 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
   /**
    * Test that a user can login with TfaTotpValidation.
    */
-  public function testTotpLogin() {
+  public function testTotpLogin(): void {
     $assert = $this->assertSession();
     $edit = [
       'name' => $this->userAccount->getAccountName(),
@@ -115,8 +118,8 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
     $assert->pageTextContains('Invalid application code. Please try again.');
 
     // Try a code that is 30 minutes old.
-    $this->validationPlugin->auth->otp->setTotpOffset(-1800);
-    $old_code = $this->validationPlugin->auth->otp->totp(Encoding::base32DecodeUpper($this->seed));
+    $old_code = TOTP::createFromSecret($this->seed)->at(max(time() - 1800, 0));
+
     $edit = ['code' => $old_code];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
@@ -124,21 +127,13 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
 
     // Try valid code. We need to offset the timing on Totp so that we don't
     // generate the same code we used during setup.
-    $this->validationPlugin->auth->otp->setTotpOffset($this->validationPlugin->getTimeSkew() * 30);
-    $valid_code = $this->validationPlugin->auth->otp->totp(Encoding::base32DecodeUpper($this->seed));
+    $valid_code = TOTP::createFromSecret($this->seed)->at(time() + 30);
     $edit = ['code' => $valid_code];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
     $assert->pageTextContains($this->userAccount->getDisplayName());
 
     // Check for replay attack.
-    $current_settings = file_get_contents("$this->siteDirectory/settings.php");
-    $current_settings .= "\n \$settings['hash_salt'] = '12345';\n";
-    $current_settings .= "\n \$settings['tfa.previous_hash_salts'] = ['" . Settings::getHashSalt() . "'];\n";
-    chmod("$this->siteDirectory/settings.php", 0644);
-    file_put_contents("$this->siteDirectory/settings.php", $current_settings);
-    chmod("$this->siteDirectory/settings.php", 0444);
-
     $this->drupalLogout();
     $edit = [
       'name' => $this->userAccount->getAccountName(),
@@ -152,8 +147,7 @@ class TfaTotpValidationPluginTest extends TfaTestBase {
     $edit = ['code' => $valid_code];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
-    $assert->pageTextNotContains('Invalid application code.');
-    $assert->pageTextContains('Invalid code, it was recently used for a login. Please try a new code.');
+    $assert->pageTextContains('Invalid application code. Please try again.');
   }
 
 }

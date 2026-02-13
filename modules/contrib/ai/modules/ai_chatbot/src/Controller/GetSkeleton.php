@@ -62,7 +62,6 @@ class GetSkeleton extends ControllerBase {
       '#assistant_id' => $assistant_id,
       '#thread_id' => $thread_id,
       '#user' => $user,
-      '#role' => $user === 'user' ? 'user' : 'assistant',
     ];
     return new JsonResponse([
       'skeleton' => $this->renderer->render($theme),

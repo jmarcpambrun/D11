@@ -8,12 +8,12 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\private_message\Traits\PrivateMessageTestTrait;
 use Drupal\private_message\Entity\PrivateMessageBan;
 use Drupal\private_message\Entity\PrivateMessageThreadInterface;
-use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests deletion of private message entities.
+ *
+ * @group private_message
  */
-#[Group('private_message')]
 final class EntityDeleteTest extends KernelTestBase {
 
   use PrivateMessageTestTrait;

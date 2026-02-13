@@ -5,14 +5,13 @@
     "license": "GPL-2.0-or-later",
     "minimum-stability": "dev",
     "require": {
-        "php": ">=7.0",
+        "php": "^8.3",
         "chillerlan/php-qrcode": "^1.0.9 || ^2.0 || ^3.2 || ^4.0",
-        "christian-riesen/otp": "^2.1",
-        "drupal/encrypt": "~3.0",
-        "paragonie/constant_time_encoding": "^1.0 || ^2.0"
+        "drupal/encrypt": "^3.1",
+        "spomky-labs/otphp": "^11.2"
     },
     "require-dev": {
-        "drush/drush": "^10 || ^11 || ^12 || ^13",
+        "drush/drush": "^13",
         "jangregor/phpstan-prophecy": "^1",
         "mglaman/phpstan-drupal": "^1.1",
         "phpstan/extension-installer": "^1.2",
@@ -23,7 +22,7 @@
     "extra": {
         "drush": {
             "services": {
-                "drush.services.yml": "^9 || ^10 || ^11"
+                "drush.services.yml": "^11"
             }
         }
     }

@@ -1,101 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Plugin\Block;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Access\CsrfTokenGenerator;
+use Drupal\Core\Block\Attribute\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\private_message\Service\PrivateMessageServiceInterface;
+use Drupal\private_message\Traits\PrivateMessageSettingsTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides the private message notification block.
- *
- * @Block(
- *   id = "private_message_notification_block",
- *   admin_label = @Translation("Private Message Notification"),
- *   category =  @Translation("Private Message"),
- * )
  */
+#[Block(
+   id: "private_message_notification_block",
+   admin_label: new TranslatableMarkup('Private Message Notification'),
+   category:  new TranslatableMarkup('Private Message'),
+)]
 class PrivateMessageNotificationBlock extends BlockBase implements BlockPluginInterface, ContainerFactoryPluginInterface {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
+  use PrivateMessageSettingsTrait;
 
-  /**
-   * The CSRF token generator service.
-   *
-   * @var \Drupal\Core\Access\CsrfTokenGenerator
-   */
-  protected CsrfTokenGenerator $csrfToken;
-
-  /**
-   * The private message service.
-   *
-   * @var \Drupal\private_message\Service\PrivateMessageServiceInterface
-   */
-  protected PrivateMessageServiceInterface $privateMessageService;
-
-  /**
-   * The private message configuration.
-   *
-   * @var \Drupal\Core\Config\Config
-   */
-  protected Config $privateMessageConfig;
-
-  /**
-   * Constructs a PrivateMessageForm object.
-   *
-   * @param array $configuration
-   *   The block configuration.
-   * @param string $plugin_id
-   *   The ID of the plugin.
-   * @param mixed $plugin_definition
-   *   The plugin definition.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   * @param \Drupal\Core\Access\CsrfTokenGenerator $csrfToken
-   *   The CSRF token generator service.
-   * @param \Drupal\private_message\Service\PrivateMessageServiceInterface $privateMessageService
-   *   The private message service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   The config service.
-   */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    AccountProxyInterface $currentUser,
-    CsrfTokenGenerator $csrfToken,
-    PrivateMessageServiceInterface $privateMessageService,
-    ConfigFactoryInterface $config,
+    protected readonly AccountProxyInterface $currentUser,
+    protected readonly CsrfTokenGenerator $csrfToken,
+    protected readonly PrivateMessageServiceInterface $privateMessageService,
+    protected readonly ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
-    $this->currentUser = $currentUser;
-    $this->csrfToken = $csrfToken;
-    $this->privateMessageService = $privateMessageService;
-    $this->privateMessageConfig = $config->get('private_message.settings');
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): PrivateMessageNotificationBlock {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $configuration,
       $plugin_id,
@@ -148,7 +102,7 @@ class PrivateMessageNotificationBlock extends BlockBase implements BlockPluginIn
     $block['#attached']['drupalSettings']['privateMessageNotificationBlock']['ajaxRefreshRate'] = $config['ajax_refresh_rate'];
 
     $block['#attached']['library'][] = 'private_message/notification_block_script';
-    $style_disabled = $this->privateMessageConfig->get('remove_css');
+    $style_disabled = $this->getPrivateMessageSettings()->get('remove_css');
     if (!$style_disabled) {
       $block['#attached']['library'][] = 'private_message/notification_block_style';
     }
@@ -165,7 +119,7 @@ class PrivateMessageNotificationBlock extends BlockBase implements BlockPluginIn
   /**
    * {@inheritdoc}
    */
-  public function getCacheTags() {
+  public function getCacheTags(): array {
     $tags = [
       'private_message:status:uid:' . $this->currentUser->id(),
       // This cache tag is @deprecated, since we have added the cache tag above.

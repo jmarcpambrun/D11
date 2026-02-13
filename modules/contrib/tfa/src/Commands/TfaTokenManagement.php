@@ -21,56 +21,29 @@ final class TfaTokenManagement {
   use TfaUserDataTrait;
 
   /**
-   * The mail manager.
+   * TfaCommands constructor.
    *
-   * @var \Drupal\Core\Mail\MailManagerInterface
-   */
-  protected $mailManager;
-
-  /**
-   * The user data object to store user information.
-   *
-   * @var \Drupal\user\UserDataInterface
-   */
-  protected $userData;
-
-  /**
-   * The entity manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The logger service for {tfa} channel.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
-   * TFA token management class constructor.
-   *
-   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager.
-   * @param \Drupal\user\UserDataInterface $user_data
+   * @param \Drupal\user\UserDataInterface $userData
    *   The user data object to store user information.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity manager .
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.channel.tfa service.
    */
-  public function __construct(MailManagerInterface $mail_manager, UserDataInterface $user_data, EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger) {
-    $this->mailManager = $mail_manager;
-    $this->userData = $user_data;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->logger = $logger;
+  public function __construct(
+    protected MailManagerInterface $mailManager,
+    protected UserDataInterface $userData,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected LoggerInterface $logger,
+  ) {
   }
 
   /**
    * Resets single user's TFA Data.
    *
-   * @param array $options
+   * @param array{'name': ?string, 'uid': ?string, 'mail': ?string} $options
    *   Options passed from the Drush CLI.
    * @param \Symfony\Component\Console\Style\SymfonyStyle $io
    *   The Drush I/O system.
@@ -103,7 +76,7 @@ final class TfaTokenManagement {
 
     $do_run_if_no_input = FALSE;
     /** @var \Drupal\user\UserInterface $account */
-    $uid = (int) $account->id();
+    $uid = $account->id();
     $name = $account->getAccountName();
     $email = $account->getEmail() ?? '';
     $answer = $io->confirm(
@@ -122,7 +95,7 @@ final class TfaTokenManagement {
     }
 
     // Delete all user data.
-    $this->deleteUserData('tfa', NULL, $uid, $this->userData);
+    $this->deleteUserData('tfa', NULL, (int) $uid);
 
     $this->logger->notice(
       "TFA deleted and reset for user @name (UID: @uid).",

@@ -31,12 +31,12 @@ variables:
   # Collect code coverage data.
   _PHPUNIT_EXTRA:
     value: --coverage-cobertura $CI_PROJECT_DIR/coverage.xml --coverage-filter $CI_PROJECT_DIR/$_WEB_ROOT/modules/custom/ --coverage-text --colors=never --no-configuration
-  # Disable PHPCS rules
-  _PHPCS_EXTRA:
-    value: --exclude=SlevomatCodingStandard.TypeHints.NullableTypeForNullDefaultValue
   # Generate a new phpstan baseline.
   GENERATE_PHPSTAN_BASELINE:
     value: "0"
+  # cSpell ignore files.
+  _CSPELL_IGNORE_PATHS:
+    value: 'docs/css/*'
 
 ################
 # Customize composer stage to not symlink the module as it interferes with
@@ -144,3 +144,10 @@ phpunit:
       - apache.access.log.txt
       - $BROWSERTEST_OUTPUT_DIRECTORY
       - coverage.xml
+
+################
+# Add extra plugins for mkdocs.
+################
+pages:
+  before_script:
+    - pip install mkdocs-literate-nav

@@ -2,13 +2,14 @@
 
 namespace Drupal\Tests\tfa\Functional;
 
-use Drupal\Core\Site\Settings;
-use ParagonIE\ConstantTime\Encoding;
+use Drupal\tfa\Plugin\Tfa\TfaHotp;
+use Drupal\user\Entity\User;
+use OTPHP\HOTP;
 
 /**
  * TfaHotpValidation plugin test.
  *
- * @group Tfa
+ * @group tfa
  */
 class TfaHotpValidationPluginTest extends TfaTestBase {
 
@@ -17,28 +18,28 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
    *
    * @var \Drupal\user\Entity\User
    */
-  public $userAccount;
+  public User $userAccount;
 
   /**
    * Validation plugin ID.
    *
    * @var string
    */
-  public $validationPluginId = 'tfa_hotp';
+  public string $validationPluginId = 'tfa_hotp';
 
   /**
    * Instance of the validation plugin for the $validationPluginId.
    *
-   * @var \Drupal\tfa\Plugin\TfaValidation\TfaHotpValidation
+   * @var \Drupal\tfa\Plugin\Tfa\TfaHotp
    */
-  public $validationPlugin;
+  public TfaHotp $validationPlugin;
 
   /**
    * The secret.
    *
-   * @var string
+   * @var non-empty-string
    */
-  public $seed;
+  public string $seed;
 
   /**
    * {@inheritdoc}
@@ -61,7 +62,7 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
       'setup own tfa',
       'disable own tfa',
     ]);
-    $this->validationPlugin = \Drupal::service('plugin.manager.tfa.validation')->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
+    $this->validationPlugin = \Drupal::service('plugin.manager.tfa')->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
     $this->drupalLogin($this->userAccount);
     $this->setupUserHotp();
     $this->drupalLogout();
@@ -70,7 +71,7 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
   /**
    * Setup the user's Validation plugin.
    */
-  public function setupUserHotp() {
+  public function setupUserHotp(): void {
     $edit = [
       'current_pass' => $this->userAccount->passRaw,
     ];
@@ -84,10 +85,12 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
       return;
     }
 
+    $this->assertIsString($result[0]->getValue());
+    $this->assertNotEmpty($result[0]->getValue());
     $this->seed = $result[0]->getValue();
     $this->validationPlugin->storeSeed($this->seed);
     $edit = [
-      'code' => $this->validationPlugin->auth->otp->hotp(Encoding::base32DecodeUpper($this->seed), $this->validationPlugin->getHotpCounter()),
+      'code' => HOTP::createFromSecret($this->seed)->at($this->validationPlugin->getHotpCounter()),
     ];
     $this->submitForm($edit, 'Verify and save');
 
@@ -97,7 +100,7 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
   /**
    * Test that a user can login with TfaHotpValidation.
    */
-  public function testHotpLogin() {
+  public function testHotpLogin(): void {
     $assert = $this->assertSession();
     $edit = [
       'name' => $this->userAccount->getAccountName(),
@@ -116,20 +119,13 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
 
     // Try valid code. We need to offset the counter on Hotp so that we don't
     // generate the same code we used during setup.
-    $valid_code = $this->validationPlugin->auth->otp->hotp(Encoding::base32DecodeUpper($this->seed), $this->validationPlugin->getHotpCounter() + 1);
+    $valid_code = HOTP::createFromSecret($this->seed)->at($this->validationPlugin->getHotpCounter() + 1);
     $edit = ['code' => $valid_code];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
     $assert->pageTextContains($this->userAccount->getDisplayName());
 
     // Check for replay attack.
-    $current_settings = file_get_contents("$this->siteDirectory/settings.php");
-    $current_settings .= "\n \$settings['hash_salt'] = '12345';\n";
-    $current_settings .= "\n \$settings['tfa.previous_hash_salts'] = ['" . Settings::getHashSalt() . "'];\n";
-    chmod("$this->siteDirectory/settings.php", 0644);
-    file_put_contents("$this->siteDirectory/settings.php", $current_settings);
-    chmod("$this->siteDirectory/settings.php", 0444);
-
     $this->drupalLogout();
     $edit = [
       'name' => $this->userAccount->getAccountName(),
@@ -143,8 +139,7 @@ class TfaHotpValidationPluginTest extends TfaTestBase {
     $edit = ['code' => $valid_code];
     $this->submitForm($edit, 'Verify');
     $assert->statusCodeEquals(200);
-    $assert->pageTextNotContains('Invalid application code.');
-    $assert->pageTextContains('Invalid code, it was recently used for a login. Please try a new code.');
+    $assert->pageTextContains('Invalid application code. Please try again.');
   }
 
 }

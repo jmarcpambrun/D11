@@ -36,7 +36,9 @@ final class SpellFix extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat', FALSE);
+    $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
+    array_shift($options);
+    array_splice($options, 0, 1);
     $form['provider'] = [
       '#type' => 'select',
       '#title' => $this->t('AI provider'),

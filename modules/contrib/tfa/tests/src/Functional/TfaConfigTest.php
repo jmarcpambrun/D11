@@ -2,10 +2,12 @@
 
 namespace Drupal\Tests\tfa\Functional;
 
+use Drupal\user\Entity\User;
+
 /**
  * Tests the Tfa UI.
  *
- * @group Tfa
+ * @group tfa
  */
 class TfaConfigTest extends TfaTestBase {
   /**
@@ -13,14 +15,14 @@ class TfaConfigTest extends TfaTestBase {
    *
    * @var \Drupal\user\Entity\User
    */
-  protected $webUser;
+  protected User $webUser;
 
   /**
    * Administrator to handle configurations.
    *
    * @var \Drupal\user\Entity\User
    */
-  protected $adminUser;
+  protected User $adminUser;
 
   /**
    * {@inheritdoc}
@@ -46,7 +48,7 @@ class TfaConfigTest extends TfaTestBase {
   /**
    * Test the access to the configuration form based on module permissions.
    */
-  public function testTfaConfigFormAccess() {
+  public function testTfaConfigFormAccess(): void {
     $assert = $this->assertSession();
 
     // Check that config form is restricted for users.
@@ -63,7 +65,7 @@ class TfaConfigTest extends TfaTestBase {
   /**
    * Test to check if configurations are working as desired.
    */
-  public function testTfaConfigForm() {
+  public function testTfaConfigForm(): void {
     $this->canEnableValidationPlugin('tfa_test_plugins_validation');
   }
 

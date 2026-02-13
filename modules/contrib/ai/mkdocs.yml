@@ -89,7 +89,6 @@ nav:
     - Contribute Bug Reports: contribute/bug_finding.md
     - Contribute Testings:
       - Getting Started: contribute/testing.md
-      - Full Patch Test: contribute/testing/full_patch_test.md
       - Mock Provider Calls: contribute/testing/spoof_provider.md
     - Contribute Features: contribute/features.md
     - Developer Information: contribute/developer_information.md
@@ -124,12 +123,6 @@ nav:
         - Run a Test Group: agents/testing/ai_agent_test/running_test_group.md
         - View Results, Export, Import Tests: agents/testing/ai_agent_test/result_export_import.md
         - Drush Commands: agents/testing/ai_agent_test/drush.md
-  - AI User Experience:
-    - Core UX Principles: ux/core_ux_principles.md
-    - Organizing AI Modules & Features: ux/organizing_ai_modules_and_features.md
-    - Request UX Support for AI modules: ux/request_ux_support.md
-    - UX Improvement Projects: ux/ux_improvement_projects.md
-    - How to Contribute to UX: ux/how_to_contribute.md
   - Documentation (How to): documentation/index.md
   - Changelog: changelog.md
 docs_dir: docs

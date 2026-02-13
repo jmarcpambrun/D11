@@ -2,12 +2,14 @@
 
 namespace Drupal\Tests\tfa\Functional;
 
-use ParagonIE\ConstantTime\Encoding;
+use Drupal\tfa\Plugin\Tfa\TfaTotp;
+use Drupal\user\Entity\User;
+use OTPHP\TOTP;
 
 /**
  * TfaTotpSetup plugin test.
  *
- * @group Tfa
+ * @group tfa
  */
 class TfaTotpSetupPluginTest extends TfaTestBase {
 
@@ -16,21 +18,21 @@ class TfaTotpSetupPluginTest extends TfaTestBase {
    *
    * @var \Drupal\user\Entity\User
    */
-  public $userAccount;
+  public User $userAccount;
 
   /**
    * Validation plugin ID.
    *
    * @var string
    */
-  public $validationPluginId = 'tfa_totp';
+  public string $validationPluginId = 'tfa_totp';
 
   /**
    * Instance of the setup plugin for the $validationPluginId.
    *
-   * @var \Drupal\tfa\Plugin\TfaSetup\TfaTotpSetup
+   * @var \Drupal\tfa\Plugin\Tfa\TfaTotp
    */
-  public $setupPlugin;
+  public TfaTotp $setupPlugin;
 
   /**
    * {@inheritdoc}
@@ -53,14 +55,14 @@ class TfaTotpSetupPluginTest extends TfaTestBase {
       'setup own tfa',
       'disable own tfa',
     ]);
-    $this->setupPlugin = \Drupal::service('plugin.manager.tfa.setup')->createInstance($this->validationPluginId . '_setup', ['uid' => $this->userAccount->id()]);
+    $this->setupPlugin = \Drupal::service('plugin.manager.tfa')->createInstance($this->validationPluginId, ['uid' => $this->userAccount->id()]);
     $this->drupalLogin($this->userAccount);
   }
 
   /**
    * Test that the overview page exists for a standard user.
    */
-  public function testTfaOverviewExists() {
+  public function testTfaOverviewExists(): void {
     $this->drupalGet('user/' . $this->userAccount->id() . '/security/tfa');
     $assert = $this->assertSession();
     $assert->statusCodeEquals(200);
@@ -70,7 +72,7 @@ class TfaTotpSetupPluginTest extends TfaTestBase {
   /**
    * Test setting up the tfa_test_plugins_validation plugin as a generic user.
    */
-  public function testPluginSetup() {
+  public function testPluginSetup(): void {
     $this->drupalGet('user/' . $this->userAccount->id() . '/security/tfa/' . $this->validationPluginId);
     $assert = $this->assertSession();
     $assert->statusCodeEquals(200);
@@ -92,6 +94,8 @@ class TfaTotpSetupPluginTest extends TfaTestBase {
     }
 
     $seed = $result[0]->getValue();
+    $this->assertIsString($seed);
+    $this->assertNotEmpty($seed);
     $this->setupPlugin->setSeed($seed);
 
     // Try invalid code.
@@ -104,7 +108,7 @@ class TfaTotpSetupPluginTest extends TfaTestBase {
 
     // Submit valid code.
     $edit = [
-      'code' => $this->setupPlugin->auth->otp->totp(Encoding::base32DecodeUpper($seed)),
+      'code' => TOTP::createFromSecret($seed)->now(),
     ];
     $this->submitForm($edit, 'Verify and save');
     $assert->statusCodeEquals(200);

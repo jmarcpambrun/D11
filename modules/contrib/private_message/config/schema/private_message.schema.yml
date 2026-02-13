@@ -26,6 +26,10 @@ private_message.settings:
     ban_mode:
       type: string
       label: 'The blocking mode.'
+      constraints:
+        Choice:
+          - passive
+          - active
     ban_message:
       type: string
       label: 'The message to show to the user when they are blocked.'

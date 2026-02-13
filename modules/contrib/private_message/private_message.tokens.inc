@@ -5,6 +5,8 @@
  * Provides tokens for the Private Message module.
  */
 
+declare(strict_types=1);
+
 use Drupal\Core\Datetime\Entity\DateFormat;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Render\BubbleableMetadata;
@@ -14,8 +16,7 @@ use Drupal\user\Entity\User;
 /**
  * Implements hook_token_info().
  */
-function private_message_token_info() {
-
+function private_message_token_info(): array {
   // Defined the private message token type.
   $private_message_type = [
     'name' => t('Private Messages'),
@@ -89,7 +90,7 @@ function private_message_token_info() {
 /**
  * Implements hook_tokens().
  */
-function private_message_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
+function private_message_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata): array {
   $replacements = [];
 
   $token_service = \Drupal::token();

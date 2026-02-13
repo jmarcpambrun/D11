@@ -160,6 +160,7 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
             'Psr\\Http\\Client\\' => 16,
             'Psr\\EventDispatcher\\' => 20,
             'Psr\\Container\\' => 14,
+            'Psr\\Clock\\' => 10,
             'Psr\\Cache\\' => 10,
             'Platformsh\\OAuth2\\Client\\' => 25,
             'Platformsh\\Client\\' => 18,
@@ -172,9 +173,9 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         ),
         'O' => 
         array (
-            'Otp\\' => 4,
             'OpenAI\\' => 7,
             'OomphInc\\ComposerInstallersExtender\\' => 36,
+            'OTPHP\\' => 6,
         ),
         'N' => 
         array (
@@ -260,7 +261,6 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'E' => 
         array (
             'Egulias\\EmailValidator\\' => 23,
-            'EasyRdf\\' => 8,
         ),
         'D' => 
         array (
@@ -596,6 +596,10 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
+        'Psr\\Clock\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/clock/src',
+        ),
         'Psr\\Cache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
@@ -632,10 +636,6 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         array (
             0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
         ),
-        'Otp\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/christian-riesen/otp/src',
-        ),
         'OpenAI\\' => 
         array (
             0 => __DIR__ . '/..' . '/openai-php/client/src',
@@ -643,6 +643,10 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'OomphInc\\ComposerInstallersExtender\\' => 
         array (
             0 => __DIR__ . '/..' . '/oomphinc/composer-installers-extender/src',
+        ),
+        'OTPHP\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/spomky-labs/otphp/src',
         ),
         'Nyholm\\Psr7\\' => 
         array (
@@ -888,10 +892,6 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         'Egulias\\EmailValidator\\' => 
         array (
             0 => __DIR__ . '/..' . '/egulias/email-validator/src',
-        ),
-        'EasyRdf\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/easyrdf/easyrdf/lib',
         ),
         'Drush\\' => 
         array (

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\private_message\Plugin\Field\FieldFormatter;
 
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\Attribute\FieldFormatter;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
@@ -12,76 +15,22 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines the private message member field formatter.
- *
- * @FieldFormatter(
- *   id = "private_message_thread_member_formatter",
- *   label = @Translation("Private Message Thread Members"),
- *   field_types = {
- *     "entity_reference"
- *   },
- * )
  */
+#[FieldFormatter(
+  id: 'private_message_thread_member_formatter',
+  label: new TranslatableMarkup('Private Message Thread Members'),
+  field_types: [
+    'entity_reference',
+  ],
+)]
 class PrivateMessageThreadMemberFormatter extends FormatterBase implements ContainerFactoryPluginInterface {
 
-  /**
-   * The entity manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
-   * The entity display repository.
-   *
-   * @var \Drupal\Core\Entity\EntityDisplayRepositoryInterface
-   */
-  protected EntityDisplayRepositoryInterface $entityDisplayRepository;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected RendererInterface $renderer;
-
-  /**
-   * Construct a PrivateMessageThreadFormatter object.
-   *
-   * @param string $plugin_id
-   *   The ID of the plugin.
-   * @param mixed $plugin_definition
-   *   The plugin definition.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
-   *   The field definition.
-   * @param array $settings
-   *   The field settings.
-   * @param mixed $label
-   *   The label of the field.
-   * @param string $view_mode
-   *   The current view mode.
-   * @param array $third_party_settings
-   *   The third party settings.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity manager service.
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
-   *   The entity display repository.
-   * @param \Drupal\Core\Render\Renderer $renderer
-   *   The renderer.
-   */
   public function __construct(
     $plugin_id,
     $plugin_definition,
@@ -90,23 +39,18 @@ class PrivateMessageThreadMemberFormatter extends FormatterBase implements Conta
     $label,
     $view_mode,
     array $third_party_settings,
-    EntityTypeManagerInterface $entity_type_manager,
-    AccountProxyInterface $current_user,
-    EntityDisplayRepositoryInterface $entity_display_repository,
-    RendererInterface $renderer,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected readonly AccountProxyInterface $currentUser,
+    protected readonly EntityDisplayRepositoryInterface $entityDisplayRepository,
+    protected readonly RendererInterface $renderer,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
-
-    $this->entityTypeManager = $entity_type_manager;
-    $this->currentUser = $current_user;
-    $this->entityDisplayRepository = $entity_display_repository;
-    $this->renderer = $renderer;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): PrivateMessageThreadMemberFormatter {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $plugin_id,
       $plugin_definition,

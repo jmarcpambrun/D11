@@ -4,6 +4,7 @@ namespace Drupal\tfa\Commands;
 
 use Consolidation\AnnotatedCommand\CommandData;
 use Drupal\Core\Database\Connection;
+use Drupal\tfa\TfaUserDataTrait;
 use Drush\Commands\DrushCommands;
 use Drush\Drupal\Commands\sql\SanitizePluginInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -11,21 +12,22 @@ use Symfony\Component\Console\Input\InputInterface;
 /**
  * A Drush command file to reset or sanitize TFA for users.
  */
-class TfaCommands extends DrushCommands implements SanitizePluginInterface {
+final class TfaCommands extends DrushCommands implements SanitizePluginInterface {
+  use TfaUserDataTrait;
 
   /**
    * Database service.
    *
    * @var \Drupal\Core\Database\Connection
    */
-  protected $database;
+  protected Connection $database;
 
   /**
    * TokenManagement service.
    *
    * @var \Drupal\tfa\Commands\TfaTokenManagement
    */
-  protected $tokenManagement;
+  protected TfaTokenManagement $tokenManagement;
 
   /**
    * TfaCommands constructor.
@@ -33,7 +35,7 @@ class TfaCommands extends DrushCommands implements SanitizePluginInterface {
    * @param \Drupal\Core\Database\Connection $database
    *   The database service.
    * @param \Drupal\tfa\Commands\TfaTokenManagement $token_management
-   *   TFA token management helper service.
+   *   The TFA Drush Token Management service.
    */
   public function __construct(Connection $database, TfaTokenManagement $token_management) {
     parent::__construct();
@@ -48,10 +50,10 @@ class TfaCommands extends DrushCommands implements SanitizePluginInterface {
    *
    * {@inheritdoc}
    */
-  public function sanitize($result, CommandData $commandData) {
-    // DBTNG does not support expressions in delete queries.
-    $sql = "DELETE FROM users_data WHERE LEFT(name, 4) = 'tfa_'";
-    $this->database->query($sql);
+  public function sanitize($result, CommandData $commandData): void {
+    $this->database->delete('users_data')
+      ->condition('name', 'tfa_%', 'LIKE')
+      ->execute();
     $this->logger()->success('Removed recovery codes and other user-specific TFA data.');
   }
 
@@ -62,14 +64,14 @@ class TfaCommands extends DrushCommands implements SanitizePluginInterface {
    *
    * {@inheritdoc}
    */
-  public function messages(&$messages, InputInterface $input) {
+  public function messages(array &$messages, InputInterface $input) {
     $messages[] = dt('Remove recovery codes and other user-specific TFA data.');
   }
 
   /**
    * Resets single user's TFA Data.
    *
-   * @param array $options
+   * @param array{name: string|null, uid: string|null, mail: string|null} $options
    *   Options to process.
    *
    * @command tfa:reset-user
