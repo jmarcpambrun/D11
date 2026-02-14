@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\flexible_permissions\Unit;
 
+use Drupal\Core\Session\CalculatedPermissions as CoreCalculatedPermissions;
+use Drupal\Core\Session\CalculatedPermissionsInterface as CoreCalculatedPermissionsInterface;
+use Drupal\Core\Session\CalculatedPermissionsItem as CoreCalculatedPermissionsItem;
 use Drupal\flexible_permissions\CalculatedPermissions;
 use Drupal\flexible_permissions\CalculatedPermissionsInterface;
 use Drupal\flexible_permissions\CalculatedPermissionsItem;
@@ -24,7 +29,7 @@ class CalculatedPermissionsTest extends UnitTestCase {
    * @covers ::getScopes
    * @covers ::getItemsByScope
    */
-  public function testConstructor() {
+  public function testConstructor(): void {
     $item_a = new CalculatedPermissionsItem('scope_a', 'foo', ['baz']);
     $item_b = new CalculatedPermissionsItem('scope_b', 1, ['bob', 'charlie']);
 
@@ -44,6 +49,63 @@ class CalculatedPermissionsTest extends UnitTestCase {
     $this->assertSame(['24'], $calculated_permissions->getCacheTags(), 'Successfully inherited all cache tags.');
     $this->assertSame([], $calculated_permissions->getCacheContexts(), 'All cache contexts were cleared so they do not bubble up.');
     $this->assertSame(1986, $calculated_permissions->getCacheMaxAge(), 'Successfully inherited cache max-age.');
+  }
+
+  /**
+   * Tests the conversion to Access Policy API.
+   *
+   * @covers ::toCore
+   * @depends testConstructor
+   */
+  public function testToCore(): void {
+    $item_old = new CalculatedPermissionsItem('scope', 'foo', ['baz']);
+
+    $calculated_permissions = $this->prophesize(CalculatedPermissionsInterface::class);
+    $calculated_permissions->getItems()->willReturn([$item_old]);
+    $calculated_permissions->getCacheTags()->willReturn(['24']);
+    $calculated_permissions->getCacheContexts()->willReturn(['Oct']);
+    $calculated_permissions->getCacheMaxAge()->willReturn(1986);
+    $calculated_permissions = new CalculatedPermissions($calculated_permissions->reveal());
+
+    $converted = $calculated_permissions->toCore();
+    $this->assertSame($calculated_permissions->getCacheTags(), $converted->getCacheTags());
+    $this->assertSame($calculated_permissions->getCacheContexts(), $converted->getCacheContexts());
+    $this->assertSame($calculated_permissions->getCacheMaxAge(), $converted->getCacheMaxAge());
+
+    $item_new = $converted->getItem('scope', 'foo');
+    $this->assertInstanceOf(CoreCalculatedPermissionsItem::class, $item_new);
+    $this->assertSame($item_old->getScope(), $item_new->getScope());
+    $this->assertSame($item_old->getIdentifier(), $item_new->getIdentifier());
+    $this->assertSame($item_old->getPermissions(), $item_new->getPermissions());
+    $this->assertSame($item_old->isAdmin(), $item_new->isAdmin());
+  }
+
+  /**
+   * Tests the conversion from the Access Policy API.
+   *
+   * @covers ::fromCore
+   */
+  public function testFromCore(): void {
+    $item_old = new CoreCalculatedPermissionsItem(['baz'], FALSE, 'scope', 'foo',);
+
+    $calculated_permissions = $this->prophesize(CoreCalculatedPermissionsInterface::class);
+    $calculated_permissions->getItems()->willReturn([$item_old]);
+    $calculated_permissions->getCacheTags()->willReturn(['24']);
+    $calculated_permissions->getCacheContexts()->willReturn(['Oct']);
+    $calculated_permissions->getCacheMaxAge()->willReturn(1986);
+    $calculated_permissions = new CoreCalculatedPermissions($calculated_permissions->reveal());
+
+    $converted = CalculatedPermissions::fromCore($calculated_permissions);
+    $this->assertSame($calculated_permissions->getCacheTags(), $converted->getCacheTags());
+    $this->assertSame($calculated_permissions->getCacheContexts(), $converted->getCacheContexts());
+    $this->assertSame($calculated_permissions->getCacheMaxAge(), $converted->getCacheMaxAge());
+
+    $item_new = $converted->getItem('scope', 'foo');
+    $this->assertInstanceOf(CalculatedPermissionsItem::class, $item_new);
+    $this->assertSame($item_old->getScope(), $item_new->getScope());
+    $this->assertSame($item_old->getIdentifier(), $item_new->getIdentifier());
+    $this->assertSame($item_old->getPermissions(), $item_new->getPermissions());
+    $this->assertSame($item_old->isAdmin(), $item_new->isAdmin());
   }
 
 }

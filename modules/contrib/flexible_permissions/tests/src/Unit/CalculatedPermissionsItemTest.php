@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\flexible_permissions\Unit;
 
+use Drupal\Core\Session\CalculatedPermissionsItem as CoreCalculatedPermissionsItem;
 use Drupal\flexible_permissions\CalculatedPermissionsItem;
 use Drupal\Tests\UnitTestCase;
 
@@ -22,7 +25,7 @@ class CalculatedPermissionsItemTest extends UnitTestCase {
    * @covers ::getPermissions
    * @covers ::isAdmin
    */
-  public function testConstructor() {
+  public function testConstructor(): void {
     $scope = 'some_scope';
 
     $item = new CalculatedPermissionsItem($scope, 'foo', ['bar', 'baz', 'bar'], FALSE);
@@ -42,7 +45,7 @@ class CalculatedPermissionsItemTest extends UnitTestCase {
    * @covers ::hasPermission
    * @depends testConstructor
    */
-  public function testHasPermission() {
+  public function testHasPermission(): void {
     $item = new CalculatedPermissionsItem('some_scope', 'foo', ['bar'], FALSE);
     $this->assertFalse($item->hasPermission('baz'), 'Missing permission was not found.');
     $this->assertTrue($item->hasPermission('bar'), 'Existing permission was found.');
@@ -54,10 +57,39 @@ class CalculatedPermissionsItemTest extends UnitTestCase {
    * @covers ::hasPermission
    * @depends testConstructor
    */
-  public function testHasPermissionWithAdminFlag() {
+  public function testHasPermissionWithAdminFlag(): void {
     $item = new CalculatedPermissionsItem('some_scope', 'foo', ['bar'], TRUE);
     $this->assertTrue($item->hasPermission('baz'), 'Missing permission was found.');
     $this->assertTrue($item->hasPermission('bar'), 'Existing permission was found.');
+  }
+
+  /**
+   * Tests the conversion to Access Policy API.
+   *
+   * @covers ::toCore
+   * @depends testConstructor
+   */
+  public function testToCore(): void {
+    $item = new CalculatedPermissionsItem('some_scope', 'foo', ['bar'], TRUE);
+    $converted = $item->toCore();
+    $this->assertSame($item->getScope(), $converted->getScope());
+    $this->assertSame($item->getIdentifier(), $converted->getIdentifier());
+    $this->assertSame($item->getPermissions(), $converted->getPermissions());
+    $this->assertSame($item->isAdmin(), $converted->isAdmin());
+  }
+
+  /**
+   * Tests the conversion from the Access Policy API.
+   *
+   * @covers ::fromCore
+   */
+  public function testFromCore(): void {
+    $item = new CoreCalculatedPermissionsItem(['bar'], TRUE, 'some_scope', 'foo');
+    $converted = CalculatedPermissionsItem::fromCore($item);
+    $this->assertSame($item->getScope(), $converted->getScope());
+    $this->assertSame($item->getIdentifier(), $converted->getIdentifier());
+    $this->assertSame($item->getPermissions(), $converted->getPermissions());
+    $this->assertSame($item->isAdmin(), $converted->isAdmin());
   }
 
 }

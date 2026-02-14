@@ -7,6 +7,7 @@ use Drupal\Core\Session\AccountInterface;
 /**
  * Defines an interface to alter the final calculated permissions.
  */
+// phpcs:ignore
 interface PermissionCalculatorAlterInterfaceV2 {
 
   /**

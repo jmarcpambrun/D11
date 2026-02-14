@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\flexible_permissions\Unit;
 
 use Drupal\Core\Cache\Context\CacheContextsManager;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Session\CalculatedPermissionsItem as CoreCalculatedPermissionsItem;
+use Drupal\Core\Session\RefinableCalculatedPermissions as CoreRefinableCalculatedPermissions;
 use Drupal\flexible_permissions\CalculatedPermissionsItem;
 use Drupal\flexible_permissions\RefinableCalculatedPermissions;
 use Drupal\Tests\UnitTestCase;
@@ -23,7 +28,7 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::addItem
    * @covers ::getItem
    */
-  public function testAddItem() {
+  public function testAddItem(): void {
     $calculated_permissions = new RefinableCalculatedPermissions();
     $scope = 'some_scope';
 
@@ -41,7 +46,6 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
     $this->assertTrue($calculated_permissions->getItem($scope, 'foo')->isAdmin(), 'Merging in a calculated permissions item with admin rights flags the result as having admin rights.');
   }
 
-
   /**
    * Tests the overwriting of a calculated permissions item.
    *
@@ -49,7 +53,7 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::getItem
    * @depends testAddItem
    */
-  public function testAddItemOverwrite() {
+  public function testAddItemOverwrite(): void {
     $calculated_permissions = new RefinableCalculatedPermissions();
     $scope = 'some_scope';
 
@@ -71,7 +75,7 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::removeItem
    * @depends testAddItem
    */
-  public function testRemoveItem() {
+  public function testRemoveItem(): void {
     $scope = 'some_scope';
     $item = new CalculatedPermissionsItem($scope, 'foo', ['bar']);
 
@@ -92,7 +96,7 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::removeItems
    * @depends testAddItem
    */
-  public function testRemoveItems() {
+  public function testRemoveItems(): void {
     $scope = 'some_scope';
     $item = new CalculatedPermissionsItem($scope, 'foo', ['bar']);
 
@@ -113,7 +117,7 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::removeItemsByScope
    * @depends testAddItem
    */
-  public function testRemoveItemsByScope() {
+  public function testRemoveItemsByScope(): void {
     $scope_a = 'cat';
     $scope_b = 'dog';
 
@@ -139,11 +143,12 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
    * @covers ::merge
    * @depends testAddItem
    */
-  public function testMerge() {
+  public function testMerge(): void {
     $scope = 'some_scope';
 
     $cache_context_manager = $this->prophesize(CacheContextsManager::class);
     $cache_context_manager->assertValidTokens(Argument::any())->willReturn(TRUE);
+
     $container = $this->prophesize(ContainerInterface::class);
     $container->get('cache_contexts_manager')->willReturn($cache_context_manager->reveal());
     \Drupal::setContainer($container->reveal());
@@ -173,6 +178,72 @@ class RefinableCalculatedPermissionsTest extends UnitTestCase {
     $this->assertSame(['baz', 'bob', 'charlie'], $calculated_permissions->getItem($scope, 'foo')->getPermissions(), 'Permissions were merged properly.');
     $this->assertEqualsCanonicalizing(['bar', 'foo'], $calculated_permissions->getCacheContexts(), 'Cache contexts were merged properly');
     $this->assertEqualsCanonicalizing(['bar', 'foo'], $calculated_permissions->getCacheTags(), 'Cache tags were merged properly');
+  }
+
+  /**
+   * Tests the conversion to Access Policy API.
+   *
+   * @covers ::toCore
+   */
+  public function testToCore(): void {
+    $cache_contexts_manager = $this->prophesize(CacheContextsManager::class);
+    $cache_contexts_manager->assertValidTokens(Argument::any())->willReturn(TRUE);
+
+    $container = new ContainerBuilder();
+    $container->set('cache_contexts_manager', $cache_contexts_manager->reveal());
+    \Drupal::setContainer($container);
+
+    $item_old = new CalculatedPermissionsItem('scope', 'foo', ['baz']);
+    $calculated_permissions = (new RefinableCalculatedPermissions())
+      ->addItem($item_old)
+      ->addCacheTags(['24'])
+      ->addCacheContexts(['Oct'])
+      ->mergeCacheMaxAge(1986);
+
+    $converted = $calculated_permissions->toCore();
+    $this->assertSame($calculated_permissions->getCacheTags(), $converted->getCacheTags());
+    $this->assertSame($calculated_permissions->getCacheContexts(), $converted->getCacheContexts());
+    $this->assertSame($calculated_permissions->getCacheMaxAge(), $converted->getCacheMaxAge());
+
+    $item_new = $converted->getItem('scope', 'foo');
+    $this->assertInstanceOf(CoreCalculatedPermissionsItem::class, $item_new);
+    $this->assertSame($item_old->getScope(), $item_new->getScope());
+    $this->assertSame($item_old->getIdentifier(), $item_new->getIdentifier());
+    $this->assertSame($item_old->getPermissions(), $item_new->getPermissions());
+    $this->assertSame($item_old->isAdmin(), $item_new->isAdmin());
+  }
+
+  /**
+   * Tests the conversion from the Access Policy API.
+   *
+   * @covers ::fromCore
+   */
+  public function testFromCore(): void {
+    $cache_contexts_manager = $this->prophesize(CacheContextsManager::class);
+    $cache_contexts_manager->assertValidTokens(Argument::any())->willReturn(TRUE);
+
+    $container = new ContainerBuilder();
+    $container->set('cache_contexts_manager', $cache_contexts_manager->reveal());
+    \Drupal::setContainer($container);
+
+    $item_old = new CoreCalculatedPermissionsItem(['baz'], FALSE, 'scope', 'foo',);
+    $calculated_permissions = (new CoreRefinableCalculatedPermissions())
+      ->addItem($item_old)
+      ->addCacheTags(['24'])
+      ->addCacheContexts(['Oct'])
+      ->mergeCacheMaxAge(1986);
+
+    $converted = RefinableCalculatedPermissions::fromCore($calculated_permissions);
+    $this->assertSame($calculated_permissions->getCacheTags(), $converted->getCacheTags());
+    $this->assertSame($calculated_permissions->getCacheContexts(), $converted->getCacheContexts());
+    $this->assertSame($calculated_permissions->getCacheMaxAge(), $converted->getCacheMaxAge());
+
+    $item_new = $converted->getItem('scope', 'foo');
+    $this->assertInstanceOf(CalculatedPermissionsItem::class, $item_new);
+    $this->assertSame($item_old->getScope(), $item_new->getScope());
+    $this->assertSame($item_old->getIdentifier(), $item_new->getIdentifier());
+    $this->assertSame($item_old->getPermissions(), $item_new->getPermissions());
+    $this->assertSame($item_old->isAdmin(), $item_new->isAdmin());
   }
 
 }

@@ -4,6 +4,7 @@ namespace Drupal\Tests\flexible_permissions\Unit;
 
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\Context\CacheContextsManager;
+use Drupal\Core\Cache\VariationCacheInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\flexible_permissions\CalculatedPermissions;
@@ -14,7 +15,6 @@ use Drupal\flexible_permissions\PermissionCalculatorBase;
 use Drupal\flexible_permissions\RefinableCalculatedPermissions;
 use Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface;
 use Drupal\Tests\UnitTestCase;
-use Drupal\variationcache\Cache\VariationCacheInterface;
 use Prophecy\Argument;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -88,6 +88,7 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
     $chain_calculator = $this->setUpChainCalculator();
     $chain_calculator->addCalculator($calculator);
 
+    /** @var \Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface $calculator_permissions */
     $calculator_permissions = $calculator->calculatePermissions($account, 'bar');
     $calculator_permissions->addCacheTags(['flexible_permissions']);
     $this->assertEquals(new CalculatedPermissions($calculator_permissions), $chain_calculator->calculatePermissions($account, 'bar'));
@@ -125,6 +126,7 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
     $chain_calculator = $this->setUpChainCalculator();
     $chain_calculator->addCalculator($calculator);
 
+    /** @var \Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface $calculator_permissions */
     $calculator_permissions = $calculator->calculatePermissions($account, 'anything');
     $calculator_permissions->addCacheTags(['flexible_permissions']);
     $calculated_permissions = $chain_calculator->calculatePermissions($account, 'anything');
@@ -176,7 +178,7 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
   }
 
   /**
-   * Tests if the account switcher switches properly when user cache context is present.
+   * Tests if the account switcher switches when user cache context is present.
    *
    * @covers ::calculatePermissions
    * @dataProvider accountSwitcherProvider
@@ -215,7 +217,7 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
   }
 
   /**
-   * Tests if the account switcher switches properly when user cache context is present.
+   * Tests the caching of the calculated permissions.
    *
    * @covers ::calculatePermissions
    * @dataProvider cachingProvider
@@ -229,6 +231,7 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
     $scope = 'bar';
 
     $bar_calculator = new BarScopeCalculator();
+    /** @var \Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface $bar_permissions */
     $bar_permissions = $bar_calculator->calculatePermissions($account, $scope);
     $bar_permissions->addCacheTags(['flexible_permissions']);
     $bar_permissions->disableBuildMode();
@@ -288,19 +291,19 @@ class ChainPermissionCalculatorTest extends UnitTestCase {
     VariationCacheInterface $variation_cache = NULL,
     VariationCacheInterface $variation_cache_static = NULL,
     CacheBackendInterface $cache_static = NULL,
-    AccountSwitcherInterface $account_switcher = NULL
+    AccountSwitcherInterface $account_switcher = NULL,
   ) {
     if (!isset($variation_cache)) {
       $variation_cache = $this->prophesize(VariationCacheInterface::class);
       $variation_cache->get(Argument::cetera())->willReturn(FALSE);
-      $variation_cache->set(Argument::cetera())->willReturn(NULL);
+      $variation_cache->set(Argument::cetera());
       $variation_cache = $variation_cache->reveal();
     }
 
     if (!isset($variation_cache_static)) {
       $variation_cache_static = $this->prophesize(VariationCacheInterface::class);
       $variation_cache_static->get(Argument::cetera())->willReturn(FALSE);
-      $variation_cache_static->set(Argument::cetera())->willReturn(NULL);
+      $variation_cache_static->set(Argument::cetera());
       $variation_cache_static = $variation_cache_static->reveal();
     }
 
@@ -334,6 +337,7 @@ class FooScopeCalculator extends PermissionCalculatorBase {
    * {@inheritdoc}
    */
   public function calculatePermissions(AccountInterface $account, $scope) {
+    /** @var \Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface $calculated_permissions */
     $calculated_permissions = parent::calculatePermissions($account, $scope);
     return $calculated_permissions->addItem(new CalculatedPermissionsItem('foo', 1, ['foo', 'bar'], TRUE));
   }
@@ -356,6 +360,7 @@ class BarScopeCalculator extends PermissionCalculatorBase {
    * {@inheritdoc}
    */
   public function calculatePermissions(AccountInterface $account, $scope) {
+    /** @var \Drupal\flexible_permissions\RefinableCalculatedPermissionsInterface $calculated_permissions */
     $calculated_permissions = parent::calculatePermissions($account, $scope);
     return $calculated_permissions->addItem(new CalculatedPermissionsItem('bar', 1, ['foo', 'bar']));
   }

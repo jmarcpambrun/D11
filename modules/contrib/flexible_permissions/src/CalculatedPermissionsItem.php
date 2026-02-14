@@ -2,6 +2,9 @@
 
 namespace Drupal\flexible_permissions;
 
+use Drupal\Core\Session\CalculatedPermissionsItem as CoreCalculatedPermissionsItem;
+use Drupal\Core\Session\CalculatedPermissionsItemInterface as CoreCalculatedPermissionsItemInterface;
+
 /**
  * Represents a single entry for the calculated permissions.
  *
@@ -89,6 +92,30 @@ class CalculatedPermissionsItem implements CalculatedPermissionsItemInterface {
    */
   public function hasPermission($permission) {
     return $this->isAdmin() || in_array($permission, $this->permissions, TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toCore(): CoreCalculatedPermissionsItemInterface {
+    return new CoreCalculatedPermissionsItem(
+      $this->getPermissions(),
+      $this->isAdmin(),
+      $this->getScope(),
+      $this->getIdentifier()
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function fromCore(CoreCalculatedPermissionsItemInterface $core_object): self {
+    return new self(
+      $core_object->getScope(),
+      $core_object->getIdentifier(),
+      $core_object->getPermissions(),
+      $core_object->isAdmin()
+    );
   }
 
 }

@@ -3,6 +3,7 @@
 namespace Drupal\flexible_permissions;
 
 use Drupal\Core\Cache\CacheableDependencyInterface;
+use Drupal\Core\Session\CalculatedPermissionsInterface as CoreCalculatedPermissionsInterface;
 
 /**
  * Defines the calculated permissions interface.
@@ -48,5 +49,24 @@ interface CalculatedPermissionsInterface extends CacheableDependencyInterface {
    *   A list of calculated permission items for the given scope.
    */
   public function getItemsByScope($scope);
+
+  /**
+   * Converts an FP version into an Access Policy API version.
+   *
+   * @return \Drupal\Core\Session\CalculatedPermissionsInterface
+   *   The Access Policy API counterpart.
+   */
+  public function toCore(): CoreCalculatedPermissionsInterface;
+
+  /**
+   * Converts an Access Policy API version into an FP version.
+   *
+   * @param \Drupal\Core\Session\CalculatedPermissionsInterface $core_object
+   *   The Drupal core version of this object.
+   *
+   * @return self
+   *   The Flexible Permissions counterpart.
+   */
+  public static function fromCore(CoreCalculatedPermissionsInterface $core_object): self;
 
 }

@@ -3,6 +3,8 @@
 namespace Drupal\flexible_permissions;
 
 use Drupal\Core\Cache\CacheableDependencyTrait;
+use Drupal\Core\Session\CalculatedPermissions as CoreCalculatedPermissions;
+use Drupal\Core\Session\CalculatedPermissionsInterface as CoreCalculatedPermissionsInterface;
 
 /**
  * Represents a calculated set of permissions with cacheable metadata.
@@ -31,6 +33,22 @@ class CalculatedPermissions implements CalculatedPermissionsInterface {
     // these cache contexts when the calculated permissions get converted into a
     // value object here so that they will never bubble up by accident.
     $this->cacheContexts = [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toCore(): CoreCalculatedPermissionsInterface {
+    $converted = (new RefinableCalculatedPermissions())->merge($this)->toCore();
+    return new CoreCalculatedPermissions($converted);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function fromCore(CoreCalculatedPermissionsInterface $core_object): self {
+    $converted = RefinableCalculatedPermissions::fromCore($core_object);
+    return new self($converted);
   }
 
 }
