@@ -21,72 +21,30 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
   use LoggerChannelTrait;
 
 
-  const QUEUE_NAME = "cron_event_scheduler";
+  const string QUEUE_NAME = 'cron_event_scheduler';
 
-  /**
-   * Symfony\Component\EventDispatcher\EventDispatcherInterface definition.
-   *
-   * @var EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * Queued events
-   *
-   * @var array
-   */
-  protected $queue;
-
-  /**
-   * Is the dispatcher pageSent to dispatch events?
-   *
-   * @var boolean
-   */
-  protected $pageSent;
-
-  /**
-   * @var EventSchedulerInterface
-   */
-  protected $scheduler;
-
-  /**
-   * @var TimeInterface
-   */
-  protected $time;
-
-  /**
-   * The event queue service allows more events to be added to the
-   * end while it's being processed, to ensure we don't process
-   * events within events (which causes issues when handling entities).
-   *
-   * @var LocalEventQueueInterface
-   */
-  protected $localEventQueue;
-
-  protected EventSchedulerUtilsInterface $eventSchedulerUtils;
+  protected bool $pageSent;
 
   /**
    * Constructs a new DelayedEventDispatcher object.
    *
-   * @param EventDispatcherInterface $event_dispatcher
+   * @param EventDispatcherInterface $eventDispatcher
    * @param EventSchedulerInterface $scheduler
    * @param EventSchedulerUtilsInterface $eventSchedulerUtils
    * @param TimeInterface $time
-   * @param LocalEventQueueInterface $eventQueue
+   * @param LocalEventQueueInterface $localEventQueue
+   *
+   *  The event queue service allows more events to be added to the
+   *  end while it's being processed, to ensure we don't process
+   *  events within events (which causes issues when handling entities).
    */
   public function __construct(
-    EventDispatcherInterface $event_dispatcher,
-    EventSchedulerInterface $scheduler,
-    EventSchedulerUtilsInterface $eventSchedulerUtils,
-    TimeInterface $time,
-    LocalEventQueueInterface $eventQueue
+    protected EventDispatcherInterface $eventDispatcher,
+    protected EventSchedulerInterface $scheduler,
+    protected EventSchedulerUtilsInterface $eventSchedulerUtils,
+    protected TimeInterface $time,
+    protected LocalEventQueueInterface $localEventQueue
   ) {
-    $this->eventDispatcher = $event_dispatcher;
-    $this->scheduler = $scheduler;
-    $this->eventSchedulerUtils = $eventSchedulerUtils;
-    $this->time = $time;
-    $this->localEventQueue = $eventQueue;
-
     $this->pageSent = FALSE;
   }
 
@@ -107,7 +65,7 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
     if (!$this->pageSent) {
       $this->pageSent = TRUE;
 
-      /** @var Event|EventDelayInterface $event */
+      /** @var object $event */
       foreach ($this->localEventQueue->get() as $eventName => $event) {
         $this->eventSchedulerUtils->log(sprintf('Dispatching queued event: %s', $eventName), 'EventSchedulerDispatcher');
         $this->eventDispatcher->dispatch($event, $eventName);
@@ -117,10 +75,9 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
 
   /**
    * {@inheritdoc}
-   *
-   * @param Event|EventDelayInterface|EventScheduleInterface $event
    */
-  public function dispatch(object $event, ?string $eventName = null): object {
+  public function dispatch($event, ?string $eventName = NULL): object {
+    /** @var Event $event */
     // Is this an event to be scheduled, delayed, or just dispatched?
     if ($event instanceof EventDelayInterface) {
       $this->eventSchedulerUtils->log(sprintf('Dispatching to local queue: %s', $eventName), 'EventSchedulerDispatcher');

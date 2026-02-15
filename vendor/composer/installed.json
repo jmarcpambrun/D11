@@ -2790,6 +2790,86 @@
             "install-path": "../../modules/contrib/ai"
         },
         {
+            "name": "drupal/ai_agents",
+            "version": "1.2.1",
+            "version_normalized": "1.2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/ai_agents.git",
+                "reference": "1.2.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/ai_agents-1.2.1.zip",
+                "reference": "1.2.1",
+                "shasum": "057ab414e5097b3500ff1b2c95c46ee269474dd6"
+            },
+            "require": {
+                "drupal/ai": "^1.2.0",
+                "drupal/core": "^10.2 || ^11",
+                "drupal/modeler_api": "^1.0.3"
+            },
+            "require-dev": {
+                "drupal/webform": "^6.0"
+            },
+            "suggest": {
+                "drupal/bpmn_io": "Allows editing of AI agents with BPMN diagrams.",
+                "drupal/simple_crawler": "Allows the AI Form integrations to crawl websites.",
+                "drupal/unstructured": "Makes the AI Form integrations work better by allowing many file contexts."
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.2.1",
+                    "datestamp": "1763555955",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "akhil babu",
+                    "homepage": "https://www.drupal.org/user/3632866"
+                },
+                {
+                    "name": "andrewbelcher",
+                    "homepage": "https://www.drupal.org/user/655282"
+                },
+                {
+                    "name": "jurgenhaas",
+                    "homepage": "https://www.drupal.org/user/168924"
+                },
+                {
+                    "name": "marcus_johansson",
+                    "homepage": "https://www.drupal.org/user/385947"
+                },
+                {
+                    "name": "michaellander",
+                    "homepage": "https://www.drupal.org/user/636494"
+                },
+                {
+                    "name": "yautja_cetanu",
+                    "homepage": "https://www.drupal.org/user/626050"
+                }
+            ],
+            "description": "Allows AI agents to be used on Drupal websites to do changes and lookup things.",
+            "homepage": "https://www.drupal.org/project/ai_agents",
+            "keywords": [
+                "Drupal"
+            ],
+            "support": {
+                "source": "https://git.drupalcode.org/project/ai_agents"
+            },
+            "install-path": "../../modules/contrib/ai_agents"
+        },
+        {
             "name": "drupal/ai_provider_openai",
             "version": "1.2.0",
             "version_normalized": "1.2.0.0",
@@ -5533,18 +5613,18 @@
         },
         {
             "name": "drupal/eu_cookie_compliance",
-            "version": "1.29.0",
-            "version_normalized": "1.29.0.0",
+            "version": "1.30.0-rc2",
+            "version_normalized": "1.30.0.0-RC2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eu-cookie-compliance.git",
-                "reference": "8.x-1.29"
+                "reference": "8.x-1.30-rc2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eu_cookie_compliance-8.x-1.29.zip",
-                "reference": "8.x-1.29",
-                "shasum": "c10aca3e4b4107e0ca804804f0deb98d20a78251"
+                "url": "https://ftp.drupal.org/files/projects/eu_cookie_compliance-8.x-1.30-rc2.zip",
+                "reference": "8.x-1.30-rc2",
+                "shasum": "3f99de9085921d530fba95362bec6ce7f11d3f19"
             },
             "require": {
                 "drupal/core": "^8.9 || ^9 || ^10 || ^11"
@@ -5552,11 +5632,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.29",
-                    "datestamp": "1760671053",
+                    "version": "8.x-1.30-rc2",
+                    "datestamp": "1762114922",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "RC releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -5671,27 +5751,27 @@
         },
         {
             "name": "drupal/event_scheduler",
-            "version": "2.3.0-rc3",
-            "version_normalized": "2.3.0.0-RC3",
+            "version": "2.3.0-rc5",
+            "version_normalized": "2.3.0.0-RC5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/event_scheduler.git",
-                "reference": "2.3.0-rc3"
+                "reference": "2.3.0-rc5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/event_scheduler-2.3.0-rc3.zip",
-                "reference": "2.3.0-rc3",
-                "shasum": "c7e4b637bace6f72935a41b0f202d5d17a9373e6"
+                "url": "https://ftp.drupal.org/files/projects/event_scheduler-2.3.0-rc5.zip",
+                "reference": "2.3.0-rc5",
+                "shasum": "140444ca0002b90d617c4ad407d21366575ca84a"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^9.5 || ^10"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.3.0-rc3",
-                    "datestamp": "1706651553",
+                    "version": "2.3.0-rc5",
+                    "datestamp": "1771087547",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "RC releases are not covered by Drupal security advisories."
@@ -7926,6 +8006,62 @@
                 "docs": "https://www.drupal.org/docs/8/modules/metatag"
             },
             "install-path": "../../modules/contrib/metatag"
+        },
+        {
+            "name": "drupal/modeler_api",
+            "version": "1.0.6",
+            "version_normalized": "1.0.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/modeler_api.git",
+                "reference": "1.0.6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.0.6.zip",
+                "reference": "1.0.6",
+                "shasum": "7f105303e9149363d4b2649848b4d9b5ad755e25"
+            },
+            "require": {
+                "drupal/core": "^10.4 || ^11"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.6",
+                    "datestamp": "1764747432",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "benjifisher",
+                    "homepage": "https://www.drupal.org/user/683300"
+                },
+                {
+                    "name": "cosmicdreams",
+                    "homepage": "https://www.drupal.org/user/42579"
+                },
+                {
+                    "name": "jurgenhaas",
+                    "homepage": "https://www.drupal.org/user/168924"
+                }
+            ],
+            "description": "Provides an API for modules to use modelers like BPMN.iO",
+            "homepage": "https://www.drupal.org/project/modeler_api",
+            "support": {
+                "source": "https://drupal.org/project/modeler_api",
+                "issues": "https://drupal.org/project/issues/modeler_api"
+            },
+            "install-path": "../../modules/contrib/modeler_api"
         },
         {
             "name": "drupal/multivalue_form_element",
