@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\OutputInterface;
+use Drupal\ai\Utility\Textarea;
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
@@ -109,6 +110,14 @@ class RegexpGuardrail extends AiGuardrailPluginBase implements ConfigurableInter
       '#title' => $this->t('Regexp Pattern'),
       '#description' => $this->t('The regular expression pattern to match.'),
       '#default_value' => $this->configuration['regexp_pattern'] ?? '',
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     $form['violation_message'] = [
@@ -118,6 +127,14 @@ class RegexpGuardrail extends AiGuardrailPluginBase implements ConfigurableInter
       '#description' => $this->t('You can use the placeholder %placeholder to include the pattern used.', [
         '%placeholder' => '@pattern',
       ]),
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     return $form;

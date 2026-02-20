@@ -3,7 +3,6 @@
 namespace Drupal\openai\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -13,26 +12,28 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Configure OpenAI client settings for this site.
  */
 class ApiSettingsForm extends ConfigFormBase {
-   /**
+
+  /**
    * Settings form constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
-   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface|null $typedConfigManager
    *   The typed config manager.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    TypedConfigManagerInterface $typedConfigManager,
-    protected ModuleHandlerInterface $moduleHandler,
+    protected $typedConfigManager = NULL,
+    ModuleHandlerInterface $module_handler,
   ) {
     parent::__construct($config_factory, $typedConfigManager);
+    $this->moduleHandler = $module_handler;
   }
 
   /**
-  * {@inheritdoc}
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -42,7 +43,7 @@ class ApiSettingsForm extends ConfigFormBase {
     );
   }
 
- /**
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -60,19 +61,13 @@ class ApiSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-	  
-	if ($this->moduleHandler->moduleExists('key')) {
+    if ($this->moduleHandler->moduleExists('key')) {
       $form['api_key'] = [
         '#required' => TRUE,
         '#type' => 'key_select',
         '#title' => $this->t('API key'),
         '#default_value' => $this->config('openai.settings')->get('api_key'),
-        '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.',
-          [
-            ':link' => 'https://openai.com/api',
-          ]
-        ),
-      ];
+        '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.', [':link' => 'https://openai.com/api']),      ];
     }
     else {
       $form['api_key'] = [
@@ -84,13 +79,14 @@ class ApiSettingsForm extends ConfigFormBase {
         '#maxlength' => 256,
       ];
     }
-	$form['api_org'] = [
+
+    $form['api_org'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Organization ID'),
       '#default_value' => $this->config('openai.settings')->get('api_org'),
       '#description' => $this->t('The organization ID on your OpenAI account. This is required for some OpenAI services to work correctly.'),
     ];
-	
+
     $form['message'] = [
       '#markup' => '<p>If you recently renewed or added more funds to OpenAI, please note that it can take a few hours for API access to be restored.</p>',
     ];
@@ -106,9 +102,6 @@ class ApiSettingsForm extends ConfigFormBase {
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_org', $form_state->getValue('api_org'))
       ->save();
-	  
-	\Drupal::service('page_cache_kill_switch')->trigger();
-	  
     parent::submitForm($form, $form_state);
   }
 

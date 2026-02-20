@@ -18,7 +18,7 @@ services:
     arguments: ['@entity_type.manager', '@extension.path.resolver', '@logger.factory']
   ai.prompt_subform:
     class: Drupal\ai\Form\AiPromptSubform
-    arguments: ['@form_builder', '@entity_type.manager']
+    arguments: ['@form_builder', '@entity_type.manager', '@datetime.time']
   ai.vdb_provider:
     class: Drupal\ai\AiVdbProviderPluginManager
     parent: default_plugin_manager
@@ -79,3 +79,6 @@ services:
   plugin.manager.ai.short_term_memory:
     class: Drupal\ai\PluginManager\AiShortTermMemoryPluginManager
     parent: default_plugin_manager
+  Drupal\ai\Hook\FormElement:
+    class: Drupal\ai\Hook\FormElement
+    autowire: true

@@ -28,7 +28,7 @@
   },
   "require": {
     "php": ">=8.0",
-    "drupal/group": "^2.0",
+    "drupal/group": "^3.0",
     "drupal/webform": "^6.2@dev",
     "drupal/core": "^9.4 || ^10 || ^11"
   }

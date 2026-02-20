@@ -341,7 +341,7 @@ class AiProviderFormHelper {
    *   The found form element or an empty array.
    */
   public static function findFormElementRecursive(array &$value, string $form_element_name): array {
-    if (isset($value[$form_element_name])) {
+    if (isset($value[$form_element_name]['#type']) && $value[$form_element_name]['#type'] == 'details') {
       return $value[$form_element_name];
     }
 

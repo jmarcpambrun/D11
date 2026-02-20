@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "583528f9d2d00861aa5751562d199b6e",
+    "content-hash": "46ee0c1c91c147d4ce3d734fe7005ec7",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2538,20 +2538,20 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.3.0-beta1",
+            "version": "1.3.0-rc1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.3.0-beta1"
+                "reference": "1.3.0-rc1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.3.0-beta1.zip",
-                "reference": "1.3.0-beta1",
-                "shasum": "10859c7977b0abd6294d34fed49522ea1dc5f0fc"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.3.0-rc1.zip",
+                "reference": "1.3.0-rc1",
+                "shasum": "4872963e1a7b8d2ec6ffaf19f8b9f83610a2a18d"
             },
             "require": {
-                "drupal/core": "^10.4 || ^11",
+                "drupal/core": "^10.5 || ^11.2",
                 "drupal/key": "^1.18",
                 "league/html-to-markdown": "^5.1",
                 "openai-php/client": ">=v0.10.1",
@@ -2559,13 +2559,16 @@
             },
             "require-dev": {
                 "allanpichardo/mysql-vector": "^2.0",
+                "drupal/address": "^2.0",
                 "drupal/ai_assistant_api": "*",
-                "drupal/eca": "^2.0",
+                "drupal/eca": "*",
                 "drupal/eca_content-eca_content": "*",
                 "drupal/field_validation": "^3.0@beta",
                 "drupal/key": "*",
+                "drupal/opentelemetry": "^1.0@beta",
                 "drupal/search_api": "^1.x-dev",
                 "drupal/search_api_solr": "^4.0",
+                "drupal/test_helpers": "^1.5",
                 "drupal/token": "^1.14",
                 "drush/drush": "^12|^13"
             },
@@ -2575,11 +2578,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.3.0-beta1",
-                    "datestamp": "1768495473",
+                    "version": "1.3.0-rc1",
+                    "datestamp": "1771519737",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Beta releases are not covered by Drupal security advisories."
+                        "message": "RC releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -6425,17 +6428,17 @@
         },
         {
             "name": "drupal/group",
-            "version": "2.3.2",
+            "version": "3.3.5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/group.git",
-                "reference": "2.3.2"
+                "reference": "3.3.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/group-2.3.2.zip",
-                "reference": "2.3.2",
-                "shasum": "56e6cf3acbf776564ccb77b0924987ac807d3dbe"
+                "url": "https://ftp.drupal.org/files/projects/group-3.3.5.zip",
+                "reference": "3.3.5",
+                "shasum": "5e8df19cf48ef171bbe042e4d4b2f8107a339530"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -6449,8 +6452,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.3.2",
-                    "datestamp": "1746519483",
+                    "version": "3.3.5",
+                    "datestamp": "1746519542",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -10606,22 +10609,22 @@
         },
         {
             "name": "drupal/webform_group",
-            "version": "2.0.1",
+            "version": "3.0.1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/webform_group.git",
-                "reference": "2.0.1"
+                "reference": "3.0.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/webform_group-2.0.1.zip",
-                "reference": "2.0.1",
-                "shasum": "74f546b9b278e7f94357853aae1359bf2334740f"
+                "url": "https://ftp.drupal.org/files/projects/webform_group-3.0.1.zip",
+                "reference": "3.0.1",
+                "shasum": "88eafe55bfb73b759ba63c1a7e71a479c9d1401f"
             },
             "require": {
                 "drupal/core": "^9.4 || ^10 || ^11",
                 "drupal/gnode": "*",
-                "drupal/group": "^2.0",
+                "drupal/group": "^3.0",
                 "drupal/webform": "^6.2@dev",
                 "drupal/webform_node": "*",
                 "php": ">=8.0"
@@ -10635,8 +10638,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.1",
-                    "datestamp": "1733925563",
+                    "version": "3.0.1",
+                    "datestamp": "1733925525",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -21683,7 +21686,7 @@
     "minimum-stability": "RC",
     "stability-flags": {
         "drupal/advancedqueue": 5,
-        "drupal/ai": 10,
+        "drupal/ai": 5,
         "drupal/auto_translation": 10,
         "drupal/bartik": 5,
         "drupal/computed_field": 15,

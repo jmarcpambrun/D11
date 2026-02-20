@@ -158,7 +158,7 @@ class WebformGroupManager implements WebformGroupManagerInterface {
     }
 
     /** @var \Drupal\group\Entity\Storage\GroupRelationshipStorageInterface $group_relationship_storage */
-    $group_relationship_storage = $this->getEntityStorage('group_content');
+    $group_relationship_storage = $this->getEntityStorage('group_relationship');
 
     // Get group content id for the source entity.
     $group_relationship_ids = $group_relationship_storage->getQuery()
@@ -198,7 +198,7 @@ class WebformGroupManager implements WebformGroupManagerInterface {
     }
 
     /** @var \Drupal\group\Entity\Storage\GroupRelationshipStorageInterface $group_relationship_storage */
-    $group_relationship_storage = $this->getEntityStorage('group_content');
+    $group_relationship_storage = $this->getEntityStorage('group_relationship');
 
     // Get group content id for the source entity.
     $group_relationship_ids = $group_relationship_storage->getQuery()

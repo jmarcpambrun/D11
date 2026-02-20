@@ -212,17 +212,17 @@ class Server extends ConfigEntityBase implements ServerInterface {
    * {@inheritdoc}
    */
   public function getBackend() {
-    if (!$this->backendPlugin) {
-      $backend_plugin_manager = $this->backendPluginManager();
+    if (!$this->backendPlugin && $this->hasValidBackend()) {
+	  $backend_plugin_manager = \Drupal::service('plugin.manager.search_api.backend');
       $config = $this->backend_config;
       $config['#server'] = $this;
       try {
-        $this->backendPlugin = $backend_plugin_manager->createInstance($this->getBackendId(), $config);
+        $this->backendPlugin = \Drupal::getContainer()
+          ->get('plugin.manager.search_api.backend')
+          ->createInstance($this->getBackendId(), $config);
       }
-      catch (PluginException) {
-        $backend_id = $this->getBackendId();
-        $label = $this->label();
-        throw new SearchApiException("The backend with ID '$backend_id' could not be retrieved for server '$label'.");
+      catch (PluginException $e) {
+        throw new SearchApiException("The backend with ID '{$this->getBackendId()}' could not be retrieved for server '{$this->label()}': {$e->getMessage()}", 0, $e);
       }
     }
     return $this->backendPlugin;

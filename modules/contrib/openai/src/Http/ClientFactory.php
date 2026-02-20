@@ -18,6 +18,7 @@ class ClientFactory {
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
+
   /**
    * The module handler.
    *
@@ -29,7 +30,9 @@ class ClientFactory {
    * The key repository.
    * @var \Drupal\key\KeyRepositoryInterface
    */
+ 
   protected KeyRepositoryInterface $keyRepository;
+
 
   /**
    * Constructs a new ClientFactory instance.
@@ -40,15 +43,17 @@ class ClientFactory {
    *   The module handler.
    * @param \Drupal\key\KeyRepositoryInterface $keyRepository
    *   The key repository.
+
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
     ModuleHandlerInterface $module_handler,
-    KeyRepositoryInterface $keyRepository,
+     KeyRepositoryInterface $keyRepository,
   ) {
-     $this->config = $config_factory->get('openai.settings');
+    $this->config = $config_factory->get('openai.settings');
     $this->moduleHandler = $module_handler;
-    $this->keyRepository = $keyRepository;  
+    $this->keyRepository = $keyRepository;
+
   }
 
   /**
@@ -60,9 +65,7 @@ class ClientFactory {
   public function create(): Client {
     $api_key = $this->config->get('api_key');
     if ($this->moduleHandler->moduleExists('key')) {
-	  if (!isset($api_key)) {	
-		$api_key = $this->keyRepository->getKey($api_key)->getKeyValue() 	;
-      }
+      $api_key = $this->keyRepository->getKey($api_key)->getKeyValue();
     }
     return \OpenAI::client($api_key, $this->config->get('api_org'));
   }

@@ -50,3 +50,5 @@ Some of the providers supports running the requests in Fibers, meaning that you 
 
 The providers that supports this will realize that they are running in a fiber and start a fiber for each request. See the tests/src/AiLlm/FiberTest.php for an example of how to do this.
 
+### Getting rate limits from the provider
+If your provider has rate limits, you can set them on the `ChatOutput` object returned by the `chat` method using `setRateLimits()`. This lets your provider return a `ChatProviderLimitsDto` object with values such as maximum requests, remaining requests, and reset time. Consumers can then read this data with `getRateLimits()` to manage and display provider rate limit status.

@@ -12,6 +12,6 @@ dependencies:
   - 'webform_group:webform_group'
 
 # Information added by Drupal.org packaging script on 2024-12-11
-version: '2.0.1'
+version: '3.0.1'
 project: 'webform_group'
-datestamp: 1733925565
+datestamp: 1733925527

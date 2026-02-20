@@ -6,6 +6,7 @@ namespace Drupal\ai\Form;
 
 use Drupal\ai\Entity\AiGuardrail;
 use Drupal\ai\Guardrail\AiGuardrailEntityInterface;
+use Drupal\ai\Utility\Textarea;
 use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
@@ -56,6 +57,14 @@ final class AiGuardrailSetForm extends EntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
       '#default_value' => $this->entity->get('description'),
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     $form['stop_threshold'] = [

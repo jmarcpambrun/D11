@@ -25,6 +25,7 @@ function ai_chatbot_theme(): array {
       'variables' => [
         'message' => [],
         'username' => 'Chatbot',
+        'role' => 'assistant',
         'timestamp' => '',
         'bot_image' => '',
         'user' => '',
@@ -85,6 +86,14 @@ function ai_chatbot_form_block_form_alter(&$form, &$form_state) {
 #[LegacyHook]
 function ai_chatbot_preprocess_top_bar(&$variables) {
   \Drupal::service(ChatbotHooks::class)->topbar($variables);
+}
+
+/**
+ * Implements hook_toolbar().
+ */
+#[LegacyHook]
+function ai_chatbot_toolbar() {
+  return \Drupal::service(ChatbotHooks::class)->toolbar();
 }
 
 /**

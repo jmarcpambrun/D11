@@ -28,6 +28,7 @@ use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
 use Drupal\Core\TypedData\ComplexDataInterface;
 use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\external_entities\Entity\Query\External\Query as ExternalEntitiesQuery;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\field\FieldConfigInterface;
 use Drupal\field\FieldStorageConfigInterface;
 use Drupal\search_api\Attribute\SearchApiDatasource;
@@ -467,6 +468,19 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
     if ($bundles = array_keys($this->getBundles())) {
       foreach ($bundles as $bundle_id) {
         $properties += $this->getEntityFieldManager()->getFieldDefinitions($type, $bundle_id);
+		// Pick up all the properties defined in the field storage definitions,
+        // this is in case the bundle configurations are stored in separate
+        // "bundle" modules that'll be installed in a later step.
+        $field_storage_definitions = $this->getEntityFieldManager()->getFieldStorageDefinitions($type);
+        $field_storage_definitions = array_diff_key($field_storage_definitions, $properties);
+        foreach ($field_storage_definitions as $key => $field_storage_definition) {
+          $properties[$key] = new FieldConfig([
+            'field_storage' => $field_storage_definition,
+            'field_type' => $field_storage_definition->getType(),
+            'bundle' => $bundle_id,
+          ]);
+        }
+
       }
     }
     // Exclude properties with custom storage, since we can't extract them

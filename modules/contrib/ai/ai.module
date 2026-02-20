@@ -5,6 +5,7 @@
  * AI module file.
  */
 
+use Drupal\ai\Hook\FormElement;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -103,4 +104,11 @@ function ai_preprocess_links__ai_tools_library_menu(array &$variables): void {
     $link['attributes']->addClass('ai-tools-library-menu__item');
     $link['link']['#options']['attributes']['class'][] = 'ai-tools-library-menu__link';
   }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function ai_element_info_alter(array &$info) {
+  \Drupal::service(FormElement::class)->elementInfoAlter($info);
 }

@@ -264,6 +264,30 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
   }
 
   /**
+   * Returns the action button widget ID.
+   *
+   * @param string $fieldName
+   *   The field name.
+   * @param array $context
+   *   The context.
+   *
+   * @return string
+   *   The Widget ID.
+   */
+  protected function getActionButtonWidgetId(string $fieldName, array $context): string {
+    if (!empty($context['action_id'])) {
+      $widgetId = $context['action_id'];
+    }
+    else {
+      $widgetId = $fieldName . '_field_widget_action_' . $this->getPluginId();
+    }
+    if (!empty($context['delta'])) {
+      $widgetId .= '_' . $context['delta'];
+    }
+    return $widgetId;
+  }
+
+  /**
    * Returns the action button depending on the `multiple` value of definition.
    *
    * @param array $form
@@ -275,15 +299,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    */
   protected function actionButton(array &$form, FormStateInterface $form_state, array $context = []) {
     $fieldName = $context['items']->getFieldDefinition()->getName();
-    if (!empty($context['action_id'])) {
-      $widgetId = $context['action_id'];
-    }
-    else {
-      $widgetId = $fieldName . '_field_widget_action_' . $this->getPluginId();
-    }
-    if (!empty($context['delta'])) {
-      $widgetId .= '_' . $context['delta'];
-    }
+    $widgetId = $this->getActionButtonWidgetId($fieldName, $context);
     $weight = $this->configuration['weight'] ?? 0;
     $form[$widgetId] = [
       '#type' => 'button',
@@ -302,7 +318,6 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
         'data-widget-id' => $this->getPluginId(),
         'data-widget-field' => $fieldName,
         'data-widget-delta' => $context['delta'] ?? '',
-        'data-widget-settings' => json_encode($this->getConfiguration()),
       ],
       '#field_widget_action_field_name' => $fieldName,
       // When called from hook_field_widget_complete_form, delta is not present.
@@ -336,9 +351,16 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    * @return string
    *   The css selector to fill in with the selected suggestion.
    */
-  protected function getSuggestionsTarget(array &$form, FormStateInterface $form_state) {
+  protected function getSuggestionsTarget(array &$form, FormStateInterface $form_state): string {
     $target_element = $this->getTargetElement($form, $form_state);
-    return $target_element ? $target_element['#attributes']['data-drupal-selector'] : '';
+    if (!$target_element) {
+      return '';
+    }
+
+    // Safely try data-drupal-selector, fallback to id, or return empty.
+    return $target_element['#attributes']['data-drupal-selector']
+      ?? $target_element['#id']
+      ?? '';
   }
 
   /**
@@ -352,13 +374,17 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    * @return array
    *   The form element.
    */
-  protected function getTargetElement(array &$form, FormStateInterface $form_state) {
+  protected function getTargetElement(array &$form, FormStateInterface $form_state): array {
     // Get the triggering element, the button is inside the same field widget.
     $triggering_element = $form_state->getTriggeringElement();
     $array_parents = $triggering_element['#array_parents'];
+
+    // Remove the button key.
     array_pop($array_parents);
+
+    // Identify the correct property name (default to 'value').
     $array_parents[] = static::FORM_ELEMENT_PROPERTY;
-    return NestedArray::getValue($form, $array_parents);
+    return NestedArray::getValue($form, $array_parents) ?? [];
   }
 
   /**
@@ -442,7 +468,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
     }
     $response->addCommand(new OpenModalDialogCommand($this->t('Suggestions'), $message, [
       'width' => '80%',
-      'dialogClass' => 'ui-dialog-fwa-suggestions',
+      'classes' => ['ui-dialog' => 'ui-dialog-fwa-suggestions'],
     ]));
     return $response;
   }

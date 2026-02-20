@@ -74,7 +74,7 @@ ai.tools_library:
 entity.ai_prompt.collection:
   path: '/admin/config/ai/prompts'
   defaults:
-    _entity_list: 'ai_prompt'
+    _controller: '\Drupal\ai\Controller\AiPromptCollectionController::collection'
     _title: 'AI Prompts'
   requirements:
     _permission: 'manage ai prompts'
@@ -136,7 +136,7 @@ entity.ai_prompt_type.add_form:
   path: '/admin/config/ai/prompts/prompt-types/add'
   defaults:
     _entity_form: 'ai_prompt_type.add'
-    _title: 'Add AI Prompt types'
+    _title: 'Add AI Prompt type'
   requirements:
     _permission: 'administer ai prompt types'
   options:

@@ -448,6 +448,7 @@ trait SearchApiFieldTrait {
    * @throws \Drupal\search_api\SearchApiException
    *   An array of all ResultRow objects returned from the query.
    *
+   * @throws \Drupal\search_api\SearchApiException
    * @see \Drupal\views\Plugin\views\field\FieldHandlerInterface::preRender()
    */
   public function preRender(&$values) {
@@ -460,10 +461,11 @@ trait SearchApiFieldTrait {
         $dependents = $info['dependents'];
 
         if ($combined_property_path === NULL) {
-          $this->preLoadResultItems($values, $dependents);
-          continue;
-          if (empty($this->getIndex()->getServerInstance()->getBackendConfig()['retrieve_data'])) {
-           $this->preLoadResultItems($values, $dependents);
+          if ($this->getIndex()->getServerInstance()) {
+            $skip_preload = !(empty($this->getIndex()->getServerInstance()->getBackendConfig()['retrieve_data']));
+          }
+          if (!empty($skip_preload)) {
+            $this->preLoadResultItems($values, $dependents);
             continue;
           }
         }

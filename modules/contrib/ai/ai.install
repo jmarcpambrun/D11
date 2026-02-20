@@ -117,3 +117,15 @@ function ai_update_10306(): void {
     $update_manager->installEntityType($entity_type);
   }
 }
+
+/**
+ * Add default request timeout configuration for existing installations.
+ */
+function ai_update_10307(): void {
+  $config = \Drupal::configFactory()->getEditable('ai.settings');
+
+  // Only set the default timeout if it's not already configured.
+  if ($config->get('request_timeout') === NULL) {
+    $config->set('request_timeout', 60)->save();
+  }
+}

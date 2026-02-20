@@ -17,6 +17,7 @@ use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\OutputInterface;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai\Utility\Textarea;
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -109,6 +110,14 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
       '#title' => $this->t('Valid Topics'),
       '#description' => $this->t('List of valid topics, one per line.'),
       '#default_value' => $this->configuration['valid_topics'] ?? '',
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     $form['invalid_topics'] = [
@@ -116,18 +125,42 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
       '#title' => $this->t('Invalid Topics'),
       '#description' => $this->t('List of invalid topics, one per line.'),
       '#default_value' => $this->configuration['invalid_topics'] ?? '',
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     $form['invalid_topics_present_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message to send if invalid topics are present'),
       '#default_value' => $this->configuration['invalid_topics_present_message'] ?: 'The text contains invalid topics',
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     $form['valid_topics_missing_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message to send if no valid topics are found'),
       '#default_value' => $this->configuration['valid_topics_missing_message'] ?: 'The text does not contain any of the valid topics',
+      // This property will land into core soon, see
+      // https://www.drupal.org/project/drupal/issues/3202631. It can stay
+      // after this is added to Drupal core.
+      '#normalize_newlines' => TRUE,
+      // Until that the custom value callback is needed. Should be removed
+      // after the issue mentioned above is merged into core and the minimum
+      // supported Drupal version includes `#normalize_newlines` property.
+      '#value_callback' => [Textarea::class, 'valueCallback'],
     ];
 
     if ($form_state->getValue('llm_ai_provider') == NULL) {

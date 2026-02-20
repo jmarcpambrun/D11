@@ -833,6 +833,19 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
       if (in_array(AiModelCapability::ChatJsonOutput, $capabilities) && !preg_match('/^(gpt-4|gpt-4o|o1|o3|gpt-4-turbo)/i', $model['id'])) {
         continue;
       }
+	  // Only allow models that support tools/function calling.
+      if (in_array(AiModelCapability::ChatTools, $capabilities) && !preg_match('/^(gpt-4\.1(?![0-9])|gpt-4o|gpt-4-turbo|gpt-5|o1|o3|o4)/i', $model['id'])) {
+        continue;
+      }
+      // Only allow models that support structured responses.
+      if (in_array(AiModelCapability::ChatStructuredResponse, $capabilities) && !preg_match('/^(gpt-4\.1(?![0-9])|gpt-4o|gpt-4-turbo|gpt-5|o1|o3|o4)/i', $model['id'])) {
+        continue;
+      }
+      // Only allow models that support both tools and structured responses.
+      if (in_array(AiModelCapability::ChatCombinedToolsAndStructuredResponse, $capabilities) && !preg_match('/^(gpt-4\.1(?![0-9])|gpt-4o|gpt-4-turbo|gpt-5|o1|o3|o4)/i', $model['id'])) {
+        continue;
+      }
+
       // Don't allow audio or video for now.
       if (in_array(AiModelCapability::ChatWithAudio, $capabilities)) {
         continue;

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
-use Drupal\ai\Guardrail\AiGuardrailHelper;
-use Drupal\ai\Guardrail\AiGuardrailSetInterface;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
@@ -13,6 +11,8 @@ use Drupal\Core\Render\Renderer;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Guardrail\AiGuardrailHelper;
+use Drupal\ai\Guardrail\AiGuardrailSetInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
@@ -182,7 +182,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     ];
 
     $form['left']['advanced']['json_schema_detail']['json_schema'] = [
-      '#type' => 'textarea',
+      '#type' => 'ai_json_schema',
       '#title' => $this->t('JSON Schema/Structured Output'),
       '#description' => $this->t('If the provider supports structured JSON, you can enter the JSON schema here.'),
       '#attributes' => [
