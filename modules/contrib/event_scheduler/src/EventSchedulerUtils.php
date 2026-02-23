@@ -89,9 +89,7 @@ class EventSchedulerUtils implements EventSchedulerUtilsInterface {
         $this->queue->createItem($itemId);
 
         // And update the DB to show it's been processed.
-        $conditions = [
-            'id' => ['value' => $itemId],
-        ];
+        $conditions = ['id' => ['value' => $itemId]];
 
         // Set processed to 1 because it's been transferred to the queue.
         $update_fields = ['processed' => 1];
