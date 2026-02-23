@@ -1,0 +1,11 @@
+name: Update Config Entity Module
+description: Fixes Error - A non-existent config entity name returned by FieldStorageConfigInterface::getBundles() entity type comment, bundle.
+package: Custom
+
+type: module
+core_version_requirement: ^9.4 || ^10 || ^11
+
+# Information added by Drupal.org packaging script on 2025-01-08
+version: '1.0.0'
+project: 'update_config_entity'
+datestamp: 1736295588
