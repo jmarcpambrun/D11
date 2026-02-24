@@ -1,8 +1,0 @@
-services:
-  logger.channel.writer_ai:
-    parent: logger.channel_base
-    arguments: ['writer_ai']
-
-  writer_ai.client:
-    class: Drupal\writer_ai\WriterAiClient
-    arguments: ['@http_client', '@logger.channel.writer_ai']
