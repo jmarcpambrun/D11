@@ -40,7 +40,7 @@ class EventNormalizer implements NormalizerInterface, DenormalizerInterface {
    *                                    reference handler can fix it
    * @throws LogicException             Occurs when the normalizer is not called in an expected context
    */
-  public function normalize($object, $format = NULL, array $context = []) {
+  public function normalize(mixed $object, ?string $format = NULL, array $context = []): string|null {
     if (!$object instanceof EventScheduleInterface) {
       throw new InvalidArgumentException('Supplied object to be normalized does not implement "EventScheduleInterface".');
     }
@@ -61,7 +61,7 @@ class EventNormalizer implements NormalizerInterface, DenormalizerInterface {
    *
    * @return bool
    */
-  public function supportsNormalization($data, $format = NULL): bool {
+  public function supportsNormalization(mixed $data, ?string $format = NULL, array $context = []): bool {
     return $format === static::FORMAT && $data instanceof EventScheduleInterface;
   }
 
@@ -100,7 +100,20 @@ class EventNormalizer implements NormalizerInterface, DenormalizerInterface {
    *
    * @return bool
    */
-  public function supportsDenormalization($data, $type, $format = NULL): bool {
+  public function supportsDenormalization(mixed $data, string $type, ?string $format = NULL, array $context = []): bool {
     return $format === static::FORMAT && is_a($type, EventScheduleInterface::class, TRUE);
+  }
+
+  /**
+   * Implements NormalizerInterface::getSupportedTypes()
+   *
+   * @param string $format This parameter allows you to define different supported types based on the serialization format (e.g., 'json', 'xml'). If null, it applies to all formats.
+   *
+   * @return array
+   */
+  public function getSupportedTypes(?string $format): array {
+    return [
+      EventScheduleInterface::class => TRUE,
+    ];
   }
 }

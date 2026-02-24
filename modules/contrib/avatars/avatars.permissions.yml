@@ -1,7 +1,0 @@
-administer avatars:
-  title: 'Administer Avatar Kit'
-  description: 'Manage settings for Avatar Kit.'
-  restrict access: TRUE
-
-permission_callbacks:
-  - \Drupal\avatars\Permissions::avatarGenerators

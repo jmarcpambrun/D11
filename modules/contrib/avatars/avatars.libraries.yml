@@ -1,5 +1,0 @@
-avatars.avatars_image_radios:
-  version: 0
-  css:
-    theme:
-      css/avatars.css: {}
