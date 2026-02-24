@@ -18,7 +18,7 @@ abstract class WebformQuizFunctionalTestBase extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['webform_quiz'];
+  protected static $modules = ['webform_quiz'];
 
   /**
    * A user with permission to administer site configuration.
@@ -30,7 +30,7 @@ abstract class WebformQuizFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->user = $this->drupalCreateUser(['administer site configuration']);
     $this->drupalLogin($this->user);

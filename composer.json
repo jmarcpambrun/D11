@@ -150,7 +150,7 @@
         "npm-asset/chartjs-plugin-datalabels": "2.0",
         "oomphinc/composer-installers-extender": "^2.0",
         "phpmailer/phpmailer": "7.0.0",
-        "phpstan/phpstan": "1.12",
+        "phpstan/phpstan": "^1.12",
         "symfony/error-handler": "*",
         "symfony/expression-language": "*",
         "symfony/polyfill-intl-grapheme": "^1.28",
@@ -259,5 +259,8 @@
             "post-update-cmd": [
               "@clean-chartjs"
             ]
-        }	
+        },
+    "require-dev": {
+        "mglaman/drupal-check": "^1.5"
+    }
 }

@@ -2,14 +2,14 @@
 
 namespace Drupal\webform_quiz\Element;
 
-use Drupal\Core\Render\Element\RenderElement;
+use Drupal\Core\Render\Element\RenderElementBase;
 
 /**
  * Provides a render element to display webform descriptions.
  *
  * @RenderElement("webform_quiz_correct_answer_description")
  */
-class WebformQuizCorrectAnswerDescription extends RenderElement {
+class WebformQuizCorrectAnswerDescription extends RenderElementBase {
 
   /**
    * {@inheritdoc}
