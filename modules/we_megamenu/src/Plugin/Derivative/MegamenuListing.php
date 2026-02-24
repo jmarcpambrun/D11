@@ -30,7 +30,7 @@ class MegamenuListing extends DeriverBase implements ContainerDeriverInterface {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, $base_plugin_id) {
-    return new static(
+    return new self(
       $base_plugin_id,
       $container->get('entity_type.manager')
     );

@@ -34,7 +34,7 @@ class EntityBuildEvent extends Event implements EventDelayInterface, EntityBuild
    * @param mixed[] $data
    */
   public static function Dispatch($data) {
-    $event = new static($data);
+    $event = new self($data);
 
     static::doDispatch($event, static::NAME);
   }

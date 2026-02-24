@@ -34,7 +34,7 @@ abstract class UniversalFileBaseEvent extends Event {
   static public function Dispatch(FileInterface $file, FileUsageInterface $fileUsage, array $extras = []) {
     $usage_list = $fileUsage->listUsage($file);
 
-    $event = new static($file, $usage_list);
+    $event = new self($file, $usage_list);
 
     $event->extras = $event->getDefaults($extras);
 

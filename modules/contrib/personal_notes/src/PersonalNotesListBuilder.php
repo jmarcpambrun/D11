@@ -44,7 +44,7 @@ class PersonalNotesListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
-    return new static(
+    return new self(
       $entity_type,
       $container->get('entity_type.manager')
         ->getStorage($entity_type->id()),

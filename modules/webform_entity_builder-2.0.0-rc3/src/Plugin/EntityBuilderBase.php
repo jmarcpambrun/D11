@@ -105,7 +105,7 @@ abstract class EntityBuilderBase extends PluginBase implements EntityBuilderInte
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
+    return new self(
       $container->get('file.usage'),
       $container->get('current_user'),
       $container->get('datetime.time'),

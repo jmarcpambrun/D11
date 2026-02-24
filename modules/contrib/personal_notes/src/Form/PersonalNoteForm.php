@@ -63,6 +63,9 @@ class PersonalNoteForm extends ContentEntityForm {
 
     $user = $form_state->getValue('user')[0]['target_id'];
     $form_state->setRedirect('view.user_personal_notes.page_1', ['user' => $user]);
+	/*JMP_DBG*/
+	return $status
+	/*JMP_DBG*/
   }
 
 }

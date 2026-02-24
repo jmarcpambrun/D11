@@ -103,7 +103,7 @@ class WeMegaMenuAdminController extends ControllerBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
+    return new self(
       $container->get('config.factory'),
       $container->get('module_handler'),
       $container->get('request_stack'),
