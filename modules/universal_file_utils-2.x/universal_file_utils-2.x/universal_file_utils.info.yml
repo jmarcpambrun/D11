@@ -1,5 +1,0 @@
-name: 'Universal File Utils'
-type: 'module'
-description: 'Provides code for handling file accesses and downloads better through events.'
-core_version_requirement: ^9.3 || ^10 || ^11
-package: 'File System'
