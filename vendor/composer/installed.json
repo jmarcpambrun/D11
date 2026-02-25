@@ -2597,18 +2597,18 @@
         },
         {
             "name": "drupal/action",
-            "version": "0.2.1",
-            "version_normalized": "0.2.1.0",
+            "version": "0.2.2",
+            "version_normalized": "0.2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/action.git",
-                "reference": "0.2.1"
+                "reference": "0.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/action-0.2.1.zip",
-                "reference": "0.2.1",
-                "shasum": "efc67e925ceb3e78fc8c1f73e58ddd0312bda6f3"
+                "url": "https://ftp.drupal.org/files/projects/action-0.2.2.zip",
+                "reference": "0.2.2",
+                "shasum": "ea4d9c32b02668e6a15b3cdec0dc9254ff01d5cd"
             },
             "require": {
                 "drupal/core": ">10.2"
@@ -2616,8 +2616,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "0.2.1",
-                    "datestamp": "1712919607",
+                    "version": "0.2.2",
+                    "datestamp": "1740601845",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Project has not opted into security advisory coverage!"
@@ -2644,39 +2644,41 @@
         },
         {
             "name": "drupal/address",
-            "version": "2.0.0",
-            "version_normalized": "2.0.0.0",
+            "version": "2.0.4",
+            "version_normalized": "2.0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/address.git",
-                "reference": "2.0.0"
+                "reference": "2.0.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/address-2.0.0.zip",
-                "reference": "2.0.0",
-                "shasum": "4f7936b6bf08188ecbfddafb3d105ee956e6a952"
+                "url": "https://ftp.drupal.org/files/projects/address-2.0.4.zip",
+                "reference": "2.0.4",
+                "shasum": "5a86f7abc028f3d9833784dbf0791a6e4463da8e"
             },
             "require": {
                 "commerceguys/addressing": "^2.1.1",
-                "drupal/core": "^9.5 || ^10",
+                "drupal/core": "^9.5 || ^10 || ^11",
                 "php": "^8.0"
             },
             "require-dev": {
-                "drupal/token": "^1.0"
+                "drupal/diff": "^1",
+                "drupal/feeds": "^3",
+                "drupal/token": "^1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0",
-                    "datestamp": "1703692572",
+                    "version": "2.0.4",
+                    "datestamp": "1746462054",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "notification-url": "https://packages.drupal.org/8/downloads",
             "license": [
                 "GPL-2.0-or-later"
@@ -2687,7 +2689,7 @@
                     "homepage": "https://www.drupal.org/user/86106"
                 },
                 {
-                    "name": "Centarro",
+                    "name": "centarro",
                     "homepage": "https://www.drupal.org/user/3661446"
                 },
                 {
@@ -2712,30 +2714,33 @@
         },
         {
             "name": "drupal/advancedqueue",
-            "version": "1.0.0-rc7",
-            "version_normalized": "1.0.0.0-RC7",
+            "version": "1.6.0",
+            "version_normalized": "1.6.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/advancedqueue.git",
-                "reference": "8.x-1.0-rc7"
+                "reference": "8.x-1.6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/advancedqueue-8.x-1.0-rc7.zip",
-                "reference": "8.x-1.0-rc7",
-                "shasum": "b446eda22f5f9a9d13f78f2ce329ff1feef69173"
+                "url": "https://ftp.drupal.org/files/projects/advancedqueue-8.x-1.6.zip",
+                "reference": "8.x-1.6",
+                "shasum": "7ee19f1041ebbd9ba7c0946da08b89afa3f012fc"
             },
             "require": {
-                "drupal/core": "^9.1 || ^10"
+                "drupal/core": "^10.2 || ^11"
+            },
+            "require-dev": {
+                "drupal/plugin": "^2"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.0-rc7",
-                    "datestamp": "1673456946",
+                    "version": "8.x-1.6",
+                    "datestamp": "1770974217",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "RC releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 },
                 "drush": {
@@ -2751,6 +2756,10 @@
             ],
             "authors": [
                 {
+                    "name": "alexpott",
+                    "homepage": "https://www.drupal.org/user/157725"
+                },
+                {
                     "name": "amitaibu",
                     "homepage": "https://www.drupal.org/user/57511"
                 },
@@ -2759,7 +2768,7 @@
                     "homepage": "https://www.drupal.org/user/86106"
                 },
                 {
-                    "name": "Damien Tournoud",
+                    "name": "damien tournoud",
                     "homepage": "https://www.drupal.org/user/22211"
                 },
                 {
@@ -2775,14 +2784,6 @@
                     "homepage": "https://www.drupal.org/user/972218"
                 },
                 {
-                    "name": "Kazanir",
-                    "homepage": "https://www.drupal.org/user/2279698"
-                },
-                {
-                    "name": "laurentchardin",
-                    "homepage": "https://www.drupal.org/user/87775"
-                },
-                {
                     "name": "mglaman",
                     "homepage": "https://www.drupal.org/user/2416470"
                 },
@@ -2793,10 +2794,6 @@
                 {
                     "name": "rszrama",
                     "homepage": "https://www.drupal.org/user/49344"
-                },
-                {
-                    "name": "skipyT",
-                    "homepage": "https://www.drupal.org/user/350126"
                 }
             ],
             "description": "Provides a better Queue API.",
@@ -2945,18 +2942,18 @@
         },
         {
             "name": "drupal/ai_agents",
-            "version": "1.2.1",
-            "version_normalized": "1.2.1.0",
+            "version": "1.2.2",
+            "version_normalized": "1.2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_agents.git",
-                "reference": "1.2.1"
+                "reference": "1.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_agents-1.2.1.zip",
-                "reference": "1.2.1",
-                "shasum": "057ab414e5097b3500ff1b2c95c46ee269474dd6"
+                "url": "https://ftp.drupal.org/files/projects/ai_agents-1.2.2.zip",
+                "reference": "1.2.2",
+                "shasum": "e43f392ffda950aab313ebe662f775ac454664bb"
             },
             "require": {
                 "drupal/ai": "^1.2.0",
@@ -2974,8 +2971,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.2.1",
-                    "datestamp": "1763555955",
+                    "version": "1.2.2",
+                    "datestamp": "1771227740",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3272,18 +3269,18 @@
         },
         {
             "name": "drupal/bartik",
-            "version": "1.1.0-rc1",
-            "version_normalized": "1.1.0.0-RC1",
+            "version": "1.1.0",
+            "version_normalized": "1.1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bartik.git",
-                "reference": "1.1.0-rc1"
+                "reference": "1.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bartik-1.1.0-rc1.zip",
-                "reference": "1.1.0-rc1",
-                "shasum": "5c01f69122db0a62112df4d9a22f80d38c404321"
+                "url": "https://ftp.drupal.org/files/projects/bartik-1.1.0.zip",
+                "reference": "1.1.0",
+                "shasum": "6ff676ec392389e3d0096acb37694a2eafdd7336"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11.0"
@@ -3291,11 +3288,11 @@
             "type": "drupal-theme",
             "extra": {
                 "drupal": {
-                    "version": "1.1.0-rc1",
-                    "datestamp": "1761315985",
+                    "version": "1.1.0",
+                    "datestamp": "1762529671",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "RC releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -3445,27 +3442,27 @@
         },
         {
             "name": "drupal/burndown",
-            "version": "1.0.39",
-            "version_normalized": "1.0.39.0",
+            "version": "1.0.56",
+            "version_normalized": "1.0.56.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/burndown.git",
-                "reference": "1.0.39"
+                "reference": "1.0.56"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.39.zip",
-                "reference": "1.0.39",
-                "shasum": "f0c0a73ec954c4327bf3bad106c6b2de00c7fa82"
+                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.56.zip",
+                "reference": "1.0.56",
+                "shasum": "fe160401e5ff51aab58711bc7ebedeb2e89d13d8"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^9 || ^10 || ^11"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.39",
-                    "datestamp": "1693224370",
+                    "version": "1.0.56",
+                    "datestamp": "1735825279",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3484,7 +3481,7 @@
             ],
             "authors": [
                 {
-                    "name": "Binoli Lalani",
+                    "name": "binoli lalani",
                     "homepage": "https://www.drupal.org/user/3717129"
                 },
                 {
@@ -3492,8 +3489,16 @@
                     "homepage": "https://www.drupal.org/user/679776"
                 },
                 {
+                    "name": "leofishman",
+                    "homepage": "https://www.drupal.org/user/358053"
+                },
+                {
                     "name": "omkar_yewale",
                     "homepage": "https://www.drupal.org/user/3628360"
+                },
+                {
+                    "name": "purencool",
+                    "homepage": "https://www.drupal.org/user/894056"
                 },
                 {
                     "name": "shailja179",

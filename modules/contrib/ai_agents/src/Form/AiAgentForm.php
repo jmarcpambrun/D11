@@ -436,6 +436,7 @@ final class AiAgentForm extends EntityForm {
       $default_action = '';
       $default_values = '';
       $is_hidden = FALSE;
+      $not_break = FALSE;
       if ($form_state->isRebuilding()) {
         $default_action = $form_state->getValue([
           'tool_usage',
@@ -455,6 +456,12 @@ final class AiAgentForm extends EntityForm {
           $property_name,
           'hide_property',
         ]);
+        $not_break = $form_state->getValue([
+          'tool_usage',
+          $tool_definition['id'],
+          $property_name,
+          'not_break',
+        ]);
       }
       elseif ($tool_usage_limits = $this->entity->get('tool_usage_limits')) {
         if (isset($tool_usage_limits[$tool_definition['id']][$property_name])) {
@@ -462,6 +469,7 @@ final class AiAgentForm extends EntityForm {
           $values = is_array($tool_usage_limits[$tool_definition['id']][$property_name]['values']) ? $tool_usage_limits[$tool_definition['id']][$property_name]['values'] : [];
           $default_values = implode("\n", $values);
           $is_hidden = $tool_usage_limits[$tool_definition['id']][$property_name]['hide_property'] ?? FALSE;
+          $not_break = $tool_usage_limits[$tool_definition['id']][$property_name]['not_break'] ?? FALSE;
         }
       }
 
@@ -526,10 +534,26 @@ final class AiAgentForm extends EntityForm {
         ],
       ];
 
+      $form['prompt_detail']['tool_usage'][$tool_definition['id']]['property_restrictions'][$property_name]['not_break'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('One value, no line breaks'),
+        '#description' => $this->t('Check this box if you do not want multiple values to be set on new line. This is useful for forced values of hardcoded prompts for instance.'),
+        '#default_value' => $not_break,
+        '#states' => [
+          'visible' => [
+            ':input[name="tool_usage[' . $tool_definition['id'] . '][property_restrictions][' . $property_name . '][action]"]' => [
+              ['value' => 'only_allow'],
+              'or',
+              ['value' => 'force_value'],
+            ],
+          ],
+        ],
+      ];
+
       $form['prompt_detail']['tool_usage'][$tool_definition['id']]['property_restrictions'][$property_name]['values'] = [
         '#type' => 'textarea',
         '#title' => $this->t('Values'),
-        '#description' => $this->t('The values that are allowed or the value that should be set. If you pick to only allow certain values, you can set the allowed values new line separated if there are more then one. If you pick to force a value, you can set the value that should be set.'),
+        '#description' => $this->t('The values that are allowed or the value that should be set. Depending on the checkbox above named "One value, no line breaks" you can either provide one value or multiple values separated by new lines.'),
         '#default_value' => $default_values,
         '#rows' => 2,
         '#states' => [
@@ -623,7 +647,7 @@ final class AiAgentForm extends EntityForm {
             if ($values['action']) {
               $cleaned_values = str_replace("\r\n", "\n", $values['values'] ?? '');
               // Trim and remove all empty values.
-              $all_values = array_filter(array_map('trim', explode("\n", $cleaned_values)));
+              $all_values = $values['not_break'] ? [trim($cleaned_values)] : array_filter(array_map('trim', explode("\n", $cleaned_values)));
               $tool_usage['property_restrictions'][$property_name]['values'] = $all_values;
             }
             else {
