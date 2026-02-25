@@ -19,6 +19,7 @@ use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
 use Drush\Exceptions\CommandFailedException;
 use Drush\Utils\StringUtils;
+use Symfony\Component\Console\Output\OutputInterface;
 
 final class LocaleCommands extends DrushCommands
 {
@@ -175,7 +176,7 @@ final class LocaleCommands extends DrushCommands
 
         $file_uri = drush_tempnam('drush_', null, '.po');
         if ($this->writePoFile($file_uri, $language, $poreader_options)) {
-            $this->output()->writeln(file_get_contents($file_uri));
+            $this->output()->writeln(file_get_contents($file_uri), OutputInterface::OUTPUT_RAW);
         } else {
             $this->logger()->success(dt('Nothing to export.'));
         }
@@ -209,7 +210,7 @@ final class LocaleCommands extends DrushCommands
     #[CLI\Option(name: 'type', description: 'String types to include, defaults to <info>not-customized</info>. Recognized values: <info>not-customized</info>, <info>customized</info>', suggestedValues: ['not-customized', 'customized'])]
     #[CLI\Option(name: 'override', description: 'Whether and how imported strings will override existing translations. Defaults to the Import behavior configured in the admin interface. Recognized values: <info>none</info>, <info>customized</info>, <info>not-customized</info>, <info>all</info>', suggestedValues: ['none', 'not-customized', 'customized', 'all'])]
     #[CLI\Usage(name: 'drush locale:import-all /var/www/translations', description: 'Import all translations from the defined directory (non-recursively). Supported filename patterns are: {project}-{version}.{langcode}.po, {prefix}.{langcode}.po or {langcode}.po.')]
-    #[CLI\Usage(name: 'drush locale:import-all /var/www/translations/custom --types=customized --override=all', description: 'Import all custom translations from the defined directory (non-recursively) and override any existing translation. Supported filename patterns are: {project}-{version}.{langcode}.po, {prefix}.{langcode}.po or {langcode}.po.')]
+    #[CLI\Usage(name: 'drush locale:import-all /var/www/translations/custom --type=customized --override=all', description: 'Import all custom translations from the defined directory (non-recursively) and override any existing translation. Supported filename patterns are: {project}-{version}.{langcode}.po, {prefix}.{langcode}.po or {langcode}.po.')]
     #[CLI\Version(version: '12.2')]
     #[CLI\ValidateModulesEnabled(modules: ['locale'])]
     public function importAll($directory, $options = ['type' => self::REQ, 'override' => self::REQ])
