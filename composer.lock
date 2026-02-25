@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "79a0264898366c6a3836b268d42d9f3b",
+    "content-hash": "6f43e41d089b3ce28d85407aa69d0baf",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3231,26 +3231,26 @@
         },
         {
             "name": "drupal/captcha",
-            "version": "2.0.5",
+            "version": "2.0.10",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/captcha.git",
-                "reference": "2.0.5"
+                "reference": "2.0.10"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/captcha-2.0.5.zip",
-                "reference": "2.0.5",
-                "shasum": "0c39d27a99b53f6517ef25ceef1ac5e333964547"
+                "url": "https://ftp.drupal.org/files/projects/captcha-2.0.10.zip",
+                "reference": "2.0.10",
+                "shasum": "f1052ffe99ec2f8246f7da75e467b281fc2d804a"
             },
             "require": {
-                "drupal/core": ">=9.4 <11"
+                "drupal/core": "^9.5 || ^10 || ^11"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.5",
-                    "datestamp": "1691598525",
+                    "version": "2.0.10",
+                    "datestamp": "1770647534",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3456,20 +3456,20 @@
         },
         {
             "name": "drupal/clientside_validation",
-            "version": "4.0.2",
+            "version": "4.1.2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/clientside_validation.git",
-                "reference": "4.0.2"
+                "reference": "4.1.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/clientside_validation-4.0.2.zip",
-                "reference": "4.0.2",
-                "shasum": "bfaf0fa81d645427c1b3ccfd2d5e493a10b7f483"
+                "url": "https://ftp.drupal.org/files/projects/clientside_validation-4.1.2.zip",
+                "reference": "4.1.2",
+                "shasum": "d0fde67b600f4c14bb669d2e997f91415379838a"
             },
             "require": {
-                "drupal/core": "^9.4 || ^10.0",
+                "drupal/core": "^9.4 || ^10.0 || ^11.0",
                 "php": ">=7.4.0"
             },
             "require-dev": {
@@ -3479,8 +3479,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.0.2",
-                    "datestamp": "1676011269",
+                    "version": "4.1.2",
+                    "datestamp": "1739335910",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3576,29 +3576,29 @@
         },
         {
             "name": "drupal/computed_field",
-            "version": "4.0.0-alpha7",
+            "version": "4.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/computed_field.git",
-                "reference": "4.0.0-alpha7"
+                "reference": "4.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/computed_field-4.0.0-alpha7.zip",
-                "reference": "4.0.0-alpha7",
-                "shasum": "4ab608bb624cbd75c68089e2a518e533912bda56"
+                "url": "https://ftp.drupal.org/files/projects/computed_field-4.0.0.zip",
+                "reference": "4.0.0",
+                "shasum": "16b1a59bd4937457cd4732579b5fe649aaf3a48d"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^10.2 || ^11"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.0.0-alpha7",
-                    "datestamp": "1703935957",
+                    "version": "4.0.0",
+                    "datestamp": "1769008713",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -3652,19 +3652,19 @@
         },
         {
             "name": "drupal/computed_field_ui",
-            "version": "4.0.0-alpha7",
+            "version": "4.0.0",
             "require": {
                 "drupal/computed_field": "*",
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^10.2 || ^11"
             },
             "type": "metapackage",
             "extra": {
                 "drupal": {
-                    "version": "4.0.0-alpha7",
-                    "datestamp": "1703935957",
+                    "version": "4.0.0",
+                    "datestamp": "1769008713",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -3718,17 +3718,17 @@
         },
         {
             "name": "drupal/content_access",
-            "version": "2.1.0-rc1",
+            "version": "2.1.0-rc2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/content_access.git",
-                "reference": "2.1.0-rc1"
+                "reference": "2.1.0-rc2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/content_access-2.1.0-rc1.zip",
-                "reference": "2.1.0-rc1",
-                "shasum": "ad859cc391f8d6d3f6b9c981fac916bb95802732"
+                "url": "https://ftp.drupal.org/files/projects/content_access-2.1.0-rc2.zip",
+                "reference": "2.1.0-rc2",
+                "shasum": "99fe3c497c82c62ed82ae1249a50bea287305c8b"
             },
             "require": {
                 "drupal/core": "^9.4 || ^10 || ^11"
@@ -3739,8 +3739,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.1.0-rc1",
-                    "datestamp": "1740665551",
+                    "version": "2.1.0-rc2",
+                    "datestamp": "1769870811",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Project has not opted into security advisory coverage!"
@@ -4225,21 +4225,21 @@
         },
         {
             "name": "drupal/csv_serialization",
-            "version": "4.0.0",
+            "version": "4.0.1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/csv_serialization.git",
-                "reference": "4.0.0"
+                "reference": "4.0.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/csv_serialization-4.0.0.zip",
-                "reference": "4.0.0",
-                "shasum": "90d429b044f7d6608d9075852285f37a97d5de6c"
+                "url": "https://ftp.drupal.org/files/projects/csv_serialization-4.0.1.zip",
+                "reference": "4.0.1",
+                "shasum": "cd172acbf6b5996daa88b0d8d897074c5fe742dd"
             },
             "require": {
-                "drupal/core": "^10",
-                "league/csv": "^9.1"
+                "drupal/core": "^10 || ^11",
+                "league/csv": "^9.16"
             },
             "require-dev": {
                 "drupal/coder": "^8.3"
@@ -4247,8 +4247,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.0.0",
-                    "datestamp": "1698702085",
+                    "version": "4.0.1",
+                    "datestamp": "1723473162",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4286,26 +4286,26 @@
         },
         {
             "name": "drupal/ctools",
-            "version": "4.0.4",
+            "version": "4.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ctools.git",
-                "reference": "4.0.4"
+                "reference": "4.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ctools-4.0.4.zip",
-                "reference": "4.0.4",
-                "shasum": "4a2474eb2fd525b2add2db0e855c135ba7f0fb70"
+                "url": "https://ftp.drupal.org/files/projects/ctools-4.1.0.zip",
+                "reference": "4.1.0",
+                "shasum": "69f5889cf557df9e55519390e6a95cfa31b67874"
             },
             "require": {
-                "drupal/core": "^9.3 || ^10"
+                "drupal/core": "^9.5 || ^10 || ^11"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.0.4",
-                    "datestamp": "1684299878",
+                    "version": "4.1.0",
+                    "datestamp": "1718144949",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4501,17 +4501,17 @@
         },
         {
             "name": "drupal/drd",
-            "version": "4.1.3",
+            "version": "4.1.7",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/drd.git",
-                "reference": "4.1.3"
+                "reference": "4.1.7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/drd-4.1.3.zip",
-                "reference": "4.1.3",
-                "shasum": "e93a554873276c2ee4770955d028a217e4810f35"
+                "url": "https://ftp.drupal.org/files/projects/drd-4.1.7.zip",
+                "reference": "4.1.7",
+                "shasum": "5d27863d23d380550b2d3b1f53e439db889fcf13"
             },
             "require": {
                 "albertofem/rsync-lib": "^1.0",
@@ -4521,12 +4521,12 @@
                 "drupal/drd_agent": "^4.1",
                 "drupal/encrypt": "^3.1",
                 "drupal/eva": "^3.0",
-                "drupal/key_value_field": "^1.3",
+                "drupal/key_value_field": "^1.3 || dev-3431515-automated-drupal-11",
                 "mikehaertl/php-shellcommand": "^1.6",
                 "php": ">=8.1",
                 "phpseclib/phpseclib": "^2.0|^3.0",
                 "platformsh/client": "^2.0",
-                "symfony/filesystem": "^2.8|^3|^4|^5|^6"
+                "symfony/filesystem": "^2.8|^3|^4|^5|^6|^7"
             },
             "require-dev": {
                 "drupal/drd_pi": "*",
@@ -4546,8 +4546,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.1.3",
-                    "datestamp": "1719212790",
+                    "version": "4.1.7",
+                    "datestamp": "1741339419",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -21993,8 +21993,6 @@
     "stability-flags": {
         "drupal/ai": 5,
         "drupal/auto_translation": 10,
-        "drupal/computed_field": 15,
-        "drupal/computed_field_ui": 15,
         "drupal/content_access": 5,
         "drupal/entity_usage": 10,
         "drupal/eu_cookie_compliance": 5,
