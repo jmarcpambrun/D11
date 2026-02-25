@@ -85,13 +85,9 @@ class MailManagerReplacement extends MailManager implements MailManagerReplaceme
     ];
 
     // Create an email from the array.
-     $builder = $this->emailBuilderManager->createInstanceFromMessage($message);
-    if (!$builder) {
-      $message['result'] = FALSE;
-      return $message;
-    }
+    $builder = $this->emailBuilderManager->createInstanceFromMessage($message);
+    $email = $builder->fromArray($this->emailFactory, $message);
 
-     $email = $builder->fromArray($this->emailFactory, $message);
     if ($send) {
       $message['result'] = $email->send();
     }
