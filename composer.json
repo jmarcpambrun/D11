@@ -38,6 +38,7 @@
         "drupal/captcha": "2.0.5",
         "drupal/charts": "5.1.10",
         "drupal/clientside_validation": "4.0.2",
+        "drupal/composer_deploy": "1.10",
         "drupal/computed_field": "4.0.0-alpha7",
         "drupal/computed_field_ui": "4.0.0-alpha7",
         "drupal/content_access": "2.1-rc1",
