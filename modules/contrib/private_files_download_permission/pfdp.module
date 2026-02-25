@@ -4,8 +4,8 @@
  * @file
  * Implements the main module function and generic helper functions.
  */
-
 use Drupal\pfdp\Entity\DirectoryEntity;
+use Symfony\Component\Mime\MimeTypeGuesserInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -38,7 +38,7 @@ function pfdp_get_download_headers($uri) {
   $settings = \Drupal::config('pfdp.settings');
   $mime_type_guesser = \Drupal::service('file.mime_type.guesser');
   // Find out the MIME type.
-  if ($mime_type_guesser instanceof \Symfony\Component\Mime\MimeTypeGuesserInterface) {
+  if ($mime_type_guesser instanceof MimeTypeGuesserInterface) {
     $mime_type = $mime_type_guesser->guessMimeType($uri);
   }
   else {

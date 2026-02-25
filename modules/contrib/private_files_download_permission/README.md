@@ -11,8 +11,8 @@ whole website and increment the overall security.
 The 8.x port was rewritten from scratch, but many thanks to Paris Liakos and
 Andrey Kovtun for their precious help and hints.
 
-The 3.x branch was created for Drupal 9 (although it currently supports Drupal
-8.8.3+) and has been ported for Drupal 10 too.
+The 3.x branch was created for Drupal 9 (although it also supported Drupal
+8.8.3+), but it currently supports Drupal 10 and 11.
 
 Idea and code (mostly for version 7.x-1.x) were inspired by
 http://www.beacon9.ca/labs/drupal-7-private-files-module.

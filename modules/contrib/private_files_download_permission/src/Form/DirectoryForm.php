@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\user\RoleInterface;
+use Drupal\user\Entity\Role;
 
 /**
  * Directory form for private_files_download_permission.
@@ -70,7 +71,7 @@ class DirectoryForm extends EntityForm {
     ];
     $form['roles_wrapper']['roles'] = [
       '#type' => 'checkboxes',
-      '#options' => user_role_names(FALSE),
+      '#options' => array_map(fn(RoleInterface $role) => $role->label(), Role::loadMultiple()),
       '#default_value' => $pfdp_directory->roles,
     ];
     // Return the form.
