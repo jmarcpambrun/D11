@@ -118,7 +118,7 @@ return array(
     '9e4824c5afbdc1482b6025ce3d4dfde8' => $vendorDir . '/league/csv/src/functions_include.php',
     '6124b4c8570aa390c21fafd04a26c69f' => $vendorDir . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
     '801c31d8ed748cfa537fa45402288c95' => $vendorDir . '/psy/psysh/src/functions.php',
-    '73321c0e02b4d45ae9c8366042d80de4' => $vendorDir . '/arthurkushman/query-path/src/qp_functions.php',
+    '73cce2a22e450e409276d2fb45896e12' => $vendorDir . '/gravitypdf/querypath/src/qp_functions.php',
     '0c6f877f03a67a7485a2a748706e2f2f' => $vendorDir . '/h5p/h5p-core/h5p.classes.php',
     'a63ae9f41847366feffbb295da33fc13' => $vendorDir . '/h5p/h5p-core/h5p-development.class.php',
     'b0f066922f2544ef1e43b5d30974b0f1' => $vendorDir . '/h5p/h5p-core/h5p-file-storage.interface.php',

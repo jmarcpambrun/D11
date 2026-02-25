@@ -119,7 +119,7 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         '9e4824c5afbdc1482b6025ce3d4dfde8' => __DIR__ . '/..' . '/league/csv/src/functions_include.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         '801c31d8ed748cfa537fa45402288c95' => __DIR__ . '/..' . '/psy/psysh/src/functions.php',
-        '73321c0e02b4d45ae9c8366042d80de4' => __DIR__ . '/..' . '/arthurkushman/query-path/src/qp_functions.php',
+        '73cce2a22e450e409276d2fb45896e12' => __DIR__ . '/..' . '/gravitypdf/querypath/src/qp_functions.php',
         '0c6f877f03a67a7485a2a748706e2f2f' => __DIR__ . '/..' . '/h5p/h5p-core/h5p.classes.php',
         'a63ae9f41847366feffbb295da33fc13' => __DIR__ . '/..' . '/h5p/h5p-core/h5p-development.class.php',
         'b0f066922f2544ef1e43b5d30974b0f1' => __DIR__ . '/..' . '/h5p/h5p-core/h5p-file-storage.interface.php',
@@ -653,11 +653,11 @@ class ComposerStaticInit8348126a4ce832a94fca12c0b4e98ca7
         ),
         'QueryPath\\' => 
         array (
-            0 => __DIR__ . '/..' . '/arthurkushman/query-path/src',
+            0 => __DIR__ . '/..' . '/gravitypdf/querypath/src',
         ),
         'QueryPathTests\\' => 
         array (
-            0 => __DIR__ . '/..' . '/arthurkushman/query-path/tests/QueryPath',
+            0 => __DIR__ . '/..' . '/gravitypdf/querypath/tests/QueryPath',
         ),
         'Psy\\' => 
         array (
