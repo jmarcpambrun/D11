@@ -18,7 +18,7 @@ class WebformQuizWebformRadiosTest extends WebformQuizFunctionalTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp(): void {
+  protected function setUp() {
     parent::setUp();
     $this->drupalLogin($this->rootUser);
 

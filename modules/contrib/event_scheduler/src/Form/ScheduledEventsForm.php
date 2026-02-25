@@ -44,7 +44,7 @@ class ScheduledEventsForm extends FormBase
   }
 
   public static function create(ContainerInterface $container): static {
-    return new self(
+    return new static(
         $container->get('queue'),
         $container->get('plugin.manager.queue_worker')
     );

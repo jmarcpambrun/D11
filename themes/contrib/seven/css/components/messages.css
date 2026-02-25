@@ -1,20 +1,15 @@
 /**
- * @file
- * Styles for messages.
+ * Messages.
  */
-
 .messages {
   margin: 0 0 20px 8px; /* LTR */
 }
-
 [dir="rtl"] .messages {
   margin: 0 8px 10px 0;
 }
-
 .messages pre {
   margin: 0;
 }
-
 .messages h1,
 .messages .heading-a,
 .messages h2,

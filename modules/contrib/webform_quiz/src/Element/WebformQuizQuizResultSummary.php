@@ -2,7 +2,7 @@
 
 namespace Drupal\webform_quiz\Element;
 
-use Drupal\Core\Render\Element\RenderElementBase;
+use Drupal\Core\Render\Element\RenderElement;
 use Drupal\webform_quiz\Helper\StatsCalculator;
 use Drupal\webform_quiz\QuizResults;
 use Drupal\webform_quiz\EntitySettings\WebformQuizWebformSettingsForm;
@@ -12,7 +12,7 @@ use Drupal\webform_quiz\EntitySettings\WebformQuizWebformSettingsForm;
  *
  * @RenderElement("webform_quiz_quiz_result_summary")
  */
-class WebformQuizQuizResultSummary extends RenderElementBase {
+class WebformQuizQuizResultSummary extends RenderElement {
 
   /**
    * {@inheritdoc}

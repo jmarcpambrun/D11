@@ -15,14 +15,9 @@
  */
 #}
 {% if bundles is not empty %}
-  <ul class="admin-entity-list">
+  <ul class="admin-list">
     {% for bundle in bundles %}
-      <li class="clearfix">
-        <a{{ create_attribute(bundle.add_link.url.options.attributes ?? []) }} href="{{ bundle.add_link.url }}">
-          <span class="label">{{ bundle.label }}</span>
-        </a>
-        <div class="description">{{ bundle.description }}</div>
-      </li>
+      <li class="clearfix"><a{{ create_attribute(bundle.add_link.url.options.attributes ?? []) }} href="{{ bundle.add_link.url }}"><span class="label">{{ bundle.label }}</span><div class="description">{{ bundle.description }}</div></a></li>
     {% endfor %}
   </ul>
 {% elseif add_bundle_message is not empty %}

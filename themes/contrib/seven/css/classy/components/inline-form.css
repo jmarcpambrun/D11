@@ -1,6 +1,6 @@
 /**
  * @file
- * Styles for inline forms.
+ * Visual styles for inline forms.
  */
 
 .form--inline .form-item {
@@ -19,7 +19,7 @@
   }
 }
 
-/* This is required to win over specificity of [dir="rtl"] .form--inline .form-item. */
+/* This is required to win over specificity of [dir="rtl"] .form--inline .form-item */
 [dir="rtl"] .views-filterable-options-controls .form-item {
   margin-right: 2%;
 }

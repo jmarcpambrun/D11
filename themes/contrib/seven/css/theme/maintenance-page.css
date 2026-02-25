@@ -1,19 +1,21 @@
 /**
  * @file
- * Styles for the maintenance page.
+ * Maintenance theming.
  */
 
 .maintenance-page {
   min-height: 100%;
   background-color: #e0e0d8;
-  background-image: -webkit-radial-gradient(hsl(203, 2%, 90%), hsl(203, 2%, 95%));
+  background-image: -webkit-radial-gradient(
+    hsl(203, 2%, 90%),
+    hsl(203, 2%, 95%)
+  );
   background-image: radial-gradient(hsl(203, 2%, 90%), hsl(203, 2%, 95%));
   background-repeat: repeat;
   background-position:
     left top,
     50% 50%; /* LTR */
 }
-
 [dir="rtl"] .maintenance-page {
   background-position:
     right top,
@@ -28,7 +30,7 @@
 }
 
 /**
- * Task list and step indicator styles.
+ * Task list & step indicator
  */
 @media all and (max-width: 48em) {
   /* 768px */
@@ -89,7 +91,7 @@
     pointer-events: none;
     border: solid transparent;
     border-width: 1.269em;
-    border-color: rgb(235, 234, 228, 0);
+    border-color: rgba(235, 234, 228, 0);
     border-left-color: #ebeae4; /* LTR */
   }
   [dir="rtl"] .task-list .is-active::after {
@@ -103,15 +105,17 @@
   }
 }
 
+/**
+ * Layout
+ */
 .layout-container {
   width: auto;
   margin-right: 1.25em;
   margin-left: 1.25em;
   background: #fff;
 }
-
 .layout-container::after {
-  /* No reason for a clearfix in the markup. */
+  /* no reason for a clearfix in the markup */
   display: table;
   clear: both;
   content: "";
@@ -157,9 +161,10 @@
     margin: 0 auto;
     padding: 20px 0 40px 0;
     border-radius: 5px;
-    box-shadow: 0 6px 12px rgb(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
-  /* Positioning sidebar and content. */
+
+  /* Positioning sidebar & content */
   main {
     float: left; /* LTR */
     clear: none;
@@ -176,8 +181,7 @@
     padding: 15px;
   }
   [dir="rtl"] ul {
-    /* Override the default [dir="rtl"] ul margin. */
-    margin-right: 0;
+    margin-right: 0; /* Overrides default [dir="rtl"] ul margin */
   }
   .layout-sidebar-first {
     float: left; /* LTR */
@@ -186,27 +190,26 @@
   [dir="rtl"] .layout-sidebar-first {
     float: right;
   }
-  /* Margins for site name. */
+
+  /* Margins for sitename */
   .page-title {
     margin: 0.75em 1.9em;
   }
 }
 
 /**
- * Status report customization for install and update pages.
+ * Status report customization for install and update page.
  */
 .system-status-report__status-title {
   float: none;
   width: 100%;
 }
-
 .system-status-report__entry__value {
   float: none;
   width: 100%;
   padding-top: 0;
   padding-left: 3em; /* LTR */
 }
-
 [dir="rtl"] .system-status-report__entry__value {
   padding-right: 3em;
   padding-left: 1em;

@@ -1,7 +1,7 @@
 /**
- * @file
+ * @file update-report.css
  *
- * Styles for the available updates report at admin/reports/updates.
+ * Styling for the Available updates report at admin/reports/updates
  */
 
 .project-update__compatibility-details details {
@@ -10,13 +10,11 @@
   border: 0;
   background-color: inherit;
 }
-
 .project-update__compatibility-details details[open] {
   overflow: visible;
   height: auto;
   white-space: normal;
 }
-
 .project-update__compatibility-details summary {
   margin: 0;
   padding: 0;
@@ -24,7 +22,6 @@
   border: 0;
   font-weight: normal;
 }
-
 .project-update__compatibility-details .details-wrapper {
   margin: 0;
   padding: 5px 0;

@@ -92,7 +92,7 @@ regions:
 regions_hidden:
   - sidebar_first
 
-# Information added by Drupal.org packaging script on 2025-10-26
-version: '2.0.0-beta2'
+# Information added by Drupal.org packaging script on 2025-08-29
+version: '2.0.0-beta1'
 project: 'seven'
-datestamp: 1761490669
+datestamp: 1756488863

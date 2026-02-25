@@ -1,8 +1,6 @@
 /**
- * @file
- * Styles for adding spacing to the bottom of pages.
+ * Add spacing to bottom of pages
  */
-
 .page-content {
   margin-bottom: 80px;
 }

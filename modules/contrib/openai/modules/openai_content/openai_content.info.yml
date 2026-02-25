@@ -5,3 +5,8 @@ package: OpenAI
 core_version_requirement: ^10 || ^11
 dependencies:
   - openai:openai
+
+# Information added by Drupal.org packaging script on 2024-07-03
+version: '1.0.0-beta6'
+project: 'openai'
+datestamp: 1720013828

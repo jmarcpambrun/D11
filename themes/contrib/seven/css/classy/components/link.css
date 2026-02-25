@@ -1,6 +1,6 @@
 /**
  * @file
- * Styles an element as link.
+ * Style another element as a link.
  */
 
 button.link {
@@ -11,7 +11,6 @@ button.link {
   background: transparent;
   font-size: 1em;
 }
-
 label button.link {
   font-weight: bold;
 }

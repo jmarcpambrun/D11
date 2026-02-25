@@ -514,13 +514,7 @@ class PhpMailerSmtp extends PHPMailer implements MailInterface, ContainerFactory
 
     try {
       // Convert headers to lowercase.
-		/*JMP_DBG */
-		if (!empty($headers))
-		{
-			$headers = array_change_key_case($message['headers']);
-		}
-	  /*JMP_DBG */
-
+      $headers = array_change_key_case($message['headers']);
       unset($message['headers']);
 
       // Extract Content-Type and charset.

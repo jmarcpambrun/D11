@@ -140,7 +140,7 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
    * @param int $priority The higher this value, the earlier an event
    *                            listener will be triggered in the chain (defaults to 0)
    */
-  public function addListener(string $eventName, callable $listener, int $priority = 0): void {
+  public function addListener($eventName, $listener, $priority = 0) {
     $this->eventDispatcher->addListener($eventName, $listener, $priority);
   }
 
@@ -152,7 +152,7 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
    *
    * @param EventSubscriberInterface $subscriber
    */
-  public function addSubscriber(EventSubscriberInterface $subscriber): void {
+  public function addSubscriber(EventSubscriberInterface $subscriber) {
     $this->eventDispatcher->addSubscriber($subscriber);
   }
 
@@ -162,7 +162,7 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
    * @param string $eventName The event to remove a listener from
    * @param callable $listener The listener to remove
    */
-  public function removeListener(string $eventName, callable $listener): void {
+  public function removeListener($eventName, $listener) {
     $this->eventDispatcher->removeListener($eventName, $listener);
   }
 
@@ -171,7 +171,7 @@ class EventSchedulerDispatcher implements EventDispatcherInterface, EventSubscri
    *
    * @param EventSubscriberInterface $subscriber
    */
-  public function removeSubscriber(EventSubscriberInterface $subscriber): void {
+  public function removeSubscriber(EventSubscriberInterface $subscriber) {
     $this->eventDispatcher->removeSubscriber($subscriber);
   }
 

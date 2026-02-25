@@ -14,14 +14,9 @@
  */
 #}
 {% if content %}
-  <ul class="admin-entity-list">
+  <ul class="admin-list">
     {% for type in types %}
-      <li class="clearfix">
-        <a href="{{ type.url }}">
-          <span class="label">{{ type.label }}</span>
-        </a>
-        <div class="description">{{ type.description }}</div>
-      </li>
+      <li class="clearfix"><a href="{{ type.url }}"><span class="label">{{ type.label }}</span><div class="description">{{ type.description }}</div></a></li>
     {% endfor %}
   </ul>
 {% else %}

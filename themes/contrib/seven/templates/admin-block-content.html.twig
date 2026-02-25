@@ -28,12 +28,7 @@
 {% if content %}
   <ul{{ attributes.addClass(classes) }}>
     {% for item in content %}
-      <li>
-        <a href="{{ item.url }}">
-          <span class="label">{{ item.title }}</span>
-          <div class="description">{{ item.description }}</div>
-        </a>
-      </li>
+      <li><a href="{{ item.url }}"><span class="label">{{ item.title }}</span><div class="description">{{ item.description }}</div></a></li>
     {% endfor %}
   </ul>
 {% endif %}

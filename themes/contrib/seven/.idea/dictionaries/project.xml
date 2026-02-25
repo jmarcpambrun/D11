@@ -1,44 +1,18 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
-      <w>arrowrefresh</w>
-      <w>arrowreturn</w>
-      <w>arrowreturnthick</w>
-      <w>arrowstop</w>
-      <w>arrowthick</w>
-      <w>arrowthickstop</w>
-      <w>buttonpane</w>
-      <w>buttonset</w>
       <w>chgrp</w>
-      <w>circlesmall</w>
-      <w>closethick</w>
-      <w>dblog</w>
       <w>dropbutton</w>
       <w>drupalci</w>
-      <w>extlink</w>
-      <w>fieldgroup</w>
-      <w>gripsmall</w>
-      <w>hbox</w>
       <w>langcode</w>
-      <w>listitem</w>
-      <w>minusthick</w>
-      <w>newwin</w>
-      <w>phpstan</w>
-      <w>plusthick</w>
-      <w>quickedit</w>
-      <w>squaresmall</w>
       <w>svgz</w>
       <w>tabbingmanager</w>
       <w>tabledrag</w>
       <w>tableselect</w>
       <w>tablesort</w>
       <w>tabwidth</w>
-      <w>touchevents</w>
-      <w>transferthick</w>
       <w>tugboatqa</w>
       <w>updb</w>
-      <w>zoomin</w>
-      <w>zoomout</w>
     </words>
   </dictionary>
 </component>

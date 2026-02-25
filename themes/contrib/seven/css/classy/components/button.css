@@ -1,6 +1,6 @@
 /**
  * @file
- * Styles for buttons.
+ * Visual styles for buttons.
  */
 
 .button,
@@ -8,7 +8,6 @@
   margin-right: 1em;
   margin-left: 1em;
 }
-
 .button:first-child,
 .image-button:first-child {
   margin-right: 0;

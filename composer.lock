@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "83d2d545d9b5b155b826286f64342434",
+    "content-hash": "fb639c76e862bb55b5d163bb2fae0194",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3290,7 +3290,7 @@
             "extra": {
                 "drupal": {
                     "version": "2.0.10",
-                    "datestamp": "1770647534",
+                    "datestamp": "1772046216",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
