@@ -5619,7 +5619,7 @@
                 "shasum": "b8f836b442b4341096dd6e1a7ce76dca01733423"
             },
             "require": {
-                "drupal/core": "^9.5 || ^10"
+                "drupal/core": "^9.5 || ^10 || ^11"
             },
             "type": "drupal-module",
             "extra": {
@@ -7368,7 +7368,7 @@
                 "shasum": "597bd0f6e62414e30aa3c85348faa3db7e2658fd"
             },
             "require": {
-                "drupal/core": "^8 || ^9 || ^10",
+                "drupal/core": "^8 || ^9 || ^10 || ^11",
                 "drupal/webform": "^5.0 || ^6.0"
             },
             "type": "drupal-module",
@@ -8180,7 +8180,7 @@
                 "shasum": "c2e5a7ddf1c4b954aa754b8decf8c7ed40436638"
             },
             "require": {
-                "drupal/core": "^9 || ^10"
+                "drupal/core": "^9 || ^10 || ^11"
             },
             "type": "drupal-module",
             "extra": {
@@ -10811,7 +10811,7 @@
             "name": "drupal/webform_node",
             "version": "6.2.9",
             "require": {
-                "drupal/core": "^10.2",
+                "drupal/core": "^10.2 || ^11",
                 "drupal/webform": "*"
             },
             "type": "metapackage",
@@ -10872,7 +10872,7 @@
                 "shasum": "c87976515486941b53d0694473ab6fe36323ef33"
             },
             "require": {
-                "drupal/core": "^8.8 || ^9 || ^10",
+                "drupal/core": "^8.8 || ^9 || ^10 || ^11",
                 "mpdf/mpdf": "~8.2"
             },
             "require-dev": {

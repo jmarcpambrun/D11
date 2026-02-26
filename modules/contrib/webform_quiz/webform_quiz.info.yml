@@ -1,7 +1,7 @@
 name: 'Webform Quiz'
 type: module
 description: 'Build awesome quizzes using the webform module.'
-core_version_requirement: ^8.8 || ^9 || ^10
+core_version_requirement: ^8.8 || ^9 || ^10 || ^11
 package: 'Webform'
 dependencies:
   - 'drupal:webform'
