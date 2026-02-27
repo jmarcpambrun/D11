@@ -43,6 +43,7 @@ Modules that provide additional support for book:
   relationships. Similar to booktree_menu.
 * [Sync book index to Drupal core menu](https://www.drupal.org/project/book_menu_sync) - module provides an easy-to-use solution for converting a Drupal
   book structure into a standard Drupal menu.
+* [Book Organizer](https://www.drupal.org/project/book_organizer) - Book Organizer delivers a clean, Views-powered administration experience for Drupal book module.
 
 ## Alternatives
 

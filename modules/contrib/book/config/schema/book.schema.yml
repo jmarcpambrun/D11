@@ -8,21 +8,24 @@ book.settings:
   mapping:
     allowed_types:
       type: sequence
-      label: 'Content types allowed in book outlines'
+      label: 'Allowed content types'
       sequence:
-        type: string
-        label: 'Content type'
-        constraints:
-          EntityBundleExists: node
-    child_type:
-      type: string
-      label: 'Content type for child pages'
-      constraints:
-        EntityBundleExists: node
-        ExistsIn:
-          selector: '%parent.allowed_types'
-          which: values
-          message: "The content type for the <em>Add child page</em> link must be one of those selected as an allowed book outline type."
+        type: mapping
+        mapping:
+          content_type:
+            type: string
+            label: 'Content type machine name'
+            constraints:
+              EntityBundleExists: node
+          child_type:
+            type: string
+            label: 'Allowed child type'
+            constraints:
+              EntityBundleExists: node
+              ExistsIn:
+                selector: '%root.allowed_types'
+                which: values
+                message: "The child page content type <em>@child_type</em> must be one of those selected as an allowed book outline types."
     book_sort:
       type: string
       label: 'Sort order'
@@ -30,6 +33,15 @@ book.settings:
         Choice:
           - weight
           - title
+    truncate_label:
+      type: boolean
+      label: 'Truncate book label'
+    use_parent_selector:
+      type: boolean
+      label: 'Use parent selector'
+    use_alternative_form:
+      type: boolean
+      label: 'Use alternative form (Experimental)'
 
 block.settings.book_navigation:
   type: block_settings
@@ -50,3 +62,7 @@ block.settings.book_navigation:
     use_top_level_title:
       type: boolean
       label: 'Use the top-level page title as block title'
+
+entity_reference_selection.book_node_selection:
+  type: entity_reference_selection.default
+  label: 'Book node selection handler settings'

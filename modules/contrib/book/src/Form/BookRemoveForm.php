@@ -62,7 +62,8 @@ class BookRemoveForm extends ConfirmFormBase {
    */
   public function getDescription(): TranslatableMarkup {
     $title = ['%title' => $this->node->label()];
-    if ($this->node->book['has_children']) {
+    $book = $this->node->getBook();
+    if (isset($book['has_children']) && $book['has_children']) {
       return $this->t('%title has associated child pages, which will be relocated automatically to maintain their connection to the book. To recreate the hierarchy (as it was before removing this page), %title may be added again using the Outline tab, and each of its former child pages will need to be relocated manually.', $title);
     }
     else {
@@ -95,6 +96,8 @@ class BookRemoveForm extends ConfirmFormBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     if ($this->bookManager->checkNodeIsRemovable($this->node)) {

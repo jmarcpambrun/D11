@@ -26,7 +26,7 @@ variables:
   SKIP_ESLINT: 1
   SKIP_STYLELINT: 1   # Until fixed in gitlab templates.
   # showdown.js is full of emoji words.
-  _CSPELL_IGNORE_PATHS: "'assets/js/ai_chat_history_element.js', 'modules/*/tests/resources/ai_test/requests/*/*.yml', 'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', 'modules/ai_automators/tests/config', '.cspell-project-words.txt', 'grumphp.yml', 'mdxeditor'"
+  _CSPELL_IGNORE_PATHS: "'assets/js/ai_chat_history_element.js', 'modules/*/tests/resources/ai_test/requests/*/*.yml', 'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', 'modules/ai_automators/tests/config', '.cspell-project-words.txt', 'grumphp.yml', 'ui/mdxeditor'"
   COMPOSER_IGNORE_PLATFORM_REQS: 'ext-ffi'
 
 phpunit (previous major):
@@ -65,7 +65,7 @@ js_build:
   artifacts:
     paths:
       - modules/ai_ckeditor/js/build
-      - mdxeditor/dist
+      - ui/mdxeditor/dist
       - ui/json-schema-editor
     expire_in: 1h
   # Build artifacts.
@@ -78,7 +78,7 @@ js_build:
       cd $CI_PROJECT_DIR
 
       # Build mdxeditor JS artifacts
-      cd mdxeditor
+      cd ui/mdxeditor
       npm install
       npm run build
       cd $CI_PROJECT_DIR

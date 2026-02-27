@@ -47,14 +47,12 @@ include:
 ################
 variables:
   _PHPUNIT_CONCURRENT: '1'
-  # Opt in to testing current minor against max supported PHP version.
   OPT_IN_TEST_MAX_PHP: '1'
   # OPT_IN_TEST_PREVIOUS_MINOR: '1'
-  OPT_IN_TEST_PREVIOUS_MAJOR: '1'
-  OPT_IN_TEST_NEXT_MAJOR: '1'
-  # todo opt in when 11.1 is out.
-  # OPT_IN_TEST_NEXT_MINOR: '1'
-  # SKIP_ESLINT: '1'
+  # OPT_IN_TEST_PREVIOUS_MAJOR: '1'
+  OPT_IN_TEST_CURRENT: '1'
+  # OPT_IN_TEST_NEXT_MAJOR: '1'
+  OPT_IN_TEST_NEXT_MINOR: '1'
   # CSpell Customization.
-  _CSPELL_IGNORE_PATHS: "tests/fixtures/**,tests/src/Kernel/Migrate/**,src/Plugin/migrate/**"
+  _CSPELL_IGNORE_PATHS: "tests/fixtures/**,tests/src/Kernel/Migrate/**,src/Plugin/migrate/**,js/third-party/*"
   _CSPELL_WORDS: "Booktree,Centry,orif,multipage,plid,Mustgrave,smustgrave,Wolanin,pwolanin"

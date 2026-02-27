@@ -8,12 +8,14 @@ use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
 use Drupal\user\Entity\Role;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests Book and Content Moderation integration.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookContentModerationTest extends BrowserTestBase {
 
   use BookTestTrait;
@@ -33,6 +35,7 @@ class BookContentModerationTest extends BrowserTestBase {
    */
   protected static $modules = [
     'book',
+    'book_content_type',
     'block',
     'book_test',
     'content_moderation',
@@ -50,7 +53,7 @@ class BookContentModerationTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-
+    $this->setBookSettings();
     $this->drupalPlaceBlock('system_breadcrumb_block');
     $this->drupalPlaceBlock('page_title_block');
 
@@ -210,7 +213,7 @@ class BookContentModerationTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(200);
     // Publish the content.
     $edit = [
-      'body[0][value]' => 'Second change non book admin user',
+      'field_body[0][value]' => 'Second change non book admin user',
       'moderation_state[0][state]' => 'published',
     ];
     $this->submitForm($edit, 'Save');
@@ -276,7 +279,7 @@ class BookContentModerationTest extends BrowserTestBase {
     $this->drupalGet('node/' . $node->id() . '/edit');
     $this->assertSession()->statusCodeEquals(200);
     $edit = [
-      'body[0][value]' => 'Change by non book admin user again',
+      'field_body[0][value]' => 'Change by non book admin user again',
       'moderation_state[0][state]' => 'draft',
     ];
     $this->submitForm($edit, 'Save');

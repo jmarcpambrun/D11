@@ -61,7 +61,7 @@ class BookBreadcrumbBuilder implements BreadcrumbBuilderInterface {
     //   requirement, see https://www.drupal.org/project/drupal/issues/3459277.
     $cacheable_metadata?->addCacheContexts(['route.book_navigation']);
     $node = $route_match->getParameter('node');
-    return $node instanceof NodeInterface && !empty($node->book);
+    return $node instanceof NodeInterface && !empty($node->getBook());
   }
 
   /**
@@ -78,7 +78,7 @@ class BookBreadcrumbBuilder implements BreadcrumbBuilderInterface {
     ]),
     ];
     $breadcrumb->addCacheContexts(['languages:' . LanguageInterface::TYPE_CONTENT]);
-    $book = $route_match->getParameter('node')->book;
+    $book = $route_match->getParameter('node')->getBook();
     $depth = 1;
     // We skip the current node.
     while (!empty($book['p' . ($depth + 1)])) {

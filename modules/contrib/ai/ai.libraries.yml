@@ -41,18 +41,22 @@ chat_history_element:
       assets/css/ai_chat_history_element.css: {}
 
 ai_global:
+  js:
+    assets/js/ai_global.js: { }
+  dependencies:
+    - core/once
   css:
     component:
       assets/css/ai_global.css: {}
 
 mdx_editor:
   js:
-    mdxeditor/dist/assets/main.js:
+    ui/mdxeditor/dist/assets/main.js:
       attributes: { type: module }
       minified: true
   css:
     component:
-      mdxeditor/dist/assets/index.css: {}
+      ui/mdxeditor/dist/assets/index.css: {}
 
 json_schema_editor:
   js:
@@ -64,3 +68,8 @@ json_schema_editor:
   css:
     theme:
       assets/css/ai_json_schema.css: {}
+
+ai_settings_form:
+  css:
+    component:
+      assets/css/ai_settings_form.css: {}

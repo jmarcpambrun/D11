@@ -6,14 +6,17 @@ namespace Drupal\Tests\book\Functional;
 
 use Drupal\Core\Cache\Cache;
 use Drupal\node\Entity\Node;
+use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
- * Create a book, add pages, and test book interface.
- *
- * @group book
- * @group #slow
+ * Create a book, add pages, and test the book interface.
  */
+#[Group('book')]
+#[Group('#slow')]
+#[RunTestsInSeparateProcesses]
 class BookTest extends BookTestBase {
 
   /**
@@ -29,7 +32,7 @@ class BookTest extends BookTestBase {
     $this->drupalCreateContentType(['type' => 'page']);
     $page = $this->drupalCreateNode();
 
-    // Create a book, consisting of book nodes.
+    // Create a book consisting of book nodes.
     $book_nodes = $this->createBook();
 
     // Enable the debug output.
@@ -63,6 +66,7 @@ class BookTest extends BookTestBase {
    * Tests saving the book outline on an empty book.
    *
    * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
   public function testEmptyBook(): void {
     // Create a new empty book.
@@ -122,7 +126,7 @@ class BookTest extends BookTestBase {
      *  |- Node 4
      */
     // Node 5.
-    $nodes[] = $this->createBookNode($book->id(), $nodes[3]->book['nid']);
+    $nodes[] = $this->createBookNode($book->id(), $nodes[3]->getBook()['nid']);
     $this->drupalLogout();
     $this->drupalLogin($this->webUser);
     // Verify the new outline - make sure we don't get stale cached data.
@@ -169,7 +173,7 @@ class BookTest extends BookTestBase {
     $current_url = parse_url($this->getSession()->getCurrentUrl(), PHP_URL_QUERY);
     $sibling_pid = substr($current_url, strpos($current_url, "=") + 1);
 
-    $this->assertEquals($nodes[4]->book['pid'], $sibling_pid);
+    $this->assertEquals($nodes[4]->getBook()['pid'], $sibling_pid);
 
     // Test preview bug.
     $this->drupalGet('node/' . $nodes[0]->id() . '/edit');
@@ -180,13 +184,10 @@ class BookTest extends BookTestBase {
   /**
    * Tests book export ("printer-friendly version") functionality.
    *
-   * @throws \Behat\Mink\Exception\ElementNotFoundException
-   * @throws \Behat\Mink\Exception\ElementTextException
    * @throws \Behat\Mink\Exception\ExpectationException
-   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function testBookExport(): void {
     // Create a book.
@@ -207,15 +208,16 @@ class BookTest extends BookTestBase {
 
     // Make sure each part of the book is there.
     foreach ($nodes as $node) {
+      $this->assertSession()->pageTextContains($book_title);
+
       // Verify unpublished node doesn't appear in export.
       if (!$node->isPublished()) {
         $this->assertSession()->pageTextNotContains('Book traversal links ' . $node->label());
-        $this->assertSession()->responseNotContains($node->body->processed);
+        $this->assertSession()->responseNotContains($node->get('field_body')->value);
       }
       else {
-        $this->assertSession()->pageTextContains($book_title);
         $this->assertSession()->pageTextContains($node->label());
-        $this->assertSession()->responseContains($node->body->processed);
+        $this->assertSession()->responseContains($node->get('field_body')->value);
       }
     }
 
@@ -255,7 +257,7 @@ class BookTest extends BookTestBase {
     $this->drupalGet('node/' . $this->book->id());
     $this->assertSession()->linkNotExists('Printer-friendly version', 'Anonymous user is not shown link to printer-friendly version.');
 
-    // Try getting the URL directly, and verify it fails.
+    // Try getting the URL directly and verify it fails.
     $this->drupalGet('book/export/html/' . $this->book->id());
     $this->assertSession()->statusCodeEquals(403);
 
@@ -331,73 +333,6 @@ class BookTest extends BookTestBase {
   }
 
   /**
-   * Tests the access for deleting top-level book nodes.
-   *
-   * @throws \Behat\Mink\Exception\ExpectationException
-   * @throws \Drupal\Core\Entity\EntityStorageException
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   */
-  public function testBookDelete() {
-    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
-    $nodes = $this->createBook();
-    $this->drupalLogin($this->adminUser);
-    $edit = [];
-
-    // Ensure that the top-level book node cannot be deleted.
-    $this->drupalGet('node/' . $this->book->id() . '/outline/remove');
-    $this->assertSession()->statusCodeEquals(403);
-
-    // Ensure that a child book node can be deleted.
-    $this->drupalGet('node/' . $nodes[4]->id() . '/outline/remove');
-    $this->submitForm($edit, 'Remove');
-    $node_storage->resetCache([$nodes[4]->id()]);
-    $node4 = $node_storage->load($nodes[4]->id());
-    $this->assertEmpty($node4->book, 'Deleting child book node properly allowed.');
-
-    // $nodes[4] is stale, trying to delete it directly will cause an error.
-    $node4->delete();
-    unset($nodes[4]);
-
-    // Delete all child book nodes and retest top-level node deletion.
-    $node_storage->delete($nodes);
-
-    $this->drupalGet('node/' . $this->book->id() . '/outline/remove');
-    $this->submitForm($edit, 'Remove');
-    $node_storage->resetCache([$this->book->id()]);
-    $node = $node_storage->load($this->book->id());
-    $this->assertEmpty($node->book, 'Deleting childless top-level book node properly allowed.');
-
-    // Tests directly deleting a book parent.
-    $nodes = $this->createBook();
-    $this->drupalLogin($this->adminUser);
-    $this->drupalGet($this->book->toUrl('delete-form'));
-    $this->assertSession()->pageTextContains($this->book->label() . ' is part of a book outline, and has associated child pages. If you proceed with deletion, the child pages will be relocated automatically.');
-    // Delete parent, and visit a child page.
-    $this->drupalGet($this->book->toUrl('delete-form'));
-    $this->submitForm([], 'Delete');
-    $this->drupalGet($nodes[0]->toUrl());
-    $this->assertSession()->statusCodeEquals(200);
-    $this->assertSession()->pageTextContains($nodes[0]->label());
-    // The book parents should be updated.
-    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
-    $node_storage->resetCache();
-    $child = $node_storage->load($nodes[0]->id());
-    $this->assertEquals($child->id(), $child->book['bid'], 'Child node book ID updated when parent is deleted.');
-    // 3rd-level children should now be 2nd-level.
-    $second = $node_storage->load($nodes[1]->id());
-    $this->assertEquals($child->id(), $second->book['bid'], '3rd-level child node is now second level when top-level node is deleted.');
-
-    // Set the child page book id to deleted book id, and visit the child page.
-    $node = $node_storage->load($nodes[0]->id());
-    $node->book['bid'] = $nodes[0]->book['bid'];
-    $node->save();
-    $this->drupalGet($nodes[0]->toUrl());
-    $this->assertSession()->pageTextContains($nodes[0]->label());
-  }
-
-  /**
    * Tests outline of a book.
    *
    * @throws \Behat\Mink\Exception\ElementNotFoundException
@@ -428,11 +363,11 @@ class BookTest extends BookTestBase {
     $this->submitForm($edit, 'Add to book outline');
     $node = $this->container->get('entity_type.manager')->getStorage('node')->load($empty_book->id());
     // Test the book array.
-    $this->assertEquals($empty_book->id(), $node->book['nid']);
-    $this->assertEquals($empty_book->id(), $node->book['bid']);
-    $this->assertEquals(1, $node->book['depth']);
-    $this->assertEquals($empty_book->id(), $node->book['p1']);
-    $this->assertEquals('0', $node->book['pid']);
+    $this->assertEquals($empty_book->id(), $node->getBook()['nid']);
+    $this->assertEquals($empty_book->id(), $node->getBook()['bid']);
+    $this->assertEquals(1, $node->getBook()['depth']);
+    $this->assertEquals($empty_book->id(), $node->getBook()['p1']);
+    $this->assertEquals('0', $node->getBook()['pid']);
 
     // Create new book.
     $this->drupalLogin($this->bookAuthor);
@@ -450,11 +385,11 @@ class BookTest extends BookTestBase {
     $node = $this->container->get('entity_type.manager')->getStorage('node')->load($node->id());
 
     // Test the book array.
-    $this->assertEquals($node->id(), $node->book['nid']);
-    $this->assertEquals($node->id(), $node->book['bid']);
-    $this->assertEquals(1, $node->book['depth']);
-    $this->assertEquals($node->id(), $node->book['p1']);
-    $this->assertEquals('0', $node->book['pid']);
+    $this->assertEquals($node->id(), $node->getBook()['nid']);
+    $this->assertEquals($node->id(), $node->getBook()['bid']);
+    $this->assertEquals(1, $node->getBook()['depth']);
+    $this->assertEquals($node->id(), $node->getBook()['p1']);
+    $this->assertEquals('0', $node->getBook()['pid']);
 
     // Test the form itself.
     $this->drupalGet('node/' . $node->id() . '/edit');
@@ -467,20 +402,7 @@ class BookTest extends BookTestBase {
     $this->drupalCreateContentType(['type' => 'page']);
     $non_book_node = $this->drupalCreateNode(['type' => 'page']);
 
-    // Create a non-book node and place in an outline.
-    $non_book_node_in_outline = $this->drupalCreateNode([
-      'type' => 'page',
-      'book' => [
-        'bid' => 'new',
-      ],
-    ]);
-
-    // Admin user has edit book field on all nodes.
     $this->drupalGet('node/' . $non_book_node->id() . '/edit');
-    $this->assertSession()->fieldExists('edit-book-bid');
-    // Admin user has access to outline path on all nodes.
-    $this->assertSession()->linkByHrefExists('node/' . $non_book_node->id() . '/outline');
-
     // Book author user only has edit book field on allowed book type nodes.
     $this->drupalLogin($this->bookAuthor);
     $this->drupalGet('node/' . $non_book_node->id() . '/edit');
@@ -494,18 +416,38 @@ class BookTest extends BookTestBase {
       'create book content',
       'edit own book content',
       'add content to books',
-      'add any content to books',
       'node test view',
       'edit any page content',
     ]);
     $this->drupalLogin($this->bookAuthor);
 
+    // Allow basic pages to be added to books.
+    $this->config('book.settings')
+      ->set('allowed_types', [
+        ['content_type' => 'page'],
+        ['content_type' => 'book'],
+      ])
+      ->save();
+
     // Book author user has edit book field on non-book nodes if node is in
     // an outline already.
+    $this->drupalGet('node/' . $non_book_node->id() . '/edit');
+    // Verify we can now edit books from the form.
+    $this->assertSession()->fieldExists('edit-book-bid');
+    // The outline local tasks link also appears.
+    $this->assertSession()->linkByHrefExists('node/' . $non_book_node->id() . '/outline');
+
+    // Create a non-book node and place in an outline.
+    $non_book_node_in_outline = $this->drupalCreateNode([
+      'type' => 'page',
+      'book' => [
+        'bid' => 'new',
+      ],
+    ]);
     $this->drupalGet('node/' . $non_book_node_in_outline->id() . '/edit');
+    // We see the "top-level" text.
     $this->assertSession()->pageTextContains('This is the top-level page in this book');
-    // Book author user has access to outline path if a node is already in
-    // an outline already.
+    // We can edit the outline.
     $this->assertSession()->linkByHrefExists('node/' . $non_book_node_in_outline->id() . '/outline');
   }
 
@@ -545,6 +487,10 @@ class BookTest extends BookTestBase {
   public function testBookListing(): void {
     // Uninstall 'node_access_test' as this interferes with the test.
     $this->container->get('module_installer')->uninstall(['node_access_test']);
+    $anonymous = Role::load(RoleInterface::ANONYMOUS_ID);
+    $anonymous->grantPermission('access book list');
+    $anonymous->save();
+
     // Create a new book.
     $nodes = $this->createBook();
 
@@ -676,16 +622,16 @@ class BookTest extends BookTestBase {
     // @see node_access_test_node_grants().
     $this->drupalLogin($this->webUserWithoutNodeAccess);
     $book_node = $node_storage->load($this->book->id());
-    $this->assertNotEmpty($book_node->book);
-    $this->assertEquals($this->book->id(), $book_node->book['bid']);
+    $this->assertNotEmpty($book_node->getBook());
+    $this->assertEquals($this->book->id(), $book_node->getBook()['bid']);
 
     // Reset the internal cache to retrigger the hook_node_load() call.
     $node_storage->resetCache();
 
     $this->drupalLogin($this->webUser);
     $book_node = $node_storage->load($this->book->id());
-    $this->assertNotEmpty($book_node->book);
-    $this->assertEquals($this->book->id(), $book_node->book['bid']);
+    $this->assertNotEmpty($book_node->getBook());
+    $this->assertEquals($this->book->id(), $book_node->getBook()['bid']);
   }
 
   /**
@@ -842,43 +788,6 @@ class BookTest extends BookTestBase {
   }
 
   /**
-   * Testing updated hierarchy after we remove one node from outline.
-   *
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   */
-  public function testBookParentDelete(): void {
-    $nodes = $this->createBook();
-    $this->drupalLogin($this->adminUser);
-
-    /*
-     * Add Node 5 under Node 1.
-     * Book
-     *  |- Node 0
-     *    |- Node 1
-     *      | - Node 5
-     *    |- Node 2
-     *  |- Node 3
-     *  |- Node 4
-     */
-    $book = $this->book;
-    $child = 5;
-    $nodes[$child] = $this->createBookNode($book->id(), $nodes[1]->id());
-
-    // Remove Node 1 from outline which should move Node 5 up 1 level.
-    $this->drupalGet($nodes[1]->toUrl()->toString() . '/outline/remove');
-    $this->submitForm([], 'Remove');
-    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
-    $node_storage->resetCache();
-
-    $this->drupalLogout();
-    $this->drupalLogin($this->webUser);
-
-    $this->checkBookNode($nodes[0], [$nodes[2], $nodes[5]], FALSE, $book, FALSE, [$book]);
-  }
-
-  /**
    * Tests the child ordering feature.
    *
    * @throws \Behat\Mink\Exception\ResponseTextException
@@ -914,6 +823,85 @@ class BookTest extends BookTestBase {
     $this->submitForm($edit, 'Save book pages');
     $this->assertSession()->fieldValueEquals('table[book-admin-' . $child1->id() . '][weight]', 0);
     $this->assertSession()->fieldValueEquals('table[book-admin-' . $child2->id() . '][weight]', 1);
+  }
+
+  /**
+   * Tests access to /book URL.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Behat\Mink\Exception\ExpectationException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  public function testGeneralBookRoute(): void {
+    $this->drupalLogin($this->adminUser);
+
+    $book1 = $this->createBookNode('new');
+    $book1->setTitle('AAA Book');
+    $book1->save();
+
+    $book2 = $this->createBookNode('new');
+    $book2->setTitle('BBB Book');
+    $book2->save();
+
+    $this->drupalGet('/book');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->pageTextContains('AAA Book');
+    $this->assertSession()->pageTextContains('BBB Book');
+
+    $this->drupalLogout();
+
+    $this->drupalLogin($this->webUser);
+    $this->drupalGet('/book');
+    $this->assertSession()->statusCodeEquals(403);
+  }
+
+  /**
+   * Test book outline updates of nodes with field level violations.
+   *
+   * Book updates don't interact with the other node fields, so should be safe
+   * to update outlines.
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  public function testBookWithFieldViolations(): void {
+    $this->drupalLogin($this->adminUser);
+
+    // Create a book (as a book admin user).
+    $book = $this->createBookNode('new');
+
+    // Add a title field violation on the book node.
+    /** @var \Drupal\Core\State\StateInterface $state */
+    $state = $this->container->get('state');
+    $invalid_title = $book->getTitle() . ' (invalid)';
+    $book->setTitle($invalid_title)->save();
+    $state->set('book_test.invalid_node_title', $invalid_title);
+    // Specify that it is an entity level violation, so attempts to work on it
+    // should fail as normal.
+    $state->set('book_test.entity_level_violation', TRUE);
+
+    // Assert that the node has violations relating to the title.
+    $violations = $book->validate();
+    static::assertCount(2, $violations);
+    static::assertEquals("An invalid book node title \"$invalid_title\" was used.", $violations->get(0)->getMessage());
+    static::assertEquals("The book node is using an invalid title \"$invalid_title\".", $violations->get(1)->getMessage());
+
+    // The outline form should only show entity level violations against the
+    // node, but no field level ones since the outline form doesn't interact
+    // with or allow the user to alter it.
+    $this->drupalGet('node/' . $book->id() . '/outline');
+    $this->submitForm(['book[weight]' => 1], 'Update book outline');
+    $this->assertSession()->statusMessageContains("The book node is using an invalid title \"$invalid_title\".");
+
+    // Remove the entity level violation.
+    $state->set('book_test.entity_level_violation', FALSE);
+    $violations = $book->validate();
+    static::assertCount(1, $violations);
+
+    // Form submissions should now work if there are only field level
+    // violations.
+    $this->drupalGet('node/' . $book->id() . '/outline');
+    $this->submitForm(['book[weight]' => 1], 'Update book outline');
+    $this->assertSession()->statusMessageContains('The book outline has been updated');
   }
 
 }

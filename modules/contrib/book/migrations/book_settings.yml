@@ -11,8 +11,10 @@ source:
     - book_allowed_types
   source_module: book
 process:
-  child_type: book_child_type
-  allowed_types: book_allowed_types
+  allowed_types:
+    plugin: callback
+    callable: Drupal\book\Migrate\BookSettingsMigration::convertAllowedTypes
+    source: book_allowed_types
 destination:
   plugin: config
   config_name: book.settings

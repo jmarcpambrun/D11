@@ -43,7 +43,7 @@ for development you need to build the assets yourself. For this you will need to
 running locally. The minimum required version of `node` is `20.14.0`.
 
 To build the editor assets follow the instructions:
-1. Go to `mdxeditor` folder.
+1. Go to `ui/mdxeditor` folder.
 2. Run `npm install`
 3. Run `npm run build`
-4. Do not commit the changes from `mdxeditor/dist` folder.
+4. Do not commit the changes from `ui/mdxeditor/dist` folder.

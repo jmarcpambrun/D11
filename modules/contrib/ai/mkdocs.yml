@@ -64,11 +64,13 @@ nav:
       - Image Classification Call: developers/call_image_classification.md
       - Translate Text Call: developers/call_translate_text.md
       - Image-To-Image Call: developers/call_image_to_image.md
+      - Object Detection Call: developers/call_object_detection.md
     - Plugins/Managers:
       - Function Call Schema: developers/function_call_schema.md
       - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
       - Chat History Form Element: developers/chat_history_element.md
+      - Provider Config Schema: developers/provider_config_schema.md
     - Develop an AI Provider:
       - Getting Started: developers/writing_an_ai_provider.md
       - Testing a Provider: developers/testing_an_ai_provider.md

@@ -131,11 +131,15 @@ class Metatag extends RuleBase {
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
     $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
+    $available_tags = [];
     $tags = [];
     $examples = [];
     foreach ($automatorConfig as $key => $value) {
-      if (str_starts_with($key, 'llm_tag_value') && $value) {
-        $tags[substr($key, strlen('llm_tag_value_'))] = $value;
+      if (str_starts_with($key, 'llm_tag_value')) {
+        $available_tags[] = substr($key, strlen('llm_tag_value_'));
+        if ($value) {
+          $tags[substr($key, strlen('llm_tag_value_'))] = $value;
+        }
       }
       if (str_starts_with($key, 'llm_tag_example') && $value) {
         $examples[substr($key, strlen('llm_tag_example_'))] = $value;
@@ -145,6 +149,7 @@ class Metatag extends RuleBase {
     // Add JSON output.
     foreach ($prompts as $key => $prompt) {
       $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\":" . json_encode($tags) . "}]";
+      $prompt .= "\n\nThe list of available tags is: " . implode(', ', $available_tags) . ". Do not generate values for any other tags.\n";
       $prompt .= "\n\nExample of one row:\n[{\"value\":" . json_encode($examples) . "}]\n";
       $prompts[$key] = $prompt;
     }

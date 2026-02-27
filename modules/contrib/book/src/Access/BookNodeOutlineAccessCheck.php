@@ -7,12 +7,15 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\book\BookHelperTrait;
 use Drupal\node\NodeInterface;
 
 /**
  * Determines if a node's outline settings can be accessed.
  */
 class BookNodeOutlineAccessCheck implements AccessInterface {
+
+  use BookHelperTrait;
 
   /**
    * Constructs a BookNodeOutlineAccessCheck object.
@@ -37,23 +40,11 @@ class BookNodeOutlineAccessCheck implements AccessInterface {
   public function access(NodeInterface $node): AccessResultInterface {
     // If content type is allowed book type, then check for 'add content to
     // books' permission.
-    $allowed_types = $this->configFactory->get('book.settings')->get('allowed_types') ?? [];
-    if (in_array($node->getType(), $allowed_types)) {
+    $allowed_types_config = $this->configFactory->get('book.settings')->get('allowed_types') ?? [];
+    $allowed_types = $this->getBookContentTypes($allowed_types_config);
+    if (in_array($node->getType(), $allowed_types, TRUE)) {
       return AccessResult::allowedIfHasPermission($this->currentUser, 'add content to books')
         ->orif(AccessResult::allowedIfHasPermission($this->currentUser, 'administer book outlines'));
-    }
-    // If content type is not allowed book type, then check additional
-    // permissions and scenarios.
-    else {
-      if ($this->currentUser->hasPermission('add content to books') || $this->currentUser->hasPermission('administer book outlines')) {
-        // If the user has the 'add content to books' permission and the node
-        // is already in a book outline, then grant access. OR
-        // If the user has the 'add content to books' and the 'add any content
-        // to books' permissions, then grant access.
-        if (!empty($node->book['bid']) && !$node->isNew() || $this->currentUser->hasPermission('add any content to books')) {
-          return AccessResult::allowed();
-        }
-      }
     }
     return AccessResult::forbidden();
   }

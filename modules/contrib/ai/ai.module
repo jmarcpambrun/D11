@@ -90,6 +90,13 @@ function ai_theme() {
 }
 
 /**
+ * Implements hook_page_attachments().
+ */
+function ai_page_attachments(array &$attachments) {
+  $attachments['#attached']['library'][] = 'ai/ai_global';
+}
+
+/**
  * Implements hook_preprocess_links__ai_tools_library_menu().
  *
  * This targets the menu of available ai tools group in the ai tools library's

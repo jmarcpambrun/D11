@@ -17,12 +17,17 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\book\BookManager;
 use Drupal\book\BookOutlineStorageInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * @coversDefaultClass \Drupal\book\BookManager
- * @group book
+ * BookManager test.
  */
+#[CoversClass(BookManager::class)]
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookManagerTest extends UnitTestCase {
 
   /**

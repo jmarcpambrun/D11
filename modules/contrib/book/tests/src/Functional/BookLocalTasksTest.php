@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Drupal\Tests\book\Functional;
 
 use Drupal\Core\Url;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
- * Tests existence of book local tasks.
- *
- * @group book
+ * Tests the existence of book local tasks.
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookLocalTasksTest extends BookTestBase {
 
   /**
@@ -18,6 +20,9 @@ class BookLocalTasksTest extends BookTestBase {
    *
    * Create a book with some nodes. Get the path of the top level page and
    * send it to assertLocalTasks().
+   *
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function testBookNodeLocalTasks(): void {
     $book_nodes = $this->createBook();
@@ -31,8 +36,10 @@ class BookLocalTasksTest extends BookTestBase {
    * Asserts that the entity's local tasks are visible.
    *
    * Links to local tasks have the attribute "data-drupal-link-system-path".
+   *
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
    */
-  protected function assertLocalTasks($path) {
+  protected function assertLocalTasks($path): void {
     $this->assertSession()->elementExists('css', "a[href='$path'][data-drupal-link-system-path]");
     $this->assertSession()->elementExists('css', "a[href='$path/edit'][data-drupal-link-system-path]");
     $this->assertSession()->elementExists('css', "a[href='$path/delete'][data-drupal-link-system-path]");
@@ -42,6 +49,8 @@ class BookLocalTasksTest extends BookTestBase {
 
   /**
    * Tests local task existence on the admin settings page.
+   *
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
    */
   public function testBookAdminLocalTasks(): void {
     $this->drupalLogin($this->adminUser);

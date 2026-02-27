@@ -111,8 +111,8 @@ class BookOutline {
       do {
         $link = array_shift($flat);
       } while ($link && ($link['nid'] != $book_link['nid']));
-      // Continue though the array and collect the links whose parent is this
-      // page.
+      // Continue through the array and collect the links whose parent is on
+      // this page.
       while (($link = array_shift($flat)) && $link['pid'] == $book_link['nid']) {
         $data['link'] = $link;
         $data['below'] = '';

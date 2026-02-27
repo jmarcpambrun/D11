@@ -71,21 +71,32 @@ class BookOutlineForm extends ContentEntityForm {
   public function form(array $form, FormStateInterface $form_state): array {
     $form['#title'] = $this->entity->label();
 
-    if (!isset($this->entity->book)) {
+    if (empty($this->entity->getBook())) {
       // The node is not part of any book yet - set default options.
-      $this->entity->book = $this->bookManager->getLinkDefaults($this->entity->id());
+      $this->entity->setBook($this->bookManager->getLinkDefaults($this->entity->id()));
     }
     else {
-      $this->entity->book['original_bid'] = $this->entity->book['bid'];
+      $this->entity->setBookKey('original_bid', $this->entity->getBook()['bid']);
     }
 
     // Find the depth limit for the parent select.
-    if (!isset($this->entity->book['parent_depth_limit'])) {
-      $this->entity->book['parent_depth_limit'] = $this->bookManager->getParentDepthLimit($this->entity->book);
+    if (!isset($book['parent_depth_limit'])) {
+      $this->entity->setBookKey('parent_depth_limit', $this->bookManager->getParentDepthLimit($this->entity->getBook()));
     }
-    $form = $this->bookManager->addFormElements($form, $form_state, $this->entity, $this->currentUser(), FALSE);
 
-    return $form;
+    return $this->bookManager->addFormElements($form, $form_state, $this->entity, $this->currentUser(), FALSE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditedFieldNames(FormStateInterface $form_state) {
+    // None of the regular node fields will be directly edited by this form, so
+    // allow field violations to be filtered out.
+    // Please note that other entity level violations and violations flagging
+    // pseudo-fields such as BookOutlineConstraint aren't affected by this and
+    // will still be flagged as normal since "book" isn't a real Drupal field.
+    return [];
   }
 
   /**
@@ -93,15 +104,17 @@ class BookOutlineForm extends ContentEntityForm {
    */
   protected function actions(array $form, FormStateInterface $form_state): array {
     $actions = parent::actions($form, $form_state);
-    $actions['submit']['#value'] = $this->entity->book['original_bid'] ? $this->t('Update book outline') : $this->t('Add to book outline');
+    $actions['submit']['#value'] = $this->entity->getBook()['original_bid'] ? $this->t('Update book outline') : $this->t('Add to book outline');
     $actions['delete']['#title'] = $this->t('Remove from book outline');
-    $actions['delete']['#url'] = new Url('entity.node.book_remove_form', ['node' => $this->entity->book['nid']]);
+    $actions['delete']['#url'] = new Url('entity.node.book_remove_form', ['node' => $this->entity->getBook()['nid']]);
     $actions['delete']['#access'] = $this->bookManager->checkNodeIsRemovable($this->entity);
     return $actions;
   }
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function save(array $form, FormStateInterface $form_state): int {
     $form_state->setRedirect(
@@ -114,9 +127,9 @@ class BookOutlineForm extends ContentEntityForm {
       return 1;
     }
 
-    $this->entity->book = $book_link;
+    $this->entity->setBook($book_link);
     if ($this->bookManager->updateOutline($this->entity)) {
-      if (isset($this->entity->book['parent_mismatch']) && $this->entity->book['parent_mismatch']) {
+      if (isset($book_link['parent_mismatch']) && $book_link['parent_mismatch']) {
         // This will usually only happen when JS is disabled.
         $this->messenger()->addStatus($this->t('The post has been added to the selected book. You may now position it relative to other pages.'));
         $form_state->setRedirectUrl($this->entity->toUrl('book-outline-form'));

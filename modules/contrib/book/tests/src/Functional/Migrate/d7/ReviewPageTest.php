@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Drupal\Tests\book\Functional\Migrate\d7;
 
 use Drupal\Tests\migrate_drupal_ui\Functional\NoMultilingualReviewPageTestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests Review page.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class ReviewPageTest extends NoMultilingualReviewPageTestBase {
 
   /**
@@ -21,7 +23,7 @@ class ReviewPageTest extends NoMultilingualReviewPageTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['book'];
+  protected static $modules = ['book', 'book_content_type'];
 
   /**
    * {@inheritdoc}

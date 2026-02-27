@@ -4,7 +4,7 @@ book.render:
     _controller: '\Drupal\book\Controller\BookController::bookRender'
     _title: 'Books'
   requirements:
-    _permission: 'access content'
+    _permission: 'access book list'
 
 book.admin:
   path: '/admin/structure/book'
@@ -20,7 +20,7 @@ book.settings:
     _form: '\Drupal\book\Form\BookSettingsForm'
     _title: 'Books'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer book settings'
 
 book.export:
   path: '/book/export/{type}/{node}'
@@ -52,6 +52,14 @@ book.admin_edit:
     _permission: 'administer book outlines'
     _entity_access: 'node.view'
     node: \d+
+
+book.book_delete_confirmation_form:
+  path: '/admin/structure/book/delete/{book_id}'
+  defaults:
+    _form: '\Drupal\book\Form\BookDeleteConfirmationForm'
+    _title: 'Delete book confirmation'
+  requirements:
+    _permission: 'delete book'
 
 entity.node.book_remove_form:
   path: '/node/{node}/outline/remove'

@@ -22,6 +22,7 @@ abstract class BookTestBase extends BrowserTestBase {
   protected static $modules = [
     'content_moderation',
     'book',
+    'book_content_type',
     'block',
     'node_access_test',
     'book_test',
@@ -60,6 +61,9 @@ abstract class BookTestBase extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+
+    $this->setBookSettings();
+
     $this->drupalPlaceBlock('system_breadcrumb_block');
     $this->drupalPlaceBlock('page_title_block');
     $this->drupalPlaceBlock('local_tasks_block');
@@ -74,6 +78,7 @@ abstract class BookTestBase extends BrowserTestBase {
       'edit own book content',
       'add content to books',
       'view own unpublished content',
+      'access book list',
     ]);
     $this->webUser = $this->drupalCreateUser([
       'access printer-friendly version',
@@ -84,19 +89,20 @@ abstract class BookTestBase extends BrowserTestBase {
     ]);
     $this->adminUser = $this->drupalCreateUser([
       'access printer-friendly version',
+      'access book list',
+      'delete book',
       'create new books',
       'create book content',
       'edit any book content',
       'delete any book content',
       'add content to books',
       'reorder book pages',
-      'add any content to books',
       'administer blocks',
       'administer permissions',
       'administer book outlines',
       'node test view',
       'administer content types',
-      'administer site configuration',
+      'administer book settings',
       'view any unpublished content',
       'view book revisions',
     ]);

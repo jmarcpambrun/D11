@@ -164,6 +164,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'style_file' => 'module:ai_chatbot:toolbar.yml',
       'show_copy_icon' => TRUE,
       'verbose_mode' => TRUE,
+      'expansion_method' => 'expand',
     ];
   }
 
@@ -378,6 +379,23 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#default_value' => $this->configuration['show_copy_icon'],
     ];
 
+    $form['styling']['expansion_method'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Expansion method'),
+      '#description' => $this->t('Choose how users can expand the chatbot for improved readability.'),
+      '#options' => [
+        'none' => $this->t('None'),
+        'expand' => $this->t('Expand'),
+        'fullscreen' => $this->t('Full screen'),
+      ],
+      '#default_value' => $this->configuration['expansion_method'] ?? 'expand',
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[styling][placement]"]' => ['value' => 'toolbar'],
+        ],
+      ],
+    ];
+
     $form['advanced'] = [
       '#type' => 'details',
       '#title' => $this->t('Advanced settings'),
@@ -471,8 +489,15 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['width'] = $form_state->getValue('styling')['width'];
     $this->configuration['height'] = $form_state->getValue('styling')['height'];
     $this->configuration['placement'] = $form_state->getValue('styling')['placement'];
+    // If the placement is toolbar, we force the toolbar style.
+    if ($this->configuration['placement'] == 'toolbar') {
+      $this->configuration['style_file'] = 'module:ai_chatbot:toolbar.yml';
+      $this->configuration['width'] = '100%';
+      $this->configuration['height'] = 'auto';
+    }
     $this->configuration['collapse_minimal'] = $form_state->getValue('styling')['collapse_minimal'];
     $this->configuration['show_copy_icon'] = $form_state->getValue('styling')['show_copy_icon'];
+    $this->configuration['expansion_method'] = $form_state->getValue('styling')['expansion_method'] ?? 'expand';
     $this->configuration['stream'] = $form_state->getValue('advanced')['stream'] ?? FALSE;
     $this->configuration['show_structured_results'] = $form_state->getValue('advanced')['show_structured_results'] ?? FALSE;
     $this->configuration['toggle_state'] = $form_state->getValue('advanced')['toggle_state'];
@@ -540,6 +565,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['show_structured_results'] = $this->configuration['show_structured_results'];
     $block['#attached']['drupalSettings']['ai_deepchat']['collapse_minimal'] = $this->configuration['collapse_minimal'];
     $block['#attached']['drupalSettings']['ai_deepchat']['show_copy_icon'] = $this->configuration['show_copy_icon'];
+    $block['#attached']['drupalSettings']['ai_deepchat']['expansion_method'] = $this->configuration['expansion_method'] ?? 'expand';
     $block['#attached']['drupalSettings']['ai_deepchat']['messages'] = $this->historicalMessages();
     $block['#attached']['drupalSettings']['ai_deepchat']['session_exists'] = $this->requestStack->getCurrentRequest()->getSession()->isStarted();
     $block['#attached']['drupalSettings']['ai_deepchat']['verbose_mode'] = $this->configuration['verbose_mode'];

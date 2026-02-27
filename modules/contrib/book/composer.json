@@ -19,6 +19,9 @@
     "require": {
         "ext-pdo": "*"
     },
+    "require-dev": {
+        "drupal/search_api": "^1.40"
+    },
     "support": {
         "issues": "https://drupal.org/project/issues/book",
         "source": "https://git.drupalcode.org/project/book"

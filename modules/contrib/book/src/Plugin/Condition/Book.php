@@ -117,8 +117,9 @@ class Book extends ConditionPluginBase implements ContainerFactoryPluginInterfac
       return TRUE;
     }
     $node = $this->getContextValue('node');
-    if (!empty($node->book['bid'])) {
-      return !empty($this->configuration['books'][$node->book['bid']]);
+    $book = $node->getBook();
+    if (!empty($book['bid'])) {
+      return !empty($this->configuration['books'][$book['bid']]);
     }
     return FALSE;
   }

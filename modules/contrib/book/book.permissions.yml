@@ -4,12 +4,19 @@ create new books:
   title: 'Create new books'
 add content to books:
   title: 'Add content and child pages to books and manage their hierarchies'
-add any content to books:
-  title: 'Add non-book content to outlines'
-  description: 'This permission is only considered if a role is already granted the <em>Add content and child pages to books and manage their hierarchies</em> permission.'
-  restrict access: true
 access printer-friendly version:
   title: 'View printer-friendly books'
   description: 'View a book page and all of its sub-pages as a single document for ease of printing. Can be performance heavy.'
 reorder book pages:
   title: 'Reorder child page of a book'
+access book list:
+  title: 'Access list of all books'
+  description: 'View the book lists page on the site.'
+delete book:
+  title: 'Delete book'
+  description: 'This permission allows a user to delete an entire book.'
+  restrict access: true
+administer book settings:
+  title: 'Administer book settings'
+  description: 'This permission allows a user to configure book settings.'
+  restrict access: true

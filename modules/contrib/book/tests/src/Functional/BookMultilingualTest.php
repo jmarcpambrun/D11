@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Drupal\Tests\book\Functional;
 
 use Drupal\language\Entity\ConfigurableLanguage;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests multilingual behavior of books.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookMultilingualTest extends BookTestBase {
 
   /**
@@ -18,6 +20,7 @@ class BookMultilingualTest extends BookTestBase {
    */
   protected static $modules = [
     'book',
+    'book_content_type',
     'block',
     'user',
     'language',
@@ -55,32 +58,11 @@ class BookMultilingualTest extends BookTestBase {
       'language-selected' => 3,
     ]);
 
-    $user = $this->drupalCreateUser([
-      'access printer-friendly version',
-      'create new books',
-      'create book content',
-      'edit any book content',
-      'delete any book content',
-      'add content to books',
-      'reorder book pages',
-      'add any content to books',
-      'administer blocks',
-      'administer permissions',
-      'administer book outlines',
-      'node test view',
-      'administer content types',
-      'administer site configuration',
-      'view any unpublished content',
-      'view book revisions',
-
-      'view the administration theme',
-      'access administration pages',
-    ], NULL, FALSE, [
-      // Use a custom user admin language.
-      'preferred_admin_langcode' => 'de',
-    ]);
-
-    $this->drupalLogin($user);
+    // Use a custom user admin language.
+    $this->adminUser
+      ->set('preferred_admin_langcode', 'de')
+      ->save();
+    $this->drupalLogin($this->adminUser);
     $this->drupalGet('node/' . $nodes[0]->id() . '/child-ordering');
     $this->assertSession()->statusCodeEquals(200);
   }

@@ -1,0 +1,14 @@
+select[data-select-level] {
+  width: 100%;
+  max-width: 350px;
+  margin: 5px 0;
+}
+
+#edit-menu select[data-select-level] {
+  max-width: 255px;
+}
+
+#edit-book-pid,
+#edit-book-pid--description {
+  position: relative;
+}

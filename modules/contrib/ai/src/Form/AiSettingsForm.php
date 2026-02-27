@@ -109,6 +109,7 @@ class AiSettingsForm extends ConfigFormBase {
 
     // Attach the AI global library for consistent styling.
     $form['#attached']['library'][] = 'ai/ai_global';
+    $form['#attached']['library'][] = 'ai/ai_settings_form';
 
     $config = $this->config(static::CONFIG_NAME);
     $default_providers = $config->get('default_providers') ?? [];
@@ -747,7 +748,7 @@ class AiSettingsForm extends ConfigFormBase {
         'target' => '_blank',
         'rel' => 'noopener noreferrer',
         'title' => $label,
-        'class' => ['ai-info-link', 'ai-info-link--model'],
+        'class' => ['ai-icon-button', 'ai-icon--model'],
       ],
     ];
   }
@@ -1251,8 +1252,8 @@ class AiSettingsForm extends ConfigFormBase {
         '#attributes' => [
           'target' => '_blank',
           'rel' => 'noopener noreferrer',
-          'title' => $provider_title,
-          'class' => ['ai-info-link', 'ai-info-link--provider'],
+          'data-ai-tooltip' => $provider_title,
+          'class' => ['ai-icon-button', 'ai-icon--provider'],
         ],
       ];
     }
@@ -1273,8 +1274,8 @@ class AiSettingsForm extends ConfigFormBase {
         '#attributes' => [
           'target' => '_blank',
           'rel' => 'noopener noreferrer',
-          'title' => $model_title,
-          'class' => ['ai-info-link', 'ai-info-link--model'],
+          'data-ai-tooltip' => $model_title,
+          'class' => ['ai-icon-button', 'ai-icon--model'],
         ],
       ];
     }

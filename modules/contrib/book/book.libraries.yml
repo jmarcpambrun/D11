@@ -6,12 +6,25 @@ drupal.book:
     - core/jquery
     - core/drupal
     - core/drupal.form
+    - core/drupalSettings
 
 book.styling:
   version: VERSION
   css:
     theme:
       css/book.css: { }
+
+book.parent-selector:
+  version: VERSION
+  js:
+    js/book-parent-selector.js: { }
+    js/third-party/book_select_extractor.js: { }
+  css:
+    theme:
+      css/book-parent-selector.css: { }
+  dependencies:
+    - core/drupalSettings
+    - core/once
 
 book-edit-form:
   version: VERSION

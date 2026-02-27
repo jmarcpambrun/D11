@@ -517,6 +517,11 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
       $this->handleApiException($e);
       throw $e;
     }
+    finally {
+      if (is_resource($input)) {
+        fclose($input);
+      }
+    }
   }
 
   /**

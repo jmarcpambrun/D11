@@ -6,12 +6,14 @@ use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\SchemaCheckTestTrait;
 use Drupal\block\Entity\Block;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the block config schema.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BlockConfigSchemaTest extends KernelTestBase {
 
   use SchemaCheckTestTrait;

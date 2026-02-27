@@ -1,5 +1,6 @@
 :root {
   --toolbar-chatbot-width: 100vw;
+  --toolbar-chatbot-expand-amount: 0rem;
 }
 
 /* Klaro applies the same display style as the element it wraps,
@@ -108,7 +109,8 @@ body.ai-chatbot-opened {
   mask-image: url('../assets/three-dots.svg');
 }
 .sidebar-header--icon.expand::before {
-  mask-image: url('../assets/expand.svg');
+  mask-image: url('../assets/caret-right.svg');
+  mask-size: 7px;
 }
 .sidebar-header--icon.close::before {
   mask-image: url('../assets/close.svg');
@@ -116,6 +118,14 @@ body.ai-chatbot-opened {
 .sidebar-header--icon:hover {
   color: var(--gin-color-primary, #0550e6);
   background-color: var(--gin-bg-item-hover, #0550e61a);
+}
+.sidebar-header--icon.expand.active {
+  color: var(--gin-color-primary, #0550e6);
+  background-color: var(--gin-bg-item-hover, #0550e61a);
+}
+
+.sidebar-header--icon.expand {
+  display: none;
 }
 
 .sidebar-header--title {
@@ -188,13 +198,29 @@ body.ai-chatbot-opened {
     --toolbar-chatbot-width: 21rem;
   }
 
+  /* Expanded state */
+  body.ai-chatbot-expanded {
+    --toolbar-chatbot-expand-amount: 20rem;
+  }
+
+  body.ai-chatbot-expanded .sidebar-header--icon.expand::before {
+    mask-image: url('../assets/caret-right.svg');
+    mask-size: 7px;
+    transform: rotate(180deg);
+  }
+
+  .sidebar-header--icon.expand {
+    display: flex;
+  }
+
   /* Page positioning */
-  body.ai-chatbot-opened  {
-    --drupal-displace-offset-left: 26rem;
+  body.ai-chatbot-opened {
+    --toolbar-chatbot-width: calc(21rem + var(--toolbar-chatbot-expand-amount));
+    --drupal-displace-offset-left: calc(26rem + var(--toolbar-chatbot-expand-amount));
   }
 
   body.ai-chatbot-opened .gin--navigation-top-bar {
-    --admin-toolbar-sidebar-width: 26rem;
+    --admin-toolbar-sidebar-width: calc(26rem + var(--toolbar-chatbot-expand-amount));
     z-index: 1;
   }
 
@@ -240,4 +266,3 @@ body.ai-chatbot-opened {
     height: 56px;
   }
 }
-

@@ -2,6 +2,7 @@
 
 namespace Drupal\book\Plugin\migrate\source;
 
+use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\migrate_drupal\Plugin\migrate\source\DrupalSqlBase;
 
 // cspell:ignore mlid plid
@@ -18,13 +19,14 @@ use Drupal\migrate_drupal\Plugin\migrate\source\DrupalSqlBase;
  *   id = "book",
  *   source_module = "book",
  * )
+ * @phpstan-ignore class.extendsDeprecatedClass
  */
 class Book extends DrupalSqlBase {
 
   /**
    * {@inheritdoc}
    */
-  public function query() {
+  public function query(): SelectInterface {
     $query = $this->select('book', 'b')->fields('b', ['nid', 'bid']);
     $query->join('menu_links', 'ml', '[b].[mlid] = [ml].[mlid]');
     $ml_fields = ['mlid', 'plid', 'weight', 'has_children', 'depth'];
@@ -39,7 +41,7 @@ class Book extends DrupalSqlBase {
   /**
    * {@inheritdoc}
    */
-  public function getIds() {
+  public function getIds(): array {
     $ids['mlid']['type'] = 'integer';
     $ids['mlid']['alias'] = 'ml';
     return $ids;
@@ -48,7 +50,7 @@ class Book extends DrupalSqlBase {
   /**
    * {@inheritdoc}
    */
-  public function fields() {
+  public function fields(): array {
     return [
       'nid' => $this->t('Node ID'),
       'bid' => $this->t('Book ID'),

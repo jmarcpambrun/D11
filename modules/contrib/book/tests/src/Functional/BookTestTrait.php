@@ -63,9 +63,9 @@ trait BookTestTrait {
     // Node 0.
     $nodes[] = $this->createBookNode($book->id(), NULL, $edit);
     // Node 1.
-    $nodes[] = $this->createBookNode($book->id(), $nodes[0]->book['nid'], $edit);
+    $nodes[] = $this->createBookNode($book->id(), $nodes[0]->getBook()['nid'], $edit);
     // Node 2.
-    $nodes[] = $this->createBookNode($book->id(), $nodes[0]->book['nid'], $edit);
+    $nodes[] = $this->createBookNode($book->id(), $nodes[0]->getBook()['nid'], $edit);
     // Node 3.
     $nodes[] = $this->createBookNode($book->id(), NULL, $edit);
     // Node 4.
@@ -158,7 +158,7 @@ trait BookTestTrait {
       // Check printer friendly version.
       $this->drupalGet('book/export/html/' . $node->id());
       $this->assertSession()->pageTextContains($node->label());
-      $this->assertSession()->responseContains($node->body->processed);
+      $this->assertSession()->responseContains($node->field_body->processed);
     }
     catch (ExpectationException | EntityMalformedException $e) {
       $this->fail($e->getMessage());
@@ -188,7 +188,7 @@ trait BookTestTrait {
 
     try {
       $edit['title[0][value]'] = str_pad((string) $number, 2, '0', STR_PAD_LEFT) . ' - test node ' . $this->randomMachineName(10);
-      $edit['body[0][value]'] = 'test body ' . $this->randomMachineName(32) . ' ' . $this->randomMachineName(32);
+      $edit['field_body[0][value]'] = 'test body ' . $this->randomMachineName(32) . ' ' . $this->randomMachineName(32);
       $edit['book[bid]'] = $book_nid;
 
       $this->drupalGet('node/add/book');
@@ -201,7 +201,7 @@ trait BookTestTrait {
         $parent_node = $this->container->get('entity_type.manager')
           ->getStorage('node')
           ->loadUnchanged($parent);
-        $this->assertNotEmpty($parent_node->book['has_children'], 'Parent node is marked as having children');
+        $this->assertNotEmpty($parent_node->getBook()['has_children'], 'Parent node is marked as having children');
       }
       else {
         $this->submitForm($edit, 'Save');
@@ -236,6 +236,25 @@ trait BookTestTrait {
     $this->assertSession()->statusCodeEquals(200);
     $edit['book[bid]'] = $book_nid;
     $this->submitForm($edit, 'Save');
+  }
+
+  /**
+   * Set book settings with content type and child type.
+   *
+   * @param string $content_type
+   *   The content type, default to book.
+   * @param string $child_type
+   *   The child type, defaults to book.
+   */
+  public function setBookSettings(string $content_type = 'book', string $child_type = 'book'): void {
+    $config_factory = \Drupal::configFactory();
+    $config = $config_factory->getEditable('book.settings');
+    $settings = [];
+    $settings[] = [
+      'content_type' => $content_type,
+      'child_type' => $child_type,
+    ];
+    $config->set('allowed_types', $settings)->save();
   }
 
 }

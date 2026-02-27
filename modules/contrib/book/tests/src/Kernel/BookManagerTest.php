@@ -5,12 +5,14 @@ namespace Drupal\Tests\book\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the BookManager class.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookManagerTest extends KernelTestBase {
 
   use UserCreationTrait;
@@ -25,6 +27,7 @@ class BookManagerTest extends KernelTestBase {
     'text',
     'node',
     'book',
+    'book_content_type',
   ];
 
   /**
@@ -37,10 +40,9 @@ class BookManagerTest extends KernelTestBase {
     parent::setUp();
     $this->installEntitySchema('user');
     $this->installEntitySchema('node');
-    $this->installSchema('system', 'sequences');
     $this->installSchema('node', 'node_access');
     $this->installSchema('book', ['book']);
-    $this->installConfig(['node', 'book', 'field']);
+    $this->installConfig(['node', 'book', 'book_content_type', 'field']);
     $this->container->get('current_user')->setAccount($this->createUser(['administer book outlines']));
   }
 
@@ -129,6 +131,58 @@ class BookManagerTest extends KernelTestBase {
     // Test bookTreeAllData() with min_depth > max_depth.
     $bookTreeAllData = $bookManager->bookTreeAllData($bid, NULL, 2, 3);
     $this->assertEmpty($bookTreeAllData);
+  }
+
+  /**
+   * Tests the book getAllBooks() function.
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Exception
+   */
+  public function testBookGetAllBooks(): void {
+    $book1 = Node::create([
+      'type' => 'book',
+      'title' => '1st book',
+      'book' => ['bid' => 'new', 'weight' => 3],
+    ]);
+    $book1->save();
+
+    $book2 = Node::create([
+      'type' => 'book',
+      'title' => '2nd book',
+      'book' => ['bid' => 'new', 'weight' => 1],
+    ]);
+    $book2->save();
+
+    $book3 = Node::create([
+      'type' => 'book',
+      'title' => '3rd book',
+      'book' => ['bid' => 'new', 'weight' => 2],
+    ]);
+    $book3->save();
+
+    $bookManager = $this->container->get('book.manager');
+    $books = $bookManager->getAllBooks();
+
+    $book_title = [];
+    foreach ($books as $book) {
+      $book_title[] = $book['title'];
+    }
+
+    $this->assertSame(['2nd book', '3rd book', '1st book'], $book_title);
+
+    $this->config('book.settings')
+      ->set('book_sort', 'title')
+      ->save();
+
+    $books = $bookManager->getAllBooks();
+
+    $book_title = [];
+    foreach ($books as $book) {
+      $book_title[] = $book['title'];
+    }
+
+    $this->assertSame(['1st book', '2nd book', '3rd book'], $book_title);
   }
 
   /**

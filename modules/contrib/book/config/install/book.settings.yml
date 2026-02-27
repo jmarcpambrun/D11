@@ -1,4 +1,5 @@
-allowed_types:
-  - book
-child_type: book
+allowed_types: {  }
 book_sort: weight
+truncate_label: true
+use_parent_selector: true
+use_alternative_form: false

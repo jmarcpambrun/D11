@@ -77,7 +77,7 @@ class BookAdminEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?NodeInterface $node = NULL): array {
-    if (empty($node->book)) {
+    if (!$node->getBook()) {
       throw new NotFoundHttpException();
     }
 
@@ -123,6 +123,9 @@ class BookAdminEditForm extends FormBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Drupal\Core\Entity\EntityMalformedException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     // Save elements in the same order as defined in post rather than the form.
@@ -155,7 +158,7 @@ class BookAdminEditForm extends FormBase {
               '%current' => $values['title'],
             ]);
             $node->setTitle($values['title']);
-            $node->book['link_title'] = $node->label();
+            $node->setBookKey('link_title', $node->label());
             $node->setNewRevision();
             $node->save();
             $this->logger('content')->info('book: updated %title.', [
@@ -209,7 +212,7 @@ class BookAdminEditForm extends FormBase {
       ],
     ];
 
-    $tree = $this->bookManager->bookSubtreeData($node->book);
+    $tree = $this->bookManager->bookSubtreeData($node->getBook());
     // Do not include the book item itself.
     $tree = array_shift($tree);
     if ($tree['below']) {

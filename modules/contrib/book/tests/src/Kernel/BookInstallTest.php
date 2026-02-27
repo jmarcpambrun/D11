@@ -2,15 +2,17 @@
 
 namespace Drupal\Tests\book\Kernel;
 
-use Drupal\KernelTests\KernelTestBase;
+use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 use Drupal\node\Entity\NodeType;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test installation of Book module.
- *
- * @group book
  */
-class BookInstallTest extends KernelTestBase {
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
+class BookInstallTest extends EntityKernelTestBase {
 
   /**
    * {@inheritdoc}

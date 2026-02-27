@@ -3,6 +3,7 @@
 namespace Drupal\book;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Statement\FetchAs;
 use Drupal\Core\Database\StatementInterface;
 
 /**
@@ -34,7 +35,7 @@ class BookOutlineStorage implements BookOutlineStorageInterface {
    * {@inheritdoc}
    */
   public function loadMultiple(array $nids, bool $access = TRUE): array {
-    $query = $this->connection->select('book', 'b', ['fetch' => \PDO::FETCH_ASSOC]);
+    $query = $this->connection->select('book', 'b', ['fetch' => FetchAs::Associative]);
     $query->fields('b');
     $query->condition('b.nid', $nids, 'IN');
 
@@ -82,7 +83,7 @@ class BookOutlineStorage implements BookOutlineStorageInterface {
     return $this->connection->select('book', 'b')
       ->fields('b')
       ->condition('b.pid', $pid)
-      ->execute()->fetchAllAssoc('nid', \PDO::FETCH_ASSOC);
+      ->execute()->fetchAllAssoc('nid', FetchAs::Associative);
   }
 
   /**
@@ -177,7 +178,7 @@ class BookOutlineStorage implements BookOutlineStorageInterface {
    * {@inheritdoc}
    */
   public function getBookSubtree($link, $max_depth): array {
-    $query = $this->connection->select('book', 'b', ['fetch' => \PDO::FETCH_ASSOC]);
+    $query = $this->connection->select('book', 'b', ['fetch' => FetchAs::Associative]);
     $query->fields('b');
     $query->condition('b.bid', $link['bid']);
 

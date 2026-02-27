@@ -4,12 +4,14 @@ namespace Drupal\Tests\book\Kernel\Migrate\d6;
 
 use Drupal\Tests\SchemaCheckTestTrait;
 use Drupal\Tests\migrate_drupal\Kernel\d6\MigrateDrupal6TestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Upgrade variables to book.settings.yml.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class MigrateBookConfigsTest extends MigrateDrupal6TestBase {
 
   use SchemaCheckTestTrait;
@@ -17,7 +19,7 @@ class MigrateBookConfigsTest extends MigrateDrupal6TestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['book'];
+  protected static $modules = ['book', 'book_content_type'];
 
   /**
    * Gets the path to the fixture file.
@@ -53,8 +55,17 @@ class MigrateBookConfigsTest extends MigrateDrupal6TestBase {
     $this->executeMigration($migration_id);
 
     $config = $this->config('book.settings');
-    $this->assertSame('book', $config->get('child_type'));
-    $this->assertSame(['book'], $config->get('allowed_types'));
+    $allowed_types = $config->get('allowed_types');
+
+    // Find the 'book' content_type item:
+    $book_type = NULL;
+    foreach ($allowed_types as $item) {
+      if (isset($item['content_type']) && $item['content_type'] === 'book') {
+        $book_type = $item;
+        break;
+      }
+    }
+    $this->assertSame('book', $book_type['child_type']);
     $this->assertConfigSchema($this->container->get('config.typed'), 'book.settings', $config->get());
   }
 

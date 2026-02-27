@@ -6,12 +6,15 @@ namespace Drupal\Tests\book\Unit;
 
 use Drupal\Tests\UnitTestCase;
 use Drupal\book\BookUninstallValidator;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * @coversDefaultClass \Drupal\book\BookUninstallValidator
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookUninstallValidatorTest extends UnitTestCase {
 
   /**

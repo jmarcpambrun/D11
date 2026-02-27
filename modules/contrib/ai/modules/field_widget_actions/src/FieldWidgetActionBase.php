@@ -240,17 +240,46 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    */
   public function completeFormAlter(array &$form, FormStateInterface $form_state, array $context = []) {
     if ($this->getAjaxCallback()) {
-      // Add wrapper.
-      $prefix = $form['#prefix'] ?? '';
-      $suffix = $form['#suffix'] ?? '';
-      $form['#prefix'] = '<div id="field-widget-action-' . $context['items']->getFieldDefinition()->getName() . '" class="field-widget-action-element-wrapper">' . $prefix;
-      $form['#suffix'] = $suffix . '</div>';
-      $form['#attributes']['class'][] = 'field-widget-action-element';
+      if (!empty($form['widget'][0]['#group'])) {
+        $form['widget']['#process'][] = [$this, 'processWidgetWithGroup'];
+      }
+      else {
+        // Add wrapper.
+        $prefix = $form['#prefix'] ?? '';
+        $suffix = $form['#suffix'] ?? '';
+        $form['#prefix'] = '<div id="field-widget-action-' . $context['items']->getFieldDefinition()->getName() . '" class="field-widget-action-element-wrapper">' . $prefix;
+        $form['#suffix'] = $suffix . '</div>';
+        $form['#attributes']['class'][] = 'field-widget-action-element';
+      }
     }
     $plugin_definition = $this->getPluginDefinition();
     if (empty($plugin_definition['multiple'])) {
       $this->actionButton($form, $form_state, $context);
     }
+  }
+
+  /**
+   * Process the element with #group property.
+   *
+   * @param array $element
+   *   The given element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param array $form
+   *   The complete form.
+   *
+   * @return array
+   *   The processed element.
+   */
+  public function processWidgetWithGroup(array $element, FormStateInterface $form_state, array &$form) {
+    if (!empty($element[0]['#group'])) {
+      $group = $element[0]['#group'];
+      // Add wrapper.
+      $form[$group]['#prefix'] = '<div id="field-widget-action-' . $group . '" class="field-widget-action-element-wrapper">';
+      $form[$group]['#suffix'] = '</div>';
+      $form[$group]['#attributes']['class'][] = 'field-widget-action-element';
+    }
+    return $element;
   }
 
   /**
@@ -325,6 +354,9 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
       '#field_widget_action_settings' => $this->getConfiguration(),
     ];
     if ($this->getAjaxCallback()) {
+      if (!empty($form['#group'])) {
+        $fieldName = $form['#group'];
+      }
       $form[$widgetId]['#ajax'] = [
         'callback' => [$this, $this->getAjaxCallback()],
         'wrapper' => 'field-widget-action-' . $fieldName,
@@ -468,7 +500,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
     }
     $response->addCommand(new OpenModalDialogCommand($this->t('Suggestions'), $message, [
       'width' => '80%',
-      'classes' => ['ui-dialog' => 'ui-dialog-fwa-suggestions'],
+      'dialogClass' => 'ui-dialog-fwa-suggestions',
     ]));
     return $response;
   }

@@ -69,20 +69,21 @@ class BookExport {
    *   Thrown when the node was not attached to a book.
    */
   public function bookExportHtml(NodeInterface $node): array {
-    if (!isset($node->book)) {
+    $book = $node->getBook();
+    if (empty($book)) {
       throw new \Exception();
     }
 
-    $tree = $this->bookManager->bookSubtreeData($node->book);
+    $tree = $this->bookManager->bookSubtreeData($book);
     $contents = $this->exportTraverse($tree, [$this, 'bookNodeExport']);
     $node = $this->entityRepository->getTranslationFromContext($node);
-    $book_title = $this->nodeStorage->load($node->book['bid'])->label();
+    $book_title = $this->nodeStorage->load($book['bid'])->label();
     return [
       '#theme' => 'book_export_html',
       '#title' => $node->label(),
       '#book_title' => $book_title,
       '#contents' => $contents,
-      '#depth' => $node->book['depth'],
+      '#depth' => $book['depth'],
       '#cache' => [
         'tags' => $node->getEntityType()->getListCacheTags(),
       ],
@@ -127,7 +128,7 @@ class BookExport {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node that will be output.
-   * @param string $children
+   * @param array|string $children
    *   (optional) All the rendered child nodes within the current node. Defaults
    *   to an empty string.
    *
@@ -136,7 +137,7 @@ class BookExport {
    *
    * @see \Drupal\book\BookExport::exportTraverse()
    */
-  protected function bookNodeExport(NodeInterface $node, $children = ''): array {
+  protected function bookNodeExport(NodeInterface $node, array|string $children = ''): array {
     $build = $this->viewBuilder->view($node, 'print');
     return [
       '#theme' => 'book_node_export_html',

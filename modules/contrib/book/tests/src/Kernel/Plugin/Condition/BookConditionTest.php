@@ -7,12 +7,14 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests that conditions provided by the book module, are working.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookConditionTest extends KernelTestBase {
 
   use UserCreationTrait {
@@ -22,7 +24,16 @@ class BookConditionTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'user', 'field', 'filter', 'text', 'node', 'book'];
+  protected static $modules = [
+    'system',
+    'user',
+    'field',
+    'filter',
+    'text',
+    'node',
+    'book',
+    'book_content_type',
+  ];
 
   /**
    * {@inheritdoc}
@@ -36,7 +47,7 @@ class BookConditionTest extends KernelTestBase {
     $this->installEntitySchema('node');
     $this->installSchema('book', ['book']);
     $this->installSchema('node', ['node_access']);
-    $this->installConfig(['node', 'book', 'field']);
+    $this->installConfig(['node', 'book', 'book_content_type', 'field']);
 
     // Create user 1 who has special permissions.
     $this->setCurrentUser($this->drupalCreateUser());
@@ -55,28 +66,39 @@ class BookConditionTest extends KernelTestBase {
     ]);
     $content_type->save();
     $book_config = $this->config('book.settings');
-    $allowed_types = $book_config->get('allowed_types');
-    $allowed_types[] = $content_type->id();
-    $book_config->set('allowed_types', $allowed_types)->save();
+    $allowed_types = $book_config->get('allowed_types') ?: [];
+
+    $allowed_types[] = [
+      'content_type' => $content_type->id(),
+      'child_type' => $content_type->id(),
+    ];
 
     // Create a regular node and three books including one with children.
     $node_1 = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
     $node_1->save();
 
     $book_1 = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
-    $book_1->book['bid'] = 'new';
+    $book_1_book = $book_1->getBook();
+    $book_1_book['bid'] = 'new';
+    $book_1->setBook($book_1_book);
     $book_1->save();
     $book_1_child = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
-    $book_1_child->book['bid'] = $book_1->id();
-    $book_1_child->book['pid'] = $book_1->id();
+    $book_1_child_book = $book_1_child->getBook();
+    $book_1_child_book['bid'] = $book_1->id();
+    $book_1_child_book['pid'] = $book_1->id();
+    $book_1_child->setBook($book_1_child_book);
     $book_1_child->save();
 
     $book_2 = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
-    $book_2->book['bid'] = 'new';
+    $book_2_book = $book_2->getBook();
+    $book_2_book['bid'] = 'new';
+    $book_2->setBook($book_2_book);
     $book_2->save();
 
     $book_3 = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
-    $book_3->book['bid'] = 'new';
+    $book_3_book = $book_3->getBook();
+    $book_3_book['bid'] = 'new';
+    $book_3->setBook($book_3_book);
     $book_3->save();
 
     // Obtain the condition manager.

@@ -2,24 +2,34 @@
 
 namespace Drupal\Tests\book\Kernel;
 
+use Drupal\book\BookHelperTrait;
+use Drupal\Core\Config\Schema\SchemaCheckTrait;
 use Drupal\Core\Form\FormState;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\book\Form\BookSettingsForm;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
- * @covers \Drupal\book\Form\BookSettingsForm
- * @group book
+ * Test Book settings form.
  */
+#[Group('book')]
+#[CoversClass(BookSettingsForm::class)]
+#[RunTestsInSeparateProcesses]
 class BookSettingsFormTest extends KernelTestBase {
 
+  use BookHelperTrait;
   use ContentTypeCreationTrait;
+  use SchemaCheckTrait;
 
   /**
    * {@inheritdoc}
    */
   protected static $modules = [
     'book',
+    'book_content_type',
     'field',
     'node',
     'system',
@@ -32,9 +42,15 @@ class BookSettingsFormTest extends KernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->installConfig(['book', 'node']);
+    $this->installConfig(['book', 'book_content_type', 'node']);
     $this->createContentType(['type' => 'chapter']);
     $this->createContentType(['type' => 'page']);
+
+    // Clear default config that might include book type.
+    $this->config('book.settings')
+      ->set('allowed_types', [])
+      ->set('book_sort', 'weight')
+      ->save();
   }
 
   /**
@@ -45,14 +61,107 @@ class BookSettingsFormTest extends KernelTestBase {
   public function testConfigValuesSavedCorrectly(): void {
     $form_state = new FormState();
     $form_state->setValues([
-      'book_allowed_types' => ['page', 'chapter', ''],
-      'book_child_type' => 'page',
+      'allowed_types' => [
+        'page' => [
+          'enabled' => TRUE,
+          'child_type' => 'page',
+        ],
+        'chapter' => [
+          'enabled' => TRUE,
+          'child_type' => 'page',
+        ],
+      ],
+      'book_sort' => 'weight',
     ]);
     $this->container->get('form_builder')->submitForm(BookSettingsForm::class, $form_state);
 
     $config = $this->config('book.settings');
-    $this->assertSame(['chapter', 'page'], $config->get('allowed_types'));
-    $this->assertSame('page', $config->get('child_type'));
+    $allowed_types_config = $config->get('allowed_types');
+    $content_types = $this->getBookContentTypes($allowed_types_config);
+    $this->assertSame(['chapter', 'page'], $content_types);
+    $this->assertSame('page', $allowed_types_config[0]['child_type']);
+  }
+
+  /**
+   * Tests that valid configuration passes schema validation.
+   *
+   * @throws \Exception
+   */
+  public function testValidAllowedTypes(): void {
+    $config = [
+      'allowed_types' => [
+        [
+          'content_type' => 'book',
+          'child_type' => 'book',
+        ],
+        [
+          'content_type' => 'page',
+          'child_type' => 'book',
+        ],
+      ],
+    ];
+
+    $typed_config = $this->container->get('config.typed');
+    $result = $this->checkConfigSchema($typed_config, 'book.settings', $config);
+
+    $this->assertTrue($result);
+  }
+
+  /**
+   * Tests that invalid configuration fails schema validation.
+   *
+   * @throws \Exception
+   */
+  public function testInvalidAllowedTypes(): void {
+    $config_values = [
+      'allowed_types' => [
+        [
+          'content_type' => 'book',
+          'child_type' => 'invalid_type',
+        ],
+      ],
+    ];
+
+    /** @var \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager */
+    $typed_config_manager = $this->container->get('config.typed');
+    $typed_config = $typed_config_manager->get('book.settings');
+
+    foreach ($config_values as $key => $value) {
+      $typed_config->set($key, $value);
+    }
+    $violations = $typed_config->validate();
+
+    // There should be at least one violation.
+    $this->assertNotEmpty($violations);
+    $expected_text = 'The child page content type';
+    $found = FALSE;
+    foreach ($violations as $violation) {
+      if (str_contains($violation->getMessage(), $expected_text)) {
+        $found = TRUE;
+        break;
+      }
+    }
+    $this->assertTrue($found);
+  }
+
+  /**
+   * Tests form cannot be saved if content_type selected with no child_type.
+   *
+   * @throws \Exception
+   */
+  public function testChildTypes(): void {
+    $form_state = new FormState();
+    $form_state->setValues([
+      'allowed_types' => [
+        'page' => [
+          'enabled' => TRUE,
+        ],
+      ],
+    ]);
+    $this->container->get('form_builder')->submitForm(BookSettingsForm::class, $form_state);
+    $errors = $form_state->getErrors();
+    $this->assertArrayHasKey('allowed_types][page][child_type', $errors);
+    $this->assertEquals('You must select a child type for the enabled content type.', $errors['allowed_types][page][child_type']);
   }
 
 }

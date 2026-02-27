@@ -2,3 +2,7 @@
 .book-admin-edit [data-drupal-selector="edit-table"] thead th:nth-child(3) {
   display: none;
 }
+
+.container-inline div {
+  display: inline-flex !important;
+}

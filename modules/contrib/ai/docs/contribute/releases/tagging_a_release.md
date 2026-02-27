@@ -27,7 +27,11 @@ All releases should be ready by 11:00 UTC on the release day to allow time for v
    to pushing, you'll be given the opportunity to inspect the result.
 2. Verify under https://git.drupalcode.org/project/ai/-/tags that the tag has been created successfully.
 3. Visit https://git.drupalcode.org/project/ai/-/compare?from=2.0.x&to=2.0.x to verify that the same diff is shown between the last release and the new tag as it is between the main branch and the last release.
-4. Notify the Publishing Manager that the tag has been created and is ready for verification and publishing.
+4. Verify in the tag branch that the following UIs have been built and committed:
+   - `ui/mdxeditor/dist/assets`
+   - `ui/json-schema-editor/dist`
+   - `modules/ai_ckeditor/js/build`
+5. Notify the Publishing Manager that the tag has been created and is ready for verification and publishing.
 
 ## Security Releases
 For security releases, it is crucial to ensure that the release is not made public until the Drupal Security Team has reviewed and approved the release. Coordinate with the Drupal Security Team to determine the appropriate timing for pushing the security release, which is usually Wednesdays before 16:00 UTC.

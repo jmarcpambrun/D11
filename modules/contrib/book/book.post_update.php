@@ -8,6 +8,7 @@
 use Drupal\Core\Config\Entity\ConfigEntityUpdater;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\block\Entity\Block;
+use Drupal\user\RoleInterface;
 
 /**
  * Pre-populate the use_top_level_title setting of the book_navigation blocks.
@@ -44,6 +45,51 @@ function book_post_update_book_navigation_view_display(?array &$sandbox = NULL):
 }
 
 /**
+ * Grant 'access book list' permission to roles with 'access content'.
+ */
+function book_post_update_book_list_permission(?array &$sandbox = NULL): void {
+  \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'user_role', function (RoleInterface $role): bool {
+    $update = FALSE;
+
+    if ($role->hasPermission('access content') && !$role->hasPermission('access book list')) {
+      $role->grantPermission('access book list');
+      $update = TRUE;
+    }
+
+    return $update;
+  });
+}
+
+/**
+ * Converts book.settings.allowed_types + child_type to structured format.
+ */
+function book_post_update_1convert_allowed_types_to_structured(array &$sandbox = []): void {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('book.settings');
+
+  $old_allowed = $config->get('allowed_types');
+  $child_type = $config->get('child_type');
+
+  // Only run if we're still using the old flat format.
+  if (is_array($old_allowed) && isset($child_type)) {
+    $new_allowed = [];
+    foreach ($old_allowed as $type_id) {
+      if (!empty($type_id)) {
+        $new_allowed[] = [
+          'content_type' => $type_id,
+          'child_type' => $child_type,
+        ];
+      }
+    }
+
+    $config
+      ->set('allowed_types', $new_allowed)
+      ->clear('child_type')
+      ->save();
+  }
+}
+
+/**
  * Pre-populate the show_top_item setting of the book_navigation blocks.
  */
 function book_post_update_prepopulate_show_top_item_setting(&$sandbox): void {
@@ -54,4 +100,57 @@ function book_post_update_prepopulate_show_top_item_setting(&$sandbox): void {
     }
     return FALSE;
   });
+}
+
+/**
+ * Add the default label truncation setting.
+ */
+function book_post_update_add_default_label_truncate_settings(): ?string {
+  $config = \Drupal::configFactory()->getEditable('book.settings');
+  if ($config->get('truncate_label') === NULL) {
+    // Specify the default setting if not specified.
+    $config
+      ->set('truncate_label', TRUE)
+      ->save(TRUE);
+    return 'Updated the default truncate setting.';
+  }
+  return NULL;
+}
+
+/**
+ * Remove 'add any content to books' permission.
+ */
+function book_post_update_remove_add_any_content_books_permission(?array &$sandbox = NULL): void {
+  \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'user_role', function (RoleInterface $role): bool {
+    $update = FALSE;
+    $permission = 'add any content to books';
+
+    if ($role->hasPermission('add any content to books')) {
+      $role->revokePermission($permission);
+      $update = TRUE;
+    }
+
+    return $update;
+  });
+}
+
+/**
+ * Set allowed child_type to parent if none previously configured.
+ */
+function book_post_update_6allowed_child_type_default(array &$sandbox = []): void {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('book.settings');
+  $updated = FALSE;
+
+  $allowed_types = $config->get('allowed_types');
+  foreach ($allowed_types as &$type) {
+    if (empty($type['child_type'])) {
+      $type['child_type'] = $type['content_type'];
+      $updated = TRUE;
+    }
+  }
+
+  if ($updated) {
+    $config->set('allowed_types', $allowed_types)->save();
+  }
 }

@@ -206,3 +206,37 @@ function book_update_103006(): void {
   $config_factory->getEditable('book.settings')
     ->clear('show_top_item')->save();
 }
+
+/**
+ * Grant 'administer book settings' permission.
+ */
+function book_update_103007(): void {
+  $roles = \Drupal::entityTypeManager()
+    ->getStorage('user_role')
+    ->loadMultiple();
+
+  foreach ($roles as $role) {
+    if ($role->hasPermission('administer site configuration')) {
+      $role->grantPermission('administer book settings');
+      $role->save();
+    }
+  }
+}
+
+/**
+ * Add show_top_item use_parent_selector settings config.
+ */
+function book_update_103008(): void {
+  $config_factory = \Drupal::configFactory();
+  $config_factory->getEditable('book.settings')
+    ->set('use_parent_selector', FALSE)->save();
+}
+
+/**
+ * Add use_alternative_form settings config.
+ */
+function book_update_103009(): void {
+  $config_factory = \Drupal::configFactory();
+  $config_factory->getEditable('book.settings')
+    ->set('use_alternative_form', FALSE)->save();
+}

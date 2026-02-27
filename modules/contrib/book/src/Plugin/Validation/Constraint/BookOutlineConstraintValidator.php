@@ -2,6 +2,7 @@
 
 namespace Drupal\book\Plugin\Validation\Constraint;
 
+use Drupal\book\BookHelperTrait;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -15,6 +16,8 @@ use Symfony\Component\Validator\ConstraintValidator;
  * Constraint validator for changing the book outline in pending revisions.
  */
 class BookOutlineConstraintValidator extends ConstraintValidator implements ContainerInjectionInterface {
+
+  use BookHelperTrait;
 
   /**
    * Creates a new BookOutlineConstraintValidator instance.
@@ -52,17 +55,19 @@ class BookOutlineConstraintValidator extends ConstraintValidator implements Cont
     // be populated even if the node is not part of the book. If the user cannot
     // manage book outlines, the book variable will be empty, and we can safely
     // ignore the constraints as the outline cannot be changed by this user.
-    if (isset($value) && !empty($value->book) && !$value->isNew() && !$value->isDefaultRevision()) {
+    if (isset($value) && !empty($value->getBook()) && !$value->isNew() && !$value->isDefaultRevision()) {
+      $book = $value->getBook();
 
       // Skip validation if the node type is not allowed in book outlines
       // This prevents BookOutlineConstraint from interfering with
       // Layout Builder operations on content types that aren't book enabled
       // Get list of allowed content types for books.
-      $allowed_types = $this->configFactory->get('book.settings')->get('allowed_types');
+      $allowed_types_config = $this->configFactory->get('book.settings')->get('allowed_types');
+      $allowed_types = $this->getBookContentTypes($allowed_types_config);
       // Get the node's content type (bundle)
       $node_type = $value->bundle();
 
-      if (in_array($node_type, $allowed_types)) {
+      if ($book['bid'] !== 'none' && in_array($node_type, $allowed_types)) {
         /** @var \Drupal\Core\Entity\ContentEntityInterface $original */
         $original = $this->bookManager->loadBookLink($value->id(), FALSE) ?: [
           'bid' => 0,
@@ -72,7 +77,7 @@ class BookOutlineConstraintValidator extends ConstraintValidator implements Cont
           $original['pid'] = -1;
         }
 
-        if ($value->book['bid'] != $original['bid']) {
+        if ($book['bid'] != $original['bid']) {
           if ($this->currentUser->hasPermission('administer book outlines')) {
             $this->context->buildViolation($constraint->messageWithLink, [
               ':link' => Url::fromRoute('book.admin')->toString(),
@@ -88,7 +93,7 @@ class BookOutlineConstraintValidator extends ConstraintValidator implements Cont
               ->addViolation();
           }
         }
-        if ($value->book['pid'] != $original['pid']) {
+        if ($book['pid'] != $original['pid']) {
           if ($this->currentUser->hasPermission('administer book outlines')) {
             $this->context->buildViolation($constraint->messageWithLink, [
               ':link' => Url::fromRoute('book.admin')->toString(),
@@ -104,7 +109,7 @@ class BookOutlineConstraintValidator extends ConstraintValidator implements Cont
               ->addViolation();
           }
         }
-        if ($value->book['weight'] != $original['weight']) {
+        if ($book['weight'] != $original['weight']) {
           if ($this->currentUser->hasPermission('administer book outlines')) {
             $this->context->buildViolation($constraint->messageWithLink, [
               ':link' => Url::fromRoute('book.admin')->toString(),

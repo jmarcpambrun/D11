@@ -150,14 +150,30 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     if (empty($this->aiSettings->get('prompt_logging'))) {
       return FALSE;
     }
-    // Check if the tags are empty.
-    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
-    if (empty($prompt_logging_tags)) {
-      return TRUE;
-    }
+
+    // Normalize tags for comparison.
     $normalized_tags = [];
     foreach ($tags as $tag) {
       $normalized_tags[] = strtolower(trim($tag));
+    }
+
+    // Check excluded tags first - if any match, don't log.
+    $prompt_logging_excluded_tags = $this->aiSettings->get('prompt_logging_excluded_tags');
+    if (!empty($prompt_logging_excluded_tags)) {
+      $excluded_tags = array_filter(array_map(
+        static fn($tag) => strtolower(trim($tag)),
+        explode(',', $prompt_logging_excluded_tags)
+      ));
+
+      if (array_intersect($excluded_tags, $normalized_tags)) {
+        return FALSE;
+      }
+    }
+
+    // Check if the included tags are empty.
+    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
+    if (empty($prompt_logging_tags)) {
+      return TRUE;
     }
     $compare_tags = explode(',', $prompt_logging_tags);
     foreach ($compare_tags as $tag) {

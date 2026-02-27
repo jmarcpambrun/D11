@@ -5,12 +5,14 @@ namespace Drupal\Tests\book\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests that the Book module cannot be uninstalled if books exist.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookUninstallTest extends KernelTestBase {
 
   /**
@@ -26,6 +28,7 @@ class BookUninstallTest extends KernelTestBase {
     'text',
     'node',
     'book',
+    'book_content_type',
   ];
 
   /**
@@ -37,7 +40,7 @@ class BookUninstallTest extends KernelTestBase {
     $this->installEntitySchema('node');
     $this->installSchema('book', ['book']);
     $this->installSchema('node', ['node_access']);
-    $this->installConfig(['node', 'book', 'field']);
+    $this->installConfig(['node', 'book', 'book_content_type', 'field']);
     // For uninstall to work.
     $this->installSchema('user', ['users_data']);
   }
@@ -59,12 +62,14 @@ class BookUninstallTest extends KernelTestBase {
     ]);
     $content_type->save();
     $book_config = $this->config('book.settings');
-    $allowed_types = $book_config->get('allowed_types');
-    $allowed_types[] = $content_type->id();
-    $book_config->set('allowed_types', $allowed_types)->save();
+    $allowed_types = $book_config->get('allowed_types') ?: [];
+    $allowed_types[] = [
+      'content_type' => $content_type->id(),
+      'child_type' => $content_type->id(),
+    ];
 
     $node = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
-    $node->book['bid'] = 'new';
+    $node->setBookKey('bid', 'new');
     $node->save();
 
     // One node in a book but not of type book.
@@ -72,7 +77,7 @@ class BookUninstallTest extends KernelTestBase {
     $this->assertEquals(['To uninstall Book, delete all content that is part of a book'], $validation_reasons['book']);
 
     $book_node = Node::create(['title' => $this->randomString(), 'type' => 'book']);
-    $book_node->book['bid'] = FALSE;
+    $book_node->setBookKey('bid', NULL);
     $book_node->save();
 
     // Two nodes, one in a book but not of type book and one book node (which is

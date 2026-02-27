@@ -16,7 +16,7 @@ class Book extends EntityContentBase {
   /**
    * {@inheritdoc}
    */
-  protected static function getEntityTypeId($plugin_id) {
+  protected static function getEntityTypeId($plugin_id): string {
     return 'node';
   }
 
@@ -24,14 +24,15 @@ class Book extends EntityContentBase {
    * {@inheritdoc}
    */
   protected function updateEntity(EntityInterface $entity, Row $row) {
-    if ($entity->book) {
+    $book = $entity->getBook();
+    if (!empty($book)) {
       $book = $row->getDestinationProperty('book');
       foreach ($book as $key => $value) {
-        $entity->book[$key] = $value;
+        $book[$key] = $value;
       }
     }
     else {
-      $entity->book = $row->getDestinationProperty('book');
+      $entity->setBook($row->getDestinationProperty('book'));
     }
     return parent::updateEntity($entity, $row);
   }

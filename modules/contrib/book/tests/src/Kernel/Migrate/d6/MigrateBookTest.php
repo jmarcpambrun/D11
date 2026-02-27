@@ -4,18 +4,20 @@ namespace Drupal\Tests\book\Kernel\Migrate\d6;
 
 use Drupal\Tests\migrate_drupal\Kernel\d6\MigrateDrupal6TestBase;
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Upgrade book structure.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class MigrateBookTest extends MigrateDrupal6TestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['book', 'node'];
+  protected static $modules = ['book', 'book_content_type', 'node'];
 
   /**
    * {@inheritdoc}
@@ -27,6 +29,7 @@ class MigrateBookTest extends MigrateDrupal6TestBase {
     $this->migrateUsers(FALSE);
     $this->installConfig('book');
     $this->installConfig(['node']);
+    $this->installConfig(['book_content_type']);
     $this->executeMigrations([
       'd6_node_settings',
       'd6_node_type',
@@ -47,35 +50,35 @@ class MigrateBookTest extends MigrateDrupal6TestBase {
    */
   public function testBook(): void {
     $nodes = Node::loadMultiple([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    $this->assertSame('1', $nodes[1]->book['bid']);
-    $this->assertSame('0', $nodes[1]->book['pid']);
+    $this->assertSame('1', $nodes[1]->getBook()['bid']);
+    $this->assertSame('0', $nodes[1]->getBook()['pid']);
 
-    $this->assertSame('1', $nodes[2]->book['bid']);
-    $this->assertSame('1', $nodes[2]->book['pid']);
+    $this->assertSame('1', $nodes[2]->getBook()['bid']);
+    $this->assertSame('1', $nodes[2]->getBook()['pid']);
 
-    $this->assertSame('1', $nodes[3]->book['bid']);
-    $this->assertSame('1', $nodes[3]->book['pid']);
+    $this->assertSame('1', $nodes[3]->getBook()['bid']);
+    $this->assertSame('1', $nodes[3]->getBook()['pid']);
 
-    $this->assertSame('1', $nodes[4]->book['bid']);
-    $this->assertSame('3', $nodes[4]->book['pid']);
+    $this->assertSame('1', $nodes[4]->getBook()['bid']);
+    $this->assertSame('3', $nodes[4]->getBook()['pid']);
 
-    $this->assertSame('1', $nodes[5]->book['bid']);
-    $this->assertSame('3', $nodes[5]->book['pid']);
+    $this->assertSame('1', $nodes[5]->getBook()['bid']);
+    $this->assertSame('3', $nodes[5]->getBook()['pid']);
 
-    $this->assertSame('6', $nodes[6]->book['bid']);
-    $this->assertSame('0', $nodes[6]->book['pid']);
+    $this->assertSame('6', $nodes[6]->getBook()['bid']);
+    $this->assertSame('0', $nodes[6]->getBook()['pid']);
 
-    $this->assertSame('6', $nodes[7]->book['bid']);
-    $this->assertSame('6', $nodes[7]->book['pid']);
+    $this->assertSame('6', $nodes[7]->getBook()['bid']);
+    $this->assertSame('6', $nodes[7]->getBook()['pid']);
 
-    $this->assertSame('6', $nodes[8]->book['bid']);
-    $this->assertSame('6', $nodes[8]->book['pid']);
+    $this->assertSame('6', $nodes[8]->getBook()['bid']);
+    $this->assertSame('6', $nodes[8]->getBook()['pid']);
 
-    $this->assertSame('6', $nodes[9]->book['bid']);
-    $this->assertSame('8', $nodes[9]->book['pid']);
+    $this->assertSame('6', $nodes[9]->getBook()['bid']);
+    $this->assertSame('8', $nodes[9]->getBook()['pid']);
 
-    $this->assertSame('6', $nodes[10]->book['bid']);
-    $this->assertSame('8', $nodes[10]->book['pid']);
+    $this->assertSame('6', $nodes[10]->getBook()['bid']);
+    $this->assertSame('8', $nodes[10]->getBook()['pid']);
 
     $tree = \Drupal::service('book.manager')->bookTreeAllData(1);
     $this->assertSame('1', $tree['50000 Birds 1']['link']['nid']);

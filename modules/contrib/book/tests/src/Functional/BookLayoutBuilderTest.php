@@ -6,12 +6,14 @@ namespace Drupal\Tests\book\Functional;
 
 use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
 use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests interaction with layout builder.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookLayoutBuilderTest extends BookTestBase {
 
   use BookTestTrait;
@@ -22,6 +24,7 @@ class BookLayoutBuilderTest extends BookTestBase {
    */
   protected static $modules = [
     'book',
+    'book_content_type',
     'field_ui',
     'node',
     'layout_builder',
@@ -64,7 +67,6 @@ class BookLayoutBuilderTest extends BookTestBase {
       'delete any book content',
       'add content to books',
       'reorder book pages',
-      'add any content to books',
       'administer book outlines',
       'view any unpublished content',
       'view book revisions',
@@ -86,10 +88,7 @@ class BookLayoutBuilderTest extends BookTestBase {
 
     // Now enable book for the content type and confirm we can still save
     // another draft.
-    $book_config = $this->config('book.settings');
-    $allowed_types = $book_config->get('allowed_types');
-    $allowed_types[] = 'test_content_type';
-    $book_config->set('allowed_types', $allowed_types)->save();
+    $this->setBookSettings('test_content_type', 'test_content_type');
     $this->resetAll();
 
     $this->drupalGet("node/{$node->id()}/layout");

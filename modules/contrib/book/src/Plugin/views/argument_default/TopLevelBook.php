@@ -57,10 +57,12 @@ class TopLevelBook extends Node {
     $nid = parent::getArgument();
     if (!empty($nid)) {
       $node = $this->nodeStorage->load($nid);
-      if (isset($node->book['bid'])) {
-        return $node->book['bid'];
+      $book = $node->getBook();
+      if (isset($book['bid'])) {
+        return $book['bid'];
       }
     }
+    return NULL;
   }
 
 }

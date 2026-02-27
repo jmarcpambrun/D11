@@ -17,13 +17,14 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 
-// cspell:ignore plid
+// cspell:ignore plid autocompleteclose
 
 /**
  * Defines a book manager.
@@ -117,8 +118,6 @@ class BookManager implements BookManagerInterface {
       // Load nodes with proper translation.
       $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($nids);
       $nodes = array_map([$this->entityRepository, 'getTranslationFromContext'], $nodes);
-      // @todo Sort by weight and translated title.
-      // @todo use route name for links, not system path.
       foreach ($book_links as $link) {
         $nid = $link['nid'];
         if (isset($nodes[$nid]) && $nodes[$nid]->access('view')) {
@@ -175,8 +174,21 @@ class BookManager implements BookManagerInterface {
     // If the form is being processed during the Ajax callback of our book bid
     // dropdown, then $form_state will hold the value that was selected.
     if ($form_state->hasValue('book')) {
-      $node->book = $form_state->getValue('book');
+      $node->setBook($form_state->getValue('book'));
     }
+
+    $book = $node->getBook();
+
+    // Find the depth limit for the parent select.
+    if (isset($book['bid']) && !isset($book['parent_depth_limit'])) {
+      $book['parent_depth_limit'] = $this->getParentDepthLimit($book);
+      $node->setBook($book);
+    }
+
+    // Get the book again.
+    $book = $node->getBook();
+    $config = $this->configFactory->get('book.settings');
+
     $form['book'] = [
       '#type' => 'details',
       '#title' => $this->t('Book outline'),
@@ -188,117 +200,209 @@ class BookManager implements BookManagerInterface {
       ],
       '#attached' => [
         'library' => ['book/drupal.book'],
+        'drupalSettings' => [
+          'book' => [
+            'alternative_form' => $config->get('use_alternative_form'),
+            'in_a_book' => $book['original_bid'] > 0,
+          ],
+        ],
       ],
       '#tree' => TRUE,
     ];
     foreach (['nid', 'has_children', 'original_bid', 'parent_depth_limit'] as $key) {
       $form['book'][$key] = [
         '#type' => 'value',
-        '#value' => $node->book[$key],
+        '#value' => $book[$key],
       ];
     }
 
-    $form['book']['pid'] = $this->addParentSelectFormElements($node->book);
+    $nid = !$node->isNew() ? $node->id() : 'new';
+
+    if ($config->get('use_alternative_form')) {
+      $newBook = (isset($book['nid']) && $book['nid'] !== 'new' && $book['bid']) || isset($book['create_new_book']);
+      $title = $newBook ? $this->t('Currently in a book') : $this->t('Create or add to existing book');
+      $description = $newBook ? $this->t('To remove use normal outline workflow') : $this->t('Check to create or add to an existing book.');
+
+      $form['book']['create_new_book'] = [
+        '#type' => 'checkbox',
+        '#title' => $title,
+        '#description' => $description,
+        '#default_value' => (isset($book['nid']) && $book['nid'] !== 'new' && $book['bid']) || isset($book['create_new_book']),
+        '#disabled' => $newBook,
+        '#attributes' => ['class' => ['book-create-new']],
+        '#weight' => 1,
+        '#ajax' => [
+          'callback' => [static::class, 'bookFormUpdate'],
+          'wrapper' => 'edit-book-plid-wrapper',
+          'effect' => 'fade',
+          'speed' => 'fast',
+        ],
+      ];
+
+      // Add a drop-down to select the destination book.
+      $form['book']['bid'] = [
+        '#type' => 'entity_autocomplete',
+        '#title' => $this->t('Book'),
+        '#target_type' => 'node',
+        '#default_value' => $book['bid'] > 0 ? $this->entityTypeManager->getStorage('node')->load($book['bid']) : '',
+        '#selection_handler' => 'default:book_node_selection',
+        '#description' => $this->t('Your page will be a part of the selected book.'),
+        '#weight' => 3,
+        '#attributes' => ['class' => ['book-title-autocomplete']],
+        '#ajax' => [
+          'callback' => [static::class, 'bookFormUpdate'],
+          'wrapper' => 'edit-book-plid-wrapper',
+          'event' => 'autocompleteclose',
+          'effect' => 'fade',
+          'speed' => 'fast',
+        ],
+        '#states' => [
+          'visible' => [
+            ':input[name="book[create_new_book]"]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+
+    }
+    else {
+      $options = [];
+      if ($node->id() && ($nid == $book['original_bid']) && ($book['parent_depth_limit'] == 0)) {
+        // This is the top level node in a maximum depth book and thus cannot be
+        // moved.
+        $options[$node->id()] = $node->label();
+      }
+      else {
+        foreach ($this->getAllBooks() as $book) {
+          $options[$book['nid']] = $book['title'];
+        }
+      }
+
+      $book = $node->getBook();
+      if ($account->hasPermission('create new books') && ($nid == 'new' || ($nid != $book['original_bid']))) {
+        // The node can become a new book if it is not one already.
+        $options = [$nid => $this->t('- Create a new book -')] + $options;
+      }
+      if (!isset($book['bid']) || $nid === 'new' || $book['original_bid'] == 0) {
+        // The node is not currently in the hierarchy.
+        $options = [0 => $this->t('- None -')] + $options;
+      }
+
+      // Add a drop-down to select the destination book.
+      $form['book']['bid'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Book'),
+        '#default_value' => $book['bid'],
+        '#options' => $options,
+        '#access' => (bool) $options,
+        '#description' => $this->t('Your page will be a part of the selected book.'),
+        '#weight' => -5,
+        '#attributes' => ['class' => ['book-title-select']],
+        '#ajax' => [
+          'callback' => [static::class, 'bookFormUpdate'],
+          'wrapper' => 'edit-book-plid-wrapper',
+          'effect' => 'fade',
+          'speed' => 'fast',
+        ],
+      ];
+    }
+
+    $form['book']['pid'] = $this->addParentSelectFormElements($book, $form_state);
+
+    if ($config->get('use_parent_selector')) {
+      $form['#attached']['library'][] = 'book/book.parent-selector';
+      $form['#attached']['drupalSettings']['book']['alternative_form'] = $config->get('use_alternative_form');
+      if (isset($book['bid'])) {
+        $trail = $this->getActiveTrailIds($book['bid'], $book);
+        array_shift($trail);
+        $trail = !empty($trail) ? array_combine($trail, $trail) : [];
+        $form['#attached']['drupalSettings']['book_active_path'] = $trail;
+      }
+    }
 
     // @see \Drupal\book\Form\BookAdminEditForm::bookAdminTableTree(). The
     // weight may be larger than 50.
     $form['book']['weight'] = [
       '#type' => 'weight',
       '#title' => $this->t('Weight'),
-      '#default_value' => $node->book['weight'],
-      '#delta' => max(50, abs($node->book['weight'])),
+      '#default_value' => $book['weight'],
+      '#delta' => max(50, abs($book['weight'])),
       '#weight' => 5,
       '#description' => $this->t('Pages at a given level are ordered first by weight and then by title.'),
-    ];
-    $options = [];
-    $nid = !$node->isNew() ? $node->id() : 'new';
-    if ($node->id() && ($nid == $node->book['original_bid']) && ($node->book['parent_depth_limit'] == 0)) {
-      // This is the top level node in a maximum depth book and thus cannot be
-      // moved.
-      $options[$node->id()] = $node->label();
-    }
-    else {
-      foreach ($this->getAllBooks() as $book) {
-        $options[$book['nid']] = $book['title'];
-      }
-    }
-
-    if ($account->hasPermission('create new books') && ($nid == 'new' || ($nid != $node->book['original_bid']))) {
-      // The node can become a new book, if it is not one already.
-      $options = [$nid => $this->t('- Create a new book -')] + $options;
-    }
-    if (!$node->book['bid'] || $nid === 'new' || $node->book['original_bid'] === 0) {
-      // The node is not currently in the hierarchy.
-      $options = [0 => $this->t('- None -')] + $options;
-    }
-
-    // Add a drop-down to select the destination book.
-    $form['book']['bid'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Book'),
-      '#default_value' => $node->book['bid'],
-      '#options' => $options,
-      '#access' => (bool) $options,
-      '#description' => $this->t('Your page will be a part of the selected book.'),
-      '#weight' => -5,
-      '#attributes' => ['class' => ['book-title-select']],
-      '#ajax' => [
-        'callback' => 'book_form_update',
-        'wrapper' => 'edit-book-plid-wrapper',
-        'effect' => 'fade',
-        'speed' => 'fast',
+      '#states' => [
+        'visible' => [
+          ':input[name="book[create_new_book]"]' => ['checked' => TRUE],
+        ],
+        [
+          ':input[name="bid"]' => ['filled' => TRUE],
+        ],
       ],
     ];
+
     return $form;
+  }
+
+  /**
+   * Renders a new parent page select element when the book selection changes.
+   *
+   * This function is called via Ajax when the selected book is changed on a
+   * node or book outline form.
+   *
+   * @return array
+   *   The rendered parent page select element.
+   */
+  public static function bookFormUpdate($form, FormStateInterface $form_state): array {
+    return $form['book']['pid'];
   }
 
   /**
    * {@inheritdoc}
    */
   public function checkNodeIsRemovable(NodeInterface $node): bool {
-    return (!empty($node->book['bid']) && (($node->book['bid'] != $node->id()) || !$node->book['has_children']));
+    $book = $node->getBook();
+    return (!empty($book['bid']) && (($book['bid'] != $node->id()) || !$book['has_children']));
   }
 
   /**
    * {@inheritdoc}
    */
   public function updateOutline(NodeInterface $node): bool {
-    if (empty($node->book['bid'])) {
+    $book = $node->getBook();
+    if (empty($book['bid']) || $book['bid'] === 'none') {
       return FALSE;
     }
 
-    if (!empty($node->book['bid'])) {
-      if ($node->book['bid'] == 'new') {
-        // New nodes that are their own book.
-        $node->book['bid'] = $node->id();
-      }
-      elseif (!isset($node->book['original_bid'])) {
-        $node->book['original_bid'] = $node->book['bid'];
-      }
+    if ($book['bid'] == 'new') {
+      // New nodes that are their own book.
+      $book['bid'] = $node->id();
+    }
+    elseif (!isset($book['original_bid'])) {
+      $book['original_bid'] = $book['bid'];
     }
 
     // Ensure we create a new book link if either the node itself is new, or the
     // bid was selected the first time, so that the original_bid is still empty.
-    $new = empty($node->book['nid']) || empty($node->book['original_bid']);
+    $new = empty($book['nid']) || empty($book['original_bid']);
 
-    $node->book['nid'] = $node->id();
+    $book['nid'] = $node->id();
 
     // Create a new book from a node.
-    if ($node->book['bid'] == $node->id()) {
-      $node->book['pid'] = 0;
+    if ($book['bid'] == $node->id()) {
+      $book['pid'] = 0;
     }
-    elseif ($node->book['pid'] < 0) {
+    elseif ($book['pid'] < 0) {
       // -1 is the default value in BookManager::addParentSelectFormElements().
       // The node save should have set the bid equal to the node ID, but
       // handle it here if it did not.
-      $node->book['pid'] = $node->book['bid'];
+      $book['pid'] = $book['bid'];
     }
+
+    $node->setBook($book);
 
     // Prevent changes to the book outline if the node being saved is not the
     // default revision.
     $updated = FALSE;
     if (!$new && $original = $this->loadBookLink($node->id(), FALSE)) {
-      if ($node->book['bid'] != $original['bid'] || $node->book['pid'] != $original['pid'] || $node->book['weight'] != $original['weight']) {
+      if ($book['bid'] != $original['bid'] || $book['pid'] != $original['pid'] || $book['weight'] != $original['weight']) {
         $updated = TRUE;
       }
     }
@@ -306,7 +410,7 @@ class BookManager implements BookManagerInterface {
       return FALSE;
     }
 
-    return !empty($this->saveBookLink($node->book, $new));
+    return !empty($this->saveBookLink($book, $new));
   }
 
   /**
@@ -358,22 +462,36 @@ class BookManager implements BookManagerInterface {
    *
    * @param array $book_link
    *   A fully loaded book link that is part of the book hierarchy.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    *
    * @return array
    *   A parent selection form element.
    */
-  protected function addParentSelectFormElements(array $book_link): array {
+  protected function addParentSelectFormElements(array $book_link, FormStateInterface $form_state): array {
     $config = $this->configFactory->get('book.settings');
     if ($config->get('override_parent_selector')) {
       return [];
     }
+
     // Offer a message or a drop-down to choose a different parent page.
     $form = [
       '#type' => 'hidden',
       '#value' => -1,
       '#prefix' => '<div id="edit-book-plid-wrapper">',
       '#suffix' => '</div>',
+      '#weight' => 4,
     ];
+
+    $new_book_checked = FALSE;
+    $use_alternative_form = FALSE;
+    if ($config->get('use_alternative_form')) {
+      $use_alternative_form = TRUE;
+      $input = $form_state->getUserInput();
+      if (isset($input['book'])) {
+        $new_book_checked = $input['book']['create_new_book'] ?? FALSE;
+      }
+    }
 
     if ($book_link['nid'] === $book_link['bid']) {
       // This is a book - at the top level.
@@ -384,8 +502,15 @@ class BookManager implements BookManagerInterface {
         $form['#prefix'] .= '<em>' . $this->t('This will be the top-level page in this book.') . '</em>';
       }
     }
-    elseif (!$book_link['bid']) {
-      $form['#prefix'] .= '<em>' . $this->t('No book selected.') . '</em>';
+    elseif (!$book_link['bid'] || $book_link['bid'] === 'none') {
+      if ($use_alternative_form) {
+        if ($new_book_checked) {
+          $form['#prefix'] .= '<em>' . $this->t('No book selected.') . '</em>';
+        }
+      }
+      else {
+        $form['#prefix'] .= '<em>' . $this->t('No book selected.') . '</em>';
+      }
     }
     else {
       $form = [
@@ -393,12 +518,14 @@ class BookManager implements BookManagerInterface {
         '#title' => $this->t('Parent item'),
         '#default_value' => $book_link['pid'],
         '#description' => $this->t('The parent page in the book. The maximum depth for a book and all child pages is @maxdepth. Some pages in the selected book may not be available as parents if selecting them would exceed this limit.', ['@maxdepth' => static::BOOK_MAX_DEPTH]),
-        '#options' => $this->getTableOfContents($book_link['bid'], $book_link['parent_depth_limit'], [$book_link['nid']]),
+        '#options' => $this->getTableOfContents($book_link['bid'], $book_link['parent_depth_limit'], [$book_link['nid']], $config->get('truncate_label')),
         '#attributes' => ['class' => ['book-title-select']],
         '#prefix' => '<div id="edit-book-plid-wrapper">',
         '#suffix' => '</div>',
+        '#weight' => 4,
       ];
     }
+
     $this->renderer->addCacheableDependency($form, $config);
 
     return $form;
@@ -457,13 +584,13 @@ class BookManager implements BookManagerInterface {
           continue;
         }
         if ($truncate_title) {
-          $toc[$nid] = $indent . ' ' . Unicode::truncate($nodes[$nid]->label(), 30, TRUE, TRUE);
+          $toc[$nid] = $indent . ' ' . Unicode::truncate($nodes[$nid]->label(), Settings::get('book.truncate_limit', 30), TRUE, TRUE);
         }
         else {
           $toc[$nid] = $indent . ' ' . $nodes[$nid]->label();
         }
         if ($data['below']) {
-          $this->recurseTableOfContents($data['below'], $indent . '--', $toc, $exclude, $depth_limit);
+          $this->recurseTableOfContents($data['below'], $indent . '--', $toc, $exclude, $depth_limit, $truncate_title);
         }
       }
     }
@@ -496,16 +623,15 @@ class BookManager implements BookManagerInterface {
         $children = $this->entityTypeManager->getStorage('node')->loadMultiple(array_keys($result));
 
         foreach ($children as $child) {
-          $child->book['bid'] = $child->id();
+          $child->setBookKey('bid', $child->id());
           $this->updateOutline($child);
         }
       }
       if (count($result) > 0) {
         // Handle children reroute.
-        $children = $this->entityTypeManager->getStorage('node')
-          ->loadMultiple(array_keys($result));
+        $children = $this->entityTypeManager->getStorage('node')->loadMultiple(array_keys($result));
         foreach ($children as $child) {
-          $child->book['pid'] = $original['pid'];
+          $child->setBookKey('pid', $original['pid']);
           $this->updateOutline($child);
         }
       }
@@ -1076,8 +1202,6 @@ class BookManager implements BookManagerInterface {
   public function bookLinkTranslate(array &$link): array {
     // Check access via the api, since the query node_access tag doesn't check
     // for unpublished nodes.
-    // @todo load the nodes en-mass rather than individually.
-    // @see https://www.drupal.org/project/drupal/issues/2470896
     $node = $this->entityTypeManager->getStorage('node')->load($link['nid']);
     $link['access'] = $node && $node->access('view');
     // For performance, don't localize a link the user can't access.

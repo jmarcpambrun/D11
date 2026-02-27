@@ -34,7 +34,9 @@
 {% set attributes = attributes.addClass('book-traversal__item') %}
 {% if tree or has_links %}
   <nav role="navigation" aria-labelledby="book-label-{{ book_id }}">
-    {{ tree }}
+    {% if show_tree %}
+      {{ tree }}
+    {% endif %}
     <p></p>
     {% if has_links %}
       <hr />

@@ -61,6 +61,10 @@ class BookController extends ControllerBase {
         'title' => t('Edit order and titles'),
         'url' => Url::fromRoute('book.admin_edit', ['node' => $book['nid']]),
       ];
+      $links['delete'] = [
+        'title' => t('Delete entire book'),
+        'url' => Url::fromRoute('book.book_delete_confirmation_form', ['book_id' => $book['nid']]),
+      ];
       $row[] = [
         'data' => [
           '#type' => 'operations',
@@ -130,7 +134,7 @@ class BookController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
-    if (!isset($node->book)) {
+    if (empty($node->getBook())) {
       $this->messenger()->addWarning(t('%title is not in a book and cannot be exported.', ['%title' => $node->label()]));
       throw new NotFoundHttpException();
     }

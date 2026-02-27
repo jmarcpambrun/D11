@@ -353,3 +353,8 @@ litellm
 mdxeditor
 retag
 commerceguys
+detr
+sshleifer
+distilbart
+xsum
+popovertarget

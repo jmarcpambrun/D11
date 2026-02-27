@@ -9,12 +9,14 @@ use Drupal\comment\CommentInterface;
 use Drupal\comment\Entity\Comment;
 use Drupal\comment\Tests\CommentTestTrait;
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests visibility of comments on book pages.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class CommentBookTest extends BrowserTestBase {
 
   use CommentTestTrait;
@@ -24,7 +26,7 @@ class CommentBookTest extends BrowserTestBase {
    *
    * @var array
    */
-  protected static $modules = ['book', 'comment'];
+  protected static $modules = ['book', 'book_content_type', 'comment'];
 
   /**
    * {@inheritdoc}
@@ -53,9 +55,11 @@ class CommentBookTest extends BrowserTestBase {
     $book_node = Node::create([
       'type' => 'book',
       'title' => 'Book title',
-      'body' => 'Book body',
+      'field_body' => 'Book body',
     ]);
-    $book_node->book['bid'] = 'new';
+    $book = $book_node->getBook();
+    $book['bid'] = 'new';
+    $book_node->setBook($book);
     $book_node->save();
 
     $comment_subject = $this->randomMachineName();

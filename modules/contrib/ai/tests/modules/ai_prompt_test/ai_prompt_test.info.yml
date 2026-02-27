@@ -8,7 +8,7 @@ dependencies:
   - ai:ai
   - ai:ai_content_suggestions
 
-# Information added by Drupal.org packaging script on 2026-02-19
-version: '1.3.0-rc1'
+# Information added by Drupal.org packaging script on 2026-02-27
+version: '1.3.0-rc2'
 project: 'ai'
-datestamp: 1771519626
+datestamp: 1772193200

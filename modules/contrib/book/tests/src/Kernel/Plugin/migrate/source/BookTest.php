@@ -2,20 +2,32 @@
 
 namespace Drupal\Tests\book\Kernel\Plugin\migrate\source;
 
+use Drupal\book\Plugin\migrate\source\Book;
 use Drupal\Tests\migrate\Kernel\MigrateSqlSourceTestBase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 // cspell:ignore mlid plid
 
 /**
- * @covers \Drupal\book\Plugin\migrate\source\Book
- * @group book
+ * Book migration test.
  */
+#[Group('book')]
+#[CoversClass(Book::class)]
+#[RunTestsInSeparateProcesses]
 class BookTest extends MigrateSqlSourceTestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['book', 'migrate_drupal', 'node'];
+  protected static $modules = [
+    'book',
+    'book_content_type',
+    'migrate_drupal',
+    'node',
+    'user',
+  ];
 
   /**
    * {@inheritdoc}

@@ -249,6 +249,7 @@ For step-by-step examples of configuring AI Automators with Field Widget Actions
 - [Text to Image Field](examples/text_to_image_automator.md) - Generate image from content using the `LLM: Media Image Generation` automator
 - [Text to Image Media Field](examples/text_to_image_media_automator.md) - Generate image from content using the `LLM: Media Image Generation` automator
 - [Text to Address Field](examples/address_automator.md) - Generate address from content using the `LLM: Address` automator
+- [Metatag](examples/metatag_automator.md) - Generate metatags for content using the `LLM: Metatag` automator
 
 ## Developer documentation
 Check the [developers guide](../../developers/writing_an_ai_automators_plugin.md) for

@@ -145,8 +145,11 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
     $current_bid = 0;
 
     $node = $this->routeMatch->getParameter('node');
-    if ($node instanceof NodeInterface && !empty($node->book['bid'])) {
-      $current_bid = $node->book['bid'];
+    if ($node instanceof NodeInterface) {
+      $book = $node->getBook();
+      if (!empty($book['bid'])) {
+        $current_bid = $book['bid'];
+      }
     }
 
     if ($this->configuration['block_mode'] == 'all pages') {
@@ -157,7 +160,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         if ($book['bid'] == $current_bid) {
           // If the current page is a node associated with a book, the menu
           // needs to be retrieved.
-          $data = $this->bookManager->bookTreeAllData($node->book['bid'], $node->book);
+          $data = $this->bookManager->bookTreeAllData($book['bid'], $book);
           $book_menus[$book_id] = $this->bookManager->bookTreeOutput($data);
         }
         else {
@@ -181,21 +184,19 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       }
     }
     elseif ($current_bid) {
+
       // Only display this block when the user is browsing a book
       // and included unpublished books if the user has access.
       $query = $this->nodeStorage->getQuery()
         ->accessCheck()
-        ->condition('nid', $node->book['bid'], '=');
-      if (!$this->currentUser->hasPermission('view any unpublished content')) {
-        $query->condition('status', NodeInterface::PUBLISHED);
-      }
+        ->condition('nid', $book['bid'], '=');
       $nid = $query->execute();
 
       // Only show the block if the user has view access for the top-level node.
       if ($nid) {
         $node = $this->routeMatch->getParameter('node');
         $current_nid = $node->id();
-        $tree = $this->bookManager->bookTreeAllData($node->book['bid'], $node->book);
+        $tree = $this->bookManager->bookTreeAllData($book['bid'], $book);
         $data = reset($tree);
 
         // Handle different display modes.
@@ -264,7 +265,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
   protected function blockAccess(AccountInterface $account): AccessResultInterface {
     if ($this->configuration['block_mode'] != 'all pages') {
       $node = $this->routeMatch->getParameter('node');
-      if (!$node || empty($node->book['bid'])) {
+      if (!$node || empty($node->getBook()['bid'])) {
         return AccessResult::forbidden();
       }
     }

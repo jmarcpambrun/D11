@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Drupal\Tests\book\Functional;
 
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Create a book, add pages, and test book interface.
- *
- * @group book
- * @group #slow
  */
+#[Group('book')]
+#[Group('#slow')]
+#[RunTestsInSeparateProcesses]
 class BookNavigationBlockTest extends BookTestBase {
 
   /**

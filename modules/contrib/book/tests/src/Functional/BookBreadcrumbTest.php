@@ -6,12 +6,14 @@ namespace Drupal\Tests\book\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Create a book, add pages, and test book interface.
- *
- * @group book
  */
+#[Group('book')]
+#[RunTestsInSeparateProcesses]
 class BookBreadcrumbTest extends BrowserTestBase {
 
   use BookTestTrait;
@@ -19,7 +21,12 @@ class BookBreadcrumbTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['book', 'block', 'book_breadcrumb_test'];
+  protected static $modules = [
+    'book',
+    'book_content_type',
+    'block',
+    'book_breadcrumb_test',
+  ];
 
   /**
    * {@inheritdoc}
@@ -40,6 +47,7 @@ class BookBreadcrumbTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->setBookSettings();
     $this->drupalPlaceBlock('system_breadcrumb_block');
     $this->drupalPlaceBlock('page_title_block');
 

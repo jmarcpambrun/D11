@@ -41,7 +41,7 @@ npm install
 npm run build
 popd
 
-pushd mdxeditor
+pushd ui/mdxeditor
 node --version
 if [[ $(node --version) != v20.* ]]; then
   echo "This script requires NodeJS v20."
@@ -65,7 +65,7 @@ popd
 
 echo "${WHITE_ON_BLUE}[3/5] Committing built UI …${NC}"
 # TRICKY: `-f` to force it even if it's listed in .gitignore.
-git add -f modules/ai_ckeditor/package.json modules/ai_ckeditor/package-lock.json modules/ai_ckeditor/js/build mdxeditor/package.json mdxeditor/package-lock.json mdxeditor/dist ui/json-schema-editor/dist
+git add -f modules/ai_ckeditor/package.json modules/ai_ckeditor/package-lock.json modules/ai_ckeditor/js/build ui/mdxeditor/package.json ui/mdxeditor/package-lock.json ui/mdxeditor/dist ui/json-schema-editor/dist
 # Similar to core: https://git.drupalcode.org/project/drupal/-/commit/b33c9280991c437a3fa05dec941c54bca0ddb7d8
 git commit -q -m "Drupal AI $TAG"
 git tag "$TAG" HEAD
@@ -75,14 +75,14 @@ echo "${WHITE_ON_BLUE}[4/5] Removing built UI …${NC}"
 pushd modules/ai_ckeditor
 npm version "0.0.0" --allow-same-version --no-git-tag-version
 popd
-pushd mdxeditor
+pushd ui/mdxeditor
 npm version "0.0.0" --allow-same-version --no-git-tag-version
 popd
 pushd ui/json-schema-editor
 npm version "0.0.0" --allow-same-version --no-git-tag-version
 popd
-git add -f modules/ai_ckeditor/package.json modules/ai_ckeditor/package-lock.json mdxeditor/package.json mdxeditor/package-lock.json ui/json-schema-editor/package.json ui/json-schema-editor/package-lock.json
-git rm -rfq modules/ai_ckeditor/js/build mdxeditor/dist ui/json-schema-editor/dist
+git add -f modules/ai_ckeditor/package.json modules/ai_ckeditor/package-lock.json ui/mdxeditor/package.json ui/mdxeditor/package-lock.json ui/json-schema-editor/package.json ui/json-schema-editor/package-lock.json
+git rm -rfq modules/ai_ckeditor/js/build ui/mdxeditor/dist ui/json-schema-editor/dist
 # Similar to core: https://git.drupalcode.org/project/drupal/-/commit/f30549fbdd5ebfb2b338c3bbcfda36ac0bf1ca9d
 git commit -q -m "Back to dev."
 echo "  ℹ️  ${GREEN}Built UI removed locally.${NC}"
