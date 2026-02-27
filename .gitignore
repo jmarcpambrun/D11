@@ -41,3 +41,4 @@ sites/simpletest
 # Ignore multi-site test environment.
 # simpletest
 tests
+tests
