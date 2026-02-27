@@ -19,12 +19,14 @@ use Symfony\Component\DependencyInjection\Exception\LogicException;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-#[\Attribute(\Attribute::TARGET_PARAMETER)]
+#[\Attribute(\Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY)]
 final class Target
 {
-    public function __construct(
-        public ?string $name = null,
-    ) {
+    /**
+     * @param string|null $name The name of the target autowiring alias
+     */
+    public function __construct(public ?string $name = null)
+    {
     }
 
     public function getParsedName(): string

@@ -1,0 +1,168 @@
+<?php
+
+/**
+ * @file
+ * Install file for mailboxlayer.
+ */
+
+use Drupal\webform\Entity\Webform;
+
+/**
+ * Implements hook_schema().
+ */
+function mailboxlayer_schema() {
+  $schema['mailboxlayer_log'] = [
+    'description' => 'To store the Mailboxlayer response to optimize the usage of the Mailboxlayer API',
+    'fields' => [
+      'id' => [
+        'description' => 'ID',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'email' => [
+        'description' => 'Email ID',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'format_valid' => [
+        'description' => 'Valid Format',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'mx_found' => [
+        'description' => 'MX Found',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'smtp_check' => [
+        'description' => 'SMTP Check',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'catch_all' => [
+        'description' => 'Catch All',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'role' => [
+        'description' => 'Role',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'disposable' => [
+        'description' => 'Disposable',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'free' => [
+        'description' => 'Free',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'score' => [
+        'description' => 'Score',
+        'type' => 'float',
+        'size' => 'tiny',
+        'not null' => FALSE,
+      ],
+      'created' => [
+        'description' => 'Created',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+    ],
+    'primary key' => [
+      'id',
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function mailboxlayer_uninstall() {
+  // Supprime proprement la configuration du module.
+  \Drupal::configFactory()
+    ->getEditable('mailboxlayer.settings')
+    ->delete();
+
+  // Plus besoin de toucher aux Webforms lors de l'uninstall.
+  // Tout #mailboxlayer_enabled sera ignoré après désinstallation.
+}
+
+/**
+ * Update hook pour nettoyer les champs email des webforms activés.
+ */
+function mailboxlayer_update_1101() {
+  // Vérifie que Webform est actif.
+  if (!\Drupal::moduleHandler()->moduleExists('webform')) {
+    return;
+  }
+
+  // Récupère la liste des webforms activés dans la config.
+  $config = \Drupal::config('mailboxlayer.settings');
+  $webform_list = $config->get('enabled_webforms');
+
+  if (empty($webform_list) || !is_array($webform_list)) {
+    return;
+  }
+
+  foreach ($webform_list as $webform_id => $enabled) {
+    $webform = Webform::load($webform_id);
+
+    // Skip si le webform n'existe plus.
+    if (!$webform) {
+      continue;
+    }
+
+    // Récupère les éléments et supprime la propriété mailboxlayer sur les champs email.
+    $elements = $webform->getElementsDecoded();
+    $elements = _mailboxlayer_remove_property($elements);
+
+    // Sauvegarde le webform modifié.
+    $webform->setElements($elements);
+    $webform->save();
+  }
+}
+
+/**
+ * Supprime récursivement la propriété #mailboxlayer_enabled des champs email.
+ *
+ * @param array $elements
+ *   La structure des éléments du webform.
+ *
+ * @return array
+ *   Les éléments modifiés.
+ */
+function _mailboxlayer_remove_property(array $elements): array {
+  foreach ($elements as $key => &$element) {
+    if (is_array($element)) {
+      // Supprime la propriété si c'est un champ email.
+      if (isset($element['#type']) && $element['#type'] === 'email') {
+        unset($element['#mailboxlayer_enabled']);
+      }
+      // Appel récursif pour les éléments imbriqués (containers, fieldsets…).
+      $element = _mailboxlayer_remove_property($element);
+    }
+  }
+
+  return $elements;
+}
