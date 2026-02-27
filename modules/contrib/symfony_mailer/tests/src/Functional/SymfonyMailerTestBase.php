@@ -4,9 +4,10 @@ namespace Drupal\Tests\symfony_mailer\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 use Drupal\symfony_mailer_test\MailerTestTrait;
+use Drupal\user\UserInterface;
 
 /**
- * Base class for Symfony Mailer browser tests.
+ * Base class for Mailer Plus browser tests.
  */
 abstract class SymfonyMailerTestBase extends BrowserTestBase {
 
@@ -18,11 +19,9 @@ abstract class SymfonyMailerTestBase extends BrowserTestBase {
   protected const TYPE_ALL = '<b>*All*</b>';
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  protected static $modules = ['symfony_mailer', 'symfony_mailer_test'];
+  protected static $modules = ['symfony_mailer', 'symfony_mailer_test', 'mailer_policy'];
 
   /**
    * {@inheritdoc}
@@ -31,24 +30,18 @@ abstract class SymfonyMailerTestBase extends BrowserTestBase {
 
   /**
    * A user with permission to manage mailer settings.
-   *
-   * @var \Drupal\user\UserInterface
    */
-  protected $adminUser;
+  protected UserInterface $adminUser;
 
   /**
    * The site name.
-   *
-   * @var string
    */
-  protected $siteName = 'Tom & Jerry';
+  protected string $siteName = 'Tom & Jerry';
 
   /**
    * The site email.
-   *
-   * @var string
    */
-  protected $siteEmail = 'site@example.org';
+  protected string $siteEmail = 'site@example.org';
 
   /**
    * {@inheritdoc}
@@ -80,7 +73,7 @@ abstract class SymfonyMailerTestBase extends BrowserTestBase {
    *   The expected common adjusters text.
    */
   protected function assertPolicyListingIntro(string $type, string $common) {
-    $this->assertSession()->pageTextContains("Configure Mailer policy records to customise the emails sent for $type.");
+    $this->assertSession()->pageTextContains("Configure Mailer policy records to customise $type emails.");
     $this->assertSession()->pageTextContains("You can set the $common and more.");
   }
 

@@ -1,14 +1,13 @@
-name: Drupal Symfony Mailer
+name: Mailer Plus
 type: module
-description: Integrate Symfony Mailer into Drupal.
+description: Enhanced integration of Symfony Mailer into Drupal.
 core_version_requirement: ^10.3 || ^11
 package: Mail
-configure: entity.mailer_policy.collection
 dependencies:
   - symfony_mailer:mailer_transport
   - drupal:filter
 
-# Information added by Drupal.org packaging script on 2025-06-27
-version: '1.6.2'
+# Information added by Drupal.org packaging script on 2026-01-29
+version: '2.0.0-beta4'
 project: 'symfony_mailer'
-datestamp: 1751013033
+datestamp: 1769710931

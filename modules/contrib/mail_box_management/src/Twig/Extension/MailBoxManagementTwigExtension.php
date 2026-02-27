@@ -29,15 +29,15 @@ class MailBoxManagementTwigExtension extends AbstractExtension {
    */
   public function getFunctions(): array {
     return [
-      new TwigFunction('mail_box_color', [$this, 'getColor']),
-      new TwigFunction('is_unseen', [$this, 'isUnseen']),
-      new TwigFunction('is_flagged', [$this, 'isFlagged']),
-      new TwigFunction('is_recent', [$this, 'isRecent']),
-      new TwigFunction('json', [$this, 'json']),
-      new TwigFunction('box_icon', [$this, 'getIcon']),
-      new TwigFunction('attachment_size', [$this, 'getSize']),
-      new TwigFunction('mail_actions', [$this, 'getActions']),
-      new TwigFunction('mail_strip', [$this, 'mailStrip']),
+      new TwigFunction('mail_box_color', $this->getColor(...)),
+      new TwigFunction('is_unseen', $this->isUnseen(...)),
+      new TwigFunction('is_flagged', $this->isFlagged(...)),
+      new TwigFunction('is_recent', $this->isRecent(...)),
+      new TwigFunction('json', $this->json(...)),
+      new TwigFunction('box_icon', $this->getIcon(...)),
+      new TwigFunction('attachment_size', $this->getSize(...)),
+      new TwigFunction('mail_actions', $this->getActions(...)),
+      new TwigFunction('mail_strip', $this->mailStrip(...)),	
     ];
   }
 
