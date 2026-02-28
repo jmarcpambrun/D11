@@ -8,13 +8,13 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\eca\Service\ContentEntityTypes;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the entity type trait.
- *
- * @group eca
- * @group eca_content
  */
+#[Group('eca')]
+#[Group('eca_content')]
 class EntityTypesTest extends TestCase {
 
   /**

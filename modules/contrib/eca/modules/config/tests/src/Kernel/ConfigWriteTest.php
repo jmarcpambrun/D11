@@ -4,13 +4,15 @@ namespace Drupal\Tests\eca_config\Kernel;
 
 use Drupal\Component\Serialization\Yaml;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_config_write" action plugin.
- *
- * @group eca
- * @group eca_config
  */
+#[Group('eca')]
+#[Group('eca_config')]
+#[RunTestsInSeparateProcesses]
 class ConfigWriteTest extends Base {
 
   /**
@@ -23,6 +25,7 @@ class ConfigWriteTest extends Base {
     $action_manager = \Drupal::service('plugin.manager.action');
     /** @var \Drupal\Core\Session\AccountSwitcherInterface $account_switcher */
     $account_switcher = \Drupal::service('account_switcher');
+    $entity_type_manager = \Drupal::entityTypeManager();
 
     $config = \Drupal::configFactory()->getEditable('system.site');
     $config->set('page.front', '/node');
@@ -111,8 +114,9 @@ YAML;
 
     $this->assertEquals('Set via token', \Drupal::configFactory()->get('node.type.article')->get('name'));
 
+    $uuid = $entity_type_manager->getStorage('node_type')->load('article')->get('uuid');
     $yaml = <<<YAML
-uuid: a1921798-6c7f-4772-bb37-d3d46386fba9
+uuid: $uuid
 langcode: en
 status: true
 dependencies: {  }
@@ -135,7 +139,7 @@ YAML;
     $action->execute();
 
     $node_type_array = \Drupal::configFactory()->get('node.type.article')->get();
-    $this->assertEquals('a1921798-6c7f-4772-bb37-d3d46386fba9', $node_type_array['uuid']);
+    $this->assertEquals($uuid, $node_type_array['uuid']);
     $this->assertEquals('en', $node_type_array['langcode']);
     $this->assertEquals('Updated Article', $node_type_array['name']);
     $this->assertEquals(Yaml::decode($yaml), $node_type_array);

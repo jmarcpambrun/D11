@@ -13,13 +13,15 @@ use Drupal\eca\Entity\Eca;
 use Drupal\eca_test_array\Plugin\Action\ArrayIncrement;
 use Drupal\eca_test_array\Plugin\Action\ArrayWrite;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for events provided by "eca_base".
- *
- * @group eca
- * @group eca_base
  */
+#[Group('eca')]
+#[Group('eca_base')]
+#[RunTestsInSeparateProcesses]
 class ConfigEventsTest extends KernelTestBase {
 
   /**

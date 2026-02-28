@@ -13,13 +13,15 @@ use Drupal\node\Entity\Node;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for reacting upon events provided by "eca_content".
- *
- * @group eca
- * @group eca_content
  */
+#[Group('eca')]
+#[Group('eca_content')]
+#[RunTestsInSeparateProcesses]
 class ContentEventsTest extends KernelTestBase {
 
   use ContentTypeCreationTrait;

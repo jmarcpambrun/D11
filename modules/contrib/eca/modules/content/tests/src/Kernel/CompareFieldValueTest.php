@@ -8,16 +8,18 @@ use Drupal\eca\PluginManager\Condition;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * The compare field value test.
  *
  * <p>Kernel tests for the "eca_entity_field_value" and
  * "eca_entity_original_field_value" condition plugins.</p>
- *
- * @group eca
- * @group eca_content
  */
+#[Group('eca')]
+#[Group('eca_content')]
+#[RunTestsInSeparateProcesses]
 class CompareFieldValueTest extends KernelTestBase {
 
   /**

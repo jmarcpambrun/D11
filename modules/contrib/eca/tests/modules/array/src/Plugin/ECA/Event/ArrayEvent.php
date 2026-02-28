@@ -3,7 +3,8 @@
 namespace Drupal\eca_test_array\Plugin\ECA\Event;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\eca\Entity\Objects\EcaEvent;
+use Drupal\eca\Attribute\EcaEvent;
+use Drupal\eca\Entity\Objects\EcaEvent as EcaEventObject;
 use Drupal\eca\Event\Tag;
 use Drupal\eca\Plugin\ECA\Event\EventBase;
 use Drupal\eca_test_array\Event\ArrayEvents;
@@ -12,12 +13,13 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Plugin implementation of the ECA array events.
- *
- * @EcaEvent(
- *   id = "eca_test_array",
- *   deriver = "Drupal\eca_test_array\Plugin\ECA\Event\ArrayEventDeriver"
- * )
  */
+#[EcaEvent(
+  id: 'eca_test_array',
+  deriver: 'Drupal\eca_test_array\Plugin\ECA\Event\ArrayEventDeriver',
+  no_docs: TRUE,
+  version_introduced: '1.0.0',
+)]
 class ArrayEvent extends EventBase {
 
   /**
@@ -77,7 +79,7 @@ class ArrayEvent extends EventBase {
   /**
    * {@inheritdoc}
    */
-  public function generateWildcard(string $eca_config_id, EcaEvent $ecaEvent): string {
+  public function generateWildcard(string $eca_config_id, EcaEventObject $ecaEvent): string {
     $configuration = $ecaEvent->getConfiguration();
     return (trim($configuration['key']) === '' ? '*' : $configuration['key']) . '::' . (trim($configuration['value']) === '' ? '*' : $configuration['value']);
   }

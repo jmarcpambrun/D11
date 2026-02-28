@@ -16,15 +16,17 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * Kernel tests regarding form conditions.
- *
- * @group eca
- * @group eca_form
  */
+#[Group('eca')]
+#[Group('eca_form')]
+#[RunTestsInSeparateProcesses]
 class FormConditionsTest extends KernelTestBase {
 
   use ContentTypeCreationTrait;
@@ -41,6 +43,7 @@ class FormConditionsTest extends KernelTestBase {
     'node',
     'eca',
     'eca_form',
+    'modeler_api',
   ];
 
   /**

@@ -1,12 +1,11 @@
 /**
  * @file
- * Seven styles for the help component.
+ * Styles for the help component.
  */
 
 .help {
   margin: 0 0 20px;
-}
-
-:where(:not(.region-breadcrumb)) + .help p:first-child {
-  margin-top: 10px;
+  :where(:not(.region-breadcrumb)) + & p:first-child {
+    margin-top: 10px;
+  }
 }

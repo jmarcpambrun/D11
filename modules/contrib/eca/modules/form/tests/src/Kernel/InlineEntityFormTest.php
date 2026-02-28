@@ -7,13 +7,15 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\Entity\Node;
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests regarding inline entity forms.
- *
- * @group eca
- * @group eca_form
  */
+#[Group('eca')]
+#[Group('eca_form')]
+#[RunTestsInSeparateProcesses]
 class InlineEntityFormTest extends KernelTestBase {
 
   /**
@@ -33,6 +35,7 @@ class InlineEntityFormTest extends KernelTestBase {
     'paragraphs',
     'inline_entity_form',
     'eca_test_inline_entity_form',
+    'modeler_api',
   ];
 
   /**

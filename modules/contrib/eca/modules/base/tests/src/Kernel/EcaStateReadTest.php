@@ -3,13 +3,15 @@
 namespace Drupal\Tests\eca_base\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_state_read" action plugin.
- *
- * @group eca
- * @group eca_base
  */
+#[Group('eca')]
+#[Group('eca_base')]
+#[RunTestsInSeparateProcesses]
 class EcaStateReadTest extends KernelTestBase {
 
   /**
@@ -56,8 +58,15 @@ class EcaStateReadTest extends KernelTestBase {
     ]);
     $this->assertTrue($action->access(NULL));
     $action->execute(NULL);
-    $this->assertEquals('my_token', $token_services->replaceClear('[my_custom_token:value1]'));
+    $this->assertEquals('', $token_services->replaceClear('[my_custom_token:value1]'), 'Expecting empty string since "myKey" and "mykey" are different tokens from a case-sensitive perspective.');
     $this->assertEquals('', $token_services->replaceClear('[my_custom_token:value3]'));
+
+    $action = $action_manager->createInstance('eca_state_read', [
+      'key' => '[mykey]',
+      'token_name' => 'my_custom_token:value1',
+    ]);
+    $action->execute(NULL);
+    $this->assertEquals('my_token', $token_services->replaceClear('[my_custom_token:value1]'));
   }
 
 }

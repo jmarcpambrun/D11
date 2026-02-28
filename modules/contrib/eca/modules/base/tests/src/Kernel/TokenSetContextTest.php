@@ -3,13 +3,15 @@
 namespace Drupal\Tests\eca_base\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_token_set_context" action plugin.
- *
- * @group eca
- * @group eca_base
  */
+#[Group('eca')]
+#[Group('eca_base')]
+#[RunTestsInSeparateProcesses]
 class TokenSetContextTest extends KernelTestBase {
 
   /**

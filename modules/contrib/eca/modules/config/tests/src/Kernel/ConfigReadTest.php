@@ -5,13 +5,15 @@ namespace Drupal\Tests\eca_config\Kernel;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\eca\Plugin\DataType\DataTransferObject;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_config_read" action plugin.
- *
- * @group eca
- * @group eca_config
  */
+#[Group('eca')]
+#[Group('eca_config')]
+#[RunTestsInSeparateProcesses]
 class ConfigReadTest extends Base {
 
   /**

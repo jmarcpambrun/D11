@@ -8,13 +8,13 @@ use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\eca\EcaState;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests to EcaState class.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
 class EcaStateTest extends EcaUnitTestBase {
 
   private const TEST_KEY = 'test_key';

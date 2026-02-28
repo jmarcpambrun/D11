@@ -21,8 +21,8 @@ class ExportRecipe {
 
   use StringTranslationTrait;
 
-  public const DEFAULT_NAMESPACE = 'drupal';
-  public const DEFAULT_DESTINATION = 'temporary://recipe';
+  public const string DEFAULT_NAMESPACE = 'drupal';
+  public const string DEFAULT_DESTINATION = 'temporary://recipe';
 
   /**
    * Constructs the recipe export service.

@@ -7,13 +7,15 @@ use Drupal\eca\Entity\Eca;
 use Drupal\eca_test_array\Plugin\Action\ArrayIncrement;
 use Drupal\migrate\MigrateExecutable;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_migrate" event plugin.
- *
- * @group eca
- * @group eca_migrate
  */
+#[Group('eca')]
+#[Group('eca_migrate')]
+#[RunTestsInSeparateProcesses]
 class MigrateEventTest extends KernelTestBase {
 
   /**

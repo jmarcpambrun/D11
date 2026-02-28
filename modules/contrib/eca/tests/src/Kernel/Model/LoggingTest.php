@@ -4,13 +4,15 @@ namespace Drupal\Tests\eca\Kernel\Model;
 
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Model test for logging.
- *
- * @group eca
- * @group eca_model
  */
+#[Group('eca')]
+#[Group('eca_model')]
+#[RunTestsInSeparateProcesses]
 class LoggingTest extends Base {
 
   /**

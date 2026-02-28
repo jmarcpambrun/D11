@@ -6,13 +6,15 @@ use Drupal\Core\Action\ActionManager;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\PluginManager\Action;
 use Drupal\eca_test_array\Plugin\Action\ArrayWrite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the decorator of the action manager.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
+#[RunTestsInSeparateProcesses]
 class ActionDecoratorTest extends KernelTestBase {
 
   /**

@@ -12,6 +12,8 @@ use Drupal\eca_misc\Plugin\RouteInterface;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /**
@@ -19,10 +21,10 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * This covers "eca_route_match" condition and "eca_token_load_route_param"
  * action plugins.
- *
- * @group eca
- * @group eca_misc
  */
+#[Group('eca')]
+#[Group('eca_misc')]
+#[RunTestsInSeparateProcesses]
 class RouteTest extends KernelTestBase {
 
   use ProphecyTrait;
@@ -131,6 +133,7 @@ class RouteTest extends KernelTestBase {
     $route_matcher = $this->prophesize(RouteMatchInterface::class);
     $route_matcher->getRouteName()->willReturn($route);
     $route_matcher->getParameter('node')->willReturn($this->node);
+    $route_matcher->getRawParameter('node')->willReturn($this->node->id());
     \Drupal::getContainer()->set('current_route_match', $route_matcher->reveal());
 
     $config = [
@@ -148,6 +151,20 @@ class RouteTest extends KernelTestBase {
     $this->assertFalse($action->access(NULL, $user0), 'User 0 should not have access to the route parameter node.');
     $user1 = User::load(1);
     $this->assertTrue($action->access(NULL, $user1), 'User 1 should have access to the route parameter node.');
+
+    // Test with raw parameter.
+    $this->tokenService->clearTokenData();
+    $config = [
+      'token_name' => 'mynodeId',
+      'request' => RouteInterface::ROUTE_CURRENT,
+      'parameter_name' => 'node',
+      'raw_value' => TRUE,
+    ];
+    /** @var \Drupal\eca_misc\Plugin\Action\TokenLoadRouteParameter $action */
+    $action = $this->actionManager->createInstance('eca_token_load_route_param', $config);
+    $action->execute();
+    $this->assertSame($this->node->id(), $this->tokenService->getTokenData('mynodeId')->getValue(), 'The node id has been added to the token system.');
+
   }
 
 }

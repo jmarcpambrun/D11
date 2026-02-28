@@ -6,13 +6,15 @@ use Drupal\Component\Render\MarkupInterface;
 use Drupal\eca_test_render_basics\Event\BasicRenderEvent;
 use Drupal\eca_test_render_basics\RenderBasicsEvents;
 use Drupal\views\Entity\View;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests regarding ECA render Views action.
- *
- * @group eca
- * @group eca_render
  */
+#[Group('eca')]
+#[Group('eca_render')]
+#[RunTestsInSeparateProcesses]
 class ViewsTest extends RenderActionsTestBase {
 
   /**

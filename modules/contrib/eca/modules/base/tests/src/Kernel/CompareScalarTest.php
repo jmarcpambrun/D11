@@ -5,13 +5,15 @@ namespace Drupal\Tests\eca_base\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\ECA\Condition\StringComparisonBase;
 use Drupal\eca\PluginManager\Condition;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_scalar" condition plugin.
- *
- * @group eca
- * @group eca_base
  */
+#[Group('eca')]
+#[Group('eca_base')]
+#[RunTestsInSeparateProcesses]
 class CompareScalarTest extends KernelTestBase {
 
   /**

@@ -12,13 +12,15 @@ use Drupal\node\NodeInterface;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use Drupal\views\Entity\View;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_views" submodule.
- *
- * @group eca
- * @group eca_views
  */
+#[Group('eca')]
+#[Group('eca_views')]
+#[RunTestsInSeparateProcesses]
 class ViewsQueryTest extends KernelTestBase {
 
   use ContentTypeCreationTrait;

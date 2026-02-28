@@ -8,6 +8,8 @@ use Drupal\eca\Token\TokenInterface;
 use Drupal\eca_endpoint\EndpointEvents;
 use Drupal\eca_endpoint\Event\EndpointResponseEvent;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,10 +17,10 @@ use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * Kernel tests regarding ECA endpoint actions.
- *
- * @group eca
- * @group eca_endpoint
  */
+#[Group('eca')]
+#[Group('eca_endpoint')]
+#[RunTestsInSeparateProcesses]
 class EndpointActionsTest extends KernelTestBase {
 
   /**

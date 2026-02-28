@@ -7,14 +7,16 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\Action\ActionInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\ErrorHandler\BufferingLogger;
 
 /**
  * Tests for config forms of ECA plugins.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
+#[RunTestsInSeparateProcesses]
 class PluginConfigFormTest extends KernelTestBase {
 
   /**
@@ -43,6 +45,7 @@ class PluginConfigFormTest extends KernelTestBase {
     'eca_user',
     'eca_views',
     'eca_workflow',
+    'modeler_api',
   ];
 
   /**
@@ -81,8 +84,8 @@ class PluginConfigFormTest extends KernelTestBase {
    * Tests configuration forms of plugins.
    */
   public function testPluginConfigForms(): void {
-    /** @var \Drupal\eca\Service\Modellers $eventManager */
-    $eventManager = \Drupal::service('eca.service.modeller');
+    /** @var \Drupal\eca\Service\Events $eventManager */
+    $eventManager = \Drupal::service('eca.service.event');
     foreach ($eventManager->events() as $event) {
       $this->doExecute('event', $event->getPluginId(), $event);
     }

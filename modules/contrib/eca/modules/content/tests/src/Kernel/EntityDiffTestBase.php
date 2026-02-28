@@ -6,13 +6,15 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Base class for Kernel tests for the entity diff condition and action plugin.
- *
- * @group eca
- * @group eca_content
  */
+#[Group('eca')]
+#[Group('eca_content')]
+#[RunTestsInSeparateProcesses]
 abstract class EntityDiffTestBase extends KernelTestBase {
 
   use ContentTypeCreationTrait;

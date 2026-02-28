@@ -20,7 +20,7 @@ events:
     plugin: 'form:ief_build'
     label: 'Build inline entity form'
     configuration:
-      form_id: ''
+      form_ids: ''
       entity_type_id: node
       bundle: page
       operation: 'edit, default'
@@ -35,7 +35,7 @@ events:
     plugin: 'form:ief_build'
     label: 'Build inline entity form'
     configuration:
-      form_id: ''
+      form_ids: ''
       entity_type_id: paragraph
       bundle: text
       operation: 'edit, default'

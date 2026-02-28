@@ -3,10 +3,10 @@
 namespace Drupal\modeler_api\Plugin\ModelerApiModeler;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
-use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Interface for modeler plugins.
@@ -169,6 +169,14 @@ interface ModelerInterface extends PluginInspectionInterface, ContainerFactoryPl
   public function getChangelog(): string;
 
   /**
+   * Get the model's template setting.
+   *
+   * @return bool
+   *   The template setting.
+   */
+  public function getTemplate(): bool;
+
+  /**
    * Get the model's storage setting.
    *
    * @return string
@@ -247,9 +255,9 @@ interface ModelerInterface extends PluginInspectionInterface, ContainerFactoryPl
    * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
    *   The model owner.
    *
-   * @return \Drupal\Core\Ajax\AjaxResponse
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
    *   The response.
    */
-  public function configForm(ModelOwnerInterface $owner): AjaxResponse;
+  public function configForm(ModelOwnerInterface $owner): JsonResponse;
 
 }

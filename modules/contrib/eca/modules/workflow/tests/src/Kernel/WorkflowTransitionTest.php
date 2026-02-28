@@ -11,13 +11,15 @@ use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_workflow" action plugin.
- *
- * @group eca
- * @group eca_workflow
  */
+#[Group('eca')]
+#[Group('eca_workflow')]
+#[RunTestsInSeparateProcesses]
 class WorkflowTransitionTest extends KernelTestBase {
 
   use ContentModerationTestTrait;
@@ -87,6 +89,7 @@ class WorkflowTransitionTest extends KernelTestBase {
 
     $this->entityTypeManager = \Drupal::service('entity_type.manager');
     $this->actionManager = \Drupal::service('plugin.manager.action');
+    $this->container->get('plugin.manager.action')->clearCachedDefinitions();
   }
 
   /**

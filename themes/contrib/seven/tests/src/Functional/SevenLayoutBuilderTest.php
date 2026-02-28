@@ -1,14 +1,26 @@
 <?php
 
+// phpcs:disable Drupal.Commenting.DocComment.ContentAfterOpen
+/* @noinspection PhpParameterByRefIsNotUsedAsReferenceInspection, PhpUnusedParameterInspection, PhpUnused */
+/* @noinspection PhpUndefinedNamespaceInspection */
+/* @noinspection PhpUndefinedClassInspection */
+/* @noinspection PhpUndefinedMethodInspection */
+
+declare(strict_types=1);
+
+// phpcs:enable
+
 namespace Drupal\Tests\seven\Functional;
 
 use Drupal\Tests\BrowserTestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the Seven theme.
- *
- * @group seven
  */
+#[Group('seven')]
+#[RunTestsInSeparateProcesses]
 class SevenLayoutBuilderTest extends BrowserTestBase {
 
   /**
@@ -68,7 +80,8 @@ class SevenLayoutBuilderTest extends BrowserTestBase {
   /**
    * Tests the layout builder has expected contextual links with Seven.
    *
-   * @see seven.theme
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   *   An error occurred when creating the account.
    */
   public function testContextualLinks() {
     $assert_session = $this->assertSession();

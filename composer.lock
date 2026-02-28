@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7b326bb9bb91a69c76b463e3ad26455c",
+    "content-hash": "53472e87ce4a0f7d1f82e984349d803f",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3097,29 +3097,33 @@
         },
         {
             "name": "drupal/bpmn_io",
-            "version": "2.0.11",
+            "version": "3.0.4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bpmn_io.git",
-                "reference": "2.0.11"
+                "reference": "3.0.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bpmn_io-2.0.11.zip",
-                "reference": "2.0.11",
-                "shasum": "14dc9b46f136a8b0fbd5966d24930e66df3acbe1"
+                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.4.zip",
+                "reference": "3.0.4",
+                "shasum": "bf5a7a99023131e5316c8573598767fd78a989f4"
             },
             "require": {
-                "drupal/core": "^10.3 || ^11",
-                "drupal/eca": "^2.0",
-                "drupal/eca_modeller_bpmn": "^2",
-                "php": ">=8.1"
+                "drupal/core": "^11.2",
+                "drupal/modeler_api": "^1.0",
+                "ext-dom": "*",
+                "mtownsend/xml-to-array": "^2.0",
+                "php": ">=8.3"
+            },
+            "require-dev": {
+                "drupal/eca": "^3.0"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.11",
-                    "datestamp": "1761319344",
+                    "version": "3.0.4",
+                    "datestamp": "1765554265",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3140,7 +3144,7 @@
                     "homepage": "https://www.drupal.org/user/168924"
                 }
             ],
-            "description": "BPMN modeller for ECA, integrated into Drupal's admin UI.",
+            "description": "BPMN modeler, integrated into Drupal's admin UI.",
             "homepage": "https://www.drupal.org/project/bpmn_io",
             "support": {
                 "source": "https://drupal.org/project/bpmn_io",
@@ -4513,32 +4517,34 @@
         },
         {
             "name": "drupal/eca",
-            "version": "2.1.18",
+            "version": "3.1.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "2.1.18"
+                "reference": "3.1.0-alpha1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-2.1.18.zip",
-                "reference": "2.1.18",
-                "shasum": "dd4d5c8f0cfc60169c4da9ae06060a5a869e5ccb"
+                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-alpha1.zip",
+                "reference": "3.1.0-alpha1",
+                "shasum": "d81ec8f337133aa7e47e38c424e79ffa6a4c2e4c"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
-                "drupal/core": "^10.3||^11",
-                "ext-dom": "*",
+                "drupal/core": "^11.3",
+                "drupal/modeler_api": "^1.1",
                 "ext-json": "*",
-                "mtownsend/xml-to-array": "^2.0",
-                "php": ">=8.1"
+                "php": ">=8.3"
+            },
+            "conflict": {
+                "drush/drush": "<12.5.1"
             },
             "require-dev": {
-                "drupal/ai": "^1.2",
-                "drupal/ai_agents": "^1.2",
-                "drupal/eca_ui": "*",
+                "drupal/ai": "1.2.x-dev",
+                "drupal/ai_agents": "1.2.x-dev",
                 "drupal/entity_reference_revisions": "^1.12",
                 "drupal/inline_entity_form": "^3.0",
+                "drupal/modeler_api": "*",
                 "drupal/paragraphs": "^1.18",
                 "drupal/project_browser": "^2.0",
                 "drupal/token": "^1.15",
@@ -4547,11 +4553,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.1.18",
-                    "datestamp": "1768560406",
+                    "version": "3.1.0-alpha1",
+                    "datestamp": "1771919779",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -4578,49 +4584,6 @@
             "support": {
                 "source": "https://drupal.org/project/eca",
                 "issues": "https://drupal.org/project/issues/eca"
-            }
-        },
-        {
-            "name": "drupal/eca_modeller_bpmn",
-            "version": "2.1.18",
-            "require": {
-                "drupal/core": "^10.3 || ^11",
-                "drupal/eca": "^2",
-                "drupal/eca_ui": "*"
-            },
-            "type": "metapackage",
-            "extra": {
-                "drupal": {
-                    "version": "2.1.18",
-                    "datestamp": "1768560406",
-                    "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
-                    }
-                }
-            },
-            "notification-url": "https://packages.drupal.org/8/downloads",
-            "license": [
-                "GPL-2.0-or-later"
-            ],
-            "authors": [
-                {
-                    "name": "boromino",
-                    "homepage": "https://www.drupal.org/user/859722"
-                },
-                {
-                    "name": "danielspeicher",
-                    "homepage": "https://www.drupal.org/user/3621778"
-                },
-                {
-                    "name": "jurgenhaas",
-                    "homepage": "https://www.drupal.org/user/168924"
-                }
-            ],
-            "description": "Common functionality for all BPMN based modeller implementations.",
-            "homepage": "https://www.drupal.org/project/eca",
-            "support": {
-                "source": "https://git.drupalcode.org/project/eca"
             }
         },
         {
@@ -4673,48 +4636,6 @@
             "homepage": "https://www.drupal.org/project/eca_site_building",
             "support": {
                 "source": "https://git.drupalcode.org/project/eca_site_building"
-            }
-        },
-        {
-            "name": "drupal/eca_ui",
-            "version": "3.0.10",
-            "require": {
-                "drupal/core": "^11.2",
-                "drupal/eca": "*"
-            },
-            "type": "metapackage",
-            "extra": {
-                "drupal": {
-                    "version": "3.0.10",
-                    "datestamp": "1768560278",
-                    "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
-                    }
-                }
-            },
-            "notification-url": "https://packages.drupal.org/8/downloads",
-            "license": [
-                "GPL-2.0-or-later"
-            ],
-            "authors": [
-                {
-                    "name": "boromino",
-                    "homepage": "https://www.drupal.org/user/859722"
-                },
-                {
-                    "name": "danielspeicher",
-                    "homepage": "https://www.drupal.org/user/3621778"
-                },
-                {
-                    "name": "jurgenhaas",
-                    "homepage": "https://www.drupal.org/user/168924"
-                }
-            ],
-            "description": "Provides a user interface for managing ECA models.",
-            "homepage": "https://www.drupal.org/project/eca",
-            "support": {
-                "source": "https://git.drupalcode.org/project/eca"
             }
         },
         {
@@ -7479,29 +7400,33 @@
         },
         {
             "name": "drupal/modeler_api",
-            "version": "1.0.6",
+            "version": "1.1.0-alpha4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler_api.git",
-                "reference": "1.0.6"
+                "reference": "1.1.0-alpha4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.0.6.zip",
-                "reference": "1.0.6",
-                "shasum": "7f105303e9149363d4b2649848b4d9b5ad755e25"
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-alpha4.zip",
+                "reference": "1.1.0-alpha4",
+                "shasum": "c6d552992169c7481980ace4c86f2b59e0fc1718"
             },
             "require": {
-                "drupal/core": "^10.4 || ^11"
+                "drupal/core": "^11.3",
+                "php": ">=8.3"
+            },
+            "require-dev": {
+                "drupal/token": "^1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.6",
-                    "datestamp": "1764747432",
+                    "version": "1.1.0-alpha4",
+                    "datestamp": "1772110050",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -8906,26 +8831,26 @@
         },
         {
             "name": "drupal/seven",
-            "version": "2.0.0-beta1",
+            "version": "2.0.0-beta4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/seven.git",
-                "reference": "2.0.0-beta1"
+                "reference": "2.0.0-beta4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/seven-2.0.0-beta1.zip",
-                "reference": "2.0.0-beta1",
-                "shasum": "f4ac4311644e502e4f6e3c9f2c85b83d2f088b4d"
+                "url": "https://ftp.drupal.org/files/projects/seven-2.0.0-beta4.zip",
+                "reference": "2.0.0-beta4",
+                "shasum": "09cde5545e1423fbf4afe9348608c0098a38b162"
             },
             "require": {
-                "drupal/core": "^10.2 || ^11"
+                "drupal/core": "^11.3"
             },
             "type": "drupal-theme",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0-beta1",
-                    "datestamp": "1756488859",
+                    "version": "2.0.0-beta4",
+                    "datestamp": "1769140579",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
@@ -8962,7 +8887,7 @@
                     "homepage": "https://www.drupal.org/user/305669"
                 }
             ],
-            "description": "The Seven theme from Drupal 8/9 moved to contrib.",
+            "description": "The Seven theme from Drupal 9 moved to a contrib project.",
             "homepage": "https://www.drupal.org/project/seven",
             "support": {
                 "source": "https://git.drupalcode.org/project/seven"
@@ -21418,6 +21343,7 @@
         "drupal/ai": 5,
         "drupal/auto_translation": 10,
         "drupal/content_access": 5,
+        "drupal/eca": 15,
         "drupal/entity_usage": 10,
         "drupal/eu_cookie_compliance": 5,
         "drupal/feeds_ex": 10,
@@ -21426,6 +21352,7 @@
         "drupal/h5p": 10,
         "drupal/inline_entity_form": 5,
         "drupal/mailer_transport": 15,
+        "drupal/modeler_api": 15,
         "drupal/multivalue_form_element": 10,
         "drupal/openai": 10,
         "drupal/page_manager": 5,

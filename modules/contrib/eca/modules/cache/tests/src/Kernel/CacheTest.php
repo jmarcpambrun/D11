@@ -5,13 +5,15 @@ namespace Drupal\Tests\eca_cache\Kernel;
 use Drupal\Core\Cache\Cache;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\DataType\DataTransferObject;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the eca_cache module.
- *
- * @group eca
- * @group eca_cache
  */
+#[Group('eca')]
+#[Group('eca_cache')]
+#[RunTestsInSeparateProcesses]
 class CacheTest extends KernelTestBase {
 
   /**

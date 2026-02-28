@@ -7,14 +7,16 @@ use Drupal\eca_migrate\Event\EcaMigrateProcessEvent;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\migrate\Row;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Kernel tests for the "eca_migrate" event plugin.
- *
- * @group eca
- * @group eca_migrate
  */
+#[Group('eca')]
+#[Group('eca_migrate')]
+#[RunTestsInSeparateProcesses]
 class EcaMigrateEventTest extends KernelTestBase {
 
   /**

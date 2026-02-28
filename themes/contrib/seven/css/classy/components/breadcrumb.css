@@ -5,25 +5,24 @@
 
 .breadcrumb {
   padding-bottom: 0.5em;
-}
-.breadcrumb ol {
-  margin: 0;
-  padding: 0;
-}
-[dir="rtl"] .breadcrumb ol {
-  /* This is required to win over specificity of [dir="rtl"] ol */
-  margin-right: 0;
-}
-.breadcrumb li {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-}
-/* IE8 does not support :not() and :last-child. */
-.breadcrumb li::before {
-  content: " \BB ";
-}
-.breadcrumb li:first-child::before {
-  content: none;
+  & ol {
+    margin: 0;
+    padding: 0;
+    [dir="rtl"] & {
+      /* This is required to win over specificity of [dir="rtl"] ol. */
+      margin-right: 0;
+    }
+  }
+  & li {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    &::before {
+      content: " \BB ";
+    }
+    &:first-child::before {
+      content: none;
+    }
+  }
 }

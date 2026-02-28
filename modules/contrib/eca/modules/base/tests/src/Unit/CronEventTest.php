@@ -8,13 +8,13 @@ use Drupal\eca\ConfigurableLoggerChannel;
 use Drupal\eca\EcaState;
 use Drupal\eca_base\Event\CronEvent;
 use Drupal\eca_base\Plugin\ECA\Event\BaseEvent;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests calculation of cron job due dates.
- *
- * @group eca
- * @group eca_base
  */
+#[Group('eca')]
+#[Group('eca_base')]
 class CronEventTest extends UnitTestCase {
 
   /**

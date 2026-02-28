@@ -1,6 +1,6 @@
 /**
  * @file
- * Contains minimal layout styling for the media library.
+ * Styles for the Media Library's minimal layout.
  */
 
 .media-library-wrapper {
@@ -19,10 +19,9 @@
 .media-library-views-form {
   display: flex;
   flex-wrap: wrap;
-}
-
-.media-library-views-form .media-library-item {
-  justify-content: space-between;
-  max-width: 23%;
-  margin: 1%;
+  & .media-library-item {
+    justify-content: space-between;
+    max-width: 23%;
+    margin: 1%;
+  }
 }

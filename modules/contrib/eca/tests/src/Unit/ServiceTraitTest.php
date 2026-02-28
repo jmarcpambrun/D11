@@ -3,18 +3,34 @@
 namespace Drupal\Tests\eca\Unit;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Tests\UnitTestCase;
 use Drupal\eca\Service\ServiceTrait;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Tests the service trait.
- *
- * @group eca
  */
+#[Group('eca')]
 class ServiceTraitTest extends UnitTestCase {
 
   use ServiceTrait;
+
+  /**
+   * The module extension manager.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected ModuleExtensionList $extensions;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->extensions = $this->getExtensions();
+  }
 
   /**
    * Tests the sort of plugins.
@@ -29,7 +45,7 @@ class ServiceTraitTest extends UnitTestCase {
     ] as $label) {
       $plugins[] = $this->getPluginMock($label);
     }
-    $this->sortPlugins($plugins);
+    $this->sortPlugins($plugins, $this->extensions);
     foreach ([
       'testPluginA',
       'testPluginB',
@@ -54,6 +70,18 @@ class ServiceTraitTest extends UnitTestCase {
     $mockObject->method('getPluginDefinition')->willReturn([
       'label' => $label,
     ]);
+    return $mockObject;
+  }
+
+  /**
+   * Gets the extension manager mock.
+   *
+   * @return \Drupal\Core\Extension\ModuleExtensionList
+   *   The mocked extension manager.
+   */
+  private function getExtensions(): ModuleExtensionList {
+    $mockObject = $this->createMock(ModuleExtensionList::class);
+    $mockObject->method('getName')->willReturn('eca');
     return $mockObject;
   }
 

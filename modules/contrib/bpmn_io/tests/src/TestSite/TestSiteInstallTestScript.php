@@ -16,6 +16,7 @@ class TestSiteInstallTestScript implements TestSetupInterface {
     $module_installer = \Drupal::service('module_installer');
     $module_installer->install([
       'bpmn_io',
+      'bpmn_io_test',
       'eca',
       'eca_base',
       'eca_content',
@@ -31,8 +32,6 @@ class TestSiteInstallTestScript implements TestSetupInterface {
     $theme_installer->install(['claro']);
     $system_theme_config = \Drupal::configFactory()->getEditable('system.theme');
     $system_theme_config->set('default', 'claro')->save();
-    \Drupal::configFactory()->getEditable('views.view.user_admin_people')->delete();
-    $module_installer->install(['bpmn_io_test']);
   }
 
 }

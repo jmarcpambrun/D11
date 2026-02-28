@@ -49,7 +49,6 @@ actions:
       label: 'Tag: [article:title]'
       published: true
       owner: ''
-      object: ''
     successors:
       -
         id: save_tag

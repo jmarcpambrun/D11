@@ -6,15 +6,17 @@ use Drupal\Core\Form\FormState;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Entity\Eca;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Execution chain tests using plugins of eca_form.
- *
- * @group eca
- * @group eca_form
  */
+#[Group('eca')]
+#[Group('eca_form')]
+#[RunTestsInSeparateProcesses]
 class FormExecutionChainTest extends KernelTestBase {
 
   /**
@@ -29,6 +31,7 @@ class FormExecutionChainTest extends KernelTestBase {
     'field',
     'eca',
     'eca_form',
+    'modeler_api',
   ];
 
   /**
@@ -74,7 +77,7 @@ class FormExecutionChainTest extends KernelTestBase {
           'plugin' => 'form:form_build',
           'label' => 'Building form',
           'configuration' => [
-            'form_id' => 'user_form',
+            'form_ids' => 'user_form',
           ],
           'successors' => [
             [
@@ -87,7 +90,7 @@ class FormExecutionChainTest extends KernelTestBase {
           'plugin' => 'form:form_process',
           'label' => 'After building form',
           'configuration' => [
-            'form_id' => 'user_form',
+            'form_ids' => 'user_form',
           ],
           'successors' => [
             [
@@ -100,7 +103,7 @@ class FormExecutionChainTest extends KernelTestBase {
           'plugin' => 'form:form_after_build',
           'label' => 'After building form',
           'configuration' => [
-            'form_id' => 'user_form',
+            'form_ids' => 'user_form',
           ],
           'successors' => [
             [
@@ -113,7 +116,7 @@ class FormExecutionChainTest extends KernelTestBase {
           'plugin' => 'form:form_validate',
           'label' => 'Validating form',
           'configuration' => [
-            'form_id' => 'user_form',
+            'form_ids' => 'user_form',
           ],
           'successors' => [
             [
@@ -126,7 +129,7 @@ class FormExecutionChainTest extends KernelTestBase {
           'plugin' => 'form:form_submit',
           'label' => 'Submitting form',
           'configuration' => [
-            'form_id' => 'user_form',
+            'form_ids' => 'user_form',
           ],
           'successors' => [
             [

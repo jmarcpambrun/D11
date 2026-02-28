@@ -8,13 +8,15 @@ use Drupal\eca_test_array\Plugin\Action\ArrayWrite;
 use Drupal\user\Entity\User;
 use Drupal\user\Event\UserEvents as CoreUserEvents;
 use Drupal\user\Event\UserFloodEvent;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for events provided by "eca_user".
- *
- * @group eca
- * @group eca_user
  */
+#[Group('eca')]
+#[Group('eca_user')]
+#[RunTestsInSeparateProcesses]
 class UserEventsTest extends KernelTestBase {
 
   /**
@@ -37,6 +39,7 @@ class UserEventsTest extends KernelTestBase {
     $this->installSchema('system', ['sequences']);
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
+    $this->installConfig('system');
     User::create(['uid' => 0, 'name' => 'guest'])->save();
     User::create(['uid' => 1, 'name' => 'admin'])->save();
     User::create(['uid' => 2, 'name' => 'authenticated'])->save();

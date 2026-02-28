@@ -9,15 +9,16 @@ use Drupal\eca\Entity\Objects\EcaEvent;
 use Drupal\eca\Plugin\ECA\Event\EventInterface;
 use Drupal\eca\PluginManager\Event as EventPluginManager;
 use Drupal\eca\Processor;
+use Drupal\eca\Token\Browser;
 use Drupal\eca\Token\TokenInterface;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Unit tests for the ECA processor engine.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
 class ProcessorTest extends EcaUnitTestBase {
 
   /**
@@ -26,6 +27,13 @@ class ProcessorTest extends EcaUnitTestBase {
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The Token browser.
+   *
+   * @var \Drupal\eca\Token\Browser
+   */
+  protected Browser $tokenBrowser;
 
   /**
    * The Token services.
@@ -61,6 +69,7 @@ class ProcessorTest extends EcaUnitTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->logger = $this->createMock(LoggerChannelInterface::class);
+    $this->tokenBrowser = $this->createMock(Browser::class);
     $this->tokenService = $this->createMock(TokenInterface::class);
     $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
     $this->eventPluginManager = $this->createMock(EventPluginManager::class);
@@ -73,7 +82,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdWithoutHistory(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, 3);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 3);
     $method = $this->getPrivateMethod(Processor::class, 'recursionThresholdSurpassed');
     $eca = $this->getEca('1');
     $result = $method->invokeArgs($processor, [
@@ -89,7 +98,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdSurpassed(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, 2);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 2);
     $this->assertTrue($this->isThresholdComplied($processor));
   }
 
@@ -99,7 +108,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdNotSurpassed(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, 3);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 3);
     $this->assertFalse($this->isThresholdComplied($processor));
   }
 

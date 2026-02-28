@@ -1,5 +1,5 @@
 global-styling:
-  version: '2.10.16'
+  version: '2.12.16'
   css:
     base:
       css/base/elements.css: {}
@@ -55,6 +55,7 @@ global-styling:
       css/components/system-status-report.css: {}
       css/components/system-status-report-counters.css: {}
       css/components/system-status-counter.css: {}
+      css/components/tableselect.css: {}
       css/components/tabs.css: {}
       css/components/views-ui.css: {}
     layout:

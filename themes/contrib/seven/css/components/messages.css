@@ -1,26 +1,28 @@
 /**
- * Messages.
+ * @file
+ * Styles for messages.
  */
+
 .messages {
   margin: 0 0 20px 8px; /* LTR */
-}
-[dir="rtl"] .messages {
-  margin: 0 8px 10px 0;
-}
-.messages pre {
-  margin: 0;
-}
-.messages h1,
-.messages .heading-a,
-.messages h2,
-.messages .heading-b,
-.messages h3,
-.messages .heading-c,
-.messages h4,
-.messages .heading-d,
-.messages h5,
-.messages .heading-e,
-.messages h6,
-.messages .heading-f {
-  margin-top: 0;
+  [dir="rtl"] & {
+    margin: 0 8px 10px 0;
+  }
+  & pre {
+    margin: 0;
+  }
+  & h1,
+  & .heading-a,
+  & h2,
+  & .heading-b,
+  & h3,
+  & .heading-c,
+  & h4,
+  & .heading-d,
+  & h5,
+  & .heading-e,
+  & h6,
+  & .heading-f {
+    margin-top: 0;
+  }
 }

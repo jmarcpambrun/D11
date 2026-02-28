@@ -1,8 +1,8 @@
 name: Seven
 type: theme
 base theme: false
-description: 'The Seven theme from Drupal 8/9 moved to contrib.'
-core_version_requirement: '^10.2 || ^11'
+description: 'The Seven theme from Drupal 9 moved to a contrib project.'
+core_version_requirement: '^11.3'
 
 libraries:
   - seven/classy.messages
@@ -12,10 +12,12 @@ libraries-override:
   system/base:
     css:
       component:
-        css/components/system-status-counter.css: css/components/system-status-counter.css
         css/components/system-status-report-counters.css: css/components/system-status-report-counters.css
+  system/status.report:
+    css:
+      component:
+        css/components/system-status-counter.css: css/components/system-status-counter.css
         css/components/system-status-report-general-info.css: css/components/system-status-report-general-info.css
-
   core/drupal.vertical-tabs:
     css:
       component:
@@ -92,7 +94,7 @@ regions:
 regions_hidden:
   - sidebar_first
 
-# Information added by Drupal.org packaging script on 2025-08-29
-version: '2.0.0-beta1'
+# Information added by Drupal.org packaging script on 2026-01-23
+version: '2.0.0-beta4'
 project: 'seven'
-datestamp: 1756488863
+datestamp: 1769140583

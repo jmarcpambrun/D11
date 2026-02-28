@@ -1,3 +1,4 @@
 hbox
 quickedit
+readmore
 webfonts

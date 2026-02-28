@@ -8,13 +8,15 @@ use Drupal\eca_queue\Plugin\Action\EnqueueTaskDelayed;
 use Drupal\eca_queue\Task;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_enqueue_task_delayed" action plugin.
- *
- * @group eca
- * @group eca_queue
  */
+#[Group('eca')]
+#[Group('eca_queue')]
+#[RunTestsInSeparateProcesses]
 class EnqueueTaskDelayedTest extends KernelTestBase {
 
   /**
@@ -64,7 +66,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
       'task_value' => '',
       'tokens' => '',
       'delay_value' => '2',
-      'delay_unit' => (string) EnqueueTaskDelayed::DELAY_MINUTES,
+      'delay_unit' => EnqueueTaskDelayed::DELAY_MINUTES,
     ];
     /** @var \Drupal\eca_queue\Plugin\Action\EnqueueTask $action */
     $action = $action_manager->createInstance('eca_enqueue_task_delayed', [] + $defaults);
@@ -95,7 +97,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
     // another queue item and we assert that this item is then stored in queue.
     $action = $action_manager->createInstance('eca_enqueue_task_delayed', [
       'delay_value' => '0',
-      'delay_unit' => (string) EnqueueTaskDelayed::DELAY_SECONDS,
+      'delay_unit' => EnqueueTaskDelayed::DELAY_SECONDS,
     ] + $defaults);
     $this->assertSame(0, $queue->numberOfItems(), 'Queue must be empty before execution.');
     $action->execute();
@@ -132,7 +134,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
             'task_value' => 'delayed_task_value',
             'tokens' => '',
             'delay_value' => '100',
-            'delay_unit' => (string) EnqueueTaskDelayed::DELAY_SECONDS,
+            'delay_unit' => EnqueueTaskDelayed::DELAY_SECONDS,
           ],
           'successors' => [],
         ],
@@ -210,7 +212,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
       'task_value' => '[entity:account-name]',
       'tokens' => "entity",
       'delay_value' => '100',
-      'delay_unit' => (string) EnqueueTaskDelayed::DELAY_SECONDS,
+      'delay_unit' => EnqueueTaskDelayed::DELAY_SECONDS,
     ] + $defaults);
     $action->execute();
     $item = $queue->claimItem();
@@ -232,7 +234,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
       'task_value' => '[admin:uid]',
       'tokens' => "entity,\nadmin",
       'delay_value' => '0',
-      'delay_unit' => (string) EnqueueTaskDelayed::DELAY_SECONDS,
+      'delay_unit' => EnqueueTaskDelayed::DELAY_SECONDS,
     ] + $defaults);
     $action->execute();
     $item = $queue->claimItem();

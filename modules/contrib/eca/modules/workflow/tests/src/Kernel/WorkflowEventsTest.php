@@ -9,13 +9,15 @@ use Drupal\eca\Entity\Eca;
 use Drupal\eca_test_array\Plugin\Action\ArrayIncrement;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the events provided by the ECA Workflow module.
- *
- * @group eca
- * @group eca_workflow
  */
+#[Group('eca')]
+#[Group('eca_workflow')]
+#[RunTestsInSeparateProcesses]
 class WorkflowEventsTest extends KernelTestBase {
 
   use ContentModerationTestTrait;

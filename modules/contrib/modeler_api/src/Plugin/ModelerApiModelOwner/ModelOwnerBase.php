@@ -2,6 +2,7 @@
 
 namespace Drupal\modeler_api\Plugin\ModelerApiModelOwner;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Component\Uuid\UuidInterface;
@@ -9,6 +10,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\PluginBase;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\modeler_api\Api;
 use Drupal\modeler_api\Component;
 use Drupal\modeler_api\ComponentColor;
@@ -42,6 +44,7 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
     protected Api $api,
     protected ModelerPluginManager $modelerPluginManager,
     protected UuidInterface $uuidGenerator,
+    protected TimeInterface $time,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
@@ -59,6 +62,7 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
       $container->get('modeler_api.service'),
       $container->get('plugin.manager.modeler_api.modeler'),
       $container->get('uuid'),
+      $container->get('datetime.time'),
     );
   }
 
@@ -74,6 +78,20 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
    */
   final public function description(): string {
     return (string) $this->pluginDefinition['description'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function componentLabels(): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function componentLabelsPlural(): array {
+    return [];
   }
 
   /**
@@ -292,6 +310,24 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
   /**
    * {@inheritdoc}
    */
+  final public function setTemplate(ConfigEntityInterface $model, bool $template): ModelOwnerInterface {
+    if ($this->supportsTemplate()) {
+      $model->set('template', $template);
+    }
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  final public function getTemplate(ConfigEntityInterface $model): bool {
+    $key = $this->entityTypeManager->getDefinition($this->configEntityTypeId())->getKey('template');
+    return !$this->supportsTemplate() || $model->get($key);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   final public function setStorage(ConfigEntityInterface $model, string $storage): ModelOwnerInterface {
     return $this->setThirdPartySetting($model, 'storage', $storage);
   }
@@ -489,6 +525,13 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
   /**
    * {@inheritdoc}
    */
+  public function getPluginSchemaKey(PluginInspectionInterface $plugin): string {
+    return '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function skipConfigurationValidation(int $type, string $id): bool {
     return FALSE;
   }
@@ -622,6 +665,18 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
   /**
    * {@inheritdoc}
    */
+  final public function supportsTemplate(): bool {
+    return $this->entityTypeManager->getDefinition($this->configEntityTypeId())->hasKey('template');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function applyTemplate(string $templateId, string $componentId, string $target, array $hiddenConfig = [], array $config = []): void {}
+
+  /**
+   * {@inheritdoc}
+   */
   public function ownerComponentEditable(PluginInspectionInterface $plugin): bool {
     return TRUE;
   }
@@ -631,6 +686,55 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
    */
   public function ownerComponentPluginChangeable(PluginInspectionInterface $plugin): bool {
     return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function favoriteOwnerComponents(): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function supportsReplayData(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getReplayData(string $hash): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getReplayDataByComponent(string $modelId, string $componentId): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function supportsTesting(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function startTestJob(string $modelId, string $componentId): string|TranslatableMarkup {
+    return $this->t('Testing is not supported.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function pollTestJob(string $jobId): array|null|TranslatableMarkup {
+    return $this->t('Testing is not supported.');
   }
 
 }

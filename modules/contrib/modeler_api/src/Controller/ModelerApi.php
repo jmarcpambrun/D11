@@ -9,13 +9,14 @@ use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Link;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\modeler_api\Api;
-use Drupal\modeler_api\EntityOriginalTrait;
 use Drupal\modeler_api\Form\Settings;
 use Drupal\modeler_api\Plugin\ModelerPluginManager;
 use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,8 +27,6 @@ use Symfony\Component\HttpFoundation\Response;
  * @package Drupal\modeler_api\Controller
  */
 final class ModelerApi extends ControllerBase {
-
-  use EntityOriginalTrait;
 
   /**
    * Modeler API controller constructor.
@@ -244,7 +243,7 @@ final class ModelerApi extends ControllerBase {
       $model = $this->api->prepareModelFromData($data, $model_owner_id, $modeler_id, $isNew);
       if ($model !== NULL) {
         $isNew = $model->isNew();
-        $originalModel = $this->getOriginal($model);
+        $originalModel = $model->getOriginal();
         $model->save();
         if ($isNew) {
           /** @var \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner */
@@ -309,22 +308,100 @@ final class ModelerApi extends ControllerBase {
   }
 
   /**
-   * Ajax callback to receive the config form for a component.
+   * Callback to receive the config form for a component.
    *
    * @param string $model_owner_id
    *   The plugin ID of the model owner.
    * @param string $modeler_id
    *   The plugin ID of the modeler that's being used for the posted model.
    *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   An Ajax response object containing the config form.
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   An response object containing the config form.
    */
-  public function configForm(string $model_owner_id, string $modeler_id): AjaxResponse {
+  public function configForm(string $model_owner_id, string $modeler_id): JsonResponse {
     /** @var \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner */
     $owner = $this->modelOwnerPluginManager->createInstance($model_owner_id);
     /** @var \Drupal\modeler_api\Plugin\ModelerApiModeler\ModelerInterface $modeler */
     $modeler = $this->modelerPluginManager->createInstance($modeler_id);
     return $modeler->configForm($owner);
+  }
+
+  /**
+   * Callback to receive replay data for an event.
+   *
+   * @param string $model_owner_id
+   *   The plugin ID of the model owner.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   The json response with the replay data.
+   */
+  public function loadReplayData(string $model_owner_id): JsonResponse {
+    /** @var \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner */
+    $owner = $this->modelOwnerPluginManager->createInstance($model_owner_id);
+    try {
+      $json_data = json_decode($this->request->getContent(), TRUE, 2, JSON_THROW_ON_ERROR);
+      if (!isset($json_data['modelId'])) {
+        $data = ['error' => 'Model ID not specified.'];
+      }
+      elseif (!isset($json_data['componentId'])) {
+        $data = ['error' => 'Component ID not specified.'];
+      }
+      else {
+        $data = $owner->getReplayDataByComponent($json_data['modelId'], $json_data['componentId']);
+      }
+    }
+    catch (\JsonException) {
+      $data = ['error' => 'Invalid JSON data.'];
+    }
+    return new JsonResponse($data);
+  }
+
+  /**
+   * Callback to receive replay data for an event.
+   *
+   * @param string $model_owner_id
+   *   The plugin ID of the model owner.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   The json response with the replay data.
+   */
+  public function testModel(string $model_owner_id): JsonResponse {
+    /** @var \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner */
+    $owner = $this->modelOwnerPluginManager->createInstance($model_owner_id);
+    try {
+      $json_data = json_decode($this->request->getContent(), TRUE, 2, JSON_THROW_ON_ERROR);
+      if (isset($json_data['jobId'])) {
+        $result = $owner->pollTestJob($json_data['jobId']);
+        if ($result === NULL) {
+          $data = ['status' => 'waiting'];
+        }
+        elseif ($result instanceof TranslatableMarkup) {
+          $data = ['error' => (string) $result];
+        }
+        else {
+          $data = $result;
+        }
+      }
+      elseif (!isset($json_data['modelId'])) {
+        $data = ['error' => 'Model ID not specified.'];
+      }
+      elseif (!isset($json_data['componentId'])) {
+        $data = ['error' => 'Component ID not specified.'];
+      }
+      else {
+        $result = $owner->startTestJob($json_data['modelId'], $json_data['componentId']);
+        if (is_string($result)) {
+          $data = ['jobId' => $result];
+        }
+        else {
+          $data = ['error' => (string) $result];
+        }
+      }
+    }
+    catch (\JsonException) {
+      $data = ['error' => 'Invalid JSON data.'];
+    }
+    return new JsonResponse($data);
   }
 
 }

@@ -3,14 +3,17 @@
 namespace Drupal\Tests\eca\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
-use Drupal\eca\Entity\Eca;
+use Drupal\modeler_api\Api;
+use Drupal\modeler_api\Component;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests for ECA-extended Token replacement behavior.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
+#[RunTestsInSeparateProcesses]
 class EcaTest extends KernelTestBase {
 
   /**
@@ -23,6 +26,8 @@ class EcaTest extends KernelTestBase {
     'text',
     'eca',
     'eca_base',
+    'eca_ui',
+    'modeler_api',
   ];
 
   /**
@@ -40,14 +45,19 @@ class EcaTest extends KernelTestBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function testInvalidTokenField(): void {
-    $fields = [
-      'list_token' => 'list',
-      'token_name' => '[test]',
-    ];
-    /** @var \Drupal\eca\Entity\Eca $ecaConfig */
-    $ecaConfig = Eca::create();
-    $this->assertFalse($ecaConfig->addAction('12345', 'eca_count',
-      'Action', $fields, []));
+    $owner = \Drupal::service('plugin.manager.modeler_api.model_owner')->createInstance('eca');
+    $component = new Component(
+      $owner,
+      'id',
+      Api::COMPONENT_TYPE_ELEMENT,
+      'eca_count',
+      'Count',
+      [
+        'list_token' => 'list',
+        'token_name' => '[test]',
+      ],
+    );
+    $this->assertEquals(['action "Count" (id): This field requires a token name, not a token; please remove the brackets.'], $component->validate());
   }
 
   /**
@@ -56,14 +66,19 @@ class EcaTest extends KernelTestBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function testValidTokenField(): void {
-    $fields = [
-      'list_token' => 'list',
-      'token_name' => 'test',
-    ];
-    /** @var \Drupal\eca\Entity\Eca $ecaConfig */
-    $ecaConfig = Eca::create();
-    $this->assertTrue($ecaConfig->addAction('12345', 'eca_count',
-      'Action', $fields, []));
+    $owner = \Drupal::service('plugin.manager.modeler_api.model_owner')->createInstance('eca');
+    $component = new Component(
+      $owner,
+      'id',
+      Api::COMPONENT_TYPE_ELEMENT,
+      'eca_count',
+      'Count',
+      [
+        'list_token' => 'list',
+        'token_name' => 'test',
+      ],
+    );
+    $this->assertEmpty($component->validate());
   }
 
 }

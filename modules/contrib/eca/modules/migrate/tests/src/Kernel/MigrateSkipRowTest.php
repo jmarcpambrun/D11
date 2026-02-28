@@ -5,16 +5,20 @@ namespace Drupal\Tests\eca_migrate\Kernel;
 use Drupal\Core\Action\ActionManager;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\eca_migrate\Plugin\Action\MigrateSkipRow;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\migrate\MigrateSkipRowException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the MigrateSkipRow action plugin.
- *
- * @coversDefaultClass \Drupal\eca_migrate\Plugin\Action\MigrateSkipRow
- * @group eca
- * @group eca_migrate
  */
+#[Group('eca_migrate')]
+#[Group('eca')]
+#[CoversClass(MigrateSkipRow::class)]
+#[RunTestsInSeparateProcesses]
 class MigrateSkipRowTest extends KernelTestBase {
 
   /**

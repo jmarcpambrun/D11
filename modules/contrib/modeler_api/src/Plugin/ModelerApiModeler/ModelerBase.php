@@ -13,6 +13,7 @@ use Drupal\Core\Plugin\PluginBase;
 use Drupal\modeler_api\Form\Settings;
 use Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -193,6 +194,13 @@ abstract class ModelerBase extends PluginBase implements ModelerInterface {
   /**
    * {@inheritdoc}
    */
+  public function getTemplate(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStorage(): string {
     return '';
   }
@@ -235,7 +243,7 @@ abstract class ModelerBase extends PluginBase implements ModelerInterface {
   /**
    * {@inheritdoc}
    */
-  public function configForm(ModelOwnerInterface $owner): AjaxResponse {
+  public function configForm(ModelOwnerInterface $owner): JsonResponse {
     return new AjaxResponse();
   }
 
@@ -279,6 +287,14 @@ abstract class ModelerBase extends PluginBase implements ModelerInterface {
         '#type' => 'checkbox',
         '#title' => $this->t('Enabled'),
         '#default_value' => $config['executable'],
+      ];
+    }
+    if ($owner->supportsTemplate()) {
+      $form['template'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Template'),
+        '#description' => $this->t('If checked, the model will be used as a template for new models.'),
+        '#default_value' => $config['template'],
       ];
     }
     $form['storage'] = [

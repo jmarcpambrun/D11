@@ -2,14 +2,17 @@
 
 namespace Drupal\Tests\eca\Kernel\Model;
 
+use Drupal\eca_base\Hook\BaseHooks;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Model test for entity loops.
- *
- * @group eca
- * @group eca_model
  */
+#[Group('eca')]
+#[Group('eca_model')]
+#[RunTestsInSeparateProcesses]
 class EntityLoopTest extends Base {
 
   /**
@@ -37,7 +40,7 @@ class EntityLoopTest extends Base {
       'status' => TRUE,
     ])->save();
 
-    \Drupal::service('eca_base.hook_handler')->cron();
+    \Drupal::classResolver(BaseHooks::class)->cron();
     $this->assertStatusMessages([
       'User ' . self::USER_1_NAME,
       "User $name",

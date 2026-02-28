@@ -6,13 +6,15 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\ECA\Condition\StringComparisonBase;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\eca\ContentTypeCreationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests for ECA condition plugins.
- *
- * @group eca
- * @group eca_core
  */
+#[Group('eca')]
+#[Group('eca_core')]
+#[RunTestsInSeparateProcesses]
 class ConditionTest extends KernelTestBase {
 
   use ContentTypeCreationTrait;

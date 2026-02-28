@@ -1,3 +1,9 @@
+html {
+  --bpmn-background-color: var(--color-white);
+}
+html.gin--dark-mode {
+  --bpmn-background-color: var(--color-gray-800);
+}
 #bpmn-io {
   position: relative;
   color-scheme: normal;
@@ -5,10 +11,9 @@
 #bpmn-io .canvas {
   position: fixed;
   bottom: 0;
-  overflow: scroll;
 }
 #bpmn-io .canvas .bjs-container {
-  background-color: var(--color-white);
+  background-color: var(--bpmn-background-color);
 }
 #bpmn-io .convert-overlay {
   position: fixed;
@@ -22,6 +27,9 @@
   vertical-align: middle;
   line-height: 300px;
 }
+#bpmn-io .convert-overlay.completed {
+  display: none;
+}
 #bpmn-io .property-panel.in-canvas {
   position: absolute;
   z-index: 9;
@@ -30,7 +38,6 @@
   width: 310px;
   max-width: 90vw;
   padding-left: 4px;
-  overflow: scroll;
 }
 #bpmn-io .property-panel.in-canvas .bio-properties-panel::after {
   content: '';
@@ -49,6 +56,15 @@
 #bpmn-io .property-panel input {
   padding-right: unset;
 }
+
+.modeler-api-embed #bpmn-io .canvas {
+  position: unset;
+  height: 80vh;
+}
+.modeler-api-embed #bpmn-io .property-panel.in-canvas {
+  bottom: 0;
+}
+
 div[data-drupal-messages=""],
 .messages-list {
   position: absolute;
@@ -67,36 +83,20 @@ div[data-drupal-messages=""] .messages-list__wrapper,
   width: 50%;
   margin: 0 auto;
 }
+
+.bjs-breadcrumbs {
+  top: 0;
+}
+.djs-palette {
+  top: 0;
+  left: 0;
+}
 /* Hidden platform components ======================================================================================= */
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__AsynchronousContinuations"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__ExecutionListener"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__Input"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__Output"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__JobExecution"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__CandidateStarter"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__ExternalTask"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__HistoryCleanup"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__Tasklist"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__Condition"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__Form"],
-.bio-properties-panel-group[data-group-id="group-CamundaPlatform__StartInitiator"],
-.djs-palette-entries .bpmn-icon-intermediate-event-none,
-.djs-palette-entries .bpmn-icon-end-event-none,
-.djs-palette-entries .bpmn-icon-subprocess-expanded,
-.djs-palette-entries .bpmn-icon-data-object,
-.djs-palette-entries .bpmn-icon-data-store,
-.djs-palette-entries .bpmn-icon-participant,
-.djs-palette-entries .bpmn-icon-group,
-.djs-context-pad .bpmn-icon-intermediate-event-none,
-.djs-context-pad .bpmn-icon-end-event-none,
-.djs-context-pad .bpmn-icon-subprocess-expanded,
-.djs-context-pad .bpmn-icon-data-object,
-.djs-context-pad .bpmn-icon-data-store,
-.djs-context-pad .bpmn-icon-participant,
-.djs-context-pad .bpmn-icon-group,
-.djs-context-pad .bpmn-icon-screw-wrench {
+.djs-popup.bpmn-replace .djs-popup-search,
+.djs-popup.bpmn-replace .djs-popup-group .entry:not([data-id="replace-with-collapsed-subprocess"]):not([data-id="replace-with-expanded-subprocess"]) {
   display: none;
 }
+
 .cmd-element-template-chooser .cmd-change-menu__entry_header {
   color: var(--text-color);
   font-size: 14px;
@@ -104,13 +104,23 @@ div[data-drupal-messages=""] .messages-list__wrapper,
 }
 
 /* Fix position of action buttons for Claro */
-#bpmn-io-modeller {
+#bpmn-io-modeler {
   position: relative;
 }
-#bpmn-io-modeller #edit-actions {
+#bpmn-io-modeler #edit-actions {
   position: absolute;
-  top: -110px;
+  top: -120px;
   right: 0;
+  z-index: 500;
+}
+body.gin--navigation #bpmn-io-modeler #edit-actions {
+  top: -80px;
+}
+body.gin--navigation #drupal-off-canvas-wrapper,
+body.gin--core-navigation #drupal-off-canvas-wrapper {
+  top: 0 !important;
+  margin-top: var(--admin-toolbar-top-bar-height);
+  height: calc(100% - var(--admin-toolbar-top-bar-height)) !important;
 }
 
 /* Fix container width for Gin */
@@ -121,9 +131,6 @@ div[data-drupal-messages=""] .messages-list__wrapper,
 /* Override certain properties for Gin's dark mode */
 html.gin--dark-mode #bpmn-io {
   color-scheme: normal;
-}
-html.gin--dark-mode #bpmn-io .canvas .bjs-container {
-  background-color: var(--color-grey-225-10-55);
 }
 html.gin--dark-mode .djs-context-pad .entry {
   background-color: transparent;
@@ -145,4 +152,88 @@ html.gin--dark-mode .djs-context-pad .entry {
 /* Workarounds for broken palette width */
 .djs-palette.two-column.open {
   width: 96px;
+}
+
+/* Token browser link */
+a.token-dialog {
+  text-decoration: none;
+}
+#edit-token-browser:hover a.token-dialog,
+a.token-dialog:hover {
+  color: var(--gin-color-button-text);
+}
+
+/* Close button for minimap */
+.djs-minimap:not(.open):hover {
+  cursor: pointer;
+}
+.djs-minimap.open .toggle {
+  width: 30px;
+  height: 30px;
+}
+.djs-minimap.open .toggle::before {
+  content: 'X';
+}
+.djs-minimap.open .toggle:hover {
+  cursor: pointer;
+}
+
+/* In canvas widgets */
+#bpmn-io-widgets,
+#bpmn-io-form-widgets {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 2px;
+  background-color: var(--bpmn-background-color);
+  opacity: .9;
+}
+#bpmn-io-widgets .widget,
+#bpmn-io-form-widgets .widget {
+  position: relative;
+  display: inline-block;
+  padding: 15px;
+}
+#bpmn-io-widgets .widget:not([disabled="disabled"]):hover,
+#bpmn-io-form-widgets .widget:not([disabled="disabled"]):hover {
+  cursor: pointer;
+  color: var(--toolbar-button-hover-color. #13161a);
+  outline: 2px solid var(--admin-toolbar-color-blue-200, #94bbff);
+  outline-offset: var(--toolbar-button-outline-offset, 0);
+  border-radius: var(--admin-toolbar-space-8, calc(0.5 * max(1rem, 16px)));
+  background-color: var(--toolbar-button-hover-bg, #f3f5f9);
+}
+body.gin--navigation #bpmn-io-widgets .widget:not([disabled="disabled"]):hover,
+body.gin--core-navigation #bpmn-io-widgets .widget:not([disabled="disabled"]):hover,
+body.gin--navigation #bpmn-io-form-widgets .widget:not([disabled="disabled"]):hover,
+body.gin--core-navigation #bpmn-io-form-widgets .widget:not([disabled="disabled"]):hover {
+  background-color: var(--gin-color-primary-light-hover, #f3f5f9);
+}
+.djs-minimap:not(.open) {
+  background-color: transparent;
+}
+.djs-minimap:not(.open) .toggle {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+  border: none;
+  border-radius: 2px;
+  text-align: center;
+  line-height: 50px;
+}
+.djs-minimap {
+  top: unset;
+  right: unset;
+  left: 0;
+  bottom: 0;
+}
+.djs-minimap:not(.open) {
+  border: none;
+}
+.djs-minimap:not(.open) .toggle {
+  padding: unset;
+}
+.djs-minimap:not(.open) .toggle::before {
+  content: '';
 }

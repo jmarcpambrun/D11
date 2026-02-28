@@ -8,15 +8,16 @@ use Drupal\eca\Event\TriggerEvent;
 use Drupal\eca_migrate\Event\EcaMigrateProcessEvent;
 use Drupal\eca_migrate\Plugin\migrate\process\Eca;
 use Drupal\Tests\migrate\Unit\process\MigrateProcessTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Unit tests for the eca migrate process plugin.
- *
- * @group eca
- * @group eca_migrate
- * @coversDefaultClass \Drupal\eca_migrate\Plugin\migrate\process\Eca
  */
+#[Group('eca')]
+#[Group('eca_migrate')]
+#[CoversClass('\Drupal\eca_migrate\Plugin\migrate\process\Eca')]
 class EcaProcessPluginTest extends MigrateProcessTestCase {
 
   /**

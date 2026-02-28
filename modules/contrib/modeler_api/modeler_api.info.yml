@@ -2,10 +2,10 @@ name: 'Modeler API'
 type: module
 description: 'Provides an API for modules to use modelers like BPMN.iO'
 package: Modeler API
-core_version_requirement: ^10.4 || ^11
+core_version_requirement: ^11.3
 configure: modeler_api.settings
 
-# Information added by Drupal.org packaging script on 2025-12-01
-version: '1.0.6'
+# Information added by Drupal.org packaging script on 2026-02-26
+version: '1.1.0-alpha4'
 project: 'modeler_api'
-datestamp: 1764587393
+datestamp: 1772110052

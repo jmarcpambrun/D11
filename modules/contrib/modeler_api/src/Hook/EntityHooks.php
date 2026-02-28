@@ -48,8 +48,6 @@ class EntityHooks {
    *
    * @param array $entity_types
    *   The entity type definitions.
-   *
-   * @phpstan-ignore-next-line
    */
   #[Hook('entity_type_build')]
   public function entityTypeBuild(array &$entity_types): void {
@@ -86,8 +84,6 @@ class EntityHooks {
    *
    * @return array
    *   An array of operations.
-   *
-   * @phpstan-ignore-next-line
    */
   #[Hook('entity_operation')]
   public function entityOperation(EntityInterface $entity): array {
@@ -197,8 +193,6 @@ class EntityHooks {
 
   /**
    * Implements hook_modules_installed().
-   *
-   * @phpstan-ignore-next-line
    */
   #[Hook('modules_installed')]
   public function modulesInstalled(array $modules, bool $is_syncing): void {

@@ -5,13 +5,15 @@ namespace Drupal\Tests\eca_content\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\entity_test\Entity\EntityTestMapField;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for getting and setting values from a map field.
- *
- * @group eca
- * @group eca_content
  */
+#[Group('eca')]
+#[Group('eca_content')]
+#[RunTestsInSeparateProcesses]
 class MapFieldTest extends KernelTestBase {
 
   /**

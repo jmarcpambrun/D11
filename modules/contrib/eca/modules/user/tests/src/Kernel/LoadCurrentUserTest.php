@@ -4,13 +4,15 @@ namespace Drupal\Tests\eca_user\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\user\Entity\User;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Kernel tests for the "eca_token_load_user_current" action plugin.
- *
- * @group eca
- * @group eca_user
  */
+#[Group('eca')]
+#[Group('eca_user')]
+#[RunTestsInSeparateProcesses]
 class LoadCurrentUserTest extends KernelTestBase {
 
   /**

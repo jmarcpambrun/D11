@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Styles for printers and devices intended to reproduce a printed display.
+ */
+
 @media print {
   body {
     padding-top: 0;
@@ -59,7 +64,7 @@
     display: block;
   }
   .js .dropbutton-widget,
-  .js td .dropbutton-widget /* Splitbuttons */ {
+  .js td .dropbutton-widget {
     position: relative;
   }
   .js .dropbutton .dropbutton-toggle {

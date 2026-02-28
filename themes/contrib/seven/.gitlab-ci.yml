@@ -27,3 +27,17 @@ include:
 #   SKIP_ESLINT: '1'
 #   OPT_IN_TEST_NEXT_MAJOR: '1'
 #   _CURL_TEMPLATES_REF: 'main'
+
+variables:
+  _PHPUNIT_CONCURRENT: '1'
+  _SHOW_ENVIRONMENT_VARIABLES: "1"
+
+composer:
+  variables:
+    DRUPAL_CORE: $CORE_NEXT_MINOR
+
+phpunit:
+  allow_failure: true
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "ignoreFile=$CI_PROJECT_DIR/$_WEB_ROOT/core/.deprecation-ignore.txt"
+

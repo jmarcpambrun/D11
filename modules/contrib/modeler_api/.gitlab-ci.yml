@@ -7,7 +7,9 @@ include:
       - '/includes/include.drupalci.workflows.yml'
 
 variables:
-  OPT_IN_TEST_PREVIOUS_MAJOR: 1
+  _CSPELL_IGNORE_PATHS: '"css/", "js/", "ui/"'
+  SKIP_ESLINT: 1
+  OPT_IN_TEST_PREVIOUS_MAJOR: 0
   OPT_IN_TEST_NEXT_MINOR: 1
   OPT_IN_TEST_NEXT_MAJOR: 0
   RUN_JOB_UPGRADE_STATUS: 0

@@ -1,6 +1,6 @@
 /**
  * @file
- * Visual styles for menu.
+ * Styles for menus.
  */
 
 ul.menu {
@@ -8,27 +8,31 @@ ul.menu {
   padding: 0;
   list-style: none outside;
   text-align: left; /* LTR */
+  [dir="rtl"] & {
+    margin-right: 1em;
+    margin-left: 0;
+    text-align: right;
+  }
 }
-[dir="rtl"] ul.menu {
-  margin-right: 1em;
-  margin-left: 0;
-  text-align: right;
-}
+
 .menu-item--expanded {
   list-style-type: circle;
   list-style-image: url(../../../images/menu-expanded.png);
 }
+
 .menu-item--collapsed {
   list-style-type: disc;
   list-style-image: url(../../../images/menu-collapsed.png); /* LTR */
+  [dir="rtl"] & {
+    list-style-image: url(../../../images/menu-collapsed-rtl.png);
+  }
 }
-[dir="rtl"] .menu-item--collapsed {
-  list-style-image: url(../../../images/menu-collapsed-rtl.png);
-}
+
 .menu-item {
   margin: 0;
   padding-top: 0.2em;
 }
+
 ul.menu a.is-active {
   color: #000;
 }
