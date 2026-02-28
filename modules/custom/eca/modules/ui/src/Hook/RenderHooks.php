@@ -66,6 +66,9 @@ class RenderHooks {
           '#theme' => 'item_list',
           '#items' => $items,
           '#list_type' => 'ul',
+		  '#attributes' => [
+            'data-modeler-api-edit-links' => TRUE,
+          ],
         ],
         '#attributes' => [
           'id' => ['eca-ui-debug-applied-events'],
