@@ -1,2 +1,0 @@
-parameters:
-  eca_project_browser.skip_procedural_hook_scan: true
