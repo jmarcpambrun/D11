@@ -7,7 +7,7 @@ dependencies:
   - drupal:language
   - eca:eca
 
-# Information added by Drupal.org packaging script on 2026-02-24
-version: '3.1.0-alpha1'
+# Information added by Drupal.org packaging script on 2026-02-25
+version: '3.1.0-alpha3'
 project: 'eca'
-datestamp: 1771919783
+datestamp: 1772041922

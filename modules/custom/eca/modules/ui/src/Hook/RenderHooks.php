@@ -66,7 +66,7 @@ class RenderHooks {
           '#theme' => 'item_list',
           '#items' => $items,
           '#list_type' => 'ul',
-		  '#attributes' => [
+          '#attributes' => [
             'data-modeler-api-edit-links' => TRUE,
           ],
         ],

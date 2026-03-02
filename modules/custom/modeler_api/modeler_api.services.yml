@@ -93,8 +93,8 @@ services:
 
   modeler_api.param_converter:
     class: Drupal\modeler_api\ModelerApiConverter
-    tags:
-      - { name: paramconverter }
+    #tags:
+     # - { name: paramconverter }
 
   # Fix autowiring for Hooks\EntityHooks.
   Drupal\modeler_api\Api: '@modeler_api.service'

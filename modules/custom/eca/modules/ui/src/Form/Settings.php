@@ -78,9 +78,9 @@ class Settings extends ConfigFormBase {
       '#title' => $this->t('Debug data depth'),
       '#default_value' => $this->state->get('_eca_internal_debug_data_depth', 3) ?? 3,
       '#min' => 2,
-      '#weight' => -30,  
-	  '#states' => [
-      'visible' => [
+      '#weight' => -30,
+      '#states' => [
+        'visible' => [
           ':input[name="debug_mode"]' => ['checked' => TRUE],
         ],
       ],
