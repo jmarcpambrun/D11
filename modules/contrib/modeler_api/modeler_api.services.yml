@@ -9,8 +9,6 @@ services:
       - '@config.factory'
       - '@config.storage.export'
       - '@file_system'
-      - '@entity_type.manager'
-      - '@router.route_provider'
       - '@plugin.manager.menu.link'
       - '@plugin.manager.modeler_api.context'
       - '@plugin.manager.modeler_api.dependency'
@@ -18,6 +16,8 @@ services:
       - '@modeler_api.context_list_builder'
       - '@modeler_api.dependency_list_builder'
       - '@modeler_api.template_token_list_builder'
+      - !service_closure '@entity_type.manager'
+      - !service_closure '@router.route_provider'
       - !service_closure '@token'
       - !service_closure '@?token.tree_builder'
 

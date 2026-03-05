@@ -97,8 +97,6 @@ class Api {
     protected ConfigFactoryInterface $configFactory,
     protected ManagedStorage $configStorage,
     protected FileSystemInterface $fileSystem,
-    protected EntityTypeManagerInterface $entityTypeManager,
-    protected RouteProviderInterface $routeProvider,
     protected MenuLinkManagerInterface $menuLinkManager,
     protected ContextPluginManager $contextPluginManager,
     protected DependencyPluginManager $dependencyPluginManager,
@@ -106,9 +104,31 @@ class Api {
     protected ContextListBuilder $contextListBuilder,
     protected DependencyListBuilder $dependencyListBuilder,
     protected TemplateTokenListBuilder $templateTokenListBuilder,
+	protected \Closure $entityTypeManagerFactory,
+    protected \Closure $routeProviderFactory,
     protected \Closure $tokenFactory,
     protected ?\Closure $tokenTreeBuilderFactory = NULL,
   ) {}
+
+  /**
+   * Get the entity type manager service.
+   *
+   * @return \Drupal\Core\Entity\EntityTypeManagerInterface
+   *   The entity type manager service.
+   */
+  protected function getEntityTypeManager(): EntityTypeManagerInterface {
+    return ($this->entityTypeManagerFactory)();
+  }
+
+  /**
+   * Get the route provider service.
+   *
+   * @return \Drupal\Core\Routing\RouteProviderInterface
+   *   The route provider service.
+   */
+  protected function getRouteProvider(): RouteProviderInterface {
+    return ($this->routeProviderFactory)();
+  }
 
   /**
    * Get the token service.
@@ -427,7 +447,7 @@ class Api {
       $owner->resetComponents($model);
     }
     else {
-      $storage = $this->entityTypeManager->getStorage($owner->configEntityTypeId());
+      $storage = $this->getEntityTypeManager()->getStorage($owner->configEntityTypeId());
       if ($dry_run) {
         /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface|null $model */
         $model = $storage->create(['id' => $modelId]);
@@ -704,7 +724,7 @@ class Api {
    */
   public function getRouteByName(string $name): ?Route {
     try {
-      return $this->routeProvider->getRouteByName($name);
+      return $this->getRouteProvider()->getRouteByName($name);
     }
     catch (RouteNotFoundException) {
       // If the route can not be found, don't set the configure route.
