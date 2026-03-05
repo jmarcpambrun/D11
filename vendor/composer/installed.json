@@ -2351,17 +2351,17 @@
         },
         {
             "name": "dompdf/dompdf",
-            "version": "v3.1.4",
-            "version_normalized": "3.1.4.0",
+            "version": "v3.1.5",
+            "version_normalized": "3.1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dompdf/dompdf.git",
-                "reference": "db712c90c5b9868df3600e64e68da62e78a34623"
+                "reference": "f11ead23a8a76d0ff9bbc6c7c8fd7e05ca328496"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/db712c90c5b9868df3600e64e68da62e78a34623",
-                "reference": "db712c90c5b9868df3600e64e68da62e78a34623",
+                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/f11ead23a8a76d0ff9bbc6c7c8fd7e05ca328496",
+                "reference": "f11ead23a8a76d0ff9bbc6c7c8fd7e05ca328496",
                 "shasum": ""
             },
             "require": {
@@ -2387,7 +2387,7 @@
                 "ext-imagick": "Improves image processing performance",
                 "ext-zlib": "Needed for pdf stream compression"
             },
-            "time": "2025-10-29T12:43:30+00:00",
+            "time": "2026-03-03T13:54:37+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -2412,7 +2412,7 @@
             "homepage": "https://github.com/dompdf/dompdf",
             "support": {
                 "issues": "https://github.com/dompdf/dompdf/issues",
-                "source": "https://github.com/dompdf/dompdf/tree/v3.1.4"
+                "source": "https://github.com/dompdf/dompdf/tree/v3.1.5"
             },
             "install-path": "../dompdf/dompdf"
         },
@@ -4155,17 +4155,17 @@
         },
         {
             "name": "drupal/core",
-            "version": "11.3.3",
-            "version_normalized": "11.3.3.0",
+            "version": "11.3.4",
+            "version_normalized": "11.3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core.git",
-                "reference": "7067385162ad51020c78052fe15334671bdf3552"
+                "reference": "8c6c6890681b0e6ec4c120a84292fbbdd2d9551f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core/zipball/7067385162ad51020c78052fe15334671bdf3552",
-                "reference": "7067385162ad51020c78052fe15334671bdf3552",
+                "url": "https://api.github.com/repos/drupal/core/zipball/8c6c6890681b0e6ec4c120a84292fbbdd2d9551f",
+                "reference": "8c6c6890681b0e6ec4c120a84292fbbdd2d9551f",
                 "shasum": ""
             },
             "require": {
@@ -4254,7 +4254,7 @@
             "suggest": {
                 "ext-zip": "Needed to extend the plugin.manager.archiver service capability with the handling of files in the ZIP format."
             },
-            "time": "2026-02-05T08:05:30+00:00",
+            "time": "2026-03-05T09:38:49+00:00",
             "type": "drupal-core",
             "extra": {
                 "drupal-scaffold": {
@@ -4325,23 +4325,23 @@
             ],
             "description": "Drupal is an open source content management platform powering millions of websites and applications.",
             "support": {
-                "source": "https://github.com/drupal/core/tree/11.3.3"
+                "source": "https://github.com/drupal/core/tree/11.3.4"
             },
             "install-path": "../../core"
         },
         {
             "name": "drupal/core-composer-scaffold",
-            "version": "11.3.3",
-            "version_normalized": "11.3.3.0",
+            "version": "11.3.4",
+            "version_normalized": "11.3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-composer-scaffold.git",
-                "reference": "445bec7d1cf903d990398b68b0a7fd98270f986f"
+                "reference": "cb417c20910980aa6d40dc0626af795f9308bcca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core-composer-scaffold/zipball/445bec7d1cf903d990398b68b0a7fd98270f986f",
-                "reference": "445bec7d1cf903d990398b68b0a7fd98270f986f",
+                "url": "https://api.github.com/repos/drupal/core-composer-scaffold/zipball/cb417c20910980aa6d40dc0626af795f9308bcca",
+                "reference": "cb417c20910980aa6d40dc0626af795f9308bcca",
                 "shasum": ""
             },
             "require": {
@@ -4354,7 +4354,7 @@
             "require-dev": {
                 "composer/composer": "^1.8@stable"
             },
-            "time": "2026-01-26T12:09:35+00:00",
+            "time": "2026-02-10T11:39:53+00:00",
             "type": "composer-plugin",
             "extra": {
                 "class": "Drupal\\Composer\\Plugin\\Scaffold\\Plugin",
@@ -4378,14 +4378,14 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.3.3"
+                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.3.4"
             },
             "install-path": "../drupal/core-composer-scaffold"
         },
         {
             "name": "drupal/core-vendor-hardening",
-            "version": "10.6.3",
-            "version_normalized": "10.6.3.0",
+            "version": "10.6.4",
+            "version_normalized": "10.6.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-vendor-hardening.git",
@@ -4422,7 +4422,7 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.3"
+                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.4"
             },
             "install-path": "../drupal/core-vendor-hardening"
         },
@@ -4862,18 +4862,18 @@
         },
         {
             "name": "drupal/eca",
-            "version": "3.1.0-alpha3",
-            "version_normalized": "3.1.0.0-alpha3",
+            "version": "3.1.0-alpha4",
+            "version_normalized": "3.1.0.0-alpha4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "3.1.0-alpha3"
+                "reference": "3.1.0-alpha4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-alpha3.zip",
-                "reference": "3.1.0-alpha3",
-                "shasum": "f4bd63394425787cc3ab064e2abacb51ba18f90a"
+                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-alpha4.zip",
+                "reference": "3.1.0-alpha4",
+                "shasum": "ccba4d4ec54a1fa1ea0946b0cef199a6af781ce8"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
@@ -4899,8 +4899,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.1.0-alpha3",
-                    "datestamp": "1772041918",
+                    "version": "3.1.0-alpha4",
+                    "datestamp": "1772298363",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."
@@ -7876,18 +7876,18 @@
         },
         {
             "name": "drupal/modeler_api",
-            "version": "1.1.0-alpha4",
-            "version_normalized": "1.1.0.0-alpha4",
+            "version": "1.1.0-alpha5",
+            "version_normalized": "1.1.0.0-alpha5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler_api.git",
-                "reference": "1.1.0-alpha4"
+                "reference": "1.1.0-alpha5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-alpha4.zip",
-                "reference": "1.1.0-alpha4",
-                "shasum": "c6d552992169c7481980ace4c86f2b59e0fc1718"
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-alpha5.zip",
+                "reference": "1.1.0-alpha5",
+                "shasum": "1117f400c622ad32abaccad02954bfecd70515a4"
             },
             "require": {
                 "drupal/core": "^11.3",
@@ -7899,8 +7899,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.0-alpha4",
-                    "datestamp": "1772110050",
+                    "version": "1.1.0-alpha5",
+                    "datestamp": "1772298388",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."
@@ -9376,18 +9376,18 @@
         },
         {
             "name": "drupal/seven",
-            "version": "2.0.0-beta4",
-            "version_normalized": "2.0.0.0-beta4",
+            "version": "2.0.0-beta5",
+            "version_normalized": "2.0.0.0-beta5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/seven.git",
-                "reference": "2.0.0-beta4"
+                "reference": "2.0.0-beta5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/seven-2.0.0-beta4.zip",
-                "reference": "2.0.0-beta4",
-                "shasum": "09cde5545e1423fbf4afe9348608c0098a38b162"
+                "url": "https://ftp.drupal.org/files/projects/seven-2.0.0-beta5.zip",
+                "reference": "2.0.0-beta5",
+                "shasum": "43589a24b0cf0af68225503a17a8b195eaeded67"
             },
             "require": {
                 "drupal/core": "^11.3"
@@ -9395,8 +9395,8 @@
             "type": "drupal-theme",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0-beta4",
-                    "datestamp": "1769140579",
+                    "version": "2.0.0-beta5",
+                    "datestamp": "1772666116",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
@@ -9502,18 +9502,18 @@
         },
         {
             "name": "drupal/statistics",
-            "version": "1.0.0",
-            "version_normalized": "1.0.0.0",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/statistics.git",
-                "reference": "1.0.0"
+                "reference": "1.0.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/statistics-1.0.0.zip",
-                "reference": "1.0.0",
-                "shasum": "a916aaac43d1ea56aa6edebb92764acbf1da9224"
+                "url": "https://ftp.drupal.org/files/projects/statistics-1.0.1.zip",
+                "reference": "1.0.1",
+                "shasum": "018b456f7f478dbb3d8baec77e696be000f27f68"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -9522,8 +9522,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.0",
-                    "datestamp": "1715094456",
+                    "version": "1.0.1",
+                    "datestamp": "1772384052",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -10055,22 +10055,22 @@
         },
         {
             "name": "drupal/upgrade_status",
-            "version": "4.3.9",
-            "version_normalized": "4.3.9.0",
+            "version": "5.0.0-alpha1",
+            "version_normalized": "5.0.0.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/upgrade_status.git",
-                "reference": "4.3.9"
+                "reference": "5.0.0-alpha1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/upgrade_status-4.3.9.zip",
-                "reference": "4.3.9",
-                "shasum": "bef9e5e08a3b6ecc6a5c380107e624fb4b5f03ef"
+                "url": "https://ftp.drupal.org/files/projects/upgrade_status-5.0.0-alpha1.zip",
+                "reference": "5.0.0-alpha1",
+                "shasum": "426068153e15f2c15bba4487417de7f2278efcf9"
             },
             "require": {
                 "dekor/php-array-table": "^2.0",
-                "drupal/core": "^9 || ^10 || ^11",
+                "drupal/core": "^10.4 || ^11 || ^12",
                 "mglaman/phpstan-drupal": "^1.2.11|^2.0",
                 "nikic/php-parser": "^4.0.0|^5.0.0",
                 "phpstan/phpstan-deprecation-rules": "^1.0.0|^2.0",
@@ -10083,11 +10083,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.3.9",
-                    "datestamp": "1771841606",
+                    "version": "5.0.0-alpha1",
+                    "datestamp": "1772557265",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 },
                 "drush": {
@@ -13005,17 +13005,17 @@
         },
         {
             "name": "laminas/laminas-feed",
-            "version": "2.26.0",
-            "version_normalized": "2.26.0.0",
+            "version": "2.26.1",
+            "version_normalized": "2.26.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laminas/laminas-feed.git",
-                "reference": "76f537d457bace6d57aa483fccfc676198d5fca7"
+                "reference": "8b651d72f2a4ce0df53e1999de3fe16c78e37a2c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laminas/laminas-feed/zipball/76f537d457bace6d57aa483fccfc676198d5fca7",
-                "reference": "76f537d457bace6d57aa483fccfc676198d5fca7",
+                "url": "https://api.github.com/repos/laminas/laminas-feed/zipball/8b651d72f2a4ce0df53e1999de3fe16c78e37a2c",
+                "reference": "8b651d72f2a4ce0df53e1999de3fe16c78e37a2c",
                 "shasum": ""
             },
             "require": {
@@ -13051,7 +13051,7 @@
                 "laminas/laminas-validator": "Laminas\\Validator component, for validating email addresses used in Atom feeds and entries when using the Writer subcomponent",
                 "psr/http-message": "PSR-7 ^1.0.1, if you wish to use Laminas\\Feed\\Reader\\Http\\Psr7ResponseDecorator"
             },
-            "time": "2025-12-19T11:28:10+00:00",
+            "time": "2026-03-03T09:55:19+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -15273,6 +15273,7 @@
                 "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=Console_Getopt",
                 "source": "https://github.com/pear/Console_Getopt"
             },
+            "abandoned": true,
             "install-path": "../pear/console_getopt"
         },
         {
@@ -16364,12 +16365,12 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.12.32",
-            "version_normalized": "1.12.32.0",
+            "version": "1.12.33",
+            "version_normalized": "1.12.33.0",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/2770dcdf5078d0b0d53f94317e06affe88419aa8",
-                "reference": "2770dcdf5078d0b0d53f94317e06affe88419aa8",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/37982d6fc7cbb746dda7773530cda557cdf119e1",
+                "reference": "37982d6fc7cbb746dda7773530cda557cdf119e1",
                 "shasum": ""
             },
             "require": {
@@ -16378,7 +16379,7 @@
             "conflict": {
                 "phpstan/phpstan-shim": "*"
             },
-            "time": "2025-09-30T10:16:31+00:00",
+            "time": "2026-02-28T20:30:03+00:00",
             "bin": [
                 "phpstan",
                 "phpstan.phar"
@@ -17466,17 +17467,17 @@
         },
         {
             "name": "sabberworm/php-css-parser",
-            "version": "v9.2.0",
-            "version_normalized": "9.2.0.0",
+            "version": "v9.3.0",
+            "version_normalized": "9.3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/MyIntervals/PHP-CSS-Parser.git",
-                "reference": "59373045e11ad47b5c18fc615feee0219e42f6d3"
+                "reference": "88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MyIntervals/PHP-CSS-Parser/zipball/59373045e11ad47b5c18fc615feee0219e42f6d3",
-                "reference": "59373045e11ad47b5c18fc615feee0219e42f6d3",
+                "url": "https://api.github.com/repos/MyIntervals/PHP-CSS-Parser/zipball/88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949",
+                "reference": "88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949",
                 "shasum": ""
             },
             "require": {
@@ -17500,11 +17501,11 @@
             "suggest": {
                 "ext-mbstring": "for parsing UTF-8 CSS"
             },
-            "time": "2026-02-21T17:12:03+00:00",
+            "time": "2026-03-03T17:31:43+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "9.3.x-dev"
+                    "dev-main": "9.4.x-dev"
                 }
             },
             "installation-source": "dist",
@@ -17543,7 +17544,7 @@
             ],
             "support": {
                 "issues": "https://github.com/MyIntervals/PHP-CSS-Parser/issues",
-                "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v9.2.0"
+                "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v9.3.0"
             },
             "install-path": "../sabberworm/php-css-parser"
         },
@@ -21699,24 +21700,24 @@
         },
         {
             "name": "tecnickcom/tcpdf",
-            "version": "6.10.1",
-            "version_normalized": "6.10.1.0",
+            "version": "6.11.2",
+            "version_normalized": "6.11.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tecnickcom/TCPDF.git",
-                "reference": "7a2701251e5d52fc3d508fd71704683eb54f5939"
+                "reference": "e1e2ade18e574e963473f53271591edd8c0033ec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/7a2701251e5d52fc3d508fd71704683eb54f5939",
-                "reference": "7a2701251e5d52fc3d508fd71704683eb54f5939",
+                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/e1e2ade18e574e963473f53271591edd8c0033ec",
+                "reference": "e1e2ade18e574e963473f53271591edd8c0033ec",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
                 "php": ">=7.1.0"
             },
-            "time": "2025-11-21T10:58:21+00:00",
+            "time": "2026-03-03T08:58:10+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -21761,7 +21762,7 @@
             ],
             "support": {
                 "issues": "https://github.com/tecnickcom/TCPDF/issues",
-                "source": "https://github.com/tecnickcom/TCPDF/tree/6.10.1"
+                "source": "https://github.com/tecnickcom/TCPDF/tree/6.11.2"
             },
             "funding": [
                 {

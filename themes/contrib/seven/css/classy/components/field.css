@@ -29,5 +29,5 @@
 }
 
 .field--name-title {
-  word-break: normal;
+  overflow-wrap: break-word;
 }

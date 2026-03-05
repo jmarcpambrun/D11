@@ -154,46 +154,6 @@ class UpgradeStatusCommands extends DrushCommands {
   }
 
   /**
-   * Analyze projects and output results in checkstyle XML.
-   *
-   * @param array $projects
-   *   List of projects to analyze.
-   * @param array $options
-   *   Additional options for the command.
-   *
-   * @command upgrade_status:checkstyle
-   * @option all Analyze all projects.
-   * @option skip-existing Return results from a previous scan of a project if available, otherwise start a new one.
-   * @option ignore-uninstalled Ignore uninstalled projects.
-   * @option ignore-contrib Ignore contributed projects.
-   * @option ignore-custom Ignore custom projects.
-   * @option ignore-list Ignore a list of comma-separated projects.
-   * @option phpstan-memory-limit Set memory limit for PHPStan.
-   * @aliases us-cs
-   *
-   * @throws \InvalidArgumentException
-   *   Thrown when one of the passed arguments is invalid or no arguments
-   *   were provided.
-   */
-  public function checkstyle(
-    array $projects,
-    array $options = [
-      'all' => FALSE,
-      'skip-existing' => FALSE,
-      'ignore-uninstalled' => FALSE,
-      'ignore-contrib' => FALSE,
-      'ignore-custom' => FALSE,
-      'ignore-list' => '',
-      'phpstan-memory-limit' => '1500M',
-    ],
-  ) {
-
-    $this->logger()->notice('The checkstyle (us-cs) drush command is deprecated and will be removed. Use the analyze command with --format=checkstyle instead.');
-    $options['format'] = 'checkstyle';
-    return $this->analyze($projects, $options);
-  }
-
-  /**
    * Formats command output as checkstyle XML.
    *
    * @param array $extensions

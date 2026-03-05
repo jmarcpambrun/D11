@@ -34,10 +34,35 @@ variables:
 
 composer:
   variables:
-    DRUPAL_CORE: $CORE_NEXT_MINOR
+    DRUPAL_CORE: "11.3.3"
 
 phpunit:
   allow_failure: true
   variables:
     SYMFONY_DEPRECATIONS_HELPER: "ignoreFile=$CI_PROJECT_DIR/$_WEB_ROOT/core/.deprecation-ignore.txt"
 
+composer (next PHP):
+  extends: .composer-base
+  rules:
+    - when: always
+      allow_failure: true
+  variables:
+    DRUPAL_CORE: "11.3.3"
+    PHP_VERSION: $CORE_PHP_NEXT
+
+phpstan (next PHP):
+  extends: phpstan
+  needs: [composer (next PHP)]
+  rules:
+    - !reference [ .skip-phpstan-rule ]
+    - !reference [ .phpstan-allow-failure-rule ]
+
+phpunit (next PHP):
+  extends: phpunit
+  needs: [composer (next PHP)]
+  rules:
+    - !reference [ .skip-phpunit-rule ]
+    - !reference [ .phpunit-tests-exist-rule ]
+  allow_failure: true
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "ignoreFile=$CI_PROJECT_DIR/$_WEB_ROOT/core/.deprecation-ignore.txt"

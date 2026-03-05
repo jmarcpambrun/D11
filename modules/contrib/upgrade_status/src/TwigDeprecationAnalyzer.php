@@ -58,6 +58,11 @@ class TwigDeprecationAnalyzer {
           );
         }
         else {
+          // Skip deprecations from vendor paths (e.g. Symfony's
+          // DebugClassLoader reporting on Drupal core Twig classes).
+          if (str_contains($file, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR)) {
+            return;
+          }
           // Otherwise record the deprecation from the original caught error.
           $deprecations[] = new DeprecationMessage(
             $msg,

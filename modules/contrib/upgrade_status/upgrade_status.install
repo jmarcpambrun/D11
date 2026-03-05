@@ -5,9 +5,12 @@
  * Install, update, and uninstall functions for the Upgrade Status module.
  */
 
+use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
+
 /**
  * Implements hook_requirements().
  */
+#[LegacyRequirementsHook]
 function upgrade_status_requirements($phase) {
   if ($phase == 'install') {
     // Check if the Drupal Finder is available. This will attempt to autoload

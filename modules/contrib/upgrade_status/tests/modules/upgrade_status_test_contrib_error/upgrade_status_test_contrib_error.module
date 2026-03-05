@@ -28,14 +28,14 @@ function upgrade_status_test_contrib_error_function_9_to_11() {
 }
 
 /**
- * Tests function deprecation detection from Drupal 10.3 to 11.0.
+ * Tests function deprecation detection from Drupal 10.6 to 11.0.
  *
- * @deprecated in drupal:10.3.0 and is removed from drupal:11.0.0. Use the
+ * @deprecated in drupal:10.6.0 and is removed from drupal:11.0.0. Use the
  *   replacement instead.
  * @see https://www.drupal.org/project/upgrade_status/issues/3459216
  */
 function upgrade_status_test_contrib_error_function_10_to_11() {
-  @trigger_error("upgrade_status_test_contrib_error_function_10_to_11() is deprecated in drupal:10.3.0 and is removed from drupal:11.0.0. Use the replacement instead. See https://www.drupal.org/project/upgrade_status/issues/3459216", E_USER_DEPRECATED);
+  @trigger_error("upgrade_status_test_contrib_error_function_10_to_11() is deprecated in drupal:10.6.0 and is removed from drupal:11.0.0. Use the replacement instead. See https://www.drupal.org/project/upgrade_status/issues/3459216", E_USER_DEPRECATED);
 }
 
 /**
@@ -50,12 +50,12 @@ function upgrade_status_test_contrib_error_function_10_to_12() {
 }
 
 /**
- * Tests function deprecation detection from Drupal 11.1 to 13.0.
+ * Tests function deprecation detection from Drupal 11.3 to 13.0.
  *
- * @deprecated in drupal:11.1.0 and is removed from drupal:13.0.0. Use the
+ * @deprecated in drupal:11.3.0 and is removed from drupal:13.0.0. Use the
  *   replacement instead.
  * @see https://www.drupal.org/project/upgrade_status/issues/3459216
  */
 function upgrade_status_test_contrib_error_function_11_to_13() {
-  @trigger_error("upgrade_status_test_contrib_error_function_11_to_13() is deprecated in drupal:11.1.0 and is removed from drupal:13.0.0. Use the replacement instead. See https://www.drupal.org/project/upgrade_status/issues/3459216", E_USER_DEPRECATED);
+  @trigger_error("upgrade_status_test_contrib_error_function_11_to_13() is deprecated in drupal:11.3.0 and is removed from drupal:13.0.0. Use the replacement instead. See https://www.drupal.org/project/upgrade_status/issues/3459216", E_USER_DEPRECATED);
 }

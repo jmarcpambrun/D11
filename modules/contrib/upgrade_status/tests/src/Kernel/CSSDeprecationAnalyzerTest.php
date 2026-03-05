@@ -11,6 +11,7 @@ use Drupal\upgrade_status\CSSDeprecationAnalyzer;
  * @group upgrade_status
  * @coversDefaultClass \Drupal\upgrade_status\CSSDeprecationAnalyzer
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 class CSSDeprecationAnalyzerTest extends KernelTestBase {
 
   /**
@@ -65,7 +66,6 @@ class CSSDeprecationAnalyzerTest extends KernelTestBase {
 
     $class = new \ReflectionClass(CSSDeprecationAnalyzer::class);
     $method = $class->getMethod('getAllCSSFiles');
-    $method->setAccessible(TRUE);
 
     $expected = [
       $this->tempPath . '/subdir/test.css',

@@ -18,21 +18,27 @@
     function handleResize(e) {
       $tab.addClass('is-horizontal');
       const $tabs = $tab.find('.tabs');
-      const isHorizontal =
+      let isHorizontal =
         Math.floor($tabs.outerHeight()) <=
-          Math.floor(1.5 * $tabs.find('.tabs__tab').outerHeight()) ||
-        Math.floor($tabs.outerWidth()) <= 1100;
+        Math.floor(1.5 * $tabs.find('.tabs__tab').outerHeight());
+      const isSecondary = $tabs.hasClass('secondary');
+
+      if (isSecondary) {
+        isHorizontal = isHorizontal || Math.floor($tabs.outerWidth()) <= 200;
+      }
+
       $tab.toggleClass('is-horizontal', isHorizontal);
+
       if (isCollapsible) {
         $tab.toggleClass('is-collapse-enabled', !isHorizontal);
       }
+
       if (isHorizontal) {
         $target.removeClass('is-open');
       }
     }
 
     $tab.addClass('position-container is-horizontal-enabled');
-
     $tab.on('click.tabs', '[data-drupal-nav-tabs-trigger]', openMenu);
     $(window)
       .on('resize.tabs', Drupal.debounce(handleResize, 150))

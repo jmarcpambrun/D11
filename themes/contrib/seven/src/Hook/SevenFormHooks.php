@@ -7,6 +7,8 @@ namespace Drupal\seven\Hook;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Render\Element;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\views\Form\ViewsForm;
 
 /**
@@ -17,6 +19,20 @@ use Drupal\views\Form\ViewsForm;
  * @see https://www.drupal.org/node/3569107
  */
 class SevenFormHooks {
+
+  use StringTranslationTrait;
+
+  /**
+   * Constructs a new \Drupal\seven\Hook\SevenFormHooks instance.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
+   *   The string translation service.
+   */
+  public function __construct(
+    TranslationInterface $string_translation,
+  ) {
+    $this->setStringTranslation($string_translation);
+  }
 
   /**
    * Implements hook_form_alter().
@@ -46,11 +62,11 @@ class SevenFormHooks {
           $form['bulk_actions_container']['#attributes']['class'][] = 'views-bulk-actions';
           $form['bulk_actions_container']['actions']['submit']['#button_type'] = 'primary';
           $form['bulk_actions_container']['actions']['submit']['#attributes']['class'][] = 'button--small';
-          $label = t('Perform actions on the selected items in the %view_title view', ['%view_title' => $view_title]);
+          $label = $this->t('Perform actions on the selected items in the %view_title view', ['%view_title' => $view_title]);
           $label_id = $key . '_group_label';
 
-          // Group the bulk actions select and submit elements, and add a label
-          // that makes the purpose of these elements clearer to screen readers.
+          // Group the bulk actions select and submit elements; add a label that
+          // makes the purpose of these elements clearer to screen readers.
           $form['bulk_actions_container']['#attributes']['role'] = 'group';
           $form['bulk_actions_container']['#attributes']['aria-labelledby'] = $label_id;
           $form['bulk_actions_container']['group_label'] = [
@@ -71,7 +87,7 @@ class SevenFormHooks {
           foreach ($bulk_action_item_keys as $bulk_action_item_key) {
             if (!empty($form['bulk_actions_container'][$bulk_action_item_key]['#type'])) {
               if ($form['bulk_actions_container'][$bulk_action_item_key]['#type'] === 'actions') {
-                // We need the key of the element that precedes the actions'
+                // We need the key of the element that precedes the actions
                 // element.
                 $bulk_child_before_actions_key = $bulk_last_key;
                 $form['bulk_actions_container'][$bulk_action_item_key]['#attributes']['class'][] = 'views-bulk-actions__item';
@@ -91,7 +107,6 @@ class SevenFormHooks {
       }
     }
 
-    // Add after build to add a CSS class to the form actions.
     if ($form_id === 'views_exposed_form' && str_starts_with($form['#id'], 'views-exposed-form-media-library-widget')) {
       $form['actions']['#attributes']['class'][] = 'media-library-view--form-actions';
     }

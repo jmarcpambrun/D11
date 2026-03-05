@@ -7,7 +7,7 @@
 
 .details {
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 20px;
   border: 1px solid #bfbfbf;
   background-color: #fcfcfa;
 }
@@ -32,9 +32,4 @@
 
 .details__description {
   padding-bottom: 1.2em;
-}
-
-details {
-  margin-top: 0;
-  margin-bottom: 20px;
 }

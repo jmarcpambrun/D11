@@ -8,12 +8,12 @@ services:
       - '@file_system'
       - '@upgrade_status.twig_deprecation_analyzer'
       - '@upgrade_status.library_deprecation_analyzer'
-      - '@upgrade_status.theme_function_deprecation_analyzer'
       - '@upgrade_status.route_deprecation_analyzer'
       - '@upgrade_status.extension_metadata_deprecation_analyzer'
       - '@upgrade_status.config_schema_deprecation_analyzer'
       - '@upgrade_status.css_deprecation_analyzer'
       - '@datetime.time'
+      - '@extension.list.module'
   upgrade_status.library_deprecation_analyzer:
     class: Drupal\upgrade_status\LibraryDeprecationAnalyzer
     arguments:

@@ -9,6 +9,7 @@ use Drush\TestTraits\DrushTestTrait;
  *
  * @group upgrade_status
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 class UpgradeStatusCommandsTest extends UpgradeStatusTestBase {
 
   use DrushTestTrait;
@@ -29,8 +30,8 @@ class UpgradeStatusCommandsTest extends UpgradeStatusTestBase {
       $this->assertStringContainsString('Value of core_version_requirement:', $output);
     }
 
-    // Test a Drupal 12 compatible module.
-    $this->drush('upgrade_status:analyze', ['upgrade_status_test_12_compatible'], [], NULL, NULL, 0);
+    // Test a Drupal 13 compatible module.
+    $this->drush('upgrade_status:analyze', ['upgrade_status_test_13_compatible'], [], NULL, NULL, 0);
     $output = $this->getOutput();
     $this->assertStringContainsString('No known issues found.', $output);
 
@@ -52,15 +53,6 @@ class UpgradeStatusCommandsTest extends UpgradeStatusTestBase {
     $this->assertStringContainsString('location', $output);
     $this->assertStringContainsString('fingerprint', $output);
     $this->assertStringContainsString('severity', $output);
-
-    // Test deprecated checkstyle output.
-    $this->drush('upgrade_status:checkstyle', ['upgrade_status_test_error'], [], NULL, NULL, 3);
-    $output = $this->getOutput();
-    $this->assertStringContainsString('<checkstyle', $output);
-    $this->assertStringContainsString('<file', $output);
-    $this->assertStringContainsString('<error', $output);
-    $output = $this->getErrorOutput();
-    $this->assertStringContainsString('The checkstyle (us-cs) drush command is deprecated and will be removed.', $output);
   }
 
 }

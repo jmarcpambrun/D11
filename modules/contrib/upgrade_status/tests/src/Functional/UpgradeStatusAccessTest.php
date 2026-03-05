@@ -10,6 +10,7 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group upgrade_status
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 class UpgradeStatusAccessTest extends BrowserTestBase {
 
   /**

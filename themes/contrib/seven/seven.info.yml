@@ -9,28 +9,7 @@ libraries:
   - core/normalize
   - seven/global-styling
 libraries-override:
-  system/base:
-    css:
-      component:
-        css/components/system-status-report-counters.css: css/components/system-status-report-counters.css
-  system/status.report:
-    css:
-      component:
-        css/components/system-status-counter.css: css/components/system-status-counter.css
-        css/components/system-status-report-general-info.css: css/components/system-status-report-general-info.css
-  core/drupal.vertical-tabs:
-    css:
-      component:
-        misc/vertical-tabs.css: false
-  core/internal.jquery_ui:
-    css:
-      theme:
-        assets/vendor/jquery.ui/themes/base/theme.css: false
   core/drupal.autocomplete:
-    css:
-      theme:
-        assets/vendor/jquery.ui/themes/base/theme.css: false
-  core/drupal.tabbingmanager:
     css:
       theme:
         assets/vendor/jquery.ui/themes/base/theme.css: false
@@ -40,6 +19,31 @@ libraries-override:
         assets/vendor/jquery.ui/themes/base/dialog.css: false
       theme:
         assets/vendor/jquery.ui/themes/base/theme.css: false
+  core/drupal.tabbingmanager:
+    css:
+      theme:
+        assets/vendor/jquery.ui/themes/base/theme.css: false
+  core/drupal.tabledrag:
+    css:
+      component:
+        misc/components/tabledrag.module.css: css/components/tabledrag.css
+  core/drupal.vertical-tabs:
+    css:
+      component:
+        misc/vertical-tabs.css: false
+  core/internal.jquery_ui:
+    css:
+      theme:
+        assets/vendor/jquery.ui/themes/base/theme.css: false
+  system/base:
+    css:
+      component:
+        css/components/system-status-report-counters.css: css/components/system-status-report-counters.css
+  system/status.report:
+    css:
+      component:
+        css/components/system-status-counter.css: css/components/system-status-counter.css
+        css/components/system-status-report-general-info.css: css/components/system-status-report-general-info.css
 
 libraries-extend:
   core/drupal.autocomplete:
@@ -94,7 +98,7 @@ regions:
 regions_hidden:
   - sidebar_first
 
-# Information added by Drupal.org packaging script on 2026-01-23
-version: '2.0.0-beta4'
+# Information added by Drupal.org packaging script on 2026-03-04
+version: '2.0.0-beta5'
 project: 'seven'
-datestamp: 1769140583
+datestamp: 1772665642

@@ -104,7 +104,7 @@ abbr.ajax-changed {
   border: 2px solid red;
 }
 
-.form-item--error-message::before {
+.form-item__error-message::before {
   display: inline-block;
   width: 14px;
   height: 14px;

@@ -3,6 +3,20 @@
  * Styles for tabs.
  */
 
+.reset-appearance {
+  margin: 0;
+  padding: 0;
+  border: 0 none;
+  background: transparent;
+  line-height: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.position-container {
+  position: relative;
+}
+
 .is-collapse-enabled .tabs,
 .is-horizontal .tabs {
   position: relative;
@@ -131,33 +145,34 @@
 
 .tabs__trigger {
   display: none;
-  .is-collapse-enabled .tabs__trigger {
-    /* JavaScript dependent styles. */
-    position: absolute;
-    z-index: 10;
-    top: 2px;
-    right: 0; /* LTR */
-    left: auto; /* LTR */
-    display: block;
-    box-sizing: content-box;
-    width: 25%;
-    padding-right: 4px;
-    padding-left: 4px;
-    text-align: center;
-    letter-spacing: 0.1em;
-    border-bottom: 0;
-    border-left: 0; /* LTR */
-    border-radius: 0 4px 0 0; /* LTR */
-    outline: 0;
-    font-family: Arial, sans-serif;
-    font-size: 1.25em;
-    [dir="rtl"] .is-collapse-enabled .tabs__trigger {
-      right: auto;
-      left: 0;
-      border-right: 0;
-      border-left: 1px solid #bfbfbf;
-      border-radius: 4px 0 0 0;
-    }
+}
+
+.is-collapse-enabled .tabs__trigger {
+  /* JavaScript dependent styles. */
+  position: absolute;
+  z-index: 10;
+  top: 2px;
+  right: 0; /* LTR */
+  left: auto; /* LTR */
+  display: block;
+  box-sizing: content-box;
+  width: 25%;
+  padding-right: 4px;
+  padding-left: 4px;
+  text-align: center;
+  letter-spacing: 0.1em;
+  border-bottom: 0;
+  border-left: 0; /* LTR */
+  border-radius: 0 4px 0 0; /* LTR */
+  outline: 0;
+  font-family: Arial, sans-serif;
+  font-size: 1.25em;
+  [dir="rtl"] & {
+    right: auto;
+    left: 0;
+    border-right: 0;
+    border-left: 1px solid #bfbfbf;
+    border-radius: 4px 0 0 0;
   }
 }
 

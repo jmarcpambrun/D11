@@ -29,7 +29,7 @@ class SevenPreprocessHooks {
    * Implements hook_preprocess_HOOK() for menu local tasks templates.
    *
    * Use preprocess hook to set #attached to child elements because they will be
-   * processed by Twig and \Drupal::service('renderer')->render() will be
+   * processed by Twig, and \Drupal::service('renderer')->render() will be
    * invoked.
    */
   #[Hook("preprocess_menu_local_tasks")]
@@ -76,7 +76,7 @@ class SevenPreprocessHooks {
    * Implements hook_preprocess_HOOK() for block_content_add_list.
    *
    * Displays the list of available custom block types for creation, adding
-   * separate variables for the label and url.
+   * separate variables for the label and the URL.
    */
   #[Hook("preprocess_block_content_add_list")]
   public function blockContentAddList(array &$variables): void {
@@ -92,7 +92,7 @@ class SevenPreprocessHooks {
   /**
    * Implements hook_preprocess_HOOK() for block templates.
    *
-   * Disables contextual links for all blocks except for layout builder blocks.
+   * Disables contextual links for all but layout builder blocks.
    */
   #[Hook("preprocess_block")]
   public function block(array &$variables): void {
@@ -125,7 +125,6 @@ class SevenPreprocessHooks {
   public function menuLocalAction(array &$variables): void {
     $variables['link']['#options']['attributes']['class'][] = 'button--primary';
     $variables['link']['#options']['attributes']['class'][] = 'button--small';
-
     // We require the touchevents test for button styling.
     $variables['#attached']['library'][] = 'core/drupal.touchevents-test';
   }
@@ -135,7 +134,6 @@ class SevenPreprocessHooks {
    */
   #[Hook("preprocess_install_page")]
   public function installPage(array &$variables): void {
-    // Seven has custom styling for the installation page.
     $variables['#attached']['library'][] = 'seven/install-page';
   }
 
@@ -144,15 +142,11 @@ class SevenPreprocessHooks {
    */
   #[Hook("preprocess_maintenance_page")]
   public function maintenancePage(array &$variables): void {
-    // Seven has custom styling for the maintenance page.
     $variables['#attached']['library'][] = 'seven/maintenance-page';
   }
 
   /**
    * Implements hook_preprocess_HOOK() for views_view_fields.
-   *
-   * This targets each rendered media item in the grid display of the media
-   * library's modal dialog.
    */
   #[Hook("preprocess_views_view_fields__media_library")]
   public function viewsViewFieldsMediaLibrary(array &$variables): void {

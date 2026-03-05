@@ -468,7 +468,6 @@ class ProjectCollector {
     // Always use a fresh service. An injected service could get stale results
     // because scan result saving happens in different HTTP requests for most
     // cases (when analysis was successful).
-    // @phpstan-ignore globalDrupalDependencyInjection.useDependencyInjection
     return \Drupal::service('keyvalue')->get('upgrade_status_scan_results')->get($project_machine_name) ?: NULL;
   }
 
@@ -577,15 +576,18 @@ class ProjectCollector {
    */
   public static function getOldestSupportedMinor(): string {
     $major = (int) \Drupal::VERSION;
+    // Last updated on 2026. February 27.
+    // https://www.drupal.org/about/core/policies/core-release-cycles/schedule
+    // has the latest information.
     switch ($major) {
-      case 9:
-        return '9.5';
-
       case 10:
-        return '10.2';
+        return '10.5';
 
       case 11:
-        return '11.0';
+        return '11.2';
+
+      case 12:
+        return '12.0';
     }
     return '';
   }

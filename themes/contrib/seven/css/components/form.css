@@ -70,6 +70,13 @@ fieldset {
   margin-bottom: 0.75em;
 }
 
+.form-datetime-wrapper {
+  margin-bottom: 1.4em;
+  & .container-inline {
+    margin-bottom: -1.4em;
+  }
+}
+
 /**
  * When a table row has a single form item, prevent it from adding unnecessary
  * extra spacing. If it has multiple form items, allow spacing between them,
@@ -100,7 +107,7 @@ td > .form-item:only-child {
   margin-bottom: 20px;
 }
 
-label {
+.label {
   display: table;
   margin: 0 0 0.1em;
   padding: 0;
@@ -170,7 +177,7 @@ label {
   background-size: 7px 7px;
 }
 
-.form-item--error-message {
+.form-item__error-message {
   margin-top: 0.15em;
   color: #e32700;
   .fieldset-wrapper > & {

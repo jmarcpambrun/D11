@@ -4,9 +4,10 @@ namespace Drupal\upgrade_status;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Extension\Extension;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
-use DrupalFinder\DrupalFinder;
+use DrupalFinder\DrupalFinderComposerRuntime;
 use GuzzleHttp\Client;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
@@ -95,13 +96,6 @@ final class DeprecationAnalyzer {
   protected $libraryDeprecationAnalyzer;
 
   /**
-   * The theme function deprecation analyzer.
-   *
-   * @var \Drupal\upgrade_status\ThemeFunctionDeprecationAnalyzer
-   */
-  protected $themeFunctionDeprecationAnalyzer;
-
-  /**
    * The route deprecation analyzer.
    *
    * @var \Drupal\upgrade_status\RouteDeprecationAnalyzer
@@ -139,9 +133,16 @@ final class DeprecationAnalyzer {
   /**
    * Drupal project finder.
    *
-   * @var \DrupalFinder\DrupalFinder
+   * @var \DrupalFinder\DrupalFinderComposerRuntime
    */
   protected $finder;
+
+  /**
+   * The module extension list.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleExtensionList;
 
   /**
    * Whether the analyzer environment is initialized.
@@ -165,8 +166,6 @@ final class DeprecationAnalyzer {
    *   The Twig deprecation analyzer.
    * @param \Drupal\upgrade_status\LibraryDeprecationAnalyzer $library_deprecation_analyzer
    *   The library deprecation analyzer.
-   * @param \Drupal\upgrade_status\ThemeFunctionDeprecationAnalyzer $theme_function_deprecation_analyzer
-   *   The theme function deprecation analyzer.
    * @param \Drupal\upgrade_status\RouteDeprecationAnalyzer $route_deprecation_analyzer
    *   The route deprecation analyzer.
    * @param \Drupal\upgrade_status\ExtensionMetadataDeprecationAnalyzer $extension_metadata_analyzer
@@ -177,6 +176,8 @@ final class DeprecationAnalyzer {
    *   The CSS deprecation analyzer.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $module_extension_list
+   *   The module extension list.
    */
   public function __construct(
     KeyValueFactoryInterface $key_value_factory,
@@ -185,12 +186,12 @@ final class DeprecationAnalyzer {
     FileSystemInterface $file_system,
     TwigDeprecationAnalyzer $twig_deprecation_analyzer,
     LibraryDeprecationAnalyzer $library_deprecation_analyzer,
-    ThemeFunctionDeprecationAnalyzer $theme_function_deprecation_analyzer,
     RouteDeprecationAnalyzer $route_deprecation_analyzer,
     ExtensionMetadataDeprecationAnalyzer $extension_metadata_analyzer,
     ConfigSchemaDeprecationAnalyzer $config_schema_analyzer,
     CSSDeprecationAnalyzer $css_deprecation_analyzer,
     TimeInterface $time,
+    ModuleExtensionList $module_extension_list,
   ) {
     $this->scanResultStorage = $key_value_factory->get('upgrade_status_scan_results');
     $this->logger = $logger;
@@ -198,12 +199,12 @@ final class DeprecationAnalyzer {
     $this->fileSystem = $file_system;
     $this->twigDeprecationAnalyzer = $twig_deprecation_analyzer;
     $this->libraryDeprecationAnalyzer = $library_deprecation_analyzer;
-    $this->themeFunctionDeprecationAnalyzer = $theme_function_deprecation_analyzer;
     $this->routeDeprecationAnalyzer = $route_deprecation_analyzer;
     $this->extensionMetadataDeprecationAnalyzer = $extension_metadata_analyzer;
     $this->configSchemaDeprecationAnalyzer = $config_schema_analyzer;
     $this->cssDeprecationAnalyzer = $css_deprecation_analyzer;
     $this->time = $time;
+    $this->moduleExtensionList = $module_extension_list;
   }
 
   /**
@@ -220,8 +221,7 @@ final class DeprecationAnalyzer {
 
     $this->phpPath = $this->findPhpPath();
 
-    $this->finder = new DrupalFinder();
-    $this->finder->locateRoot(DRUPAL_ROOT);
+    $this->finder = new DrupalFinderComposerRuntime();
 
     // If a Drupal project is built with Composer scaffolding, the "name"
     // property in composer.json MUST NOT be "drupal/drupal". If it is, the
@@ -261,7 +261,7 @@ final class DeprecationAnalyzer {
    * Finds bin-dir location.
    *
    * This can be set in composer.json via `bin-dir` config and may not be
-   * inside the vendor directory. The logic somewhat duplicates
+   * inside the vendor directory. The logic somewhat duplicates the old
    * DrupalFinder's vendor directory detection for best developer guidance
    * in case of errors.
    *
@@ -459,13 +459,6 @@ final class DeprecationAnalyzer {
       $this->configSchemaDeprecationAnalyzer->analyze($extension),
       $metadataDeprecations,
     );
-    if (ProjectCollector::getDrupalCoreMajorVersion() < 10) {
-      // Theme function support is not present in Drupal 10
-      // and cannot be checked.
-      $more_deprecations = array_merge($more_deprecations,
-        $this->themeFunctionDeprecationAnalyzer->analyze($extension),
-      );
-    }
 
     foreach ($more_deprecations as $one_deprecation) {
       $result['data']['files'][$one_deprecation->getFile()]['messages'][] = [
@@ -548,13 +541,7 @@ final class DeprecationAnalyzer {
    *   If the PHPStan configuration file cannot be written.
    */
   protected function createModifiedNeonFile() {
-    if (function_exists('drupal_get_path')) {
-      // @todo remove compatibility layer with Drupal 9.3.0 when removing Drupal 9 compatibility.
-      $module_path = DRUPAL_ROOT . '/' . drupal_get_path('module', 'upgrade_status');
-    }
-    else {
-      $module_path = DRUPAL_ROOT . '/' . \Drupal::service('extension.list.module')->getPath('upgrade_status');
-    }
+    $module_path = DRUPAL_ROOT . '/' . $this->moduleExtensionList->getPath('upgrade_status');
     $config = file_get_contents($module_path . '/deprecation_testing_template.neon');
     $config = str_replace(
       'parameters:',
