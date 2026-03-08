@@ -22,7 +22,7 @@ class TemplateHooks {
   /**
    * Implements hook_library_info_alter().
    */
-#[Hook('library_info_alter')]
+  #[Hook('library_info_alter')]
   public function libraryInfoAlter(array &$libraries, string $extension): void {
     if ($extension === 'modeler_api' && isset($libraries['template_token_selector'])) {
       // URL du token CSRF (existant dans Drupal)
@@ -38,7 +38,7 @@ class TemplateHooks {
         $libraries['template_token_selector']['drupalSettings']['modeler_api']['template_apply_url'] = '';
       }
     }
- } 
+  } 
 
   /**
    * Implements hook_page_attachments().

@@ -370,7 +370,16 @@ final class ModelerApi extends ControllerBase {
     $owner = $this->modelOwnerPluginManager->createInstance($model_owner_id);
     try {
       $json_data = json_decode($this->request->getContent(), TRUE, 2, JSON_THROW_ON_ERROR);
-      if (isset($json_data['jobId'])) {
+      if (isset($json_data['jobId']) && !empty($json_data['cancelled'])) {
+        $result = $owner->cancelTestJob($json_data['jobId']);
+        if ($result instanceof TranslatableMarkup) {
+          $data = ['error' => (string) $result];
+        }
+        else {
+          $data = ['status' => 'cancelled'];
+        }
+      }
+      elseif (isset($json_data['jobId'])) {
         $result = $owner->pollTestJob($json_data['jobId']);
         if ($result === NULL) {
           $data = ['status' => 'waiting'];

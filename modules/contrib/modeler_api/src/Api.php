@@ -27,8 +27,6 @@ use Drupal\modeler_api\Plugin\DependencyPluginManager;
 use Drupal\modeler_api\Plugin\ModelerPluginManager;
 use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
 use Drupal\modeler_api\Plugin\TemplateTokenPluginManager;
-use Drupal\token\Token;
-use Drupal\token\TreeBuilder;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\Route;
 
@@ -91,23 +89,25 @@ class Api {
    * Constructs the modeler API plugin manager.
    */
   public function __construct(
-    protected AccountProxy $currentUser,
-    protected ModelOwnerPluginManager $modelOwnerPluginManager,
-    protected ModelerPluginManager $modelerPluginManager,
-    protected ConfigFactoryInterface $configFactory,
-    protected ManagedStorage $configStorage,
-    protected FileSystemInterface $fileSystem,
-    protected MenuLinkManagerInterface $menuLinkManager,
-    protected ContextPluginManager $contextPluginManager,
-    protected DependencyPluginManager $dependencyPluginManager,
-    protected TemplateTokenPluginManager $templateTokenPluginManager,
-    protected ContextListBuilder $contextListBuilder,
-    protected DependencyListBuilder $dependencyListBuilder,
-    protected TemplateTokenListBuilder $templateTokenListBuilder,
-	protected \Closure $entityTypeManagerFactory,
-    protected \Closure $routeProviderFactory,
-    protected \Closure $tokenFactory,
-    protected ?\Closure $tokenTreeBuilderFactory = NULL,
+  protected AccountProxy $currentUser,
+  protected ModelOwnerPluginManager $modelOwnerPluginManager,
+  protected ModelerPluginManager $modelerPluginManager,
+  protected ConfigFactoryInterface $configFactory,
+  protected ManagedStorage $configStorage,
+  protected FileSystemInterface $fileSystem,
+  protected ContextPluginManager $contextPluginManager,
+  protected DependencyPluginManager $dependencyPluginManager,
+  protected TemplateTokenPluginManager $templateTokenPluginManager,
+
+  protected \Closure $menuLinkManagerFactory,
+  protected \Closure $entityTypeManagerFactory,
+  protected \Closure $routeProviderFactory,
+  protected \Closure $tokenFactory,
+  protected ?\Closure $tokenTreeBuilderFactory,
+
+  protected ContextListBuilder $contextListBuilder,
+  protected DependencyListBuilder $dependencyListBuilder,
+  protected TemplateTokenListBuilder $templateTokenListBuilder,
   ) {}
 
   /**
@@ -143,11 +143,16 @@ class Api {
   /**
    * Get the token tree builder.
    *
-   * @return \Drupal\token\TreeBuilder|null
-   *   The token tree builder.
+   * @return mixed|null
+   *   The token tree builder if available.
    */
-  protected function getTokenTreeBuilder(): ?TreeBuilder {
+  protected function getTokenTreeBuilder(): mixed {
     return is_callable($this->tokenTreeBuilderFactory) ? ($this->tokenTreeBuilderFactory)() : NULL;
+  }
+
+
+  protected function getMenuLinkManager() {
+    return ($this->menuLinkManagerFactory)();
   }
 
   /**
@@ -746,7 +751,7 @@ class Api {
     array_pop($parts);
     $path = implode('/', $parts);
     $url = Url::fromUri('internal:/' . $path);
-    $links = $this->menuLinkManager->loadLinksByRoute($url->getRouteName(), $url->getRouteParameters());
+    $links = $this->getMenuLinkManager()->loadLinksByRoute($url->getRouteName(), $url->getRouteParameters());
     if (!empty($links)) {
       $menuLink = reset($links);
       return $menuLink->getPluginId();
@@ -787,12 +792,13 @@ class Api {
     if ($treeBuilder === NULL) {
       return [];
     }
-    /** @var \Drupal\token\Token $tokenService */
+    // If the token tree builder is available, the token service will be the
+    // one from contrib module. But we don't declare the dependency.
     $tokenService = $this->getTokenService();
 
     $tokens = [];
     $tokenInfo = $tokenService->getInfo();
-    /** @var string $type */
+    // @phpstan-ignore-next-line
     foreach ($tokenService->getGlobalTokenTypes() as $type) {
       $tree = $treeBuilder->buildTree($type);
       $tokens[$type] = [
@@ -827,13 +833,13 @@ class Api {
    *
    * @param array $def
    *   The token definitions.
-   * @param \Drupal\token\Token $tokenService
+   * @param \Drupal\Core\Utility\Token $tokenService
    *   The token service.
    *
    * @return array
    *   The token definitions.
    */
-  private function prepareTokenDefinition(array $def, Token $tokenService): array {
+  private function prepareTokenDefinition(array $def, BaseToken $tokenService): array {
     if (empty($def['children'])) {
       $def['value'] = $tokenService->replace($def['raw token'] ?? '', [], ['clear' => TRUE]);
     }

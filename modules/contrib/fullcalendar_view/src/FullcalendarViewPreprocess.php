@@ -161,8 +161,8 @@ class FullcalendarViewPreprocess {
     $start_field_option = $fields[$start_field]->options;
     $end_field_option = empty($end_field) ? NULL : $fields[$end_field]->options;
     // Custom timezone or user timezone.
-    $timezone = !empty($start_field_option['settings']['timezone']) ?
-    $start_field_option['settings']['timezone'] : date_default_timezone_get();
+    $timezone = !empty($start_field_option['settings']['timezone_override']) ?
+    $start_field_option['settings']['timezone_override'] : date_default_timezone_get();
     // Set the first day setting.
     $first_day = isset($options['firstDay']) ? intval($options['firstDay']) : 0;
     // Left side buttons.
@@ -243,7 +243,9 @@ class FullcalendarViewPreprocess {
         else {
           $title = $this->t('Invalid event title');
         }
-        $link_url = strstr($title, 'href="');
+        // Render the title to a string to safely extract the URL and sanitize.
+        $rendered_title = is_array($title) ? \Drupal::service('renderer')->renderRoot($title) : (string) $title;
+        $link_url = strstr($rendered_title, 'href="');
         if ($link_url) {
           $link_url = substr($link_url, 6);
           $link_url = strstr($link_url, '"', TRUE);
@@ -256,12 +258,13 @@ class FullcalendarViewPreprocess {
         if (!empty($start_dates) && is_array($start_dates)) {
           foreach ($start_dates as $i => $start_date) {
             $idkey = $row->index . '-' . $i;
+            $rendered_des = isset($des[$idkey]) ? (is_array($des[$idkey]) ? \Drupal::service('renderer')->renderRoot($des[$idkey]) : $des[$idkey]) : '';
             $entry = [
               'title' => Xss::filter($title, $title_allowed_tags),
               'id' => $idkey,
               'eid' => $entity_id,
               'url' => $link_url,
-              'des' => $des[$idkey] ?? '',
+              'des' => Xss::filterAdmin($rendered_des),
             ];
             // Event duration.
             if (!empty($duration_field) && !empty($fields[$duration_field])) {
@@ -315,7 +318,7 @@ class FullcalendarViewPreprocess {
                 $entry['allDay'] = TRUE;
               }
               else {
-                // Drupal store date time in UTC timezone.
+                // Drupal stores date time in UTC timezone.
                 // So we need to convert it into user timezone.
                 $entry['start'] = $timezone_service->utcToLocal($start_date_value, $timezone);
               }
@@ -345,19 +348,26 @@ class FullcalendarViewPreprocess {
               }
 
               if (!empty($end_date)) {
-                $all_day = (strlen($end_date) < 11) ? TRUE : FALSE;
-                if ($all_day) {
+                $end_is_all_day = (strlen($end_date) < 11);
+                if ($end_is_all_day) {
                   $end = new DrupalDateTime($end_date);
                   // The end date is inclusive for a all day event,
                   // which is not what we want. So we need one day offset.
                   $end->modify('+1 day');
                   $entry['end'] = $end->format('Y-m-d');
-                  $entry['allDay'] = TRUE;
                 }
                 else {
-                  // Drupal store date time in UTC timezone.
+                  // Drupal stores date time in UTC timezone.
                   // So we need to convert it into user timezone.
                   $entry['end'] = $timezone_service->utcToLocal($end_date, $timezone);
+                }
+
+                // If an all-day event has an end date with a time component,
+                // it should not be editable to prevent data corruption. This
+                // is a simpler approach than trying to handle the complex
+                // date logic on the client side.
+                if (!empty($entry['allDay']) && !$end_is_all_day) {
+                  $entry['editable'] = FALSE;
                 }
               }
             }

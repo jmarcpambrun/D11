@@ -26,9 +26,29 @@ class DynamicSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     $events = [];
-    foreach (\Drupal::state()->get('eca.subscribed', []) as $name => $prioritized) {
-      $events[$name][] = ['onEvent', key($prioritized)];
+
+    // Guard against container build phase to avoid circular dependencies.
+    // During container compilation, the state service may not be ready and
+    // attempting to access it can trigger circular dependency chains.
+    if (!\Drupal::hasContainer()) {
+      return $events;
     }
+
+    try {
+      // Only access state if the service is available.
+      if (\Drupal::hasService('state')) {
+        foreach (\Drupal::state()->get('eca.subscribed', []) as $name => $prioritized) {
+          $events[$name][] = ['onEvent', key($prioritized)];
+        }
+      }
+    }
+    catch (\Throwable $e) {
+      // During container compilation, accessing state or other services
+      // may cause circular dependencies. Return empty array to allow
+      // container build to complete. Events will be properly registered
+      // when ECA configurations are saved/loaded after container is built.
+    }
+
     return $events;
   }
 

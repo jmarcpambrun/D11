@@ -1,5 +1,7 @@
 services:
 
+services:
+
   modeler_api.service:
     class: Drupal\modeler_api\Api
     arguments:
@@ -9,17 +11,20 @@ services:
       - '@config.factory'
       - '@config.storage.export'
       - '@file_system'
-      - '@plugin.manager.menu.link'
       - '@plugin.manager.modeler_api.context'
       - '@plugin.manager.modeler_api.dependency'
       - '@plugin.manager.modeler_api.template_token'
-      - '@modeler_api.context_list_builder'
-      - '@modeler_api.dependency_list_builder'
-      - '@modeler_api.template_token_list_builder'
+
+      # lazy services
+      - !service_closure '@plugin.manager.menu.link'
       - !service_closure '@entity_type.manager'
       - !service_closure '@router.route_provider'
       - !service_closure '@token'
       - !service_closure '@?token.tree_builder'
+
+      - '@modeler_api.context_list_builder'
+      - '@modeler_api.dependency_list_builder'
+      - '@modeler_api.template_token_list_builder'
 
   logger.channel.modeler_api:
     parent: logger.channel_base

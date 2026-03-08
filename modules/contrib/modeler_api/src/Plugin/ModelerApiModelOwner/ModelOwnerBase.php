@@ -737,4 +737,11 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
     return $this->t('Testing is not supported.');
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function cancelTestJob(string $jobId): null|TranslatableMarkup {
+    return $this->t('Testing is not supported.');
+  }
+
 }

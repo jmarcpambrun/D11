@@ -23,8 +23,12 @@ class ContentHooks {
    * The ECA settings.
    *
    * @var \Drupal\Core\Config\ImmutableConfig
+   * Lazy-loaded to avoid circular dependencies during hook discovery.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig|null
+
    */
-  protected ImmutableConfig $ecaSettings;
+  protected ?ImmutableConfig $ecaSettings = NULL;
 
   /**
    * Constructs a new ContentHooks object.
@@ -35,7 +39,23 @@ class ContentHooks {
     protected ConfigFactoryInterface $configFactory,
     protected EntityTypeManagerInterface $entityTypeManager,
   ) {
-    $this->ecaSettings = $this->configFactory->get('eca.settings');
+
+    // Config is lazy-loaded to avoid circular dependencies during hook
+    // discovery.
+  }
+
+  /**
+   * Gets ECA settings, lazy-loading to avoid circular dependencies.
+   *
+   * @return \Drupal\Core\Config\ImmutableConfig
+   *   The ECA settings config.
+   */
+  protected function getEcaSettings(): ImmutableConfig {
+    if ($this->ecaSettings === NULL) {
+      $this->ecaSettings = $this->configFactory->get('eca.settings');
+    }
+    return $this->ecaSettings;
+
   }
 
   /**
@@ -284,7 +304,7 @@ class ContentHooks {
    */
   #[Hook('field_config_insert')]
   public function fieldConfigInsert(EntityInterface $entity): void {
-    if (!in_array('new_field_config', $this->ecaSettings->get('dependency_calculation') ?? [], TRUE)) {
+    if (!in_array('new_field_config', $this->getEcaSettings()->get('dependency_calculation') ?? [], TRUE)) {
       // Nothing to do.
       return;
     }

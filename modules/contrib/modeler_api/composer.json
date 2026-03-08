@@ -9,9 +9,6 @@
   },
   "require": {
     "php": ">=8.3",
-    "drupal/core": "^11.3"
-  },
-  "require-dev": {
-    "drupal/token": "^1"
+    "drupal/core": "^11.3 || ^12.0"
   }
 }

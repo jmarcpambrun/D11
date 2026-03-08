@@ -870,4 +870,20 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    */
   public function pollTestJob(string $jobId): array|null|TranslatableMarkup;
 
+  /**
+   * Cancels a running test job and cleans up associated resources.
+   *
+   * Called when the user cancels a test in the modeler UI. This allows the
+   * model owner to clean up any state that was set up for the test job (e.g.
+   * reset debug mode if it was automatically enabled).
+   *
+   * @param string $jobId
+   *   The job ID.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
+   *   NULL on success, or an error message as a translatable string if the
+   *   cancellation failed.
+   */
+  public function cancelTestJob(string $jobId): null|TranslatableMarkup;
+
 }

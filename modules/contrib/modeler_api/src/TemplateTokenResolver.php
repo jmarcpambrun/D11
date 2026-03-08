@@ -316,23 +316,13 @@ class TemplateTokenResolver {
    * @return bool
    *   TRUE if at least one token has been resolved, FALSE otherwise.
    */
-  public function hasTokens(): bool {
+  protected function hasTokens(): bool {
     foreach ($this->entries as $entry) {
       if (!empty($entry['select']) || !empty($entry['config'])) {
         return TRUE;
       }
     }
     return FALSE;
-  }
-
-  /**
-   * Gets all resolved entries.
-   *
-   * @return array<string, array{model_owner_id: string, model_id: string, component_id: string, select: array, config: array}>
-   *   The resolved entries keyed by composite object key.
-   */
-  public function getEntries(): array {
-    return $this->entries;
   }
 
   /**
@@ -368,7 +358,7 @@ class TemplateTokenResolver {
    *     when the object has at least one resolved token entry and a label
    *     was provided.
    */
-  public function resolve(): array {
+  protected function resolve(): array {
     $result = [];
     foreach ($this->entries as $objectKey => $entry) {
       if (!empty($this->hiddenConfig[$objectKey])) {
@@ -519,22 +509,6 @@ class TemplateTokenResolver {
   }
 
   /**
-   * Resets all collected entries.
-   *
-   * This is primarily useful for testing or when the service needs to be
-   * reused within the same request.
-   *
-   * @return $this
-   */
-  public function reset(): static {
-    $this->entries = [];
-    $this->hiddenConfig = [];
-    $this->labels = [];
-    $this->appliedTemplates = [];
-    return $this;
-  }
-
-  /**
    * Gets the render array attachments for the current page.
    *
    * If tokens have been resolved, this method returns a render array with
@@ -548,18 +522,15 @@ class TemplateTokenResolver {
    *   An array that you can add attachments to.
    */
   public function getAttachments(array &$attachments): void {
-    if (!$this->hasTokens()) {
-      return;
-    }
-
-    $resolved = $this->resolve();
-    if (empty($resolved)) {
-      return;
-    }
-    $attachments['#attached']['library'][] = 'modeler_api/template_token_selector';
-    $attachments['#attached']['drupalSettings']['modelerApiTemplateTokens'] = $resolved;
-    if (!empty($this->appliedTemplates)) {
-      $attachments['#attached']['drupalSettings']['modelerApiAppliedTemplates'] = $this->appliedTemplates;
+    if ($this->hasTokens()) {
+      $resolved = $this->resolve();
+      if ($resolved) {
+        $attachments['#attached']['library'][] = 'modeler_api/template_token_selector';
+        $attachments['#attached']['drupalSettings']['modelerApiTemplateTokens'] = $resolved;
+        if (!empty($this->appliedTemplates)) {
+          $attachments['#attached']['drupalSettings']['modelerApiAppliedTemplates'] = $this->appliedTemplates;
+        }
+      }
     }
   }
 
