@@ -62,16 +62,18 @@ class EntityHooks {
         continue;
       }
       $type = $owner->configEntityTypeId();
-      /**
-       * @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
-       */
-      $entity_types[$type]
-        ->setAccessClass(AccessControlHandler::class)
-        ->setListBuilderClass(ListBuilder::class)
-        ->setLinkTemplate('collection', '/' . $basePath)
-        ->setFormClass('delete', DeleteForm::class)
-        ->setLinkTemplate('edit-form', '/' . $basePath . '/{' . $type . '}/edit')
-        ->setLinkTemplate('delete-form', '/' . $basePath . '/{' . $type . '}/delete');
+      if (isset($entity_types[$type])) {
+        /**
+        * @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
+        */
+        $entity_types[$type]
+          ->setAccessClass(AccessControlHandler::class)
+          ->setListBuilderClass(ListBuilder::class)
+          ->setLinkTemplate('collection', '/' . $basePath)
+          ->setFormClass('delete', DeleteForm::class)
+          ->setLinkTemplate('edit-form', '/' . $basePath . '/{' . $type . '}/edit')
+          ->setLinkTemplate('delete-form', '/' . $basePath . '/{' . $type . '}/delete');
+      }
     }
     $alreadyRunning = FALSE;
   }
