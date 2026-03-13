@@ -1,0 +1,102 @@
+{% if content.emails %}
+  <div class="mailcontent-subject">
+    <nav class="nav">
+      <a id="mailBack" href="#" class="nav-link"><i class="ri-arrow-left-line"></i></a>
+      <a href="#" class="nav-link top-actions" data-bs-toggle="tooltip" title="move" data-msgno="{{ content.emails[0].header.Msgno }}" data-source="{{ content.emails[0].header.box }}" data-bs-placement="left"><i class="ri-scissors-cut-line"></i></a>
+      <a href="#" class="nav-link top-actions" data-bs-toggle="tooltip" title="copy" data-msgno="{{ content.emails[0].header.Msgno }}" data-source="{{ content.emails[0].header.box }}" data-bs-placement="left"><i class="ri-file-copy-2-line"></i></a>
+      <a href="#" class="nav-link top-actions" data-bs-toggle="tooltip" title="More" data-msgno="{{ content.emails[0].header.Msgno }}" data-source="{{ content.emails[0].header.box }}" data-bs-placement="left"><i class="ri-more-2-fill"></i></a>
+    </nav>
+    <h4>{{ content.emails[0].header.Subject }}</h4>
+  </div><!-- mailcontent-subject -->
+
+  <div class="mailcontent-group">
+
+    {% for mail in content.emails %}
+      <div class="mailcontent-item">
+        <div class="mailcontent-header">
+          <div class="mail-avatar"><span class="color-{{ mail_box_color(mail.header.fromaddress) }}">{{ mail.header.fromaddress|slice(0,1)|upper }}</span></div>
+          <div class="mailcontent-sender">
+            {% if mail.header.from_name %}
+              <h6>{{ mail.header.from_name | default('Unknown') }} <span>{{ mail.header.from_email | default(mail.header.fromaddress) }}</span></h6>
+            {% else %}
+              <h6>{{ mail.header.fromaddress }}</h6>
+            {% endif %}
+            <p>to: {{ mail.header.to_name | default(mail.header.toaddress ) }}</p>
+          </div><!-- mail-sender -->
+          <div class="mailcontent-time">{{ mail.header.Date|date("h:i A") }}</div>
+          <nav class="nav" data-boxname="{{ mail.header.box }}">
+            {% if is_flagged(mail.header.Flagged) %}
+            <a href="#" class="nav-link single-mail-action active" data-msgno="{{ mail.header.Msgno }}" data-action="UNFLAGGED" data-bs-toggle="tooltip" title="Not Starred"><i class="ri-star-fill"></i></a>
+            {% else %}
+              <a href="#" class="nav-link single-mail-action" data-msgno="{{ mail.header.Msgno }}" data-action="FLAGGED" data-bs-toggle="tooltip" title="Not Starred"><i class="ri-star-line"></i></a>
+            {% endif %}
+            <a href="#" class="nav-link single-mail-action" data-to-box="{{ mail.header.box }}" data-to-mail="{{ mail_strip(mail.header.reply_toaddress) }}" data-subject="{{ mail.header.Subject }}" data-msgno="{{ mail.header.Msgno }}" data-message-id="{{ mail.header.message_id }}" data-action="reply" data-bs-toggle="tooltip" title="Reply"><i class="ri-reply-line"></i></a>
+            <a href="#" class="nav-link single-mail-action" data-msgno="{{ mail.header.Msgno }}" data-action="delete" data-bs-toggle="tooltip" title="Delete"><i class="ri-delete-bin-2-line"></i></a>
+          </nav>
+        </div><!-- mailcontent-header -->
+        {% if loop.last %}
+          <div class="mailcontent-body">
+            {{ mail.body.content | raw }}
+
+            {% if mail.attachments %}
+              <hr>
+
+              <label class="mailcontent-label">{{ mail.attachments|length }} Attachments</label>
+
+              <div class="attachment-group">
+                {% for attach in mail.attachments %}
+                  <div class="attachment-item">
+                    <div class="attachment-icon text-primary"><i class="{{ attach.icon }}"></i></div>
+                    <div class="attachment-body">
+                      <h6><a href="{{ attach.base64 }}{{ attach.content }}" download="{{ attach.name }}">{{ attach.name }}</a></h6>
+                      <span>{{ attachment_size(attach.content) }}</span>
+                    </div>
+                  </div><!-- attachment-item -->
+                {% endfor %}
+              </div><!-- attachment-group -->
+
+            {% endif %}
+
+          </div><!-- mailcontent-body -->
+        {% else %}
+          <div class="mailcontent-body d-none">
+            {{ mail.body.content | raw }}
+
+            {% if mail.attachments %}
+              <hr>
+
+              <label class="mailcontent-label">{{ mail.attachments|length }} Attachments</label>
+
+              <div class="attachment-group">
+                {% for attach in mail.attachments %}
+                <div class="attachment-item">
+                  <div class="attachment-icon text-primary"><i class="{{ attach.icon }}"></i></div>
+                  <div class="attachment-body">
+                    <h6><a href="#">{{ attach.name }}</a></h6>
+                    <span>{{ attachment_size(attach.content) }}</span>
+                  </div>
+                </div><!-- attachment-item -->
+                {% endfor %}
+              </div><!-- attachment-group -->
+
+            {% endif %}
+
+          </div><!-- mailcontent-body -->
+        {% endif %}
+      </div><!-- mailcontent-item -->
+
+    {% endfor %}
+  </div><!-- mailcontent-group -->
+
+  <div class="mailcontent-footer">
+    <a href="#" data-to-box="{{ mail.header.box }}" data-to-mail="{{ mail_strip(mail.header.reply_toaddress) }}" data-subject="{{ mail.header.Subject }}" data-msgno="{{ mail.header.Msgno }}" data-message-id="{{ mail.header.message_id }}" data-action="reply" class="btn btn-secondary btn-icontext single-mail-action"><i class="ri-reply-line me-1"></i> Reply</a>
+    <a href="" class="btn btn-secondary btn-icontext" id="forward"><i class="ri-share-forward-line me-1"></i> Forward</a>
+  </div><!-- mailcontent-footer -->
+{% else %}
+
+  <div class="mailcontent-placeholder">
+    <i class="ri-mail-send-line"></i>
+    <h5>No email has been selected</h5>
+  </div><!-- mailcontent-placeholder -->
+
+{% endif %}

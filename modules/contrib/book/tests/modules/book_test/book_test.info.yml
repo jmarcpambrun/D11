@@ -1,0 +1,12 @@
+name: 'Book module tests'
+type: module
+description: 'Support module for book module testing.'
+core_version_requirement: ^11
+package: Testing
+dependencies:
+  - drupal:book
+
+# Information added by Drupal.org packaging script on 2026-02-14
+version: '3.0.0'
+project: 'book'
+datestamp: 1771097385

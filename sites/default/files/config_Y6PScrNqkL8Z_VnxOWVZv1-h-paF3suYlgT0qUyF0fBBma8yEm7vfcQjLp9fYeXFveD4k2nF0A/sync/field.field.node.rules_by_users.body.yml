@@ -1,0 +1,23 @@
+uuid: a08c112b-90bf-4773-a0ac-76a4634890f8
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - node.type.rules_by_users
+  module:
+    - text
+id: node.rules_by_users.body
+field_name: body
+entity_type: node
+bundle: rules_by_users
+label: Body
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+field_type: text_with_summary

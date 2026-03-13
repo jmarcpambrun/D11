@@ -1,0 +1,7 @@
+helper:
+  js:
+    js/helper.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once

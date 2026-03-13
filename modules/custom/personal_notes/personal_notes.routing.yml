@@ -1,0 +1,19 @@
+personal_notes.create.form:
+  path: '/user/{user}/add-note'
+  defaults:
+    _title: 'Add a Note'
+    _entity_form: personal_note.add
+  requirements:
+    _permission: 'add and delete personal notes'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+entity.personal_notes.collection:
+  path: '/admin/structure/personal_notes'
+  defaults:
+    _title: 'Personal Notes'
+    _entity_list: 'personal_note'
+  requirements:
+    _permission: 'administer personal_notes'

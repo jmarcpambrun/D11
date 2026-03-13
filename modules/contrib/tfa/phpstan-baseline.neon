@@ -1,0 +1,934 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Cannot call method success\\(\\) on Drush\\\\Log\\\\DrushLoggerManager\\|null\\.$#"
+			count: 1
+			path: src/Commands/TfaCommands.php
+
+		-
+			message: """
+				#^Class Drupal\\\\tfa\\\\Commands\\\\TfaCommands implements deprecated interface Drush\\\\Drupal\\\\Commands\\\\sql\\\\SanitizePluginInterface\\:
+				use \\\\Drush\\\\Commands\\\\sql\\\\sanitize\\\\SanitizePluginInterface instead\\.$#
+			"""
+			count: 1
+			path: src/Commands/TfaCommands.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Commands\\\\TfaCommands\\:\\:messages\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Commands/TfaCommands.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Commands\\\\TfaCommands\\:\\:sanitize\\(\\) has parameter \\$result with no type specified\\.$#"
+			count: 1
+			path: src/Commands/TfaCommands.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Controller/TfaLoginController.php
+
+		-
+			message: "#^Parameter \\#1 \\$plugin_id of method Drupal\\\\Component\\\\Plugin\\\\PluginManagerBase\\:\\:createInstance\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Controller/TfaLoginController.php
+
+		-
+			message: "#^Part \\$method \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/Controller/TfaLoginController.php
+
+		-
+			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
+			count: 2
+			path: src/Controller/TfaLoginController.php
+
+		-
+			message: "#^Cannot access offset 'data' on mixed\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Cannot access offset 'plugins' on mixed\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$interval of method Drupal\\\\Core\\\\Datetime\\\\DateFormatterInterface\\:\\:formatInterval\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$plugin_id of method Drupal\\\\Component\\\\Plugin\\\\PluginManagerBase\\:\\:createInstance\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Parameter \\#2 \\$threshold of method Drupal\\\\Core\\\\Flood\\\\FloodInterface\\:\\:isAllowed\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Parameter \\#2 \\$window of method Drupal\\\\Core\\\\Flood\\\\FloodInterface\\:\\:register\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Parameter \\#3 \\$window of method Drupal\\\\Core\\\\Flood\\\\FloodInterface\\:\\:isAllowed\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Form\\\\EntryForm\\:\\:\\$tfaLoginPlugins \\(array\\<Drupal\\\\tfa\\\\Plugin\\\\TfaLoginInterface\\>\\) does not accept array\\<object\\>\\.$#"
+			count: 1
+			path: src/Form/EntryForm.php
+
+		-
+			message: "#^Argument of an invalid type Drupal\\\\user\\\\RoleInterface\\|null supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Form/SettingsForm.php
+
+		-
+			message: "#^Cannot access offset 'title' on 'fieldset'\\|array\\{\\#type\\: 'container', \\#states\\: array\\{visible\\: array\\{non\\-empty\\-array\\<non\\-falsy\\-string, array\\{checked\\: true\\}\\>, array\\{'select\\[name\\=\"tfa_default_validation_plugin\"\\]'\\: array\\{value\\: \\(int\\|string\\)\\}\\}\\}\\}, title\\: array\\{\\#type\\: 'html_tag', \\#tag\\: 'h3', \\#value\\: mixed\\}, form\\: mixed\\}\\|array\\{\\#type\\: 'container', \\#states\\: array\\{visible\\: array\\{non\\-empty\\-array\\<non\\-falsy\\-string, array\\{checked\\: true\\}\\>, array\\{'select\\[name\\=\"tfa_default_validation_plugin\"\\]'\\: array\\{value\\: \\(int\\|string\\)\\}\\}\\}\\}\\}\\|array\\{visible\\: array\\{'\\:input\\[name\\=\"tfa_enabled\"\\]'\\: array\\{checked\\: true\\}\\}, title\\: array\\{\\#type\\: 'html_tag', \\#tag\\: 'h3', \\#value\\: mixed\\}, form\\: mixed\\}\\|array\\{visible\\: array\\{'\\:input\\[name\\=\"tfa_enabled\"\\]'\\: array\\{checked\\: true\\}\\}\\}\\|Drupal\\\\Core\\\\StringTranslation\\\\TranslatableMarkup\\|true\\.$#"
+			count: 1
+			path: src/Form/SettingsForm.php
+
+		-
+			message: "#^Cannot access offset 'title' on 'fieldset'\\|array\\{\\#type\\: 'container', \\#states\\: array\\{visible\\: array\\{non\\-empty\\-array\\<non\\-falsy\\-string, array\\{checked\\: true\\}\\>\\}\\}, title\\: array\\{\\#type\\: 'html_tag', \\#tag\\: 'h3', \\#value\\: string\\}, form\\: mixed\\}\\|array\\{\\#type\\: 'container', \\#states\\: array\\{visible\\: array\\{non\\-empty\\-array\\<non\\-falsy\\-string, array\\{checked\\: true\\}\\>\\}\\}\\}\\|array\\{visible\\: array\\{'\\:input\\[name\\=\"tfa_enabled\"\\]'\\: array\\{checked\\: true\\}\\}, title\\: array\\{\\#type\\: 'html_tag', \\#tag\\: 'h3', \\#value\\: string\\}, form\\: mixed\\}\\|array\\{visible\\: array\\{'\\:input\\[name\\=\"tfa_enabled\"\\]'\\: array\\{checked\\: true\\}\\}\\}\\|Drupal\\\\Core\\\\StringTranslation\\\\TranslatableMarkup\\|true\\.$#"
+			count: 1
+			path: src/Form/SettingsForm.php
+
+		-
+			message: "#^Cannot access offset mixed on mixed\\.$#"
+			count: 1
+			path: src/Form/SettingsForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_filter expects array, mixed given\\.$#"
+			count: 3
+			path: src/Form/SettingsForm.php
+
+		-
+			message: "#^Cannot call method getDisplayName\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 2
+			path: src/Form/TfaDisableForm.php
+
+		-
+			message: "#^Cannot call method getEmail\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 1
+			path: src/Form/TfaDisableForm.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 1
+			path: src/Form/TfaDisableForm.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Form/TfaDisableForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function trim expects string, mixed given\\.$#"
+			count: 1
+			path: src/Form/TfaDisableForm.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getOverview\\(\\)\\.$#"
+			count: 1
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Cannot access offset \\(int\\|string\\) on mixed\\.$#"
+			count: 2
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Cannot call method getAccountName\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Cannot call method getDisplayName\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 2
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on mixed\\.$#"
+			count: 2
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\tfa\\\\Form\\\\TfaOverviewForm\\:\\:canPerformReset\\(\\) expects Drupal\\\\user\\\\UserInterface, Drupal\\\\user\\\\UserInterface\\|null given\\.$#"
+			count: 1
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method Drupal\\\\tfa\\\\Form\\\\TfaOverviewForm\\:\\:tfaGetTfaData\\(\\) expects int, int\\|string\\|null given\\.$#"
+			count: 1
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Parameter \\#2 \\$account of method Drupal\\\\tfa\\\\Form\\\\TfaOverviewForm\\:\\:tfaPluginSetupFormOverview\\(\\) expects Drupal\\\\user\\\\UserInterface, Drupal\\\\user\\\\UserInterface\\|null given\\.$#"
+			count: 3
+			path: src/Form/TfaOverviewForm.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Binary operation \"\\.\\=\" between array\\{\\}\\|string and non\\-falsy\\-string results in an error\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Cannot access offset 'id' on mixed\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Cannot access offset 'label' on mixed\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Cannot call method getAccountName\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\UserInterface\\|null\\.$#"
+			count: 3
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$plugin of class Drupal\\\\tfa\\\\TfaSetup constructor expects Drupal\\\\tfa\\\\Plugin\\\\TfaSetupInterface, object given\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$plugin_id of method Drupal\\\\Component\\\\Plugin\\\\PluginManagerBase\\:\\:createInstance\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function trim expects string, mixed given\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method Drupal\\\\tfa\\\\Form\\\\TfaSetupForm\\:\\:tfaGetTfaData\\(\\) expects int, int\\|string\\|null given\\.$#"
+			count: 1
+			path: src/Form/TfaSetupForm.php
+
+		-
+			message: "#^Cannot access offset 'ciphertext_base64' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Cannot access offset 'iv_base64' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Cannot access offset 'version' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Constant MCRYPT_MODE_ECB not found\\.$#"
+			count: 4
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Constant MCRYPT_RAND not found\\.$#"
+			count: 2
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Constant MCRYPT_RIJNDAEL_128 not found\\.$#"
+			count: 4
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Function mcrypt_create_iv not found\\.$#"
+			count: 2
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Function mcrypt_decrypt not found\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Function mcrypt_encrypt not found\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Function mcrypt_get_iv_size not found\\.$#"
+			count: 2
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\EncryptionMethod\\\\McryptAES128Encryption\\:\\:decrypt\\(\\) should return string but returns string\\|false\\.$#"
+			count: 2
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_decode expects string, mixed given\\.$#"
+			count: 2
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_encode expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strlen expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Parameter \\#4 \\$options of function openssl_decrypt expects int, true given\\.$#"
+			count: 1
+			path: src/Plugin/EncryptionMethod/McryptAES128Encryption.php
+
+		-
+			message: "#^Cannot access offset 'seed' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Cannot access offset string on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\:\\:getQrCodeUri\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\:\\:validate\\(\\) has parameter \\$code with no type specified\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$encryption_profile_id of method Drupal\\\\encrypt\\\\EncryptionProfileManagerInterface\\:\\:getEncryptionProfile\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_decode expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtolower expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:decrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:encrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Parameter \\#2 \\.\\.\\.\\$replacements of function array_replace expects array, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\:\\:\\$counterWindow \\(int\\<0, max\\>\\) does not accept 10\\|'Drupal'\\|'TFA'\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\:\\:\\$namePrefix \\(string\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\:\\:\\$siteNamePrefix \\(bool\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaHotp.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaRecoveryCode\\:\\:getCodes\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_walk expects array\\|object, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#1 \\$codes of method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaRecoveryCode\\:\\:storeCodes\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#1 \\$encryption_profile_id of method Drupal\\\\encrypt\\\\EncryptionProfileManagerInterface\\:\\:getEncryptionProfile\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:decrypt\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:decrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:encrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaRecoveryCode\\:\\:\\$codeLimit \\(int\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaRecoveryCode.php
+
+		-
+			message: "#^Cannot access offset 'seed' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Cannot access offset string on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\:\\:getQrCodeUri\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\:\\:validate\\(\\) has parameter \\$code with no type specified\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$encryption_profile_id of method Drupal\\\\encrypt\\\\EncryptionProfileManagerInterface\\:\\:getEncryptionProfile\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_decode expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtolower expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:decrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:encrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Parameter \\#2 \\.\\.\\.\\$replacements of function array_replace expects array, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\:\\:\\$namePrefix \\(string\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\:\\:\\$siteNamePrefix \\(bool\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\:\\:\\$timeSkew \\(int\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTotp.php
+
+		-
+			message: "#^Cannot access offset 'last_used' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Cannot access offset 'tfa_trusted_browser' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Cannot access offset bool\\|float\\|int\\|string on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Cannot access offset non\\-falsy\\-string on mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Cannot access offset string on mixed\\.$#"
+			count: 2
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:getTrustedBrowsers\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#1 \\$haystack of function strpos expects string, mixed given\\.$#"
+			count: 3
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#1 \\$id of method Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:trustedBrowser\\(\\) expects string, bool\\|float\\|int\\|string given\\.$#"
+			count: 2
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function substr expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#2 \\$subject of function preg_match expects string, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#2 \\.\\.\\.\\$replacements of function array_replace expects array, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Parameter \\#5 \\$domain of function setcookie expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:\\$allowSubdomains \\(bool\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:\\$cookieName \\(string\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:\\$expiration \\(int\\) does not accept int\\|string\\|true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Property Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTrustedBrowser\\:\\:\\$request \\(Symfony\\\\Component\\\\HttpFoundation\\\\Request\\) does not accept Symfony\\\\Component\\\\HttpFoundation\\\\Request\\|null\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Right side of && is always true\\.$#"
+			count: 1
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
+			count: 7
+			path: src/Plugin/Tfa/TfaTrustedBrowser.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\TfaSendInterface\\:\\:begin\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Plugin/TfaSendInterface.php
+
+		-
+			message: "#^Cannot access offset 'saved' on mixed\\.$#"
+			count: 1
+			path: src/Plugin/views/field/TfaEnabledField.php
+
+		-
+			message: "#^Parameter \\#2 \\$uid of method Drupal\\\\user\\\\UserDataInterface\\:\\:get\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Plugin/views/field/TfaEnabledField.php
+
+		-
+			message: "#^Cannot access offset 'helpLinks' on array\\|Drupal\\\\Component\\\\Plugin\\\\Definition\\\\PluginDefinitionInterface\\.$#"
+			count: 1
+			path: src/TfaBasePlugin.php
+
+		-
+			message: "#^Cannot access offset 'label' on array\\|Drupal\\\\Component\\\\Plugin\\\\Definition\\\\PluginDefinitionInterface\\.$#"
+			count: 1
+			path: src/TfaBasePlugin.php
+
+		-
+			message: "#^Cannot access offset 'setupMessages' on array\\|Drupal\\\\Component\\\\Plugin\\\\Definition\\\\PluginDefinitionInterface\\.$#"
+			count: 1
+			path: src/TfaBasePlugin.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of static method Drupal\\\\Component\\\\Utility\\\\Crypt\\:\\:hashBase64\\(\\) expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/TfaBasePlugin.php
+
+		-
+			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
+			count: 1
+			path: src/TfaBasePlugin.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:loginAllowed\\(\\)\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:ready\\(\\)\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\TfaLoginContext\\:\\:remainingSkips\\(\\) should return int\\|false but returns float\\|int\\<0, max\\>\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_filter expects array, mixed given\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Parameter \\#1 \\$plugin_id of method Drupal\\\\Component\\\\Plugin\\\\PluginManagerBase\\:\\:createInstance\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Variable \\$login_plugin in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Variable \\$validation_plugin in PHPDoc tag @var does not exist\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Variable \\$validation_plugin in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/TfaLoginContext.php
+
+		-
+			message: "#^Cannot access offset 'class' on mixed\\.$#"
+			count: 1
+			path: src/TfaPluginManager.php
+
+		-
+			message: "#^Parameter \\#1 \\$object_or_class of function is_a expects object\\|string, mixed given\\.$#"
+			count: 1
+			path: src/TfaPluginManager.php
+
+		-
+			message: "#^Call to an undefined method Drupal\\\\tfa\\\\Plugin\\\\TfaSetupInterface\\:\\:getSetupMessages\\(\\)\\.$#"
+			count: 1
+			path: src/TfaSetup.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\Plugin\\\\TfaSetupInterface\\:\\:getSetupForm\\(\\) invoked with 3 parameters, 2 required\\.$#"
+			count: 1
+			path: src/TfaSetup.php
+
+		-
+			message: "#^Method Drupal\\\\tfa\\\\TfaSetup\\:\\:begin\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/TfaSetup.php
+
+		-
+			message: "#^Method Drupal\\\\tfa_test_encryption\\\\Plugin\\\\EncryptionMethod\\\\FailingEncryption\\:\\:decrypt\\(\\) has parameter \\$options with no type specified\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_encryption/src/Plugin/EncryptionMethod/FailingEncryption.php
+
+		-
+			message: "#^Method Drupal\\\\tfa_test_encryption\\\\Plugin\\\\EncryptionMethod\\\\FailingEncryption\\:\\:encrypt\\(\\) has parameter \\$options with no type specified\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_encryption/src/Plugin/EncryptionMethod/FailingEncryption.php
+
+		-
+			message: "#^Method Drupal\\\\tfa_test_plugins\\\\Plugin\\\\Tfa\\\\TfaTestLoginPlugin\\:\\:isLoginAllowed\\(\\) should return bool but returns mixed\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestLoginPlugin.php
+
+		-
+			message: "#^Cannot access offset 'expected_field' on mixed\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Cannot access offset 'id' on array\\|Drupal\\\\Component\\\\Plugin\\\\Definition\\\\PluginDefinitionInterface\\.$#"
+			count: 2
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Cannot call method getDisplayName\\(\\) on Drupal\\\\user\\\\Entity\\\\User\\|null\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Parameter \\#1 \\$encryption_profile_id of method Drupal\\\\encrypt\\\\EncryptionProfileManagerInterface\\:\\:getEncryptionProfile\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_decode expects string, mixed given\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:encrypt\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:decrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Parameter \\#2 \\$encryption_profile of method Drupal\\\\encrypt\\\\EncryptServiceInterface\\:\\:encrypt\\(\\) expects Drupal\\\\encrypt\\\\EncryptionProfileInterface, Drupal\\\\encrypt\\\\EncryptionProfileInterface\\|null given\\.$#"
+			count: 1
+			path: tests/modules/tfa_test_plugins/src/Plugin/Tfa/TfaTestValidationPlugin.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaConfigTest\\:\\:\\$adminUser \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaConfigTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaConfigTest\\:\\:\\$webUser \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaConfigTest.php
+
+		-
+			message: "#^Access to an undefined property Drupal\\\\user\\\\UserInterface\\:\\:\\$passRaw\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaEncryptionSetupTest.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpSetupPluginTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTestBase\\:\\:drupalLogin\\(\\) expects Drupal\\\\Core\\\\Session\\\\AccountInterface, Drupal\\\\user\\\\Entity\\\\User\\|false given\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpSetupPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaHotpSetupPluginTest\\:\\:\\$setupPlugin \\(Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\) does not accept object\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpSetupPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaHotpSetupPluginTest\\:\\:\\$userAccount \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpSetupPluginTest.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpSetupPluginTest.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpValidationPluginTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTestBase\\:\\:drupalLogin\\(\\) expects Drupal\\\\Core\\\\Session\\\\AccountInterface, Drupal\\\\user\\\\Entity\\\\User\\|false given\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpValidationPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaHotpValidationPluginTest\\:\\:\\$userAccount \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpValidationPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaHotpValidationPluginTest\\:\\:\\$validationPlugin \\(Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaHotp\\) does not accept object\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpValidationPluginTest.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaHotpValidationPluginTest.php
+
+		-
+			message: "#^Access to an undefined property Drupal\\\\user\\\\UserInterface\\:\\:\\$passRaw\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaLoginTest.php
+
+		-
+			message: "#^Access to an undefined property Drupal\\\\user\\\\UserInterface\\:\\:\\$passRaw\\.$#"
+			count: 4
+			path: tests/src/Functional/TfaRecoveryCodePluginTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTestBase\\:\\:drupalLogin\\(\\) expects Drupal\\\\Core\\\\Session\\\\AccountInterface, Drupal\\\\user\\\\Entity\\\\User\\|false given\\.$#"
+			count: 2
+			path: tests/src/Functional/TfaTestBase.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpSetupPluginTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTestBase\\:\\:drupalLogin\\(\\) expects Drupal\\\\Core\\\\Session\\\\AccountInterface, Drupal\\\\user\\\\Entity\\\\User\\|false given\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpSetupPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTotpSetupPluginTest\\:\\:\\$setupPlugin \\(Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\) does not accept object\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpSetupPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTotpSetupPluginTest\\:\\:\\$userAccount \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpSetupPluginTest.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpSetupPluginTest.php
+
+		-
+			message: "#^Cannot call method id\\(\\) on Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpValidationPluginTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$account of method Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTestBase\\:\\:drupalLogin\\(\\) expects Drupal\\\\Core\\\\Session\\\\AccountInterface, Drupal\\\\user\\\\Entity\\\\User\\|false given\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpValidationPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTotpValidationPluginTest\\:\\:\\$userAccount \\(Drupal\\\\user\\\\Entity\\\\User\\) does not accept Drupal\\\\user\\\\Entity\\\\User\\|false\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpValidationPluginTest.php
+
+		-
+			message: "#^Property Drupal\\\\Tests\\\\tfa\\\\Functional\\\\TfaTotpValidationPluginTest\\:\\:\\$validationPlugin \\(Drupal\\\\tfa\\\\Plugin\\\\Tfa\\\\TfaTotp\\) does not accept object\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpValidationPluginTest.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: tests/src/Functional/TfaTotpValidationPluginTest.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 5
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset 'data' on mixed\\.$#"
+			count: 3
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset 'plugins' on mixed\\.$#"
+			count: 3
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset 'settings' on mixed\\.$#"
+			count: 1
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset 'tfa_recovery_code' on mixed\\.$#"
+			count: 3
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset \\(array\\<int, string\\>\\|string\\) on mixed\\.$#"
+			count: 2
+			path: tfa.install
+
+		-
+			message: "#^Cannot access offset mixed on mixed\\.$#"
+			count: 2
+			path: tfa.install
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_slice expects array, mixed given\\.$#"
+			count: 1
+			path: tfa.install
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
+			count: 1
+			path: tfa.install
+
+		-
+			message: "#^Parameter \\#2 \\$uid of method Drupal\\\\user\\\\UserData\\:\\:set\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: tfa.install
+
+		-
+			message: "#^Parameter \\#3 \\$subject of function str_replace expects array\\|string, mixed given\\.$#"
+			count: 4
+			path: tfa.install
+
+		-
+			message: "#^Possibly invalid array key type \\(array\\<int, string\\>\\|string\\)\\.$#"
+			count: 1
+			path: tfa.install
+
+		-
+			message: "#^Parameter \\#1 \\$markup of method Drupal\\\\Core\\\\Utility\\\\Token\\:\\:replace\\(\\) expects string, mixed given\\.$#"
+			count: 2
+			path: tfa.module

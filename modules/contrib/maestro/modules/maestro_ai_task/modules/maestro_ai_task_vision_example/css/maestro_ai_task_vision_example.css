@@ -1,0 +1,29 @@
+.webform-submission-maestro-ai-expense-rcpt-complex-form .receipt_upload-table--rejection_reason.webform-multiple-table--rejection_reason {
+  display: none;
+}
+
+#receipt_upload_table {
+  background-color: #f0f0f0;
+  padding: 5px;
+}
+
+
+.webform-submission-maestro-ai-expense-rcpt-complex-form #receipt_upload_table th {
+  font-size: 10pt;
+}
+
+#edit-receipt-upload > label {
+  font-size: 12pt;
+}
+
+.webform-submission-maestro-ai-expense-rcpt-complex-edit-form .receipt_upload-table--rejection_reason.webform-multiple-table--rejection_reason {
+  display: block !important;
+}
+
+.webform-submission-maestro-ai-expense-rcpt-complex-edit-form .webform-submission-information {
+  display: none;
+}
+
+#receipt_upload_table td.webform-multiple-table--operations > input:first-of-type  {
+  display: none;
+}

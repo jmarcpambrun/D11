@@ -1,0 +1,40 @@
+services:
+  logger.channel.event_scheduler:
+    parent: logger.channel_base
+    arguments: [ 'event_scheduler' ]
+
+  event_scheduler.dispatcher:
+    class: Drupal\event_scheduler\EventSchedulerDispatcher
+    arguments: [ '@event_dispatcher', '@event_scheduler.scheduler', '@event_scheduler.utils', '@datetime.time', '@event_scheduler.local_queue' ]
+    tags:
+      - { name: event_subscriber }
+
+  event_scheduler.scheduler:
+    class: Drupal\event_scheduler\EventScheduler
+    arguments: [ '@event_scheduler.utils', '@event_scheduler.database', '@serializer', '@logger.factory' ]
+
+  event_scheduler.database:
+    class: Drupal\event_scheduler\EventSchedulerDatabase
+    arguments: [ '@database', '@logger.factory', '@state' ]
+
+  event_scheduler.utils:
+    class: Drupal\event_scheduler\EventSchedulerUtils
+    arguments: [ '@event_scheduler.database', '@datetime.time', '@queue','@config.factory', '@logger.channel.event_scheduler' ]
+
+  serializer.event_scheduler.json.event:
+    class: Drupal\event_scheduler\Normalizer\EventNormalizer
+    tags:
+      - { name: normalizer, priority: 20 }
+
+  event_scheduler.local_queue:
+    class: Drupal\event_scheduler\LocalEventQueue
+    arguments: [ ]
+
+  event_scheduler.process:
+    class: Drupal\event_scheduler\EventSubscriber\EventsProcessSubscriber
+    arguments: [ '@current_user', '@messenger',
+                 '@event_scheduler.dispatcher', '@event_scheduler.scheduler',
+                 '@event_scheduler.database', '@event_scheduler.utils',
+                 '@datetime.time', '@state' ]
+    tags:
+      - { name: event_subscriber }

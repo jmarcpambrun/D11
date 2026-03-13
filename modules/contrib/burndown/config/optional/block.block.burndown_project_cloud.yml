@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  theme:
+    - bartik
+id: burndown_project_cloud
+theme: bartik
+region: sidebar_first
+weight: -6
+provider: null
+plugin: burndown_project_cloud_block
+settings:
+  id: null
+  label: 'Projects'
+  provider: null
+  label_display: '0'
+visibility:
+  user_role:
+    id: user_role
+    roles:
+      authenticated: authenticated
+      administrator: administrator
+    negate: false
+    context_mapping:
+      user: '@user.current_user_context:current_user'

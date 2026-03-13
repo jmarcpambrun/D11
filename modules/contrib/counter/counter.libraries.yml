@@ -1,0 +1,27 @@
+counter.custom:
+  version: 1.x
+  css:
+    theme:    
+      css/counter.css: {}
+
+counter.dashboard:
+  version: 1.x
+  css:
+    base:    
+      'https://www.w3schools.com/w3css/4/w3.css': { type: external }
+    theme:
+      'https://fonts.googleapis.com/css?family=Raleway': { type: external }
+      'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css': { type: external, minified: true }
+      css/counter-dashboard.css: {}
+
+statistics:
+  version: 1.x
+  js:
+    'https://cdn.jsdelivr.net/npm/chart.js': { type: external }
+    js/statistics.js: { }
+  css:
+    theme:
+      css/statistics.css: { }
+  dependencies:
+    - core/drupal
+    - core/drupalSettings

@@ -1,0 +1,68 @@
+# Schema for the configuration files of the book module.
+
+book.settings:
+  type: config_object
+  label: 'Book settings'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    allowed_types:
+      type: sequence
+      label: 'Allowed content types'
+      sequence:
+        type: mapping
+        mapping:
+          content_type:
+            type: string
+            label: 'Content type machine name'
+            constraints:
+              EntityBundleExists: node
+          child_type:
+            type: string
+            label: 'Allowed child type'
+            constraints:
+              EntityBundleExists: node
+              ExistsIn:
+                selector: '%root.allowed_types'
+                which: values
+                message: "The child page content type <em>@child_type</em> must be one of those selected as an allowed book outline types."
+    book_sort:
+      type: string
+      label: 'Sort order'
+      constraints:
+        Choice:
+          - weight
+          - title
+    truncate_label:
+      type: boolean
+      label: 'Truncate book label'
+    use_parent_selector:
+      type: boolean
+      label: 'Use parent selector'
+    use_alternative_form:
+      type: boolean
+      label: 'Use alternative form (Experimental)'
+
+block.settings.book_navigation:
+  type: block_settings
+  label: 'Book navigation block'
+  mapping:
+    block_mode:
+      type: string
+      label: 'Block display mode'
+      constraints:
+        Choice:
+          - 'all pages'
+          - 'book pages'
+          - 'primary book page'
+          - 'child book pages'
+    show_top_item:
+      type: boolean
+      label: 'Show top level item'
+    use_top_level_title:
+      type: boolean
+      label: 'Use the top-level page title as block title'
+
+entity_reference_selection.book_node_selection:
+  type: entity_reference_selection.default
+  label: 'Book node selection handler settings'

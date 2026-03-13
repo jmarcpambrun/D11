@@ -1,0 +1,4 @@
+text:
+  -
+    value: "<p>Agreement: <a href=\"[message:agreement:entity:url]/revisions/[message:agreement:target_revision_id]/view\">[message:agreement:entity:title]</a><br />\r\nAgreed: [message:agreed]<br />\r\nNotes: [message:notes]</p>\r\n"
+    format: full_html

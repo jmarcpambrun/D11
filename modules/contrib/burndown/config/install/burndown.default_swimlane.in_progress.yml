@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies: {  }
+id: in_progress
+label: 'In Progress'
+sort_order: 1
+show_backlog: false
+show_project_board: true
+show_completed: false

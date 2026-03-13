@@ -1,0 +1,13 @@
+name: ECA GitLab API
+type: module
+description: Integrates the GitLab API with ECA.
+package: ECA
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - eca:eca (^2)
+  - gitlab_api:gitlab_api
+
+# Information added by Drupal.org packaging script on 2024-06-20
+version: '2.3.0-beta1'
+project: 'gitlab_api'
+datestamp: 1718876280

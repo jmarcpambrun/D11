@@ -1,0 +1,196 @@
+quiz.type.*:
+  type: config_entity
+  label: 'Quiz type'
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+
+quiz.result.answer.type.*:
+  type: config_entity
+  label: 'Quiz answer type'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+
+quiz.question.type.*:
+  type: config_entity
+  label: 'Quiz answer type'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+
+quiz.result.type.*:
+  type: config_entity
+  label: 'Quiz result type'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+
+quiz.feedback.type.*:
+  type: config_entity
+  label: 'Quiz feedback type'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    description:
+      type: text
+      label: 'Description'
+    component:
+      type: rules_component
+
+field.field.*.*.*.third_party.quiz:
+  type: mapping
+  label: 'Show before quiz'
+  mapping:
+    show_field:
+      type: boolean
+      label: 'Make this field appear before a quiz.'
+
+quiz.settings:
+  type: config_object
+  label: 'Quiz settings'
+  mapping:
+    revisioning:
+      type: boolean
+      label: 'Revisioning'
+    durod:
+      type: boolean
+      label: Delete results on user delete
+    default_close:
+      type: integer
+      label: Days after today to default close date
+      constraints:
+        Range:
+          min: 0
+    use_passfail:
+      type: boolean
+      label: Use pass/fail
+    remove_partial_quiz_record:
+      type: integer
+      label: Remove partial attempts after X days
+      constraints:
+        Range:
+          min: 0
+    remove_invalid_quiz_record:
+      type: integer
+      label: Remove invalid attempts after X days
+      constraints:
+        Range:
+          min: 0
+    autotitle_length:
+      type: integer
+      label: Default autotitle length
+      constraints:
+        Range:
+          min: 0
+    pager_start:
+      type: integer
+      label: Default pager start length
+      constraints:
+        Range:
+          min: 0
+    pager_siblings:
+      type: integer
+      label: Default pager start siblings
+      constraints:
+        Range:
+          min: 0
+    time_limit_buffer:
+      type: integer
+      label: Seconds buffer for end of quiz
+      constraints:
+        Range:
+          min: 0
+    has_timer:
+      type: boolean
+      label: Enable timer
+    timer_format:
+      type: string
+      label: Timer format
+    admin_review_options_end:
+      type: sequence
+      label: 'After the quiz'
+      constraints:
+        FullyValidatable: ~
+      sequence:
+        type: boolean
+        label: 'Option'
+    admin_review_options_question:
+      type: sequence
+      label: 'After the question'
+      constraints:
+        FullyValidatable: ~
+      sequence:
+        type: boolean
+        label: 'Option'
+    override_admin_feedback:
+      type: boolean
+      label: 'Override administrator review options'
+    \Drupal\quiz\Util\QuizUtil::getQuizName():
+      type: string
+      label: 'Display name'
+
+quiz.defaults:
+  type: config_object
+  mapping:
+    backwards_navigation:
+      type: boolean
+      label: Allow backwards navigation
+    repeat_until_correct:
+      type: boolean
+      label: Repeat until correct
+    show_attempt_stats:
+      type: boolean
+      label: Show attempt statistics
+    allow_skipping:
+      type: boolean
+      label: Allow skipping
+    allow_resume:
+      type: boolean
+      label: Allow resume
+    allow_jumping:
+      type: boolean
+      label: Allow jumping
+    allow_change:
+      type: boolean
+      label: Allow change
+    allow_change_blank:
+      type: boolean
+      label: Allow change to be blank
+    show_passed:
+      type: boolean
+      label: Show passed
+    mark_doubtful:
+      type: boolean
+      label: Mark as doubtful
+    takes:
+      type: integer
+      label: Takes

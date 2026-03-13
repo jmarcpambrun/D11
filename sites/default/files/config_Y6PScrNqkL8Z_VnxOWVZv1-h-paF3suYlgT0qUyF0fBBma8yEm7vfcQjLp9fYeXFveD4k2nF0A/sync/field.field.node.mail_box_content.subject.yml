@@ -1,0 +1,21 @@
+uuid: 4502c0f8-d759-499b-b40c-3c6eb8b2dc00
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.subject
+    - node.type.mail_box_content
+_core:
+  default_config_hash: dkP29slu0R_BZiQCVdkpjpZAzCCoUpTeZgGAY8Aqy2Y
+id: node.mail_box_content.subject
+field_name: subject
+entity_type: node
+bundle: mail_box_content
+label: Subject
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

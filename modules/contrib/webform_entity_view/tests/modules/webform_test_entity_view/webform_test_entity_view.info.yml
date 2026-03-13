@@ -1,0 +1,15 @@
+name: 'Webform Entity View test'
+type: module
+description: 'Support module for webform entity view testing.'
+package: 'Webform Testing'
+core_version_requirement: ^10.1 || ^11
+dependencies:
+  - 'drupal:node'
+  - 'drupal:user'
+  - 'webform:webform'
+  - 'webform_entity_view:webform_entity_view'
+
+# Information added by Drupal.org packaging script on 2025-05-12
+version: '1.0.4'
+project: 'webform_entity_view'
+datestamp: 1747060996

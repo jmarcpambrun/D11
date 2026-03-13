@@ -1,0 +1,16 @@
+# File: self.site.yml
+live:
+  host: ssh.cluster031.hosting.ovh.net
+  user: drupbut
+  ssh:
+     options: '-p 22'
+  root: /home/drupal/www/sites/default
+  identityFile: /home/drupbut/www/.ssh/id_rsa
+  uri: http://drupbuilder.org
+  os: Linux
+stage:
+  user: dpjmarc.pambrun
+  root: sites/default
+  uri: http://localhost/drupal-10.2.1
+  os: Windows
+ 

@@ -1,0 +1,57 @@
+uuid: adb40caa-8ed9-4110-8b4c-2eb6bf4e8288
+langcode: fr
+status: false
+dependencies:
+  module:
+    - eca_content
+    - maestro_eca_task
+    - node
+_core:
+  default_config_hash: TIBAlQkJxsALFVehAjZHlkqLZaLInWZQUBmmlZ1rpik
+id: process_maestro_eca
+modeller: bpmn_io
+label: 'Maestro Example: Publish Content'
+version: '1'
+weight: 0
+events:
+  Event_1tdpg98:
+    plugin: 'content_entity:custom'
+    label: 'Custom Event with Event ID of maestro_example'
+    configuration:
+      event_id: maestro_example
+    successors:
+      -
+        id: Activity_0hygmnl
+        condition: ''
+      -
+        id: Activity_0movz22
+        condition: ''
+conditions: {  }
+gateways: {  }
+actions:
+  Activity_0hygmnl:
+    plugin: 'entity:publish_action:node'
+    label: 'Publish Content Entity'
+    configuration:
+      object: entity
+    successors: {  }
+  Activity_0movz22:
+    plugin: maestro_eca_spawn_process
+    label: 'Spawn Maestro Process'
+    configuration:
+      maestro_eca_spawn_template: simple_parallel_to_serial
+      maestro_eca_entity_identifier: node_submission
+      maestro_eca_process_id_token: maestro_process_id
+      object: entity
+    successors:
+      -
+        id: Activity_0ny3o2k
+        condition: ''
+  Activity_0ny3o2k:
+    plugin: eca_write_log_message
+    label: 'Log Process ID'
+    configuration:
+      channel: maestro_eca_example
+      severity: '6'
+      message: 'Process ID: [maestro_process_id]'
+    successors: {  }

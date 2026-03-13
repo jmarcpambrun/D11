@@ -1,0 +1,6 @@
+key_value:
+  label: 'Key / Value'
+  description: 'Field to store key / value pairs.'
+  weight: 0
+  libraries:
+    - key_value_field/keyvaluefield-icon

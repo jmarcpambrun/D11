@@ -1,0 +1,29 @@
+uuid: 890695dd-9c7b-4562-87cd-11b81b6a0d9e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.attachment
+    - node.type.mail_box_content
+  module:
+    - file
+_core:
+  default_config_hash: F5e-Tc1h3pHKuRPfqviQs0wU9gYL7ByCrtCHXv2aDmA
+id: node.mail_box_content.attachment
+field_name: attachment
+entity_type: node
+bundle: mail_box_content
+label: 'Élément joint'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: '[date:custom:Y]-[date:custom:m]'
+  file_extensions: txt
+  max_filesize: ''
+  description_field: false
+field_type: file

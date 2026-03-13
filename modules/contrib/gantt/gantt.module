@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Gantt module.
+ */
+
+/**
+ * Implements hook_theme().
+ *
+ * Call the base hook from Paragraphs to allow preprocess hooks to work.
+ */
+function gantt_theme() {
+
+  // Store gantt preprocess theme functions in a separate .inc file.
+  \Drupal::moduleHandler()->loadInclude('gantt', 'inc', 'gantt.theme');
+
+  return [
+    'views_view_gantt' => [
+      'file' => 'gantt.theme.inc',
+    ],
+  ];
+}

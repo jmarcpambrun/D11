@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - quiz_directions
+id: directions
+label: 'Directions question'

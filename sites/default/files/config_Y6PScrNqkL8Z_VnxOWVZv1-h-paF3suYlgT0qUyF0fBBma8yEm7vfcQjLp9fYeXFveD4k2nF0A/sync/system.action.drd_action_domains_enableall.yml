@@ -1,0 +1,14 @@
+uuid: 48f41448-9ecc-47ab-9ea1-91b5cd5a5ff1
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: 9tujCmwdak1w5C8NMP0auZPSRIPqzwY_Rhr_OyQo58M
+id: drd_action_domains_enableall
+label: 'Enable all domains'
+type: drd_core
+plugin: drd_action_domains_enableall
+configuration:
+  terms: {  }

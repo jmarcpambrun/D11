@@ -1,0 +1,28 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+  Drupal\symfony_mailer\MailerPlusInterface:
+    class: Drupal\symfony_mailer\MailerPlus
+    tags:
+      - { name: service_collector, tag: symfony_mailer.add_processor, call: addProcessor }
+  Drupal\symfony_mailer\MailerLookupInterface:
+    class: Drupal\symfony_mailer\MailerLookup
+    parent: autowire_default_plugin_manager
+    tag: plugin_manager_cache_clear
+
+  # Mailer plugins.
+  Drupal\symfony_mailer\Component\CommerceOrderMailerInterface:
+    class: Drupal\symfony_mailer\Component\CommerceOrderMailer
+  Drupal\symfony_mailer\Component\ContactMailerInterface:
+    class: Drupal\symfony_mailer\Component\ContactMailer
+  Drupal\symfony_mailer\Component\SimplenewsNewsletterMailerInterface:
+    class: Drupal\symfony_mailer\Component\SimplenewsNewsletterMailer
+  Drupal\symfony_mailer\Component\SimplenewsSubscriberMailerInterface:
+    class: Drupal\symfony_mailer\Component\SimplenewsSubscriberMailer
+  Drupal\symfony_mailer\Component\UpdateMailerInterface:
+    class: Drupal\symfony_mailer\Component\UpdateMailer
+  Drupal\symfony_mailer\Component\UserMailerInterface:
+    class: Drupal\symfony_mailer\Component\UserMailer
+  Drupal\symfony_mailer\Component\VerifyMailerInterface:
+    class: Drupal\symfony_mailer\Component\VerifyMailer

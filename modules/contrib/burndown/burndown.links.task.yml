@@ -1,0 +1,91 @@
+# Project routing definition
+
+entity.burndown_project.canonical:
+  route_name: entity.burndown_project.canonical
+  base_route: entity.burndown_project.canonical
+  title: 'View'
+
+entity.burndown_project.edit_form:
+  route_name: entity.burndown_project.edit_form
+  base_route: entity.burndown_project.canonical
+  title: 'Edit'
+
+entity.burndown_project.version_history:
+  route_name: entity.burndown_project.version_history
+  base_route: entity.burndown_project.canonical
+  title: 'Revisions'
+
+entity.burndown_project.delete_form:
+  route_name:  entity.burndown_project.delete_form
+  base_route:  entity.burndown_project.canonical
+  title: Delete
+  weight: 10
+# Task routing definition
+
+entity.burndown_task.canonical:
+  route_name: entity.burndown_task.canonical
+  base_route: entity.burndown_task.canonical
+  title: 'View'
+
+entity.burndown_task.edit_form:
+  route_name: entity.burndown_task.edit_form
+  base_route: entity.burndown_task.canonical
+  title: 'Edit'
+
+entity.burndown_task.version_history:
+  route_name: entity.burndown_task.version_history
+  base_route: entity.burndown_task.canonical
+  title: 'Revisions'
+
+entity.burndown_task.delete_form:
+  route_name:  entity.burndown_task.delete_form
+  base_route:  entity.burndown_task.canonical
+  title: Delete
+  weight: 10
+# Swimlane routing definition
+burndown_swimlane.settings_tab:
+  route_name: burndown_swimlane.settings
+  title: 'Settings'
+  base_route: burndown_swimlane.settings
+
+entity.burndown_swimlane.canonical:
+  route_name: entity.burndown_swimlane.canonical
+  base_route: entity.burndown_swimlane.canonical
+  title: 'View'
+
+entity.burndown_swimlane.edit_form:
+  route_name: entity.burndown_swimlane.edit_form
+  base_route: entity.burndown_swimlane.canonical
+  title: 'Edit'
+
+entity.burndown_swimlane.delete_form:
+  route_name:  entity.burndown_swimlane.delete_form
+  base_route:  entity.burndown_swimlane.canonical
+  title: Delete
+  weight: 10
+# Sprint routing definition
+burndown_sprint.settings_tab:
+  route_name: burndown_sprint.settings
+  title: 'Settings'
+  base_route: burndown_sprint.settings
+
+entity.burndown_sprint.canonical:
+  route_name: entity.burndown_sprint.canonical
+  base_route: entity.burndown_sprint.canonical
+  title: 'View'
+
+entity.burndown_sprint.edit_form:
+  route_name: entity.burndown_sprint.edit_form
+  base_route: entity.burndown_sprint.canonical
+  title: 'Edit'
+
+entity.burndown_sprint.version_history:
+  route_name: entity.burndown_sprint.version_history
+  base_route: entity.burndown_sprint.canonical
+  title: 'Revisions'
+
+entity.burndown_sprint.delete_form:
+  route_name:  entity.burndown_sprint.delete_form
+  base_route:  entity.burndown_sprint.canonical
+  title: Delete
+  weight: 10

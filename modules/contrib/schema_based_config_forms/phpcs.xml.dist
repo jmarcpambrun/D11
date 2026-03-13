@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="schema_based_config_forms">
+  <file>.</file>
+  <arg name="extensions" value="php,module,inc,install,test,profile,theme,css,info,txt,md,yml"/>
+
+  <rule ref="Drupal"/>
+  <rule ref="DrupalPractice"/>
+
+  <rule ref="Drupal.Arrays.Array">
+    <properties>
+      <property name="lineLimit" value="120" />
+    </properties>
+  </rule>
+
+  <rule ref="Drupal.Files.LineLength">
+    <properties>
+      <property name="lineLimit" value="120" />
+    </properties>
+  </rule>
+</ruleset>

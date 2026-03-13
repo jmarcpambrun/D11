@@ -1,0 +1,24 @@
+uuid: 213f0c74-9b79-4b57-8c40-5bc04109a71b
+langcode: fr
+status: true
+dependencies:
+  config:
+    - block_content.type.bloc_notes_perso
+    - field.storage.block_content.field_date_d_echeance
+  module:
+    - datetime
+id: block_content.bloc_notes_perso.field_date_d_echeance
+field_name: field_date_d_echeance
+entity_type: block_content
+bundle: bloc_notes_perso
+label: "Date d'échéance"
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    default_date_type: relative
+    default_date: '+3'
+default_value_callback: ''
+settings: {  }
+field_type: datetime

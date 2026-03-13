@@ -1,0 +1,5 @@
+symfony_mailer.config:
+  title: 'Mailer Plus'
+  parent: system.admin_config_system
+  description: 'Mailer verification'
+  route_name: symfony_mailer.verify

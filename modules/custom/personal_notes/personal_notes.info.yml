@@ -1,0 +1,5 @@
+name: Personal Notes
+description: Allow registered users to create and delete notes to themselves which display on a block.
+core_version_requirement: ^9 || ^10 || ^11
+package: Custom
+type: module

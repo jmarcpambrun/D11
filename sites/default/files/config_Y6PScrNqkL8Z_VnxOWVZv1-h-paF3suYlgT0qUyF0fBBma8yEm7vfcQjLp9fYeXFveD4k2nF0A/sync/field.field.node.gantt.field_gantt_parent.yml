@@ -1,0 +1,25 @@
+uuid: fd730413-74d1-4061-97dc-5c2984174a07
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_parent
+    - node.type.gantt
+_core:
+  default_config_hash: DLkLBGFyhGUs1MiuJZvko10HIItdEVrWzH6WJGFhMY0
+id: node.gantt.field_gantt_parent
+field_name: field_gantt_parent
+entity_type: node
+bundle: gantt
+label: Parent
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

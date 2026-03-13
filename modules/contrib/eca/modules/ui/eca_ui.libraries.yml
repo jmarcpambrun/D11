@@ -1,0 +1,4 @@
+debug:
+  css:
+    component:
+      css/eca_ui_debug.css: {}

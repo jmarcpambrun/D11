@@ -1,0 +1,226 @@
+<div class="sidebar">
+  <div class="sidebar-body">
+    <label class="sidebar-label">Mailboxes</label>
+    <nav class="nav flex-column mb-5">
+      {% if content.mailbox.imap.mailboxes %}
+        {% for key, box in content.mailbox.imap.mailboxes %}
+          {% if content.mailbox.imap.active_box[key] %}
+            <a href="#" box-path="{{ box }}" data-name="{{ key }}" class="nav-link active mailboxes">
+              <i class="ri-inbox-line"></i>
+              <span>{{ key }}</span>
+              <small>{{ content.mailbox.imap.mailboxes_statuses[key].messages }}</small>
+            </a>
+          {% else %}
+            <a href="#" box-path="{{ box }}" data-name="{{ key }}" class="nav-link mailboxes">
+              <i class="{{ box_icon(key) }}"></i>
+              <span>{{ key }}</span>
+              <small>{{ content.mailbox.imap.mailboxes_statuses[key].messages }}</small>
+            </a>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </nav>
+
+    <label class="sidebar-label">Labels</label>
+    <nav class="nav flex-column mb-5">
+      <a href="" class="nav-link"><i class="ri-price-tag-line"></i> <span>Promotions</span></a>
+      <a href="" class="nav-link"><i class="ri-price-tag-line"></i> <span>Social</span></a>
+      <a href="" class="nav-link"><i class="ri-price-tag-line"></i> <span>Updates</span></a>
+    </nav>
+
+    <label class="sidebar-label">Background tasks</label>
+    <nav class="nav flex-column mb-5" id="background-tasks-triggers">
+      <a href="" class="nav-link" data-action="refresh-content"><i class="ri-play-circle-line"></i><span>Reload Content</span></a>
+      <a href="" class="nav-link" data-action="refresh-mails"><i class="ri-play-circle-line"></i><span>Reload Mailboxes</span></a>
+    </nav>
+    <label class="sidebar-label">Ongoing tasks</label>
+    <nav class="nav flex-column mb-5" id="ongoing-background-tasks">
+    </nav>
+  </div><!-- sidebar-body -->
+</div><!-- sidebar -->
+
+<div class="mailbox">
+  <div class="mailbox-header">
+    <a href="#" class="mailbox-menu"><i class="ri-menu-2-fill"></i></a>
+    <div class="mailbox-search">
+      <i class="ri-search-line"></i>
+      <input type="search" class="form-control" placeholder="Search mail">
+    </div><!-- mailbox-search -->
+    <a href="#" class="mail-avatar"><span>{{ content.mailbox.connection.title|slice(0,1)|upper }}</span></a>
+  </div><!-- mailbox-header -->
+
+  <div class="mailbox-option">
+    <div class="mailbox-select dropdown">
+      <a href="" class="dropdown-check">
+        <i class="ri-checkbox-blank-line"></i>
+        <i class="ri-checkbox-fill"></i>
+        <i class="ri-checkbox-indeterminate-fill"></i>
+      </a>
+      <a href="" class="dropdown-link" data-bs-toggle="dropdown"><i class="ri-arrow-down-s-line"></i></a>
+      <div class="dropdown-menu">
+        <a href="" class="dropdown-item all"><i class="ri-check-fill"></i> All</a>
+        <a href="" class="dropdown-item none active"><i class="ri-check-line"></i> None</a>
+        <a href="" class="dropdown-item read"><i class="ri-check-line"></i> Read</a>
+        <a href="" class="dropdown-item unread"><i class="ri-check-line"></i> Unread</a>
+        <a href="" class="dropdown-item starred"><i class="ri-check-line"></i> Starred</a>
+        <a href="" class="dropdown-item custom"><i class="ri-check-line"></i> Custom</a>
+      </div><!-- dropdown-menu -->
+    </div><!-- mailbox-select -->
+
+    {% if(content.mailbox.imap.range) %}
+      {% for range_key, range_data in content.mailbox.imap.range %}
+        {% if content.mailbox.imap.active_box[range_key] %}
+          <div class="ms-auto d-flex align-items-center navigation-mailbox " data-pager-name="{{ range_key }}">
+            <span>1-20 of {{ range_data.pages }}</span>
+            <a href="" class="pager prev"><i class="ri-arrow-left-s-line"></i></a>
+            <a href="" class="pager next"><i class="ri-arrow-right-s-line"></i></a>
+            <div data-pager="{{ range_key }}" class="d-none">
+              {{ json(range_data) }}
+            </div>
+          </div>
+        {% else %}
+          <div class="ms-auto d-flex align-items-center d-none navigation-mailbox " data-pager-name="{{ range_key }}">
+            <span>1-20 of {{ range_data.pages }}</span>
+            <a href="" class="pager prev"><i class="ri-arrow-left-s-line"></i></a>
+            <a href="" class="pager next"><i class="ri-arrow-right-s-line"></i></a>
+            <div data-pager="{{ range_key }}" class="d-none">
+              {{ json(range_data) }}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div><!-- mailbox-option -->
+  {% if content.mailbox.imap.headers_content %}
+
+    {% for box_key, content_box in content.mailbox.imap.headers_content  %}
+      {% if content.mailbox.imap.active_box[box_key] %}
+
+        <ul id="mailGroup" data-name="{{ box_key }}" class="mail-group mailboxes-headers">
+          {% for header in content_box %}
+            {% if   is_unseen(header.Unseen) or is_recent(header.Recent) %}
+              <li class="mail-item" data-message="{{ header.Msgno }}">
+                <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                <div class="mail-item-body">
+                  <div class="d-flex align-items-center">
+                    <span class="mail-sender">{{ header.from_name }}</span>
+                    <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                    {% if  is_flagged(header.Flagged) %}
+                      <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                    {% else %}
+                      <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                    {% endif %}
+                  </div>
+                  <h6 class="mail-subject">{{ header.Subject }}</h6>
+                  <p class="mail-text">{{ header.from_mail }}</p>
+                </div><!-- mail-item-body -->
+              </li>
+            {% else %}
+              <li class="mail-item unread" data-message="{{ header.Msgno }}">
+                <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                <div class="mail-item-body">
+                  <div class="d-flex align-items-center">
+                    <span class="mail-sender">{{ header.from_name }}</span>
+                    <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                    {% if is_flagged(header.Flagged) %}
+                      <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                    {% else %}
+                      <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                    {% endif %}
+                  </div>
+                  <h6 class="mail-subject">{{ header.Subject }}</h6>
+                  <p class="mail-text">{{ header.from_mail }}</p>
+                </div><!-- mail-item-body -->
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul><!-- mail-group -->
+
+      {% else %}
+        <ul data-name="{{ box_key }}" class="mail-group mailboxes-headers d-none">
+          {% if content_box %}
+            {% for header in content_box %}
+
+              {% if  is_unseen(header.Unseen) or is_recent(header.Recent) %}
+                <li class="mail-item" data-message="{{ header.Msgno }}">
+                  <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                  <div class="mail-item-body">
+                    <div class="d-flex align-items-center">
+                      <span class="mail-sender">{{ header.from_name }}</span>
+                      <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                      {% if  is_flagged(header.Flagged) %}
+                        <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% else %}
+                        <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% endif %}
+                    </div>
+                    <h6 class="mail-subject">{{ header.Subject }}</h6>
+                    <p class="mail-text">{{ header.from_mail }}</p>
+                  </div><!-- mail-item-body -->
+                </li>
+              {% else %}
+                <li class="mail-item unread" data-message="{{ header.Msgno }}">
+                  <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+                  <div class="mail-item-body">
+                    <div class="d-flex align-items-center">
+                      <span class="mail-sender">{{ header.from_mail }}</span>
+                      <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+                      {% if is_flagged(header.Flagged) %}
+                        <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% else %}
+                        <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+                      {% endif %}
+                    </div>
+                    <h6 class="mail-subject">{{ header.Subject }}</h6>
+                    <p class="mail-text">{{ header.from_mail }}</p>
+                  </div><!-- mail-item-body -->
+                </li>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </ul><!-- mail-group -->
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+</div><!-- mailbox -->
+
+<div id="mailContent" class="mailcontent">
+  <div class="mailcontent-placeholder">
+    <i class="ri-mail-send-line"></i>
+    <h5>No email has been selected</h5>
+  </div><!-- mailcontent-placeholder -->
+</div><!-- mailcontent -->
+
+<a href="" class="menu-compose"><i class="ri-pencil-line"></i></a>
+
+<div class="compose d-none" id="compose-mail-form">
+  <div class="compose-content">
+    <div class="compose-header">
+      <h6 class="compose-title">New Message</h6>
+      <nav class="nav">
+        <a href="#" class="nav-link nav-link-minimize"><i class="ri-subtract-line"></i></a>
+        <a href="#" class="nav-link nav-link-fullscreen">
+          <i class="ri-fullscreen-line"></i>
+          <i class="ri-fullscreen-exit-line"></i>
+        </a>
+        <a href="#" class="nav-link nav-link-close"><i class="ri-close-line"></i></a>
+      </nav>
+    </div><!-- compose-header -->
+    <div class="compose-body">
+      <div class="form-group"><input type="text" class="form-control" placeholder="Enter receipient's email address"></div>
+      <div class="form-group"><input type="text" class="form-control" placeholder="Enter subject"></div>
+      <div class="form-group"><textarea class="form-control" rows="10" id="editor"></textarea></div>
+    </div><!-- compose-body -->
+    <nav class="nav nav-toolbar">
+      <a href="" class="nav-link"><i class="ri-attachment-2"></i></a>
+    </nav><!-- nav-toolbar -->
+    <div class="compose-footer">
+      <button type="submit" class="btn btn-primary btn-icontext"><i class="ri-send-plane-fill me-2"></i> Send</button>
+      <button class="btn btn-white btn-icon"><i class="ri-delete-bin-line"></i></button>
+    </div><!-- compose-footer -->
+  </div><!-- compose-content -->
+</div><!-- compose -->
+
+<div class="backdrop"></div>
+<div id="toast" class="toast"></div>

@@ -1,0 +1,23 @@
+{% if boards is not empty %}
+
+<h3>Boards for {{shortcode }}</h3>
+
+<ul>
+{% for board in boards %}
+  <li>{{ board }}</li>
+{% endfor %}
+</ul>
+
+{% endif %}
+
+{% if links is not empty %}
+
+<h3>Useful Links</h3>
+
+<ul>
+{% for link in links %}
+  <li>{{ link }}</li>
+{% endfor %}
+</ul>
+
+{% endif %}

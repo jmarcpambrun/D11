@@ -1,0 +1,15 @@
+_core:
+  default_config_hash: yTxtFqBHnEWxQswuWvkjE8mKw2t8oKuCL1q8KnfHuGE
+langcode: fr
+uuid: 38b57336-6938-4093-b6a2-4bd93640bc4c
+name: 'Drup Builder'
+mail: dpalicepeio@drupbuilder.org
+slogan: 'Drupal Builder for beginners'
+page:
+  403: ''
+  404: ''
+  front: /node
+admin_compact_mode: false
+weight_select_max: 100
+default_langcode: fr
+mail_notification: ''

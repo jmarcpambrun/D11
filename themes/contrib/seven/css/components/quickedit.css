@@ -1,0 +1,62 @@
+/**
+ * @file
+ * Styles for the Quick Edit's entity toolbar.
+ */
+
+/**
+ * The Seven style guide prescribes softer corners.
+ */
+.quickedit-toolbar-container > .quickedit-toolbar-content,
+.quickedit-toolbar-container > .quickedit-toolbar-lining {
+  border-radius: 4px;
+}
+
+.quickedit-button {
+  border-radius: 3px;
+  /**
+   * The entity toolbar's "Save" button must be styled like a primary button.
+   */
+  &.action-save,
+  &.action-saving {
+    margin-top: 2px;
+    color: #fff;
+    border-color: #1e5c90;
+    background-image: -webkit-linear-gradient(top, #007bc6, #0071b8);
+    background-image: linear-gradient(to bottom, #007bc6, #0071b8);
+    text-shadow: 0 1px hsl(0, 0%, 0%, 0.5);
+    font-weight: 700;
+    -webkit-font-smoothing: antialiased;
+  }
+  &.action-save:hover,
+  &.action-save:focus,
+  &.action-saving:hover,
+  &.action-saving:focus {
+    color: #fff;
+    border-color: #1e5c90;
+    background-color: #2369a6;
+    background-image: -webkit-linear-gradient(top, #0c97ed, #1f86c7);
+    background-image: linear-gradient(to bottom, #0c97ed, #1f86c7);
+  }
+  &.action-save:hover,
+  &.action-save:focus,
+  &.action-saving:hover,
+  &.action-saving:focus {
+    box-shadow: 0 1px 2px hsl(203, 10%, 10%, 0.25);
+  }
+  &.action-save:active,
+  &.action-saving:active {
+    border-color: #144b78;
+    background-image: -webkit-linear-gradient(top, #08639b, #0071b8);
+    background-image: linear-gradient(to bottom, #08639b, #0071b8);
+    box-shadow: inset 0 1px 3px hsl(0, 0%, 0%, 0.2);
+  }
+}
+
+/**
+ * The entity toolbar's "Save" button's top margin shifts both buttons two
+ * pixels down; we must compensate for that to achieve vertically centered
+ * positioning.
+ */
+.quickedit .icon-close::before {
+  top: 8px;
+}

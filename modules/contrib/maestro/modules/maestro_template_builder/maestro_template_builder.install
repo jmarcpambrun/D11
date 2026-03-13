@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * Maestro Template Builder install file
+ */
+
+ /**
+ * Implements hook_install().
+ */
+function maestro_template_builder_install() {
+  // Set the default Maestro template builder pan/zoom save delay value.
+  \Drupal::service('config.factory')
+    ->getEditable('maestro_template_builder.settings')
+    ->set('maestro_template_builder_pan_zoom_delay', 1500)
+    ->save();
+}
+
+/**
+ * Update 11000 - Remove original Template Builder settings and prepopulate new version settings.
+ */
+function maestro_template_builder_update_11000() {
+  $config = \Drupal::config('maestro_template_builder.settings');
+
+  // Remove the old settings
+  \Drupal::service('config.factory')
+    ->getEditable('maestro_template_builder.settings')
+    ->clear('maestro_template_builder_local_library')
+    ->save();
+
+  \Drupal::service('config.factory')
+    ->getEditable('maestro_template_builder.settings')
+    ->clear('maestro_template_builder_remote_library_location')
+    ->save();
+
+  // Preset the new value for the pan/zoom save delay time
+  \Drupal::service('config.factory')
+    ->getEditable('maestro_template_builder.settings')
+    ->set('maestro_template_builder_pan_zoom_delay', 1500)
+    ->save();
+}

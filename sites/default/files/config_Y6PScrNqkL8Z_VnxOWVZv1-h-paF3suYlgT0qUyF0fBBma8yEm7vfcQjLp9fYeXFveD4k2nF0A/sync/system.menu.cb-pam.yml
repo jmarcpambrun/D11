@@ -1,0 +1,8 @@
+uuid: 335c27a4-5fc6-4cc8-82b3-d022b8157b30
+langcode: fr
+status: true
+dependencies: {  }
+id: cb-pam
+label: 'CV PAMBRUN Jean-Marc'
+description: 'CV PAMBRUN Jean-Marc'
+locked: false

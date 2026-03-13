@@ -1,0 +1,35 @@
+/**
+ * @file
+ * Styles for collapsible details.
+ *
+ * @see collapse.js
+ */
+
+.details {
+  margin-top: 0;
+  margin-bottom: 20px;
+  border: 1px solid #bfbfbf;
+  background-color: #fcfcfa;
+}
+
+.details__summary {
+  cursor: pointer;
+  color: #0074bd;
+  text-shadow: 0 1px 0 white;
+  &:hover,
+  &:focus {
+    color: #004f80;
+  }
+}
+
+.details[open] > .details__summary {
+  color: #004f80;
+}
+
+.details__wrapper {
+  padding: 1em 1.5em 1em 1.5em;
+}
+
+.details__description {
+  padding-bottom: 1.2em;
+}

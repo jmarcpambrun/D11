@@ -1,0 +1,45 @@
+{% if data.users %}
+<div id="user_list" class="row">
+
+  <h4>Filter Users:</h4>
+
+  {% for user in data.users %}
+  <div class="assigned_to user_circle circle {{ user.active }}" data-user="{{ user.id }}">
+  {% if user.assigned_to_image %}
+	<img src="{{ user.assigned_to_image }}" alt="Assigned to {{ user.assigned_to }}" class="circle" />
+  {% else %}
+	<span class="letter-{{ user.assigned_to_first_letter }} circle">{{ user.assigned_to_first_letter }}</span>
+  {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="reset button">
+    Reset
+  </div>
+
+</div>
+{% endif %}
+
+<div id="board" class="row">
+
+  {% for swimlane in data.swimlanes %}
+    <div class="col swimlane">
+      <span class="label">{{ swimlane.swimlane_name }}</span>
+      <span class="counter swimlane-{{ swimlane.swimlane_id }}-counter"></span>
+
+      <div
+        class="list-group swimlane-{{ swimlane.swimlane_id }}"
+        data-swimlane-id="{{ swimlane.swimlane_id }}">
+
+        {% for task in swimlane.tasks %}
+
+          {{ task }}
+
+        {% endfor %}
+      </div>
+      
+    </div>
+
+  {% endfor %}
+
+</div>

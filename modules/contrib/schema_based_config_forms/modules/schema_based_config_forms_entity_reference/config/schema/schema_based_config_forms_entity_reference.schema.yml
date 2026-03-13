@@ -1,0 +1,7 @@
+entity_reference_id:
+  type: string
+  label: Entity Reference ID
+
+entity_reference_id_int:
+  type: integer
+  label: Entity Reference ID (Integer)

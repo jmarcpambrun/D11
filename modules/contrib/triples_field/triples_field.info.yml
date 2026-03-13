@@ -1,0 +1,10 @@
+name: Triple field
+description: Provides a field type with three separate sub-fields.
+package: Field types
+core_version_requirement: ^10 || ^11
+type: module
+
+# Information added by Drupal.org packaging script on 2024-06-10
+version: '1.0.10'
+project: 'triples_field'
+datestamp: 1718026879

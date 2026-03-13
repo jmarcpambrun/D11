@@ -1,0 +1,91 @@
+uuid: 13985fa3-4ac3-49a7-8d56-9941e247ea1a
+langcode: fr
+status: true
+dependencies:
+  config:
+    - eca.eca.process_ormgqa9
+id: process_ormgqa9
+label: Mail_sent_by_admin
+tags:
+  - untagged
+documentation: ''
+filename: ''
+modeldata: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:qa="http://some-company/schema/bpmn/qa" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+    <bpmn2:process id="Process_oRmGQA9" name="Mail_sent_by_admin" isExecutable="true" camunda:versionTag="v1">
+      <bpmn2:startEvent id="Event_10z9q5f" name="cron" camunda:modelerTemplate="org.drupal.event.eca_base:eca_cron">
+        <bpmn2:extensionElements>
+          <camunda:field name="frequency">
+            <camunda:string>* * * * *</camunda:string>
+          </camunda:field>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="eca_base:eca_cron" />
+          </camunda:properties>
+        </bpmn2:extensionElements>
+        <bpmn2:outgoing>Flow_1lp0xlj</bpmn2:outgoing>
+      </bpmn2:startEvent>
+      <bpmn2:task id="Activity_17ijm1y" name="mail" camunda:modelerTemplate="org.drupal.action.action_send_email_action">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="action_send_email_action" />
+          </camunda:properties>
+          <camunda:field name="recipient">
+            <camunda:string>dpalicepeio@drupbuilder.org</camunda:string>
+          </camunda:field>
+          <camunda:field name="subject">
+            <camunda:string>Test Fonctionnement Mail</camunda:string>
+          </camunda:field>
+          <camunda:field name="message">
+            <camunda:string>Le mail envoyé à l'admin est il bien recu</camunda:string>
+          </camunda:field>
+          <camunda:field name="replace_tokens">
+            <camunda:string>no</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:incoming>Flow_0vq1yyu</bpmn2:incoming>
+      </bpmn2:task>
+      <bpmn2:sequenceFlow id="Flow_1lp0xlj" sourceRef="Event_10z9q5f" targetRef="Activity_174ei80" />
+      <bpmn2:task id="Activity_174ei80" name="switch user" camunda:modelerTemplate="org.drupal.action.eca_switch_account">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="eca_switch_account" />
+          </camunda:properties>
+          <camunda:field name="user_id">
+            <camunda:string>1</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:incoming>Flow_1lp0xlj</bpmn2:incoming>
+        <bpmn2:outgoing>Flow_0vq1yyu</bpmn2:outgoing>
+      </bpmn2:task>
+      <bpmn2:sequenceFlow id="Flow_0vq1yyu" sourceRef="Activity_174ei80" targetRef="Activity_17ijm1y" />
+    </bpmn2:process>
+    <bpmndi:BPMNDiagram id="sid-dd53c14e-d326-45ed-b694-d5b209050abd">
+      <bpmndi:BPMNPlane id="sid-c3b1ac40-e0db-477d-b861-6eaf6c124dd9" bpmnElement="Process_oRmGQA9">
+        <bpmndi:BPMNShape id="Event_1gqx87a_di" bpmnElement="Event_10z9q5f">
+          <dc:Bounds x="272" y="142" width="36" height="36" />
+          <bpmndi:BPMNLabel>
+            <dc:Bounds x="278" y="185" width="25" height="14" />
+          </bpmndi:BPMNLabel>
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNShape id="Activity_17ijm1y_di" bpmnElement="Activity_17ijm1y">
+          <dc:Bounds x="510" y="130" width="100" height="80" />
+          <bpmndi:BPMNLabel />
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNShape id="Activity_174ei80_di" bpmnElement="Activity_174ei80">
+          <dc:Bounds x="370" y="130" width="100" height="80" />
+          <bpmndi:BPMNLabel />
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNEdge id="Flow_1lp0xlj_di" bpmnElement="Flow_1lp0xlj">
+          <di:waypoint x="308" y="160" />
+          <di:waypoint x="339" y="160" />
+          <di:waypoint x="339" y="170" />
+          <di:waypoint x="370" y="170" />
+        </bpmndi:BPMNEdge>
+        <bpmndi:BPMNEdge id="Flow_0vq1yyu_di" bpmnElement="Flow_0vq1yyu">
+          <di:waypoint x="470" y="170" />
+          <di:waypoint x="510" y="170" />
+        </bpmndi:BPMNEdge>
+      </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+  </bpmn2:definitions>

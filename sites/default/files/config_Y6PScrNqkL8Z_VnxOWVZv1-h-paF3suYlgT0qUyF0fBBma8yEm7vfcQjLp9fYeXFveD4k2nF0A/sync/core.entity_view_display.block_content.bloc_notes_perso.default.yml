@@ -1,0 +1,56 @@
+uuid: ab851b5d-30d4-4b07-a113-244914ca580b
+langcode: fr
+status: true
+dependencies:
+  config:
+    - block_content.type.bloc_notes_perso
+    - field.field.block_content.bloc_notes_perso.body
+    - field.field.block_content.bloc_notes_perso.field_categorie_note
+    - field.field.block_content.bloc_notes_perso.field_date_d_echeance
+    - field.field.block_content.bloc_notes_perso.field_date_de_creation
+  module:
+    - datetime
+    - text
+id: block_content.bloc_notes_perso.default
+targetEntityType: block_content
+bundle: bloc_notes_perso
+mode: default
+content:
+  body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_categorie_note:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_date_d_echeance:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_date_de_creation:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  search_api_excerpt: true

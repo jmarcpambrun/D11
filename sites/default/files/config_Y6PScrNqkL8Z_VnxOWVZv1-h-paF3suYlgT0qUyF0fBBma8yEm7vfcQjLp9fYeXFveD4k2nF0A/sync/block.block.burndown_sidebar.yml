@@ -1,0 +1,30 @@
+uuid: b9225684-a765-4f59-9409-87579c7e9c7d
+langcode: fr
+status: true
+dependencies:
+  module:
+    - user
+  theme:
+    - bartik
+_core:
+  default_config_hash: 2t6Eu3hvcbuOGEwrBRixbg6MfIkyQpeoU9nem_gMNSk
+id: burndown_sidebar
+theme: bartik
+region: sidebar_first
+weight: -5
+provider: null
+plugin: burndown_project_nav_block
+settings:
+  id: null
+  label: 'Burndown Sidebar'
+  label_display: visible
+  provider: null
+visibility:
+  user_role:
+    id: user_role
+    negate: false
+    context_mapping:
+      user: '@user.current_user_context:current_user'
+    roles:
+      authenticated: authenticated
+      administrator: administrator

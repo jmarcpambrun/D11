@@ -1,0 +1,30 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.entity_view_node_type.field_one
+    - field.field.node.entity_view_node_type.field_two
+    - node.type.entity_view_node_type
+  module:
+    - user
+id: node.entity_view_node_type.teaser
+targetEntityType: node
+bundle: entity_view_node_type
+mode: teaser
+content:
+  field_one:
+    type: string
+    weight: 0
+    region: content
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+hidden:
+  addtoany: true
+  created: true
+  field_two: true
+  langcode: true
+  links: true
+  search_api_excerpt: true

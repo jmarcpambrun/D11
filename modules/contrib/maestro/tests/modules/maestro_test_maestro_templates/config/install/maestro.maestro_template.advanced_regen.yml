@@ -1,0 +1,444 @@
+uuid: 81edfcf6-8f9b-45a1-a20e-179593c4364c
+langcode: en
+status: true
+dependencies: {  }
+id: advanced_regen
+label: 'Advanced Regen'
+description: 'A regeneration example flow to test the engine.'
+app_group: 0
+pan_left: -459
+pan_top: -191
+zoom: 0.861
+private: true
+canvas_height: 900
+canvas_width: 800
+default_workflow_timeline_stage_count: 0
+show_details: false
+validated: true
+views_attached:
+  maestro_entity_identifiers:
+    view_machine_name: maestro_entity_identifiers
+    view_weight: -10
+    view_display: 'taskconsole_display;Task Console Display'
+  maestro_completed_tasks:
+    view_machine_name: maestro_completed_tasks
+    view_weight: -9
+    view_display: default;Master
+variables:
+  initiator:
+    variable_id: initiator
+    variable_value: '0'
+  workflow_timeline_stage_count:
+    variable_id: workflow_timeline_stage_count
+    variable_value: ''
+  workflow_current_stage:
+    variable_id: workflow_current_stage
+    variable_value: ''
+  workflow_current_stage_message:
+    variable_id: workflow_current_stage_message
+    variable_value: ''
+  loop_count:
+    variable_id: loop_count
+    variable_value: '0'
+tasks:
+  start:
+    id: start
+    tasktype: MaestroStart
+    label: Start
+    nextstep: maestrosetprocessvariable1767799516635
+    nextfalsestep: ''
+    top: '-155'
+    left: '130'
+    assignby: fixed
+    assignto: engine
+  end:
+    id: end
+    tasktype: MaestroEnd
+    label: End
+    nextstep: ''
+    nextfalsestep: ''
+    top: '595'
+    left: '770'
+    assignby: fixed
+    assignto: engine
+  maestrointeractive1767799273154:
+    id: maestrointeractive1767799273154
+    tasktype: MaestroInteractive
+    label: '1'
+    nextstep: 'maestrointeractive1767799319902,maestrointeractive1767799324974'
+    nextfalsestep: ''
+    runonce: false
+    top: '45'
+    left: '130'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799319902:
+    id: maestrointeractive1767799319902
+    tasktype: MaestroInteractive
+    label: '2'
+    nextstep: maestrointeractive1767799464465
+    nextfalsestep: ''
+    runonce: false
+    top: '155'
+    left: '60'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799324974:
+    id: maestrointeractive1767799324974
+    tasktype: MaestroInteractive
+    label: '3'
+    nextstep: maestrointeractive1767799327429
+    nextfalsestep: ''
+    runonce: false
+    top: '155'
+    left: '210'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799327429:
+    id: maestrointeractive1767799327429
+    tasktype: MaestroInteractive
+    label: '5'
+    nextstep: 'maestrointeractive1767799331853,maestrointeractive1767799333589'
+    nextfalsestep: ''
+    runonce: false
+    top: '225'
+    left: '410'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799331853:
+    id: maestrointeractive1767799331853
+    tasktype: MaestroInteractive
+    label: '6'
+    nextstep: maestrointeractive1767799324974
+    nextfalsestep: ''
+    runonce: false
+    top: '325'
+    left: '210'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799333589:
+    id: maestrointeractive1767799333589
+    tasktype: MaestroInteractive
+    label: '7'
+    nextstep: maestrointeractive1767799337832
+    nextfalsestep: ''
+    runonce: false
+    top: '345'
+    left: '410'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799337832:
+    id: maestrointeractive1767799337832
+    tasktype: MaestroInteractive
+    label: '8'
+    nextstep: maestrointeractive1767799433197
+    nextfalsestep: ''
+    runonce: false
+    top: '465'
+    left: '410'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799433197:
+    id: maestrointeractive1767799433197
+    tasktype: MaestroInteractive
+    label: '9'
+    nextstep: maestroif1767799502673
+    nextfalsestep: ''
+    runonce: false
+    top: '465'
+    left: '590'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrointeractive1767799464465:
+    id: maestrointeractive1767799464465
+    tasktype: MaestroInteractive
+    label: '4'
+    nextstep: maestrosetprocessvariable1767799516635
+    nextfalsestep: ''
+    runonce: false
+    top: '45'
+    left: '-10'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: maestro_accept_only_form
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      modal: modal
+      redirect_to: taskconsole
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestroif1767799502673:
+    id: maestroif1767799502673
+    tasktype: MaestroIf
+    label: 'If Count < 3'
+    nextstep: maestrointeractive1767799327429
+    nextfalsestep: end
+    runonce: false
+    top: '465'
+    left: '770'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      if:
+        method: byvariable
+        variable: loop_count
+        operator: '<'
+        variable_value: '3'
+        status: '1'
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  maestrosetprocessvariable1767799516635:
+    id: maestrosetprocessvariable1767799516635
+    tasktype: MaestroSetProcessVariable
+    label: 'Increment Count'
+    nextstep: maestrointeractive1767799273154
+    nextfalsestep: ''
+    runonce: false
+    top: '-55'
+    left: '130'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      spv:
+        variable: loop_count
+        method: addsubtract
+        variable_value: '1'
+        spv_plugin: ''
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''

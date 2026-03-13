@@ -1,0 +1,8 @@
+uuid: 1de598c5-df37-4b18-a96e-de50af64bde3
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: 28-Rq5VuVDCqUwVtHClWqkvf_i4VhTz2ONb4uGFqLDk
+id: gdpr_sar
+label: 'SARs Request'

@@ -1,0 +1,153 @@
+gantt-main:
+  js:
+    js/main.js: {attributes: {type: module}}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
+    - gantt/gantt
+
+gantt-main.cdn:
+  js:
+    js/main.js: {attributes: {type: module}}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
+    - gantt/gantt.cdn
+
+gantt:
+  version: 8.x
+  css:
+    theme:
+      /libraries/gantt/codebase/dhtmlxgantt.css: { minified: true }
+  js:
+    /libraries/gantt/codebase/dhtmlxgantt.js: { minified: true }
+    js/dhx_file_dnd.js: { }
+    js/api.js: { }
+    js/functions.js: { }
+    js/gantt.js: { }
+  dependencies:
+    - core/once
+    - core/jquery
+    - core/drupal
+
+gantt.cdn:
+  version: 8.x
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css: { type: external }
+  js:
+    //cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js: { type: external, attributes: { async: false } }
+    //export.dhtmlx.com/beta/gantt/api.js: { type: external, attributes: { async: false } }
+    js/dhx_file_dnd.js: {}
+    js/functions.js: { }
+    js/gantt.js: { }
+  dependencies:
+    - core/once
+    - core/jquery
+    - core/drupal
+
+gantt.chosen:
+  version: 1.8.7
+  js:
+    //cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.js: { type: external, attributes: { async: false } }
+  css:
+    theme:
+      //cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.css: { type: external }
+
+gantt-theme-base:
+  css:
+    theme:
+      /libraries/gantt/codebase/dhtmlxgantt.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-broadway:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_broadway.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-contrast_black:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_contrast_black.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-contrast_white:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_contrast_white.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-material:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_material.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-meadow:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_meadow.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-skyblue:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/skyblue.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-terrace:
+  css:
+    theme:
+      /libraries/gantt/codebase/skins/dhtmlxgantt_terrace.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-base.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-broadway.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_broadway.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-contrast_black.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_contrast_black.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-contrast_white.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_contrast_white.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-material.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_material.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-meadow.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_meadow.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-skyblue.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_skyblue.css: {minified: true}
+      css/reset.css: {}
+
+gantt-theme-terrace.cdn:
+  css:
+    theme:
+      //cdn.dhtmlx.com/gantt/edge/skins/dhtmlxgantt_terrace.css: {minified: true}
+      css/reset.css: {}

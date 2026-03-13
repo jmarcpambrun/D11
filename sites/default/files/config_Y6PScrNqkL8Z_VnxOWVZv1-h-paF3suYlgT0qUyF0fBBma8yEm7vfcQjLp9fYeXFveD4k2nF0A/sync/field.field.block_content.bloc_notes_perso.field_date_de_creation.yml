@@ -1,0 +1,24 @@
+uuid: 3835c628-d70e-43d4-b0b4-3199f9c6ba0e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - block_content.type.bloc_notes_perso
+    - field.storage.block_content.field_date_de_creation
+  module:
+    - datetime
+id: block_content.bloc_notes_perso.field_date_de_creation
+field_name: field_date_de_creation
+entity_type: block_content
+bundle: bloc_notes_perso
+label: 'Date  de création'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    default_date_type: now
+    default_date: now
+default_value_callback: ''
+settings: {  }
+field_type: datetime

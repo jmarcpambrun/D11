@@ -1,0 +1,21 @@
+uuid: 6cfd2e76-56bc-4764-b922-b3abb809dad7
+langcode: fr
+status: true
+dependencies:
+  config:
+    - filter.format.full_html
+_core:
+  default_config_hash: fq0AH-go8GoqiLSf_VdQgzGqpS_J26X3aRoFRzkgjYw
+template: consent_agreement_accepted
+label: 'GDPR Consent Agreement'
+description: ''
+text:
+  -
+    value: "<p>Agreement: <a href=\"[message:agreement:entity:url]/revisions/[message:agreement:target_revision_id]/view\">[message:agreement:entity:title]</a><br />\r\nAgreed: [message:agreed]<br />\r\nNotes: [message:notes]</p>\r\n"
+    format: full_html
+settings:
+  'token options':
+    clear: false
+    'token replace': true
+  purge_override: true
+  purge_methods: {  }

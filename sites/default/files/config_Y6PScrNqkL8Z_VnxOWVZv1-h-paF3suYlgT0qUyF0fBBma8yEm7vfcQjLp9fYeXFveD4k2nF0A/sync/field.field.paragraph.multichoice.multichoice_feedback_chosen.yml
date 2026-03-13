@@ -1,0 +1,27 @@
+uuid: 407c17a6-ef4c-436b-a202-6b838903fa20
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.multichoice_feedback_chosen
+    - paragraphs.paragraphs_type.multichoice
+  module:
+    - text
+  enforced:
+    module:
+      - quiz_multichoice
+_core:
+  default_config_hash: vC4MexGa42_g1gUQ7uQPxOJaiemcKxL3Dkc9d1QutXo
+id: paragraph.multichoice.multichoice_feedback_chosen
+field_name: multichoice_feedback_chosen
+entity_type: paragraph
+bundle: multichoice
+label: 'Retour utilisateur si choisi'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

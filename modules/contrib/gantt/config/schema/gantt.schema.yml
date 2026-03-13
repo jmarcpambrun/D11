@@ -1,0 +1,85 @@
+views.style.gantt:
+  type: views_style
+  label: 'Gantt'
+  mapping:
+    text:
+      type: string
+      label: 'Name views'
+    progress:
+      type: string
+      label: 'Progress field'
+    start_date:
+      type: string
+      label: 'Date field'
+    duration:
+      type: string
+      label: 'Duration'
+    type:
+      type: string
+      label: 'Type of row'
+    add_task:
+      type: boolean
+      label: 'Add task'
+    edit_task:
+      type: boolean
+      label: 'Edit task'
+    open:
+      type: string
+      label: 'Open field'
+    cdn:
+      type: boolean
+      label: 'Use cdn'
+    send_email:
+      type: boolean
+      label: 'Send email when date change'
+    planned_date:
+      type: string
+      label: 'Planned field'
+    planned_duration:
+      type: string
+      label: 'Planned field'
+    split_actual_planned:
+      type: boolean
+      label: 'Split gantt actual and planned date'
+    send_notification:
+      type: boolean
+      label: 'Send notification'
+    parent:
+      type: string
+      label: 'Parent number'
+    links:
+      type: string
+      label: 'links field'
+    owner:
+      type: string
+      label: 'Owner field'
+    custom_field:
+      type: string
+      label: 'Field custom'
+    priority:
+      type: string
+      label: 'priority field'
+    hide_add_task_level:
+      type: boolean
+      label: 'Hide more task by level value'
+    hide_add_task_level_value:
+      type: number
+      label: 'Hide more task by level value'
+    column_buttons:
+      type: boolean
+      label: 'Display buttons as the same column'
+    time_input_mode:
+      type: string
+      label: 'Time input mode'
+    calendar_ical:
+      type: string
+      label: 'Custom text at the modal'
+    format_date:
+      type: boolean
+      label: 'Format date'
+    custom_format_date:
+      type: string
+      label: 'Custom format date'
+    action_queue:
+      type: boolean
+      label: 'Action queue'

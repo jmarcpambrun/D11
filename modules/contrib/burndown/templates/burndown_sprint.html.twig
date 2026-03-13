@@ -1,0 +1,58 @@
+{#
+/**
+ * @file burndown_sprint.html.twig
+ * Default theme implementation to present Sprint data.
+ *
+ * This template is used when viewing Sprint pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_burndown_sprint()
+ *
+ * @ingroup themeable
+ */
+#}
+<div
+  {{ attributes.addClass('burndown_sprint', 'sprint', 'col') }}
+  data-sprint-id="{{ id }}"
+  data-status="{{ status }}">
+
+  <div class="backlog col">
+
+    <div class="sprint_name">
+      <h3>{{ name }}</h3>
+    </div>
+    
+    <div class="status" style="display:none;"></div>
+    
+    <div class="num_tasks"></div>
+
+    <div class="open_button" style="display:none;">
+      <a
+        href="#"
+        title="Open the Sprint"
+        class="open_sprint">
+        Open Sprint
+      </a>
+    </div>
+
+    <div class="close_button" style="display:none;">
+      <a
+        href="{{ url('<front>') }}burndown/close_sprint/{{ id }}"
+        title="Close the Sprint"
+        class="use-ajax close_sprint"
+        data-dialog-type="modal"
+        data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+        Close Sprint
+      </a>
+    </div>
+  </div>
+
+  {% if content %}
+    {{- content|without('name') -}}
+  {% endif %}
+
+</div>

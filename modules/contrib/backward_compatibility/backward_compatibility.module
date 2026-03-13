@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Contains backward_compatibility.module.
+ */
+
+use Drupal\Core\Extension\Extension;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function backward_compatibility_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the backward_compatibility module.
+    case 'help.page.backward_compatibility':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Backward Compatibility allows you to install Drupal 8, 9, 10 modules in newer versions.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_system_info_alter().
+ */
+function backward_compatibility_system_info_alter(&$info, Extension $file, $type) {
+  $info['core_incompatible'] = FALSE;
+}

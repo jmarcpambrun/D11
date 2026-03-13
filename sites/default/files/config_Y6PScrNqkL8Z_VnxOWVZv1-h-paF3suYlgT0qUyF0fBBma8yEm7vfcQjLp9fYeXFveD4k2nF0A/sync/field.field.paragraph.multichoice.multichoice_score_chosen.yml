@@ -1,0 +1,28 @@
+uuid: 8718c011-044d-480b-a315-8a203a844c01
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.multichoice_score_chosen
+    - paragraphs.paragraphs_type.multichoice
+  enforced:
+    module:
+      - quiz_multichoice
+_core:
+  default_config_hash: '-ZmRq4aBjN1UwbE_pLysmZKSH7DWlzYWArohmoK8ABI'
+id: paragraph.multichoice.multichoice_score_chosen
+field_name: multichoice_score_chosen
+entity_type: paragraph
+bundle: multichoice
+label: 'Score si choisi'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

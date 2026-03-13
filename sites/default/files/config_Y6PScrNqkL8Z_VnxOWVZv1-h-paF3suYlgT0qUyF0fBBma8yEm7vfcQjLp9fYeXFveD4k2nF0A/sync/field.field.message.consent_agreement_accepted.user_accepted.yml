@@ -1,0 +1,30 @@
+uuid: e59169bf-bc3d-4fc2-9cf0-9d35eba6d866
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.message.user_accepted
+    - message.template.consent_agreement_accepted
+_core:
+  default_config_hash: '-iU5I_n_ZTa22YCFV0dUM4iXIGPOpb-zmn8cWFI2Gl4'
+id: message.consent_agreement_accepted.user_accepted
+field_name: user_accepted
+entity_type: message
+bundle: consent_agreement_accepted
+label: 'User Accepted'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    target_bundles: null
+    sort:
+      field: _none
+    auto_create: false
+    filter:
+      type: _none
+    include_anonymous: true
+field_type: entity_reference

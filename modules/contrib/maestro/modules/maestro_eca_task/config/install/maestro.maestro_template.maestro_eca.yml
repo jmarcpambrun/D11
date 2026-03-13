@@ -1,0 +1,137 @@
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: _PUHYLtyLqKdZTD5Vf2oRksS5Glc7s2lb7rd78LTiJU
+id: maestro_eca
+label: 'Maestro-ECA Example'
+description: 'A very simple example that uses the Maestro ECA Task to kick off an ECA process.'
+app_group: 0
+canvas_height: 900
+canvas_width: 800
+default_workflow_timeline_stage_count: 0
+show_details: false
+validated: true
+views_attached:
+  maestro_entity_identifiers:
+    view_machine_name: maestro_entity_identifiers
+    view_weight: -10
+    view_display: 'taskconsole_display;Task Console Display'
+  maestro_completed_tasks:
+    view_machine_name: maestro_completed_tasks
+    view_weight: -9
+    view_display: default;Master
+variables:
+  initiator:
+    variable_id: initiator
+    variable_value: '0'
+  workflow_timeline_stage_count:
+    variable_id: workflow_timeline_stage_count
+    variable_value: ''
+  workflow_current_stage:
+    variable_id: workflow_current_stage
+    variable_value: ''
+  workflow_current_stage_message:
+    variable_id: workflow_current_stage_message
+    variable_value: ''
+tasks:
+  start:
+    id: start
+    tasktype: MaestroStart
+    label: Start
+    nextstep: add_content
+    nextfalsestep: ''
+    top: '40'
+    left: '40'
+    assignby: fixed
+    assignto: engine
+  end:
+    id: end
+    tasktype: MaestroEnd
+    label: End
+    nextstep: ''
+    nextfalsestep: ''
+    top: '40'
+    left: '610'
+    assignby: fixed
+    assignto: engine
+  eca:
+    id: eca
+    tasktype: MaestroEcaEventTask
+    label: eca
+    nextstep: end
+    nextfalsestep: ''
+    runonce: false
+    top: '40'
+    left: '410'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      eca:
+        entity_identifier_source: manual
+        entity_identifier_manual: submission
+        entity_identifier_variable: null
+        event_name: maestro_example
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  add_content:
+    id: add_content
+    tasktype: MaestroContentType
+    label: 'Add Content'
+    nextstep: eca
+    nextfalsestep: ''
+    runonce: false
+    top: '40'
+    left: '210'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: '/node/add/article?maestro=1'
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      unique_id: submission
+      redirect_to: taskconsole
+      content_type: article
+      save_edit_later: 1
+      link_to_edit: 1
+      show_maestro_buttons_on_view: 0
+      accept_label: ''
+      reject_label: ''
+      accept_redirect_to: ''
+      reject_redirect_to: ''
+      supply_maestro_ids_in_url: 0
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''

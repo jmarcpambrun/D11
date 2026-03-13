@@ -1,0 +1,9 @@
+parameters:
+	level: 9
+	ignoreErrors:
+		- '#Unsafe usage of new static\(\)#'
+		- identifier: missingType.iterableValue
+	scanDirectories:
+		- ../../../../vendor/drush/drush/src-symfony-compatibility
+includes:
+	- phpstan-baseline.neon

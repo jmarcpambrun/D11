@@ -1,0 +1,20 @@
+uuid: 70b9844b-afb5-4136-924a-4171fa0b626f
+langcode: fr
+status: true
+dependencies:
+  module:
+    - block_content
+    - datetime
+id: block_content.field_date_d_echeance
+field_name: field_date_d_echeance
+entity_type: block_content
+type: datetime
+settings:
+  datetime_type: datetime
+module: datetime
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

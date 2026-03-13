@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Contains scheduled_event.module.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\event_scheduler\EventSchedulerUtilsInterface;
+
+/**
+ * Implements hook_entity_delete().
+ */
+function event_scheduler_entity_delete(EntityInterface $entity): void {
+  if (_event_scheduler_utils()->isEnabled()) {
+    // Remove any events related to this deleted entity.
+    \Drupal::service('event_scheduler.utils')->entityDelete($entity);
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function event_scheduler_cron(): void {
+  if (_event_scheduler_utils()->isEnabled()) {
+    // Check the scheduled event database and add due scheduled events to the queue.
+    \Drupal::service('event_scheduler.utils')->runCron();
+  }
+}
+
+/**
+ * Fetch the event scheduler utils service.
+ *
+ * @return EventSchedulerUtilsInterface
+ */
+function _event_scheduler_utils(): EventSchedulerUtilsInterface {
+  static $eventSchedulerUtils = NULL;
+  if ($eventSchedulerUtils === NULL) {
+    $eventSchedulerUtils = \Drupal::service('event_scheduler.utils');
+  }
+  return $eventSchedulerUtils;
+}

@@ -1,0 +1,249 @@
+<div class="counter-wrapper">
+    <div class="counter-page">
+        <div class="w3-main">
+    <div class="w3-row-padding w3-margin-bottom">
+        {% if site_counter is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-red w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-eye w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ site_counter }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Views for all time:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if unique_visitor is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-blue w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-eye w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ unique_visitor }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Visitors for all time:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if registered_user is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-teal w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ registered_user }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Registered Users:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if unregistered_user is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-orange w3-text-white w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ unregistered_user }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Unregistered Users:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="w3-row-padding w3-margin-bottom">
+        {% if blocked_user is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-red w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ blocked_user }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Blocked Users:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if published_nodes is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-blue w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-database w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ published_nodes }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Published Nodes:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if unpublished_nodes is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-teal w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-database w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ unpublished_nodes }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Unublished Nodes:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if counter_since is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-orange w3-text-white w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-calendar w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ counter_since }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Counter Since:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="w3-row-padding w3-margin-bottom">
+        {% if statistic_today is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-red w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-clock-o w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ statistic_today }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Views Today:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if statistic_week is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-blue w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-sun-o w3-xxxlarge"></i>
+                    </div>
+                    <div class="w3-right">
+                        <h3>{{ statistic_week }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Views This Week:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if statistic_month is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-teal w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-calendar w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ statistic_month }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Views This Month:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+        {% if statistic_year is not null %}
+            <div class="w3-quarter">
+                <div class="w3-container w3-orange w3-text-white w3-padding-16">
+                    <div class="w3-left"><i
+                                class="fa fa-calendar-o w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{{ statistic_year }}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>{{ 'Views This Year:'|t({}, {'context': 'counter'}) }}</h4>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-quarter">
+            <div class="w3-container w3-red w3-padding-16">
+                <div class="w3-left"><i class="fa fa-clock-o w3-xxxlarge"></i>
+                </div>
+                <div class="w3-right">
+                    <h3>{{ unique_visitor_today }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h4>{{ 'Visitors Today:'|t({}, {'context': 'counter'}) }}</h4>
+            </div>
+        </div>
+        <div class="w3-quarter">
+            <div class="w3-container w3-blue w3-padding-16">
+                <div class="w3-left"><i class="fa fa-sun-o w3-xxxlarge"></i>
+                </div>
+                <div class="w3-right">
+                    <h3>{{ unique_visitor_week }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h4>{{ 'Visitors This Week:'|t({}, {'context': 'counter'}) }}</h4>
+            </div>
+        </div>
+        <div class="w3-quarter">
+            <div class="w3-container w3-teal w3-padding-16">
+                <div class="w3-left"><i class="fa fa-calendar w3-xxxlarge"></i>
+                </div>
+                <div class="w3-right">
+                    <h3>{{ unique_visitor_month }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h4>{{ 'Visitors This Month:'|t({}, {'context': 'counter'}) }}</h4>
+            </div>
+        </div>
+        <div class="w3-quarter">
+            <div class="w3-container w3-orange w3-text-white w3-padding-16">
+                <div class="w3-left"><i
+                            class="fa fa-calendar-o w3-xxxlarge"></i></div>
+                <div class="w3-right">
+                    <h3>{{ unique_visitor_year }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h4>{{ 'Visitors This Year:'|t({}, {'context': 'counter'}) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="w3-row-padding w3-margin-bottom w3-half">
+        <h3>{{ 'Top views nodes'|t({}, {'context': 'counter'}) }}</h3>
+        <ol class="w3-ol">
+            {% for top_node in top_nodes %}
+                <li>{{ 'Name'|t({}, {'context': 'counter'}) }} {{ top_node.type }}
+                    :
+                    <a href="{{ top_node.url }}">{{ top_node.title }}</a>
+                    ({{ top_node.views }} {{ 'views'|t({}, {'context': 'counter'}) }})
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+    <div class="w3-row-padding w3-margin-bottom w3-half">
+        <h3>{{ 'Top views url'|t({}, {'context': 'counter'}) }}</h3>
+        <ol class="w3-ol">
+            {% for top_url in top_urls %}
+                <li>
+                    {{ 'Page'|t({}, {'context': 'counter'}) }}:
+                    <a href="{{ top_url.url }}">
+                        {{ top_url.url }}
+                    </a>
+                    ({{ top_url.views }} {{ 'views'|t({}, {'context': 'counter'}) }})
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+        </div>
+    </div>
+    <div class="counter-menu">
+        <ul class="counter-menu-list">
+            {% for item in counter_menu %}
+                <li class="counter-menu-item {{ item.active ? 'is-active' : '' }}">
+                    <a href="{{ item.url }}">{{ item.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

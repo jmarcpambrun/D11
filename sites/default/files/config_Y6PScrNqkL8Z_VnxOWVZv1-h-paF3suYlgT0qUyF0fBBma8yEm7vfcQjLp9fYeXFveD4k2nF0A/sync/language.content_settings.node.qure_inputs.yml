@@ -1,0 +1,11 @@
+uuid: 8270429a-21fb-40d6-aad6-5d83c5ef90ca
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.qure_inputs
+id: node.qure_inputs
+target_entity_type_id: node
+target_bundle: qure_inputs
+default_langcode: site_default
+language_alterable: false

@@ -1,0 +1,83 @@
+uuid: 61fc121d-dfed-4d52-9015-53d7bfaa4ff3
+langcode: fr
+status: true
+dependencies:
+  config:
+    - views.view.user_admin_people
+  module:
+    - eca_base
+    - eca_content
+    - eca_user
+    - eca_views
+id: process_todlvdl
+modeller: bpmn_io
+label: Views_blocked_user
+version: v1
+weight: 0
+events:
+  Event_1up81dz:
+    plugin: 'eca_base:eca_cron'
+    label: Cron
+    configuration:
+      frequency: '* * * * *'
+    successors:
+      -
+        id: Activity_0ha3xin
+        condition: ''
+  Event_1asjw3k:
+    plugin: 'content_entity:custom'
+    label: X1
+    configuration:
+      event_id: x1
+    successors:
+      -
+        id: Activity_1fscwli
+        condition: ''
+conditions: {  }
+gateways: {  }
+actions:
+  Activity_08o1wo5:
+    plugin: eca_views_query
+    label: 'List users'
+    configuration:
+      token_name: userlist
+      view_id: user_admin_people
+      display_id: entity_reference_1
+      arguments: ''
+    successors:
+      -
+        id: Activity_105ssdc
+        condition: ''
+  Activity_0ha3xin:
+    plugin: eca_switch_account
+    label: 'Switch user'
+    configuration:
+      user_id: '1'
+    successors:
+      -
+        id: Activity_08o1wo5
+        condition: ''
+  Activity_105ssdc:
+    plugin: eca_trigger_content_entity_custom_event
+    label: 'Trigger X1'
+    configuration:
+      event_id: x1
+      tokens: ''
+      object: userlist
+    successors: {  }
+  Activity_0xpew34:
+    plugin: action_message_action
+    label: Msg
+    configuration:
+      message: 'User [entity:name]'
+      replace_tokens: true
+    successors: {  }
+  Activity_1fscwli:
+    plugin: eca_switch_account
+    label: 'Switch user'
+    configuration:
+      user_id: '1'
+    successors:
+      -
+        id: Activity_0xpew34
+        condition: ''

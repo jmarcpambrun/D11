@@ -1,0 +1,25 @@
+/**
+ * @file
+ * Styles for the image upload widget.
+ *
+ * @see templates/classy/content-edit/image-widget.html.twig
+ */
+
+.image-preview {
+  float: left; /* LTR */
+  padding: 0 10px 10px 0; /* LTR */
+  [dir="rtl"] & {
+    float: right;
+    padding: 0 0 10px 10px;
+  }
+}
+
+.image-widget-data {
+  float: left; /* LTR */
+  [dir="rtl"] & {
+    float: right;
+  }
+  & .text-field {
+    width: auto;
+  }
+}

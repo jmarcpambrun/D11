@@ -1,0 +1,105 @@
+uuid: 4e552854-61ab-4fed-a7b3-c3dce82f3b29
+langcode: fr
+status: true
+dependencies:
+  config:
+    - filter.format.email_html
+  module:
+    - ckeditor5
+format: email_html
+editor: ckeditor5
+settings:
+  toolbar:
+    items:
+      - heading
+      - bold
+      - italic
+      - undo
+      - redo
+      - sourceEditing
+      - underline
+      - link
+      - bulletedList
+      - numberedList
+      - alignment
+      - horizontalLine
+      - insertTable
+      - indent
+      - outdent
+      - imce_link
+      - drupalInsertImage
+      - textPartLanguage
+      - imce_image
+      - openai
+      - aickeditor
+  plugins:
+    ai_ckeditor_ai:
+      dialog:
+        autoresize: 'min-width: 600px'
+        height: '750'
+        width: '900'
+        dialog_class: ai-ckeditor-modal
+      plugins:
+        ai_ckeditor_completion:
+          enabled: true
+          provider: openai__gpt-5
+        ai_ckeditor_help:
+          enabled: true
+        ai_ckeditor_modify_prompt:
+          enabled: true
+          provider: openai__gpt-5
+        ai_ckeditor_reformat_html:
+          enabled: true
+          provider: openai__gpt-5
+        ai_ckeditor_spellfix:
+          enabled: true
+          provider: openai__gpt-5
+        ai_ckeditor_summarize:
+          enabled: true
+          provider: openai__gpt-5
+        ai_ckeditor_tone:
+          autocreate: false
+          provider: openai__gpt-5
+          tone_vocabulary: forums
+          use_description: 0
+          enabled: true
+        ai_ckeditor_translate:
+          autocreate: false
+          provider: openai__gpt-5
+          translate_vocabulary: forums
+          use_description: false
+          language_source: lang
+          enabled: true
+    ckeditor5_alignment:
+      enabled_alignments:
+        - center
+        - justify
+        - left
+        - right
+    ckeditor5_heading:
+      enabled_headings:
+        - heading1
+        - heading2
+        - heading3
+        - heading4
+        - heading5
+        - heading6
+    ckeditor5_imageResize:
+      allow_resize: true
+    ckeditor5_language:
+      language_list: site_configured
+    ckeditor5_list:
+      properties:
+        reversed: true
+        startIndex: true
+      multiBlock: true
+    ckeditor5_sourceEditing:
+      allowed_tags: {  }
+    openai_ckeditor_openai:
+      completion:
+        enabled: true
+        model: gpt-3.5-turbo
+        temperature: 0.2
+        max_tokens: 512
+image_upload:
+  status: false

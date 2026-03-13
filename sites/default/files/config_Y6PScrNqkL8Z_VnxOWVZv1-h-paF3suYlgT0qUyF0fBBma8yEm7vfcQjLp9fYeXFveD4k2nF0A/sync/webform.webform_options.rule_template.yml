@@ -1,0 +1,12 @@
+uuid: 70e1be25-5983-4dc4-8b9b-dae11e041fca
+langcode: fr
+status: true
+dependencies: {  }
+id: rule_template
+label: 'Rule Template'
+category: 'Rule Generator'
+likert: false
+options: |-
+  CHECK_IS_NULL: 'CHECK_IS_NULL--Check if a column value is filled'
+  CHECK_IS_NOT_IN_LIST: 'CHECK_IS_NOT_IN_LIST--Check if a column value is not in a given list of values'
+  CHECK_IS_POSITIVE: 'CHECK_IS_POSITIVE--Check if a column value is positive'

@@ -1,0 +1,248 @@
+<?php
+
+/**
+ * @file
+ * Mail_bo_management.module for module mail_bo_management.
+ *
+ * Mail_bo_management.module.
+ */
+
+use Drupal\mail_box_management\Server\Imap\ImapConnection;
+use Drupal\mail_box_management\Server\Imap\MailBoxStorage;
+use Drupal\file\Entity\File;
+use Drupal\mail_box_management\Server\Imap\EmailContentManager;
+
+/**
+ * Implements hook_theme().
+ */
+function mail_box_management_theme(): array {
+  return [
+    'mail-box-management-configuration' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-configuration',
+    ],
+    'mail-box-management-panel' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-panel',
+    ],
+    'mail-box-management-content-view' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-content-view',
+    ],
+    'mail-box-management-on-refresh' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-on-refresh',
+    ],
+    'mail-box-management-settings' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-settings',
+    ],
+    'mail-box-management-mail-listing' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'mail-box-management-mail-listing',
+    ],
+    'block--header' => [
+      'variables' => [
+        'title' => NULL,
+        'content' => NULL,
+      ],
+      'template' => 'block--header',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function mail_box_management_page_attachments(array &$attachments): void {
+
+  if (mail_box_management_is_mailbox_route()) {
+    $attachments['#attached']['library'][] = 'mail_box_management/assets_management';
+  }
+}
+
+/**
+ * Check if we are not mailbox route.
+ *
+ * @return bool
+ *   True if current page is mailbox.
+ */
+function mail_box_management_is_mailbox_route(): bool {
+  // Get the current route name.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  $mail_box_routes = [
+    'mail_box_management.configuration',
+    'mail_box_management.mailbox_panel',
+  ];
+  return in_array($route_name, $mail_box_routes);
+}
+
+/**
+ * Get services drupal offers.
+ *
+ * @param string $service_name
+ *   Service name or key.
+ *
+ * @return mixed
+ *   Service instance.
+ */
+function mail_box_management_service(string $service_name): mixed {
+  return \Drupal::service($service_name);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mail_box_management_color(string $string): array|int|string {
+  $colors = [
+    "A" => [
+      "Almond",
+      "Amaranth",
+      "Amber",
+      "Amethyst",
+      "Apricot",
+      "Aqua",
+      "Aquamarine",
+      "Azure",
+    ],
+    "B" => ["Beige", "Black", "Blue", "Blush", "Bronze", "Brown", "Burgundy"],
+    "C" => [
+      "Carmine",
+      "Cerise",
+      "Cerulean",
+      "Chartreuse",
+      "Cherry",
+      "Chestnut",
+      "Coral",
+      "Crimson",
+      "Cyan",
+    ],
+    "D" => ["Denim"],
+    "E" => ["Emerald"],
+    "F" => ["Fuchsia"],
+    "G" => ["Gold", "Gray", "Green"],
+    "H" => ["Harlequin"],
+    "I" => ["Indigo", "Ivory"],
+    "J" => ["Jade", "Jasmine"],
+    "K" => ["Khaki"],
+    "L" => ["Lavender", "Lemon", "Lilac", "Lime"],
+    "M" => ["Magenta", "Maroon", "Mauve", "Mint", "Mustard"],
+    "N" => ["Navy"],
+    "O" => ["Ochre", "Olive", "Orange", "Orchid"],
+    "P" => [
+      "Peach",
+      "Pear",
+      "Periwinkle",
+      "Pink",
+      "Plum",
+      "Prussian Blue",
+      "Purple",
+    ],
+    "R" => ["Red", "Rose", "Ruby", "Russet"],
+    "S" => ["Saffron", "Salmon", "Sapphire", "Scarlet", "Silver"],
+    "T" => ["Teal", "Turquoise"],
+    "U" => ["Ultramarine"],
+    "V" => ["Vermilion", "Violet"],
+    "W" => ["White"],
+    "Y" => ["Yellow"],
+  ];
+
+  $first_letter = strtoupper(substr($string, 0, 1));
+  $picked_color = $colors[$first_letter];
+  return array_rand($colors);
+}
+
+/**
+ * Implements hook_mail() for sending HTML emails with attachments.
+ */
+function mail_box_management_mail($key, &$message, $params): void {
+  if ($key == 'mail_box_management_key') {
+    $message['from'] = \Drupal::config('system.site')->get('mail');
+    $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
+    $message['body'][] = $params['message'];
+    $message['subject'] = $params['subject'];
+    if (!empty($params['attachments'])) {
+      foreach ($params['attachments'] as $attachment) {
+        if (!empty($attachment)) {
+          $file = File::load($attachment);
+          if ($file instanceof File) {
+            $message['params']['attachments'][] = [
+              'filepath' => $file->getFileUri(),
+              'filename' => $file->getFilename(),
+              'filemime' => $file->getMimeType(),
+            ];
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_cache_flush().
+ */
+function mail_box_management_cache_flush(): void {
+  $config_helper = mail_box_management_service('mail_box_management.config');
+  $cache_settings = $config_helper->get('cache_mail_clear')?->get('cache_mail_clear');
+  if ($cache_settings) {
+    mail_box_management_service('mail_box_management.local.storage')
+      ->clearLocalStorage();
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function mail_box_management_cron(): void {
+  $config_helper = mail_box_management_service('mail_box_management.config');
+  $cache_settings = $config_helper->get('cache_mail_cron')?->get('cache_mail_cron');
+  if ($cache_settings) {
+    $local_storage = mail_box_management_service('mail_box_management.local.storage');
+    // Load all mail here into cache.
+    $imap_servers = $config_helper->get('mail_box_management.settings')?->get('imap_servers') ?? [];
+    foreach ($imap_servers as $server) {
+      $imap_class = new ImapConnection($server);
+      $mail_box = new MailBoxStorage($imap_class);
+      $mailboxes = $mail_box->getMailboxes();
+      if ($mailboxes) {
+        foreach ($mailboxes as $name => $mailbox) {
+          $mail = new EmailContentManager($imap_class);
+          $mail->worker($mailbox, $server['owner_id']);
+          $mails = $mail->getAllEmailMsgno($mailbox);
+          if ($mails) {
+            foreach ($mails as $msgno) {
+              $mail_found = $mail->getByLoaderCall($mailbox, $msgno, $server['owner_id']);
+              $content = mail_box_management_service('mail_box_management.theme')
+                ->getThemeTemplateContent('mail-box-management-content-view',
+                  ['emails' => $mail_found]);
+              $local_storage->templateContentSaver("$mailbox._.$msgno._.{$server['owner_id']}", $content);
+            }
+          }
+        }
+
+      }
+    }
+  }
+}

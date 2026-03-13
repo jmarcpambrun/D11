@@ -1,0 +1,19 @@
+uuid: 70f10833-0b0a-4bc5-8312-4cd37b66b6e6
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_physical_data
+    - node.type.qure_data_catalog
+id: node.qure_data_catalog.field_physical_data
+field_name: field_physical_data
+entity_type: node
+bundle: qure_data_catalog
+label: physical_data
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

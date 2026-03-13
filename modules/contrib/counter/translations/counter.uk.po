@@ -1,0 +1,544 @@
+# uk translation of counter
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2025-09-24 15:07+0300\n"
+"PO-Revision-Date: 2025-09-24 15:07+0300\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((((n%10)==1)&&((n%100)!=11))?(0):(((((n%10)>=2)&&((n%10)<=4))&&(((n%100)<10)||((n%100)>=20)))?(1):2));\n"
+
+msgctxt "counter"
+msgid "Current period"
+msgstr "Поточний період"
+
+msgctxt "counter"
+msgid "Previous period"
+msgstr "Попередній період"
+
+msgctxt "counter"
+msgid "increased"
+msgstr "збільшились на"
+
+msgctxt "counter"
+msgid "decreased"
+msgstr "зменшились на"
+
+msgctxt "counter"
+msgid "Views"
+msgstr "Перегляди"
+
+msgctxt "counter"
+msgid "compared to the previous period."
+msgstr "порівняно з минулим періодом"
+
+msgctxt "counter"
+msgid "Last 7 days"
+msgstr "Останні 7 днів"
+
+msgctxt "counter"
+msgid "Last 30 days"
+msgstr "Останні 30 днів"
+
+msgctxt "counter"
+msgid "Custom"
+msgstr "Індивідуально"
+
+msgctxt "counter"
+msgid "Counter stats fetch error"
+msgstr ""
+"Помилка отримання статистики "
+"лічильника"
+
+msgctxt "counter"
+msgid "Compare with previous period"
+msgstr "Порівняйте з попереднім періодом"
+
+msgctxt "counter"
+msgid "@metric @dir <span>@percent%</span> compared to the previous period."
+msgstr ""
+"@metric @dir <span>@percent%</span> порівняно з "
+"попереднім періодом."
+
+msgctxt "counter"
+msgid "compared to the previous period"
+msgstr "порівняно з попереднім періодом"
+
+msgctxt "counter"
+msgid "Period"
+msgstr "Період"
+
+msgctxt "counter"
+msgid "Today"
+msgstr "Сьогодні"
+
+msgctxt "counter"
+msgid "Yesterday"
+msgstr "Вчора"
+
+msgctxt "counter"
+msgid "This month"
+msgstr "Цей місяць"
+
+msgctxt "counter"
+msgid "This year"
+msgstr "Цей рік"
+
+msgctxt "counter"
+msgid "All time"
+msgstr "Весь час"
+
+msgctxt "counter"
+msgid "Custom range"
+msgstr "Індивідуальний діапазон"
+
+msgctxt "counter"
+msgid "Start"
+msgstr "Початок"
+
+msgctxt "counter"
+msgid "End"
+msgstr "Кінець"
+
+msgctxt "counter"
+msgid "Unique visitors"
+msgstr "Унікальні відвідувачі"
+
+msgctxt "counter"
+msgid "The last 7 days"
+msgstr "Останні 7 днів"
+
+msgctxt "counter"
+msgid "All the time"
+msgstr "Весь час"
+
+msgctxt "counter"
+msgid "Visitors"
+msgstr "Відвідувачі"
+
+msgctxt "counter"
+msgid "Compare with the previous period"
+msgstr "Порівняти з попереднім періодом"
+
+msgctxt "counter"
+msgid "Statistics views"
+msgstr "Статистика переглядів"
+
+msgctxt "counter"
+msgid "Basic Counter"
+msgstr "Базові налаштування лічильника"
+
+msgctxt "counter"
+msgid "Advanced Counter"
+msgstr "Розширені налаштування лічильника"
+
+msgctxt "counter"
+msgid "Initial Counter"
+msgstr "Початкові налаштування лічильника"
+
+msgctxt "counter"
+msgid "Counter Dashboard"
+msgstr "Панель лічильника"
+
+msgctxt "counter"
+msgid "Counter"
+msgstr "Лічильник"
+
+msgctxt "counter"
+msgid "Show Site Counter, Client IP, and Unique Visitor."
+msgstr ""
+"Показати лічильник сайту, IP-клієнта та "
+"унікального відвідувача."
+
+msgctxt "counter"
+msgid "Configure advanced data for displaying in counter block."
+msgstr ""
+"Налаштувати розширені дані для "
+"відображення в лічильному блоці."
+
+msgctxt "counter"
+msgid "Configure initial values for the counter."
+msgstr ""
+"Налаштувати початкові значення для "
+"лічильника."
+
+msgctxt "counter"
+msgid "Check counter dashboard."
+msgstr "Переглянути панель лічильника."
+
+msgctxt "counter"
+msgid "Check statistics views."
+msgstr "Переглянути статистику переглядів."
+
+msgctxt "counter"
+msgid "Views for all time:"
+msgstr "Переглядів за весь час:"
+
+msgctxt "counter"
+msgid "Visitors for all time:"
+msgstr "Відвідувачів за весь час:"
+
+msgctxt "counter"
+msgid "Registered Users:"
+msgstr "Зареєстровані користувачі:"
+
+msgctxt "counter"
+msgid "Unregistered Users:"
+msgstr "Незареєстровані користувачі:"
+
+msgctxt "counter"
+msgid "Blocked Users:"
+msgstr "Заблоковані користувачі:"
+
+msgctxt "counter"
+msgid "Published Nodes:"
+msgstr "Опубліковані сторінки:"
+
+msgctxt "counter"
+msgid "Unublished Nodes:"
+msgstr "Неопубліковані сторінки:"
+
+msgctxt "counter"
+msgid "Counter Since:"
+msgstr "Лічильник рахує з:"
+
+msgctxt "counter"
+msgid "Views Today:"
+msgstr "Перегляди сьогодні:"
+
+msgctxt "counter"
+msgid "Views This Week:"
+msgstr "Перегляди за тиждень:"
+
+msgctxt "counter"
+msgid "Views This Month:"
+msgstr "Перегляди за місяць:"
+
+msgctxt "counter"
+msgid "Views This Year:"
+msgstr "Перегляди за рік:"
+
+msgctxt "counter"
+msgid "Visitors Today:"
+msgstr "Відвідувачі сьогодні:"
+
+msgctxt "counter"
+msgid "Visitors This Week:"
+msgstr "Відвідувачі за тиждень:"
+
+msgctxt "counter"
+msgid "Visitors This Month:"
+msgstr "Відвідувачі за місяць:"
+
+msgctxt "counter"
+msgid "Visitors This Year:"
+msgstr "Відвідувачі за рік:"
+
+msgctxt "counter"
+msgid "Top views nodes"
+msgstr "Топ переглядів сторінки"
+
+msgctxt "counter"
+msgid "Name"
+msgstr "Назва"
+
+msgctxt "counter"
+msgid "views"
+msgstr "переглядів"
+
+msgctxt "counter"
+msgid "Top views url"
+msgstr "Топ переглядів URL"
+
+msgctxt "counter"
+msgid "Page"
+msgstr "Сторінки"
+
+msgctxt "counter"
+msgid "Show Site Counter"
+msgstr "Показати лічильник сайту"
+
+msgctxt "counter"
+msgid "Show Unique Visitors"
+msgstr ""
+"Показувати кількість унікальних "
+"відвідувачів"
+
+msgctxt "counter"
+msgid "Show Unique Visitors based on their IP"
+msgstr ""
+"Показувати унікальних відвідувачів "
+"на основі їхньої IP-адреси"
+
+msgctxt "counter"
+msgid "Show Registered Users"
+msgstr ""
+"Показувати кількість зареєстрованих "
+"користувачів"
+
+msgctxt "counter"
+msgid "Show Unregistered Users"
+msgstr ""
+"Показати незареєстрованих "
+"користувачів"
+
+msgctxt "counter"
+msgid "Show Blocked Users"
+msgstr "Показати заблокованих користувачів"
+
+msgctxt "counter"
+msgid "Show Published Nodes"
+msgstr ""
+"Показувати кількість опублікованих "
+"матеріалів"
+
+msgctxt "counter"
+msgid "Show Unpublished Nodes"
+msgstr ""
+"Показати неопубліковані матеріали "
+"сторінок"
+
+msgctxt "counter"
+msgid "Show Web Server IP"
+msgstr "Показати IP веб-сервера"
+
+msgctxt "counter"
+msgid "Show Client IP"
+msgstr "Показати IP клієнта"
+
+msgctxt "counter"
+msgid "Show Site Counter Since"
+msgstr "Показати лічильник сайту з"
+
+msgctxt "counter"
+msgid "Show the first entry date in the Site Counter"
+msgstr ""
+"Відображати дату першого входу в "
+"лічильнику сайту"
+
+msgctxt "counter"
+msgid "Basic settings"
+msgstr "Основні налаштування"
+
+msgctxt "counter"
+msgid "Visitors Today"
+msgstr "Відвідувачі сьогодні"
+
+msgctxt "counter"
+msgid "Visitors This Week"
+msgstr "Відвідувачі цього тижня"
+
+msgctxt "counter"
+msgid "Visitors This Month"
+msgstr "Відвідувачі цього місяця"
+
+msgctxt "counter"
+msgid "Visitors This Year"
+msgstr "Відвідувачі цього року"
+
+msgctxt "counter"
+msgid "Statistic settings"
+msgstr "Налаштування статистики"
+
+msgctxt "counter"
+msgid "Skip admin"
+msgstr "Пропустити адміна"
+
+msgctxt "counter"
+msgid "Do not count when visitor has an administrator role."
+msgstr ""
+"Не враховується, якщо відвідувач має "
+"роль адміністратора."
+
+msgctxt "counter"
+msgid "Only pages"
+msgstr "Тільки сторінки"
+
+msgctxt "counter"
+msgid "Only considers user visits"
+msgstr ""
+"Враховує лише відвідування "
+"користувачів"
+
+msgctxt "counter"
+msgid "Refresh counter values on cron run."
+msgstr ""
+"Оновлювати значення лічильника під "
+"час запуску cron."
+
+msgctxt "counter"
+msgid ""
+"It will make sure cache of the counter block is cleared on cron run. "
+"Strongly recommended to keep this enabled for performance reasons."
+msgstr ""
+"Це гарантуватиме очищення кешу блоку "
+"лічильника під час запуску cron. "
+"Наполегливо рекомендується залишати "
+"цю опцію ввімкненою з міркувань "
+"продуктивності."
+
+msgctxt "counter"
+msgid "Advanced settings"
+msgstr "Розширені налаштування"
+
+msgctxt "counter"
+msgid "Initial value of Site Counter"
+msgstr "Початкове значення лічильника сайту"
+
+msgctxt "counter"
+msgid "Initial value of Unique Visitor"
+msgstr ""
+"Початкове значення унікального "
+"відвідувача"
+
+msgctxt "counter"
+msgid "Replace 'Since' value with this Unix timestamp"
+msgstr ""
+"Замініть значення «З» на цю позначку "
+"часу Unix"
+
+msgctxt "counter"
+msgid "This field type is Unix timestamp, so you must enter like: 1404671462."
+msgstr ""
+"Це поле типу Unix timestamp, тому потрібно "
+"ввести значення приблизно такого "
+"типу: 1404671462."
+
+msgctxt "counter"
+msgid "Initial Values"
+msgstr "Початкові значення"
+
+msgctxt "counter"
+msgid "Set initial values for Site Counter."
+msgstr ""
+"Встановіть початкові значення для "
+"лічильника сайту."
+
+msgctxt "counter"
+msgid "Counter list."
+msgstr "Список лічильників."
+
+msgctxt "counter"
+msgid "Counter ID"
+msgstr "ID лічильника"
+
+msgctxt "counter"
+msgid "The Counter ID."
+msgstr "Ідентифікатор лічильника."
+
+msgctxt "counter"
+msgid "IP Address"
+msgstr "IP-адреса"
+
+msgctxt "counter"
+msgid "The Counter IP Address."
+msgstr "IP адреса лічильника"
+
+msgctxt "counter"
+msgid "URL"
+msgstr "URL-адреса"
+
+msgctxt "counter"
+msgid "The URL when Counter counted."
+msgstr ""
+"URL-адреса під час підрахунку "
+"лічильника."
+
+msgctxt "counter"
+msgid "Created"
+msgstr "Створено"
+
+msgctxt "counter"
+msgid "The created time of Counter item."
+msgstr "Час створення елемента лічильника."
+
+msgctxt "counter"
+msgid "UID"
+msgstr "UID"
+
+msgctxt "counter"
+msgid "The UID who visit Counter URL."
+msgstr ""
+"UID, які відвідують URL-адресу "
+"лічильника."
+
+msgctxt "counter"
+msgid "Counter user"
+msgstr "Користувач лічильника"
+
+msgctxt "counter"
+msgid "Relate content to the user for which the data was counted."
+msgstr ""
+"Зв’яжіть контент із користувачем, для "
+"якого було підраховано дані."
+
+msgctxt "counter"
+msgid "Counter User"
+msgstr "Користувач лічильника"
+
+msgctxt "counter"
+msgid "Node ID"
+msgstr "ID матеріалу"
+
+msgctxt "counter"
+msgid "The NID of URL if node was visited."
+msgstr "NID URL-адреси, якщо вузол було відвідано."
+
+msgctxt "counter"
+msgid "Content Type"
+msgstr "Тип матеріалу"
+
+msgctxt "counter"
+msgid "The content type of node if node was visited."
+msgstr ""
+"Тип вмісту вузла, якщо вузол було "
+"відвідано."
+
+msgctxt "counter"
+msgid "Browser name"
+msgstr "Назва браузера"
+
+msgctxt "counter"
+msgid "The Browser Name of Client Browser."
+msgstr "Ім'я браузера клієнта."
+
+msgctxt "counter"
+msgid "Browser version"
+msgstr "Версія браузера"
+
+msgctxt "counter"
+msgid "The Browser Version of Client Browser."
+msgstr "Версія браузера клієнта."
+
+msgctxt "counter"
+msgid "Platform"
+msgstr "Платформа"
+
+msgctxt "counter"
+msgid "The Platform Name of Client System/OS."
+msgstr ""
+"Назва платформи клієнтської "
+"системи/ОС."
+
+msgctxt "counter"
+msgid "About"
+msgstr "Про модуль"
+
+msgctxt "counter"
+msgid ""
+"The counter module is used for displaying details like Site Counter, "
+"Node Count, Unique Visitor and Client IP in a block."
+msgstr ""
+"Модуль лічильника використовується "
+"для відображення таких деталей, як "
+"лічильник сайтів, кількість вузлів, "
+"унікальний відвідувач та IP-адреса "
+"клієнта в блоці."
+
+msgctxt "counter"
+msgid "k"
+msgstr "к"

@@ -1,0 +1,10 @@
+general:
+  version: 3.x
+  css:
+    component:
+      css/drd.css: {}
+  js:
+    js/drd.js: {}
+  dependencies:
+    - core/jquery
+    - core/once

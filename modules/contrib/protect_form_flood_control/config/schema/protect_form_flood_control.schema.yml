@@ -1,0 +1,60 @@
+protect_form_flood_control.settings:
+  type: config_object
+  label: 'Protect Form Flood Control settings.'
+  mapping:
+    general:
+      type: mapping
+      label: 'General settings'
+      mapping:
+        protect_all:
+          type: boolean
+          label: 'Protect all form'
+        window:
+          type: integer
+          label: 'The window for flood control'
+        threshold:
+          type: integer
+          label: 'The threshold for flood control'
+        protected_ids:
+          type: sequence
+          label: 'The protected form IDs'
+          sequence:
+            type: string
+            label: 'The form ID'
+        unprotected_ids:
+          type: sequence
+          label: 'The protected form IDs'
+          sequence:
+            type: string
+            label: 'The form ID'
+        whitelist:
+          type: sequence
+          label: 'The whitelist of IP addresses'
+          sequence:
+            type: string
+            label: 'IP Address'
+        log:
+          type: boolean
+          label: 'Log submission blocked'
+    forms:
+      type: sequence
+      label: 'The protected form IDs'
+      sequence:
+        type: mapping
+        label: 'Setting per form'
+        mapping:
+          ids:
+            type: sequence
+            label: 'The form IDs'
+            sequence:
+              type: string
+              label: 'The form ID'
+          window:
+            type: integer
+            label: 'The window for flood control'
+          threshold:
+            type: integer
+            label: 'The threshold for flood control'
+    show_ids:
+      type: boolean
+      label: 'Show form IDs to admins'

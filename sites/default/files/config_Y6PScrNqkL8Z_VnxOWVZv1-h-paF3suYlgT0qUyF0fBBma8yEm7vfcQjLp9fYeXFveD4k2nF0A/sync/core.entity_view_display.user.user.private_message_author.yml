@@ -1,0 +1,39 @@
+uuid: b2339e63-d080-4afd-ae21-187aea96a461
+langcode: fr
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.user.private_message_author
+    - field.field.user.user.avatars_avatar_generator
+    - field.field.user.user.avatars_user_picture
+    - field.field.user.user.user_picture
+  module:
+    - user
+_core:
+  default_config_hash: 5VkjdDDe_kM-giLC61z36ACn6Z2eMjaH63Rh6adWWpw
+id: user.user.private_message_author
+targetEntityType: user
+bundle: user
+mode: private_message_author
+content:
+  linked_username:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  masquerade:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 50
+    region: content
+hidden:
+  avatars_avatar_generator: true
+  avatars_user_picture: true
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  member_for: true
+  private_message_link: true
+  search_api_excerpt: true
+  user_picture: true

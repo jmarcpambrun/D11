@@ -1,0 +1,91 @@
+uuid: 9e1c5a9f-ca30-42e4-aec6-3e7fad12596a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.mail_box_content.attachment
+    - field.field.node.mail_box_content.content
+    - field.field.node.mail_box_content.from_email
+    - field.field.node.mail_box_content.from_name
+    - field.field.node.mail_box_content.subject
+    - field.field.node.mail_box_content.to_email
+    - field.field.node.mail_box_content.to_name
+    - node.type.mail_box_content
+  module:
+    - file
+    - text
+    - user
+_core:
+  default_config_hash: MYGmpbU1IQtIcgHsqxuxnjdSdnbXI2MOeUKAJT2dyzY
+id: node.mail_box_content.default
+targetEntityType: node
+bundle: mail_box_content
+mode: default
+content:
+  attachment:
+    type: file_default
+    label: above
+    settings:
+      use_description_as_link_text: true
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  content:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  from_email:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  from_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  subject:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  to_email:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  to_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  langcode: true
+  private_message_link: true
+  search_api_excerpt: true

@@ -1,0 +1,22 @@
+uuid: b7f9609d-66bc-4a5c-a4fb-2d6b5e6c2c6a
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.group_relationship.group_roles
+    - group.relationship_type.group_content_type_c10611ba5c4f2
+id: group_relationship.group_content_type_c10611ba5c4f2.group_roles
+field_name: group_roles
+entity_type: group_relationship
+bundle: group_content_type_c10611ba5c4f2
+label: Roles
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'group_type:group_role'
+  handler_settings:
+    group_type_id: dpalicepeio_regsitered
+field_type: entity_reference

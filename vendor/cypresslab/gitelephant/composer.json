@@ -1,0 +1,48 @@
+{
+    "name": "cypresslab/gitelephant",
+    "description": "An abstraction layer for git written in PHP",
+    "scripts": {
+        "tests": "./vendor/bin/phpunit",
+        "static-tests": "./vendor/bin/phpstan analyse -c phpstan.neon",
+        "check-cs": "./vendor/bin/ecs check",
+        "fix-cs": "./vendor/bin/ecs check --fix"
+    },
+    "keywords": [
+        "git"
+    ],
+    "homepage": "http://gitelephant.cypresslab.net/",
+    "license": "LGPL-3.0+",
+    "authors": [
+        {
+            "name": "Matteo Giachino",
+            "email": "matteog@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2.0",
+        "symfony/process": ">=3.4",
+        "symfony/filesystem": ">=3.4",
+        "symfony/finder": ">=3.4",
+        "phpoption/phpoption": "1.*"
+    },
+    "require-dev": {
+        "php": ">=7.2.0",
+        "phpunit/phpunit": "~8.0|~9.0",
+        "mockery/mockery": "~1.1",
+        "rector/rector": "*",
+        "symplify/easy-coding-standard": "*",
+        "phpstan/phpstan": "*",
+        "phpstan/phpstan-phpunit": "*"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-0": {
+            "GitElephant": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-0": {
+            "GitElephant": "tests/"
+        }
+    }
+}

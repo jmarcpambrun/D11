@@ -1,0 +1,18 @@
+webform_quiz.webform_quiz_add_form:
+  route_name: webform_quiz.webform_quiz_add_form
+  title: 'Add quiz'
+  class: '\Drupal\webform\Plugin\Menu\LocalAction\WebformDialogLocalAction'
+  dialog: narrow
+  appears_on:
+    - entity.webform.collection
+
+entity.webform_ui.element.quiz_page:
+  route_name: entity.webform_ui.element.add_quiz_page
+  title: 'Add Quiz page'
+  class: '\Drupal\webform\Plugin\Menu\LocalAction\WebformDialogLocalAction'
+  weight: 10
+  off_canvas: normal
+  attributes:
+    id: 'webform-ui-add-page'
+  appears_on:
+    - entity.webform.edit_form

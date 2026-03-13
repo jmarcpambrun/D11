@@ -1,0 +1,14 @@
+uuid: 66906feb-1b69-48c3-a964-d3d96312f047
+langcode: fr
+status: true
+dependencies:
+  module:
+    - drd
+_core:
+  default_config_hash: __pxlpOGco1Xun0cCA1kZ3W4deAWMnRG7zkSJBeeYjg
+id: drd_action_blocks
+label: 'Get blocks'
+type: drd_domain
+plugin: drd_action_blocks
+configuration:
+  terms: {  }

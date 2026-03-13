@@ -1,0 +1,24 @@
+.notes::before {
+  display: inline-block;
+  width: 1em;
+  content: attr(data-icon);
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.notes + div {
+  position: absolute;
+  z-index: 3;
+  display: none;
+  float: right;
+  min-width: 200px;
+  margin-top: -3em;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.notes:hover + div,
+.notes + div:hover {
+  display: inline-block;
+}

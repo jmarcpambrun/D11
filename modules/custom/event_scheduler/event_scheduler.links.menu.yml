@@ -1,0 +1,5 @@
+event_scheduler.settings:
+  title: Event scheduler settings
+  description: 'Settings to control the behaviour of the Event Scheduler.'
+  parent: system.admin_config_development
+  route_name: event_scheduler.settings

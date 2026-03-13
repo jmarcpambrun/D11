@@ -1,0 +1,74 @@
+parameters:
+  tfa.auth_provider_bypass: []
+  tfa.auth_provider_bypass_priority: 50
+
+services:
+  plugin.manager.tfa:
+    class: Drupal\tfa\TfaPluginManager
+    parent: default_plugin_manager
+    arguments:
+      - '@config.factory'
+  tfa.login_context_factory:
+    class: Drupal\tfa\TfaLoginContextFactory
+    arguments:
+      - '@config.factory'
+      - '@user.data'
+      - '@plugin.manager.tfa'
+      - '@string_translation'
+      - '@messenger'
+      - '@logger.channel.tfa'
+      - '@url_generator'
+  Drupal\tfa\TfaLoginContextFactory: '@tfa.login_context_factory'
+  logger.channel.tfa:
+    parent: logger.channel_base
+    arguments: ['tfa']
+  tfa.user.auth:
+    class: \Drupal\tfa\TfaUserAuth
+    decorates: user.auth
+    decoration_priority: 100
+    arguments:
+      - '@tfa.user.auth.inner'
+      - '@tfa.login_context_factory'
+      - '@cache.tfa_memcache'
+      - '@plugin.manager.tfa'
+      - '@config.factory'
+      - '@user.data'
+      - '@entity_type.manager'
+  cache.tfa_memcache:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin, default_backend: cache.backend.memory }
+    factory:
+      - '@cache_factory'
+      - 'get'
+    arguments:
+      - 'tfa_memcache'
+  tfa.user_set_protection:
+    class: \Drupal\tfa\EventSubscriber\TfaUserSetSubscriber
+    autowire: true
+    tags:
+      - { name: 'event_subscriber' }
+  tfa.account_switcher:
+    class: \Drupal\tfa\TfaAccountSwitcher
+    decorates: account_switcher
+    decoration_priority: 250
+    autowire: true
+  tfa.subscriber.one_time_login:
+    class: Drupal\tfa\EventSubscriber\TfaOneTimeLoginEventSubscriber
+    autowire: true
+    tags:
+      - 'event_subscriber'
+  tfa.login_form_helper:
+    class: \Drupal\tfa\Form\TfaLoginFormHelper
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+      - '@tfa.login_context_factory'
+      - '@cache.tfa_memcache'
+      - '@string_translation'
+      - '@messenger'
+      - '@request_stack'
+      - '@tempstore.private'
+      - '@private_key'
+      - '@session'
+      - '@redirect.destination'

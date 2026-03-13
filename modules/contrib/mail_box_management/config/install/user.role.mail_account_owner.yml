@@ -1,0 +1,5 @@
+id: mail_account_owner
+label: 'Mail Account Owner'
+permissions:
+  - 'access mail_box_management'
+  - 'administer themes'

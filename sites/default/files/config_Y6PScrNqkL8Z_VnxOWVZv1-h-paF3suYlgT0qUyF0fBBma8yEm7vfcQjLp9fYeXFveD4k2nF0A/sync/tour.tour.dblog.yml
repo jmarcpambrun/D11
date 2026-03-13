@@ -1,0 +1,66 @@
+uuid: dd4d7217-5178-4a62-88ac-6545245ff02d
+langcode: fr
+status: true
+dependencies: {  }
+id: dblog
+label: 'Database log'
+routes:
+  -
+    route_name: dblog.overview
+tips:
+  dblog_intro:
+    id: dblog_intro
+    plugin: text
+    label: 'Recent log messages'
+    weight: 1
+    position: top-start
+    selector: null
+    body: "System events such as errors, failed login attempts and content updates are stored as messages in the site's database. On the <em>Recent log messages</em> page you find a chronological list of recorded messages that you can filter and view. You should check the log messages on a regular basis to ensure the site is working properly"
+  dblog_filter_clear:
+    id: dblog_filter_clear
+    plugin: text
+    label: 'Clearing messages'
+    weight: 2
+    position: auto
+    selector: null
+    body: 'Click on the <em>Delete</em> tab on the top left to delete all the log messages from the database.'
+  dblog_filter:
+    id: dblog_filter
+    plugin: text
+    label: 'Filtering messages'
+    weight: 3
+    position: auto
+    selector: '#views-exposed-form-watchdog-page'
+    body: 'Use the exposed form to <em>Filter log messages</em> by <em>Type</em> (usually the name of the module that generated the message) or <em>Severity</em> (emergency, critical, notice, etc).'
+  dblog_table_sort:
+    id: dblog_table_sort
+    plugin: text
+    label: 'Sorting messages'
+    weight: 4
+    position: auto
+    selector: '.views-table thread'
+    body: 'Click on the table headers <em>Type</em>, <em>Date</em>, <em>Message</em>, or <em>User</em> to sort the list of messages.'
+  dblog_recognize_message:
+    id: dblog_recognize_message
+    plugin: text
+    label: 'Recognizing messages'
+    weight: 5
+    position: auto
+    selector: null
+    body: 'The severity of the message is made visible with colors and icons.'
+  dblog_table_view:
+    id: dblog_table_view
+    plugin: text
+    label: 'Viewing messages'
+    weight: 6
+    position: auto
+    selector: '.admin-dblog tbody > tr td a'
+    body: 'Click on the message to get more details such as the location (page that generated the message), the referrer and the hostname where the request originated from.'
+  dblog_more_information:
+    id: dblog_more_information
+    plugin: text
+    label: 'More information'
+    weight: 99
+    position: auto
+    selector: null
+    body: 'For more information, see [help.page.dblog]<a href="https://www.drupal.org/documentation/modules/dblog">the online documentation</a>. On the <a href="[site:url]admin/config/development/logging">configuration</a> page you define which and how many messages should be stored.'

@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies: {  }
+id: completed
+label: Completed
+sort_order: 0
+show_backlog: false
+show_project_board: false
+show_completed: true

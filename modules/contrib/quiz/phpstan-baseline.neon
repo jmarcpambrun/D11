@@ -1,0 +1,16 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Function rules_import not found\\.$#"
+			count: 1
+			path: quiz.rules_defaults.inc
+
+		-
+			message: "#^Access to an undefined property Drupal\\\\quiz\\\\Entity\\\\QuizFeedbackType\\:\\:\\$component\\.$#"
+			count: 2
+			path: src/Entity/QuizFeedbackType.php
+
+		-
+			message: "#^Access to an undefined property Drupal\\\\quiz\\\\Entity\\\\QuizFeedbackType\\:\\:\\$componentObject\\.$#"
+			count: 2
+			path: src/Entity/QuizFeedbackType.php

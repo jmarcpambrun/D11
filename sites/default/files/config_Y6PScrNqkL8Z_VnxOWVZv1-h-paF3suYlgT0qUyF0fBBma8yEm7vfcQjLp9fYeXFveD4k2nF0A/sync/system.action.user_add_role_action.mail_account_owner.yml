@@ -1,0 +1,14 @@
+uuid: 2e3fd540-27c5-4e49-a958-31580e1d62ab
+langcode: fr
+status: true
+dependencies:
+  config:
+    - user.role.mail_account_owner
+  module:
+    - user
+id: user_add_role_action.mail_account_owner
+label: 'Ajouter le rôle Mail Account Owner aux utilisateurs sélectionnés'
+type: user
+plugin: user_add_role_action
+configuration:
+  rid: mail_account_owner

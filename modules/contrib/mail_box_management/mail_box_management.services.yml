@@ -1,0 +1,22 @@
+services:
+  mail_box_management.config:
+    class: Drupal\mail_box_management\Plugin\ConfigurationHelper
+    arguments: ['@config.factory']
+  mail_box_management.theme:
+    class: Drupal\mail_box_management\Plugin\ThemeTemplateLoader
+    arguments: ['@mail_box_management.config']
+  mail_box_management.imap_connector:
+    class:  Drupal\mail_box_management\Server\Imap\ImapConnection
+  mail_box_management.twig_extension:
+    class: Drupal\mail_box_management\Twig\Extension\MailBoxManagementTwigExtension
+    arguments: [ '@service_container' ]
+    tags:
+      - { name: twig.extension }
+  mail_box_management.local.storage:
+    class: Drupal\mail_box_management\Plugin\LocalStorage
+    arguments: [ '@database' ]
+  mail_box_management.theme.negotiator:
+    class: Drupal\mail_box_management\Theme\MailAccountOwnerThemeNegotiator
+    arguments: [ '@current_user' ]
+    tags:
+      - { name: theme_negotiator, priority: 100 }

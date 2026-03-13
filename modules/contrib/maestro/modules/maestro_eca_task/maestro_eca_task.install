@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * @file
+ * maestro_eca_task.install
+ */
+
+use Drupal\maestro\Engine\MaestroEngine;
+
+/**
+ * Implements hook_uninstall().
+ */
+function maestro_eca_task_uninstall() {
+  // Remove our example template
+  $example_template = MaestroEngine::getTemplate('maestro_eca');
+  if ($example_template) {
+    $example_template->delete();
+  }
+
+  // Delete the ECA model and settings in config
+  $config_factory = \Drupal::service('config.factory');
+  $config_factory->getEditable('eca.eca.process_maestro_eca')->delete();
+  $config_factory->getEditable('eca.model.process_maestro_eca')->delete();
+}
+
+/**
+ * Update 10000 - Move the ECA Task's configuration under task_data to clean up schema.
+ */
+function maestro_eca_task_update_10000() {
+  // Load all templates and find ones that contain ECA tasks and transpose their data
+  $eca_config_fields = [
+    'entity_identifier_source',
+    'entity_identifier_manual',
+    'entity_identifier_variable',
+    'event_name',
+  ];
+  $templates = MaestroEngine::getTemplates(); // template_id => tasks
+  foreach($templates as $template_id => &$settings) {
+    $change = FALSE;
+    $tasks = &$settings->tasks ?? [];
+    foreach($tasks as &$task) {
+      if($task['tasktype'] == 'MaestroEcaEventTask') {
+        // Transpose all ECA fields into the ['data']['eca'] key
+        foreach($eca_config_fields as $field) {
+          if(array_key_exists($field, $task)) {
+            $task['data']['eca'][$field] = $task[$field];
+            $change = TRUE;
+          }
+          unset($task[$field]);
+        }
+      }
+    }
+    if($change) {
+      $templates[$template_id]->save();
+    }
+  }
+
+}

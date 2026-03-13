@@ -1,0 +1,14 @@
+name: 'DRD Platform Integration: Pantheon'
+type: module
+description: Import and update Pantheon inventory into DRD
+package: DRD
+dependencies:
+  - drd:drd_pi
+configure: drd_pi_pantheon.drd_pi_pantheon_settings
+core_version_requirement: ^10 || ^11
+# project: drd
+
+# Information added by Drupal.org packaging script on 2025-03-07
+version: '4.1.7'
+project: 'drd'
+datestamp: 1741339424

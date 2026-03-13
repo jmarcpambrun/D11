@@ -1,0 +1,8 @@
+url:
+  type: string
+  label: URL
+  translatable: true
+
+url_notranslate:
+  type: string
+  label: URL

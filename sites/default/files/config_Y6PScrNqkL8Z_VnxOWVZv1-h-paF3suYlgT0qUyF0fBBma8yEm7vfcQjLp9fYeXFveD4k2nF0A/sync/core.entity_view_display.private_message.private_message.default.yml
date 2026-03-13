@@ -1,0 +1,59 @@
+uuid: afe38019-b651-4f1e-a0fd-8b5ec7fb3629
+langcode: fr
+status: true
+dependencies:
+  module:
+    - private_message
+    - text
+_core:
+  default_config_hash: bY60CRy-1iA05ELhvP1G7mki9KT4YbhNEoh-HzFbwAw
+id: private_message.private_message.default
+targetEntityType: private_message
+bundle: private_message
+mode: default
+content:
+  created:
+    type: timestamp
+    label: hidden
+    settings:
+      date_format: short
+      custom_date_format: ''
+      timezone: ''
+      tooltip:
+        date_format: ''
+        custom_date_format: ''
+      time_diff:
+        enabled: false
+        future_format: '@interval hence'
+        past_format: '@interval ago'
+        granularity: 2
+        refresh: 60
+    third_party_settings: {  }
+    weight: -1
+    region: content
+  message:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  owner:
+    type: entity_reference_entity_view
+    label: inline
+    settings:
+      view_mode: private_message_author
+      link: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  timestamp:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  search_api_excerpt: true

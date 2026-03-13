@@ -1,0 +1,13 @@
+{
+    "name": "drupal/backward_compatibility",
+    "type": "drupal-module",
+    "description": "Backward Compatibility for Drupal 9 and 10 with previous versions of Drupal.",
+    "keywords": [
+    ],
+    "homepage": "https://www.drupal.org/project/backward_compatibility",
+    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/backward_compatibility",
+        "source": "http://cgit.drupalcode.org/backward_compatibility"
+    }
+}

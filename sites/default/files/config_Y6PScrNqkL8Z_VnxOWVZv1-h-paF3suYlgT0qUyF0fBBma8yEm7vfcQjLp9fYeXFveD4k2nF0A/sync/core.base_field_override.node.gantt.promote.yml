@@ -1,0 +1,24 @@
+uuid: 073b4479-bfa4-4b1c-9d7e-7aede62391f3
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.gantt
+_core:
+  default_config_hash: ZcvEOHlf3uLiNWXAJ9wpQFXE_HaevEOpvrFVNpjU__o
+id: node.gantt.promote
+field_name: promote
+entity_type: node
+bundle: gantt
+label: 'Promoted to front page'
+description: ''
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

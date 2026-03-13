@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.to_email
+    - node.type.mail_box_content
+id: node.mail_box_content.to_email
+field_name: to_email
+entity_type: node
+bundle: mail_box_content
+label: 'To Email'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

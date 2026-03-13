@@ -1,0 +1,18 @@
+<div id="burndown_project_cloud">
+
+  {% for shortcode, project_data in data %}
+  
+  <div class="tag_cloud_item letter-{{ project_data.first_letter }}">
+  
+    <a
+      href="{{ url('<front>') }}burndown/{{ board }}/{{ shortcode }}"
+      title="Navigate to {{ shortcode }} {{ board }}"
+      style="font-size: {{ project_data.size }}px;">
+        {{ shortcode }}
+    </a>
+  
+  </div>
+
+  {% endfor %}
+
+</div>

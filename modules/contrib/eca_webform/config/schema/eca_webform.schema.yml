@@ -1,0 +1,118 @@
+eca.event.plugin.webform:access_rules:
+  type: eca.event.plugin
+  label: 'Access rules'
+eca.event.plugin.webform:access_rules_alter:
+  type: eca.event.plugin
+  label: 'Alter access rules'
+eca.event.plugin.webform:admin_third_party_settings_form_alter:
+  type: eca.event.plugin
+  label: 'Alter admin third party settings form'
+eca.event.plugin.webform:element_access:
+  type: eca.event.plugin
+  label: 'Element access'
+eca.event.plugin.webform:element_alter:
+  type: eca.event.plugin
+  label: 'Alter element'
+eca.event.plugin.webform:element_configuration_form_alter:
+  type: eca.event.plugin
+  label: 'Alter element configuration form'
+eca.event.plugin.webform:element_default_properties_alter:
+  type: eca.event.plugin
+  label: 'Alter element default properties'
+eca.event.plugin.webform:element_info_alter:
+  type: eca.event.plugin
+  label: 'Alter element info'
+eca.event.plugin.webform:element_input_masks:
+  type: eca.event.plugin
+  label: 'Element input masks'
+eca.event.plugin.webform:element_input_masks_alter:
+  type: eca.event.plugin
+  label: 'Alter element input masks'
+eca.event.plugin.webform:element_translatable_properties_alter:
+  type: eca.event.plugin
+  label: 'Alter element translatable properties'
+eca.event.plugin.webform:handler_info_alter:
+  type: eca.event.plugin
+  label: 'Alter handler info'
+eca.event.plugin.webform:handler_invoke_alter:
+  type: eca.event.plugin
+  label: 'Alter handler invoke'
+eca.event.plugin.webform:help_info:
+  type: eca.event.plugin
+  label: 'Help info'
+eca.event.plugin.webform:help_info_alter:
+  type: eca.event.plugin
+  label: 'Alter help info'
+eca.event.plugin.webform:image_select_images_alter:
+  type: eca.event.plugin
+  label: 'Alter image select images'
+eca.event.plugin.webform:options_alter:
+  type: eca.event.plugin
+  label: 'Alter options'
+eca.event.plugin.webform:source_entity_info_alter:
+  type: eca.event.plugin
+  label: 'Alter source entity info'
+eca.event.plugin.webform:submission_access:
+  type: eca.event.plugin
+  label: 'Submission access'
+eca.event.plugin.webform:submission_form_alter:
+  type: eca.event.plugin
+  label: 'Alter submission form'
+eca.event.plugin.webform:submission_query_access_alter:
+  type: eca.event.plugin
+  label: 'Alter submission query access'
+eca.event.plugin.webform:submissions_post_purge:
+  type: eca.event.plugin
+  label: 'Submissions post-purge'
+eca.event.plugin.webform:submissions_pre_purge:
+  type: eca.event.plugin
+  label: 'Submissions pre-purge'
+eca.event.plugin.webform:third_party_settings_form_alter:
+  type: eca.event.plugin
+  label: 'Alter third party settings form'
+eca.event.plugin.webform:variant_info_alter:
+  type: eca.event.plugin
+  label: 'Alter variant info'
+
+action.configuration.eca_webform_submission_get_data:
+  type: mapping
+  mapping:
+    field_name:
+      type: string
+      label: 'Field name'
+    token_name:
+      type: string
+      label: 'Token name'
+action.configuration.eca_webform_get_third_party_setting:
+  type: mapping
+  mapping:
+    provider:
+      type: string
+      label: 'Provider'
+    setting_name:
+      type: string
+      label: 'Setting name'
+    token_name:
+      type: string
+      label: 'Token name'
+action.configuration.eca_webform_submission_set_data:
+  type: mapping
+  mapping:
+    field_name:
+      type: string
+      label: 'Field name'
+    field_value:
+      type: string
+      label: 'Field value'
+action.configuration.eca_webform_set_third_party_setting:
+  type: mapping
+  mapping:
+    provider:
+      type: string
+      label: 'Provider'
+    setting_name:
+      type: string
+      label: 'Setting name'
+    setting_value:
+      type: string
+      label: 'Setting value'

@@ -1,0 +1,22 @@
+services:
+  plugin.manager.quiz.question:
+    class: Drupal\quiz\Plugin\QuizQuestionPluginManager
+    parent: default_plugin_manager
+  quiz_event_subscriber:
+    class: '\Drupal\quiz\EventSubscriber\QuizEventSubscriber'
+    arguments: ["@entity_type.manager"]
+    tags:
+      - { name: 'event_subscriber' }
+  quiz.session:
+    class: Drupal\quiz\Services\QuizSession
+    arguments: ['@session']
+  quiz.quiz_route_context:
+    class: Drupal\quiz\ContextProvider\QuizRouteContext
+    arguments: [ '@current_route_match', '@entity_type.manager' ]
+    tags:
+      - { name: 'context_provider' }
+  quiz.event_subscriber:
+    class: Drupal\quiz\EventSubscriber\QuizAccessDeniedSubscriber
+    arguments: ['@http_kernel', '@logger.channel.php', '@redirect.destination', '@router.no_access_checks', '@current_route_match', '@quiz.session', '@config.factory']
+    tags:
+      - { name: event_subscriber }

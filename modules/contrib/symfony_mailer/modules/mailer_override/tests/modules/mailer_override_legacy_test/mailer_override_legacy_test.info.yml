@@ -1,0 +1,12 @@
+name: Mailer Override legacy email test
+type: module
+description: For testing of Mailer legacy emails.
+package: Testing
+hidden: true
+dependencies:
+  - symfony_mailer:mailer_override
+
+# Information added by Drupal.org packaging script on 2026-01-29
+version: '2.0.0-beta4'
+project: 'symfony_mailer'
+datestamp: 1769710931

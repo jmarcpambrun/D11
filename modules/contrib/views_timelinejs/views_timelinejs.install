@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Contains install, uninstall, and update hooks for Views TimelineJS.
+ */
+
+/**
+ * Sets the TimelineJS CSS library group to 'theme' for existing sites.
+ *
+ * @see https://www.drupal.org/node/2856403
+ */
+function views_timelinejs_update_8302() {
+  \Drupal::service('config.factory')
+    ->getEditable('views_timelinejs.settings')
+    ->set('css_library_group', 'theme')
+    ->save();
+}
+
+/**
+ * Updates the font setting from 'additional_config' to 'timeline_config'.
+ *
+ * @see https://www.drupal.org/node/3210663
+ */
+function views_timelinejs_update_9401() {
+  $config_factory = \Drupal::configFactory();
+  foreach ($config_factory->listAll('views.view.') as $view_config_name) {
+    $view = $config_factory->getEditable($view_config_name);
+    $save = FALSE;
+    foreach ($view->get('display') as $display_id => $display) {
+      if ($display['display_options']['style']['type'] == 'timelinejs') {
+        $display['display_options']['style']['options']['timeline_config']['font'] = $display['display_options']['style']['options']['additional_config']['font'];
+        unset($display['display_options']['style']['options']['additional_config']['font']);
+        $view->set("display.{$display_id}", $display);
+        $save = TRUE;
+      }
+    }
+    if ($save) {
+      $view->save();
+    }
+  }
+}

@@ -1,0 +1,31 @@
+uuid: b3fb6f99-a366-4f18-86db-7834ae39a07f
+langcode: fr
+status: true
+dependencies:
+  module:
+    - private_message
+    - system
+  theme:
+    - bartik
+  enforced:
+    module:
+      - private_message
+_core:
+  default_config_hash: fz76WJgYBiPULFUH-fBqOKqOKA-viCQSwO6ri6zQgbo
+id: privatemessageactions
+theme: bartik
+region: sidebar_first
+weight: 0
+provider: null
+plugin: private_message_actions_block
+settings:
+  id: private_message_actions_block
+  label: Actions
+  label_display: visible
+  provider: private_message
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    context_mapping: {  }
+    pages: "/private-messages\r\n/private-messages/*\r\n/private-message/create"

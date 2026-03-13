@@ -1,0 +1,136 @@
+services:
+  plugin.manager.drd_action:
+    class: Drupal\drd\ActionManager
+    arguments:
+      - '@container.namespaces'
+      - '@cache.discovery'
+      - '@module_handler'
+      - '@entity_type.manager'
+      - '@event_dispatcher'
+  plugin.manager.drd_auth:
+    class: Drupal\drd\Plugin\Auth\Manager
+    parent: default_plugin_manager
+  plugin.manager.drd_update.storage:
+    class: Drupal\drd\Update\ManagerStorage
+    arguments:
+      - '@container.namespaces'
+      - '@cache.discovery'
+      - '@module_handler'
+      - '@plugin.manager.drd_update.build'
+      - '@plugin.manager.drd_update.process'
+      - '@plugin.manager.drd_update.test'
+      - '@plugin.manager.drd_update.deploy'
+      - '@plugin.manager.drd_update.finish'
+  plugin.manager.drd_update.build:
+    class: Drupal\drd\Update\ManagerBuild
+    parent: default_plugin_manager
+  plugin.manager.drd_update.deploy:
+    class: Drupal\drd\Update\ManagerDeploy
+    parent: default_plugin_manager
+  plugin.manager.drd_update.finish:
+    class: Drupal\drd\Update\ManagerFinish
+    parent: default_plugin_manager
+  plugin.manager.drd_update.process:
+    class: Drupal\drd\Update\ManagerProcess
+    parent: default_plugin_manager
+  plugin.manager.drd_update.test:
+    class: Drupal\drd\Update\ManagerTests
+    parent: default_plugin_manager
+  update.processor.drd:
+    class: Drupal\drd\UpdateProcessor
+    arguments:
+      - '@config.factory'
+      - '@queue'
+      - '@update.fetcher.drd'
+      - '@state'
+      - '@private_key'
+      - '@keyvalue'
+      - '@keyvalue.expirable'
+      - '@datetime.time'
+      - '@entity_type.manager'
+      - '@module_handler'
+  update.fetcher.drd:
+    class: Drupal\drd\UpdateFetcher
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@settings'
+      - '@logger.channel.update'
+  drd.encrypt:
+    class: Drupal\drd\Encryption
+    arguments:
+      - '@config.factory'
+      - '@?encryption'
+  drd.encrypt.update:
+    class: Drupal\drd\EncryptionUpdate
+    arguments:
+      - '@drd.encrypt'
+      - '@config.factory'
+      - '@entity_type.manager'
+  drd_host.host_route_context:
+    class: Drupal\drd\ContextProvider\RouteContextHost
+    arguments:
+      - '@current_route_match'
+    tags:
+      - { name: 'context_provider' }
+  drd_core.core_route_context:
+    class: Drupal\drd\ContextProvider\RouteContextCore
+    arguments:
+      - '@current_route_match'
+    tags:
+      - { name: 'context_provider' }
+  drd_domain.domain_route_context:
+    class: Drupal\drd\ContextProvider\RouteContextDomain
+    arguments:
+      - '@current_route_match'
+    tags:
+      - { name: 'context_provider' }
+  drd_domain.local_copy:
+    class: Drupal\drd\DomainLocalCopy
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@config.factory'
+      - '@drd.encrypt'
+      - '@extension.list.module'
+  queue.drd:
+    class: Drupal\drd\QueueManager
+    arguments:
+      - '@advancedqueue.processor'
+  drd.entities.select:
+    class: Drupal\drd\SelectEntities
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+  drd.widgets:
+    class: Drupal\drd\Widgets
+    arguments:
+      - '@plugin.manager.block'
+      - '@current_user'
+  drd.action.widget:
+    class: Drupal\drd\ActionWidget
+    arguments:
+      - '@entity_type.manager'
+      - '@queue.drd'
+  drd.http_request:
+    class: Drupal\drd\HttpRequest
+    arguments:
+      - '@drd.logging'
+      - '@http_client_factory'
+  drd.ssh_command:
+    class: Drupal\drd\SshCommand
+    arguments: []
+  drd.dnslookup:
+    class: Drupal\drd\DnsLookup
+    arguments: []
+  drd.cleanup:
+    class: Drupal\drd\Cleanup
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@database'
+  drd.logging:
+    class: Drupal\drd\Logging
+    arguments:
+      - '@config.factory'
+      - '@logger.factory'

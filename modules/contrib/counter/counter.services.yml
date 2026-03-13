@@ -1,0 +1,20 @@
+services:
+  counter.counter_utility:
+    class: '\Drupal\counter\CounterUtility'
+    arguments: [ '@database', '@request_stack', '@current_user',  '@config.factory' ]
+
+  counter.counter_event_subscriber:
+    class: '\Drupal\counter\EventSubscriber\CounterEventsSubscriber'
+    arguments: [ '@config.factory', '@current_user', '@counter.counter_utility',  '@module_handler' ]
+    tags:
+      - { name: 'event_subscriber' }
+
+  counter.middleware:
+    class: '\Drupal\counter\StackMiddleware\CounterMiddleware'
+    arguments: [ '@counter.counter_utility' ]
+    tags:
+      - { name: http_middleware, priority: 210 }
+
+  counter.statistics_service:
+    class: '\Drupal\counter\Service\StatisticsService'
+    arguments: [ '@database', '@request_stack', '@module_handler' ]

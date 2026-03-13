@@ -1,0 +1,52 @@
+uuid: 4070f990-60c4-470d-9da2-ba4cd2599b72
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.gantt.field_gantt_date
+    - field.field.node.gantt.field_gantt_duration
+    - field.field.node.gantt.field_gantt_links
+    - field.field.node.gantt.field_gantt_open
+    - field.field.node.gantt.field_gantt_order
+    - field.field.node.gantt.field_gantt_owner
+    - field.field.node.gantt.field_gantt_parent
+    - field.field.node.gantt.field_gantt_planned_date
+    - field.field.node.gantt.field_gantt_planned_duration
+    - field.field.node.gantt.field_gantt_progress
+    - field.field.node.gantt.field_gantt_type
+    - field.field.node.gantt.field_gantt_worker
+    - node.type.gantt
+  module:
+    - user
+_core:
+  default_config_hash: JTKK4LTYGA05Ubs04e-2VDpoK34yLddjSliapQFa-I0
+id: node.gantt.teaser
+targetEntityType: node
+bundle: gantt
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  field_gantt_date: true
+  field_gantt_duration: true
+  field_gantt_links: true
+  field_gantt_open: true
+  field_gantt_order: true
+  field_gantt_owner: true
+  field_gantt_parent: true
+  field_gantt_planned_date: true
+  field_gantt_planned_duration: true
+  field_gantt_progress: true
+  field_gantt_type: true
+  field_gantt_worker: true
+  langcode: true
+  private_message_link: true
+  search_api_excerpt: true

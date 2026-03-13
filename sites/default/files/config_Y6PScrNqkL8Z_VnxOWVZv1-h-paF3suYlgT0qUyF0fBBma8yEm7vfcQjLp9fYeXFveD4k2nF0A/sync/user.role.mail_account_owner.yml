@@ -1,0 +1,18 @@
+uuid: 2d8f5c50-0fae-496e-9417-14f87ec56135
+langcode: fr
+status: true
+dependencies:
+  config:
+    - filter.format.email_html
+  module:
+    - filter
+    - mail_box_management
+_core:
+  default_config_hash: u-MMHavZyEA7rqKTff0Peqz4BLFn4O664kOz2PGFXzU
+id: mail_account_owner
+label: 'Mail Account Owner'
+weight: 3
+is_admin: null
+permissions:
+  - 'access mail_box_management'
+  - 'use text format email_html'

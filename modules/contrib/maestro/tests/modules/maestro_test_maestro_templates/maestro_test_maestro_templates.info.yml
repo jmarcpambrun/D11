@@ -1,0 +1,12 @@
+name: 'Maestro templates tests'
+type: module
+description: 'Support module for maestro_template tests'
+package: Testing
+dependencies:
+  - maestro:maestro
+  - maestro:maestro_utilities
+
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '4.4.0'
+project: 'maestro'
+datestamp: 1770141281

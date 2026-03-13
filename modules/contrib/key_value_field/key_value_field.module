@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * @file
+ * Contains key_value_field.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_help().
+ */
+function key_value_field_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the key_value_field module.
+    case 'help.page.key_value_field':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provides a field with a key, value pair along with a description.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function key_value_field_theme() {
+  $theme = [];
+
+  return $theme;
+}
+
+/**
+ * Implements hook_field_info_alter().
+ *
+ * @todo Remove once minimum version supported is at least 10.2.0.
+ */
+function key_value_field_field_info_alter(array &$info): void {
+  // Allow module to work with versions of older versions of Drupal.
+  if (\version_compare(\Drupal::VERSION, '10.1.9999', '<')) {
+    $info['key_value']['category'] = new TranslatableMarkup('Key / value');
+  }
+
+}

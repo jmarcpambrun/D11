@@ -1,0 +1,12 @@
+name: 'Scheduled event'
+type: module
+description: 'Delay the execution of special events into the future.'
+core_version_requirement: ^9.5 || ^10 || ^11
+package: 'Custom'
+dependencies:
+  - drupal:serialization
+
+# Information added by Drupal.org packaging script on 2026-02-21
+version: '2.3.0-rc6'
+project: 'event_scheduler'
+datestamp: 1771691839

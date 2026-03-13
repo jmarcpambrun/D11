@@ -1,0 +1,27 @@
+<div id="completed" class="row">
+
+  {% for key, sprint in data.sprints %}
+    {{ sprint }}
+
+    <div
+      class="list-group col sprint_tasks">
+
+      {% if data.sprint_tasks[ key ] is defined %}
+        {{ data.sprint_tasks[ key ] }}
+      {% endif %}
+
+    </div>
+
+  {% endfor %}
+
+  {% if data.pre_sprint_tasks is not empty %}
+    <div class="sprint_name">
+      <h2>Not in a Sprint:</h2>
+    </div>
+
+    <div class="list-group col sprint_tasks">
+      {{ data.pre_sprint_tasks }}
+    </div>
+  {% endif %}
+
+</div>

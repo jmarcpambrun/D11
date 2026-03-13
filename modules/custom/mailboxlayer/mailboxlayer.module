@@ -1,0 +1,208 @@
+<?php
+
+/**
+ * @file
+ * Module file for mailboxlayer.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function mailboxlayer_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.mailboxlayer':
+      $text = file_get_contents(__DIR__ . '/README.md');
+      if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
+        return '<pre>' . Html::escape($text) . '</pre>';
+      }
+      else {
+        // Use the Markdown filter to render the README.
+        $filter_manager = \Drupal::service('plugin.manager.filter');
+        $settings = \Drupal::configFactory()->get('markdown.settings')->getRawData();
+        $config = ['settings' => $settings];
+        $filter = $filter_manager->createInstance('markdown', $config);
+        return $filter->process($text, 'en');
+      }
+  }
+  return NULL;
+}
+
+/**
+ * Implements hook_webform_element_alter().
+ */
+function mailboxlayer_webform_element_alter(array &$element, FormStateInterface $form_state, array $context) {
+  if ($element['#type'] == 'email') {
+    if (array_key_exists('#mailboxlayer_enabled', $element) && $element['#mailboxlayer_enabled']) {
+      $element['#element_validate'][] = [
+        'Drupal\mailboxlayer\Validate\MailboxlayerConstraint',
+        'validateEmail',
+      ];
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function mailboxlayer_form_webform_ui_element_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Getting module configuration.
+  $config = \Drupal::service('config.factory')->getEditable('mailboxlayer.settings');
+  if (array_key_exists('callback_object', $form_state->getBuildInfo())) {
+    $callback_object = $form_state->getBuildInfo()['callback_object'];
+    $webform = $callback_object->getWebform();
+    if (is_object($webform)) {
+      // Saving webform id where mailboxlayer is enabled.
+      $webform_id = $webform->id();
+      $webform_list = $config->get('enabled_webforms');
+      $webform_list[$webform_id] = 1;
+      $config->set('enabled_webforms', $webform_list)->save();
+    }
+  }
+  // Define default custom properties.
+  $defaultMailboxlayerProperties = [
+    'mailboxlayer_enabled' => FALSE,
+  ];
+  $form_state->set('default_properties', $form_state->get('default_properties') + $defaultMailboxlayerProperties);
+
+  // Retrieve the values from the custom properties element's default value.
+  // @see \Drupal\webform\Plugin\WebformElementBase::buildConfigurationForm
+  $customProperties = $form_state->get('element_properties');
+  // Finally, append the default custom property values.
+  $customProperties += $defaultMailboxlayerProperties;
+  $allowedTypes = [
+    'email',
+  ];
+  $access = FALSE;
+  if (in_array($customProperties['type'], $allowedTypes)) {
+    $access = TRUE;
+  }
+
+  $form['properties']['mailboxlayer_validation'] = [
+    '#type' => 'details',
+    '#title' => t('Extra Email Validation'),
+    '#description' => t('Provides extra email validation'),
+    '#open' => TRUE,
+    '#access' => $access,
+  ];
+  $form['properties']['mailboxlayer_validation']['mailboxlayer'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Enable mailboxlayer'),
+    '#description' => t('This will enable the mailboxlayer validation for the email field.'),
+    '#parents' => ['properties', 'mailboxlayer_enabled'],
+    '#default_value' => $customProperties['mailboxlayer_enabled'],
+  ];
+
+}
+
+/**
+ * Implements hook_cron().
+ */
+function mailboxlayer_cron() {
+
+  // Getting database object.
+  $connection = \Drupal::database();
+
+  // 24 hrs from now.
+  $current_timestamp = time();
+  $config = \Drupal::config('mailboxlayer.settings');
+  $expirationDay = $config->get('mailbox_layer.email_expire');
+  $validity = $current_timestamp - ($expirationDay * 86400);
+  $result = $connection->select('mailboxlayer_log', 'ml')
+    ->fields('ml', ['id'])
+    ->condition('created', $validity, '<=')
+    ->execute()
+    ->fetchAssoc();
+
+  // Adding item in the LogRemoval Queue.
+  if (!empty($result)) {
+    $queue = \Drupal::queue('mailboxlayer_log_removal');
+    $queue->createItem($result);
+  }
+}
+
+/**
+ * Validate the email id with Mailboxlayer.
+ */
+function mailboxlayer_validate($email) {
+
+  $httpClient = \Drupal::httpClient();
+  $config = \Drupal::config('mailboxlayer.settings');
+  $accessToken = $config->get('mailbox_layer.api_key');
+  if ($accessToken && trim($email)) {
+    $tableCheck = mailboxlayer_log_check(trim($email));
+    if (empty($tableCheck)) {
+      $request = $httpClient->request('GET', 'https://apilayer.net/api/check', [
+        'query' => [
+          'access_key' => $accessToken,
+          'email' => $email,
+        ],
+      ]);
+      if ($request->getStatusCode() == 200) {
+        $response = json_decode($request->getBody(), TRUE);
+        // If error code is present then do nothing.
+        /// @todo can add notification implementation.
+        if (!isset($response['error']['code'])) {
+          mailboxlayer_log($response);
+          if (!$response['smtp_check']) {
+            return FALSE;
+          }
+        }
+        else {
+          $error_code = $response['error']['code'];
+          $error_type = $response['error']['type'];
+          // Logs error.
+          $logger = \Drupal::logger('mailboxlayer');
+          $logger->error(t('Mailboxlayer error code is @error_code and type is @error_type',
+          ['@error_code' => $error_code, '@error_type' => $error_type]));
+        }
+      }
+    }
+    elseif (!$tableCheck['smtp_check']) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Validate the email id from mailboxlayer log table.
+ */
+function mailboxlayer_log_check($email) {
+  // Result array.
+  $result = NULL;
+  if (!empty($email)) {
+    $connection = \Drupal::database();
+    $result = $connection->select('mailboxlayer_log', 'ml')
+      ->fields('ml', ['email', 'smtp_check'])
+      ->condition('email', $email, '=')
+      ->execute()
+      ->fetchAssoc();
+
+  }
+  return $result;
+}
+
+/**
+ * Log the email result in the mailboxlayer custom table.
+ */
+function mailboxlayer_log($response) {
+  // Storing values in table.
+  $connection = \Drupal::database();
+  $connection->insert('mailboxlayer_log')
+    ->fields([
+      'email' => $response['email'],
+      'format_valid' => (int) $response['format_valid'] ?? 0,
+      'mx_found' => (int) $response['mx_found'] ?? 0,
+      'smtp_check' => (int) $response['smtp_check'] ?? 0,
+      'catch_all' => (int) $response['catch_all'] ?? 0,
+      'role' => (int) $response['role'] ?? 0,
+      'disposable' => (int) $response['disposable'] ?? 0,
+      'free' => (int) $response['free'] ?? 0,
+      'score' => (int) $response['score'] ?? 0,
+      'created' => time(),
+    ])->execute();
+}

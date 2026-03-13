@@ -1,0 +1,21 @@
+uuid: 485cfd2a-d0ae-4854-9659-f87db6c5b9ee
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.from_email
+    - node.type.mail_box_content
+_core:
+  default_config_hash: i6glLpMpx77uLrG_CKBPj5F6irKWG97WUXwwUNHDZ9s
+id: node.mail_box_content.from_email
+field_name: from_email
+entity_type: node
+bundle: mail_box_content
+label: "Courriel de l'expéditeur"
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * @file
+ * maestro_eca_task.module
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function maestro_eca_task_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.maestro_eca_task':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('A Maestro Task is made available which creates an ECA Custom entity-aware event when executed.') . '<br>';
+      $output .= t('You can pass an entity referenced in the Maestro Entity Identifiers into the ECA event and carry out ECA-based actions on it.') . '</p>';
+      $output .= '<p>' . t('An ECA Action is made available that allows you to spawn a Maestro Process from your ECA model.') . '<br>';
+      $output .= t('The ECA Action also provides the ability to set a token which can store the created Process ID for potential use in ECA.') . '</p>';
+      $output .= '<p>' . t('Two examples are installed with the module: An example Maestro Template and an ECA BPMN.iO model.') . '<br>';
+      $output .= t('The example flow uses the "article" content type to show how a simple flow can kick off an ECA model, passing the article into the ECA Event. ') . '<br>';
+      $output .= t('<em>Both examples are removed on uninstall of the module.</em>') . '<br>';
+
+      $output .= t('The ECA model will attempt to publish the node and will spawn the "Simple Parallel to Serial" Maestro workflow to demonstrate') . '<br>';
+      $output .= t('how to spawn a Maestro Process and pass the article back into Maestro. The ECA BPMN.iO model is disabled by default.') . '</p>';
+      
+      $output .= '<h3>' . t('Documentation') . '</h3>';
+      $output .= '<p>' . t('<a href="https://www.drupal.org/docs/contributed-modules/maestro">Find all the Maestro documentation here.</a>') . '</p>';
+      return $output;
+  }
+}

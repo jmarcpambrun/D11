@@ -1,0 +1,15 @@
+name: Maestro ECA Integration
+type: module
+description: 'Provides a Maestro task to fire events which you can then use ECA to intercept and an ECA Action to spawn a Maestro process.'
+package: Maestro
+core_version_requirement: ^10 || ^11
+dependencies:
+  - maestro:maestro
+  - eca:eca
+  - eca_log:eca_log
+  - eca_content:eca_content
+
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '4.4.0'
+project: 'maestro'
+datestamp: 1770141281

@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -eu
+
+directories=(
+"./libraries/chart.js/auto"
+"./libraries/chart.js/helpers"
+"./libraries/chart.js/types"
+"./libraries/chart.js/dist/chunks"
+"./libraries/chart.js/dist/docs"
+"./libraries/chart.js/dist/controllers"
+"./libraries/chart.js/dist/core"
+"./libraries/chart.js/dist/elements"
+"./libraries/chart.js/dist/helpers"
+"./libraries/chart.js/dist/platform"
+"./libraries/chart.js/dist/plugins"
+"./libraries/chart.js/dist/scales"
+"./libraries/chart.js/dist/types"
+"./libraries/chartjs-plugin-datalabels/types"
+)
+
+counter=0
+
+echo "Deleting unneeded directories inside ./libraries/chartjs"
+
+for directory in "${directories[@]}"
+do
+    if [ -d "$directory" ]; then
+        echo "Deleting $directory"
+        rm -rf "$directory"
+        counter=$((counter+1))
+    fi
+done
+
+echo "$counter folders were deleted"
+
+files=(
+"./libraries/chart.js/README.md"
+"./libraries/chart.js/LICENSE.md"
+"./libraries/chart.js/package.json"
+"./libraries/chart.js/dist/helpers.esm.js"
+"./libraries/chart.js/dist/helpers.mjs"
+"./libraries/chart.js/dist/chart.mjs"
+"./libraries/chart.js/dist/chart.esm.js"
+"./libraries/chart.js/dist/chart.cjs"
+"./libraries/chart.js/dist/chart.cjs.map"
+"./libraries/chart.js/dist/helpers.js"
+"./libraries/chart.js/dist/helpers.js.map"
+"./libraries/chart.js/dist/helpers.cjs"
+"./libraries/chart.js/dist/helpers.cjs.map"
+"./libraries/chart.js/dist/index.d.ts"
+"./libraries/chart.js/dist/index.umd.d.ts"
+"./libraries/chart.js/dist/types.d.ts"
+"./libraries/chartjs-adapter-date-fns/README.md"
+"./libraries/chartjs-adapter-date-fns/LICENSE.md"
+"./libraries/chartjs-adapter-date-fns/package.json"
+"./libraries/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.esm.js"
+"./libraries/chartjs-plugin-datalabels/README.md"
+"./libraries/chartjs-plugin-datalabels/LICENSE.md"
+"./libraries/chartjs-plugin-datalabels/package.json"
+"./libraries/chartjs-plugin-datalabels/bower.json"
+)
+
+counter=0
+
+echo "Deleting unneeded files inside ./libraries/chartjs"
+
+for file in "${files[@]}"
+do
+    if [ -f "$file" ]; then
+        echo "Deleting $file"
+        rm "$file"
+        counter=$((counter+1))
+    fi
+done
+
+echo "$counter files were deleted"

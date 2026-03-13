@@ -1,0 +1,89 @@
+#Config section
+burndown.admin_config_burndown:
+  title: Burndown
+  route_name: burndown.admin_config_burndown
+  parent: system.admin_config
+  weight: -5
+
+burndown.burndown_settings:
+  title: Burndown Settings
+  route_name: burndown.burndown_settings
+  description: 'Configuration settings for Burndown.'
+  parent: burndown.admin_config_burndown
+
+# Dashboard
+burndown.dashboard:
+  title: 'Burndown'
+  description: 'Burndown Project Dashboard'
+  route_name: burndown.dashboard
+  parent: system.admin
+  
+burndown.structure:
+  title: 'Burndown'
+  description: 'Configure Burndown Project Management entities'
+  route_name: burndown.structure
+  parent: system.admin_structure
+
+# Project menu items definition
+entity.burndown_project.collection:
+  title: 'Project list'
+  route_name: entity.burndown_project.collection
+  description: 'List Projects'
+  parent: burndown.dashboard
+
+# Project type menu items definition
+entity.burndown_project_type.collection:
+  title: 'Project type'
+  route_name: entity.burndown_project_type.collection
+  description: 'Administer Project types'
+  parent: burndown.structure
+
+# Task menu items definition
+#entity.burndown_task.collection:
+#  title: 'Task list'
+#  route_name: entity.burndown_task.collection
+#  description: 'List Tasks'
+#  parent: burndown.dashboard
+
+# Task type menu items definition
+entity.burndown_task_type.collection:
+  title: 'Task type'
+  route_name: entity.burndown_task_type.collection
+  description: 'Administer Task types'
+  parent: burndown.structure
+
+# Swimlane menu items definition
+#entity.burndown_swimlane.collection:
+#  title: 'Swimlane list'
+#  route_name: entity.burndown_swimlane.collection
+#  description: 'List Swimlane entities'
+#  parent: burndown.dashboard
+#  weight: 100
+
+burndown_swimlane.admin.structure.settings:
+  title: 'Swimlane settings'
+  description: 'Configure Swimlane entities'
+  route_name: burndown_swimlane.settings
+  parent: burndown.structure
+
+# Sprint menu items definition
+#entity.burndown_sprint.collection:
+#  title: 'Sprint list'
+#  route_name: entity.burndown_sprint.collection
+#  description: 'List Sprint entities'
+#  parent: burndown.dashboard
+#  weight: 100
+
+burndown_sprint.admin.structure.settings:
+  title: 'Sprint settings'
+  description: 'Configure Sprint entities'
+  route_name: burndown_sprint.settings
+  parent: burndown.structure
+
+# Default Swimlane menu items definition
+entity.default_swimlane.collection:
+  title: 'Default Swimlanes'
+  route_name: entity.default_swimlane.collection
+  description: 'List Default Swimlanes'
+  parent: burndown.admin_config_burndown
+  weight: 99

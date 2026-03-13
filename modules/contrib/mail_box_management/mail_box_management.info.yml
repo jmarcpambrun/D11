@@ -1,0 +1,13 @@
+name: Mailbox Management
+type: module
+core_version_requirement: ^9.5 || ^10 || ^11
+package: Contrib
+description: "Module for management inbox and outbox and other mail box functionalities within drupal project"
+configure: mail_box_management.configuration
+libraries:
+  - mail_box_management/assets_management
+
+# Information added by Drupal.org packaging script on 2025-01-28
+version: '1.0.1'
+project: 'mail_box_management'
+datestamp: 1738039600

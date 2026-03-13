@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * @file
+ * Contains tfa.module.
+ */
+
+use Drupal\Component\Render\PlainTextOutput;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_help().
+ */
+function tfa_help(string $route_name, RouteMatchInterface $route_match): string {
+  $output = '';
+  switch ($route_name) {
+    // Main module help for the tfa module.
+    case 'help.page.tfa':
+      $output .= '<h3>' . \Drupal::translation()->translate('About') . '</h3>';
+      $output .= '<p>' . \Drupal::translation()->translate('Pluggable provider of second factor authentication for Drupal. For more information, see the online documentation for the <a href=":tfa">Two-factor Authentication</a> module.',
+        [':tfa' => 'https://www.drupal.org/project/tfa']
+      ) . '</p>';
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_entity_operation().
+ */
+function tfa_entity_operation(EntityInterface $entity): array {
+  $operations = [];
+
+  if ($entity instanceof UserInterface) {
+    $url = Url::fromRoute('tfa.overview', ['user' => $entity->id()]);
+    if ($url->access() === TRUE) {
+      $operations['tfa'] = [
+        'title' => t('TFA'),
+        'url' => $url,
+        'weight' => 50,
+      ];
+    }
+  }
+
+  return $operations;
+}
+
+/**
+ * Implements hook_mail().
+ */
+function tfa_mail(string $key, array &$message, array $params): void {
+  $token_service = \Drupal::token();
+  $language_manager = \Drupal::languageManager();
+  $variables = ['user' => $params['account']];
+
+  $language = $language_manager->getLanguage($params['account']->getPreferredLangcode());
+  $original_language = $language_manager->getConfigOverrideLanguage();
+  $language_manager->setConfigOverrideLanguage($language);
+  $tfa_config = \Drupal::config('tfa.settings');
+
+  $token_options = [
+    'langcode' => $message['langcode'],
+    'clear' => TRUE,
+  ];
+
+  // Configuration mapping key matches the hook_mail() $key.
+  $subject = $tfa_config->get("mail.{$key}.subject");
+  $subject = $token_service->replace($subject, $variables, $token_options);
+  $message['subject'] = PlainTextOutput::renderFromHtml($subject);
+
+  $body = $tfa_config->get("mail.{$key}.body");
+  $message['body'][] = $token_service->replace($body, $variables, $token_options);
+
+  $language_manager->setConfigOverrideLanguage($original_language);
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function tfa_user_login(UserInterface $account): void {
+  /** @var \Drupal\Core\Cache\CacheBackendInterface $memory_cache */
+  $memory_cache = \Drupal::service('cache.tfa_memcache');
+
+  /** @var FALSE|object{'data': mixed} $tfa_complete_this_request */
+  $tfa_complete_this_request = $memory_cache->get('tfa_complete');
+  if ($tfa_complete_this_request !== FALSE) {
+    $user_auth_as_id = $tfa_complete_this_request->data;
+    if (is_int($user_auth_as_id) && $user_auth_as_id === (int) $account->id()) {
+      /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
+      $session = \Drupal::service('session');
+      $session->set('tfa_complete', (int) $account->id());
+    }
+  }
+
+}
+
+/**
+ * Implements hook_user_logout().
+ */
+function tfa_user_logout(AccountInterface $account): void {
+  /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
+  $session = \Drupal::service('session');
+  $session->remove('tfa_complete');
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function tfa_form_alter(array &$form, FormStateInterface &$form_state, string $form_id): void {
+  switch ($form_id) {
+    case 'user_login_form':
+    case 'user_login_block':
+      \Drupal::service('tfa.login_form_helper')->alterLoginForm($form);
+      break;
+  }
+}

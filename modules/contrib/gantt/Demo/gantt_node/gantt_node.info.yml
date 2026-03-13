@@ -1,0 +1,14 @@
+name: Gantt Node demo
+description: 'Provides Gantt content type and related configuration.'
+type: module
+core_version_requirement: ^9 || ^10 || ^11 || ^12
+package: Views
+dependencies:
+  - drupal:datetime_range
+  - triples_field:triples_field
+  - gantt:gantt
+
+# Information added by Drupal.org packaging script on 2026-03-06
+version: '1.0.19'
+project: 'gantt'
+datestamp: 1772810095

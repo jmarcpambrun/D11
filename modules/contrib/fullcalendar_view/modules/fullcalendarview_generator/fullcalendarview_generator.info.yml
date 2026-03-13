@@ -1,0 +1,13 @@
+name: Fullcalendar View Generator
+type: module
+description: Provides a Drush command to generate calendar views using FullcalendarView.
+package: Views
+core_version_requirement: ^11
+dependencies:
+  - views
+  - fullcalendar_view
+
+# Information added by Drupal.org packaging script on 2026-03-06
+version: '5.3.0-alpha1'
+project: 'fullcalendar_view'
+datestamp: 1772764049

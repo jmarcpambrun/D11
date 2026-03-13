@@ -1,0 +1,19 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a personal note.
+ *
+ * @ingroup themeable
+ */
+#}
+<article{{ attributes.addClass('personal-note') }}>
+  {{ title_prefix }}
+  <h2{{ title_attributes }}>
+    <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+  </h2>
+  {{ title_suffix }}
+
+  <div{{ content_attributes }}>
+    {{ content }}
+  </div>
+</article>

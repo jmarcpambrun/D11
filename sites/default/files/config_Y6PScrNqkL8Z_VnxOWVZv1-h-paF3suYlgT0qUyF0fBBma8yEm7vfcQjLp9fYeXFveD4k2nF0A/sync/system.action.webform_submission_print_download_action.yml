@@ -1,0 +1,12 @@
+uuid: b2308c35-839a-4854-b3b4-cdb11727d2e4
+langcode: fr
+status: true
+dependencies:
+  module:
+    - entity_print
+id: webform_submission_print_download_action
+label: 'Download PDF'
+type: webform_submission
+plugin: entity_print_download_action
+configuration:
+  export_type: pdf

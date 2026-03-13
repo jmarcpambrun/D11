@@ -1,0 +1,20 @@
+{
+  "name": "drupal/gantt",
+  "description": "This module provides a Views Gantt chart",
+  "type": "drupal-module",
+  "keywords": ["Drupal", "gantt", "views", "timeline"],
+  "homepage": "https://www.drupal.org/project/gantt",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/gantt",
+    "source": "https://git.drupalcode.org/project/gantt"
+  },
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "NGUYEN Bao",
+      "email": "n.bao@yahoo.com",
+      "homepage": "https://www.drupal.org/u/lazzyvn",
+      "role": "Maintainer"
+    }
+  ]
+}

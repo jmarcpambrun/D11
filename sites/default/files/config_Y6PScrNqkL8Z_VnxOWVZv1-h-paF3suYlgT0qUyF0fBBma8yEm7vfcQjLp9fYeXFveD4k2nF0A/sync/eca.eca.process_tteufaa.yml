@@ -1,0 +1,21 @@
+uuid: 9e66301a-ebb3-462d-b2f4-90ed44c4784c
+langcode: fr
+status: true
+dependencies:
+  module:
+    - eca_content
+id: process_tteufaa
+modeller: bpmn_io
+label: Update_feed_contents
+version: v1
+weight: 0
+events:
+  Event_1vc1pjc:
+    plugin: 'content_entity:update'
+    label: Debut_updateèfeed_contents
+    configuration:
+      type: 'feeds_feed _all'
+    successors: {  }
+conditions: {  }
+gateways: {  }
+actions: {  }

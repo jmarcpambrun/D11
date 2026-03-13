@@ -1,0 +1,139 @@
+mail_box_management.configuration:
+  path: '/mailbox-management/configuration'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagement::configuration'
+    _title: 'Mail Box Management Configurations'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.settings:
+  path: '/mailbox-management/settings'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagement::settingsForm'
+    _title: 'Mail Box Management Settings'
+  requirements:
+    _role: administrator
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_panel:
+  path: '/mailbox-management/mailbox'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagement'
+    _title: 'Mailbox Panel'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_content:
+  path: '/mailbox-management/content/loader'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementContent'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_flag_action:
+  path: '/mailbox-management/content/flag/action'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementContentFlag'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_delete_mail_action:
+  path: '/mailbox-management/content/mail/action'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementContentDelete'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_worker_thread:
+  path: '/mailbox-management/worker/background'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementWorkerHandler'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_ui_refresh:
+  path: '/mailbox_management/ui/refresh'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementUiRefresh'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_composer_mail:
+  path: '/mailbox_management/compose/mail'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementComposeMail'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_composer_mail_reply:
+  path: '/mailbox_management/compose/mail/reply'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementComposeMailReply'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mailbox_create_mailbox:
+  path: '/mailbox_management/mailboxes/create/new'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementMailBoxCreation'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mail_mailbox_top_action:
+  path: '/mailbox_management/mailboxes/mail/top/action'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementMailBoxMailTopAction'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.mail_mailbox_search:
+  path: '/mailbox_management/mail/search'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagementPanel::mailboxManagementMailSearch'
+    _title: 'Mailbox Panel Content'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE
+
+mail_box_management.delete_server:
+  path: '/mailbox_management/server/{owner_id}/delete'
+  defaults:
+    _controller: '\Drupal\mail_box_management\Controller\MailboxManagement::mailboxManagementMailServerDeletions'
+    _title: 'Mailbox Server Deletion'
+  requirements:
+    _role: administrator+mail_account_owner
+  options:
+    _admin_route: TRUE

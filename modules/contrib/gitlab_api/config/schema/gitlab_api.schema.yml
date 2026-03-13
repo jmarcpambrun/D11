@@ -1,0 +1,18 @@
+gitlab_api.gitlab_server.*:
+  type: config_entity
+  label: Gitlab Server
+  mapping:
+    id:
+      type: string
+      label: ID
+    url:
+      type: string
+      label: 'Server Url'
+    auth_token:
+      type: string
+      label: 'Authentication token'
+    default_server:
+      type: boolean
+      label: 'Default server'
+    uuid:
+      type: string

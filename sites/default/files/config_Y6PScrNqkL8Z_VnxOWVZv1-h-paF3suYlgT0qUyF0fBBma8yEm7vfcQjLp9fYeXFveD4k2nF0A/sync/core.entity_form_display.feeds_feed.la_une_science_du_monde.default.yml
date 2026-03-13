@@ -1,0 +1,43 @@
+uuid: f9645a6a-a007-4647-bd79-e14e95236da4
+langcode: fr
+status: true
+dependencies:
+  config:
+    - feeds.feed_type.la_une_science_du_monde
+id: feeds_feed.la_une_science_du_monde.default
+targetEntityType: feeds_feed
+bundle: la_une_science_du_monde
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  feeds_log:
+    type: boolean_checkbox
+    weight: 11
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden: {  }

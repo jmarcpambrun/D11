@@ -1,0 +1,11 @@
+uuid: de8ae853-7171-4c69-9dba-6402f6512546
+langcode: fr
+status: true
+dependencies:
+  module:
+    - content_moderation
+id: content_moderation_state.token
+label: 'Jeton (token)'
+description: ''
+targetEntityType: content_moderation_state
+cache: true

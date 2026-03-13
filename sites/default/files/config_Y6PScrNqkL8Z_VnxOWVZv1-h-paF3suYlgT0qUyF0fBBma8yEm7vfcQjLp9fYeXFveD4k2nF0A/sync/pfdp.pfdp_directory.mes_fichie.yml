@@ -1,0 +1,13 @@
+uuid: 05279674-2386-433c-a12e-305735104a20
+langcode: fr
+status: true
+dependencies: {  }
+id: mes_fichie
+path: /fichiers_déposés
+bypass: false
+grant_file_owners: true
+users: {  }
+roles:
+  anonymous: anonymous
+  authenticated: authenticated
+  administrator: administrator

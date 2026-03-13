@@ -1,0 +1,74 @@
+#board {
+  clear: both;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.swimlane {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 25%;
+}
+
+.list-group {
+  min-height: 50vh;
+  height: 90%;
+  border: 1px dotted rgba(0,0,0,0.05);
+  border-radius: 12px;
+  padding: 0.5em;
+  margin: 0.5em 0.5em 0.5em 0;
+  background-color: rgba(0,0,0,0.01);
+}
+
+.list-group-item {
+  border: 1px solid rgba(0,0,0,.125);
+  margin: 0.5em 0;
+  padding: 0.5em;
+  border-radius: 5px;
+}
+
+.swimlane .counter {
+  font-style: italic;
+  font-weight: 500;
+}
+
+#user_list {
+  height: 24px;
+  margin: 0.5em 0 1em 0;
+}
+
+#user_list h4,
+#user_list div.assigned_to,
+#user_list div.reset {
+  float: left;
+}
+
+#user_list a {
+  outline: 0;
+}
+
+#user_list h4 {
+  line-height: 24px;
+  margin: 0;
+}
+
+#user_list div.assigned_to,
+#user_list div.reset {
+  cursor: pointer;
+  margin: 0 0.5em;
+}
+
+#user_list div.reset {
+  height: 24px;
+  line-height: 24px;
+  padding: 0 0.5rem;
+}
+
+#user_list div.assigned_to {
+  border: 1px solid transparent;
+}
+
+#user_list div.assigned_to.active {
+  border: 1px solid black;
+}

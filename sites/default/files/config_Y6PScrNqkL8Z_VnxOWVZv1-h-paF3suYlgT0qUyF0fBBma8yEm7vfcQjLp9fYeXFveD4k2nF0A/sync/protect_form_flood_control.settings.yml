@@ -1,0 +1,23 @@
+_core:
+  default_config_hash: RDq7h1Tvi3KLjPIXdrbnQPJmbJXMBI-utczK9F_bKNQ
+general:
+  protect_all: false
+  window: 86400
+  threshold: 50
+  protected_ids: {  }
+  unprotected_ids: {  }
+  whitelist:
+    - 127.0.0.1
+  log: true
+forms:
+  1:
+    ids:
+      - '*user*'
+    window: 86400
+    threshold: 50
+  2:
+    ids:
+      - ''
+    window: null
+    threshold: null
+show_ids: false

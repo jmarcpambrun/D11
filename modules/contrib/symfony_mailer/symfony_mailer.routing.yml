@@ -1,0 +1,7 @@
+symfony_mailer.verify:
+  path: '/admin/config/system/mailer'
+  defaults:
+    _form: '\Drupal\symfony_mailer\Form\VerifyEmailForm'
+    _title: 'Mailer Plus'
+  requirements:
+    _permission: 'administer mailer'

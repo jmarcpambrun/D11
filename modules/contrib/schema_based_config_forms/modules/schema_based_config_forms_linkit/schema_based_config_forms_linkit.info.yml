@@ -1,0 +1,12 @@
+name: Schema Based Config Forms Linkit
+type: module
+description: 'Provides a ''linkit_url'' schema type for use with config forms.'
+core_version_requirement: ^10 || ^11
+package: Config
+dependencies:
+  - linkit:linkit (>=6.0.0-rc1)
+
+# Information added by Drupal.org packaging script on 2025-07-11
+version: '1.0.0-beta6'
+project: 'schema_based_config_forms'
+datestamp: 1752271076

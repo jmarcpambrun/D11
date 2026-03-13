@@ -1,0 +1,49 @@
+<div class="log-items">
+
+  {% for log in data %}
+
+    <div class="log-item {{ log.type }}">
+
+      {% if log.type == 'created' %}
+
+        <label>{{ log.description }} on {{ log.created }} by {{ log.user }}</label>
+
+      {% elseif log.type == 'changed' %}
+
+        <label>{{ log.description }} on {{ log.created }} by {{ log.user }}</label>
+
+        {% if log.comment is not empty %}
+          <div class="log-item-changes">
+            {{ log.comment.value|raw }}
+          </div>
+        {% endif %}
+
+      {% elseif log.type == 'comment' %}
+
+        <label>{{ log.user }} commented at {{ log.created }}</label>
+
+        <div class="comment">
+          {{ log.comment|raw }}
+        </div>
+
+      {% elseif log.type == 'work' %}
+
+        <label>{{ log.user }} added a work log at {{ log.created }}</label>
+
+        <div class="hours">
+          {{ log.work_done }}
+        </div>
+
+        {% if log.comment is not empty %}
+          <div class="log-item-changes">
+            {{ log.comment }}
+          </div>
+        {% endif %}
+
+      {% endif %}
+
+    </div>
+
+  {% endfor %}
+
+</div>

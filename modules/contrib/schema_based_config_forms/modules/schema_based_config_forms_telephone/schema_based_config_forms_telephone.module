@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Schema Based Config Forms Telephone module file.
+ */
+
+/**
+ * Implements hook_config_schema_info_alter().
+ */
+function schema_based_config_forms_telephone_config_schema_info_alter(&$definitions) {
+  if (
+    \Drupal::moduleHandler()->moduleExists('config_translation')
+    && isset($definitions['telephone'])
+    && !isset($definitions['telephone']['form_element_class'])
+  ) {
+    $definitions['telephone']['form_element_class'] = '\Drupal\schema_based_config_forms\FormElement\Telephone';
+  }
+}
+
+/**
+ * Implements hook_schema_config_form_element_info_alter().
+ */
+function schema_based_config_forms_telephone_schema_config_form_element_info_alter(array &$definitions): void {
+  if (isset($definitions['telephone'])) {
+    $definitions['telephone']['types'][] = 'telephone';
+    $definitions['telephone']['types'][] = 'telephone_notranslate';
+  }
+}

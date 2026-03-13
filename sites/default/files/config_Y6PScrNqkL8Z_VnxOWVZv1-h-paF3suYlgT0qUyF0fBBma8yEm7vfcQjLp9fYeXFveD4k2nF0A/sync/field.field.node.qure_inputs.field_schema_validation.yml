@@ -1,0 +1,23 @@
+uuid: 045b7454-ac7d-4a47-a6a1-a8e046af376d
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_schema_validation
+    - node.type.qure_inputs
+id: node.qure_inputs.field_schema_validation
+field_name: field_schema_validation
+entity_type: node
+bundle: qure_inputs
+label: 'Validation de schéma'
+description: "Spécifie si un schéma est activé pour effectuer des contrôles de structure de l'enregistrement de la table"
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'True'
+  off_label: 'False'
+field_type: boolean

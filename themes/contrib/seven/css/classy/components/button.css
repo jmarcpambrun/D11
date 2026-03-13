@@ -1,0 +1,22 @@
+/**
+ * @file
+ * Styles for buttons.
+ */
+
+.button {
+  margin-right: 1em;
+  margin-left: 1em;
+  &:first-child {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
+
+.image-button {
+  margin-right: 1em;
+  margin-left: 1em;
+  &:first-child {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}

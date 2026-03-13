@@ -1,0 +1,10 @@
+name: 'Backward Compatibility'
+type: module
+description: 'Backward Compatibility for Drupal 9, 10, 11 with previous versions of Drupal.'
+core_version_requirement: ^9 || ^10 || ^11
+package: 'Custom'
+
+# Information added by Drupal.org packaging script on 2023-12-07
+version: '1.0.2'
+project: 'backward_compatibility'
+datestamp: 1701967696

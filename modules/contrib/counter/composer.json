@@ -1,0 +1,10 @@
+{
+    "name": "drupal/counter",
+    "type": "drupal-module",
+    "description": "This module used for displaying a Site Counter, Node Count, Unique Visitor and Client IP.",
+    "homepage": "http://drupal.org/project/counter",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "matomo/device-detector": "^5.0.3"
+    }
+}

@@ -1,0 +1,11 @@
+general:
+  protect_all: false
+  window: 86400
+  threshold: 50
+  protected_ids: {}
+  unprotected_ids: {}
+  whitelist:
+    - 127.0.0.1
+  log: false
+forms: {}
+show_ids: false

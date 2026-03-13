@@ -1,0 +1,5 @@
+entity.personal_notes.add_form:
+  title: 'Add Note'
+  route_name: entity.personal_note.add_form
+  appears_on:
+    - entity.personal_note.collection

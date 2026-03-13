@@ -1,0 +1,18 @@
+mail_box_management.mail_box_panel:
+  title: 'Mail Box Management'
+  description: 'Manage mails from drupal site'
+  route_name: mail_box_management.mailbox_panel
+  parent: system.admin_config_system
+  weight: 20
+mail_box_management.mail_box_management.config:
+  title: 'IMAP Configuration'
+  description: 'Manage mails from drupal site'
+  route_name: mail_box_management.configuration
+  parent: mail_box_management.mail_box_panel
+  weight: 21
+mail_box_management.mail_box_management.settings:
+  title: 'Mail Box Management Settings'
+  description: 'Manage mails from drupal site'
+  route_name: mail_box_management.settings
+  parent: mail_box_management.mail_box_panel
+  weight: 22

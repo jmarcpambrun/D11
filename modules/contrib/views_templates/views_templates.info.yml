@@ -1,0 +1,12 @@
+name: 'Views Templates'
+type: module
+description: 'Reintroduces dynamic default views.'
+dependencies:
+  - drupal:views
+package: Views
+core_version_requirement: ^10.1 || ^11
+
+# Information added by Drupal.org packaging script on 2026-01-30
+version: '8.x-1.7'
+project: 'views_templates'
+datestamp: 1769737410

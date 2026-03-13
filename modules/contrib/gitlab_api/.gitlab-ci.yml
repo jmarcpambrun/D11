@@ -1,0 +1,14 @@
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+variables:
+  _TARGET_CORE: "^10.3 || ^11"
+phpcs:
+  allow_failure: false
+phpstan:
+  allow_failure: false

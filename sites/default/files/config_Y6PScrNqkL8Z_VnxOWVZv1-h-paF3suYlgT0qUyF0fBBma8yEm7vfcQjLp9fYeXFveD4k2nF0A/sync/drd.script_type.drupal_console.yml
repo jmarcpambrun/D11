@@ -1,0 +1,13 @@
+uuid: 3fe5a901-a379-46da-80a2-1dd9b53b4933
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: G6iKGoLXCevKNPFvo6mMiynjRD3aaFx6dT_FOqVrdek
+id: drupal_console
+label: 'Drupal Console'
+interpreter: /bin/sh
+extension: sh
+prefix: ''
+suffix: ''
+linesuffix: null

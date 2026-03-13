@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * @file
+ * Install and uninstall functions for the Counter module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function counter_schema() {
+  $schema['counter'] = [
+    'fields' => [
+      'counter_id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'ip' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'url' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'uid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'nid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'browser_name' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'browser_version' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'platform' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+    'indexes' => [
+      'uid' => ['uid'],
+      'nid' => ['nid'],
+      'ip' => ['ip'],
+      'created' => ['created'],
+    ],
+    'primary key' => ['counter_id'],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function counter_uninstall() {
+  \Drupal::database()->schema()->dropTable('counter');
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Deletes the unwanted counter_data table and configurations.
+ */
+function counter_update_8101() {
+  \Drupal::database()->schema()->dropTable('counter_data');
+
+  $config = \Drupal::configFactory()->getEditable('counter.settings');
+  if (!($config->isNew())) {
+    $config->set('counter_refresh_on_cron', 1);
+    $config->clear('counter_refresh_delay');
+    $config->clear('counter_insert_delay');
+    $config->save();
+  }
+}
+
+/**
+ * Changes the length of the 'ip' field in the 'counter' table to 45 characters
+ * (to support IPv6).
+ */
+function counter_update_8102() {
+  $schema = \Drupal::database()->schema();
+
+  if ($schema->tableExists('counter') && $schema->fieldExists('counter', 'ip')) {
+    $schema->changeField('counter', 'ip', 'ip', [
+      'type' => 'varchar',
+      'length' => 45,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'IP address of the visitor (supports IPv4 and IPv6)',
+    ]);
+  }
+}

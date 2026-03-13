@@ -1,0 +1,29 @@
+{
+    "name": "drupal/quiz",
+    "description": "Create and take graded quizzes.",
+    "type": "drupal-module",
+    "homepage": "https://www.drupal.org/project/quiz",
+    "authors": [
+        {
+            "name": "Devin Zuczek",
+            "homepage": "https://www.drupal.org/u/djdevin"
+        }
+    ],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/quiz",
+        "source": "https://git.drupal.org/project/quiz.git"
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "drupal/core": "^10.3 || ^11",
+        "drupal/field_group": "^3.6 || ^4.0",
+        "drupal/entity": "^1.5",
+        "drupal/paragraphs": "^1.18",
+        "drupal/range": "^1.6",
+        "drupal/rules": "^4.0.1",
+        "drupal/views_bulk_operations": "^4.2"
+    },
+    "require-dev": {
+        "drupal/replicate": "^1.3"
+    }
+}

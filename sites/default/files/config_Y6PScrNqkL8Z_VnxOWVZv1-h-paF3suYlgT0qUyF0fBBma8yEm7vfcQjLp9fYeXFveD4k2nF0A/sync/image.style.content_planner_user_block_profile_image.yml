@@ -1,0 +1,17 @@
+uuid: b004ac84-64e7-467b-9938-e23629199d71
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: 7Ce7QYTY0v8AFFVFR0Q5O8TTzw1Nb0CF3z3CPUX4FiY
+name: content_planner_user_block_profile_image
+label: 'Content Planner: User Block Profile Image'
+effects:
+  925c2c26-fb32-483b-977d-a659b771e47f:
+    uuid: 925c2c26-fb32-483b-977d-a659b771e47f
+    id: image_scale_and_crop
+    weight: 0
+    data:
+      width: 40
+      height: 40
+      anchor: center-center

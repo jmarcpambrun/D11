@@ -1,0 +1,205 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Triple Field module.
+ */
+
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\FieldTypeCategoryManagerInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function triples_field_theme(): array {
+  $item = ['render element' => 'elements'];
+  return [
+    'triples_field_item' => $item,
+    'triples_field_subfield' => $item,
+    'triples_field_definition_list' => $item,
+  ];
+}
+
+/**
+ * Implements hook_help().
+ */
+function triples_field_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the user_dashboard_bootstrap module.
+    case 'help.page.triples_field':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provide an individual dashboard for each user..') . '</p>';
+      $output .= '<p>' . t('Base on module Double field I just added a third field.') . '</p>';
+      $output .= '<p>' . t('Help someone who is looking for a triple field and too lazy like me to create paragraphs') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":url">online documentation for the Triple field module</a>.', [
+        ':url' => 'https://www.drupal.org/project/triples_field',
+      ]) . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Prepares variables for triples-field-item template.
+ */
+function template_preprocess_triples_field_item(array &$variables): void {
+  $variables['settings'] = $variables['elements']['#settings'];
+  $variables['field_settings'] = $variables['elements']['#field_settings'];
+  $subfields = array_keys($variables["field_settings"]["storage"]);
+  foreach ($subfields as $subfield) {
+    $variables['item'][$subfield] = $variables['elements']['#item']->$subfield;
+    if (!empty($variables["settings"][$subfield]["show_label"])) {
+      $variables['item'][$subfield] = [
+        '#theme' => 'triples_field_subfield',
+        '#subfield' => $variables['elements']['#item']->$subfield,
+        '#index' => $subfield,
+        '#field_name' => $subfield,
+        '#label' => $variables['settings'][$subfield]["show_label"] ? $variables['field_settings'][$subfield]["label"] : '',
+      ];
+    }
+  }
+}
+
+/**
+ * Prepares variables for triples-field-item template.
+ */
+function template_preprocess_triples_field_subfield(array &$variables): void {
+  $variables['index'] = $variables['elements']['#index'] ?? NULL;
+  $variables['value'] = $variables['elements']['#subfield'] ?? NULL;
+  $variables['label'] = $variables['elements']['#label'] ?? NULL;
+}
+
+/**
+ * Prepares variables for triples-field-definition-list template.
+ */
+function template_preprocess_triples_field_definition_list(array &$variables): void {
+  $variables['settings'] = $variables['elements']['#settings'];
+  $variables['field_settings'] = $variables['elements']['#field_settings'];
+  $subfields = array_keys($variables["field_settings"]["storage"]);
+  $variables['items'] = $variables['elements']['#items'];
+  foreach ($subfields as $subfield) {
+    if (!empty($variables["settings"][$subfield]["show_label"])) {
+      $variables['items'][$subfield]["label"] = $variables["field_settings"][$subfield]["label"];
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function triples_field_field_storage_config_update(EntityInterface $entity): void {
+
+  /** @var \Drupal\field\Entity\FieldStorageConfig $entity */
+  if ($entity->getType() == 'triples_field') {
+    $settings = $entity->getSettings();
+    $original_settings = $entity->original->getSettings();
+
+    $isChanged = FALSE;
+    foreach (array_keys($settings['storage']) as $subfield) {
+      if ($settings['storage'][$subfield]['type'] != $original_settings['storage'][$subfield]['type']) {
+        $isChanged = TRUE;
+        break;
+      }
+    }
+    if ($isChanged) {
+      Drupal::messenger()
+        ->addWarning(t('Since storage type has been changed you need to verify the configuration of corresponding widget on form display page.'));
+    }
+  }
+
+}
+
+/**
+ * Implements hook_validation_constraint_alter().
+ */
+function triples_field_validation_constraint_alter(array &$definitions): void {
+  // This constraint is required to test empty boolean values.
+  $definitions['NotEqualTo']['class'] = '\Symfony\Component\Validator\Constraints\NotEqualTo';
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function triples_field_theme_suggestions_triples_field_item(array $variables): array {
+  return [
+    'triples_field_item__' . $variables['elements']['#field_name'],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ *
+ * @todo remove this once the 'triples-field-subfield.html.twig' is removed.
+ */
+function triples_field_theme_suggestions_triples_field_subfield(array $variables): array {
+  return [
+    'triples_field_subfield__' . $variables['elements']['#field_name'],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function triples_field_theme_suggestions_triples_field_definition_list(array $variables): array {
+  return [
+    'triples_field_definition_list__' . $variables['elements']['#field_name'],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function triples_field_theme_suggestions_item_list_alter(array &$suggestions, array $variables): void {
+  $field_name = $variables['context']['triples_field']['field_name'] ?? NULL;
+  if ($field_name) {
+    $suggestions[] = 'item_list__triples_field__' . $field_name;
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function triples_field_theme_suggestions_table_alter(array &$suggestions, array $variables): void {
+  $id = Html::getId('triples_field--field-name');
+  $field_name = $variables['attributes'][$id] ?? NULL;
+  if ($field_name) {
+    $suggestions[] = 'table__triples_field__' . $field_name;
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function triples_field_theme_suggestions_details_alter(array &$suggestions, array $variables): void {
+  $id = Html::getId('triples_field--field-name');
+  $field_name = $variables['element']['#attributes'][$id] ?? NULL;
+  if ($field_name) {
+    $suggestions[] = 'details__triples_field__' . $field_name;
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function triples_field_preprocess_field_multiple_value_form(&$variables) {
+  if (!empty($variables['table']['#header']) && isset($variables['table']['#rows']) && !empty($variables["element"]['#widgetTable'])) {
+    if (!empty($variables["element"]["add_more"])) {
+      $variables["button"] = $variables["element"]["add_more"];
+      unset($variables["element"]["add_more"]);
+    }
+    $variables["table"]["#header"] = $variables["element"]["#header"];
+    foreach (Element::children($variables["element"]) as $delta => $element) {
+      $variables["table"][$delta] = $variables["element"][$delta];
+    }
+    unset($variables["table"]["#rows"]);
+  }
+}
+
+/**
+ * Implements hook_field_type_category_info_alter().
+ */
+function triples_field_field_type_category_info_alter(&$definitions) {
+  $definitions[FieldTypeCategoryManagerInterface::FALLBACK_CATEGORY]['libraries'][] = 'triples_field/drupal.triples-field-icon';
+}

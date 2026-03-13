@@ -1,0 +1,66 @@
+uuid: 84810a25-c305-4f2b-a97a-ff74e4651827
+langcode: fr
+status: true
+dependencies: {  }
+id: user_create
+label: 'User create'
+routes:
+  -
+    route_name: user.admin_create
+tips:
+  user_create_overview:
+    id: user_create_overview
+    plugin: text
+    label: 'Add User'
+    weight: 1
+    position: auto
+    selector: null
+    body: 'The "Add User" page allows you to create new users for the site and assign them roles.'
+  create_mail:
+    id: create_mail
+    plugin: text
+    label: 'Login Credentials'
+    weight: 2
+    position: auto
+    selector: '#edit-mail'
+    body: 'The <em>email address</em> has to be unique.'
+  create_username:
+    id: create_username
+    plugin: text
+    label: Username
+    weight: 3
+    position: auto
+    selector: '#edit-name'
+    body: 'The username has to be unique.  It is how the sites Administrators will identify the user.'
+  create_new_pass:
+    id: create_new_pass
+    plugin: text
+    label: 'Password Credentials'
+    weight: 4
+    position: auto
+    selector: '#edit-pass-pass1'
+    body: 'A <em>password</em> is needed for the user to access their account.  See best practices for <a href="https://www.drupal.org/docs/8/security/us-nist-password-guidelines-review">email creation here</a>'
+  create_status:
+    id: create_status
+    plugin: text
+    label: 'The status'
+    weight: 5
+    position: auto
+    selector: '#edit-status'
+    body: 'The status determines if the user is able to login or not. It&lsquo;s useful in case that new accounts need administrator approval before being active. The default value for new accounts can be changed in the <a href="[site:url]admin/config/people/accounts#create-registration-cancellation">account settings</a>.'
+  notify_user:
+    id: notify_user
+    plugin: text
+    label: 'Notify user'
+    weight: 6
+    position: auto
+    selector: '#edit-notify'
+    body: 'You can choose to send this newly created user a notification email.'
+  add_user_picture:
+    id: add_user_picture
+    plugin: text
+    label: 'User Picture'
+    weight: 7
+    position: auto
+    selector: '#edit-user-picture-0-upload'
+    body: 'Uploading a picture is a great way to help identify users.'

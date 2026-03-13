@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * @file
+ * GitLab API install file.
+ */
+
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\gitlab_api\Entity\GitlabServer;
+
+/**
+ * Migrate configuration to a config entity.
+ */
+function gitlab_api_update_8001(): void {
+  $config = \Drupal::config('gitlab_api.settings');
+  $url = $config->get('url');
+  $token = $config->get('token');
+  if (isset($url, $token)) {
+    $id = \Drupal::service('transliteration')->transliterate($url, LanguageInterface::LANGCODE_DEFAULT, '_');
+    $id = mb_strtolower($id);
+    $id = preg_replace('@[^a-z0-9_.]+@', '', $id);
+    $server = GitlabServer::create([
+      'id' => $id,
+      'url' => $url,
+      'auth_token' => $token,
+      'status' => TRUE,
+      'default_server' => TRUE,
+    ]);
+    if ($server->save()) {
+      \Drupal::configFactory()->getEditable('gitlab_api.settings')->delete();
+    }
+  }
+}

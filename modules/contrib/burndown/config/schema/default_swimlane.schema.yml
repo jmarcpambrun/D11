@@ -1,0 +1,24 @@
+burndown.default_swimlane.*:
+  type: config_entity
+  label: 'Default Swimlane config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    sort_order:
+      type: integer
+      label: 'Sort Order'
+    show_backlog:
+      type: boolean
+      label: 'Show in Backlog'
+    show_project_board:
+      type: boolean
+      label: 'Show on Project Board'
+    show_completed:
+      type: boolean
+      label: 'Show in Completed'
+    uuid:
+      type: string

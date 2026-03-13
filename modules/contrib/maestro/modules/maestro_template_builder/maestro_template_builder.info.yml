@@ -1,0 +1,14 @@
+name: Maestro Template Builder with Diagram.js
+description: Maestro Template Builder using Diagram.js
+core_version_requirement: ^10 || ^11
+configure: maestro_template_builder.maestro_template_builder_admin_settings
+package: Maestro
+type: module
+scripts:
+dependencies:
+  - maestro:maestro
+
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '4.4.0'
+project: 'maestro'
+datestamp: 1770141281

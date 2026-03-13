@@ -1,0 +1,8 @@
+telephone:
+  type: string
+  label: Telephone
+  translatable: true
+
+telephone_notranslate:
+  type: string
+  label: Telephone (untranslatable)

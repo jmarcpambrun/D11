@@ -1,0 +1,40 @@
+uuid: 4517e570-54b8-49ae-9cf7-1281e8851713
+langcode: fr
+status: true
+dependencies:
+  module:
+    - content_access
+    - menu_ui
+    - scheduler
+third_party_settings:
+  menu_ui:
+    available_menus:
+      - main
+    parent: 'main:'
+  scheduler:
+    expand_fieldset: when_required
+    fields_display_mode: vertical_tab
+    publish_enable: false
+    publish_past_date: error
+    publish_past_date_created: false
+    publish_required: false
+    publish_revision: false
+    publish_touch: false
+    show_message_after_update: true
+    unpublish_enable: false
+    unpublish_required: false
+    unpublish_revision: false
+  content_access:
+    view_own:
+      - authenticated
+      - administrator
+    view:
+      - authenticated
+      - administrator
+name: 'Users by department'
+type: users_by_department
+description: 'Users by department'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: true

@@ -1,0 +1,39 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.gantt.field_gantt_date
+    - field.field.node.gantt.field_gantt_duration
+    - field.field.node.gantt.field_gantt_links
+    - field.field.node.gantt.field_gantt_open
+    - field.field.node.gantt.field_gantt_owner
+    - field.field.node.gantt.field_gantt_parent
+    - field.field.node.gantt.field_gantt_planned_date
+    - field.field.node.gantt.field_gantt_planned_duration
+    - field.field.node.gantt.field_gantt_progress
+    - field.field.node.gantt.field_gantt_type
+    - node.type.gantt
+  module:
+    - user
+id: node.gantt.teaser
+targetEntityType: node
+bundle: gantt
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_gantt_date: true
+  field_gantt_duration: true
+  field_gantt_links: true
+  field_gantt_open: true
+  field_gantt_owner: true
+  field_gantt_parent: true
+  field_gantt_planned_date: true
+  field_gantt_planned_duration: true
+  field_gantt_progress: true
+  field_gantt_type: true

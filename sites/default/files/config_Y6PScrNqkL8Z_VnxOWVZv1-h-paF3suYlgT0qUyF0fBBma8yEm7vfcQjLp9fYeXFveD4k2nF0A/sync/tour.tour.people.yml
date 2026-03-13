@@ -1,0 +1,50 @@
+uuid: c730621a-9bf4-401f-b546-49fef3f8e20d
+langcode: fr
+status: true
+dependencies: {  }
+id: people
+label: People
+routes:
+  -
+    route_name: entity.user.collection
+tips:
+  people_main:
+    id: people_main
+    plugin: text
+    label: 'Managing users'
+    weight: 1
+    position: auto
+    selector: null
+    body: 'View and edit user accounts.'
+  people_add:
+    id: people_add
+    plugin: text
+    label: 'Add a user'
+    weight: 2
+    position: auto
+    selector: .button--primary
+    body: 'Create a new user account.'
+  people_filter:
+    id: people_filter
+    plugin: text
+    label: 'Search for users'
+    weight: 3
+    position: auto
+    selector: '#views-exposed-form-user-admin-people-page-1'
+    body: 'Find users by applying filters.'
+  people_operations:
+    id: people_operations
+    plugin: text
+    label: 'Update accounts'
+    weight: 4
+    position: auto
+    selector: '#edit-submit--2'
+    body: 'Apply changes after selecting one or more accounts via the checkboxes.'
+  people_edit:
+    id: people_edit
+    plugin: text
+    label: 'Edit user account'
+    weight: 5
+    position: left
+    selector: .dropbutton-widget
+    body: 'Make changes to one user account.'

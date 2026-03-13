@@ -1,0 +1,37 @@
+{% for header in content.headers %}
+  {% if   is_unseen(header.Unseen) or is_recent(header.Recent) %}
+    <li class="mail-item" data-message="{{ header.Msgno }}">
+      <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+      <div class="mail-item-body">
+        <div class="d-flex align-items-center">
+          <span class="mail-sender">{{ header.from_name }}</span>
+          <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+          {% if  is_flagged(header.Flagged) %}
+            <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+          {% else %}
+            <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+          {% endif %}
+        </div>
+        <h6 class="mail-subject">{{ header.Subject }}</h6>
+        <p class="mail-text">{{ header.from_mail }}</p>
+      </div><!-- mail-item-body -->
+    </li>
+  {% else %}
+    <li class="mail-item unread" data-message="{{ header.Msgno }}">
+      <div class="mail-avatar"><span class="color-{{ mail_box_color(header.from_name | default(header.from_email)) }}">{{ header.from_name | default(header.from_email)|slice(0,1)|upper }}</span></div>
+      <div class="mail-item-body">
+        <div class="d-flex align-items-center">
+          <span class="mail-sender">{{ header.from_name }}</span>
+          <span class="mail-time">{{ header.date|date("h:i A") }}</span>
+          {% if is_flagged(header.Flagged) %}
+            <span class="mail-star active" data-flag="UNFLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+          {% else %}
+            <span class="mail-star" data-flag="FLAGGED"><i class="ri-star-line"></i><i class="ri-star-fill"></i></span>
+          {% endif %}
+        </div>
+        <h6 class="mail-subject">{{ header.Subject }}</h6>
+        <p class="mail-text">{{ header.from_mail }}</p>
+      </div><!-- mail-item-body -->
+    </li>
+  {% endif %}
+{% endfor %}

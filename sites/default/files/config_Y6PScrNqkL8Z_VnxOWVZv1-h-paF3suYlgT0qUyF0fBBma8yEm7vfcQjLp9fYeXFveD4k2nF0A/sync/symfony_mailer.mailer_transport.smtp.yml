@@ -1,0 +1,18 @@
+uuid: 3cd66b2e-2f9a-458c-8681-447d5be38e70
+langcode: fr
+status: true
+dependencies: {  }
+id: smtp
+label: SMTP
+plugin: smtp
+configuration:
+  user: dpalicepeio@drupbuilder.org
+  pass: dpRoger_1928
+  host: SSL0.OVH.NET
+  port: 465
+  query:
+    verify_peer: false
+    local_domain: drupbuilder.org
+    restart_threshold: null
+    restart_threshold_sleep: null
+    ping_threshold: null

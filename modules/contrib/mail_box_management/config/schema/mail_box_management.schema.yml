@@ -1,0 +1,83 @@
+mail_box_management.settings:
+  type: config_object
+  label: 'Mailbox Management Settings'
+  mapping:
+    imap_servers:
+      type: sequence
+      label: 'IMAP Servers'
+      sequence:
+        - type: mapping
+          label: 'IMAP Server Details'
+          mapping:
+            host:
+              type: string
+              label: 'Server Host'
+            mail_box_management.password:
+              type: string
+              label: 'Server Password'
+            secure:
+              type: string
+              label: 'Secure Connection Type (SSL/TLS)'
+            port:
+              type: integer
+              label: 'Server Port'
+            username:
+              type: string
+              label: 'Server Username'
+            connection_type:
+              type: string
+              label: 'Connection Type'
+            connection_type_title:
+              type: string
+              label: 'Connection Type Title'
+            owner_id:
+              type: string
+              label: 'Owner id'
+
+mail_box_management.cache_mail_data:
+  type: config_object
+  label: 'Cache Data of Mails'
+  mapping:
+    cache_mail_data:
+      type: string
+      label: 'Mail Data Caching'
+
+mail_box_management.cache_mail_content:
+  type: config_object
+  label: 'Cache Data of Mail Content'
+  mapping:
+    cache_mail_content:
+      type: string
+      label: 'Mail Data Caching'
+
+mail_box_management.cache_mail_cron:
+  type: config_object
+  label: 'Cache Cron'
+  mapping:
+    cache_mail_cron:
+      type: string
+      label: 'Mail Cron'
+
+mail_box_management.cache_mail_clear:
+  type: config_object
+  label: 'Cache Data Clear'
+  mapping:
+    cache_mail_clear:
+      type: string
+      label: 'Mail Cache Clear'
+
+mail_box_management.cache_mail_count_mailbox:
+  type: config_object
+  label: 'Cache Data Clear'
+  mapping:
+    cache_mail_count_mailbox:
+      type: string
+      label: 'Mail Cache Clear'
+
+mail_box_management.mailbox_theme:
+  type: config_object
+  label: 'Mailbox theme'
+  mapping:
+    mailbox_theme:
+      type: string
+      label: 'Mailbox theme'

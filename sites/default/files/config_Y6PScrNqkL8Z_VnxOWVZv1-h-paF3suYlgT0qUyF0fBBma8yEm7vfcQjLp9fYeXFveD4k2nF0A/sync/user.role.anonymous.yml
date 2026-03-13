@@ -1,0 +1,33 @@
+uuid: 91b18437-555c-4979-9eb3-38699bf12520
+langcode: fr
+status: true
+dependencies:
+  config:
+    - feeds.feed_type.la_une_du_monde
+    - feeds.feed_type.la_une_science_du_monde
+  module:
+    - comment
+    - contact
+    - content_moderation
+    - feeds
+    - media
+    - node
+    - system
+_core:
+  default_config_hash: pq_mEIu_B4widZN7Ap81iCJSjShFFdcL0jEiCi8VrDk
+id: anonymous
+label: 'Utilisateur anonyme'
+weight: 0
+is_admin: false
+permissions:
+  - 'access comments'
+  - 'access content'
+  - 'access content overview'
+  - 'access feed overview'
+  - 'access site-wide contact form'
+  - 'view any unpublished content'
+  - 'view la_une_du_monde feeds'
+  - 'view la_une_science_du_monde feeds'
+  - 'view media'
+  - 'view own la_une_du_monde feeds'
+  - 'view own la_une_science_du_monde feeds'

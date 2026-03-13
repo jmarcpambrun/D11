@@ -1,0 +1,5 @@
+symfony_mailer.verify:
+  title: Verify
+  description: 'Verify Mailer.'
+  base_route: symfony_mailer.verify
+  route_name: symfony_mailer.verify

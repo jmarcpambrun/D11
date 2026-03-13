@@ -1,0 +1,105 @@
+<?php
+
+/**
+ * @file
+ * The counter module used for displaying Site Counter.
+ */
+
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function counter_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.counter':
+      $output = '';
+      $output .= '<h3>' . t('About', [], ['context' => 'counter']) . '</h3>';
+      $output .= '<p>' . t(
+          'The counter module is used for displaying details like Site Counter, Node Count, Unique Visitor and Client IP in a block.',
+          [], ['context' => 'counter'],
+        ) . ' </p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function counter_theme($existing, $type, $theme, $path) {
+  return [
+    'counter' => [
+      'variables' => [
+        'site_counter' => NULL,
+        'unique_visitor' => NULL,
+        'registered_user' => NULL,
+        'unregistered_user' => NULL,
+        'blocked_user' => NULL,
+        'published_nodes' => NULL,
+        'unpublished_nodes' => NULL,
+        'server_ip' => NULL,
+        'ip' => NULL,
+        'counter_since' => NULL,
+        'statistic_today' => NULL,
+        'statistic_week' => NULL,
+        'statistic_month' => NULL,
+        'statistic_year' => NULL,
+      ],
+    ],
+    'configure_counter' => [
+      'variables' => [
+        'site_counter' => NULL,
+        'unique_visitor' => NULL,
+        'registered_user' => NULL,
+        'unregistered_user' => NULL,
+        'blocked_user' => NULL,
+        'published_nodes' => NULL,
+        'unpublished_nodes' => NULL,
+        'server_ip' => NULL,
+        'ip' => NULL,
+        'counter_since' => NULL,
+        'statistic_today' => NULL,
+        'statistic_week' => NULL,
+        'statistic_month' => NULL,
+        'statistic_year' => NULL,
+      ],
+    ],
+    'counter_dashboard' => [
+      'variables' => [
+        'counter_menu' => [],
+        'site_counter' => NULL,
+        'unique_visitor' => NULL,
+        'registered_user' => NULL,
+        'unregistered_user' => NULL,
+        'blocked_user' => NULL,
+        'published_nodes' => NULL,
+        'unpublished_nodes' => NULL,
+        'counter_since' => NULL,
+        'statistic_today' => NULL,
+        'statistic_week' => NULL,
+        'statistic_month' => NULL,
+        'statistic_year' => NULL,
+        'unique_visitor_today' => NULL,
+        'unique_visitor_week' => NULL,
+        'unique_visitor_month' => NULL,
+        'unique_visitor_year' => NULL,
+        'top_nodes' => NULL,
+        'top_urls' => NULL,
+      ],
+    ],
+    'counter_statistics' => [
+      'variables' => [
+        'counter_menu' => [],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function counter_cron() {
+  // Invalidate cache tag for counter block.
+  Cache::invalidateTags(['counter_data_refresh']);
+}

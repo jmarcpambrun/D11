@@ -1,0 +1,10 @@
+imap_servers:
+  -
+    host: ssl0.ovh.net
+    secure: ssl
+    port: 993
+    username: dpalicepeio@drupbuilder.org
+    connection_type: imap
+    connection_type_title: 'Maibox Ovh dpalicepeio@drupbuilder.org'
+    owner_id: '1'
+    password: dpRoger_1928

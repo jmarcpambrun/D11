@@ -1,0 +1,8 @@
+name: 'Mailbox Layer Integration'
+description: 'Integrate the mailbox layer in webform email fields.'
+type: module
+core: 8.x
+core_version_requirement: ^8 || ^9 || ^10 || ^11
+package: 'Mailbox Layer'
+dependencies:
+  - webform:webform

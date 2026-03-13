@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file
+ * Update hooks for quiz module.
+ */
+
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_install().
+ *
+ * Grant default permissions to authenticated users, to take available quizzes
+ * and view their own results.
+ */
+function quiz_install(): void {
+  user_role_grant_permissions(AccountInterface::AUTHENTICATED_ROLE, [
+    'view own quiz_result',
+    'view any quiz',
+    'access quiz',
+  ]);
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function quiz_requirements($phase): array {
+  $requirements = [];
+  if ($phase === 'install') {
+    if (!\file_exists(DRUPAL_ROOT . '/libraries/jquery-countdown/dist/jquery.countdown.min.js')) {
+      $requirements['jquery_countdown'] = [
+        'title' => t('Quiz: jQuery countdown'),
+        'value' => t('Missing'),
+        'description' => t('If you want to use <a href=":link" target="_blank">jQuery countdown</a>, you either need to <ul><li> manually download the <a href=":npm" target="_blank">js library</a>, extract and copy it to :library and rename the js folder to :foldername or</li><li>use <a href=":url" target="_blank">Asset Packagist</a> with your composer project and require npm-asset/jquery-countdown</li></ul>', [
+          ':link' => 'https://www.npmjs.com/package/jquery-countdown',
+          ':github' => 'https://github.com/hilios/jQuery.countdown/releases/latest',
+          ':library' => DRUPAL_ROOT . '/libraries/',
+          ':foldername' => 'jquery-countdown',
+          ':packagist' => 'https://asset-packagist.org/',
+        ]),
+        'severity' => REQUIREMENT_WARNING,
+      ];
+    }
+    else {
+      $requirements['jquery_countdown'] = [
+        'title' => t('Quiz: jQuery countdown'),
+        'value' => t('Installed'),
+        'severity' => REQUIREMENT_OK,
+      ];
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Add owner field to quiz questions.
+ */
+function quiz_update_9001(): void {
+  $field_storage_definition = BaseFieldDefinition::create('entity_reference')
+    ->setLabel(new TranslatableMarkup('User ID'))
+    ->setSetting('target_type', 'user')
+    ->setDefaultValueCallback('\Drupal\quiz\Entity\QuizQuestion::getDefaultEntityOwner');
+
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('uid', 'quiz_question', 'quiz', $field_storage_definition);
+}
+
+/**
+ * Update configs from disk.
+ */
+function quiz_update_9002(): void {
+  $bundle_info = Drupal::service('entity_type.bundle.info')->getBundleInfo('paragraph');
+  if (empty($bundle_info['quiz_result_feedback'])) {
+    return;
+  }
+  $name = 'field.field.paragraph.quiz_result_feedback.quiz_feedback_range';
+
+  $source = new FileStorage(__DIR__ . '/config/install');
+  /** @var \Drupal\Core\Config\StorageInterface $active_storage */
+  $active_storage = \Drupal::service('config.storage');
+  $active_storage->write($name, $source->read($name));
+
+}

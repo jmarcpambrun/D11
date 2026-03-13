@@ -1,0 +1,195 @@
+<?php
+
+/**
+ * @file
+ * This is the Calendar module for calendar filtering and display in views.
+ */
+
+use Drupal\calendar\DateArgumentWrapper;
+use Drupal\Component\Datetime\DateTimePlus;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\datetime\Plugin\views\argument\Date;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function calendar_views_pre_render(ViewExecutable $view) {
+  _calendar_views_track_current_date($view);
+}
+
+/**
+ * Track the current date as the user moves between calendar displays.
+ *
+ * This function updates the session with the current date based on the user's
+ * navigation through the calendar.
+ */
+function _calendar_views_track_current_date(ViewExecutable $view): void {
+  $tracking = \Drupal::config('calendar.settings')->get('track_date');
+  if (empty($tracking)) {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+  if ($tracking != 2 && $current_user->isAnonymous()) {
+    return;
+  }
+
+  foreach ($view->argument as $argument) {
+    // If this is not a default date we have browsed to a new calendar period.
+    if (!($argument instanceof Date) || !empty($argument->is_default)) {
+      continue;
+    }
+
+    $wrapper = new DateArgumentWrapper($argument);
+    $min = $wrapper->getMinDate();
+    $max = $wrapper->getMaxDate();
+    if (!$min || !$max) {
+      continue;
+    }
+
+    $session_date = clone $min;
+    $seconds = (int) floor(($max->getTimestamp() - $min->getTimestamp()) / 2);
+    if ($seconds > 0) {
+      $session_date->modify(sprintf('+%d seconds', $seconds));
+    }
+
+    $view_id = $view->id() ?? $view->storage->id();
+    if ($view_id) {
+      $_SESSION[$view_id]['default_date'] = $session_date;
+    }
+  }
+}
+
+/**
+ * Implements hook_help().
+ */
+function calendar_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.calendar':
+      return '<p>' . t('View complete documentation at <a href=":link">Date and Calendar Documentation</a>.',
+          [':link' => 'http://drupal.org/node/262062']) . '</p>';
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function calendar_theme() {
+  return [
+    'calendar_mini' => [
+      'variables' => ['view' => NULL, 'options' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_datebox' => [
+      'variables' => [
+        'date' => NULL,
+        'view' => NULL,
+        'items' => NULL,
+        'selected' => NULL,
+      ],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_empty_day' => [
+      'variables' => ['curday' => NULL, 'view' => NULL],
+    ],
+    'calendar_month_col' => [
+      'variables' => ['item' => NULL],
+    ],
+    'calendar_month_row' => [
+      'variables' => ['inner' => NULL, 'class' => NULL],
+    ],
+    'calendar_day' => [
+      'variables' => ['view' => NULL, 'options' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_month' => [
+      'variables' => ['view' => NULL, 'options' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_stripe_legend' => [
+      'variables' => ['view_and_display_id' => NULL, 'title' => NULL],
+    ],
+    'calendar_item' => [
+      'variables' => [
+        'view' => NULL,
+        'rendered_fields' => NULL,
+        'item' => NULL,
+      ],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_week' => [
+      'variables' => ['view' => NULL, 'day_names' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_week_overlap' => [
+      'variables' => ['view' => NULL, 'day_names' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_day_overlap' => [
+      'variables' => ['view' => NULL, 'options' => [], 'rows' => []],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_year' => [
+      'variables' => [
+        'view' => NULL,
+        'rows' => [],
+        'options' => [],
+        'months' => [],
+        'mini' => FALSE,
+      ],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_header' => [
+      'variables' =>
+        [
+          'view' => NULL,
+          'options' => [],
+          'title' => '',
+          'empty' => FALSE,
+          'granularity' => NULL,
+        ],
+      'file' => 'calendar.theme.inc',
+    ],
+    'calendar_time_row_heading' => [
+      'variables' => [
+        'start_time' => NULL,
+        'next_start_time' => NULL,
+        'curday_date' => NULL,
+      ],
+    ],
+    'calendar_pager' => [
+      'variables' => [
+        'parameters' => [],
+        'items' => [],
+        'exclude' => FALSE,
+      ],
+    ],
+
+  ];
+}
+
+/**
+ * Default settings array for calendar time grouping.
+ */
+function calendar_groupby_times($type = ''): array {
+  $times = [];
+  switch ($type) {
+    case 'hour':
+      for ($i = 0; $i <= 23; $i++) {
+        $times[] = DateTimePlus::datePad($i) . ':00:00';
+      }
+      break;
+
+    case 'half':
+      for ($i = 0; $i <= 23; $i++) {
+        $times[] = DateTimePlus::datePad($i) . ':00:00';
+        $times[] = DateTimePlus::datePad($i) . ':30:00';
+      }
+      break;
+
+    default:
+      break;
+  }
+  return $times;
+}

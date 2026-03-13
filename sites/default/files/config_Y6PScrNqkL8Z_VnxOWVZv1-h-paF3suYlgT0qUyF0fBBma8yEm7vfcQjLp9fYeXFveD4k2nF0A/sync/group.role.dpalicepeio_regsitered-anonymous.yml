@@ -1,0 +1,14 @@
+uuid: 636ee1f2-4526-4c25-9a8a-35c6dea0ae4a
+langcode: fr
+status: true
+dependencies:
+  config:
+    - group.type.dpalicepeio_regsitered
+id: dpalicepeio_regsitered-anonymous
+label: Anonyme
+weight: -102
+group_type: dpalicepeio_regsitered
+permissions: {  }
+admin: false
+scope: outsider
+global_role: anonymous

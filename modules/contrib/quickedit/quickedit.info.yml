@@ -1,0 +1,17 @@
+name: Quick Edit
+type: module
+description: 'In-place content editing (contrib).'
+package: Fields
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - drupal:contextual
+  - drupal:editor
+  - drupal:field
+  - drupal:filter
+test_dependencies:
+  - drupal:ckeditor5
+
+# Information added by Drupal.org packaging script on 2026-02-11
+version: '2.0.1'
+project: 'quickedit'
+datestamp: 1770802268

@@ -1,0 +1,4 @@
+administer views gantt:
+  title: 'Administer gantt action'
+  description: 'Use for add/edit/import action gantt.'
+  restrict access: true

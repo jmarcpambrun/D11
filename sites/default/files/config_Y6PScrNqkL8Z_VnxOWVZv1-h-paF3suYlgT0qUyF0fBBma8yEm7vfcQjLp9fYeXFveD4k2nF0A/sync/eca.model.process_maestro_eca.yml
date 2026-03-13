@@ -1,0 +1,121 @@
+uuid: c3fb62d7-7c7f-4a59-a541-cf89e6a015a5
+langcode: fr
+status: false
+dependencies:
+  config:
+    - eca.eca.process_maestro_eca
+_core:
+  default_config_hash: mYNSMdwoUbmLleAqNl9olcxS4aDMnHttg8IX_9JBdSo
+id: process_maestro_eca
+label: 'Maestro Example: Publish Content'
+tags:
+  - ''
+documentation: ''
+filename: ''
+modeldata: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:qa="http://some-company/schema/bpmn/qa" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+    <bpmn2:process id="Process_maestro_eca" name="Maestro Example: Publish Content" isExecutable="true" camunda:versionTag="1">
+      <bpmn2:extensionElements />
+      <bpmn2:startEvent id="Event_1tdpg98" name="Custom Event with Event ID of maestro_example" camunda:modelerTemplate="org.drupal.event.content_entity:custom">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="content_entity:custom" />
+          </camunda:properties>
+          <camunda:field name="event_id">
+            <camunda:string>maestro_example</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:outgoing>Flow_0amjti7</bpmn2:outgoing>
+        <bpmn2:outgoing>Flow_12a3edo</bpmn2:outgoing>
+      </bpmn2:startEvent>
+      <bpmn2:task id="Activity_0hygmnl" name="Publish Content Entity" camunda:modelerTemplate="org.drupal.action.entity:publish_action:node">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="entity:publish_action:node" />
+          </camunda:properties>
+          <camunda:field name="object">
+            <camunda:string>entity</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:incoming>Flow_0amjti7</bpmn2:incoming>
+      </bpmn2:task>
+      <bpmn2:sequenceFlow id="Flow_0amjti7" sourceRef="Event_1tdpg98" targetRef="Activity_0hygmnl" />
+      <bpmn2:task id="Activity_0movz22" name="Spawn Maestro Process" camunda:modelerTemplate="org.drupal.action.maestro_eca_spawn_process">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="maestro_eca_spawn_process" />
+          </camunda:properties>
+          <camunda:field name="maestro_eca_spawn_template">
+            <camunda:string>simple_parallel_to_serial</camunda:string>
+          </camunda:field>
+          <camunda:field name="maestro_eca_entity_identifier">
+            <camunda:string>node_submission</camunda:string>
+          </camunda:field>
+          <camunda:field name="maestro_eca_process_id_token">
+            <camunda:string>maestro_process_id</camunda:string>
+          </camunda:field>
+          <camunda:field name="object">
+            <camunda:string>entity</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:incoming>Flow_12a3edo</bpmn2:incoming>
+        <bpmn2:outgoing>Flow_03omnkx</bpmn2:outgoing>
+      </bpmn2:task>
+      <bpmn2:sequenceFlow id="Flow_12a3edo" sourceRef="Event_1tdpg98" targetRef="Activity_0movz22" />
+      <bpmn2:task id="Activity_0ny3o2k" name="Log Process ID" camunda:modelerTemplate="org.drupal.action.eca_write_log_message">
+        <bpmn2:extensionElements>
+          <camunda:properties>
+            <camunda:property name="pluginid" value="eca_write_log_message" />
+          </camunda:properties>
+          <camunda:field name="channel">
+            <camunda:string>maestro_eca_example</camunda:string>
+          </camunda:field>
+          <camunda:field name="severity">
+            <camunda:string>6</camunda:string>
+          </camunda:field>
+          <camunda:field name="message">
+            <camunda:string>Process ID: [maestro_process_id]</camunda:string>
+          </camunda:field>
+        </bpmn2:extensionElements>
+        <bpmn2:incoming>Flow_03omnkx</bpmn2:incoming>
+      </bpmn2:task>
+      <bpmn2:sequenceFlow id="Flow_03omnkx" sourceRef="Activity_0movz22" targetRef="Activity_0ny3o2k" />
+    </bpmn2:process>
+    <bpmndi:BPMNDiagram id="sid-32e97c1a-968e-4605-96b2-402f0339b89a">
+      <bpmndi:BPMNPlane id="sid-6d21fb73-dd8f-45af-a031-1e9bd7293e44" bpmnElement="Process_maestro_eca">
+        <bpmndi:BPMNShape id="Event_1tdpg98_di" bpmnElement="Event_1tdpg98">
+          <dc:Bounds x="332" y="142" width="36" height="36" />
+          <bpmndi:BPMNLabel>
+            <dc:Bounds x="306" y="92" width="88" height="40" />
+          </bpmndi:BPMNLabel>
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNShape id="Activity_0hygmnl_di" bpmnElement="Activity_0hygmnl">
+          <dc:Bounds x="690" y="120" width="100" height="80" />
+          <bpmndi:BPMNLabel />
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNShape id="Activity_0movz22_di" bpmnElement="Activity_0movz22">
+          <dc:Bounds x="690" y="270" width="100" height="80" />
+          <bpmndi:BPMNLabel />
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNShape id="Activity_0ny3o2k_di" bpmnElement="Activity_0ny3o2k">
+          <dc:Bounds x="840" y="270" width="100" height="80" />
+          <bpmndi:BPMNLabel />
+        </bpmndi:BPMNShape>
+        <bpmndi:BPMNEdge id="Flow_0amjti7_di" bpmnElement="Flow_0amjti7">
+          <di:waypoint x="368" y="160" />
+          <di:waypoint x="690" y="160" />
+        </bpmndi:BPMNEdge>
+        <bpmndi:BPMNEdge id="Flow_12a3edo_di" bpmnElement="Flow_12a3edo">
+          <di:waypoint x="368" y="160" />
+          <di:waypoint x="529" y="160" />
+          <di:waypoint x="529" y="310" />
+          <di:waypoint x="690" y="310" />
+        </bpmndi:BPMNEdge>
+        <bpmndi:BPMNEdge id="Flow_03omnkx_di" bpmnElement="Flow_03omnkx">
+          <di:waypoint x="790" y="310" />
+          <di:waypoint x="840" y="310" />
+        </bpmndi:BPMNEdge>
+      </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+  </bpmn2:definitions>

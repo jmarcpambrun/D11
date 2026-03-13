@@ -1,0 +1,101 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.gantt.field_gantt_date
+    - field.field.node.gantt.field_gantt_duration
+    - field.field.node.gantt.field_gantt_links
+    - field.field.node.gantt.field_gantt_open
+    - field.field.node.gantt.field_gantt_owner
+    - field.field.node.gantt.field_gantt_parent
+    - field.field.node.gantt.field_gantt_planned_date
+    - field.field.node.gantt.field_gantt_planned_duration
+    - field.field.node.gantt.field_gantt_progress
+    - field.field.node.gantt.field_gantt_type
+    - node.type.gantt
+  module:
+    - datetime_range
+id: node.gantt.default
+targetEntityType: node
+bundle: gantt
+mode: default
+content:
+  field_gantt_date:
+    type: daterange_default
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_gantt_duration:
+    type: number
+    weight: 2
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_gantt_open:
+    type: boolean_checkbox
+    weight: 6
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  field_gantt_owner:
+    type: entity_reference_autocomplete
+    weight: 4
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_gantt_planned_date:
+    type: daterange_default
+    weight: 26
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_gantt_planned_duration:
+    type: number
+    weight: 27
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_gantt_progress:
+    type: number
+    weight: 3
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_gantt_type:
+    type: options_select
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 7
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  field_gantt_links: true
+  field_gantt_parent: true
+  path: true
+  promote: true
+  sticky: true
+  uid: true

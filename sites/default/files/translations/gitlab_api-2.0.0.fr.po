@@ -1,0 +1,20 @@
+# French translation of GitLab API with Library (2.0.0)
+# Copyright (c) 2020 by the French translation team
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GitLab API with Library (2.0.0)\n"
+"POT-Creation-Date: 2020-05-22 12:52+0000\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Language-Team: French\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+msgid "URL"
+msgstr "URL"
+msgid "Namespace"
+msgstr "espace de nommage"
+msgid "Web services"
+msgstr "Services Web"

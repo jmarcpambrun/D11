@@ -1,0 +1,13 @@
+uuid: 4efa69fa-68ab-46f1-a8b5-a5691910b7b8
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: z5xiHme6_ma_-PYdm4d9YyjurlvXNaSgQVuhtkyGy64
+id: php
+label: PHP
+interpreter: /usr/bin/php
+extension: php
+prefix: '<?php'
+suffix: ''
+linesuffix: null

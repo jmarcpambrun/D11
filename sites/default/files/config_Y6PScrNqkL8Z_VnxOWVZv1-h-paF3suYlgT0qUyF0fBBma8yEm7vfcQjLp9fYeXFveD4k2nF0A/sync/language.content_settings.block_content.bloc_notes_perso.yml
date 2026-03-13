@@ -1,0 +1,11 @@
+uuid: 4d22a4bc-2f2d-46ef-b569-b7e4598f5529
+langcode: fr
+status: true
+dependencies:
+  config:
+    - block_content.type.bloc_notes_perso
+id: block_content.bloc_notes_perso
+target_entity_type_id: block_content
+target_bundle: bloc_notes_perso
+default_langcode: site_default
+language_alterable: false

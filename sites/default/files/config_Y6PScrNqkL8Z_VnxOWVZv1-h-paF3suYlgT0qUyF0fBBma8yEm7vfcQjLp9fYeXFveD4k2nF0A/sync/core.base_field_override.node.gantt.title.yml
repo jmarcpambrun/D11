@@ -1,0 +1,20 @@
+uuid: 2507f473-90fb-4167-bcfe-b3190b9e2c8e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - node.type.gantt
+_core:
+  default_config_hash: XjIXqS7x8ZioapBRkU2THsTekoXpTvNCe-jbz4bbirM
+id: node.gantt.title
+field_name: title
+entity_type: node
+bundle: gantt
+label: 'Task name'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

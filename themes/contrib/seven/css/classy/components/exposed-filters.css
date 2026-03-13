@@ -1,0 +1,47 @@
+/**
+ * @file
+ * Styles for exposed filters.
+ */
+
+.exposed-filters {
+  .filters {
+    float: left; /* LTR */
+    margin-right: 1em; /* LTR */
+    [dir="rtl"] & {
+      float: right;
+      margin-right: 0;
+      margin-left: 1em;
+    }
+  }
+  .form-item {
+    margin: 0 0 0.1em 0;
+    padding: 0;
+    & label {
+      float: left; /* LTR */
+      width: 10em;
+      font-weight: normal;
+    }
+    [dir="rtl"] & label {
+      float: right;
+    }
+  }
+  & .form-select {
+    width: 14em;
+  }
+  & .current-filters {
+    margin-bottom: 1em;
+    & .placeholder {
+      font-weight: bold;
+      font-style: normal;
+    }
+  }
+  & .additional-filters {
+    float: left; /* LTR */
+    margin-right: 1em; /* LTR */
+    [dir="rtl"] & {
+      float: right;
+      margin-right: 0;
+      margin-left: 1em;
+    }
+  }
+}

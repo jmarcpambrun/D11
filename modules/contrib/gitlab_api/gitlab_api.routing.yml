@@ -1,0 +1,31 @@
+entity.gitlab_server.collection:
+  path: '/admin/config/services/gitlab-server'
+  defaults:
+    _entity_list: 'gitlab_server'
+    _title: 'Gitlab Servers'
+  requirements:
+    _permission: 'administer gitlab_server'
+
+entity.gitlab_server.add_form:
+  path: '/admin/config/services/gitlab-server/add'
+  defaults:
+    _entity_form: 'gitlab_server.add'
+    _title: 'Add a gitlab server'
+  requirements:
+    _permission: 'administer gitlab_server'
+
+entity.gitlab_server.edit_form:
+  path: '/admin/config/services/gitlab-server/{gitlab_server}'
+  defaults:
+    _entity_form: 'gitlab_server.edit'
+    _title: 'Edit a gitlab server'
+  requirements:
+    _permission: 'administer gitlab_server'
+
+entity.gitlab_server.delete_form:
+  path: '/admin/config/services/gitlab-server/{gitlab_server}/delete'
+  defaults:
+    _entity_form: 'gitlab_server.delete'
+    _title: 'Delete a gitlab server'
+  requirements:
+    _permission: 'administer gitlab_server'

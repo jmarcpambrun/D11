@@ -1,0 +1,34 @@
+uuid: 9e49a44c-8f29-41e2-b6e6-de0a5e9dfcbc
+langcode: fr
+status: true
+dependencies: {  }
+id: menu_ui
+label: 'Menu Listing Page'
+routes:
+  -
+    route_name: entity.menu.collection
+tips:
+  menu_listing:
+    id: menu_listing
+    plugin: text
+    label: 'Menu Administration'
+    weight: 1
+    position: auto
+    selector: null
+    body: 'Using the Menu system you can add, remove, and rename menus and menu items/tabs. Each Menu contains a hierarchy of links that can be displayed in a variety of contexts throughout your site.'
+  menu_add:
+    id: menu_add
+    plugin: text
+    label: 'Adding New Menus'
+    weight: 2
+    position: auto
+    selector: .button-action
+    body: "Add a new top level Menu here, and specify the Menu's title and, optionally, a description (Administrative Summary)."
+  menu_actions:
+    id: menu_actions
+    plugin: text
+    label: 'Menu Actions'
+    weight: 3
+    position: auto
+    selector: .dropbutton-widget
+    body: 'Edit a Menu to view or change the hierarchy of Links in the Menu. These drop-button controls also offer quick access to the commonly used Add Link form.'

@@ -1,0 +1,4 @@
+services:
+  gitlab_api.api:
+    class: Drupal\gitlab_api\Api
+    arguments: ['@config.factory']

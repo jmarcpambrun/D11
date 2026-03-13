@@ -1,0 +1,23 @@
+auto_translation_content_types:
+  audio: audio
+  document: document
+  image: image
+  remote_video: remote_video
+  video: video
+  article: article
+  book: book
+  department: department
+  forum: forum
+  gantt: gantt
+  page: page
+  qure_data_catalog: qure_data_catalog
+  qure_inputs: qure_inputs
+  rules_by_users: rules_by_users
+  users_by_department: users_by_department
+  webform: webform
+auto_translation_api_enabled: false
+auto_translation_api_key: WtPwuzYFnwvJe3WArrsW4294A1yJ5DoYCfgztkDDltj8fR+A2k4sh/4gFolqE1zs2kh9Uy1Psikr9YRRdYIQlw==
+auto_translation_provider: drupal_ai
+interval: null
+auto_translation_excluded_fields: ''
+custom_secret: 50f012b313ac7c0c2d7763100ef864d1

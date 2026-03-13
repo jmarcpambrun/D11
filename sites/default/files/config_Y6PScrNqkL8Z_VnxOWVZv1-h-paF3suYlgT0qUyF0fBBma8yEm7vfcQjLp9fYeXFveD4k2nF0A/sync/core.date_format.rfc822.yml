@@ -1,0 +1,8 @@
+uuid: 77c79ee9-5726-41ed-a457-5aaa3c987d34
+langcode: fr
+status: true
+dependencies: {  }
+id: rfc822
+label: 'RFC-822 (used for RSS feeds, etc)'
+locked: false
+pattern: 'D, d M y H:i:s O'

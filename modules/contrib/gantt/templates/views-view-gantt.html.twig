@@ -1,0 +1,105 @@
+<div class="gantt-wrapper default">
+  <div class="wrapper-controls"
+    {% if paragraph_parent_id %}
+    data-paragraph_parent_id="{{ paragraph_parent_id }}"
+    data-paragraph_parent_type="{{ paragraph_parent_type }}"
+    data-paragraph_parent_field_name="{{ paragraph_parent_field_name }}"
+    {% endif %}>
+    <ul class="gantt-controls">
+      {% if toolbar_text %}
+        <li class="gantt-menu-item">
+          {{ toolbar_text }}
+        </li>
+      {% endif %}
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-bs-toggle="tooltip" title="{{ 'Collapse all'|trans }}" type="button" data-action="close"><span class="bi bi-arrows-collapse"><b class="d-none">⇧</b></span></button>
+        <button class="btn btn-default but but-hover" data-bs-toggle="tooltip" title="{{ 'Extend all'|trans }}" style="display: none" type="button" data-action="open"><span class="bi bi-arrows-expand"><b class="d-none">⇩</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="undo" data-bs-toggle="tooltip" title="{{ 'Undo'|trans }}" type="button"><span class="bi bi-arrow-counterclockwise"><b class="d-none">↻</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="redo" data-bs-toggle="tooltip" title="{{ 'Redo'|trans }}" type="button"><span class="bi bi-arrow-clockwise"><b class="d-none">↺</b> </span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="indent" data-bs-toggle="tooltip" title="{{ 'Indent'|trans }}" type="button"><span class="bi bi-indent"><b class="d-none">⇥</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="outdent" data-bs-toggle="tooltip" title="{{ 'Outdent'|trans }}" type="button"><span class="bi bi-unindent"><b class="d-none">⇤</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="del" data-bs-toggle="tooltip" title="{{ 'Delete'|trans }}" type="button"><span class="bi bi-trash"><b class="d-none">🗑</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="toggle_grid" data-bs-toggle="tooltip" title="{{ 'Toggle grid'|trans }}" type="button"><span class="bi bi-list-task"><b class="d-none">📃</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="toggle_chart" data-bs-toggle="tooltip" title="{{ 'Toggle chart'|trans }}" type="button"><span class="bi bi-bar-chart-steps"><b class="d-none">📊</b></span></button>
+      </li>
+      <li class="gantt-menu-item gantt-menu-item-last">
+        <button class="btn btn-default but but-hover" data-action="dashboard" data-bs-toggle="tooltip" title="{{ 'Dashboard'|trans }}" type="button"><span class="bi bi-dpad"><b class="d-none">🗊</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <input class="form-control me-1" placeholder="{{ 'Search task name'|trans }}" data-action="search" type="search" />
+      </li>
+      <li class="gantt-menu-item">
+        <div class="d-inline-block">
+          <div class="input-group">
+            <span class="input-group-text" id="basic-addon1">{{ 'Start'|trans }}</span>
+            <input type="date" class="form-control" data-action="date-start">
+          </div>
+        </div>
+        <div class="d-inline-block">
+          <div class="input-group">
+            <span class="input-group-text" id="basic-addon1">{{ 'End'|trans }}</span>
+            <input type="date" class="form-control" data-action="date-end">
+          </div>
+        </div>
+      </li>
+      <li class="gantt-menu-item">
+        <div class="input-group">
+          <label class="input-group-text" for="group">{{ 'Group'|trans }}</label>
+          <select class="form-select" id="group" data-action="group">
+            <option value="">{{ '-None-'|t }}</option>
+          </select>
+        </div>
+      </li>
+
+    </ul>
+    <ul class="gantt-controls">
+      <li class="gantt-menu-item">
+        <select data-action="scale_gantt" class="form-select">
+          <option value="year">{{ 'Year'|trans }}</option>
+          <option value="quarter">{{ 'Quarter'|trans }}</option>
+          <option value="month">{{ 'Month'|trans }}</option>
+          <option value="week">{{ 'Week'|trans }}</option>
+          <option value="day" selected>{{ 'Day'|trans }}</option>
+          <option value="hour">{{ 'Hour'|trans }}</option>
+        </select>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="zoomIn btn btn-default but but-hover" type="button" data-action="zoomIn" data-bs-toggle="tooltip" title="{{ 'Zoom in'|trans }}"><span class="bi bi-zoom-in"><b class="d-none">🔍</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="zoomOut btn btn-default but but-hover" type="button" data-action="zoomOut" data-bs-toggle="tooltip" title="{{ 'Zoom out'|trans }}"><span class="bi bi-zoom-out"><b class="d-none">🔍</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="zoomToFit btn btn-default but but-hover" type="button" data-action="zoomToFit" data-bs-toggle="tooltip" title="{{ 'Zoom fit'|trans }}"><span class="bi bi-aspect-ratio"><b class="d-none">⛶</b></span></button>
+      </li>
+      <li class="gantt-menu-item">
+        <button class="btn btn-default but but-hover" data-action="fullscreen" type="button" data-bs-toggle="tooltip" title="{{ 'Full screen'|trans }}"><i class="bi bi-arrows-fullscreen"><b class="d-none">⎚</b></i></button>
+      </li>
+      <li class="gantt-menu-item gantt-menu-item-first">
+        <button class="btn btn-default" data-action="export" type="button" data-bs-toggle="tooltip" title="{{ 'Export'|trans }}"><span class="bi bi-save"><b class="d-none">💾</b></span></button>
+      </li>
+    </ul>
+  </div>
+  <div class="showGantt" id="{{ id_gantt }}" style="width: 100%;  height:calc(100vh - 52px); position: relative;"   {% if paragraph_parent_id  %}
+    data-paragraph_parent_id="{{ paragraph_parent_id }}"
+    data-paragraph_parent_type="{{ paragraph_parent_type }}"
+    data-paragraph_parent_field_name="{{ paragraph_parent_field_name }}"
+  {% endif %}
+  ></div>
+  <div id="gantt_dropdown">
+  </div>
+</div>

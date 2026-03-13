@@ -1,0 +1,29 @@
+.inline-elements {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: row;
+      flex-direction: row;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -ms-flex-align: start;
+      align-items: flex-start;
+  -ms-flex-pack: start;
+      justify-content: flex-start;
+}
+.inline-elements > * {
+  padding: 1rem;
+}
+.inline-elements .form-type-item {
+  width: 30px;
+  -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
+      align-self: center;
+}
+.inline-elements .form-type-textarea {
+  width: 300px;
+}
+.inline-elements input.button {
+  -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
+      align-self: center;
+}

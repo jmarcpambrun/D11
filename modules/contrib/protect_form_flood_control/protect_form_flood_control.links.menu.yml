@@ -1,0 +1,7 @@
+protect_form_flood_control.settings:
+  title: 'Protect Form Flood Control'
+  route_name: protect_form_flood_control.settings
+  description: 'Configure the Protect Form Flood Control settings.'
+  parent: system.admin_config_ui
+  weight: 99
+

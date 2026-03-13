@@ -1,0 +1,96 @@
+_core:
+  default_config_hash: AXUBMTvVtpcNp0jKjDaWjSHqMy6HjuUf7j4yVbXgazI
+local_task_enabled_entity_types:
+  - backup_migrate_schedule
+  - block
+  - block_content_type
+  - node
+  - paragraphs_library_item
+track_enabled_source_entity_types:
+  - avatars_preview
+  - block_content
+  - burndown_project
+  - burndown_sprint
+  - burndown_swimlane
+  - burndown_task
+  - comment
+  - contact_message
+  - content_moderation_state
+  - group
+  - group_content
+  - h5p_content
+  - maestro_entity_identifiers
+  - maestro_process
+  - maestro_process_status
+  - maestro_process_variables
+  - maestro_production_assignments
+  - maestro_queue
+  - media
+  - menu_link_content
+  - node
+  - paragraph
+  - paragraphs_library_item
+  - path_alias
+  - quiz
+  - quiz_question
+  - quiz_question_relationship
+  - quiz_result
+  - quiz_result_answer
+  - search_api_task
+  - shortcut
+  - taxonomy_term
+  - webform_submission
+track_enabled_target_entity_types:
+  - aggregator_feed
+  - aggregator_item
+  - avatars_preview
+  - block_content
+  - burndown_project
+  - burndown_sprint
+  - burndown_swimlane
+  - burndown_task
+  - comment
+  - contact_message
+  - content_kanban_log
+  - content_moderation_state
+  - group
+  - group_content
+  - h5p_content
+  - maestro_entity_identifiers
+  - maestro_process
+  - maestro_process_status
+  - maestro_process_variables
+  - maestro_production_assignments
+  - maestro_queue
+  - media
+  - menu_link_content
+  - node
+  - paragraph
+  - paragraphs_library_item
+  - path_alias
+  - quiz
+  - quiz_question
+  - quiz_question_relationship
+  - quiz_result
+  - quiz_result_answer
+  - search_api_task
+  - shortcut
+  - taxonomy_term
+  - webform_submission
+track_enabled_plugins:
+  - block_field
+  - dynamic_entity_reference
+  - entity_embed
+  - entity_reference
+  - html_link
+  - layout_builder
+  - link
+  - linkit
+  - media_embed
+track_enabled_base_fields: false
+site_domains: {  }
+edit_warning_message_entity_types:
+  - paragraphs_library_item
+delete_warning_message_entity_types:
+  - paragraphs_library_item
+usage_controller_items_per_page: 25

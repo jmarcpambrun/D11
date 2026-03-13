@@ -1,0 +1,23 @@
+uuid: 9fa3cb33-569a-4c10-8da6-a5f3782a4a5f
+langcode: fr
+status: true
+dependencies:
+  config:
+    - feeds.feed_type.la_une_du_monde
+    - field.storage.feeds_feed.feeds_item
+  module:
+    - feeds
+id: feeds_feed.la_une_du_monde.feeds_item
+field_name: feeds_item
+entity_type: feeds_feed
+bundle: la_une_du_monde
+label: 'Feeds item'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:feeds_feed'
+  handler_settings: {  }
+field_type: feeds_item

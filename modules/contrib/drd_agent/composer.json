@@ -1,0 +1,35 @@
+{
+  "name": "drupal/drd_agent",
+  "type": "drupal-module",
+  "description": "Agent on remote Drupal sites for the main DRD module.",
+  "keywords": [
+    "Drupal"
+  ],
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/drd_agent",
+  "authors": [
+    {
+      "name": "Jürgen Haas",
+      "homepage": "https://www.drupal.org/u/jurgenhaas"
+    }
+  ],
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/drd",
+    "source": "https://git.drupal.org/project/drd_agent"
+  },
+  "suggest": {
+    "drupal/hacked": "Validate each project if it got changed compared to the original code from drupal.org.",
+    "drupal/monitoring": "Site monitoring module with sensors.",
+    "drupal/security_review": "Site security and configuration review module."
+  },
+  "require": {
+    "php": ">=8.1"
+  },
+  "require-dev": {
+    "drupal/hacked": "^2.0",
+    "drupal/job_scheduler": "^4.0",
+    "drupal/monitoring": "^1.13",
+    "drupal/security_review": "^3.0"
+  }
+}

@@ -1,0 +1,59 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_gantt_links
+    - node.type.gantt
+  module:
+    - triples_field
+id: node.gantt.field_gantt_links
+field_name: field_gantt_links
+entity_type: node
+bundle: gantt
+label: Links
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  first:
+    label: Target
+    list: false
+    allowed_values: {  }
+    max: null
+    min: 0
+    required: false
+    on_label: 'On'
+    off_label: 'Off'
+  second:
+    label: Loại
+    list: true
+    allowed_values:
+      -
+        label: 'Finish to start'
+        value: '0'
+      -
+        label: 'Start to start'
+        value: '1'
+      -
+        label: 'Finish to finish'
+        value: '2'
+      -
+        label: 'Start to finish'
+        value: '3'
+    max: null
+    min: null
+    required: false
+    on_label: 'On'
+    off_label: 'Off'
+  third:
+    label: Lag
+    list: false
+    allowed_values: {  }
+    max: null
+    min: null
+    required: false
+    on_label: 'On'
+    off_label: 'Off'
+field_type: triples_field

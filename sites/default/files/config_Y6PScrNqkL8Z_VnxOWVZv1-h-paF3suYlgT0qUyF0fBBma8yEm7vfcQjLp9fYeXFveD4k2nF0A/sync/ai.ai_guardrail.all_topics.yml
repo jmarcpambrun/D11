@@ -1,0 +1,22 @@
+uuid: 9c06dde1-fda1-4e76-979c-84ee1c6d165a
+langcode: fr
+status: true
+dependencies: {  }
+id: all_topics
+label: All_topics
+description: 'No restrictions'
+guardrail: restrict_to_topic
+guardrail_settings:
+  valid_topics: ''
+  invalid_topics: ''
+  invalid_topics_present_message: 'The text contains invalid topics'
+  valid_topics_missing_message: 'The text does not contain any of the valid topics'
+  llm_model: gpt-5
+  llm_provider: openai
+  llm_config:
+    temperature: 1.0
+    frequency_penalty: 0
+    presence_penalty: 0
+    top_p: 1.0
+    max_completion_tokens: 4096
+    reasoning_effort: medium

@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Schema Based Config Forms URL module file.
+ */
+
+/**
+ * Implements hook_config_schema_info_alter().
+ */
+function schema_based_config_forms_url_config_schema_info_alter(&$definitions) {
+  if (
+    \Drupal::moduleHandler()->moduleExists('config_translation')
+    && isset($definitions['url'])
+    && !isset($definitions['url']['form_element_class'])
+  ) {
+    $definitions['url']['form_element_class'] = '\Drupal\schema_based_config_forms\FormElement\Url';
+  }
+}
+
+/**
+ * Implements hook_schema_config_form_element_info_alter().
+ */
+function schema_based_config_forms_url_schema_config_form_element_info_alter(array &$definitions): void {
+  if (isset($definitions['url'])) {
+    $definitions['url']['types'][] = 'url';
+    $definitions['url']['types'][] = 'url_notranslate';
+  }
+}

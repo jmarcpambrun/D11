@@ -1,0 +1,424 @@
+uuid: 860201a7-111c-48c2-b78b-97ca8eb8c5c6
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: GcMoVC2_iSI7i6Q7tCGaWFcNkqRejFagYNYwP7SYGMs
+id: maestro_ai_expense_rcpt_checking_simple
+label: 'Maestro AI Expense Receipt Checking Simple Example'
+description: 'Simple Receipt checking flow using Maestro AI Task with Image Vision'
+app_group: 0
+canvas_height: 900
+canvas_width: 800
+default_workflow_timeline_stage_count: 0
+show_details: false
+validated: true
+views_attached:
+  maestro_entity_identifiers:
+    view_machine_name: maestro_entity_identifiers
+    view_weight: -10
+    view_display: 'taskconsole_display;Task Console Display'
+  maestro_completed_tasks:
+    view_machine_name: maestro_completed_tasks
+    view_weight: -9
+    view_display: default;Master
+variables:
+  initiator:
+    variable_id: initiator
+    variable_value: '0'
+  workflow_timeline_stage_count:
+    variable_id: workflow_timeline_stage_count
+    variable_value: ''
+  workflow_current_stage:
+    variable_id: workflow_current_stage
+    variable_value: ''
+  workflow_current_stage_message:
+    variable_id: workflow_current_stage_message
+    variable_value: ''
+  image_file:
+    variable_id: image_file
+    variable_value: ''
+  receipt_description:
+    variable_id: receipt_description
+    variable_value: ''
+  message:
+    variable_id: message
+    variable_value: ''
+tasks:
+  start:
+    id: start
+    tasktype: MaestroStart
+    label: Start
+    nextstep: set_image_file
+    nextfalsestep: ''
+    top: '20'
+    left: '30'
+    assignby: fixed
+    assignto: engine
+  end:
+    id: end
+    tasktype: MaestroEnd
+    label: End
+    nextstep: ''
+    nextfalsestep: ''
+    top: '270'
+    left: '30'
+    assignby: fixed
+    assignto: engine
+  set_image_file:
+    id: set_image_file
+    tasktype: MaestroSetProcessVariable
+    label: 'Set Image File'
+    nextstep: clear_ai_message
+    nextfalsestep: ''
+    runonce: false
+    top: '20'
+    left: '180'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      spv:
+        variable: image_file
+        method: byplugin
+        variable_value: ''
+        spv_plugin: GetWebformSubmissionElementValue
+        entity_identifier: submission
+        entity_type: webform_submission
+        entity_type_bundle: simple_expense_report_example
+        entity_type_field: receipt_upload
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  set_receipt_description:
+    id: set_receipt_description
+    tasktype: MaestroSetProcessVariable
+    label: 'Set Receipt Description'
+    nextstep: check_receipt
+    nextfalsestep: ''
+    runonce: false
+    top: '20'
+    left: '510'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      spv:
+        variable: receipt_description
+        method: byplugin
+        variable_value: ''
+        spv_plugin: GetWebformSubmissionElementValue
+        entity_identifier: submission
+        entity_type: webform_submission
+        entity_type_bundle: simple_expense_report_example
+        entity_type_field: receipt_description
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  check_receipt:
+    id: check_receipt
+    tasktype: MaestroAITask
+    label: 'Finance AI - Check Receipt'
+    nextstep: if_has_issues
+    nextfalsestep: ''
+    runonce: false
+    top: '15'
+    left: '665'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      ai:
+        ai_prompt: "You are a finance employee tasked with reviewing expense report receipts. Each receipt may have an attached employee explanation, which might be missing, irrelevant, or applicable to a different receipt — evaluate carefully.\r\n\r\n    If alcohol is found on the receipt, return a brief explanation (<250 characters) containing the word \"alcohol\". If the explanation mentions managerial approval, client hospitality, or customer appreciation, do not flag the receipt for alcohol.\r\n    If the receipt appears invalid, return a brief explanation (<250 characters) containing the word \"invalid\".\r\n    If no issues are found, return a single dash: -.\r\n\r\nIgnore irrelevant explanations when the receipt is otherwise valid. Only provide explanations when alcohol is present or the receipt is invalid. Prioritize concise, clear evaluations.\r\n\r\nEmployee's explanation (if any):\r\n[maestro:process-variable-value:receipt_description]"
+        hold_task_on_null: 0
+        ai_provider: MaestroAiTaskVision
+        ai_return_format: ''
+        ai_return_custom_format: ''
+        ai_return_into: process_variable
+        ai_return_into_process_variable: message
+        ai_return_into_ai_variable: ''
+        log_ai_return: 0
+        ai_testing: 0
+        ai_testing_response: '{"result":"true"}'
+        ai_vision_image_source: process_variable
+        ai_vision_image_source_url: ''
+        ai_vision_image_source_entity: ''
+        ai_vision_image_source_pv: image_file
+        ai_vision_image_source_file: ''
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  if_has_issues:
+    id: if_has_issues
+    tasktype: MaestroIf
+    label: 'If Receipt Has Issues'
+    nextstep: set_ai_message
+    nextfalsestep: finance_human_review
+    runonce: false
+    top: '140'
+    left: '670'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      if:
+        method: byvariable
+        variable: message
+        operator: '!='
+        variable_value: '-'
+        status: '1'
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  clear_ai_message:
+    id: clear_ai_message
+    tasktype: MaestroSetProcessVariable
+    label: 'Clear AI Message'
+    nextstep: set_receipt_description
+    nextfalsestep: ''
+    runonce: false
+    top: '20'
+    left: '340'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      spv:
+        variable: message
+        method: hardcoded
+        variable_value: '-'
+        spv_plugin: ''
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  initiator_review:
+    id: initiator_review
+    tasktype: MaestroWebform
+    label: 'Issue With Your Receipt'
+    nextstep: set_image_file
+    nextfalsestep: ''
+    runonce: false
+    top: '140'
+    left: '180'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      unique_id: submission
+      modal: notmodal
+      redirect_to: taskconsole
+      webform_machine_name: simple_expense_report_example
+      skip_webform_handlers: true
+      webform_nodes_attached_to: none
+      use_nodes_attached: false
+      webform_nodes_attached_variable: none
+      show_edit_form: true
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  set_ai_message:
+    id: set_ai_message
+    tasktype: MaestroBatchFunction
+    label: 'Set AI Message in Form'
+    nextstep: initiator_review
+    nextfalsestep: ''
+    runonce: false
+    top: '140'
+    left: '430'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: maestro_ai_task_vision_example_set_webform_value_with_pv
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  finance_human_review:
+    id: finance_human_review
+    tasktype: MaestroWebform
+    label: 'Finance Human Review'
+    nextstep: if_finance_rejects
+    nextfalsestep: ''
+    runonce: false
+    top: '270'
+    left: '670'
+    assignby: fixed
+    assignto: ''
+    assigned: 'user:variable:initiator'
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      unique_id: submission
+      modal: notmodal
+      redirect_to: taskconsole
+      webform_machine_name: simple_expense_report_example
+      skip_webform_handlers: true
+      webform_nodes_attached_to: none
+      use_nodes_attached: false
+      webform_nodes_attached_variable: none
+      show_edit_form: false
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: 0
+      reminder_after: 0
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''
+  if_finance_rejects:
+    id: if_finance_rejects
+    tasktype: MaestroIf
+    label: 'If Finance Rejects'
+    nextstep: initiator_review
+    nextfalsestep: end
+    runonce: false
+    top: '270'
+    left: '180'
+    assignby: fixed
+    assignto: ''
+    assigned: ''
+    handler: ''
+    showindetail: true
+    participate_in_workflow_status_stage: false
+    workflow_status_stage_number: 0
+    workflow_status_stage_message: ''
+    raphael: ''
+    to: ''
+    pointedfrom: ''
+    falsebranch: ''
+    lines: {  }
+    data:
+      if:
+        method: bylasttaskstatus
+        variable: initiator
+        operator: '='
+        variable_value: ''
+        status: '2'
+    notifications:
+      notification_assignment: ''
+      notification_reminder: ''
+      notification_escalation: ''
+      escalation_after: null
+      reminder_after: null
+      notification_assignment_subject: ''
+      notification_reminder_subject: ''
+      notification_escalation_subject: ''

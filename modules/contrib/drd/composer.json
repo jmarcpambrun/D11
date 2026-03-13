@@ -1,0 +1,62 @@
+{
+  "name": "drupal/drd",
+  "type": "drupal-module",
+  "description": "Dashboard to monitor and manage any number of remote Drupal 6, 7 or 8 sites",
+  "keywords": [
+    "Drupal"
+  ],
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/drd",
+  "authors": [
+    {
+      "name": "Jürgen Haas",
+      "homepage": "https://www.drupal.org/u/jurgenhaas"
+    }
+  ],
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/drd",
+    "source": "https://git.drupal.org/project/drd"
+  },
+  "repositories": {
+    "drupal": {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8",
+      "exclude": [
+        "drupal/key_value_field"
+      ]
+    },
+    "drupal.key_value_field": {
+      "type": "git",
+      "url": "https://git.drupalcode.org/issue/key_value_field-3431515.git"
+    }
+  },
+  "require": {
+    "php": ">=8.1",
+    "albertofem/rsync-lib": "^1.0",
+    "drupal/advancedqueue": "^1.0@RC",
+    "drupal/drd_agent": "^4.1",
+    "drupal/encrypt": "^3.1",
+    "drupal/eva": "^3.0",
+    "drupal/key_value_field": "^1.3 || dev-3431515-automated-drupal-11",
+    "cypresslab/gitelephant": "^2.0|^4.0",
+    "mikehaertl/php-shellcommand": "^1.6",
+    "phpseclib/phpseclib": "^2.0|^3.0",
+    "platformsh/client": "^2.0",
+    "symfony/filesystem": "^2.8|^3|^4|^5|^6|^7"
+  },
+  "require-dev": {
+    "drupal/eca": "^2.0",
+    "drupal/gitlab_api": "^2.1",
+    "drupal/webform": "^6.2"
+  },
+  "suggest": {
+    "drupal/extlink": "Allows to open external links in new tabs/windows.",
+    "drupal/hacked": "Validate each project if it got changed compared to the original code from drupal.org.",
+    "drupal/monitoring": "Site monitoring module with sensors.",
+    "drupal/real_aes": "Encryption method for the encrypt module.",
+    "drupal/security_review": "Site security and configuration review module.",
+    "drupal/console": "CLI to use and optionally automate DRD actions.",
+    "drush/drush": "Another CLI to use and optionally automate DRD actions."
+  }
+}

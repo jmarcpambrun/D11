@@ -1,0 +1,25 @@
+blocks:
+  custom_html_block_1:
+    plugin_id: custom_html_block_1
+    title: null
+    weight: 0
+    configured: false
+    plugin_specific_config: {  }
+  recent_calendar_content_block:
+    plugin_id: recent_calendar_content_block
+    title: null
+    weight: 0
+    configured: false
+    plugin_specific_config: {  }
+  user_block:
+    plugin_id: user_block
+    title: null
+    weight: 0
+    configured: false
+    plugin_specific_config: {  }
+  view_1_block:
+    plugin_id: view_1_block
+    title: null
+    weight: 0
+    configured: false
+    plugin_specific_config: {  }

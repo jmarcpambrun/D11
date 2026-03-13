@@ -1,0 +1,7 @@
+uuid: fb579f2d-5710-4cb2-9062-885089cd6111
+langcode: fr
+status: true
+dependencies: {  }
+formId: node_book_form
+captchaType: default
+label: node_book_form

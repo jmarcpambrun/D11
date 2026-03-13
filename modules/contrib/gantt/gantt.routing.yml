@@ -1,0 +1,53 @@
+gantt.ajax:
+  path: '/gantt/ajax/{view_id}/{display_id}'
+  defaults:
+    _controller: '\Drupal\gantt\Controller\GanttController::ajax'
+    _title: 'Gantt JSON api'
+  methods: [POST]
+  requirements:
+    _permission: 'administer views gantt'
+
+gantt.import:
+  path: '/gantt/import/{view_id}/{display_id}'
+  defaults:
+    _controller: '\Drupal\gantt\Controller\GanttController::import'
+    _title: 'Gantt JSON import'
+  methods: [POST]
+  requirements:
+    _permission: 'administer views gantt'
+
+gantt.add:
+  path: '/gantt/add/{paragraph_type}/{entity_type}/{entity_field}/{entity_id}'
+  defaults:
+    _controller: '\Drupal\gantt\Controller\ComponentFormController::addForm'
+    operation: 'create'
+  options:
+    parameters:
+      paragraph_type:
+        type: entity:paragraphs_type
+  requirements:
+    _permission: 'administer views gantt'
+
+gantt.edit:
+  path: '/gantt/{paragraph}/edit'
+  defaults:
+    _form: '\Drupal\gantt\Form\EditComponentForm'
+    _title_callback: '\Drupal\gantt\Form\EditComponentForm::pageTitle'
+  requirements:
+    _permission: 'view unpublished paragraphs'
+  options:
+    parameters:
+      paragraph:
+        type: 'entity:paragraph'
+
+gantt.display:
+  path: '/gantt/{paragraph}'
+  defaults:
+    _controller: '\Drupal\gantt\Controller\ComponentFormController::page'
+    _title_callback: '\Drupal\gantt\Form\EditComponentForm::pageTitle'
+  requirements:
+    _permission: 'view unpublished paragraphs'
+  options:
+    parameters:
+      paragraph:
+        type: 'entity:paragraph'

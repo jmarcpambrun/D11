@@ -1,0 +1,16 @@
+/*!
+	Copyright (c) 2025 Randy Kolenko.
+	Licensed under the MIT License (MIT), see
+	https://github.com/oknelok/maestrotemplatebuilder
+*/
+
+/*!
+* diagram-js 15.3.0
+* @license MIT, https://github.com/bpmn-io/diagram-js/blob/develop/LICENSE
+*/
+
+/*!
+* tiny-svg 4.1.3
+* @license MIT, https://github.com/bpmn-io/tiny-svg/blob/main/LICENSE
+*/
+

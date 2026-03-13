@@ -1,0 +1,6 @@
+_core:
+  default_config_hash: mNRnvlHeZbkILRNvgRAhaLGkTNjFw3kfn5y-ZzL9Hks
+fields:
+  first: 'First subfield'
+  second: 'Second subfield'
+  third: 'Third subfield'

@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Personal Notes module.
+ */
+
+use Drupal\personal_notes\Entity\PersonalNote;
+use Drupal\views\Entity\View;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Implements hook_schema().
+ *
+ * Defines the database tables used by this module.
+ *
+ * @see hook_schema()
+ */
+function personal_notes_schema(): array {
+  $schema['personal_notes_notes'] = [
+    'description' => 'Stores notes that users write.',
+    'fields' => [
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {user}.uid of the user who created the note.',
+      ],
+      'notenum' => [
+        'description' => 'The primary identifier for a personal note.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'title' => [
+        'description' => 'The title of the note.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 24,
+      ],
+      'note' => [
+        'description' => 'The text of the note.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 512,
+      ],
+      'created' => [
+        'description' => 'A Unix timestamp indicating when the note was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['notenum'],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Create personal note entity.
+ */
+function personal_notes_update_9001(&$sandbox) {
+  // Check if the table exists first.  If not, then create the entity.
+  if (!\Drupal::database()->schema()->tableExists('personal_note')) {
+    \Drupal::entityTypeManager()->clearCachedDefinitions();
+    \Drupal::entityDefinitionUpdateManager()
+      ->installEntityType(\Drupal::entityTypeManager()
+        ->getDefinition('personal_note'));
+  }
+  else {
+    return 'Personal Notes entity already exists.';
+  }
+  return 'Personal Notes entity created.';
+}
+
+/**
+ * Migrate personal notes into entities.
+ */
+function personal_notes_update_9002(&$sandbox) {
+  // Check if the table exists first.  If not, then nothing to migrate.
+  if (\Drupal::database()->schema()->tableExists('personal_notes_notes')) {
+
+    if (!isset($sandbox['progress'])) {
+      // This must be the first run. Initialize the sandbox.
+      $sandbox['progress'] = 0;
+      $sandbox['current_pk'] = 0;
+      $sandbox['max'] = \Drupal::database()
+        ->query('SELECT COUNT([notenum]) FROM {personal_notes_notes}')
+        ->fetchField();
+    }
+
+    // Update in chunks of 50.
+    $records = \Drupal::database()
+      ->select('personal_notes_notes', 'notes')
+      ->fields('notes', [
+        'uid',
+        'notenum',
+        'title',
+        'note',
+        'created',
+      ])
+      ->condition('notenum', $sandbox['current_pk'], '>')
+      ->range(0, 50)
+      ->orderBy('notenum', 'ASC')
+      ->execute();
+
+    // Create entities.
+    foreach ($records as $record) {
+
+      $note = PersonalNote::create([
+        'user' => $record->uid,
+        'uid' => 1,
+        'title' => $record->title,
+        'note' => $record->note,
+        'created' => $record->created,
+        'changed' => $record->created,
+      ]);
+      $note->save();
+
+      $sandbox['progress']++;
+      $sandbox['current_pk'] = $record->notenum;
+    }
+    $sandbox['#finished'] = empty($sandbox['max']) ? 1 : $sandbox['progress'] / $sandbox['max'];
+  }
+  else {
+    return 'Nothing to migrate.';
+  }
+  return $sandbox['progress'] . " / " . $sandbox['max'] . ' Personal Notes entity created.';
+}
+
+/**
+ * Import the new view.
+ */
+function personal_notes_update_9003(&$sandbox) {
+
+  // Only create if the redirect view doesn't exist and views is enabled.
+  if (\Drupal::moduleHandler()->moduleExists('views') &&
+    !View::load('user_personal_notes')) {
+    $config_path = \Drupal::service('extension.list.module')
+        ->getPath('personal_notes') . '/config/install/views.view.user_personal_notes.yml';
+    $data = Yaml::parseFile($config_path);
+    \Drupal::configFactory()
+      ->getEditable('views.view.user_personal_notes')
+      ->setData($data)
+      ->save(TRUE);
+    $message = 'The new user_personal_notes view has been created.';
+  }
+  else {
+    $message = 'Not creating a user_personal_notes view since it already exists.';
+  }
+  return $message;
+}
+

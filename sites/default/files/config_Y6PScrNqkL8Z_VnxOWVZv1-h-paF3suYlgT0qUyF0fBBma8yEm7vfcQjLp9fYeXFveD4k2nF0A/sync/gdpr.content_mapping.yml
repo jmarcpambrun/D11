@@ -1,0 +1,11 @@
+links:
+  fr:
+    privacy_policy: 'internal:/private-policy-fr'
+    terms_of_use: 'internal:/conditions-of-use-fr'
+    about_us: 'internal:/about-us-fr'
+    impressum: 'internal:/print-fr'
+  en:
+    privacy_policy: 'internal:/private-policy-en'
+    terms_of_use: 'internal:/conditions-of-use-en'
+    about_us: 'internal:/about-us-en'
+    impressum: 'internal:/print-en'

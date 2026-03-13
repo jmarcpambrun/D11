@@ -1,0 +1,8 @@
+services:
+  logger.channel.schema_based_config_forms:
+    parent: logger.channel_base
+    arguments: ['schema_based_config_forms']
+
+  plugin.manager.schema_config_form_element:
+    class: Drupal\schema_based_config_forms\SchemaConfigFormElementPluginManager
+    parent: default_plugin_manager

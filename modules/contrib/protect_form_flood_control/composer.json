@@ -1,0 +1,13 @@
+{
+    "name": "drupal/protect_form_flood_control",
+    "type": "drupal-module",
+    "description": "Provide flood control protection on any form.",
+    "keywords": [
+    ],
+    "homepage": "https://www.drupal.org/project/protect_form_flood_control",
+    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/protect_form_flood_control",
+        "source": "https://cgit.drupalcode.org/protect_form_flood_control"
+    }
+}

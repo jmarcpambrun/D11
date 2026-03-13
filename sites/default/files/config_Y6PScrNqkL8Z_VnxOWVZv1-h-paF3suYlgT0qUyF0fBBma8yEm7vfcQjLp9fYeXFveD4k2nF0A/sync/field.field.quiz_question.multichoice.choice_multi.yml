@@ -1,0 +1,26 @@
+uuid: 848f6c5c-d9da-4488-8b5a-a5a962bcddea
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.quiz_question.choice_multi
+    - quiz.question.type.multichoice
+  enforced:
+    module:
+      - quiz_multichoice
+_core:
+  default_config_hash: PSFEd8JjTBzJ7lIgRC0uF6ctq8adAshJpj8nDPyTg6A
+id: quiz_question.multichoice.choice_multi
+field_name: choice_multi
+entity_type: quiz_question
+bundle: multichoice
+label: 'Réponses multiples'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

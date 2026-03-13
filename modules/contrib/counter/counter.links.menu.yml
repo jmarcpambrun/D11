@@ -1,0 +1,46 @@
+counter.counter_settings:
+  title: 'Counter'
+  title_context: 'counter'
+  route_name: counter.counter_settings
+  weight: -10
+  parent: system.admin_config
+
+counter.basic:
+  title: 'Basic Counter'
+  title_context: 'counter'
+  description: 'Show Site Counter, Client IP, and Unique Visitor.'
+  route_name: counter.basic
+  weight: -17
+  parent: counter.counter_settings
+
+counter.advanced:
+  title: 'Advanced Counter'
+  title_context: 'counter'
+  description: 'Configure advanced data for displaying in counter block.'
+  route_name: counter.advanced
+  weight: -16
+  parent: counter.counter_settings
+
+counter.initial:
+  title: 'Initial Counter'
+  title_context: 'counter'
+  description: 'Configure initial values for the counter.'
+  route_name: counter.initial
+  weight: -15
+  parent: counter.counter_settings
+
+counter.dashboard:
+  title: 'Counter Dashboard'
+  title_context: 'counter'
+  description: 'Check counter dashboard.'
+  route_name: counter.dashboard
+  weight: -14
+  parent: counter.counter_settings
+
+counter.statistics:
+  title: 'Statistics views'
+  title_context: 'counter'
+  description: 'Check statistics views.'
+  route_name: counter.statistics
+  weight: -13
+  parent: counter.counter_settings

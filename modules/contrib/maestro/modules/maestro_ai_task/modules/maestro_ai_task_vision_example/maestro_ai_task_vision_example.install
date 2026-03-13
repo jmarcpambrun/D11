@@ -1,0 +1,76 @@
+<?php
+
+use Drupal\Core\Link;
+use Drupal\maestro\Engine\MaestroEngine;
+use Drupal\maestro\Entity\MaestroProcess;
+use Drupal\maestro\Entity\MaestroTemplate;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\Entity\WebformSubmission;
+
+/**
+ * Implements hook_requirements().
+ */
+function maestro_ai_task_vision_example_requirements($phase) {
+  $requirements = [];
+
+  // Only check during installation.
+  if ($phase === 'install') {
+    $ai_module_settings = \Drupal::config('ai.settings');
+    $default_providers = $ai_module_settings->get('default_providers') ?? [];
+
+    // Check if chat_with_image_vision is one of the default providers configured
+    if (!array_key_exists('chat_with_image_vision', $default_providers)) {
+      $requirements['maestro_ai_task_vision_example_requires_ai_setting'] = [
+        'title' => t('Maestro AI Task Vision Example Module'),
+        'value' => t('Missing'),
+        'description' => t('You must configure the AI module to have a Chat with Image Vision provider to install this module.'),
+        'severity' => REQUIREMENT_ERROR,
+      ];
+    }
+  }
+  return $requirements;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function maestro_ai_task_vision_example_uninstall() {
+  $template = MaestroTemplate::load('maestro_ai_expense_rcpt_checking_simple');
+  if($template) {
+    $template->delete();
+  }
+
+  $template = MaestroTemplate::load('maestro_ai_expense_rcpt_complex');
+  if($template) {
+    $template->delete();
+  }
+
+  // Delete all processes for the simple example
+  $query = \Drupal::entityQuery('maestro_process')
+    ->condition('template_id', 'maestro_ai_expense_rcpt_checking_simple')
+    ->accessCheck(FALSE);
+  $entityIDs = $query->execute();
+  foreach ($entityIDs as $entityID) {
+    MaestroEngine::deleteProcess($entityID);
+  }
+
+  // Delete all processes for the complex example
+  $query = \Drupal::entityQuery('maestro_process')
+    ->condition('template_id', 'maestro_ai_expense_rcpt_complex')
+    ->accessCheck(FALSE);
+  $entityIDs = $query->execute();
+  foreach ($entityIDs as $entityID) {
+    MaestroEngine::deleteProcess($entityID);
+  }
+
+  // Delete all webforms and submissions related to the examples
+  $webform = Webform::load('simple_expense_report_example');
+  if($webform) {
+    $webform->delete();
+  }
+
+  $webform = Webform::load('maestro_ai_expense_rcpt_complex');
+  if($webform) {
+    $webform->delete();
+  }
+}

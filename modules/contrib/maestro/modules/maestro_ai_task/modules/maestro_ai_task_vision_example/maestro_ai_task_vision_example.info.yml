@@ -1,0 +1,14 @@
+name: Maestro AI Task Vision Example
+type: module
+description: 'Example workflows for the Maestro AI Task that shows a simple and complex expense receipt checker. Requires that you have an AI Module provider set up for Chat with Image Vision.'
+package: Maestro (Experimental)
+core_version_requirement: ^11
+lifecycle: experimental
+dependencies:
+  - maestro_ai_task:maestro_ai_task
+  - webform:webform
+
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '4.4.0'
+project: 'maestro'
+datestamp: 1770141281

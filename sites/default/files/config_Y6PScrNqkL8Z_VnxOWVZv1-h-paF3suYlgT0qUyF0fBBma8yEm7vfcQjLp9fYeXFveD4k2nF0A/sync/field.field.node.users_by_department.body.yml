@@ -1,0 +1,23 @@
+uuid: c5ef0451-eaa2-455f-a787-d0bfff1eeaf1
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - node.type.users_by_department
+  module:
+    - text
+id: node.users_by_department.body
+field_name: body
+entity_type: node
+bundle: users_by_department
+label: Body
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+field_type: text_with_summary

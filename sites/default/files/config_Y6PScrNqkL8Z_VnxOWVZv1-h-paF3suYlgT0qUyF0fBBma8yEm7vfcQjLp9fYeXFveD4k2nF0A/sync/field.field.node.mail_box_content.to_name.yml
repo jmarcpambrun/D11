@@ -1,0 +1,21 @@
+uuid: 843d2876-3a07-46ec-9bf4-e2ade877ec80
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.to_name
+    - node.type.mail_box_content
+_core:
+  default_config_hash: HI2ymmfMBLH5dV3jEEHWzFCiqHcAVYW2IjSy3JRvZYI
+id: node.mail_box_content.to_name
+field_name: to_name
+entity_type: node
+bundle: mail_box_content
+label: 'To Name'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Add installation steps.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Help users get started with the module.
+ */
+function backward_compatibility_install() {
+  module_set_weight('backward_compatibility', -1000);
+}

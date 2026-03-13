@@ -1,0 +1,34 @@
+uuid: afdedc19-95ca-45f1-939c-7067c9e78bc0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.quiz_question.short_answer.short_answer_correct
+    - field.field.quiz_question.short_answer.short_answer_evaluation
+    - quiz.question.type.short_answer
+  module:
+    - text
+  enforced:
+    module:
+      - quiz_short_answer
+_core:
+  default_config_hash: 5PTRykm_Y2RQ2-BRyaqM5eIp7FnZlcmpERghKXi8opQ
+id: quiz_question.short_answer.default
+targetEntityType: quiz_question
+bundle: short_answer
+mode: default
+content:
+  body:
+    type: text_default
+    weight: 0
+    region: content
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  entity_print_view_epub: true
+  entity_print_view_pdf: true
+  entity_print_view_word_docx: true
+  search_api_excerpt: true
+  short_answer_correct: true
+  short_answer_evaluation: true

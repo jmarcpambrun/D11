@@ -1,0 +1,20 @@
+<style>
+  .webform-quiz-correct-answer-description .result {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .webform-quiz-correct-answer-description .correct {
+    color: green;
+  }
+  .webform-quiz-correct-answer-description .wrong {
+    color: red;
+  }
+</style>
+<div class="webform-quiz-correct-answer-description">
+  {% if is_user_correct %}
+    <div class="result correct">{{'Correct'|t([],{'context':'Quiz Webform answer was correct' })}}</div>
+  {% else %}
+    <div class="result wrong">{{'Wrong'|t([],{'context':'Quiz Webform answer was incorrect' })}}</div>
+  {% endif %}
+  {{ correct_answer_description|raw }}
+</div>

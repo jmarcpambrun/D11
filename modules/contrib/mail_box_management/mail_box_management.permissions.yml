@@ -1,0 +1,3 @@
+access mail_box_management:
+  title: 'Access Mail Box Management'
+  description: 'Allow users to manage mail box settings and configurations.'

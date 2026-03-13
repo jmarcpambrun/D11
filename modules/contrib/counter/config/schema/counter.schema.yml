@@ -1,0 +1,64 @@
+counter.settings:
+  type: config_object
+  label: 'Counter settings'
+  mapping:
+    counter_show_site_counter:
+      type: integer
+      label: 'Counter show site counter'
+    counter_show_unique_visitor:
+      type: integer
+      label: 'Counter show unique visitors'
+    counter_registered_user:
+      type: integer
+      label: 'Counter show registered user'
+    counter_unregistered_user:
+      type: integer
+      label: 'Counter show unregistered user'
+    counter_blocked_user:
+      type: integer
+      label: 'Counter show blocked user'
+    counter_published_node:
+      type: integer
+      label: 'Counter show published nodes'
+    counter_unpublished_node:
+      type: integer
+      label: 'Counter show unpublished nodes'
+    counter_show_server_ip:
+      type: integer
+      label: 'Counter show server IP address'
+    counter_show_ip:
+      type: integer
+      label: 'Counter show user IP address'
+    counter_show_counter_since:
+      type: integer
+      label: 'Counter show counter since'
+    counter_statistic_today:
+      type: integer
+      label: 'Counter show statistics today'
+    counter_statistic_week:
+      type: integer
+      label: 'Counter show statistics week'
+    counter_statistic_month:
+      type: integer
+      label: 'Counter show statistics month'
+    counter_statistic_year:
+      type: integer
+      label: 'Counter show statistics year'
+    counter_skip_admin:
+      type: integer
+      label: 'Counter skip admin user'
+    counter_only_pages:
+      type: integer
+      label: 'Only considers user visits'
+    counter_refresh_on_cron:
+      type: integer
+      label: 'Counter refresh on cron run'
+    counter_initial_counter:
+      type: integer
+      label: 'Counter show initial counter'
+    counter_initial_unique_visitor:
+      type: integer
+      label: 'Counter show initial unique visitors'
+    counter_initial_since:
+      type: integer
+      label: 'Counter show initial since'

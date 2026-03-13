@@ -1,0 +1,12 @@
+name: Counter
+type: module
+description: This module is used for displaying details like Site Counter, Node Count, Unique Visitor and Client IP in a block.
+core_version_requirement: ^9 || ^10 || ^11
+package: Statistics
+configure: counter.counter_settings
+'interface translation project': counter
+
+# Information added by Drupal.org packaging script on 2026-01-15
+version: '8.x-1.5'
+project: 'counter'
+datestamp: 1768483957

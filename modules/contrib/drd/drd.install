@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * @file
+ * Install file for the DRD module.
+ */
+
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\drd\Entity\Core;
+use Drupal\drd\Entity\Domain;
+use Drupal\drd\Entity\Release;
+use Drupal\taxonomy\Entity\Vocabulary;
+
+/**
+ * Implements hook_install().
+ */
+function drd_install(): void {
+  try {
+    $host = \Drupal::entityTypeManager()->getStorage('drd_host')->create([
+      'name' => 'Localhost',
+    ]);
+    $host->save();
+
+    // Create "tags" taxonomy vocabulary if it does not exist.
+    $tags_vocabulary = Vocabulary::load('tags');
+    if (!$tags_vocabulary) {
+      $tags_vocabulary = Vocabulary::create([
+        'name' => 'Tags',
+        'vid' => 'tags',
+      ]);
+      $tags_vocabulary->save();
+    }
+  }
+  catch (InvalidPluginDefinitionException | PluginNotFoundException | EntityStorageException) {
+    // @todo Log this exception.
+  }
+}
+
+/**
+ * Fix majorversion for drd_major entities.
+ */
+function drd_update_8001(): void {
+  $majors = [];
+  foreach (Release::loadMultiple() as $release) {
+    /** @var \Drupal\drd\Entity\ReleaseInterface $release */
+    $major = $release->getMajor();
+    if ($major === NULL) {
+      continue;
+    }
+    if (in_array($major->id(), $majors, TRUE)) {
+      continue;
+    }
+    $majors[] = $major->id();
+
+    $version = $release->getVersion();
+    $parts = explode('-', $version);
+    [$coreversion] = explode('.', $parts[0]);
+    if (isset($parts[1])) {
+      [$majorversion] = explode('.', $parts[1]);
+    }
+    else {
+      $majorversion = $coreversion;
+    }
+
+    if ($major->getCoreVersion() !== (int) $coreversion || $major->getMajorVersion() !== (int) $majorversion) {
+      $major->setCoreVersion((int) $coreversion);
+      $major->setMajorVersion((int) $majorversion);
+      try {
+        $major->save();
+      }
+      catch (EntityStorageException) {
+        // @todo Log this exception.
+      }
+    }
+  }
+
+}
+
+/**
+ * Update view definitions.
+ */
+function drd_update_8002(): string {
+  $config_path = \Drupal::service('extension.list.module')->getPath('drd') . '/config/optional/views.view.drd_';
+  foreach (['domains_per_project', 'project', 'releases_per_domain'] as $view) {
+    $data = Yaml::decode(file_get_contents($config_path . $view . '.yml'));
+    \Drupal::configFactory()
+      ->getEditable('views.view.drd_' . $view)
+      ->setData($data)
+      ->save(TRUE);
+  }
+  return 'DRD views have been updated.';
+}
+
+/**
+ * Reset all encryption keys.
+ */
+function drd_update_8003(): FormattableMarkup|TranslatableMarkup {
+  $n = 0;
+  foreach (Domain::loadMultiple() as $domain) {
+    /** @var \Drupal\drd\Entity\DomainInterface $domain */
+    $domain->resetCryptSettings();
+    $n++;
+  }
+  return t('Successfully reset :n domains.', [':n' => $n]);
+}
+
+/**
+ * Add new field "gitrepo" to core entities.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ */
+function drd_update_8004(): void {
+  if ($core_entity_type = \Drupal::entityTypeManager()
+    ->getDefinition('drd_core')) {
+    $field_definition = Core::baseFieldDefinitions($core_entity_type);
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'gitrepo',
+      $core_entity_type->id(),
+      $core_entity_type->getProvider(),
+      // @phpstan-ignore-next-line
+      $field_definition['gitrepo']
+    );
+  }
+}
+
+/**
+ * Delete library action.
+ */
+function drd_update_8005(): void {
+  \Drupal::configFactory()
+    ->getEditable('system.action.drd_action_library')
+    ->delete();
+}
+
+/**
+ * Remove redundant drupalconsole field from host tokens.
+ */
+function drd_update_8006(): void {
+  if ($field_definition = \Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('drupalconsole', 'drd_host')) {
+    \Drupal::entityDefinitionUpdateManager()->uninstallFieldStorageDefinition($field_definition);
+  }
+}
+
+/**
+ * Create "tags" taxonomy vocabulary if it does not exist.
+ */
+function drd_update_8007(): void {
+  $tags_vocabulary = Vocabulary::load('tags');
+
+  if (!$tags_vocabulary) {
+    $tags_vocabulary = Vocabulary::create([
+      'name' => 'Tags',
+      'vid' => 'tags',
+    ]);
+    $tags_vocabulary->save();
+  }
+}
+
+/**
+ * Update crypt class names.
+ */
+function drd_update_8008(): void {
+  $db = \Drupal::database();
+  foreach ([
+    'MCrypt' => 'Mcrypt',
+    'OpenSSL' => 'OpenSsl',
+    'TLS' => 'Tls',
+  ] as $oldValue => $newValue) {
+    $db->update('drd_domain')
+      ->fields(['crypt' => $newValue])
+      ->condition('crypt', $oldValue)
+      ->execute();
+  }
+}

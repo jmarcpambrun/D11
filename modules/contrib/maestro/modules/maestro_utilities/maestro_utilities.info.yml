@@ -1,0 +1,14 @@
+name: Maestro Utility Functions
+description: Common use interactive and batch type functions.
+core_version_requirement: ^10 || ^11
+package: Maestro
+type: module
+scripts:
+dependencies:
+  - maestro:maestro
+  - maestro:maestro_taskconsole
+
+# Information added by Drupal.org packaging script on 2026-02-03
+version: '4.4.0'
+project: 'maestro'
+datestamp: 1770141281

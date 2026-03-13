@@ -1,0 +1,5 @@
+services:
+  drd_install_core.create_project.event_subscriber:
+    class: Drupal\drd_install_core\EventSubscriber\CreateProject
+    tags:
+      - { name: event_subscriber }

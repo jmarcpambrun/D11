@@ -1,0 +1,28 @@
+{
+  "name": "drupal/webform_entity_handler",
+  "description": "This module allows you to create or update an entity with the webform submission values.",
+  "type": "drupal-module",
+  "homepage": "http://drupal.org/project/webform_entity_handler",
+  "authors": [
+    {
+      "name": "Pedro Cambra",
+      "homepage": "https://www.drupal.org/u/pcambra"
+    },
+    {
+      "name": "Manuel Egío",
+      "homepage": "https://www.drupal.org/u/facine"
+    }
+  ],
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/webform_entity_handler",
+    "source": "https://cgit.drupalcode.org/webform_entity_handler"
+  },
+  "require": {
+      "drupal/webform": "^5.6||^6.0"
+  },
+  "suggest": {
+    "drupal/token": "Provides a user interface for the Token API and some missing core tokens."
+  },
+  "minimum-stability": "dev"
+}
+

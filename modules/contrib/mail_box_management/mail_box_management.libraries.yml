@@ -1,0 +1,15 @@
+assets_management:
+  version: VERSION
+  css:
+    theme:
+      lib/remixicon/fonts/remixicon.css: {}
+      https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css: {}
+      assets/ckeditor5-44.1.0/ckeditor5/ckeditor5.css: {}
+      assets/css/mailbox.css: { }
+      assets/css/style.min.css: {}
+  js:
+    lib/jquery/jquery.min.js: {}
+    lib/bootstrap/js/bootstrap.bundle.min.js: {}
+    lib/perfect-scrollbar/perfect-scrollbar.min.js: {}
+    assets/js/script.js: {}
+    assets/js/mailbox.js: { }

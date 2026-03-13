@@ -1,0 +1,26 @@
+uuid: a72f98c0-fd9a-46fa-abee-212b846c5a4b
+langcode: fr
+status: true
+dependencies: {  }
+id: node_translation_overview_page
+label: 'Node translation'
+routes:
+  -
+    route_name: entity.node.content_translation_overview
+tips:
+  node_translation_tab:
+    id: node_translation_tab
+    plugin: text
+    label: 'Translation add'
+    weight: 2
+    position: auto
+    selector: '.dropbutton-widget li.add a'
+    body: 'If a translation does not exist it can be added by clicking <em>add</em>.'
+  node_translation_page_not:
+    id: node_translation_page_not
+    plugin: text
+    label: 'Note check configuration'
+    weight: 3
+    position: auto
+    selector: null
+    body: 'Before translating a page double check the content field configuration on <a href="/admin/config/regional/content-language">Content language and translation Add to Default shortcuts</a>.'
