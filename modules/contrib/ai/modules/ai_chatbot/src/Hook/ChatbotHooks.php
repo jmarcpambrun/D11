@@ -17,6 +17,8 @@ class ChatbotHooks {
 
   use StringTranslationTrait;
 
+  private const CHATBOT_BLOCK_PLUGIN_ID = 'ai_deepchat_block';
+
   /**
    * Constructs the ChatbotHooks object.
    */
@@ -36,6 +38,9 @@ class ChatbotHooks {
     if (!$this->currentUser->hasPermission('access deepchat api')) {
       return;
     }
+
+    // Cache by block plugin to refresh on change.
+    $variables['#cache']['tags'][] = 'block:' . self::CHATBOT_BLOCK_PLUGIN_ID;
 
     // Check if any ai_deepchat_block exists on the site.
     if (!$this->hasDeepChatBlock()) {
@@ -74,6 +79,9 @@ class ChatbotHooks {
 
     $items['ai_chatbot'] = [
       '#type' => 'toolbar_item',
+      '#cache' => [
+        'tags' => ['block:' . self::CHATBOT_BLOCK_PLUGIN_ID],
+      ],
       'tab' => [
         '#type' => 'html_tag',
         '#tag' => 'button',
@@ -125,7 +133,7 @@ class ChatbotHooks {
       // Load all blocks for the current theme.
       $blocks = $block_storage->loadByProperties([
         'theme' => $theme,
-        'plugin' => 'ai_deepchat_block',
+        'plugin' => self::CHATBOT_BLOCK_PLUGIN_ID,
       ]);
 
       // Check if any of the blocks are enabled.

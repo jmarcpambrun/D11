@@ -5,7 +5,7 @@ services:
   ai.provider:
     class: Drupal\ai\AiProviderPluginManager
     parent: default_plugin_manager
-    arguments: ['@service_container', '@messenger', '@uuid']
+    arguments: ['@service_container', '@messenger', '@uuid', '@ai.hostname_filter_service']
   ai.form_helper:
     class: Drupal\ai\Service\AiProviderFormHelper
     arguments: ['@ai.provider', '@path.current']
@@ -82,3 +82,6 @@ services:
   Drupal\ai\Hook\FormElement:
     class: Drupal\ai\Hook\FormElement
     autowire: true
+  ai.hostname_filter_service:
+    class: Drupal\ai\Service\HostnameFilter
+    arguments: ['@logger.factory', '@config.factory']

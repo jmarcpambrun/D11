@@ -82,60 +82,42 @@ class Chart extends AutomatorBaseAction {
     if (!empty($values)) {
       $element['#value'] = $values;
       $element['#default_value'] = $values;
-      $template_data = NULL;
-      $template_color = NULL;
 
-      // Try to find a template in existing children.
-      if (isset($element[0][0]['data'])) {
-        $template_data = $element[0][0]['data'];
-        unset($template_data['#value'], $template_data['#default_value']);
-      }
-      else {
-        $template_data = [
-          '#type' => 'textfield',
-          '#title' => '',
-          '#title_display' => 'invisible',
-          '#size' => 10,
-        ];
-      }
+      // Only use integer keys for mapping (exclude 'delete',
+      // '_delete_column_buttons', '_operations', etc.).
+      $existing_row_keys = array_values(array_filter(array_keys($element), 'is_int'));
 
-      if (isset($element[0][0]['color'])) {
-        $template_color = $element[0][0]['color'];
-        unset($template_color['#value'], $template_color['#default_value']);
-      }
-      else {
-        $template_color = [
-          '#type' => 'textfield',
-          '#title' => '',
-          '#title_display' => 'invisible',
-          '#size' => 10,
-        ];
-      }
-
-      $existing_col_keys = array_filter(array_keys($element), function ($k) {
-        return strpos((string) $k, '#') !== 0;
-      });
-      $existing_col_keys = array_values($existing_col_keys);
-
-      foreach ($values as $col_key => $col_data) {
-        $target_col_key = $existing_col_keys[$col_key] ?? $col_key;
-
-        // Ensure col_data is an array before processing.
-        if (!is_array($col_data)) {
+      foreach ($values as $row_key => $row_data) {
+        // Skip non-numeric keys like _delete_column_buttons, _operations.
+        if (!is_int($row_key)) {
           continue;
         }
 
-        if (!isset($element[$target_col_key])) {
-          $element[$target_col_key] = [];
+        // Ensure row_data is an array before processing.
+        if (!is_array($row_data)) {
+          continue;
         }
 
-        $existing_row_keys = array_filter(array_keys($element[$target_col_key]), function ($k) {
-          return strpos((string) $k, '#') !== 0;
-        });
-        $existing_row_keys = array_values($existing_row_keys);
+        $target_row_key = $existing_row_keys[$row_key] ?? $row_key;
 
-        foreach ($col_data as $row_key => $cell_data) {
-          $target_row_key = $existing_row_keys[$row_key] ?? $row_key;
+        if (!isset($element[$target_row_key])) {
+          $element[$target_row_key] = [];
+        }
+
+        // Only use integer keys for column mapping (exclude 'delete',
+        // 'weight', etc.).
+        $existing_col_keys = array_values(array_filter(
+          array_keys($element[$target_row_key]),
+          'is_int'
+        ));
+
+        foreach ($row_data as $col_key => $cell_data) {
+          // Skip non-numeric keys like delete.
+          if (!is_int($col_key)) {
+            continue;
+          }
+
+          $target_col_key = $existing_col_keys[$col_key] ?? $col_key;
 
           // Normalize cell_data - handle cases where it might be a
           // TranslatableMarkup or string.
@@ -145,28 +127,143 @@ class Chart extends AutomatorBaseAction {
             ];
           }
 
-          if (!isset($element[$target_col_key][$target_row_key]['data']) && $template_data) {
-            $element[$target_col_key][$target_row_key]['data'] = $template_data;
-          }
-          if (!isset($element[$target_col_key][$target_row_key]['data']) && empty($template_data)) {
-            $element[$target_col_key][$target_row_key]['data'] = [];
-          }
-          if (!isset($element[$target_col_key][$target_row_key]['color']) && $template_color && isset($cell_data['color'])) {
-            $element[$target_col_key][$target_row_key]['color'] = $template_color;
+          // If the cell doesn't exist, clone from an existing cell in the
+          // same row and update its identity properties.
+          if (!isset($element[$target_row_key][$target_col_key]) && !empty($existing_col_keys)) {
+            $source_col_key = end($existing_col_keys);
+            $element[$target_row_key][$target_col_key] = $this->cloneCellElement(
+              $element[$target_row_key][$source_col_key],
+              $source_col_key,
+              $target_col_key
+            );
           }
 
-          if (isset($element[$target_col_key][$target_row_key]['data']) && isset($cell_data['data'])) {
+          if (isset($element[$target_row_key][$target_col_key]['data']) && isset($cell_data['data'])) {
             $data_value = $cell_data['data'] instanceof TranslatableMarkup ? $cell_data['data']->__toString() : $cell_data['data'];
-            $element[$target_col_key][$target_row_key]['data']['#value'] = $data_value;
-            $element[$target_col_key][$target_row_key]['data']['#default_value'] = $data_value;
+            $element[$target_row_key][$target_col_key]['data']['#value'] = $data_value;
+            $element[$target_row_key][$target_col_key]['data']['#default_value'] = $data_value;
           }
-          if (isset($element[$target_col_key][$target_row_key]['color']) && isset($cell_data['color'])) {
-            $color_value = $cell_data['color'] instanceof TranslatableMarkup ? $cell_data['color']->__toString() : $cell_data['color'];
-            $element[$target_col_key][$target_row_key]['color']['#value'] = $color_value;
-            $element[$target_col_key][$target_row_key]['color']['#default_value'] = $color_value;
+          if (isset($cell_data['color'])) {
+            // Ensure color sub-element exists by cloning from data if needed.
+            if (!isset($element[$target_row_key][$target_col_key]['color']) && isset($element[$target_row_key][$target_col_key]['data'])) {
+              $element[$target_row_key][$target_col_key]['color'] = $element[$target_row_key][$target_col_key]['data'];
+              $element[$target_row_key][$target_col_key]['color']['#type'] = 'textfield';
+              $element[$target_row_key][$target_col_key]['color']['#attributes']['TYPE'] = 'color';
+              $element[$target_row_key][$target_col_key]['color']['#attributes']['style'] = 'min-width:50px;';
+              $element[$target_row_key][$target_col_key]['color']['#maxlength'] = 7;
+              unset($element[$target_row_key][$target_col_key]['color']['#groups']);
+              // Update identity for the color sub-element.
+              $this->updateSubElementIdentity($element[$target_row_key][$target_col_key]['color'], 'data', 'color');
+            }
+            if (isset($element[$target_row_key][$target_col_key]['color'])) {
+              $color_value = $cell_data['color'] instanceof TranslatableMarkup ? $cell_data['color']->__toString() : $cell_data['color'];
+              $element[$target_row_key][$target_col_key]['color']['#value'] = $color_value;
+              $element[$target_row_key][$target_col_key]['color']['#default_value'] = $color_value;
+            }
           }
         }
+
+        // Move 'delete' button to the end of the row so it stays in the
+        // last column after any newly added data columns.
+        if (isset($element[$target_row_key]['delete'])) {
+          $delete = $element[$target_row_key]['delete'];
+          unset($element[$target_row_key]['delete']);
+          $element[$target_row_key]['delete'] = $delete;
+        }
       }
+    }
+  }
+
+  /**
+   * Clone a cell element and update its identity for a new column index.
+   */
+  protected function cloneCellElement(array $source_cell, $source_index, $target_index): array {
+    $cell = $source_cell;
+    foreach (['data', 'color'] as $type) {
+      if (!isset($cell[$type])) {
+        continue;
+      }
+      // Update #parents: the column index is second-to-last.
+      if (isset($cell[$type]['#parents'])) {
+        $parents = $cell[$type]['#parents'];
+        $parents[count($parents) - 2] = $target_index;
+        $cell[$type]['#parents'] = $parents;
+      }
+      // Rebuild #name from #parents.
+      if (isset($cell[$type]['#parents'])) {
+        $parents = $cell[$type]['#parents'];
+        $first = array_shift($parents);
+        $cell[$type]['#name'] = $first . '[' . implode('][', $parents) . ']';
+      }
+      // Update #id: the column index is second-to-last segment.
+      if (isset($cell[$type]['#id'])) {
+        $id_parts = explode('-', $cell[$type]['#id']);
+        $id_parts[count($id_parts) - 2] = (string) $target_index;
+        $cell[$type]['#id'] = implode('-', $id_parts);
+      }
+      if (isset($cell[$type]['#attributes']['id'])) {
+        $cell[$type]['#attributes']['id'] = $cell[$type]['#id'];
+      }
+      // Update #array_parents if present.
+      if (isset($cell[$type]['#array_parents'])) {
+        $array_parents = $cell[$type]['#array_parents'];
+        $array_parents[count($array_parents) - 2] = (string) $target_index;
+        $cell[$type]['#array_parents'] = $array_parents;
+      }
+      // Clear values and stale form processing data.
+      unset(
+        $cell[$type]['#value'],
+        $cell[$type]['#default_value'],
+        $cell[$type]['#groups'],
+        $cell[$type]['#needs_validation'],
+        $cell[$type]['#errors']
+      );
+    }
+    // Update the cell container's identity too.
+    if (isset($cell['#parents'])) {
+      $parents = $cell['#parents'];
+      $parents[count($parents) - 1] = $target_index;
+      $cell['#parents'] = $parents;
+    }
+    if (isset($cell['#id'])) {
+      $id_parts = explode('-', $cell['#id']);
+      $id_parts[count($id_parts) - 1] = (string) $target_index;
+      $cell['#id'] = implode('-', $id_parts);
+    }
+    if (isset($cell['#array_parents'])) {
+      $array_parents = $cell['#array_parents'];
+      $array_parents[count($array_parents) - 1] = (string) $target_index;
+      $cell['#array_parents'] = $array_parents;
+    }
+    return $cell;
+  }
+
+  /**
+   * Update identity properties when changing a sub-element type.
+   */
+  protected function updateSubElementIdentity(array &$sub_element, string $old_type, string $new_type): void {
+    if (isset($sub_element['#parents'])) {
+      $parents = $sub_element['#parents'];
+      $parents[count($parents) - 1] = $new_type;
+      $sub_element['#parents'] = $parents;
+    }
+    if (isset($sub_element['#parents'])) {
+      $parents = $sub_element['#parents'];
+      $first = array_shift($parents);
+      $sub_element['#name'] = $first . '[' . implode('][', $parents) . ']';
+    }
+    if (isset($sub_element['#id'])) {
+      $id_parts = explode('-', $sub_element['#id']);
+      $id_parts[count($id_parts) - 1] = $new_type;
+      $sub_element['#id'] = implode('-', $id_parts);
+    }
+    if (isset($sub_element['#attributes']['id'])) {
+      $sub_element['#attributes']['id'] = $sub_element['#id'];
+    }
+    if (isset($sub_element['#array_parents'])) {
+      $array_parents = $sub_element['#array_parents'];
+      $array_parents[count($array_parents) - 1] = $new_type;
+      $sub_element['#array_parents'] = $array_parents;
     }
   }
 
