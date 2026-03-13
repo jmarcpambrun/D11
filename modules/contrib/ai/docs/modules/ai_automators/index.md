@@ -84,15 +84,6 @@ Field UI module enabled**.
          processes running at save, but can cause large delays between save and
          field population, particularly if there are large numbers of AI
          Automators waiting to be processed across the site.
-      4. Field Widget: processes the automator when triggered from a
-         Field Widget Action button in the content edit form. This allows
-         content creators to manually trigger AI generation on-demand via
-         AJAX without saving the entity. Use this worker type when you
-         want to add a "Generate" button to a field widget using the
-         Field Widget Actions module. The generated values are populated
-         directly into the form without saving the entity, allowing users
-         to review and edit before saving.
-
    10. **AI Provider**: If you want to use a specific AI Provider to run the AI
        Automator, you can select it here. For more information about AI
        Providers, please see [the documentation here](https://project.pages.drupalcode.org/ai/providers/matris/).

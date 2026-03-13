@@ -16,7 +16,6 @@ use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\Event\ProviderDisabledEvent;
 use Drupal\ai\Plugin\ProviderProxy;
-use Drupal\ai\Service\HostnameFilter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
@@ -77,13 +76,6 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   protected $uuid;
 
   /**
-   * The hostname filter service.
-   *
-   * @var \Drupal\ai\Service\HostnameFilter
-   */
-  protected HostnameFilter $hostnameFilter;
-
-  /**
    * Constructs the object.
    */
   public function __construct(
@@ -93,7 +85,6 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     ContainerInterface $container,
     MessengerInterface $messenger,
     UuidInterface $uuid,
-    HostnameFilter $hostname_filter,
   ) {
     parent::__construct('Plugin/AiProvider', $namespaces, $module_handler, AiProviderInterface::class, AiProvider::class);
     $this->alterInfo('ai_provider_info');
@@ -105,7 +96,6 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->configFactory = $container->get('config.factory');
     $this->messenger = $messenger;
     $this->uuid = $uuid;
-    $this->hostnameFilter = $hostname_filter;
   }
 
   /**
@@ -124,7 +114,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    */
   public function createInstance($plugin_id, array $configuration = []): ProviderProxy {
     $plugin = parent::createInstance($plugin_id, $configuration);
-    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory, $this->uuid, $this->cacheBackend, $this->hostnameFilter);
+    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory, $this->uuid, $this->cacheBackend);
   }
 
   /**

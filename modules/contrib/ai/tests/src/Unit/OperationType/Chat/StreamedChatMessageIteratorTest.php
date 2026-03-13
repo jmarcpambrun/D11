@@ -2,15 +2,13 @@
 
 namespace Drupal\Tests\ai\Unit\OperationType\Chat;
 
-use Drupal\Tests\UnitTestCase;
-use Drupal\Tests\ai\Mock\MockIterator;
-use Drupal\Tests\ai\Mock\MockStreamedChatIterator;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Chat\StreamedChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageInterface;
-use Drupal\ai\Service\HostnameFilter;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Tests\ai\Mock\MockIterator;
+use Drupal\Tests\ai\Mock\MockStreamedChatIterator;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -19,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @group ai
  * @covers \Drupal\ai\OperationType\Chat\StreamedChatMessageIterator
  */
-class StreamedChatMessageIteratorTest extends UnitTestCase {
+class StreamedChatMessageIteratorTest extends TestCase {
 
   /**
    * A MockStreamedChatIterator instance.
@@ -46,7 +44,6 @@ class StreamedChatMessageIteratorTest extends UnitTestCase {
    * Set up the test.
    */
   protected function setUp(): void {
-    parent::setUp();
     $mock_event_dispatcher = $this->createMock(EventDispatcherInterface::class);
     $mock_event_dispatcher
       ->method('dispatch');
@@ -56,16 +53,6 @@ class StreamedChatMessageIteratorTest extends UnitTestCase {
     // Attach the event dispatcher.
     $message->setEventDispatcher($mock_event_dispatcher);
     $this->streamedChatMessage = $message;
-
-    // Mock the service builder.
-    $hostname_filter = $this->createMock(HostnameFilter::class);
-    $hostname_filter->expects($this->once())
-      ->method('filterText')
-      ->willReturnCallback(fn($text) => $text);
-
-    $container = new ContainerBuilder();
-    $container->set('ai.hostname_filter_service', $hostname_filter);
-    \Drupal::setContainer($container);
   }
 
   /**
@@ -73,18 +60,15 @@ class StreamedChatMessageIteratorTest extends UnitTestCase {
    */
   public function testStreamedMessage() {
     $message = $this->streamedChatMessage;
-    $parts = [];
-    foreach ($message as $part) {
-      $parts[] = $part->getText();
+    foreach ($message as $key => $part) {
+      $this->assertEquals($this->output[$key], $part->getText());
     }
-    $this->assertEquals(implode('', $this->output), implode('', $parts));
   }
 
   /**
    * Test that you can collect an output/message after streaming.
    */
   public function testCollectMessage() {
-
     $message = $this->streamedChatMessage;
     // FIrst check so the output is empty, before consuming the iterator.
     $output = $message->reconstructChatOutput();
@@ -99,6 +83,8 @@ class StreamedChatMessageIteratorTest extends UnitTestCase {
     $this->assertEquals('', $chat_message->getText());
     // Now consume the iterator.
     foreach ($message as $part) {
+      // Check so the text is not empty.
+      $this->assertNotEmpty($part->getText());
       // Check so the part is a StreamedChatMessageInterface.
       $this->assertInstanceOf(StreamedChatMessageInterface::class, $part);
     }
@@ -138,9 +124,11 @@ class StreamedChatMessageIteratorTest extends UnitTestCase {
     $messages[] = $chunk;
     $message->setStreamChatMessages($messages);
     // Now iterate over the messages and check the tokens.
-    foreach ($message as $part) {
-      // Just consume.
-      $part->getText();
+    foreach ($message as $key => $part) {
+      // All chunks outside of the last one should have text.
+      if ($key < count($this->output) - 1) {
+        $this->assertNotEmpty($part->getText());
+      }
     }
     // Now check the output again.
     $output = $message->reconstructChatOutput();

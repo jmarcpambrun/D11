@@ -23,13 +23,6 @@ class OfficeHours extends AutomatorBaseAction {
   public string $formElementProperty = 'value';
 
   /**
-   * Do not filter empty items, as day 0 (Sunday) is valid but falsy.
-   *
-   * @var bool
-   */
-  protected bool $clearEntity = FALSE;
-
-  /**
    * Ajax handler for Automators.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
@@ -48,62 +41,33 @@ class OfficeHours extends AutomatorBaseAction {
    * {@inheritdoc}
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
-    // Build mapping from day number to form slot indices.
-    $day_slots = [];
-    foreach ($form[$form_key]['widget']['value'] as $slot_index => $slot) {
-      if (!is_int($slot_index)) {
-        continue;
-      }
-      $day = $slot['#value']['day'] ?? NULL;
-      if ($day !== NULL) {
-        $day_slots[$day][] = $slot_index;
+    $properties = ['day', 'starthours', 'endhours'];
+
+    if (is_null($key)) {
+      // If no key is provided, we should iterate through all items.
+      foreach ($entity->get($form_key) as $index => $item) {
+        foreach ($properties as $property) {
+          if ($item->get($property)) {
+            // Check if the widget has this property as a direct element.
+            if (isset($form[$form_key]['widget'][$index][$property])) {
+              $form[$form_key]['widget'][$index][$property]['#default_value'] = $item->get($property)->getValue();
+            }
+          }
+        }
       }
     }
-
-    // Track which delta we're on for each day.
-    $day_used = [];
-
-    foreach ($entity->get($form_key) as $item) {
-      $day = $item->get('day')->getValue();
-      $delta = $day_used[$day] ?? 0;
-      $day_used[$day] = $delta + 1;
-
-      if (!isset($day_slots[$day][$delta])) {
-        continue;
-      }
-
-      $slot_index = $day_slots[$day][$delta];
-      $slot = &$form[$form_key]['widget']['value'][$slot_index];
-
-      foreach (['starthours', 'endhours'] as $property) {
-        $value = $item->get($property)->getValue();
-        if ($value === NULL) {
-          continue;
+    else {
+      // Handle specific key/index.
+      if (isset($entity->get($form_key)[$key])) {
+        $item = $entity->get($form_key)[$key];
+        foreach ($properties as $property) {
+          if ($item && $item->get($property)) {
+            // Check if the widget has this property as a direct element.
+            if (isset($form[$form_key]['widget'][$key][$property])) {
+              $form[$form_key]['widget'][$key][$property]['#default_value'] = $item->get($property)->getValue();
+            }
+          }
         }
-
-        // Pad to 4 digits for internal format (e.g. 500 -> "0500").
-        $padded = str_pad($value, 4, '0', STR_PAD_LEFT);
-        // Format as HH:MM for the HTML time input.
-        $time_string = substr($padded, 0, 2) . ':' . substr($padded, 2, 2);
-
-        // Set on the parent element's composite value.
-        $slot['#value'][$property] = $padded;
-        $slot['#default_value'][$property] = $padded;
-
-        // Set on the rendered time input sub-element.
-        if (isset($slot[$property]['time'])) {
-          $slot[$property]['time']['#value'] = $time_string;
-          $slot[$property]['time']['#default_value'] = $time_string;
-        }
-      }
-
-      // Set comment if the field has it and the entity item has a value.
-      $comment = $item->get('comment')->getValue();
-      if ($comment !== NULL && $comment !== '' && isset($slot['comment'])) {
-        $slot['#value']['comment'] = $comment;
-        $slot['#default_value']['comment'] = $comment;
-        $slot['comment']['#value'] = $comment;
-        $slot['comment']['#default_value'] = $comment;
       }
     }
 

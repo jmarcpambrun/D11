@@ -2,12 +2,12 @@
 
 namespace Drupal\Tests\ai\Unit\OperationType\Chat;
 
+use Drupal\ai\Dto\StructuredOutputSchema;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
-use Drupal\ai\OperationType\GenericType\ImageFile;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -188,156 +188,133 @@ class ChatArrayTest extends TestCase {
   }
 
   /**
-   * Test ChatMessage toArray with an attached image uses base64.
+   * Test setting a StructuredOutputSchema object on ChatInput.
    */
-  public function testChatMessageWithImageToArray(): void {
-    $binaryData = 'fake image binary data';
-    $mimeType = 'image/png';
-    $filename = 'test.png';
+  public function testStructuredOutputSchema(): void {
+    $input = new ChatInput([new ChatMessage('user', 'What is the weather today?')]);
 
-    $image = new ImageFile($binaryData, $mimeType, $filename);
-    $message = new ChatMessage('user', 'Describe this image');
-    $message->setImage($image);
-
-    $array = $message->toArray();
-
-    $this->assertEquals('user', $array['role']);
-    $this->assertEquals('Describe this image', $array['text']);
-    $this->assertCount(1, $array['images']);
-    $this->assertArrayHasKey('base64', $array['images'][0]);
-    $this->assertArrayHasKey('mime_type', $array['images'][0]);
-    $this->assertArrayHasKey('filename', $array['images'][0]);
-    $this->assertArrayHasKey('type', $array['images'][0]);
-    $this->assertEquals($mimeType, $array['images'][0]['mime_type']);
-    $this->assertEquals($filename, $array['images'][0]['filename']);
-    $this->assertEquals(ImageFile::class, $array['images'][0]['type']);
-    // Verify it's base64 encoded with data URL scheme.
-    $expectedBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($binaryData);
-    $this->assertEquals($expectedBase64, $array['images'][0]['base64']);
-  }
-
-  /**
-   * Test ChatMessage fromArray with base64 image data.
-   */
-  public function testChatMessageWithImageFromArray(): void {
-    $binaryData = 'fake image binary data';
-    $mimeType = 'image/jpeg';
-    $filename = 'photo.jpg';
-    $base64Data = 'data:' . $mimeType . ';base64,' . base64_encode($binaryData);
-
-    $array = [
-      'role' => 'user',
-      'text' => 'What is in this photo?',
-      'images' => [
-        [
-          'type' => ImageFile::class,
-          'base64' => $base64Data,
-          'mime_type' => $mimeType,
-          'filename' => $filename,
+    // Create a StructuredOutputSchema object.
+    $schema = new StructuredOutputSchema(
+      name: 'test_schema',
+      description: 'Test schema description',
+      strict: TRUE,
+      json_schema: [
+        'properties' => [
+          'temperature' => ['type' => 'number'],
+          'location' => ['type' => 'string'],
         ],
       ],
-      'tools' => NULL,
-      'tool_id' => NULL,
-    ];
+    );
 
-    $message = ChatMessage::fromArray($array);
+    // Set it on the input.
+    $input->setChatStructuredJsonSchema($schema);
 
-    $this->assertEquals('user', $message->getRole());
-    $this->assertEquals('What is in this photo?', $message->getText());
-    $this->assertCount(1, $message->getFiles());
-    $this->assertCount(1, $message->getImages());
+    // Verify it was converted to array correctly (stored with 'schema' key).
+    $schema_array = $input->getChatStructuredJsonSchema();
+    $this->assertIsArray($schema_array);
+    $this->assertEquals('test_schema', $schema_array['name']);
+    $this->assertEquals('Test schema description', $schema_array['description']);
+    $this->assertTrue($schema_array['strict']);
+    $this->assertArrayHasKey('schema', $schema_array);
+    $this->assertIsArray($schema_array['schema']);
+    $this->assertArrayHasKey('properties', $schema_array['schema']);
 
-    $restoredImage = $message->getImages()[0];
-    $this->assertInstanceOf(ImageFile::class, $restoredImage);
-    $this->assertEquals($binaryData, $restoredImage->getBinary());
-    $this->assertEquals($mimeType, $restoredImage->getMimeType());
-    $this->assertEquals($filename, $restoredImage->getFilename());
+    // Test toArray() directly (uses 'schema' key for provider compatibility).
+    $schema_to_array = $schema->toArray();
+    $this->assertEquals('test_schema', $schema_to_array['name']);
+    $this->assertEquals('Test schema description', $schema_to_array['description']);
+    $this->assertTrue($schema_to_array['strict']);
+    $this->assertArrayHasKey('schema', $schema_to_array);
+    $this->assertIsArray($schema_to_array['schema']);
+    $this->assertArrayHasKey('properties', $schema_to_array['schema']);
+    // Verify validator is not in the array.
+    $this->assertArrayNotHasKey('validator', $schema_to_array);
   }
 
   /**
-   * Test ChatMessage round-trip with image preserves data.
+   * Test creating StructuredOutputSchema from array with validation.
    */
-  public function testChatMessageWithImageRoundTrip(): void {
-    $binaryData = 'test image content for round trip';
-    $mimeType = 'image/gif';
-    $filename = 'animation.gif';
+  public function testStructuredOutputSchemaFromArray(): void {
+    // Test valid schema with 'schema' key (default, documented).
+    $schema = StructuredOutputSchema::fromArray([
+      'name' => 'valid_schema',
+      'description' => 'Valid schema',
+      'strict' => FALSE,
+      'schema' => [
+        'properties' => [
+          'field1' => ['type' => 'string'],
+        ],
+      ],
+    ]);
 
-    // Create original message with image.
-    $image = new ImageFile($binaryData, $mimeType, $filename);
-    $originalMessage = new ChatMessage('user', 'Check this animation');
-    $originalMessage->setImage($image);
+    $this->assertInstanceOf(StructuredOutputSchema::class, $schema);
+    $this->assertEquals('valid_schema', $schema->getName());
+    $this->assertEquals('Valid schema', $schema->getDescription());
+    $this->assertFalse($schema->isStrict());
+    $this->assertIsArray($schema->getJsonSchema());
 
-    // Convert to array and back.
-    $array = $originalMessage->toArray();
-    $restoredMessage = ChatMessage::fromArray($array);
+    // Test that 'json_schema' key is accepted (backwards compatibility).
+    $schema_legacy = StructuredOutputSchema::fromArray([
+      'name' => 'legacy_schema',
+      'json_schema' => [
+        'properties' => [
+          'field2' => ['type' => 'number'],
+        ],
+      ],
+    ]);
+    $this->assertEquals('legacy_schema', $schema_legacy->getName());
+    $this->assertArrayHasKey('field2', $schema_legacy->getJsonSchema()['properties']);
 
-    // Verify all data is preserved.
-    $this->assertEquals($originalMessage->getRole(), $restoredMessage->getRole());
-    $this->assertEquals($originalMessage->getText(), $restoredMessage->getText());
-    $this->assertCount(1, $restoredMessage->getImages());
-
-    $restoredImage = $restoredMessage->getImages()[0];
-    $this->assertEquals($binaryData, $restoredImage->getBinary());
-    $this->assertEquals($mimeType, $restoredImage->getMimeType());
-    $this->assertEquals($filename, $restoredImage->getFilename());
+    // Test invalid schema name (should throw exception).
+    $this->expectException(\InvalidArgumentException::class);
+    // Contains uppercase and spaces.
+    StructuredOutputSchema::fromArray([
+      'name' => 'Invalid Schema Name',
+      'schema' => [
+        'properties' => [],
+      ],
+    ]);
   }
 
   /**
-   * Test ChatInput with image message toArray and fromArray.
+   * Test StructuredOutputSchema validation in setters.
    */
-  public function testChatInputWithImageMessageRoundTrip(): void {
-    $binaryData = 'sample image data';
-    $mimeType = 'image/webp';
-    $filename = 'sample.webp';
+  public function testStructuredOutputSchemaValidation(): void {
+    $schema = new StructuredOutputSchema();
 
-    $image = new ImageFile($binaryData, $mimeType, $filename);
-    $message = new ChatMessage('user', 'Analyze this image');
-    $message->setImage($image);
+    // Test valid name.
+    $schema->setName('valid_name_123');
+    $this->assertEquals('valid_name_123', $schema->getName());
 
-    $input = new ChatInput([$message]);
-    $array = $input->toArray();
-
-    // Verify the array structure.
-    $this->assertCount(1, $array['messages']);
-    $this->assertCount(1, $array['messages'][0]['images']);
-    $this->assertArrayHasKey('base64', $array['messages'][0]['images'][0]);
-
-    // Restore from array.
-    $restoredInput = ChatInput::fromArray($array);
-
-    $this->assertCount(1, $restoredInput->getMessages());
-    $restoredMessage = $restoredInput->getMessages()[0];
-    $this->assertEquals('user', $restoredMessage->getRole());
-    $this->assertEquals('Analyze this image', $restoredMessage->getText());
-    $this->assertCount(1, $restoredMessage->getImages());
-
-    $restoredImage = $restoredMessage->getImages()[0];
-    $this->assertEquals($binaryData, $restoredImage->getBinary());
-    $this->assertEquals($mimeType, $restoredImage->getMimeType());
-    $this->assertEquals($filename, $restoredImage->getFilename());
+    // Test invalid name (should throw exception).
+    $this->expectException(\InvalidArgumentException::class);
+    $schema->setName('Invalid Name');
   }
 
   /**
-   * Test ChatMessage with multiple images toArray.
+   * Test that ChatInput accepts 'json_schema' key and normalizes to 'schema'.
    */
-  public function testChatMessageWithMultipleImagesToArray(): void {
-    $image1Binary = 'first image data';
-    $image2Binary = 'second image data';
-
-    $image1 = new ImageFile($image1Binary, 'image/png', 'first.png');
-    $image2 = new ImageFile($image2Binary, 'image/jpeg', 'second.jpg');
-
-    $message = new ChatMessage('user', 'Compare these images');
-    $message->setImage($image1);
-    $message->setImage($image2);
-
-    $array = $message->toArray();
-
-    $this->assertCount(2, $array['images']);
-    $this->assertArrayHasKey('base64', $array['images'][0]);
-    $this->assertArrayHasKey('base64', $array['images'][1]);
-    $this->assertEquals('image/png', $array['images'][0]['mime_type']);
-    $this->assertEquals('image/jpeg', $array['images'][1]['mime_type']);
+  public function testChatInputAcceptsJsonSchemaKey(): void {
+    $input = new ChatInput([new ChatMessage('user', 'Test')]);
+    $input->setChatStructuredJsonSchema([
+      'name' => 'book',
+      'strict' => TRUE,
+      'json_schema' => [
+        'properties' => [
+          'name' => ['type' => 'string'],
+          'authors' => ['type' => 'array', 'items' => ['type' => 'string']],
+        ],
+        'required' => ['name', 'authors'],
+        'type' => 'object',
+      ],
+    ]);
+    $stored = $input->getChatStructuredJsonSchema();
+    $this->assertArrayHasKey('schema', $stored);
+    $this->assertArrayNotHasKey('json_schema', $stored);
+    $this->assertEquals('book', $stored['name']);
+    $this->assertTrue($stored['strict']);
+    $this->assertArrayHasKey('properties', $stored['schema']);
+    $this->assertArrayHasKey('name', $stored['schema']['properties']);
   }
 
 }

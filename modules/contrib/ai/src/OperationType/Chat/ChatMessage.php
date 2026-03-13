@@ -261,7 +261,7 @@ class ChatMessage {
   public function toArray(): array {
     $images = [];
     foreach ($this->files as $image) {
-      $images[] = $image->toArray();
+      $images[] = $image->getBinary();
     }
     return [
       'role' => $this->role,

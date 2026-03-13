@@ -2,12 +2,10 @@
 
 namespace Drupal\Tests\ai\Unit\OperationType\Chat\Tools;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Tests\UnitTestCase;
 use Drupal\ai\Exception\AiToolsValidationException;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult;
-use Drupal\ai\Service\HostnameFilter;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Tests that the input works.
@@ -15,7 +13,7 @@ use Drupal\ai\Service\HostnameFilter;
  * @group ai
  * @covers \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult
  */
-class ToolsPropertyResultTest extends UnitTestCase {
+class ToolsPropertyResultTest extends TestCase {
 
   /**
    * Test the validate.
@@ -26,18 +24,6 @@ class ToolsPropertyResultTest extends UnitTestCase {
    * @covers \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult::validate
    */
   public function testTyping($value, $type, $shouldFail) {
-    // Mock on string or array.
-    if (in_array(gettype($value), ['string', 'array']) && !empty($value)) {
-      // Mock the service builder.
-      $hostname_filter = $this->createMock(HostnameFilter::class);
-      $hostname_filter->expects($this->once())
-        ->method('filterText')
-        ->willReturnCallback(fn($text) => $text);
-
-      $container = new ContainerBuilder();
-      $container->set('ai.hostname_filter_service', $hostname_filter);
-      \Drupal::setContainer($container);
-    }
     $stringInput = new ToolsPropertyInput('test_property', [
       'description' => 'Test description',
       'type' => $type,
@@ -94,17 +80,6 @@ class ToolsPropertyResultTest extends UnitTestCase {
    * @covers \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult::__construct
    */
   public function testMinMaxLength() {
-    // Mock the service builder.
-    $hostname_filter = $this->createMock(HostnameFilter::class);
-    // It doesn't run on empty.
-    $hostname_filter->expects($this->exactly(2))
-      ->method('filterText')
-      ->willReturnCallback(fn($text) => $text);
-
-    $container = new ContainerBuilder();
-    $container->set('ai.hostname_filter_service', $hostname_filter);
-    \Drupal::setContainer($container);
-
     $stringInput = new ToolsPropertyInput('test_property', [
       'description' => 'Test description',
       'type' => 'string',
@@ -130,16 +105,6 @@ class ToolsPropertyResultTest extends UnitTestCase {
    * @covers \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult::__construct
    */
   public function testFormat() {
-    // Mock the service builder.
-    $hostname_filter = $this->createMock(HostnameFilter::class);
-    $hostname_filter->expects($this->exactly(2))
-      ->method('filterText')
-      ->willReturnCallback(fn($text) => $text);
-
-    $container = new ContainerBuilder();
-    $container->set('ai.hostname_filter_service', $hostname_filter);
-    \Drupal::setContainer($container);
-
     // Email.
     $stringInput = new ToolsPropertyInput('test_property', [
       'description' => 'Test description',

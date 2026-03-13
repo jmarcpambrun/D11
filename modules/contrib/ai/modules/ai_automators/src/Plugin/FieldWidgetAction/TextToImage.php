@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\Plugin\FieldWidgetAction;
 
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
@@ -24,85 +23,83 @@ class TextToImage extends AutomatorBaseAction {
   public string $formElementProperty = 'target_id';
 
   /**
-   * {@inheritdoc}
-   */
-  protected function actionButton(array &$form, FormStateInterface $form_state, array $context = []): void {
-    parent::actionButton($form, $form_state, $context);
-    $fieldName = $context['items']->getFieldDefinition()->getName();
-    if (!empty($context['action_id'])) {
-      $widgetId = $context['action_id'];
-    }
-    else {
-      $widgetId = $fieldName . '_field_widget_action_' . $this->getPluginId();
-    }
-    if (!empty($context['delta'])) {
-      $widgetId .= '_' . $context['delta'];
-    }
-    $form[$widgetId]['#submit'] = [[$this, 'runAutomatorSubmit']];
-    $form[$widgetId]['#executes_submit_callback'] = TRUE;
-    $form[$widgetId]['#automator_config'] = $this->getConfiguration();
-  }
-
-  /**
-   * Submit handler to run the automator and update widget state.
-   */
-  public function runAutomatorSubmit(array &$form, FormStateInterface $form_state): void {
-    $triggering_element = $form_state->getTriggeringElement();
-    $field_name = $triggering_element['#field_widget_action_field_name'] ?? NULL;
-    $config = $triggering_element['#automator_config'] ?? [];
-
-    if (!$field_name || !isset($form[$field_name]['widget'][0]['fids'])) {
-      return;
-    }
-
-    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-    $entity = static::buildEntity($form, $form_state);
-
-    $automator_id = $config['settings']['automator_id'] ?? NULL;
-    if ($automator_id) {
-      $automator = $this->entityTypeManager->getStorage('ai_automator')->load($automator_id);
-      if (!$automator) {
-        $this->loggerFactory->get('ai_automators')->warning('Automator @automator_id not found.', [
-          '@automator_id' => $automator_id,
-        ]);
-        return;
-      }
-    }
-
-    $entity->get($field_name)->filterEmptyItems();
-    $form_state->setValue($field_name, NULL);
-
-    $entity = $this->entityModifier->saveEntity($entity, FALSE, $field_name, FALSE);
-    if ($entity->get($field_name)->isEmpty()) {
-      return;
-    }
-    $item = $entity->get($field_name)->first()->toArray();
-
-    // ManagedFile::submit() uses internally. On rebuild,
-    // ManagedFile::valueCallback()
-    // reads fids as a space-separated string, then the full process chain
-    // (ManagedFile -> FileWidget -> ImageWidget) rebuilds preview, buttons,
-    // alt and title automatically.
-    $fids_parents = $form[$field_name]['widget'][0]['fids']['#parents'];
-    $delta_parents = array_slice($fids_parents, 0, -1);
-
-    $user_input = $form_state->getUserInput();
-    NestedArray::setValue($user_input, $fids_parents, (string) $item['target_id']);
-    NestedArray::setValue($user_input, [...$delta_parents, 'alt'], $item['alt'] ?: $entity->label());
-    NestedArray::setValue($user_input, [...$delta_parents, 'title'], $item['title'] ?? '');
-    $form_state->setUserInput($user_input);
-    $form_state->setRebuild();
-  }
-
-  /**
    * Ajax handler for Automators.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
+    // Get the triggering element, as it contains the settings.
     $triggering_element = $form_state->getTriggeringElement();
+
+    // Attempt to get context directly from the triggering element properties
+    // set in FieldWidgetActionBase::actionButton.
+    $key = $triggering_element['#field_widget_action_field_delta'] ?? NULL;
     $form_key = $triggering_element['#field_widget_action_field_name'] ?? NULL;
 
-    if (!$form_key || !isset($form[$form_key])) {
-      return [];
+    // Fallback logic if properties are missing.
+    if ($form_key === NULL) {
+      $array_parents = $triggering_element['#array_parents'];
+      array_pop($array_parents);
+      // Determine form key from parents (usually index 0).
+      $form_key = $array_parents[0];
+
+      if ($key === NULL) {
+        // Try to guess delta from array parents (usually index 2).
+        $potentialKey = $array_parents[2] ?? 0;
+        $key = is_numeric($potentialKey) ? (int) $potentialKey : NULL;
+      }
+    }
+
+    // Ensure key is strictly int or NULL.
+    if ($key !== NULL) {
+      $key = (int) $key;
+    }
+
+    $this->populateAutomatorValues($form, $form_state, $form_key, $key);
+
+    return $form[$form_key];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
+    // Helper to set values on a managed_file widget.
+    $setValue = function ($index, $item) use (&$form, $form_key) {
+      // We need to set the value for the managed_file element.
+      // The structure of image_image widget puts the managed_file properties
+      // at the root of the widget element for that delta.
+      if (isset($form[$form_key]['widget'][$index])) {
+        $fid = $item->target_id;
+        // 'fids' is used by ManagedFile to track files.
+        // We set '#value' which is used during rendering.
+        $form[$form_key]['widget'][$index]['#value'] = ['fids' => [$fid]];
+        // We also set the 'fids' child element if it exists (hidden input).
+        if (isset($form[$form_key]['widget'][$index]['fids'])) {
+          $form[$form_key]['widget'][$index]['fids']['#value'] = [$fid];
+        }
+        // Also update alt/title if available.
+        if (isset($form[$form_key]['widget'][$index]['alt']) && $item->alt) {
+          $form[$form_key]['widget'][$index]['alt']['#value'] = $item->alt;
+        }
+        if (isset($form[$form_key]['widget'][$index]['title']) && $item->title) {
+          $form[$form_key]['widget'][$index]['title']['#value'] = $item->title;
+        }
+      }
+    };
+
+    if (is_null($key)) {
+      foreach ($entity->get($form_key) as $index => $item) {
+        if ($item->target_id) {
+          $setValue($index, $item);
+        }
+      }
+    }
+    else {
+      if (isset($entity->get($form_key)[$key])) {
+        $item = $entity->get($form_key)[$key];
+        if ($item->target_id) {
+          $setValue($key, $item);
+        }
+      }
     }
 
     return $form[$form_key];

@@ -2,7 +2,6 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
-use Drupal\ai\Dto\HostnameFilterDto;
 use Drupal\ai\Dto\StructuredOutputSchema;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
@@ -63,13 +62,6 @@ class ChatInput extends InputBase {
    * @var string
    */
   protected string $systemPrompt = '';
-
-  /**
-   * The hostname settings.
-   *
-   * @var \Drupal\ai\Dto\HostnameFilterDto|null
-   */
-  protected ?HostnameFilterDto $hostnameFilter = NULL;
 
   /**
    * The constructor.
@@ -285,26 +277,6 @@ class ChatInput extends InputBase {
    */
   public function getChatTools(): ?ToolsInputInterface {
     return $this->chatTools;
-  }
-
-  /**
-   * Set the hostname filter settings.
-   *
-   * @param \Drupal\ai\Dto\HostnameFilterDto $hostnameFilter
-   *   The hostname filter settings.
-   */
-  public function setHostnameFilter(HostnameFilterDto $hostnameFilter): void {
-    $this->hostnameFilter = $hostnameFilter;
-  }
-
-  /**
-   * Get the hostname filter settings.
-   *
-   * @return \Drupal\ai\Dto\HostnameFilterDto|null
-   *   The hostname filter settings or NULL if not set.
-   */
-  public function getHostnameFilter(): ?HostnameFilterDto {
-    return $this->hostnameFilter;
   }
 
   /**

@@ -602,9 +602,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *
    * @return string
    *   The API key.
-   *
-   * @throws \Drupal\ai\Exception\AiSetupFailureException
-   *   Thrown when API key could not be loaded or empty.
    */
   protected function loadApiKey(): string {
     $key = $this->keyRepository->getKey($this->getConfig()->get('api_key'));

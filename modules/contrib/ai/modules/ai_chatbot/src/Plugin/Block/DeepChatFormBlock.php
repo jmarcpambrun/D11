@@ -6,7 +6,6 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockBase;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBuilderInterface;
@@ -884,15 +883,6 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     }
     // Otherwise return block settings.
     return $this->configuration['stream'] ?? FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getCacheTags() {
-    return Cache::mergeTags(parent::getCacheTags(), [
-      'block:' . $this->getPluginId(),
-    ]);
   }
 
 }

@@ -17,7 +17,6 @@ use Drupal\Core\Url;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
 use Drupal\ai\Utility\PseudoOperationTypes;
-use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -182,41 +181,6 @@ class AiSettingsForm extends ConfigFormBase {
       '#min' => 1,
       '#max' => 3600,
       '#required' => TRUE,
-    ];
-
-    // A details field that has allowed hosts for generated content.
-    $form['advanced_settings']['allowed_host_wrapper'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Generated Content External Link Security'),
-      '#description' => $this->t('Protect against prompt injection attacks that trick AI into sending sensitive data to third-party sites via hidden links or images. Links to your own site and relative paths are always allowed.'),
-      '#open' => FALSE,
-      '#weight' => 20,
-    ];
-
-    $form['advanced_settings']['allowed_host_wrapper']['allowed_hosts'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Trusted Domains'),
-      '#default_value' => implode("\n", $config->get('allowed_hosts') ?? []),
-      '#description' => $this->t('Enter one domain per line. Links and images to trusted domains are not filtered. Examples: `example.com`, `docs.example.com`. Use `*.example.com` to allow all subdomains. Links and images pointing to unlisted domains will be handled according to the setting below.'),
-    ];
-
-    $option = $config->get('allowed_hosts_rewrite_links') ? 'rewrite' : 'delete';
-    if (!empty(Settings::get('ai_output')['full_trust_mode'])) {
-      $option = 'full_trust';
-    }
-
-    $form['advanced_settings']['allowed_host_wrapper']['allowed_hosts_rewrite_links'] = [
-      '#type' => 'radios',
-      '#title' => $this->t('Untrusted AI Generated Links & Images'),
-      '#default_value' => $option,
-      '#options' => [
-        'rewrite' => $this->t('Replace Links & Delete Images'),
-        'delete' => $this->t('Delete Images & Links'),
-        'full_trust' => $this->t('Full Trust Mode (must be enabled in settings.php)'),
-      ],
-      '#description' => $this->t('<ul><li><strong>Replace Links & Delete Images</strong> displays the full URL as visible text, so users can see the destination and any URL parameters. Images from untrusted domains are removed.</li>
-<li><strong>Delete Images & Links</strong> removes all links and images from untrusted domains.</li>
-<li><strong>Full Trust Mode</strong> allows all links and images. Can only be enabled in settings.php.</li></ul>'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -977,16 +941,6 @@ class AiSettingsForm extends ConfigFormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
 
-    // Validate that allowed hosts are properly formatted.
-    $allowed_hosts_input = $form_state->getValue('allowed_hosts');
-    $allowed_hosts = array_filter(array_map('trim', explode("\n", $allowed_hosts_input)));
-    foreach ($allowed_hosts as $host) {
-      // Basic validation for host format.
-      if (!preg_match('/^(\*\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', $host)) {
-        $form_state->setErrorByName('allowed_hosts', $this->t('The host %host is not a valid host format.', ['%host' => $host]));
-      }
-    }
-
     // Skip validation if we're just selecting a provider (non-JS flow).
     $triggering_element = $form_state->getTriggeringElement();
     if ($triggering_element && !empty($triggering_element['#name']) &&
@@ -1046,8 +1000,6 @@ class AiSettingsForm extends ConfigFormBase {
       ->set('default_providers', $default_providers)
       ->set('default_vdb_provider', $form_state->getValue('vdb_table')['vdb']['provider']['default_vdb_provider'] ?? '')
       ->set('request_timeout', (int) $form_state->getValue('request_timeout'))
-      ->set('allowed_hosts', array_filter(array_map('trim', explode("\n", $form_state->getValue('allowed_hosts')))))
-      ->set('allowed_hosts_rewrite_links', $form_state->getValue('allowed_hosts_rewrite_links') == 'rewrite' ? TRUE : FALSE)
       ->save();
 
     parent::submitForm($form, $form_state);
