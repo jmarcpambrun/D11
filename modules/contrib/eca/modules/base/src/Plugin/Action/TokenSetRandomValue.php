@@ -30,7 +30,7 @@ class TokenSetRandomValue extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $name = trim($this->configuration['token_name']);
     if ($name === '') {
       // Without a token name specified, a token cannot be set.

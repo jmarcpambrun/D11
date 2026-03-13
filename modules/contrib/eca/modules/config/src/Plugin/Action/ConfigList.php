@@ -87,7 +87,7 @@ class ConfigList extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $configuration = $this->getConfiguration();
     $prefix = $this->tokenService->getOrReplace($configuration['prefix']);
 

@@ -193,7 +193,7 @@ class NewEntity extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $config = &$this->configuration;
     if ($config['type'] === '_eca_token') {
       $type = $this->getTokenValue('type', '');

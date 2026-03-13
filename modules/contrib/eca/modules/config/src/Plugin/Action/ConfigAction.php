@@ -85,7 +85,7 @@ class ConfigAction extends ConfigurableActionBase {
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     try {
       $data = $this->yamlParser->parse($this->configuration['data']);
     }

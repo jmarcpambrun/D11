@@ -47,7 +47,7 @@ class LogMessage extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $channel = $this->tokenService->replaceClear($this->configuration['channel']);
     if (empty($channel)) {
       $channel = 'eca';

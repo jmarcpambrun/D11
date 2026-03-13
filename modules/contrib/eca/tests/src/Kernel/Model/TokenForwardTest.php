@@ -23,6 +23,7 @@ class TokenForwardTest extends Base {
     'eca_content',
     'eca_user',
     'eca_test_model_token_forward',
+    'modeler_api',
   ];
 
   /**

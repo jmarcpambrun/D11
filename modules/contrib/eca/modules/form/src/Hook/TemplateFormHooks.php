@@ -10,7 +10,6 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\PluginManager\Event;
-use Drupal\eca\Processor;
 use Drupal\eca_form\Event\FormBuild;
 use Drupal\eca_form\Event\FormValidate;
 use Drupal\modeler_api\TemplateTokenResolver;
@@ -35,7 +34,7 @@ class TemplateFormHooks {
    */
   #[Hook('form_alter', order: Order::Last)]
   public function formAlter(array &$form, FormStateInterface $form_state): void {
-    if (!$this->templateTokenResolver->enabled() || !isset($form['#form_id']) || !$this->currentUser->hasPermission('modeler api edit eca')) {
+    if (!isset($form['#form_id']) || !$this->currentUser->hasPermission('modeler api edit eca')) {
       return;
     }
     $templates = $this->state->get('eca.templates', []);
@@ -78,28 +77,7 @@ class TemplateFormHooks {
         }
       }
     }
-  }
-
-  /**
-   * Implements hook_page_attachments().
-   */
-  #[Hook('page_attachments')]
-  public function pageBuildAlter(array &$attachments): void {
-    foreach (Processor::getAppliedTemplates() as $ecaId => $appliedTemplate) {
-      foreach ($appliedTemplate as $eventId => $arguments) {
-        foreach ($arguments as $target => $config) {
-          if (isset($config[$eventId])) {
-            $hiddenConfig = $config[$eventId];
-            unset($config[$eventId]);
-          }
-          else {
-            $hiddenConfig = [];
-          }
-          $hiddenConfig['newModelId'] = $ecaId;
-          $this->templateTokenResolver->addAppliedTemplate('eca', $eventId, $target, $hiddenConfig, $config ?? []);
-        }
-      }
-    }
+    $this->templateTokenResolver->getAttachments($form);
   }
 
 }

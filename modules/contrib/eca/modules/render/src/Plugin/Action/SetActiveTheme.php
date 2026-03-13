@@ -55,7 +55,7 @@ class SetActiveTheme extends ActiveThemeActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $theme_name = trim((string) $this->tokenService->replaceClear($this->configuration['theme_name']));
     if ($theme_name !== '') {
       $active_theme = $this->themeInitialization->getActiveThemeByName($theme_name);

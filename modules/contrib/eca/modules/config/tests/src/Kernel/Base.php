@@ -3,7 +3,7 @@
 namespace Drupal\Tests\eca_config\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 
@@ -26,6 +26,7 @@ abstract class Base extends KernelTestBase {
     'node',
     'eca',
     'eca_config',
+    'modeler_api',
   ];
 
   /**

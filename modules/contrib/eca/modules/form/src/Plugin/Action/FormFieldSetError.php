@@ -72,7 +72,7 @@ class FormFieldSetError extends FormFieldValidateActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (trim((string) $this->configuration['field_name']) === '') {
       // We support setting a global error on the whole form.
       $this->doExecute();

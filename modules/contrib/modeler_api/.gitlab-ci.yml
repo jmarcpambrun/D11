@@ -21,8 +21,9 @@ phpstan:
   allow_failure: false
 phpstan (next minor):
   allow_failure: false
+# Allow failure until Drush can be installed with Drupal 12
 phpstan (next major):
-  allow_failure: false
+  allow_failure: true
 phpunit (previous major):
   allow_failure: false
 phpunit (next minor):

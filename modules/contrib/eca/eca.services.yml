@@ -14,6 +14,8 @@ services:
       - '@plugin.manager.eca.event'
       - '@state'
       - '@eca.token_browser'
+      - '@modeler_api.template_token_resolver'
+      - '@current_user'
       - '%eca.max_recursion_level%'
   logger.channel.eca:
     parent: logger.channel_base

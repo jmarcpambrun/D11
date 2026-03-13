@@ -1,12 +1,12 @@
 name: 'ECA Cache'
 type: module
 description: 'Cache actions for ECA.'
-core_version_requirement: ^11.3
+core_version_requirement: ^11.3 || ^12.0
 package: ECA
 dependencies:
   - eca:eca
 
-# Information added by Drupal.org packaging script on 2026-02-28
-version: '3.1.0-alpha4'
+# Information added by Drupal.org packaging script on 2026-03-13
+version: '3.1.0-beta1'
 project: 'eca'
-datestamp: 1772298368
+datestamp: 1773412423

@@ -27,6 +27,7 @@ class LogTest extends KernelTestBase {
     'field',
     'eca',
     'eca_log',
+    'modeler_api',
   ];
 
   /**

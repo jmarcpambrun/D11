@@ -5,7 +5,7 @@ namespace Drupal\Tests\eca_endpoint\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca_endpoint\Controller\EndpointController;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -37,6 +37,7 @@ class EndpointControllerTest extends KernelTestBase {
     'eca',
     'eca_endpoint',
     'eca_access',
+    'modeler_api',
   ];
 
   /**
@@ -60,7 +61,7 @@ class EndpointControllerTest extends KernelTestBase {
    * Tests the custom access callback of the endpoint controller.
    */
   public function testControllerAccess(): void {
-    $controller = EndpointController::create($this->container);
+    $controller = $this->container->get(EndpointController::class);
     $result = $controller->access(User::load(0), 'first', 'second');
     $this->assertFalse($result->isAllowed());
     $this->assertTrue($result->isForbidden());
@@ -129,7 +130,7 @@ class EndpointControllerTest extends KernelTestBase {
    * Tests the handle callback of the endpoint controller.
    */
   public function testControllerHandle(): void {
-    $controller = EndpointController::create($this->container);
+    $controller = $this->container->get(EndpointController::class);
     $request = Request::create('/eca/first/second');
     $request->setSession(new Session());
 

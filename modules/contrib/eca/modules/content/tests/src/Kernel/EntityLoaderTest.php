@@ -9,7 +9,7 @@ use Drupal\language\Entity\ContentLanguageSettings;
 use Drupal\language\Plugin\LanguageNegotiation\LanguageNegotiationUrl;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -39,6 +39,7 @@ class EntityLoaderTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
     'language',
     'content_translation',
   ];

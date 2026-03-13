@@ -69,7 +69,7 @@ class TokenSetValue extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $name = $this->configuration['token_name'];
     $value = $this->configuration['token_value'];
 

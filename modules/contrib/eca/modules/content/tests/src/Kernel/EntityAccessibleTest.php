@@ -4,7 +4,7 @@ namespace Drupal\Tests\eca_content\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
@@ -39,6 +39,7 @@ class EntityAccessibleTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**

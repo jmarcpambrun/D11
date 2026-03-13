@@ -163,6 +163,18 @@ class Parser {
   }
 
   /**
+   * Gets the template setting of the model.
+   *
+   * @return bool
+   *   The template setting.
+   */
+  public function getTemplate(): bool {
+    $process = $this->xmlNsPrefix() . 'process';
+    $extensions = $this->xmlNsPrefix() . 'extensionElements';
+    return mb_strtolower($this->findProperty($this->xmlModel[$process][0][$extensions] ?? [], 'Template')) === 'true';
+  }
+
+  /**
    * Gets the storage setting of the model.
    *
    * @return string

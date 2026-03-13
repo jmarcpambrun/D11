@@ -46,7 +46,7 @@ class ListCompare extends ListOperationBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $result = [];
     $method = $this->configuration['method'];
     $name1 = $this->configuration['list_token'];

@@ -24,6 +24,7 @@ class CacheTest extends KernelTestBase {
     'user',
     'eca',
     'eca_cache',
+    'modeler_api',
   ];
 
   /**

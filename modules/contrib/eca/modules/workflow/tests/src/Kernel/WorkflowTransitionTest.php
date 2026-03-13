@@ -10,7 +10,7 @@ use Drupal\Tests\ConfigTestTrait;
 use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
@@ -39,6 +39,7 @@ class WorkflowTransitionTest extends KernelTestBase {
     'field',
     'eca',
     'eca_workflow',
+    'modeler_api',
   ];
 
   /**

@@ -50,7 +50,7 @@ class TriggerCustomEvent extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $event_id = $this->tokenService->replaceClear($this->configuration['event_id']);
     $event = new CustomEvent($event_id, ['event' => $this->event]);
     $event->addTokenNamesFromString($this->configuration['tokens']);

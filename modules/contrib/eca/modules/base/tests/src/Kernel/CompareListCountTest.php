@@ -26,6 +26,7 @@ class CompareListCountTest extends KernelTestBase {
     'field',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

@@ -105,7 +105,7 @@ class LockAcquire extends ConfigurableActionBase implements CleanupInterface {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $name = $this->getLockName();
     $timeout = $this->getTimeout();
     $lock_wait = $this->configuration['lock_wait'];

@@ -41,7 +41,7 @@ class ConfigRead extends ConfigActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $token = $this->tokenService;
     $token_name = $this->configuration['token_name'];
     $config_name = $token->replace($this->configuration['config_name']);

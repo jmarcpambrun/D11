@@ -64,7 +64,7 @@ class AlterBreakpoint extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     assert($this->event instanceof EcaRenderBreakpointsAlterEvent);
     $this->event->mergeDefinition($this->configuration['id'], $this->yamlParser->parse($this->configuration['definition']));
   }

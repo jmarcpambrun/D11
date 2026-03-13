@@ -1,15 +1,7 @@
 services:
-
-  eca_ui.v3.migrate:
-    class: Drupal\eca_ui\V3Migrate
+  eca_ui.event_collector:
+    class: Drupal\eca_ui\EventSubscriber\EcaEventCollector
     arguments:
-      - '@plugin.manager.modeler_api.model_owner'
-      - '@plugin.manager.modeler_api.modeler'
-      - '@messenger'
-
-  eca_ui.event_subscriber:
-    class: Drupal\eca_ui\EventSubscriber\ConfigImport
-    arguments:
-      - '@eca_ui.v3.migrate'
+      - '@state'
     tags:
       - { name: event_subscriber }

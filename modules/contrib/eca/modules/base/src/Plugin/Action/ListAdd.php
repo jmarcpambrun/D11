@@ -24,7 +24,7 @@ class ListAdd extends ListAddBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $value = $this->tokenService->getOrReplace($this->configuration['value']);
     $this->addItem($value);
   }

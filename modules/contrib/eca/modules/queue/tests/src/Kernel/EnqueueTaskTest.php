@@ -7,7 +7,7 @@ use Drupal\eca\Entity\Eca;
 use Drupal\eca_queue\Task;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -35,6 +35,7 @@ class EnqueueTaskTest extends KernelTestBase {
     'eca',
     'eca_queue',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**

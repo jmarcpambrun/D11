@@ -23,6 +23,7 @@ class LoggingTest extends Base {
     'eca_content',
     'eca_log',
     'eca_test_model_logging',
+    'modeler_api',
   ];
 
   /**

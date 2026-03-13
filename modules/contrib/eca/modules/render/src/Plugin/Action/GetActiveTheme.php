@@ -59,7 +59,7 @@ class GetActiveTheme extends ActiveThemeActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $this->tokenService->addTokenData($this->configuration['token_name'], $this->themeManager->getActiveTheme()->getName());
   }
 

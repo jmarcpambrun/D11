@@ -28,6 +28,7 @@ class EnqueueTaskDelayedTest extends KernelTestBase {
     'field',
     'eca',
     'eca_queue',
+    'modeler_api',
   ];
 
   /**

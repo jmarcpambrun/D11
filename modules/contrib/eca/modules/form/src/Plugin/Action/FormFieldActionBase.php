@@ -56,7 +56,7 @@ abstract class FormFieldActionBase extends FormActionBase {
    * Optionally allows execution on multiple field names, calling ::doExecute()
    * for each single field name.
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $original_field_name = $this->configuration['field_name'];
 
     $field_names = $this->extractFormFieldNames($original_field_name);

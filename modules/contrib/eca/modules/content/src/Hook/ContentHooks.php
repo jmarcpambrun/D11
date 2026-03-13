@@ -22,11 +22,9 @@ class ContentHooks {
   /**
    * The ECA settings.
    *
-   * @var \Drupal\Core\Config\ImmutableConfig
    * Lazy-loaded to avoid circular dependencies during hook discovery.
    *
    * @var \Drupal\Core\Config\ImmutableConfig|null
-
    */
   protected ?ImmutableConfig $ecaSettings = NULL;
 
@@ -39,7 +37,6 @@ class ContentHooks {
     protected ConfigFactoryInterface $configFactory,
     protected EntityTypeManagerInterface $entityTypeManager,
   ) {
-
     // Config is lazy-loaded to avoid circular dependencies during hook
     // discovery.
   }
@@ -55,7 +52,6 @@ class ContentHooks {
       $this->ecaSettings = $this->configFactory->get('eca.settings');
     }
     return $this->ecaSettings;
-
   }
 
   /**

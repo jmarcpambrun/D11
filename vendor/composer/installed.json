@@ -3383,18 +3383,18 @@
         },
         {
             "name": "drupal/bpmn_io",
-            "version": "3.0.4",
-            "version_normalized": "3.0.4.0",
+            "version": "3.0.5",
+            "version_normalized": "3.0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bpmn_io.git",
-                "reference": "3.0.4"
+                "reference": "3.0.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.4.zip",
-                "reference": "3.0.4",
-                "shasum": "bf5a7a99023131e5316c8573598767fd78a989f4"
+                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.5.zip",
+                "reference": "3.0.5",
+                "shasum": "0f55b30f77d0dc365b8caf883ad4b9b9e01c49c8"
             },
             "require": {
                 "drupal/core": "^11.2",
@@ -3409,8 +3409,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.4",
-                    "datestamp": "1765554265",
+                    "version": "3.0.5",
+                    "datestamp": "1773411172",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4926,48 +4926,37 @@
         },
         {
             "name": "drupal/eca",
-            "version": "3.1.0-alpha4",
-            "version_normalized": "3.1.0.0-alpha4",
+            "version": "3.1.0-beta1",
+            "version_normalized": "3.1.0.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "3.1.0-alpha4"
+                "reference": "3.1.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-alpha4.zip",
-                "reference": "3.1.0-alpha4",
-                "shasum": "ccba4d4ec54a1fa1ea0946b0cef199a6af781ce8"
+                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-beta1.zip",
+                "reference": "3.1.0-beta1",
+                "shasum": "a5e8a8ad2d0103a7a7a27e2edbd04348a6f80562"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
-                "drupal/core": "^11.3",
+                "drupal/core": "^11.3 || ^12.0",
                 "drupal/modeler_api": "^1.1",
                 "ext-json": "*",
                 "php": ">=8.3"
             },
-            "conflict": {
-                "drush/drush": "<12.5.1"
-            },
             "require-dev": {
-                "drupal/ai": "1.2.x-dev",
-                "drupal/ai_agents": "1.2.x-dev",
-                "drupal/entity_reference_revisions": "^1.12",
-                "drupal/inline_entity_form": "^3.0",
-                "drupal/modeler_api": "*",
-                "drupal/paragraphs": "^1.18",
-                "drupal/project_browser": "^2.0",
-                "drupal/token": "^1.15",
-                "drupal/webform": "^6.3"
+                "drupal/modeler_api": "*"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.1.0-alpha4",
-                    "datestamp": "1772298363",
+                    "version": "3.1.0-beta1",
+                    "datestamp": "1773412420",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -7940,18 +7929,18 @@
         },
         {
             "name": "drupal/modeler_api",
-            "version": "1.1.0-alpha6",
-            "version_normalized": "1.1.0.0-alpha6",
+            "version": "1.1.0-beta1",
+            "version_normalized": "1.1.0.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler_api.git",
-                "reference": "1.1.0-alpha6"
+                "reference": "1.1.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-alpha6.zip",
-                "reference": "1.1.0-alpha6",
-                "shasum": "426413718a89655828acde6e089f5cdfe874d0c0"
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-beta1.zip",
+                "reference": "1.1.0-beta1",
+                "shasum": "a37620e981e2211ca0955f7e0c8dfc09841179db"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -7960,11 +7949,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.0-alpha6",
-                    "datestamp": "1772878321",
+                    "version": "1.1.0-beta1",
+                    "datestamp": "1773414266",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },

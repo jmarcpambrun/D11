@@ -30,6 +30,7 @@ class MigrateSkipRowTest extends KernelTestBase {
     'eca',
     'migrate',
     'eca_migrate',
+    'modeler_api',
   ];
 
   /**

@@ -200,8 +200,11 @@ trait TokenDecoratorTrait {
     if (\Drupal::hasService('token.entity_mapper')) {
       /**
        * @var \Drupal\token\TokenEntityMapperInterface $token_entity_mapper
+       *
+       * @phpstan-ignore-next-line
        */
       $token_entity_mapper = \Drupal::service('token.entity_mapper');
+      // @phpstan-ignore-next-line
       $tokenType = $token_entity_mapper->getTokenTypeForEntityType($entity_type_id, TRUE);
     }
     elseif ($definition = \Drupal::entityTypeManager()->getDefinition($entity_type_id, FALSE)) {
@@ -225,8 +228,11 @@ trait TokenDecoratorTrait {
     if (\Drupal::hasService('token.entity_mapper')) {
       /**
        * @var \Drupal\token\TokenEntityMapperInterface $token_entity_mapper
+       *
+       * @phpstan-ignore-next-line
        */
       $token_entity_mapper = \Drupal::service('token.entity_mapper');
+      // @phpstan-ignore-next-line
       $entity_type_id = $token_entity_mapper->getEntityTypeForTokenType($token_type) ?: NULL;
     }
     else {

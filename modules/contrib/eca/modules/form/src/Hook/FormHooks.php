@@ -2,7 +2,6 @@
 
 namespace Drupal\eca_form\Hook;
 
-use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Hook\Order\Order;
@@ -44,131 +43,6 @@ class FormHooks {
     $form['#validate'][] = [static::class, 'validate'];
     $form['#submit'][] = [static::class, 'submit'];
     $this->addSubmitHandler($form);
-  }
-
-  /**
-   * Implements hook_inline_entity_form_entity_form_alter().
-   */
-  #[Hook('inline_entity_form_entity_form_alter')]
-  public function inlineEntityFormEntityFormAlter(array &$entity_form, FormStateInterface $form_state): void {
-    if ($form_state->has('skip_eca')) {
-      // When flagged by a component to skip ECA, then skip it.
-      return;
-    }
-    if (!isset($entity_form['#eca_ief_info'])) {
-      return;
-    }
-    $info = &$entity_form['#eca_ief_info'];
-    $this->triggerEvent->dispatchFromPlugin('form:ief_build', $entity_form, $form_state, $entity_form['#entity'], $info['parent'], $info['field_name'], $info['delta'], $info['widget_plugin_id']);
-    // Pass along the info to the after build callback, but only parent UUID
-    // is needed there.
-    $info['parent'] = $info['parent']->uuid();
-  }
-
-  /**
-   * Implements hook_field_widget_single_element_WIDGET_TYPE_form_alter().
-   *
-   * For the "inline_entity_form_complex" widget plugin ID.
-   */
-  #[Hook('field_widget_single_element_inline_entity_form_complex_form_alter')]
-  public function fieldWidgetSingleElementInlineEntityFormComplexFormAlter(array &$element, FormStateInterface $form_state, array &$context): void {
-    if ($form_state->has('skip_eca')) {
-      // When flagged by a component to skip ECA, then skip it.
-      return;
-    }
-
-    $delta = $context['delta'] ?? NULL;
-    if (isset($element['#ief_id']) && ($triggering_element = &$form_state->getTriggeringElement())) {
-      if (isset($triggering_element['#ief_row_delta'])) {
-        $delta = $triggering_element['#ief_row_delta'];
-      }
-      else {
-        $entities = $form_state->get([
-          'inline_entity_form',
-          $element['#ief_id'],
-          'entities',
-        ]);
-        if (!empty($entities)) {
-          $delta = count($entities);
-        }
-        elseif (isset($triggering_element['#ief_form']) && $triggering_element['#ief_form'] === 'add') {
-          $delta = $context['items']->count();
-        }
-      }
-    }
-    if (!isset($delta)) {
-      return;
-    }
-
-    // Pass along information for ::alterInlineEntityForm().
-    if (isset($element['inline_entity_form'])) {
-      $entity_form = &$element['inline_entity_form'];
-    }
-    elseif (isset($element['entities'][$delta]['form']['inline_entity_form'])) {
-      $entity_form = &$element['entities'][$delta]['form']['inline_entity_form'];
-    }
-    elseif (isset($element['form']['inline_entity_form'])) {
-      $entity_form = &$element['form']['inline_entity_form'];
-    }
-    else {
-      return;
-    }
-    $info = [
-      'parent' => $context['items']->getEntity(),
-      'field_name' => $context['items']->getFieldDefinition()->getName(),
-      'delta' => $delta,
-      'widget_plugin_id' => $context['widget']->getPluginId(),
-    ];
-    $entity_form['#eca_ief_info'] = &$info;
-  }
-
-  /**
-   * Implements hook_field_widget_single_element_WIDGET_TYPE_form_alter().
-   *
-   * For the "inline_entity_form_simple" widget plugin ID.
-   */
-  #[Hook('field_widget_single_element_inline_entity_form_simple_form_alter')]
-  public function fieldWidgetSingleElementInlineEntityFormSimpleFormAlter(array &$element, FormStateInterface $form_state, array &$context): void {
-    $this->fieldWidgetSingleElementInlineEntityFormComplexFormAlter($element, $form_state, $context);
-  }
-
-  /**
-   * Implements hook_field_widget_single_element_WIDGET_TYPE_form_alter().
-   *
-   * For the "paragraphs" widget plugin ID.
-   */
-  #[Hook('field_widget_single_element_paragraphs_form_alter')]
-  public function fieldWidgetSingleElementParagraphsFormAlter(array &$element, FormStateInterface $form_state, array &$context): void {
-    if ($form_state->has('skip_eca')) {
-      // When flagged by a component to skip ECA, then skip it.
-      return;
-    }
-
-    // Skip if subform is null or not an array
-    // to prevent InlineEntityFormBuild errors.
-    if (!isset($element['subform']) || !is_array($element['subform'])) {
-      return;
-    }
-
-    $field_name = $context['items']->getFieldDefinition()->getName();
-    $delta = $context['delta'];
-    $widget_state = WidgetBase::getWidgetState($element['#field_parents'], $field_name, $form_state);
-    /** @var \Drupal\paragraphs\ParagraphInterface $paragraph */
-    $paragraph = $widget_state['paragraphs'][$delta]['entity'] ?? $context['items']->get($delta)->entity;
-    $parent = $context['items']->getEntity();
-    $widget_plugin_id = $context['widget']->getPluginId();
-
-    $this->triggerEvent->dispatchFromPlugin('form:ief_build', $element['subform'], $form_state, $paragraph, $parent, $field_name, $delta, $widget_plugin_id);
-  }
-
-  /**
-   * Implements hook_field_widget_single_element_WIDGET_TYPE_form_alter().
-   *
-   * For the "entity_reference_paragraphs" widget plugin ID.
-   */
-  #[Hook('field_widget_single_element_entity_reference_paragraphs_form_alter')]
-  public function fieldWidgetSingleElementEntityReferenceParagraphsFormAlter(array &$element, FormStateInterface $form_state, array &$context): void {
-    $this->fieldWidgetSingleElementParagraphsFormAlter($element, $form_state, $context);
   }
 
   /**

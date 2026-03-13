@@ -7,7 +7,6 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\webform\WebformSubmissionInterface;
 
 /**
  * Trait for comparing entities within ECA action and condition plugins.
@@ -135,7 +134,8 @@ trait EntityDiffTrait {
    */
   public function compare(ContentEntityInterface $entity): array {
     $compareEntity = $this->tokenService->getTokenData($this->configuration['compare_token_name']);
-    if ($entity instanceof WebformSubmissionInterface) {
+    if (is_a($entity, 'Drupal\webform\WebformSubmissionInterface')) {
+      // @phpstan-ignore-next-line
       $diff = DiffArray::diffAssocRecursive($entity->toArray(TRUE), $compareEntity->toArray(TRUE));
     }
     else {

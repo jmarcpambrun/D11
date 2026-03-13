@@ -22,21 +22,6 @@ eca.event.plugin.eca_base:eca_token_generate:
       type: required_label
       label: 'Name of token'
 
-eca.event.plugin.eca_base:eca_tool:
-  type: eca.event.plugin
-  label: 'ECA Tool'
-  mapping:
-    description:
-      type: string
-      label: 'Description'
-    arguments:
-      type: string
-      label: 'Arguments'
-
-eca.event.plugin.eca_base:eca_field_widget:
-  type: eca.event.plugin
-  label: 'ECA Field Widget'
-
 eca.condition.plugin.eca_state:
   type: eca.condition.plugin
   label: 'State condition'
@@ -393,22 +378,6 @@ action.configuration.eca_lock_acquire:
       type: label
       label: 'Name of token'
 
-action.configuration.eca_set_tool_output:
-  type: mapping
-  label: 'Configuration for the "Set tool output" action'
-  mapping:
-    output:
-      type: string
-      label: 'Tool output'
-
-action.configuration.eca_set_field_widget_value:
-  type: mapping
-  label: 'Configuration for the "Set field widget value" action'
-  mapping:
-    widget_value:
-      type: string
-      label: 'Field widget value'
-
 action.configuration.eca_state_read:
   type: mapping
   label: 'Configuration for the "State Read" action'
@@ -641,28 +610,3 @@ action.configuration.eca_trigger_custom_event:
 action.configuration.eca_void_and_condition:
   type: mapping
   label: 'Chain action for AND condition'
-
-yaml.eca.event.plugin.eca_base:eca_tool.arguments:
-  type: sequence
-  label: 'Tool Arguments'
-  keyed: true
-  sequence:
-    type: mapping
-    label: 'Argument'
-    mapping:
-      data_type:
-        type: string
-        label: 'Data Type'
-        constraints:
-          NotBlank: []
-          Choice:
-            callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidDataTypes'
-      label:
-        type: label
-        label: 'Label'
-      required:
-        type: boolean
-        label: 'Required'
-      description:
-        type: string
-        label: 'Description'

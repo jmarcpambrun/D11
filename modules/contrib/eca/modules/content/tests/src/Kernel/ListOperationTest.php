@@ -27,6 +27,7 @@ class ListOperationTest extends KernelTestBase {
     'user',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**

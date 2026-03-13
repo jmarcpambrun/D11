@@ -36,7 +36,15 @@ class ConfigEventsTest extends KernelTestBase {
     'eca',
     'eca_config',
     'eca_test_array',
+    'modeler_api',
   ];
+
+  /**
+   * The config collection info, dummy to satisfy tests.
+   *
+   * @var array|null
+   */
+  protected ?array $configCollectionInfo;
 
   /**
    * {@inheritdoc}

@@ -618,4 +618,17 @@ class Eca extends ModelOwnerBase {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function cancelTestJob(string $jobId): null|TranslatableMarkup {
+    try {
+      $this->getContainer()->get('eca.token_browser')->cancelTesting($jobId);
+      return NULL;
+    }
+    catch (TempStoreException) {
+      return $this->t('Error cancelling test job.');
+    }
+  }
+
 }

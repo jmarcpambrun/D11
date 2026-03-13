@@ -89,7 +89,7 @@ class ArrayIncrement extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $key = $this->configuration['key'];
     static::$array[$key] = isset(static::$array[$key]) ? static::$array[$key] + 1 : 1;
   }

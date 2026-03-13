@@ -52,3 +52,19 @@ action.configuration.eca_migrate_run_migration:
     update:
       type: boolean
       label: 'Update existing records'
+
+action.configuration.eca_migrate_rollback_migration:
+  type: mapping
+  label: 'Configuration for the "Migrate: Rollback migration" action'
+  mapping:
+    migration_id:
+      type: string
+      label: 'Migration ID'
+
+action.configuration.eca_migrate_reset_migration:
+  type: mapping
+  label: 'Configuration for the "Migrate: Reset migration" action'
+  mapping:
+    migration_id:
+      type: string
+      label: 'Migration ID'

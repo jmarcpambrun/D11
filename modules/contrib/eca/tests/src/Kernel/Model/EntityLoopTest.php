@@ -25,6 +25,7 @@ class EntityLoopTest extends Base {
     'eca_user',
     'eca_views',
     'eca_test_model_entity_loop',
+    'modeler_api',
   ];
 
   /**

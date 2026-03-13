@@ -77,7 +77,7 @@ class Translate extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $token = $this->tokenService;
     $name = $this->configuration['token_name'];
     $value = $this->configuration['value'];

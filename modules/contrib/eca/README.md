@@ -4,8 +4,8 @@ site.**
 ECA is a powerful, versatile, and user-friendly rules engine for Drupal. The
 core module is a processor that validates and executes event-condition-action
 plugins. Integrated with the graphical user interface
-[BPMN.iO](https://www.drupal.org/project/bpmn_io), ECA is a robust system for building
-conditionally triggered action sets.
+[Modeler](https://www.drupal.org/project/modeler), ECA is a robust system for
+building conditionally triggered action sets.
 
 ### How it works
 
@@ -27,7 +27,7 @@ which provides a range of useful content:
 
 - Explaining ECA and how it works
 - Describing the main ECA concepts and how you can use them for your models
-- Documentation of modellers and all plugins
+- Documentation of modelers and all plugins
 - A library with downloadable ECA models to learn from
 - Video tutorials
 
@@ -38,36 +38,37 @@ There is more to come all the time. So, it's always worth checking back.
 ### User interface
 
 ECA Core is a processing engine that runs in the background. It needs an
-integrated modeller - a front-end tool with which you define
+integrated modeler - a front-end tool with which you define
 event-condition-action models (a.k.a. rules). ECA provides a plugin manager with
 an interface to easily integrate existing tools that already provide that
-capability. And if the modeller supports templates for events, conditions and
+capability. And if the modeler supports templates for events, conditions and
 actions, ECA will provide them for all the plugins that are available on the
 current Drupal site.
-#### Modellers
 
-[BPMN.iO](https://www.drupal.org/project/bpmn_io) is the recommended ECA
-modeller. It's a JavaScript-based implementation for building models as
+#### Modelers
+
+[Modeler](https://www.drupal.org/project/modeler) is the recommended ECA
+modeler. It's a JavaScript-based implementation for building models as
 two-dimensional diagrams, integrated into the Drupal admin UI.
 
-Alternatively, you can use these modellers. Please do not use them unless you
+Alternatively, you can use these modelers. Please do not use them unless you
 have no other option:
 
-- [Camunda](https://www.drupal.org/project/camunda):
-  User-friendly desktop client for designing and deploying automated processes
-- [ECA Classic Modeller](https://www.drupal.org/project/eca_cm):
+- [BPMN.iO](https://www.drupal.org/project/bpmn_io):
+  BPMN-based modeler with a graphical user interface
+- [ECA Classic Modeler](https://www.drupal.org/project/eca_cm):
   "Low-level" modelling tool using Drupal core's form API
 
-#### Important: You will need to install the modeller separately
+#### Important: You will need to install the modeler separately
 
-You will find instructions on how to install and use the modeller you select
+You will find instructions on how to install and use the modeler you select
 over at their respective project pages and in the documentation. On production
-sites, however, you can run ECA models without having any modeller being
+sites, however, you can run ECA models without having any modeler being
 available or enabled.
 
 ### Features
 
-- Plugin managers for modellers, events, and conditions
+- Plugin managers for modelers, events, and conditions
 - Interfaces and abstract base classes and traits
 - Integration of all actions from the Drupal core Actions module and all
   available contrib modules
@@ -119,8 +120,8 @@ for ECA developers.
 
 It is easy to get started with ECA:
 
-- Download the ECA module and a modeller, BPMN.iO is recommended
-- Install ECA, the sub-modules you want to use, and the modeller
+- Download the ECA module and the recommended modeler
+- Install ECA, the sub-modules you want to use, and the modeler
 
 For a Quick Start, see the [Install section in the ECA Guide](https://ecaguide.org/eca/install).
 
@@ -135,10 +136,10 @@ started and where you can follow its progress.
 
 #### Modules integrating with ECA
 
-- Modellers:
+- Modelers:
+  - [Modeler](https://www.drupal.org/project/modeler)
   - [BPMN.iO](https://www.drupal.org/project/bpmn_io)
-  - [Camunda (deprecated)](https://www.drupal.org/project/camunda)
-  - [ECA Classic Modeller](https://www.drupal.org/project/eca_cm)
+  - [ECA Classic Modeler](https://www.drupal.org/project/eca_cm)
 - Helper Modules:
   - [ECA Report](https://www.drupal.org/project/eca_report)
 - ECA integrations with other modules:
@@ -224,8 +225,6 @@ Not only are developers needed, we have so much more that needs to be addressed.
 Here is a list but even that may not be complete:
 
 - Development
-  - ECA and plugins
-  - Optimization of the integrated BPMN.iO client
 - Writing tests
 - Review and feedback
 - Support (Issue queue and in chats)

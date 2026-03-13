@@ -37,6 +37,7 @@ class AccessExecutionChainTest extends KernelTestBase {
     'node',
     'eca',
     'eca_access',
+    'modeler_api',
     'eca_test_array',
   ];
 

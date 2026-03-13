@@ -50,7 +50,7 @@ class ThrowException extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $class = $this->configuration['exception_type'];
     $message = $this->tokenService->replace($this->configuration['response_message']);
     throw new $class($message);

@@ -119,17 +119,6 @@ class TemplateTokenResolver {
   ) {}
 
   /**
-   * Determines whether the resolver is enabled.
-   *
-   * @return bool
-   *   TRUE if the resolver is enabled, FALSE otherwise.
-   */
-  public function enabled(): bool {
-    // @todo How do we allow this to be turned off? Permissions or settings?
-    return TRUE;
-  }
-
-  /**
    * Adds tokens from a generic string for a specific object.
    *
    * The value is a generic string that may contain one or more raw template

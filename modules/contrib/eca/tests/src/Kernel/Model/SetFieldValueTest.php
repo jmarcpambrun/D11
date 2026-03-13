@@ -23,6 +23,7 @@ class SetFieldValueTest extends Base {
     'eca_base',
     'eca_content',
     'eca_test_model_set_field_value',
+    'modeler_api',
   ];
 
   /**

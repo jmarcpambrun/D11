@@ -54,7 +54,7 @@ class SetEcaLogLevel extends ConfigurableActionBase implements CleanupInterface 
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if ($this->logger instanceof ConfigurableLoggerChannel) {
       $logLevel = $this->configuration['log_level'];
       if ($logLevel === '_eca_token') {

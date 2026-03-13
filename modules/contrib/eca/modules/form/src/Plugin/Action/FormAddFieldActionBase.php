@@ -36,7 +36,7 @@ abstract class FormAddFieldActionBase extends FormActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($form = &$this->getCurrentForm())) {
       return;
     }

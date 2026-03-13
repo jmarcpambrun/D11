@@ -98,7 +98,7 @@ class NewUser extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $mail = $this->tokenService->replaceClear($this->configuration['mail']);
     if (empty($mail)) {
       throw new \InvalidArgumentException('The email address is empty.');

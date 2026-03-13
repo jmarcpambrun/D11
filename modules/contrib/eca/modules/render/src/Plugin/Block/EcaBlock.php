@@ -6,9 +6,11 @@ use Drupal\Core\Block\Attribute\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\eca\Event\RenderEventInterface;
 use Drupal\eca\Event\TriggerEvent;
+use Drupal\eca_render\RenderEvents;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -44,6 +46,13 @@ final class EcaBlock extends BlockBase implements ContainerFactoryPluginInterfac
   protected TriggerEvent $triggerEvent;
 
   /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected StateInterface $state;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): EcaBlock {
@@ -52,7 +61,8 @@ final class EcaBlock extends BlockBase implements ContainerFactoryPluginInterfac
       $plugin_id,
       $plugin_definition,
       $container->get('entity_type.manager'),
-      $container->get('eca.trigger_event')
+      $container->get('eca.trigger_event'),
+      $container->get('state'),
     );
   }
 
@@ -69,11 +79,14 @@ final class EcaBlock extends BlockBase implements ContainerFactoryPluginInterfac
    *   The entity type manager.
    * @param \Drupal\eca\Event\TriggerEvent $trigger_event
    *   The service for triggering ECA-related events.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, TriggerEvent $trigger_event) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, TriggerEvent $trigger_event, StateInterface $state) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entity_type_manager;
     $this->triggerEvent = $trigger_event;
+    $this->state = $state;
   }
 
   /**
@@ -107,9 +120,14 @@ final class EcaBlock extends BlockBase implements ContainerFactoryPluginInterfac
   public function getEcaConfigurations(): array {
     $block_event_name = $this->getDerivativeId();
     $configs = [];
-    /** @var \Drupal\eca\Entity\Eca $eca */
-    foreach ($this->entityTypeManager->getStorage('eca')->loadMultiple() as $eca) {
-      if (!$eca->status()) {
+    $subscribed = current($this->state->get('eca.subscribed', [])[RenderEvents::BLOCK] ?? []);
+    if (!$subscribed) {
+      return $configs;
+    }
+    foreach (array_keys($subscribed) as $eca_id) {
+      /** @var \Drupal\eca\Entity\Eca|null $eca */
+      $eca = $this->entityTypeManager->getStorage('eca')->load($eca_id);
+      if ($eca === NULL || !$eca->status()) {
         continue;
       }
       foreach (($eca->get('events') ?? []) as $event) {

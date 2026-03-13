@@ -27,7 +27,7 @@ class ListCount extends ListOperationBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $result = $this->countValue($this->configuration['list_token']);
     $this->tokenService->addTokenData($this->configuration['token_name'], $result);
   }

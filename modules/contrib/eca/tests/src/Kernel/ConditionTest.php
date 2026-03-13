@@ -5,7 +5,7 @@ namespace Drupal\Tests\eca\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\ECA\Condition\StringComparisonBase;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
@@ -31,6 +31,7 @@ class ConditionTest extends KernelTestBase {
     'node',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

@@ -40,6 +40,7 @@ class RouteTest extends KernelTestBase {
     'user',
     'eca',
     'eca_misc',
+    'modeler_api',
   ];
 
   /**

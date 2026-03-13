@@ -93,7 +93,7 @@ class FormBuildEntity extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $form_state = $this->getCurrentFormState();
     $form_object = $form_state ? $form_state->getFormObject() : NULL;
     $form = &$this->getCurrentForm();

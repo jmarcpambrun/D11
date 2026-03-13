@@ -23,6 +23,7 @@ class SaveNewEntityTest extends Base {
     'eca_base',
     'eca_content',
     'eca_test_model_save_new_entity',
+    'modeler_api',
   ];
 
   /**

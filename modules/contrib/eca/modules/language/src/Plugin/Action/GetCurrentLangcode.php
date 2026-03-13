@@ -57,7 +57,7 @@ class GetCurrentLangcode extends LanguageActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $token_name = (string) $this->configuration['token_name'];
     $langcode = isset($this->event) && ($this->event instanceof LanguageNegotiateEvent) ? $this->event->langcode : $this->languageManager->getCurrentLanguage()->getId();
     $this->tokenService->addTokenData($token_name, $langcode);

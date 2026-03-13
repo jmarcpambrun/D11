@@ -10,7 +10,7 @@ use Drupal\language\Plugin\LanguageNegotiation\LanguageNegotiationUrl;
 use Drupal\locale\StringStorageInterface;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
 use PHPUnit\Framework\Attributes\Group;
@@ -41,6 +41,7 @@ class TranslateTest extends KernelTestBase {
     'node',
     'eca',
     'eca_base',
+    'modeler_api',
     'language',
     'locale',
     'content_translation',

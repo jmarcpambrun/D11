@@ -25,20 +25,10 @@ class TemplateHooks {
   #[Hook('library_info_alter')]
   public function libraryInfoAlter(array &$libraries, string $extension): void {
     if ($extension === 'modeler_api' && isset($libraries['template_token_selector'])) {
-      // URL du token CSRF (existant dans Drupal)
       $libraries['template_token_selector']['drupalSettings']['modeler_api']['token_url'] = Url::fromRoute('system.csrftoken')->toString();
-
-      // URL pour appliquer le template (sécurisée)
-      try {
-         $libraries['template_token_selector']['drupalSettings']['modeler_api']['template_apply_url'] = Url::fromRoute('modeler_api.apply_template')->toString();
-      }
-      catch (\Symfony\Component\Routing\Exception\RouteNotFoundException $e) {
-        // Route inexistante : on logue et on met un fallback vide.
-        \Drupal::logger('modeler_api')->warning('La route "modeler_api.apply_template" n’existe pas. template_apply_url laissé vide.');
-        $libraries['template_token_selector']['drupalSettings']['modeler_api']['template_apply_url'] = '';
-      }
+      $libraries['template_token_selector']['drupalSettings']['modeler_api']['template_apply_url'] = Url::fromRoute('modeler_api.apply_template')->toString();
     }
-  } 
+  }
 
   /**
    * Implements hook_page_attachments().

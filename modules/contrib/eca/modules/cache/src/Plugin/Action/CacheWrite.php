@@ -53,7 +53,7 @@ abstract class CacheWrite extends CacheActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($cache = $this->getCacheBackend()) || !($key = $this->getCacheKey())) {
       return;
     }

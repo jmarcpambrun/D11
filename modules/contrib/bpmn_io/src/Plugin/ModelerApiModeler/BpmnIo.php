@@ -306,12 +306,6 @@ class BpmnIo extends ModelerBase {
    *   The render array.
    */
   public function convert(ModelOwnerInterface $owner, ConfigEntityInterface $model, bool $readOnly = FALSE): array {
-    $reload = FALSE;
-    if (!in_array($owner->getModelerId($model), ['bpmn_io', 'fallback'])) {
-      // Let the modeler clone the model entity.
-      $model = $owner->clone($model);
-      $reload = $owner->configEntityBasePath() !== NULL;
-    }
     $owner->setModelerId($model, 'bpmn_io');
     $type = $model->getEntityTypeId();
 
@@ -329,11 +323,13 @@ class BpmnIo extends ModelerBase {
     $build['canvas']['#suffix'] = '<div class="convert-overlay">' . $this->t('Conversion in progress ...') . '</div>';
     $build['#attached']['library'][] = 'bpmn_io/convert';
     $build['#attached']['drupalSettings']['bpmn_io_convert'] = [
-      'reload' => $reload,
+      'reload' => FALSE,
       'metadata' => [
         'label' => $owner->getLabel($model),
         'version' => $owner->getVersion($model),
         'executable' => $owner->getStatus($model),
+        'template' => method_exists($owner, 'getTemplate') && $owner->getTemplate($model),
+        'storage' => $owner->getStorage($model),
         'documentation' => $owner->getDocumentation($model),
         'tags' => $owner->getTags($model),
         'changelog' => $owner->getChangelog($model),
@@ -483,6 +479,13 @@ class BpmnIo extends ModelerBase {
   /**
    * {@inheritdoc}
    */
+  public function getTemplate(): bool {
+    return $this->parser()->getTemplate();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStorage(): string {
     return $this->parser()->getStorage();
   }
@@ -552,6 +555,7 @@ class BpmnIo extends ModelerBase {
     if ($key === FALSE) {
       if ($data['type'] === 'bpmn:Process' || $data['type'] === 'bpmn:Collaboration') {
         $config['executable'] = $config['executable'] === 'true';
+        $config['template'] = $config['template'] === 'true';
         $form = $this->defaultModelConfigForm($owner, $config, $data['isNew'] === 'true');
       }
       else {

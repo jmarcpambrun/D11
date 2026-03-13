@@ -41,6 +41,7 @@ class KernelEventTest extends KernelTestBase {
     'eca',
     'eca_misc',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**

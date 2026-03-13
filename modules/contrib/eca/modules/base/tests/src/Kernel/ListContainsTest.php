@@ -9,7 +9,7 @@ use Drupal\eca\Token\TokenInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
@@ -49,6 +49,7 @@ class ListContainsTest extends KernelTestBase {
     'node',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

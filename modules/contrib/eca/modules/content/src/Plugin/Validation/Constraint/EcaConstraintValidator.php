@@ -42,8 +42,8 @@ final class EcaConstraintValidator extends ConstraintValidator implements Contai
   /**
    * {@inheritdoc}
    */
-  public function validate(mixed $entity, Constraint $constraint) {
-    $this->triggerEvent->dispatchFromPlugin('content_entity:validate', $entity, $this->entityTypes, $this);
+  public function validate(mixed $value, Constraint $constraint): void {
+    $this->triggerEvent->dispatchFromPlugin('content_entity:validate', $value, $this->entityTypes, $this);
   }
 
   /**

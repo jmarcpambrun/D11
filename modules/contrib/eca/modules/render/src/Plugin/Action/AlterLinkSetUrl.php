@@ -25,7 +25,7 @@ class AlterLinkSetUrl extends AlterLinkBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!$this->event instanceof EcaRenderAlterLinkEvent) {
       return;
     }

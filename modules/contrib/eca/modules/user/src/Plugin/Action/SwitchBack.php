@@ -41,7 +41,7 @@ class SwitchBack extends ActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $this->accountSwitcher->switchBack();
   }
 

@@ -8,8 +8,9 @@ parameters:
     - identifier: missingType.generics
     - '#^Call to method Drupal\\Core\\Entity\\Query\\QueryInterface::accessCheck\(\) with false will always evaluate to true.#'
     - '#^Class Drupal\\eca_render\\Element\\EcaLazy extends @internal class Drupal\\Core\\Render\\Element\\RenderElementBase.#'
+    - '#^Cannot unset property Drupal\\eca_form\\Plugin\\Action\\FormAddAjax::\$currentForm because it might have hooks in a subclass.#'
   excludePaths:
-    - 'modules/modeller_bpmn/*'
+    - 'src/Token/ContribToken.php'
     - '*/tests/*.php'
   stubFiles:
     - './tests/phpstan/stubs/CacheableDependencyInterface.stub'

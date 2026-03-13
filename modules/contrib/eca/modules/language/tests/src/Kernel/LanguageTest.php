@@ -40,6 +40,7 @@ class LanguageTest extends KernelTestBase {
     'locale',
     'eca_language',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

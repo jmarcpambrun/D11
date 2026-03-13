@@ -67,7 +67,7 @@ class SwitchServiceAccount extends SwitchAccount {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $user = NULL;
     $storage = $this->entityTypeManager->getStorage('user');
     if ($this->serviceUser === '') {

@@ -38,6 +38,7 @@ class EcaMigrateEventTest extends KernelTestBase {
     'user',
     'eca',
     'eca_migrate',
+    'modeler_api',
   ];
 
   /**

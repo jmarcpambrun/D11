@@ -69,7 +69,7 @@ class EnqueueTask extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $task_name = $this->tokenService->replaceClear($this->configuration['task_name']);
     $task_value = $this->tokenService->replaceClear($this->configuration['task_value']);
     $task_not_before = $this->getEarliestProcessingTime();

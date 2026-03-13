@@ -28,6 +28,7 @@ class MapFieldTest extends KernelTestBase {
     'field',
     'eca',
     'eca_content',
+    'modeler_api',
     'entity_test',
   ];
 

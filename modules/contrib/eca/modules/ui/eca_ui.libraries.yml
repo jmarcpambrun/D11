@@ -2,3 +2,5 @@ debug:
   css:
     component:
       css/eca_ui_debug.css: {}
+  dependencies:
+    - core/drupal.htmx

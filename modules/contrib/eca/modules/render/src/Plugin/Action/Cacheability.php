@@ -79,7 +79,7 @@ class Cacheability extends RenderActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $event = $this->event;
     if (!($event instanceof RenderEventInterface)) {
       return;

@@ -46,7 +46,7 @@ abstract class CacheRead extends CacheActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($cache = $this->getCacheBackend()) || !($key = $this->getCacheKey()) || !($name = trim($this->configuration['token_name']))) {
       return;
     }

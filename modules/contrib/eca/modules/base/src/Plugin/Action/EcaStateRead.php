@@ -38,7 +38,7 @@ class EcaStateRead extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $key = $this->tokenService->replace($this->configuration['key']);
     $value = $this->state->get($key, '');
     $this->tokenService->addTokenData($this->configuration['token_name'], $value);

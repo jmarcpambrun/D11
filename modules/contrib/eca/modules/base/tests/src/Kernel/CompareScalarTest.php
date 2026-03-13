@@ -24,6 +24,7 @@ class CompareScalarTest extends KernelTestBase {
     'user',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

@@ -121,7 +121,7 @@ class ArrayWrite extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $key = $this->configuration['key'];
     $value = $this->tokenService->replace($this->configuration['value']);
     static::$array[$key] = $value;

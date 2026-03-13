@@ -23,6 +23,7 @@ class EntityBasicsTest extends Base {
     'eca_content',
     'eca_user',
     'eca_test_model_entity_basics',
+    'modeler_api',
   ];
 
   /**

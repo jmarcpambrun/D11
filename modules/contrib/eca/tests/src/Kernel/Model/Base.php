@@ -25,6 +25,7 @@ abstract class Base extends KernelTestBase {
     'field',
     'text',
     'eca',
+    'modeler_api',
   ];
 
   /**
@@ -49,7 +50,6 @@ abstract class Base extends KernelTestBase {
     // Install config for modules of this base class.
     $this->installConfig(['user', 'system', 'field', 'text', 'eca']);
     $this->installEntitySchema('user');
-    $this->installSchema('system', ['sequences']);
 
     // Install config for modules of the implementing test class.
     $this->installConfig(static::$modules);

@@ -7,6 +7,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
+use Drupal\Core\State\StateInterface;
+use Drupal\eca_render\RenderEvents;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,10 +24,20 @@ final class EcaBlockDeriver extends DeriverBase implements ContainerDeriverInter
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected StateInterface $state;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, $base_plugin_id): EcaBlockDeriver {
-    return new EcaBlockDeriver($container->get('entity_type.manager'));
+    return new EcaBlockDeriver(
+      $container->get('entity_type.manager'),
+      $container->get('state'),
+    );
   }
 
   /**
@@ -33,9 +45,12 @@ final class EcaBlockDeriver extends DeriverBase implements ContainerDeriverInter
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, StateInterface $state) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->state = $state;
   }
 
   /**
@@ -43,11 +58,14 @@ final class EcaBlockDeriver extends DeriverBase implements ContainerDeriverInter
    */
   public function getDerivativeDefinitions($base_plugin_definition): array {
     if (empty($this->derivatives)) {
-      /**
-       * @var \Drupal\eca\Entity\Eca $eca
-       */
-      foreach ($this->entityTypeManager->getStorage('eca')->loadMultiple() as $eca) {
-        if (!$eca->status()) {
+      $subscribed = current($this->state->get('eca.subscribed', [])[RenderEvents::BLOCK] ?? []);
+      if (!$subscribed) {
+        return $this->derivatives;
+      }
+      foreach (array_keys($subscribed) as $eca_id) {
+        /** @var \Drupal\eca\Entity\Eca|null $eca */
+        $eca = $this->entityTypeManager->getStorage('eca')->load($eca_id);
+        if ($eca === NULL || !$eca->status()) {
           continue;
         }
         foreach (($eca->get('events') ?? []) as $event) {

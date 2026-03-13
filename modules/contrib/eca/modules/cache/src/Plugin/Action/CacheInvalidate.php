@@ -47,7 +47,7 @@ abstract class CacheInvalidate extends CacheActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($cache = $this->getCacheBackend())) {
       return;
     }

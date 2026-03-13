@@ -106,7 +106,7 @@ class FormAddOptionsField extends FormAddFieldActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     parent::execute();
     $this->setOptionsExecute();
   }

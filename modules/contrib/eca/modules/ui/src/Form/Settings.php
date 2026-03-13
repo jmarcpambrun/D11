@@ -39,8 +39,7 @@ class Settings extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): Settings {
-    /** @var \Drupal\eca_ui\Form\Settings $instance */
+  public static function create(ContainerInterface $container): static {
     $instance = parent::create($container);
     $instance->defaultDocumentationDomain = $container->getParameter('eca.default_documentation_domain');
     $instance->entityTypeManager = $container->get('entity_type.manager');
@@ -76,9 +75,21 @@ class Settings extends ConfigFormBase {
     $form['debug_data_depth'] = [
       '#type' => 'number',
       '#title' => $this->t('Debug data depth'),
-      '#default_value' => $this->state->get('_eca_internal_debug_data_depth', 3) ?? 3,
+      '#default_value' => $this->state->get('_eca_internal_debug_data_depth', 5) ?? 5,
       '#min' => 2,
       '#weight' => -30,
+      '#states' => [
+        'visible' => [
+          ':input[name="debug_mode"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $form['debug_data_cases'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Debug data cases'),
+      '#default_value' => $this->state->get('_eca_internal_debug_data_cases', 10) ?? 10,
+      '#min' => 1,
+      '#weight' => -31,
       '#states' => [
         'visible' => [
           ':input[name="debug_mode"]' => ['checked' => TRUE],
@@ -230,6 +241,7 @@ class Settings extends ConfigFormBase {
 
     $this->state->set('_eca_internal_debug_mode', $form_state->getValue('debug_mode'));
     $this->state->set('_eca_internal_debug_data_depth', $form_state->getValue('debug_data_depth'));
+    $this->state->set('_eca_internal_debug_data_cases', $form_state->getValue('debug_data_cases'));
 
     parent::submitForm($form, $form_state);
   }

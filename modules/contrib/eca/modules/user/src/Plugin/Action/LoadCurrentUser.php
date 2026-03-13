@@ -53,7 +53,7 @@ class LoadCurrentUser extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if ($user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id())) {
       $token_name = trim($this->configuration['token_name'] ?? '');
       if ($token_name === '') {

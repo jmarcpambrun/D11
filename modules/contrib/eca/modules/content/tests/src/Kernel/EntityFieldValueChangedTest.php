@@ -11,7 +11,7 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -40,6 +40,7 @@ class EntityFieldValueChangedTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**
@@ -123,7 +124,7 @@ class EntityFieldValueChangedTest extends KernelTestBase {
 
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
     $storage = $this->entityTypeManager->getStorage($this->node->getEntityTypeId());
-    $this->node->original = $storage->loadUnchanged($this->node->id());
+    $this->node->setOriginal($storage->loadUnchanged($this->node->id()));
   }
 
   /**
@@ -262,7 +263,7 @@ class EntityFieldValueChangedTest extends KernelTestBase {
     ]);
 
     $this->node->setTitle('Changed title');
-    $this->node->original = NULL;
+    $this->node->setOriginal(NULL);
     $this->condition->setContextValue('entity', $this->node);
     $this->assertFalse($this->condition->evaluate());
   }
@@ -304,7 +305,7 @@ class EntityFieldValueChangedTest extends KernelTestBase {
 
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
     $storage = $this->entityTypeManager->getStorage($multiFieldNode->getEntityTypeId());
-    $multiFieldNode->original = $storage->loadUnchanged($multiFieldNode->id());
+    $multiFieldNode->setOriginal($storage->loadUnchanged($multiFieldNode->id()));
 
     $multiFieldNode->set('field_string_multi', [
       $string,

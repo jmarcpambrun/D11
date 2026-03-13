@@ -3,6 +3,7 @@
 namespace Drupal\Tests\eca\Unit;
 
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\Entity\Objects\EcaEvent;
@@ -11,6 +12,7 @@ use Drupal\eca\PluginManager\Event as EventPluginManager;
 use Drupal\eca\Processor;
 use Drupal\eca\Token\Browser;
 use Drupal\eca\Token\TokenInterface;
+use Drupal\modeler_api\TemplateTokenResolver;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -34,6 +36,13 @@ class ProcessorTest extends EcaUnitTestBase {
    * @var \Drupal\eca\Token\Browser
    */
   protected Browser $tokenBrowser;
+
+  /**
+   * The template token resolver.
+   *
+   * @var \Drupal\modeler_api\TemplateTokenResolver
+   */
+  protected TemplateTokenResolver $templateTokenResolver;
 
   /**
    * The Token services.
@@ -64,16 +73,25 @@ class ProcessorTest extends EcaUnitTestBase {
   protected StateInterface $state;
 
   /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
     $this->logger = $this->createMock(LoggerChannelInterface::class);
     $this->tokenBrowser = $this->createMock(Browser::class);
+    $this->templateTokenResolver = $this->createMock(TemplateTokenResolver::class);
     $this->tokenService = $this->createMock(TokenInterface::class);
     $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
     $this->eventPluginManager = $this->createMock(EventPluginManager::class);
     $this->state = $this->createMock(StateInterface::class);
+    $this->currentUser = $this->createMock(AccountProxyInterface::class);
   }
 
   /**
@@ -82,7 +100,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdWithoutHistory(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 3);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, $this->templateTokenResolver, $this->currentUser, 3);
     $method = $this->getPrivateMethod(Processor::class, 'recursionThresholdSurpassed');
     $eca = $this->getEca('1');
     $result = $method->invokeArgs($processor, [
@@ -98,7 +116,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdSurpassed(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 2);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, $this->templateTokenResolver, $this->currentUser, 2);
     $this->assertTrue($this->isThresholdComplied($processor));
   }
 
@@ -108,7 +126,7 @@ class ProcessorTest extends EcaUnitTestBase {
    * @throws \ReflectionException
    */
   public function testRecursionThresholdNotSurpassed(): void {
-    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, 3);
+    $processor = new Processor($this->entityTypeManager, $this->logger, $this->eventDispatcher, $this->eventPluginManager, $this->state, $this->tokenBrowser, $this->templateTokenResolver, $this->currentUser, 3);
     $this->assertFalse($this->isThresholdComplied($processor));
   }
 

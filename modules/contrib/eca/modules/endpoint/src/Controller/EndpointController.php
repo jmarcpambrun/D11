@@ -9,8 +9,6 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
-use Drupal\Core\DependencyInjection\ClassResolverInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\EventSubscriber\MainContentViewSubscriber;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -25,7 +23,9 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\eca\Event\AccessEventInterface;
 use Drupal\eca\Event\RenderEventInterface;
 use Drupal\eca\Event\TriggerEvent;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -34,134 +34,46 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * The ECA endpoint controller.
  */
-final class EndpointController implements ContainerInjectionInterface {
+final class EndpointController {
 
   use AjaxHelperTrait;
 
   /**
-   * The trigger event service.
-   *
-   * @var \Drupal\eca\Event\TriggerEvent
-   */
-  protected TriggerEvent $triggerEvent;
-
-  /**
-   * The renderer.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected RendererInterface $renderer;
-
-  /**
-   * The main content renderer.
-   *
-   * @var \Drupal\Core\Render\MainContent\HtmlRenderer
-   */
-  protected HtmlRenderer $mainContentHtmlRenderer;
-
-  /**
-   * The current route match.
-   *
-   * @var \Drupal\Core\Routing\RouteMatchInterface
-   */
-  protected RouteMatchInterface $routeMatch;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected AccountInterface $currentUser;
-
-  /**
-   * The config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
-
-  /**
-   * The route match service.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
-
-  /**
-   * The messenger.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected MessengerInterface $messenger;
-
-  /**
-   * The class resolver.
-   *
-   * @var \Drupal\Core\DependencyInjection\ClassResolverInterface
-   */
-  protected ClassResolverInterface $classResolver;
-
-  /**
-   * The main content renderers.
-   *
-   * @var array
-   */
-  protected array $mainContentRenderers;
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container): EndpointController {
-    return new EndpointController(
-      $container->get('eca.trigger_event'),
-      $container->get('renderer'),
-      $container->get('main_content_renderer.html'),
-      $container->get('current_route_match'),
-      $container->get('current_user'),
-      $container->get('config.factory'),
-      $container->get('logger.channel.eca'),
-      $container->get('messenger'),
-      $container->get('class_resolver'),
-      $container->getParameter('main_content_renderers')
-    );
-  }
-
-  /**
    * Constructs a new EcaEndpointController object.
    *
-   * @param \Drupal\eca\Event\TriggerEvent $trigger_event
+   * @param \Drupal\eca\Event\TriggerEvent $triggerEvent
    *   The trigger event service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
-   * @param \Drupal\Core\Render\MainContent\HtmlRenderer $html_renderer
-   *   The main content renderer.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   * @param \Drupal\Core\Render\MainContent\HtmlRenderer $mainContentHtmlRenderer
+   *   The main content HTML renderer.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
    *   The current route match.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
    *   The current user.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
    *   The logger.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
-   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
-   *   The class resolver.
-   * @param array $main_content_renderers
-   *   The main content renderers.
+   * @param \Symfony\Component\DependencyInjection\ServiceLocator $mainContentRenderers
+   *   A service locator that contains the main content renderer services,
+   *   keyed by the 'format' attribute.
    */
-  public function __construct(TriggerEvent $trigger_event, RendererInterface $renderer, HtmlRenderer $html_renderer, RouteMatchInterface $route_match, AccountInterface $current_user, ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger, MessengerInterface $messenger, ClassResolverInterface $class_resolver, array $main_content_renderers) {
-    $this->triggerEvent = $trigger_event;
-    $this->renderer = $renderer;
-    $this->mainContentHtmlRenderer = $html_renderer;
-    $this->routeMatch = $route_match;
-    $this->currentUser = $current_user;
-    $this->configFactory = $config_factory;
-    $this->logger = $logger;
-    $this->messenger = $messenger;
-    $this->classResolver = $class_resolver;
-    $this->mainContentRenderers = $main_content_renderers;
-  }
+  public function __construct(
+    protected TriggerEvent $triggerEvent,
+    protected RendererInterface $renderer,
+    #[Autowire(service: 'main_content_renderer.html')]
+    protected HtmlRenderer $mainContentHtmlRenderer,
+    protected RouteMatchInterface $routeMatch,
+    protected AccountInterface $currentUser,
+    protected ConfigFactoryInterface $configFactory,
+    protected LoggerChannelInterface $logger,
+    protected MessengerInterface $messenger,
+    #[AutowireLocator('render.main_content_renderer', indexAttribute: 'format')]
+    protected ServiceLocator $mainContentRenderers,
+  ) {}
 
   /**
    * Handles the request to the endpoint.
@@ -228,8 +140,10 @@ final class EndpointController implements ContainerInjectionInterface {
     if ($response instanceof AjaxResponse) {
       if (Element::children($build)) {
         $wrapper = $request->query->get(MainContentViewSubscriber::WRAPPER_FORMAT, 'drupal_modal');
-        $renderer = $this->classResolver->getInstanceFromDefinition($this->mainContentRenderers[$wrapper]);
-        $response = $renderer->renderResponse($build, $request, $this->routeMatch);
+        if (!$this->mainContentRenderers->has($wrapper)) {
+          $wrapper = 'drupal_modal';
+        }
+        $response = $this->mainContentRenderers->get($wrapper)->renderResponse($build, $request, $this->routeMatch);
       }
       foreach ($this->messenger->deleteAll() as $type => $type_messages) {
         /** @var string[]|\Drupal\Component\Render\MarkupInterface[] $type_messages */

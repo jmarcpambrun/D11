@@ -68,7 +68,7 @@ class ConfigWrite extends ConfigActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $token = $this->tokenService;
     $config_name = $token->replace($this->configuration['config_name']);
     $config_key = $this->configuration['config_key'] !== '' ? (string) $token->replace($this->configuration['config_key']) : '';

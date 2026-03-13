@@ -68,7 +68,7 @@ class MigrateSkipRow extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $message = $this->configuration['message'];
     if (!empty($message)) {
       $message = $this->tokenService->replace($message);

@@ -27,6 +27,7 @@ class PreconfiguredActionTest extends KernelTestBase {
     'field',
     'eca',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**

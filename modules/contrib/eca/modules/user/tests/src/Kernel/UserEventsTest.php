@@ -29,6 +29,7 @@ class UserEventsTest extends KernelTestBase {
     'eca',
     'eca_user',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**
@@ -36,7 +37,6 @@ class UserEventsTest extends KernelTestBase {
    */
   public function setUp(): void {
     parent::setUp();
-    $this->installSchema('system', ['sequences']);
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
     $this->installConfig('system');

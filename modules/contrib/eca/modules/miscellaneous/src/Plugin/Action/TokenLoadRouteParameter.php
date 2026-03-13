@@ -46,7 +46,7 @@ class TokenLoadRouteParameter extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if ($parameter = $this->getParameterValue()) {
       $tokenName = empty($this->configuration['token_name']) ? $this->tokenService->getTokenType($parameter) : $this->configuration['token_name'];
       if ($tokenName) {

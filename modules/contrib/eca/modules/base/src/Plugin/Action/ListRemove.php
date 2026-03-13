@@ -24,7 +24,7 @@ class ListRemove extends ListRemoveBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $token_name = trim((string) $this->configuration['token_name']);
     $item = $this->removeItem();
     if ($token_name !== '') {

@@ -10,7 +10,7 @@ use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\language\Entity\ContentLanguageSettings;
 use Drupal\language\Plugin\LanguageNegotiation\LanguageNegotiationUrl;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
 use PHPUnit\Framework\Attributes\Group;
@@ -40,6 +40,7 @@ class ContentEventsTest extends KernelTestBase {
     'content_translation',
     'eca',
     'eca_content',
+    'modeler_api',
     'eca_test_array',
   ];
 

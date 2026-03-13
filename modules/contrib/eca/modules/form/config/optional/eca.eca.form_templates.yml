@@ -8,9 +8,10 @@ dependencies:
     - modeler_api
 third_party_settings:
   modeler_api:
-    modeler_id: bpmn_io
+    modeler_id: workflow_modeler
     storage: none
     label: 'Form API Templates'
+    version: 1.0.0
 id: form_templates
 weight: 0
 template: true
@@ -163,7 +164,7 @@ events:
         id: eca_form_field_disable_08dxxj7
         condition: ''
 conditions:
-  eca_scalar_17pz6h9:
+  eca_tamper__str_len_0ljnlbu_1_eca_form_field_set_error_1enbcup_condition:
     plugin: eca_scalar
     label: 'Length > max?'
     configuration:
@@ -173,7 +174,7 @@ conditions:
       operator: greaterthan
       type: numeric
       case: false
-  eca_count_0pjp1lx:
+  Gateway_1tmwasn_eca_list_remove_1v8q142_condition:
     plugin: eca_count
     label: 'More fields in list?'
     configuration:
@@ -183,7 +184,7 @@ conditions:
       operator: greaterthan
       type: numeric
       case: false
-  eca_count_1uzgq9d:
+  Gateway_1xxgzdu_eca_list_remove_0d4jevu_condition:
     plugin: eca_count
     label: 'More fields in list?'
     configuration:
@@ -193,7 +194,7 @@ conditions:
       operator: greaterthan
       type: numeric
       case: false
-  eca_count_01p27mf:
+  Gateway_0dm5ka8_Activity_07a8n8t_condition:
     plugin: eca_count
     label: 'More fields in list?'
     configuration:
@@ -205,23 +206,26 @@ conditions:
       case: false
 gateways:
   Gateway_1tmwasn:
+    label: 'Loop over list of fields'
     type: 0
     successors:
       -
         id: eca_list_remove_1v8q142
-        condition: eca_count_0pjp1lx
+        condition: Gateway_1tmwasn_eca_list_remove_1v8q142_condition
   Gateway_1xxgzdu:
+    label: 'Loop over list of fields'
     type: 0
     successors:
       -
         id: eca_list_remove_0d4jevu
-        condition: eca_count_1uzgq9d
+        condition: Gateway_1xxgzdu_eca_list_remove_0d4jevu_condition
   Gateway_0dm5ka8:
+    label: 'Loop over list of fields'
     type: 0
     successors:
       -
         id: Activity_07a8n8t
-        condition: eca_count_01p27mf
+        condition: Gateway_0dm5ka8_Activity_07a8n8t_condition
 actions:
   eca_form_field_add_state_1y60dja:
     label: 'Hide when selected'
@@ -421,7 +425,7 @@ actions:
     successors:
       -
         id: eca_form_field_set_error_1enbcup
-        condition: eca_scalar_17pz6h9
+        condition: eca_tamper__str_len_0ljnlbu_1_eca_form_field_set_error_1enbcup_condition
   eca_form_field_set_error_1enbcup:
     label: 'Form field: set validation error'
     plugin: eca_form_field_set_error

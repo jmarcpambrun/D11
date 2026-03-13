@@ -85,7 +85,7 @@ class FormFieldSetOptions extends FormFieldActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     // It is necessary to define the method here, otherwise the method of
     // the trait would be used instead.
     parent::execute();

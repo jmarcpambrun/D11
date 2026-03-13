@@ -14,10 +14,12 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
 use Drupal\eca\Event\RenderEventInterface;
 use Drupal\eca\Event\TriggerEvent;
+use Drupal\eca_render\RenderEvents;
 use Symfony\Component\Serializer\Serializer;
 
 /**
@@ -34,6 +36,7 @@ class RenderHooks {
     protected LoggerChannelInterface $logger,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
+    protected StateInterface $state,
   ) {}
 
   /**
@@ -293,10 +296,16 @@ class RenderHooks {
   #[Hook('entity_extra_field_info')]
   public function entityExtraFieldInfo(): array {
     $extra = [];
-    /**
-     * @var \Drupal\eca\Entity\Eca $eca
-     */
-    foreach ($this->entityTypeManager->getStorage('eca')->loadMultiple() as $eca) {
+    $subscribed = current($this->state->get('eca.subscribed', [])[RenderEvents::EXTRA_FIELD] ?? []);
+    if (!$subscribed) {
+      return $extra;
+    }
+    foreach (array_keys($subscribed) as $eca_id) {
+      /** @var \Drupal\eca\Entity\Eca|null $eca */
+      $eca = $this->entityTypeManager->getStorage('eca')->load($eca_id);
+      if ($eca === NULL) {
+        continue;
+      }
       foreach ($eca->get('events') ?? [] as $event) {
         if (($event['plugin'] ?? NULL) !== 'eca_render:extra_field') {
           continue;

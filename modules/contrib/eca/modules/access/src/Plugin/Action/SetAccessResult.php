@@ -38,7 +38,7 @@ class SetAccessResult extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($this->event instanceof AccessEventInterface)) {
       return;
     }

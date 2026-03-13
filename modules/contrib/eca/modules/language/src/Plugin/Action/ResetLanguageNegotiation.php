@@ -23,7 +23,7 @@ class ResetLanguageNegotiation extends LanguageActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (isset($this->event) && ($this->event instanceof LanguageNegotiateEvent)) {
       $this->event->langcode = NULL;
       return;

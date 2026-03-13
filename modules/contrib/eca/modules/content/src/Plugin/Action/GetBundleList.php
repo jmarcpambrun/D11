@@ -103,7 +103,7 @@ class GetBundleList extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if ($this->configuration['type'] === '_eca_token') {
       $type = $this->getTokenValue('type', '');
     }

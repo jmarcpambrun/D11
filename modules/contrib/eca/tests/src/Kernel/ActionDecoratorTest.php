@@ -25,6 +25,7 @@ class ActionDecoratorTest extends KernelTestBase {
     'user',
     'eca',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**

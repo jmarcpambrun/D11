@@ -28,12 +28,20 @@ class LockTest extends KernelTestBase {
     'user',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
+
+  /**
+   * The locks, dummy to satisfy tests.
+   *
+   * @var array
+   */
+  protected array $locks;
 
   /**
    * {@inheritdoc}
    */
-  public function register(ContainerBuilder $container) {
+  public function register(ContainerBuilder $container): void {
     parent::register($container);
     // Change container to use database lock backends.
     $container

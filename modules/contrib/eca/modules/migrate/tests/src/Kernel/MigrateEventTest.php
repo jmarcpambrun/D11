@@ -29,6 +29,7 @@ class MigrateEventTest extends KernelTestBase {
     'eca',
     'eca_migrate',
     'eca_test_array',
+    'modeler_api',
   ];
 
   /**
@@ -37,7 +38,6 @@ class MigrateEventTest extends KernelTestBase {
   public function setUp(): void {
     parent::setUp();
     $this->installConfig(static::$modules);
-    $this->installSchema('system', ['sequences']);
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
     User::create(['uid' => 0, 'name' => 'guest'])->save();

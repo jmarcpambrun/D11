@@ -42,10 +42,14 @@ final class Templates extends ControllerBase {
    *   The access result.
    */
   public function checkAccess(): AccessResultInterface {
-    // @todo Implement access control. Let's validate edit access to at least
-    //   one of the model owners. For each request, we should then verify for
-    //   each template before pushing that to the model owner.
-    return AccessResult::allowed();
+    $result = AccessResult::forbidden();
+    foreach ($this->modelOwnerPluginManager->getAllInstances() as $owner) {
+      if ($this->currentUser()->hasPermission('modeler api edit ' . $owner->configEntityTypeId())) {
+        $result = AccessResult::allowed();
+        break;
+      }
+    }
+    return $result;
   }
 
   /**

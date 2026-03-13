@@ -93,7 +93,7 @@ class SetCurrentLangcode extends LanguageActionBase implements CleanupInterface 
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $langcode = trim($this->configuration['langcode']);
     if (in_array($langcode, ['_interface', ''], TRUE)) {
       $langcode = $this->languageManager->getCurrentLanguage()->getId();

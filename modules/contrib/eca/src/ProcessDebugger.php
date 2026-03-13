@@ -38,11 +38,26 @@ class ProcessDebugger {
   protected string $eventLabel = '';
 
   /**
+   * Marker value for deduplicated token data.
+   *
+   * When consecutive debug entries have identical token data, this marker
+   * is stored instead of the full data to reduce storage volume.
+   */
+  public const string TOKEN_DATA_PREV = '@prev';
+
+  /**
    * The history of debug entries for this process.
    *
    * @var array
    */
   protected array $history = [];
+
+  /**
+   * Hash of the last stored token data for deduplication.
+   *
+   * @var string
+   */
+  protected string $lastTokenDataHash = '';
 
   /**
    * The event name of this process.
@@ -123,7 +138,7 @@ class ProcessDebugger {
    * Stores the history in Drupal's temp store for later retrieval.
    *
    * @return string
-   *   The MD5 hash of the JSON-encoded history array.
+   *   The MD5 hash of the compressed history data.
    */
   public function getHistoryHash(): string {
     return $this->tokenBrowser->storeHistory($this->history);
@@ -341,13 +356,60 @@ class ProcessDebugger {
   }
 
   /**
-   * Gets the current token data.
+   * Gets the current token data, with deduplication.
+   *
+   * If the token data has not changed since the last call, the marker
+   * string '@prev' is returned instead of the full data array. This
+   * significantly reduces storage volume for history entries where actions
+   * do not modify token state.
+   *
+   * @return array|string
+   *   The token data array, or the marker string '@prev' if unchanged.
+   */
+  protected function getTokenData(): array|string {
+    $data = $this->tokenBrowser->normalizedTokenData($this->eventName);
+    $hash = md5(serialize($data));
+    if ($hash === $this->lastTokenDataHash) {
+      return self::TOKEN_DATA_PREV;
+    }
+    $this->lastTokenDataHash = $hash;
+    return $data;
+  }
+
+  /**
+   * Expands deduplicated token data markers in a history array.
+   *
+   * Walks through the history entries and replaces '@prev' markers with
+   * the actual token data from the nearest preceding entry that has it.
+   * This restores the full data for consumers that need it.
+   *
+   * @param array $history
+   *   The history array, potentially containing '@prev' markers.
    *
    * @return array
-   *   The token data array, normalized to a maximum depth set in state.
+   *   The history array with all '@prev' markers expanded.
    */
-  protected function getTokenData(): array {
-    return $this->tokenBrowser->normalizedTokenData($this->eventName);
+  public static function expandHistory(array $history): array {
+    $lastData = [];
+    foreach ($history as &$entry) {
+      if (!is_array($entry)) {
+        continue;
+      }
+      if (array_key_exists('data', $entry)) {
+        if ($entry['data'] === self::TOKEN_DATA_PREV) {
+          $entry['data'] = $lastData;
+        }
+        else {
+          $lastData = $entry['data'];
+        }
+      }
+      // Also expand nested history (used in the shared store path where
+      // entries have a 'history' sub-array).
+      if (isset($entry['history']) && is_array($entry['history'])) {
+        $entry['history'] = self::expandHistory($entry['history']);
+      }
+    }
+    return $history;
   }
 
 }

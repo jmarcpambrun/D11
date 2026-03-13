@@ -54,7 +54,7 @@ class TokenLoadQueryArgument extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $argument_name = $this->tokenService->replace($this->configuration['argument_name']);
     $argument = $this->request->query->get($argument_name);
     $tokenName = empty($this->configuration['token_name']) ? $this->tokenService->getTokenType($argument) : $this->configuration['token_name'];

@@ -6,7 +6,7 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -36,6 +36,7 @@ class GetFieldValueTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**
@@ -156,14 +157,6 @@ class GetFieldValueTest extends KernelTestBase {
     $action->execute($node);
     $this->assertEquals($text, $token_services->replaceClear('[my_custom_token:bodyvalue]'));
     $this->assertEquals($text, $token_services->replaceClear('[my_custom_token:body]'));
-
-    /** @var \Drupal\eca_content\Plugin\Action\GetFieldValue $action */
-    $action = $action_manager->createInstance('eca_get_field_value', [
-      'token_name' => 'my_custom_token:body_summary',
-      'field_name' => 'body.0.summary',
-    ]);
-    $action->execute($node);
-    $this->assertEquals($summary, $token_services->replaceClear('[my_custom_token:body_summary]'));
 
     /** @var \Drupal\eca_content\Plugin\Action\GetFieldValue $action */
     $action = $action_manager->createInstance('eca_get_field_value', [

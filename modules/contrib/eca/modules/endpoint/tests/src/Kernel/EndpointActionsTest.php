@@ -57,6 +57,7 @@ class EndpointActionsTest extends KernelTestBase {
     'node',
     'eca',
     'eca_endpoint',
+    'modeler_api',
   ];
 
   /**

@@ -88,7 +88,7 @@ class GetEntityTypeList extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $types = $this->entityTypes->getTypes();
     if ($this->configuration['mode'] === 'ids') {
       $types = array_keys($types);

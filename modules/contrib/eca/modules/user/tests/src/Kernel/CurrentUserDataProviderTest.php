@@ -25,6 +25,7 @@ class CurrentUserDataProviderTest extends KernelTestBase {
     'field',
     'eca',
     'eca_user',
+    'modeler_api',
   ];
 
   /**

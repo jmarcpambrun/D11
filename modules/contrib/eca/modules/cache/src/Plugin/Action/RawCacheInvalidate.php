@@ -34,7 +34,7 @@ class RawCacheInvalidate extends CacheInvalidate {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $tags = $this->getCacheTags();
 
     if (empty($tags)) {

@@ -42,7 +42,7 @@ class TokenSetContext extends ConfigurableActionBase implements CleanupInterface
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $data = $this->tokenService->getTokenData();
     $this->contextDataProvider->push($data);
   }

@@ -52,19 +52,40 @@ class YamlParser {
   public function parse(string $yaml_string, bool $replace_tokens = TRUE): mixed {
     $parsed = $this->parser->parse($yaml_string);
     if ($replace_tokens) {
-      $token = $this->token;
       if (is_array($parsed)) {
-        array_walk_recursive($parsed, static function (&$value) use ($token) {
-          if (!empty($value) && is_string($value)) {
-            $value = (string) $token->replaceClear($value);
-          }
-        });
+        $parsed = $this->replaceTokens($parsed);
       }
       elseif (is_string($parsed)) {
-        $parsed = (string) $token->replaceClear($parsed);
+        $parsed = (string) $this->token->replaceClear($parsed);
       }
     }
     return $parsed;
+  }
+
+  /**
+   * Recursively replaces tokens in array keys and values.
+   *
+   * @param array $data
+   *   The array to process.
+   *
+   * @return array
+   *   The array with tokens replaced in both keys and values.
+   */
+  protected function replaceTokens(array $data): array {
+    $result = [];
+    foreach ($data as $key => $value) {
+      if (is_string($key)) {
+        $key = (string) $this->token->replaceClear($key);
+      }
+      if (is_array($value)) {
+        $value = $this->replaceTokens($value);
+      }
+      elseif (!empty($value) && is_string($value)) {
+        $value = (string) $this->token->replaceClear($value);
+      }
+      $result[$key] = $value;
+    }
+    return $result;
   }
 
 }

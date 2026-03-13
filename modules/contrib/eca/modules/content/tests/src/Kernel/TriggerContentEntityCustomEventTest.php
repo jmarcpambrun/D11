@@ -8,7 +8,7 @@ use Drupal\eca_content\Event\ContentEntityEvents;
 use Drupal\eca_content\Event\ContentEntityPreSave;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\Entity\User;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -38,6 +38,7 @@ class TriggerContentEntityCustomEventTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**

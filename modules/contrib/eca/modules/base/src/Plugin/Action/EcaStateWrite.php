@@ -68,7 +68,7 @@ class EcaStateWrite extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $value = $this->configuration['value'];
 
     if ($this->configuration['use_yaml']) {

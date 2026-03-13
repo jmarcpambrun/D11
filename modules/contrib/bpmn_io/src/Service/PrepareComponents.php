@@ -3,6 +3,7 @@
 namespace Drupal\bpmn_io\Service;
 
 use Drupal\bpmn_io\Plugin\ModelerApiModeler\BpmnIo;
+use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -154,7 +155,8 @@ readonly class PrepareComponents {
       ],
     ];
     $extraDescriptions = [];
-    foreach ($this->prepareConfigFields($form, $extraDescriptions) as $key => $field) {
+    $defaultConfiguration = $plugin instanceof ConfigurableInterface ? $plugin->defaultConfiguration() : [];
+    foreach ($this->prepareConfigFields($form, $extraDescriptions, $defaultConfiguration) as $key => $field) {
       $value = $this->sanitizeConfigValue($plugin->getPluginId(), $key, $field['value'] ?? NULL);
       $property = [
         'label' => $field['label'],
@@ -169,7 +171,7 @@ readonly class PrepareComponents {
       if (!empty($field['required'])) {
         $property['constraints']['notEmpty'] = TRUE;
       }
-      if (isset($field['description'])) {
+      if (isset($field['description']) && !is_array($field['description'])) {
         $property['description'] = (string) $field['description'];
       }
       if (isset($field['extras'])) {
@@ -208,11 +210,13 @@ readonly class PrepareComponents {
    * @param array $extraDescriptions
    *   An array receiving all markup "fields" which can be displayed separately
    *   in the UI.
+   * @param array $defaultConfiguration
+   *   The default configuration for this form.
    *
    * @return array
    *   The prepared config fields.
    */
-  protected function prepareConfigFields(array $form, array &$extraDescriptions): array {
+  protected function prepareConfigFields(array $form, array &$extraDescriptions, array $defaultConfiguration): array {
     $fields = [];
     foreach ($form as $key => $definition) {
       if (!is_array($definition)) {
@@ -224,13 +228,13 @@ readonly class PrepareComponents {
         foreach ($children as $child) {
           $childForm[$child] = $form[$key][$child];
         }
-        foreach ($this->prepareConfigFields($childForm, $extraDescriptions) as $childKey => $childField) {
+        foreach ($this->prepareConfigFields($childForm, $extraDescriptions, $defaultConfiguration) as $childKey => $childField) {
           $fields[$childKey] = $childField;
         }
       }
       $label = $definition['#title'] ?? $this->convertKeyToLabel($key);
       $description = $definition['#description'] ?? NULL;
-      $value = $definition['#default_value'] ?? '';
+      $value = $definition['#default_value'] ?? $defaultConfiguration[$key] ?? NULL;
       $weight = $definition['#weight'] ?? 0;
       $type = 'String';
       $required = $definition['#required'] ?? FALSE;
@@ -252,16 +256,19 @@ readonly class PrepareComponents {
           continue 2;
 
         case 'textarea':
+          $value = $value ?? '';
           $type = 'Text';
           break;
 
         case 'checkbox':
+          $value = $value ?? FALSE;
           $fields[$key] = $this->checkbox($key, $label, $weight, $description, $value);
           continue 2;
 
         case 'checkboxes':
         case 'radios':
         case 'select':
+          $value = $value ?? [];
           $fields[$key] = $this->optionsField($key, $label, $weight, $description, form_select_options($definition), $value, $required);
           continue 2;
 
@@ -275,7 +282,7 @@ readonly class PrepareComponents {
         'label' => $label,
         'weight' => $weight,
         'type' => $type,
-        'value' => $value,
+        'value' => $value ?? '',
         'required' => $required,
       ];
       if ($description !== NULL) {

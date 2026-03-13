@@ -9,7 +9,7 @@ use Drupal\Core\TypedData\Plugin\DataType\ItemList;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Plugin\DataType\DataTransferObject;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\eca\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\user\RoleInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -35,6 +35,7 @@ class TokenTest extends KernelTestBase {
     'text',
     'node',
     'eca',
+    'modeler_api',
   ];
 
   /**

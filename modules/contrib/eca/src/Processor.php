@@ -4,6 +4,7 @@ namespace Drupal\eca;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\Entity\Objects\EcaEvent;
@@ -14,6 +15,7 @@ use Drupal\eca\Plugin\CleanupInterface;
 use Drupal\eca\Plugin\ObjectWithPluginInterface;
 use Drupal\eca\PluginManager\Event as PluginManagerEvent;
 use Drupal\eca\Token\Browser;
+use Drupal\modeler_api\TemplateTokenResolver;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
@@ -100,11 +102,18 @@ class Processor {
   protected static array $appliedEvents = [];
 
   /**
-   * The list of applied templates during the current request.
+   * The template token resolver.
    *
-   * @var array
+   * @var \Drupal\modeler_api\TemplateTokenResolver
    */
-  protected static array $appliedTemplates = [];
+  protected TemplateTokenResolver $templateTokenResolver;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
 
   /**
    * Returns the list of applied events during the current request.
@@ -114,16 +123,6 @@ class Processor {
    */
   public static function getAppliedEvents(): array {
     return self::$appliedEvents;
-  }
-
-  /**
-   * Returns the list of applied templates during the current request.
-   *
-   * @return array
-   *   The list of applied templates.
-   */
-  public static function getAppliedTemplates(): array {
-    return self::$appliedTemplates;
   }
 
   /**
@@ -151,10 +150,14 @@ class Processor {
    *   The Drupal state.
    * @param \Drupal\eca\Token\Browser $tokenBrowser
    *   The token browser.
+   * @param \Drupal\modeler_api\TemplateTokenResolver $templateTokenResolver
+   *   The template token resolver.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
    * @param int $recursion_threshold
    *   A parameterized threshold of the maximum allowed level of recursion.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelInterface $logger, EventDispatcherInterface $event_dispatcher, PluginManagerEvent $event_plugin_manager, StateInterface $state, Browser $tokenBrowser, int $recursion_threshold) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelInterface $logger, EventDispatcherInterface $event_dispatcher, PluginManagerEvent $event_plugin_manager, StateInterface $state, Browser $tokenBrowser, TemplateTokenResolver $templateTokenResolver, AccountProxyInterface $currentUser, int $recursion_threshold) {
     $this->entityTypeManager = $entity_type_manager;
     $this->logger = $logger;
     $this->eventDispatcher = $event_dispatcher;
@@ -162,6 +165,8 @@ class Processor {
     $this->recursionThreshold = $recursion_threshold;
     $this->state = $state;
     $this->tokenBrowser = $tokenBrowser;
+    $this->templateTokenResolver = $templateTokenResolver;
+    $this->currentUser = $currentUser;
     ProcessDebugger::$debug = $this->state->get('_eca_internal_debug_mode', FALSE) ?? FALSE;
   }
 
@@ -241,10 +246,20 @@ class Processor {
         $debugger->setEventLabel($ecaEvent->getLabel());
         $context['%eventlabel'] = $ecaEvent->getLabel();
 
-        $appliedTemplates = $eca->get('events')[$eca_event_id]['applied_templates'] ?? [];
-        foreach ($appliedTemplates as $applied_template) {
-          [$eventId, $ecaId, $target, $config] = json_decode($applied_template, TRUE);
-          self::$appliedTemplates[$ecaId][$eventId][$target] = $config;
+        if ($this->currentUser->hasPermission('modeler api edit eca')) {
+          $appliedTemplates = $eca->get('events')[$eca_event_id]['applied_templates'] ?? [];
+          foreach ($appliedTemplates as $applied_template) {
+            [$eventId, $ecaId, $target, $config] = json_decode($applied_template, TRUE);
+            if (isset($config[$eventId])) {
+              $hiddenConfig = $config[$eventId];
+              unset($config[$eventId]);
+            }
+            else {
+              $hiddenConfig = [];
+            }
+            $hiddenConfig['newModelId'] = $ecaId;
+            $this->templateTokenResolver->addAppliedTemplate('eca', $eventId, $target, $hiddenConfig, $config ?? []);
+          }
         }
 
         /** @var \Symfony\Contracts\EventDispatcher\Event $event */

@@ -36,6 +36,7 @@ class CompareFieldValueTest extends KernelTestBase {
     'node',
     'eca',
     'eca_content',
+    'modeler_api',
   ];
 
   /**

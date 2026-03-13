@@ -75,7 +75,7 @@ class SwitchAccount extends ConfigurableActionBase implements CleanupInterface {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!isset($this->configuration['user_id']) || $this->configuration['user_id'] === '') {
       return;
     }

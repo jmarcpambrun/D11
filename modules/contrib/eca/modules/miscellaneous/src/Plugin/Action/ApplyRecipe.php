@@ -42,7 +42,7 @@ class ApplyRecipe extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $recipe = Recipe::createFromDirectory($this->getRecipePath($this->configuration['recipe_package_name']));
     RecipeRunner::processRecipe($recipe);
   }

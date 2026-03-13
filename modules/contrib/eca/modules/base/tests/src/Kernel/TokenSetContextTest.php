@@ -25,6 +25,7 @@ class TokenSetContextTest extends KernelTestBase {
     'user',
     'eca',
     'eca_base',
+    'modeler_api',
   ];
 
   /**

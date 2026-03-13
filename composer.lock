@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d711eeb9928c4ac5977859312e2e7c7b",
+    "content-hash": "00b12ac195c0ad2b3aac690168e32443",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3097,17 +3097,17 @@
         },
         {
             "name": "drupal/bpmn_io",
-            "version": "3.0.4",
+            "version": "3.0.5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bpmn_io.git",
-                "reference": "3.0.4"
+                "reference": "3.0.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.4.zip",
-                "reference": "3.0.4",
-                "shasum": "bf5a7a99023131e5316c8573598767fd78a989f4"
+                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.5.zip",
+                "reference": "3.0.5",
+                "shasum": "0f55b30f77d0dc365b8caf883ad4b9b9e01c49c8"
             },
             "require": {
                 "drupal/core": "^11.2",
@@ -3122,8 +3122,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.4",
-                    "datestamp": "1765554265",
+                    "version": "3.0.5",
+                    "datestamp": "1773411172",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4578,47 +4578,36 @@
         },
         {
             "name": "drupal/eca",
-            "version": "3.1.0-alpha4",
+            "version": "3.1.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "3.1.0-alpha4"
+                "reference": "3.1.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-alpha4.zip",
-                "reference": "3.1.0-alpha4",
-                "shasum": "ccba4d4ec54a1fa1ea0946b0cef199a6af781ce8"
+                "url": "https://ftp.drupal.org/files/projects/eca-3.1.0-beta1.zip",
+                "reference": "3.1.0-beta1",
+                "shasum": "a5e8a8ad2d0103a7a7a27e2edbd04348a6f80562"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
-                "drupal/core": "^11.3",
+                "drupal/core": "^11.3 || ^12.0",
                 "drupal/modeler_api": "^1.1",
                 "ext-json": "*",
                 "php": ">=8.3"
             },
-            "conflict": {
-                "drush/drush": "<12.5.1"
-            },
             "require-dev": {
-                "drupal/ai": "1.2.x-dev",
-                "drupal/ai_agents": "1.2.x-dev",
-                "drupal/entity_reference_revisions": "^1.12",
-                "drupal/inline_entity_form": "^3.0",
-                "drupal/modeler_api": "*",
-                "drupal/paragraphs": "^1.18",
-                "drupal/project_browser": "^2.0",
-                "drupal/token": "^1.15",
-                "drupal/webform": "^6.3"
+                "drupal/modeler_api": "*"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.1.0-alpha4",
-                    "datestamp": "1772298363",
+                    "version": "3.1.0-beta1",
+                    "datestamp": "1773412420",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -7461,17 +7450,17 @@
         },
         {
             "name": "drupal/modeler_api",
-            "version": "1.1.0-alpha6",
+            "version": "1.1.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler_api.git",
-                "reference": "1.1.0-alpha6"
+                "reference": "1.1.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-alpha6.zip",
-                "reference": "1.1.0-alpha6",
-                "shasum": "426413718a89655828acde6e089f5cdfe874d0c0"
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.0-beta1.zip",
+                "reference": "1.1.0-beta1",
+                "shasum": "a37620e981e2211ca0955f7e0c8dfc09841179db"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -7480,11 +7469,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.0-alpha6",
-                    "datestamp": "1772878321",
+                    "version": "1.1.0-beta1",
+                    "datestamp": "1773414266",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -21525,7 +21514,7 @@
         "drupal/ai": 5,
         "drupal/auto_translation": 10,
         "drupal/content_access": 5,
-        "drupal/eca": 15,
+        "drupal/eca": 10,
         "drupal/entity_usage": 10,
         "drupal/eu_cookie_compliance": 5,
         "drupal/feeds_ex": 10,
@@ -21535,7 +21524,7 @@
         "drupal/h5p": 10,
         "drupal/inline_entity_form": 5,
         "drupal/mailer_transport": 15,
-        "drupal/modeler_api": 15,
+        "drupal/modeler_api": 10,
         "drupal/multivalue_form_element": 10,
         "drupal/openai": 10,
         "drupal/page_manager": 5,

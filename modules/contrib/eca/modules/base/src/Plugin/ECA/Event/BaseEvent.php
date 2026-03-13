@@ -4,7 +4,6 @@ namespace Drupal\eca_base\Plugin\ECA\Event;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\eca\Attribute\EcaEvent;
-use Drupal\eca\Attribute\Token;
 use Drupal\eca\EcaEvents;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\Entity\Objects\EcaEvent as EcaEventObject;
@@ -16,8 +15,6 @@ use Drupal\eca\Plugin\PluginUsageInterface;
 use Drupal\eca_base\BaseEvents;
 use Drupal\eca_base\Event\CronEvent;
 use Drupal\eca_base\Event\CustomEvent;
-use Drupal\eca_base\Event\FieldWidgetEvent;
-use Drupal\eca_base\Event\ToolEvent;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -54,20 +51,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
       'tags' => Tag::RUNTIME,
       'version_introduced' => '2.0.0',
     ];
-    $actions['eca_tool'] = [
-      'label' => 'ECA Tool',
-      'event_name' => BaseEvents::TOOL,
-      'event_class' => ToolEvent::class,
-      'tags' => Tag::RUNTIME,
-      'version_introduced' => '2.1.11',
-    ];
-    $actions['eca_field_widget'] = [
-      'label' => 'ECA Field Widget',
-      'event_name' => BaseEvents::FIELD_WIDGET,
-      'event_class' => FieldWidgetEvent::class,
-      'tags' => Tag::RUNTIME,
-      'version_introduced' => '2.1.11',
-    ];
     return $actions;
   }
 
@@ -88,12 +71,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
     elseif ($this->eventClass() === TokenGenerateEvent::class) {
       $values = [
         'token_name' => '',
-      ];
-    }
-    elseif ($this->eventClass() === ToolEvent::class) {
-      $values = [
-        'description' => '',
-        'arguments' => '',
       ];
     }
     else {
@@ -132,21 +109,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
         '#eca_token_reference' => TRUE,
       ];
     }
-    elseif ($this->eventClass() === ToolEvent::class) {
-      $form['description'] = [
-        '#type' => 'textarea',
-        '#title' => $this->t('Description'),
-        '#default_value' => $this->configuration['description'] ?? '',
-        '#description' => $this->t('Summarizes what this tool is for. This plain text property is particularly important to the AI agent because it provides context and explicitly defines the use case using natural language.'),
-        '#required' => TRUE,
-      ];
-      $form['arguments'] = [
-        '#type' => 'textarea',
-        '#title' => $this->t('Arguments'),
-        '#default_value' => $this->configuration['arguments'] ?? '',
-        '#description' => $this->t('The arguments that the AI agent passes into the tool. They must be written in YAML format. This property is also important to the AI agent. Note that the top-level keys (e.g. node, user) become the names of the tokens that are then available to successors of this event.'),
-      ];
-    }
     return parent::buildConfigurationForm($form, $form_state);
   }
 
@@ -163,10 +125,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
     }
     elseif ($this->eventClass() === TokenGenerateEvent::class) {
       $this->configuration['token_name'] = $form_state->getValue('token_name');
-    }
-    elseif ($this->eventClass() === ToolEvent::class) {
-      $this->configuration['description'] = $form_state->getValue('description');
-      $this->configuration['arguments'] = $form_state->getValue('arguments');
     }
   }
 
@@ -185,12 +143,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
 
       case 'eca_token_generate':
         return $ecaEvent->getConfiguration()['token_name'];
-
-      case 'eca_tool':
-        return $ecaEvent->getEca()->id() . '::' . $ecaEvent->getId();
-
-      case 'eca_field_widget':
-        return $ecaEvent->getId();
 
       default:
         return parent::generateWildcard($eca_config_id, $ecaEvent);
@@ -234,12 +186,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
       }
       return TRUE;
     }
-    elseif ($event instanceof ToolEvent) {
-      return $event->getWildcard() === $wildcard;
-    }
-    elseif ($event instanceof FieldWidgetEvent) {
-      return $event->getEventId() === $wildcard;
-    }
     return FALSE;
   }
 
@@ -257,44 +203,6 @@ class BaseEvent extends EventBase implements PluginUsageInterface, CleanupInterf
         $this->state->setTimestamp('cron-' . $id, $this->state->getCurrentTimestamp() - 60);
       }
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  #[Token(
-    name: 'entity',
-    description: 'The entity being edited.',
-    classes: [FieldWidgetEvent::class],
-  )]
-  #[Token(
-    name: 'field_name',
-    description: 'The name of the entity field for which the field widget is used.',
-    classes: [FieldWidgetEvent::class],
-  )]
-  #[Token(
-    name: 'field_key',
-    description: 'The index of the field starting with zero and going up if it is a multi-value field.',
-    classes: [FieldWidgetEvent::class],
-  )]
-  public function getData(string $key): mixed {
-    if ($this->event instanceof TokenGenerateEvent) {
-      return $this->event->getData()[$key] ?? parent::getData($key);
-    }
-    if ($this->event instanceof FieldWidgetEvent) {
-      switch ($key) {
-        case 'entity':
-          return $this->event->getEntity();
-
-        case 'field_name':
-          return $this->event->getFieldName();
-
-        case 'field_key':
-          return $this->event->getFieldKey();
-
-      }
-    }
-    return parent::getData($key);
   }
 
   /**

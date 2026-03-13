@@ -33,7 +33,7 @@ abstract class RenderElementActionBase extends RenderActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $build = [];
     $this->doBuild($build);
     if ($this->configuration['weight'] !== '') {

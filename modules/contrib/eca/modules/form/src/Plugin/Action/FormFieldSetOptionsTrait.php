@@ -46,7 +46,7 @@ trait FormFieldSetOptionsTrait {
   /**
    * {@inheritdoc}
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     if (!($element = &$this->getTargetElement())) {
       return;
     }

@@ -164,7 +164,7 @@ abstract class KeyValueStoreBase extends ConfigurableActionBase {
    *
    * @throws \Exception
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $collection = $this->tokenService->replaceClear($this->configuration['collection']);
     $key = $this->tokenService->replaceClear($this->configuration['key']);
     if ($this->writeMode()) {

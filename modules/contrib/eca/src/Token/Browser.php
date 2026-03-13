@@ -20,6 +20,7 @@ use Drupal\eca\Attribute\Token;
 use Drupal\eca\EcaEvents;
 use Drupal\eca\Plugin\DataType\DataTransferObject;
 use Drupal\eca\PluginManager\Event;
+use Drupal\eca\ProcessDebugger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -58,6 +59,11 @@ class Browser {
   protected ?array $tokenInfo = NULL;
 
   /**
+   * Prefix for compressed data to distinguish it from other strings.
+   */
+  protected const string COMPRESS_PREFIX = "\x1f\x9d";
+
+  /**
    * Making sure that we don't run this twice.
    *
    * @var bool
@@ -86,6 +92,13 @@ class Browser {
   protected int $depth;
 
   /**
+   * Max number of cases for history data.
+   *
+   * @var int
+   */
+  protected int $cases;
+
+  /**
    * Constructs the browser object.
    */
   public function __construct(
@@ -100,9 +113,11 @@ class Browser {
     protected StateInterface $state,
   ) {
     $this->privateTempStore = $privateTempStoreFactory->get('eca_process_debugger');
+    $this->privateTempStore->delete('testing::');
     $this->sharedTempStore = $sharedTempStoreFactory->get('eca_process_debugger');
     $this->request = $requestStack->getCurrentRequest();
-    $this->depth = $this->state->get('_eca_internal_debug_data_depth', 3) ?? 3;
+    $this->depth = $this->state->get('_eca_internal_debug_data_depth', 5) ?? 5;
+    $this->cases = $this->state->get('_eca_internal_debug_data_cases', 10) ?? 10;
   }
 
   /**
@@ -121,9 +136,10 @@ class Browser {
    */
   public function storeHistory(array $history, ?string $event = NULL): ?string {
     if ($event === NULL) {
-      $hash = md5(json_encode($history));
+      $compressed = $this->compress($history);
+      $hash = md5($compressed);
       try {
-        $this->privateTempStore->set($hash, $history);
+        $this->privateTempStore->set($hash, $compressed);
       }
       catch (\Exception) {
         // Silently fail if temp store is not available.
@@ -133,8 +149,8 @@ class Browser {
     }
     $testingKey = 'testing::' . $event;
     $testingData = $this->sharedTempStore->get($testingKey);
-    if (is_string($testingData)) {
-      $this->sharedTempStore->set($testingKey, $history);
+    if (is_string($testingData) && !str_starts_with($testingData, self::COMPRESS_PREFIX)) {
+      $this->sharedTempStore->set($testingKey, $this->compress($history));
     }
     $history += [
       'timestamp' => $this->time->getRequestTime(),
@@ -145,14 +161,14 @@ class Browser {
       'ip' => $this->request->getClientIp(),
       'url' => $this->request->getRequestUri(),
     ];
-    $data = $this->getHistoryByEvent($event);
+    $data = $this->getRawHistoryByEvent($event);
     $data[] = $history;
-    // Only store the 10 latest cases of that event.
-    if (count($data) > 10) {
-      $data = array_slice($data, -10);
+    // Only store a number latest cases of that event.
+    if (count($data) > $this->cases) {
+      $data = array_slice($data, -1 * $this->cases);
     }
     try {
-      $this->sharedTempStore->set($event, $data);
+      $this->sharedTempStore->set($event, $this->compress($data));
     }
     catch (\Exception) {
       // Silently fail if temp store is not available.
@@ -171,7 +187,7 @@ class Browser {
    *   The history data.
    */
   public function getHistoryByHash(string $hash): array {
-    return $this->privateTempStore->get($hash) ?? [];
+    return ProcessDebugger::expandHistory($this->decompress($this->privateTempStore->get($hash)));
   }
 
   /**
@@ -184,7 +200,23 @@ class Browser {
    *   The history data.
    */
   public function getHistoryByEvent(string $event): array {
-    return $this->sharedTempStore->get($event) ?? [];
+    return ProcessDebugger::expandHistory($this->getRawHistoryByEvent($event));
+  }
+
+  /**
+   * Get the raw history data by event without expanding deduplication markers.
+   *
+   * Used internally when appending new entries to avoid unnecessary
+   * expansion of data that will be re-compressed and stored again.
+   *
+   * @param string $event
+   *   The event.
+   *
+   * @return array
+   *   The raw history data.
+   */
+  protected function getRawHistoryByEvent(string $event): array {
+    return $this->decompress($this->sharedTempStore->get($event));
   }
 
   /**
@@ -202,7 +234,31 @@ class Browser {
     $jobId = (new Random())->string();
     $this->sharedTempStore->set('testing::' . $event, $jobId);
     $this->sharedTempStore->set('jobid::testing::' . $jobId, $event);
+    if (!($this->state->get('_eca_internal_debug_mode', FALSE) ?? FALSE)) {
+      $this->state->set('_eca_internal_debug_mode', TRUE);
+      $this->sharedTempStore->set('jobid::reset_debug::' . $jobId, TRUE);
+    }
     return $jobId;
+  }
+
+  /**
+   * Cancels a running test and cleans up associated resources.
+   *
+   * @param string $jobId
+   *   The job ID.
+   *
+   * @throws \Drupal\Core\TempStore\TempStoreException
+   */
+  public function cancelTesting(string $jobId): void {
+    $event = $this->sharedTempStore->get('jobid::testing::' . $jobId);
+    if ($event) {
+      $this->sharedTempStore->delete('testing::' . $event);
+      $this->sharedTempStore->delete('jobid::testing::' . $jobId);
+    }
+    if ($this->sharedTempStore->get('jobid::reset_debug::' . $jobId)) {
+      $this->state->set('_eca_internal_debug_mode', FALSE);
+      $this->sharedTempStore->delete('jobid::reset_debug::' . $jobId);
+    }
   }
 
   /**
@@ -218,11 +274,18 @@ class Browser {
    */
   public function pollTesting(string $jobId): ?array {
     $event = $this->sharedTempStore->get('jobid::testing::' . $jobId);
-    $data = $this->sharedTempStore->get('testing::' . $event);
-    if ($data !== $jobId && is_array($data)) {
+    $raw = $this->sharedTempStore->get('testing::' . $event);
+    // Distinguish between the jobId string (test pending) and compressed
+    // history data (test completed) by checking for the compression prefix.
+    if (is_string($raw) && $raw !== $jobId && str_starts_with($raw, self::COMPRESS_PREFIX)) {
+      $data = $this->decompress($raw);
       $this->sharedTempStore->delete('testing::' . $event);
       $this->sharedTempStore->delete('jobid::testing::' . $jobId);
-      return $data['history'] ?? [];
+      if ($this->sharedTempStore->get('jobid::reset_debug::' . $jobId)) {
+        $this->state->set('_eca_internal_debug_mode', FALSE);
+        $this->sharedTempStore->delete('jobid::reset_debug::' . $jobId);
+      }
+      return ProcessDebugger::expandHistory($data['history'] ?? []);
     }
     return NULL;
   }
@@ -286,10 +349,11 @@ class Browser {
     }
     $normalizedData = [];
     foreach ($data as $key => $value) {
-      if (!isset($this->processedValues[$key]) || $this->processedValues[$key]['hash'] !== md5(serialize($value))) {
+      $hash = md5(serialize($value));
+      if (!isset($this->processedValues[$key]) || $this->processedValues[$key]['hash'] !== $hash) {
         $this->processedValues[$key] = [
           'data' => $this->normalizeValue($key, $value),
-          'hash' => md5(serialize($value)),
+          'hash' => $hash,
         ];
       }
       $normalizedData[$key] = $this->processedValues[$key]['data'];
@@ -547,6 +611,39 @@ class Browser {
       }
     }
     return FALSE;
+  }
+
+  /**
+   * Compresses data for storage in the temp store.
+   *
+   * @param array $data
+   *   The data to compress.
+   *
+   * @return string
+   *   The compressed data string, prefixed with a marker.
+   */
+  protected function compress(array $data): string {
+    return self::COMPRESS_PREFIX . gzcompress(serialize($data));
+  }
+
+  /**
+   * Decompresses data retrieved from the temp store.
+   *
+   * @param mixed $data
+   *   The data from the temp store.
+   *
+   * @return array
+   *   The decompressed data array.
+   */
+  protected function decompress(mixed $data): array {
+    if (is_string($data) && str_starts_with($data, self::COMPRESS_PREFIX)) {
+      $decompressed = gzuncompress(substr($data, strlen(self::COMPRESS_PREFIX)));
+      if ($decompressed === FALSE) {
+        return [];
+      }
+      return unserialize($decompressed) ?: [];
+    }
+    return [];
   }
 
 }

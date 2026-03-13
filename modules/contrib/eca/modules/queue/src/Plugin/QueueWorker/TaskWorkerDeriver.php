@@ -4,7 +4,9 @@ namespace Drupal\eca_queue\Plugin\QueueWorker;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\eca_queue\QueueEvents;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,10 +29,20 @@ final class TaskWorkerDeriver implements ContainerDeriverInterface {
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected StateInterface $state;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, $base_plugin_id): TaskWorkerDeriver {
-    return new TaskWorkerDeriver($container->get('entity_type.manager'));
+    return new TaskWorkerDeriver(
+      $container->get('entity_type.manager'),
+      $container->get('state'),
+    );
   }
 
   /**
@@ -38,9 +50,12 @@ final class TaskWorkerDeriver implements ContainerDeriverInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, StateInterface $state) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->state = $state;
   }
 
   /**
@@ -60,9 +75,16 @@ final class TaskWorkerDeriver implements ContainerDeriverInterface {
   public function getDerivativeDefinitions($base_plugin_definition): array {
     // Also keep "eca_task" as is for non-distributed tasks.
     $this->derivatives[''] = $base_plugin_definition;
-
-    /** @var \Drupal\eca\Entity\Eca $eca */
-    foreach ($this->entityTypeManager->getStorage('eca')->loadMultiple() as $eca) {
+    $subscribed = current($this->state->get('eca.subscribed', [])[QueueEvents::PROCESSING_TASK] ?? []);
+    if (!$subscribed) {
+      return $this->derivatives;
+    }
+    foreach (array_keys($subscribed) as $eca_id) {
+      /** @var \Drupal\eca\Entity\Eca|null $eca */
+      $eca = $this->entityTypeManager->getStorage('eca')->load($eca_id);
+      if ($eca === NULL || !$eca->status()) {
+        continue;
+      }
       foreach ($eca->get('events') ?? [] as $event) {
         if (($event['plugin'] ?? NULL) !== 'eca_queue:processing_task') {
           continue;

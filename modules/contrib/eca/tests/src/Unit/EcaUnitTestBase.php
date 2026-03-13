@@ -40,9 +40,7 @@ abstract class EcaUnitTestBase extends UnitTestCase {
    */
   protected function getPrivateMethod(string $class, string $method): \ReflectionMethod {
     $reflector = new \ReflectionClass($class);
-    $method = $reflector->getMethod($method);
-    $method->setAccessible(TRUE);
-    return $method;
+    return $reflector->getMethod($method);
   }
 
   /**
@@ -60,9 +58,7 @@ abstract class EcaUnitTestBase extends UnitTestCase {
    */
   protected function getPrivateProperty(string $className, string $propertyName): \ReflectionProperty {
     $reflector = new \ReflectionClass($className);
-    $property = $reflector->getProperty($propertyName);
-    $property->setAccessible(TRUE);
-    return $property;
+    return $reflector->getProperty($propertyName);
   }
 
 }
