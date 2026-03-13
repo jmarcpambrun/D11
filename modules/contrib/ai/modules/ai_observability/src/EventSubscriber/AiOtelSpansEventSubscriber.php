@@ -10,6 +10,7 @@ use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai_observability\AiObservabilityUtils;
 use Drupal\ai_observability\Form\SettingsForm;
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\opentelemetry\OpentelemetryService;
 use OpenTelemetry\API\Trace\Span;
@@ -135,7 +136,7 @@ class AiOtelSpansEventSubscriber implements EventSubscriberInterface {
     $span->setAttribute('model', $event->getModelId());
     $span->setAttribute('provider_request_id', $event->getRequestThreadId());
     $span->setAttribute('provider_request_parent_id', $event->getRequestParentId());
-    $span->setAttribute('configuration', $event->getConfiguration());
+    $span->setAttribute('configuration', Json::encode($event->getConfiguration()));
     $span->setAttribute('tags', $event->getTags());
 
     // Optionally submit input to the span if enabled in configuration.

@@ -33,3 +33,17 @@ using the module.
 ## Develop for it
 Check the [developers guide](https://project.pages.drupalcode.org/ai/developers/developer_information) for information on how to develop using the
 AI module.
+
+### Override field processing decisions
+To override whether an automator field should run after `checkIfEmpty()`
+normalization, subscribe to
+`Drupal\ai_automators\Event\ShouldProcessFieldEvent::EVENT_NAME`
+(`ai_automator.should_process_field`), and call `setShouldProcess(TRUE|FALSE)`.
+
+Rules extending `RuleBase` can override `postCheckIfEmpty()` and return an
+empty array to force the value to be treated as empty before the event is
+dispatched.
+
+Rules not extending `RuleBase` can implement
+`Drupal\ai_automators\PluginInterfaces\AiAutomatorPostCheckIfEmptyInterface`
+to provide the same behavior.

@@ -635,14 +635,36 @@ final class AiAssistantForm extends EntityForm {
         /** @var \Drupal\ai_agent\Entity\AiAgent $agent */
         $agent = $this->entityTypeManager->getStorage('ai_agent')->load($form_state->getValue('ai_agent'));
         if ($agent) {
+          // Get existing tools and preserve non-managed tools.
+          $existing_tools = $agent->get('tools') ?: [];
+
+          // Remove only RAG and subagent tools from existing tools.
+          foreach ($existing_tools as $tool_key => $enabled) {
+            if ($tool_key === 'ai_search:rag_search' || str_starts_with($tool_key, 'ai_agents::ai_agent::')) {
+              unset($existing_tools[$tool_key]);
+            }
+          }
+
+          // Merge preserved tools with new managed tools.
+          $tools = array_merge($existing_tools, $tools);
           $agent->set('tools', $tools);
           $agent->set('description', $form_state->getValue('description'));
           $agent->set('system_prompt', $form_state->getValue('instructions'));
-          // Load and merge the tool usage limits.
-          $old_tool_usage_limits = $agent->get('tool_usage_limits');
-          if ($old_tool_usage_limits) {
-            $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
+
+          // Load and merge tool usage limits, preserving non-managed limits.
+          $old_tool_usage_limits = $agent->get('tool_usage_limits') ?: [];
+
+          // Remove limits for removed subagents and disabled RAG.
+          foreach ($old_tool_usage_limits as $limit_key => $limit_value) {
+            if ($limit_key === 'ai_search:rag_search' && !$form_state->getValue('enable_rag')) {
+              unset($old_tool_usage_limits[$limit_key]);
+            }
+            if (str_starts_with($limit_key, 'ai_agents::ai_agent::') && !isset($tools[$limit_key])) {
+              unset($old_tool_usage_limits[$limit_key]);
+            }
           }
+
+          $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
           $agent->set('tool_usage_limits', $tool_usage_limits);
 
           $agent->save();

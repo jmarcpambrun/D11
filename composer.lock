@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d711eeb9928c4ac5977859312e2e7c7b",
+    "content-hash": "d5771a85f9bb6cb2ade4beb5893755f4",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2528,17 +2528,17 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.3.0-rc2",
+            "version": "1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.3.0-rc2"
+                "reference": "1.3.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.3.0-rc2.zip",
-                "reference": "1.3.0-rc2",
-                "shasum": "cb0efcd34cedecb4a48d901a78bb06aa7eb7ab7c"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.3.0.zip",
+                "reference": "1.3.0",
+                "shasum": "0585d2d799305c3275b0966f8b41959fd7fa45ab"
             },
             "require": {
                 "drupal/core": "^10.5 || ^11.2",
@@ -2568,11 +2568,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.3.0-rc2",
-                    "datestamp": "1772193193",
+                    "version": "1.3.0",
+                    "datestamp": "1773325312",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "RC releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -21522,7 +21522,6 @@
     "aliases": [],
     "minimum-stability": "RC",
     "stability-flags": {
-        "drupal/ai": 5,
         "drupal/auto_translation": 10,
         "drupal/content_access": 5,
         "drupal/eca": 15,

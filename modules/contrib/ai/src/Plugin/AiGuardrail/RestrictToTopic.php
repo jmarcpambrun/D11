@@ -164,14 +164,14 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
     ];
 
     if ($form_state->getValue('llm_ai_provider') == NULL) {
-      $form_state->setValue('llm_ai_provider', $this->getConfiguration()['llm_provider'] ?? $this->getConfiguration()['llm_ai_provider']);
+      $form_state->setValue('llm_ai_provider', $this->getConfiguration()['llm_provider'] ?? $this->getConfiguration()['llm_ai_provider'] ?? NULL);
     }
     if ($form_state->getValue('llm_ai_model') == NULL) {
-      $form_state->setValue('llm_ai_model', $this->getConfiguration()['llm_model'] ?? $this->getConfiguration()['llm_ajax_prefix']['llm_ai_model']);
+      $form_state->setValue('llm_ai_model', $this->getConfiguration()['llm_model'] ?? ($this->getConfiguration()['llm_ajax_prefix']['llm_ai_model'] ?? NULL));
     }
 
     $this->aiProviderFormHelper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('AI Provider'), $this->t('The provider of the AI models used by this guardrail.'), TRUE);
-    $llm_configs = $this->getConfiguration()['llm_config'];
+    $llm_configs = $this->getConfiguration()['llm_config'] ?? [];
     if ($llm_configs && count($llm_configs)) {
       foreach ($llm_configs as $key => $value) {
         $form['llm_ajax_prefix']['llm_ajax_prefix_configuration_' . $key]['#default_value'] = $value;
@@ -262,13 +262,22 @@ PROMPT;
       new ChatMessage('user', $prompt),
     ]);
 
-    $provider = $this->configuration['llm_provider'];
-    $model = $this->configuration['llm_model'];
+    $provider = $this->configuration['llm_provider'] ?? '';
+    $model = $this->configuration['llm_model'] ?? '';
+
+    if (empty($provider)) {
+      $default = $this->getAiPluginManager()->getDefaultProviderForOperationType('chat');
+      if ($default === NULL) {
+        return new StopResult('No AI provider configured for topic classification. Please configure a default chat provider in the AI module settings.', $this);
+      }
+      $provider = $default['provider_id'];
+      $model = $default['model_id'];
+    }
 
     $ai_provider = $this->getAiPluginManager()->createInstance($provider);
 
     // @phpstan-ignore-next-line
-    $ai_provider->setConfiguration($this->configuration['llm_config']);
+    $ai_provider->setConfiguration($this->configuration['llm_config'] ?? []);
 
     // @phpstan-ignore-next-line
     $response = $ai_provider

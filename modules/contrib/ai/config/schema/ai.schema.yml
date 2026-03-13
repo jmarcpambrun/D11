@@ -61,6 +61,14 @@ ai.settings:
       required: false
       sequence:
         type: ignore
+    allowed_hosts:
+      type: sequence
+      label: 'Allowed hosts for external AI requests'
+      sequence:
+        type: string
+    allowed_hosts_rewrite_links:
+      type: boolean
+      label: 'If links to allowed hosts should be rewritten'
 
 ai.default_operation_provider:
   type: mapping

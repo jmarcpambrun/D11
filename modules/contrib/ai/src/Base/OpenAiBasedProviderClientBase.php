@@ -12,7 +12,6 @@ use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
-use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -122,7 +121,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    * {@inheritdoc}
    */
   public function hasAuthentication(): bool {
-    return !empty($this->apiKey);
+    return TRUE;
   }
 
   /**
@@ -144,18 +143,12 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
 
   /**
    * Loads the OpenAI Client with authentication if not initialized.
+   *
+   * @throws \Drupal\ai\Exception\AiSetupFailureException
+   *   Thrown when the API key cannot be loaded or authentication setup fails.
    */
   protected function loadClient(): void {
     if (empty($this->client)) {
-      if (!$this->hasAuthentication()) {
-        try {
-          $this->setAuthentication($this->loadApiKey());
-        }
-        catch (AiSetupFailureException $e) {
-          throw new AiSetupFailureException('Failed to authenticate with AI provider: ' . $e->getMessage(), $e->getCode(), $e);
-        }
-      }
-
       $this->client = $this->createClient();
     }
   }
@@ -195,12 +188,16 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    *
    * @return \OpenAI\Client
    *   The configured OpenAI client instance.
+   *
+   * @throws \Drupal\ai\Exception\AiSetupFailureException
+   *   Thrown when the API key cannot be loaded or authentication setup fails.
    */
   protected function createClient(): Client {
     $clientFactory = \OpenAI::factory();
 
     // Only set the API key if it is not empty.
     if ($this->hasAuthentication()) {
+      $this->setAuthentication($this->loadApiKey());
       $clientFactory = $clientFactory->withApiKey($this->apiKey);
     }
 

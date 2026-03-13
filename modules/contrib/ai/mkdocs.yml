@@ -66,10 +66,12 @@ nav:
       - Image-To-Image Call: developers/call_image_to_image.md
       - Object Detection Call: developers/call_object_detection.md
     - Plugins/Managers:
+      - Function Call Plugins: developers/function_call.md
       - Function Call Schema: developers/function_call_schema.md
       - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
       - Chat History Form Element: developers/chat_history_element.md
+      - CSS / JS / Icon Utility Library: developers/css_utility_library.md
       - Provider Config Schema: developers/provider_config_schema.md
     - Develop an AI Provider:
       - Getting Started: developers/writing_an_ai_provider.md
