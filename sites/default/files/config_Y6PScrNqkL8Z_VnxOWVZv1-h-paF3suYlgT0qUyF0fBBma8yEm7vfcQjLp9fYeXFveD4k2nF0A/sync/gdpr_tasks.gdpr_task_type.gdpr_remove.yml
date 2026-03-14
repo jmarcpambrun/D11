@@ -1,8 +1,0 @@
-uuid: 8ce43aad-0076-418c-9f3e-fa5fff908112
-langcode: fr
-status: true
-dependencies: {  }
-_core:
-  default_config_hash: 9VpgkAPFx40SyOeKvMtrJFi6p5xj9bSN6I-5YW9Mwbg
-id: gdpr_remove
-label: 'Removal Request'
