@@ -3,7 +3,7 @@
         'name' => 'drupal/legacy-project',
         'pretty_version' => 'dev-D11_NEW_UBU',
         'version' => 'dev-D11_NEW_UBU',
-        'reference' => '7cbddb774d5748954e715c463b725779771a19e9',
+        'reference' => '70478b9caf376fcb1615e428385a054e79d73402',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -1108,7 +1108,7 @@
         'drupal/legacy-project' => array(
             'pretty_version' => 'dev-D11_NEW_UBU',
             'version' => 'dev-D11_NEW_UBU',
-            'reference' => '7cbddb774d5748954e715c463b725779771a19e9',
+            'reference' => '70478b9caf376fcb1615e428385a054e79d73402',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
