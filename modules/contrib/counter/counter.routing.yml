@@ -3,7 +3,6 @@ counter.counter_settings:
   defaults:
     _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
     _title: 'Counter'
-    _title_context: 'counter'
   requirements:
     _permission: 'administer counter'
 
@@ -12,7 +11,6 @@ counter.basic:
   defaults:
     _form: '\Drupal\counter\Form\CounterSettingsBasic'
     _title: 'Basic Counter'
-    _title_context: 'counter'
   requirements:
     _permission: 'administer counter'
 
@@ -21,7 +19,6 @@ counter.advanced:
   defaults:
     _form: '\Drupal\counter\Form\CounterSettingsAdvanced'
     _title: 'Advanced Counter'
-    _title_context: 'counter'
   requirements:
     _permission: 'administer counter'
 
@@ -30,7 +27,6 @@ counter.initial:
   defaults:
     _form: '\Drupal\counter\Form\CounterSettingsInitial'
     _title: 'Initial Counter'
-    _title_context: 'counter'
   requirements:
     _permission: 'administer counter'
 
@@ -39,22 +35,5 @@ counter.dashboard:
   defaults:
     _controller: '\Drupal\counter\Controller\CounterDashboard::page'
     _title: 'Counter Dashboard'
-    _title_context: 'counter'
-  requirements:
-    _permission: 'administer counter'
-
-counter.statistics:
-  path: '/admin/config/counter/statistics'
-  defaults:
-    _controller: '\Drupal\counter\Controller\CounterStatistics::statisticsPage'
-    _title: 'Statistics views'
-    _title_context: 'counter'
-  requirements:
-    _permission: 'administer counter'
-
-counter.statistics.data:
-  path: '/admin/config/counter/statistics/data'
-  defaults:
-    _controller: '\Drupal\counter\Controller\CounterStatistics::statisticsData'
   requirements:
     _permission: 'administer counter'

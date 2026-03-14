@@ -2,49 +2,49 @@
 <div id="counter">
   <ul>
     {% if site_counter is not null %}
-    <li>{{ 'Site Counter:'|t({}, {'context': 'counter'}) }} <strong>{{ site_counter }}</strong></li>
+    <li>{{ 'Site Counter:'|t }} <strong>{{ site_counter }}</strong></li>
     {% endif %}
     {% if unique_visitor is not null %}
-    <li>{{ 'Unique Visitor:'|t({}, {'context': 'counter'}) }} <strong>{{ unique_visitor }}</strong></li>
+    <li>{{ 'Unique Visitor:'|t }} <strong>{{ unique_visitor }}</strong></li>
     {% endif %}
     {% if registered_user is not null %}
-    <li>{{ 'Registered Users:'|t({}, {'context': 'counter'}) }} <strong>{{ registered_user }}</strong></li>
+    <li>{{ 'Registered Users:'|t }} <strong>{{ registered_user }}</strong></li>
     {% endif %}
     {% if unregistered_user is not null %}
-    <li>{{ 'Unregistered Users:'|t({}, {'context': 'counter'}) }} <strong>{{ unregistered_user }}</strong></li>
+    <li>{{ 'Unregistered Users:'|t }} <strong>{{ unregistered_user }}</strong></li>
     {% endif %}
     {% if blocked_user is not null %}
-    <li>{{ 'Blocked Users:'|t({}, {'context': 'counter'}) }} <strong>{{ blocked_user }}</strong></li>
+    <li>{{ 'Blocked Users:'|t }} <strong>{{ blocked_user }}</strong></li>
     {% endif %}
     {% if published_nodes is not null %}
-    <li>{{ 'Published Nodes:'|t({}, {'context': 'counter'}) }} <strong>{{ published_nodes }}</strong></li>
+    <li>{{ 'Published Nodes:'|t }} <strong>{{ published_nodes }}</strong></li>
     {% endif %}
     {% if unpublished_nodes is not null %}
-    <li>{{ 'Unublished Nodes:'|t({}, {'context': 'counter'}) }} <strong>{{ unpublished_nodes }}</strong></li>
+    <li>{{ 'Unublished Nodes:'|t }} <strong>{{ unpublished_nodes }}</strong></li>
     {% endif %}
     {% if server_ip is not null %}
-    <li>{{ 'Server IP Address:'|t({}, {'context': 'counter'}) }} <strong>{{ server_ip }}</strong></li>
+    <li>{{ 'Server IP Address:'|t }} <strong>{{ server_ip }}</strong></li>
     {% endif %}
     {% if ip is not null %}
-    <li>{{ 'IP Address:'|t({}, {'context': 'counter'}) }} <strong>{{ ip }}</strong></li>
+    <li>{{ 'IP Address:'|t }} <strong>{{ ip }}</strong></li>
     {% endif %}
     {% if counter_since is not null %}
-    <li>{{ 'Counter Since:'|t({}, {'context': 'counter'}) }} <strong>{{ counter_since }}</strong></li>
+    <li>{{ 'Counter Since:'|t }} <strong>{{ counter_since }}</strong></li>
     {% endif %}
     {% if (statistic_today is not null) or (statistic_week is not null) or (statistic_month is not null) or (statistic_year is not null) %}
-      <li> {{ 'Visitors'|t({}, {'context': 'counter'}) }}
+      <li> {{ 'Visitors'|t }}
         <ul>
           {% if statistic_today is not null %}
-            <li>{{ 'Today:'|t({}, {'context': 'counter'}) }} <strong>{{ statistic_today }}</strong></li>
+            <li>{{ 'Today:'|t }} <strong>{{ statistic_today }}</strong></li>
           {% endif %}
           {% if statistic_week is not null %}
-            <li>{{ 'This week:'|t({}, {'context': 'counter'}) }} <strong>{{ statistic_week }}</strong></li>
+            <li>{{ 'This week:'|t }} <strong>{{ statistic_week }}</strong></li>
           {% endif %}
           {% if statistic_month is not null %}
-            <li>{{ 'This month:'|t({}, {'context': 'counter'}) }} <strong>{{ statistic_month }}</strong></li>
+            <li>{{ 'This month:'|t }} <strong>{{ statistic_month }}</strong></li>
           {% endif %}
           {% if statistic_year is not null %}
-            <li>{{ 'This year:'|t({}, {'context': 'counter'}) }} <strong>{{ statistic_year }}</strong></li>
+            <li>{{ 'This year:'|t }} <strong>{{ statistic_year }}</strong></li>
           {% endif %}
         </ul>
       </li>

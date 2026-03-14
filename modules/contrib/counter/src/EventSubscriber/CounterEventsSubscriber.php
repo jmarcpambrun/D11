@@ -99,7 +99,7 @@ class CounterEventsSubscriber implements EventSubscriberInterface {
 
     $path = $request->getPathInfo();
 
-    $skip = strpos($path, '/sites/') === 0 || preg_match('/^\/history\/\d+\/read$/', $path) || strpos($path, '/admin/config/counter') === 0;
+    $skip = strpos($path, '/sites/') === 0 || preg_match('/^\/history\/\d+\/read$/', $path);
 
     $this->moduleHandler->alter('counter_request', $event, $skip);
 

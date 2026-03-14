@@ -38,35 +38,35 @@ class CounterSettingsInitial extends ConfigFormBase {
     $form['counter_initial'] = [
       '#type' => 'details',
       '#weight' => -30,
-      '#title' => $this->t('Basic settings', [], ['context' => 'counter']),
+      '#title' => $this->t('Basic settings'),
     ];
 
     $form['counter_initial'] = [
       '#type' => 'details',
       '#weight' => -10,
-      '#title' => $this->t('Initial Values', [], ['context' => 'counter']),
-      '#description' => $this->t("Set initial values for Site Counter.", [], ['context' => 'counter']),
+      '#title' => $this->t('Initial Values'),
+      '#description' => $this->t("Set initial values for Site Counter."),
     ];
 
     $form['counter_initial']['counter_initial_counter'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Initial value of Site Counter', [], ['context' => 'counter']),
+      '#title' => $this->t('Initial value of Site Counter'),
       '#default_value' => $config->get('counter_initial_counter'),
-      '#description' => $this->t('Initial value of Site Counter', [], ['context' => 'counter']),
+      '#description' => $this->t('Initial value of Site Counter'),
     ];
 
     $form['counter_initial']['counter_initial_unique_visitor'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Initial value of Unique Visitor', [], ['context' => 'counter']),
+      '#title' => $this->t('Initial value of Unique Visitor'),
       '#default_value' => $config->get('counter_initial_unique_visitor'),
-      '#description' => $this->t('Initial value of Unique Visitor', [], ['context' => 'counter']),
+      '#description' => $this->t('Initial value of Unique Visitor'),
     ];
 
     $form['counter_initial']['counter_initial_since'] = [
       '#type' => 'textfield',
-      '#title' => $this->t("Replace 'Since' value with this Unix timestamp", [], ['context' => 'counter']),
+      '#title' => $this->t("Replace 'Since' value with this Unix timestamp"),
       '#default_value' => $config->get('counter_initial_since'),
-      '#description' => $this->t("This field type is Unix timestamp, so you must enter like: 1404671462.", [], ['context' => 'counter']),
+      '#description' => $this->t("This field type is Unix timestamp, so you must enter like: 1404671462."),
     ];
 
     return parent::buildForm($form, $form_state);
