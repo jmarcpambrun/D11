@@ -2,6 +2,9 @@
 
 namespace Drupal\modeler_api;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Link;
+use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
 use Drupal\modeler_api\Plugin\TemplateTokenPluginManager;
 
 /**
@@ -109,13 +112,34 @@ class TemplateTokenResolver {
   protected array $appliedTemplates = [];
 
   /**
+   * Dropdown items to add to DOM elements identified by template token paths.
+   *
+   * Each item maps a resolved token path to a dropdown entry containing a
+   * label and a link to either edit an existing or create a new model. The
+   * frontend uses the token path's CSS selector chain to locate the target
+   * DOM elements and inject the dropdown item.
+   *
+   * @var array<int, array{selectors: string[], target: string, link: string}>
+   */
+  protected array $dropdownItems = [];
+
+  /**
    * Constructs a TemplateTokenResolver.
    *
    * @param \Drupal\modeler_api\Plugin\TemplateTokenPluginManager $templateTokenPluginManager
    *   The template token plugin manager.
+   * @param \Drupal\modeler_api\Plugin\ModelOwnerPluginManager $modelOwnerPluginManager
+   *   The model owner plugin manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\modeler_api\Api $modelerApiService
+   *   The API.
    */
   public function __construct(
     protected TemplateTokenPluginManager $templateTokenPluginManager,
+    protected ModelOwnerPluginManager $modelOwnerPluginManager,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected Api $modelerApiService,
   ) {}
 
   /**
@@ -296,6 +320,119 @@ class TemplateTokenResolver {
       'hidden_config' => $hiddenConfig,
       'config' => $config,
     ];
+    return $this;
+  }
+
+  /**
+   * Adds a dropdown item to DOM elements identified by a token path.
+   *
+   * This method resolves a colon-separated token path against the template
+   * token definitions for the given model owner to determine the CSS selector
+   * chain and target attribute for identifying DOM elements. It then checks
+   * whether the specified model already exists and generates a link to either
+   * edit the existing model or create a new one.
+   *
+   * The token path uses the same colon-separated format as raw token
+   * references in addToken(), e.g. 'eca-template:select:form:field:all'.
+   *
+   * The resolved token definition provides:
+   * - CSS selectors for locating the target DOM elements.
+   * - A target attribute (e.g. '[name]') for identifying individual elements.
+   *
+   * The link is generated via Link::createFromRoute() so that other modules
+   * can hook into link generation (e.g. to add HTMX attributes). The
+   * rendered link HTML is passed to the frontend, which injects it into the
+   * template token popup.
+   *
+   * Context and context config are included as query parameters in the
+   * generated link. Context config values may contain the placeholder
+   * '{{ target }}' which the frontend replaces with the resolved target
+   * attribute value of the DOM element (e.g. the form field's name) before
+   * rendering the link.
+   *
+   * @param string $tokenPath
+   *   The colon-separated token path describing which DOM elements to
+   *   target (e.g. 'eca-template:select:form:field:all').
+   * @param string $label
+   *   The human-readable label for the dropdown item.
+   * @param string $modelOwnerId
+   *   The model owner plugin ID (e.g. 'eca').
+   * @param string $modelId
+   *   The model (config entity) ID. Used to determine whether the model
+   *   already exists. If it exists, the link points to the edit page;
+   *   otherwise, it points to the add page.
+   * @param string $context
+   *   A context identifier included as the 'context' query parameter
+   *   in the generated link (e.g. 'eca_form').
+   * @param array $contextConfig
+   *   An associative array of context configuration key/value pairs
+   *   included as the JSON-encoded 'contextConfig' query parameter.
+   *   Values may contain the '{{ target }}' placeholder which the
+   *   frontend resolves against the matched DOM element.
+   *
+   * @return $this
+   */
+  public function addDropdownItem(string $tokenPath, string $label, string $modelOwnerId, string $modelId, string $context, array $contextConfig = []): static {
+    // Resolve the token path against the model owner's template tokens,
+    // reusing the same resolution logic as addToken().
+    $templateTokens = $this->templateTokenPluginManager->getTemplateTokensByModelOwner($modelOwnerId);
+    if (empty($templateTokens)) {
+      return $this;
+    }
+
+    $resolved = $this->resolveTokenPath($tokenPath, $templateTokens);
+    if ($resolved === NULL || $resolved['purpose'] !== 'select') {
+      return $this;
+    }
+
+    // Determine whether the model already exists.
+    try {
+      $owner = $this->modelOwnerPluginManager->createInstance($modelOwnerId);
+    }
+    catch (\Exception) {
+      return $this;
+    }
+
+    $entityTypeId = $owner->configEntityTypeId();
+    $entity = $this->entityTypeManager->getStorage($entityTypeId)->load($modelId);
+    $isNew = $entity === NULL;
+
+    // Build query parameters.
+    $query = [];
+    if ($context !== '') {
+      $query['context'] = $context;
+    }
+    if (!empty($contextConfig)) {
+      $query['contextConfig'] = json_encode($contextConfig);
+    }
+
+    $options = [];
+    if (!empty($query)) {
+      $options['query'] = $query;
+    }
+
+    // Generate the link via Link::createFromRoute() so other modules can
+    // hook into link generation (e.g. to add HTMX attributes).
+    $prefix = $isNew ? '+ ' : '✎ ';
+    if ($isNew) {
+      $name = 'entity.' . $entityTypeId . '.add';
+    }
+    else {
+      $name = 'entity.' . $entityTypeId . '.edit_form';
+    }
+    if ($this->modelerApiService->getRouteByName($name)) {
+      $link = Link::createFromRoute($prefix . $label, $name, [
+        $entityTypeId => $modelId,
+        'ownerId' => $modelOwnerId,
+      ], $options)->toString();
+
+      $this->dropdownItems[] = [
+        'selectors' => $resolved['selectors'],
+        'target' => $resolved['target'] ?? '',
+        'link' => (string) $link,
+      ];
+    }
+
     return $this;
   }
 
@@ -500,25 +637,35 @@ class TemplateTokenResolver {
   /**
    * Gets the render array attachments for the current page.
    *
-   * If tokens have been resolved, this method returns a render array with
-   * the Preact library attached and the resolved data in drupalSettings.
+   * If tokens have been resolved or dropdown items have been added, this
+   * method returns a render array with the Preact library attached and the
+   * resolved data in drupalSettings.
    *
    * The drupalSettings structure groups tokens by object (model owner +
    * model + component) and by purpose (select, config), enabling the
    * frontend to associate DOM selections with specific model components.
    *
+   * Dropdown items are passed separately in
+   * drupalSettings.modelerApiDropdownItems so the frontend can inject them
+   * into the appropriate DOM elements.
+   *
    * @param array &$attachments
    *   An array that you can add attachments to.
    */
   public function getAttachments(array &$attachments): void {
-    if ($this->hasTokens()) {
-      $resolved = $this->resolve();
-      if ($resolved) {
-        $attachments['#attached']['library'][] = 'modeler_api/template_token_selector';
-        $attachments['#attached']['drupalSettings']['modelerApiTemplateTokens'] = $resolved;
-        if (!empty($this->appliedTemplates)) {
-          $attachments['#attached']['drupalSettings']['modelerApiAppliedTemplates'] = $this->appliedTemplates;
+    if ($this->hasTokens() || !empty($this->dropdownItems)) {
+      $attachments['#attached']['library'][] = 'modeler_api/template_token_selector';
+      if ($this->hasTokens()) {
+        $resolved = $this->resolve();
+        if ($resolved) {
+          $attachments['#attached']['drupalSettings']['modelerApiTemplateTokens'] = $resolved;
+          if (!empty($this->appliedTemplates)) {
+            $attachments['#attached']['drupalSettings']['modelerApiAppliedTemplates'] = $this->appliedTemplates;
+          }
         }
+      }
+      if (!empty($this->dropdownItems)) {
+        $attachments['#attached']['drupalSettings']['modelerApiDropdownItems'] = $this->dropdownItems;
       }
     }
   }

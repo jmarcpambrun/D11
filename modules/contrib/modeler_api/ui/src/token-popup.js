@@ -13,7 +13,7 @@
 
 import { h } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
-import { getEntries, findAppliedTemplate } from './entry-store';
+import { getEntries, getDropdownItems, findAppliedTemplate } from './entry-store';
 import { getDrupal } from './drupal-context';
 import { ConfigForm } from './config-form';
 
@@ -108,6 +108,59 @@ function resolveTarget(element, targetSelector) {
   }
 
   return targetEl.getAttribute(attrName) || null;
+}
+
+/**
+ * Resolves {{ target }} placeholders in a pre-rendered link HTML string.
+ *
+ * The backend generates the link including query parameters, but context
+ * config values may contain '{{ target }}' placeholders that must be
+ * replaced with the actual target value from the DOM element. Since these
+ * placeholders appear URL-encoded in the href attribute, this function
+ * replaces both the raw and URL-encoded forms.
+ *
+ * @param {string} linkHtml - The pre-rendered <a> tag HTML string.
+ * @param {string} targetSelector - The target CSS selector (e.g. '[name]').
+ * @param {Element|null} element - The DOM element the popup is attached to.
+ * @returns {string} The link HTML with placeholders resolved.
+ */
+function resolveDropdownLink(linkHtml, targetSelector, element) {
+  if (!element || !targetSelector) {
+    return linkHtml;
+  }
+
+  var targetValue = resolveTarget(element, targetSelector);
+  if (targetValue === null) {
+    return linkHtml;
+  }
+
+  // Replace both URL-encoded and raw placeholder forms.
+  // The backend encodes {{ target }} as part of the JSON query parameter,
+  // so in the rendered href it appears URL-encoded.
+  var result = linkHtml;
+  result = result.replace(/\{\{\s*target\s*\}\}/g, targetValue);
+  result = result.replace(/%7B%7B%20target%20%7D%7D/gi, encodeURIComponent(targetValue));
+  result = result.replace(/%7B%7Btarget%7D%7D/gi, encodeURIComponent(targetValue));
+  result = result.replace(/%7B%7B\+target\+%7D%7D/gi, encodeURIComponent(targetValue));
+
+  return result;
+}
+
+/**
+ * Attaches Drupal behaviors to a newly inserted DOM element.
+ *
+ * When server-rendered link HTML is injected via dangerouslySetInnerHTML,
+ * Drupal behaviors (such as HTMX processing) are not automatically applied.
+ * This function calls Drupal.attachBehaviors() on the element so that any
+ * behavior-driven attributes (e.g. HTMX) are activated.
+ *
+ * @param {Element} element - The DOM element to attach behaviors to.
+ */
+function attachDrupalBehaviors(element) {
+  var Drupal = getDrupal();
+  if (Drupal && Drupal.attachBehaviors) {
+    Drupal.attachBehaviors(element, window.drupalSettings || {});
+  }
 }
 
 /**
@@ -212,7 +265,7 @@ function submitSaveData(data) {
  * @param {function} props.onClose - Callback to close the popup.
  * @returns {import('preact').VNode|null} The popup element.
  */
-export function TokenPopup({ objectIds, targetElement, onClose }) {
+export function TokenPopup({ objectIds, dropdownKeys, targetElement, onClose }) {
   var [selectedId, setSelectedId] = useState(null);
 
   // Config values per object, keyed by objectId → { tokenPath: value }.
@@ -232,6 +285,7 @@ export function TokenPopup({ objectIds, targetElement, onClose }) {
   }
 
   var entries = getEntries(objectIds);
+  var dropdownItemsList = getDropdownItems(dropdownKeys || []);
 
   // Track which entries have a previously applied template match.
   // Keyed by objectId → the matched applied record (or null).
@@ -291,7 +345,7 @@ export function TokenPopup({ objectIds, targetElement, onClose }) {
     }
   }, [entries, targetElement]);
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && dropdownItemsList.length === 0) {
     return null;
   }
 
@@ -514,6 +568,23 @@ export function TokenPopup({ objectIds, targetElement, onClose }) {
               })
             : null
         );
+      }),
+      dropdownItemsList.map(function (item, idx) {
+        var linkHtml = resolveDropdownLink(
+          item.link || '',
+          item.target || '',
+          targetElement
+        );
+        return h('li', {
+          key: '__dropdown__' + idx,
+          class: 'modeler-api-token-popup__item modeler-api-token-popup__item--dropdown',
+          dangerouslySetInnerHTML: { __html: linkHtml },
+          ref: function (node) {
+            if (node) {
+              attachDrupalBehaviors(node);
+            }
+          },
+        });
       })
     ),
     h('div', { class: 'modeler-api-token-popup__footer' },

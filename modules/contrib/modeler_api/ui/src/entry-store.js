@@ -55,6 +55,60 @@ export function getEntries(objectIds) {
 }
 
 /**
+ * Dropdown items indexed by the element data-attribute key they belong to.
+ *
+ * Each key maps to an array of dropdown items that should appear in the
+ * popup for elements carrying that key in their data-template-token-select
+ * attribute.
+ *
+ * @type {Map<string, Array<Object>>}
+ */
+const dropdownItemsByKey = new Map();
+
+/**
+ * Registers a dropdown item and associates it with a data-attribute key.
+ *
+ * The key is a synthetic identifier used to link the item to marked DOM
+ * elements via the same data-template-token-select attribute that template
+ * token entries use.
+ *
+ * @param {string} key - The synthetic key for associating with DOM elements.
+ * @param {Object} item - The dropdown item data (label, url, is_new).
+ */
+export function registerDropdownItem(key, item) {
+  if (!dropdownItemsByKey.has(key)) {
+    dropdownItemsByKey.set(key, []);
+  }
+  dropdownItemsByKey.get(key).push(item);
+}
+
+/**
+ * Retrieves all dropdown items for a given set of data-attribute keys.
+ *
+ * Collects dropdown items from all keys present on a DOM element,
+ * deduplicating by URL.
+ *
+ * @param {string[]} keys - Data-attribute keys from the element.
+ * @returns {Array<Object>} The matched dropdown items.
+ */
+export function getDropdownItems(keys) {
+  var result = [];
+  var seen = new Set();
+  for (var i = 0; i < keys.length; i++) {
+    var items = dropdownItemsByKey.get(keys[i]);
+    if (items) {
+      for (var j = 0; j < items.length; j++) {
+        if (!seen.has(items[j].url)) {
+          seen.add(items[j].url);
+          result.push(items[j]);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/**
  * Previously applied template records from drupalSettings.
  *
  * Each record contains model_owner_id, component_id, target,
@@ -130,9 +184,10 @@ export function findAppliedTemplate(modelOwnerId, componentId, target, hiddenCon
 }
 
 /**
- * Clears all stored entries and applied templates.
+ * Clears all stored entries, applied templates, and dropdown items.
  */
 export function clearEntries() {
   entries.clear();
+  dropdownItemsByKey.clear();
   appliedTemplates = [];
 }

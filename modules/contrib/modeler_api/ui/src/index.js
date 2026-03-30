@@ -11,7 +11,7 @@
  * page rebuilds.
  */
 
-import { applyTemplateTokens } from './template-token-selector';
+import { applyTemplateTokens, applyDropdownItems } from './template-token-selector';
 import { registerAppliedTemplates } from './entry-store';
 import { setDrupal } from './drupal-context';
 
@@ -26,16 +26,19 @@ import { setDrupal } from './drupal-context';
     Drupal.behaviors.modelerApiTemplateTokenSelector = {
       attach: function (context, settings) {
         var tokens = settings.modelerApiTemplateTokens;
+        var dropdownItems = settings.modelerApiDropdownItems;
 
-        if (!tokens || !Array.isArray(tokens) || tokens.length === 0) {
-          return;
+        if (tokens && Array.isArray(tokens) && tokens.length > 0) {
+          if (settings.modelerApiAppliedTemplates) {
+            registerAppliedTemplates(settings.modelerApiAppliedTemplates);
+          }
+
+          applyTemplateTokens(tokens, context);
         }
 
-        if (settings.modelerApiAppliedTemplates) {
-          registerAppliedTemplates(settings.modelerApiAppliedTemplates);
+        if (dropdownItems && Array.isArray(dropdownItems) && dropdownItems.length > 0) {
+          applyDropdownItems(dropdownItems, context);
         }
-
-        applyTemplateTokens(tokens, context);
       },
     };
   }
@@ -44,16 +47,19 @@ import { setDrupal } from './drupal-context';
     function init() {
       var settings = window.drupalSettings || {};
       var tokens = settings.modelerApiTemplateTokens;
+      var dropdownItems = settings.modelerApiDropdownItems;
 
-      if (!tokens || !Array.isArray(tokens) || tokens.length === 0) {
-        return;
+      if (tokens && Array.isArray(tokens) && tokens.length > 0) {
+        if (settings.modelerApiAppliedTemplates) {
+          registerAppliedTemplates(settings.modelerApiAppliedTemplates);
+        }
+
+        applyTemplateTokens(tokens, document);
       }
 
-      if (settings.modelerApiAppliedTemplates) {
-        registerAppliedTemplates(settings.modelerApiAppliedTemplates);
+      if (dropdownItems && Array.isArray(dropdownItems) && dropdownItems.length > 0) {
+        applyDropdownItems(dropdownItems, document);
       }
-
-      applyTemplateTokens(tokens, document);
     }
 
     if (document.readyState === 'loading') {

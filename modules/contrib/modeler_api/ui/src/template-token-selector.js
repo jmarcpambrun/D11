@@ -16,7 +16,7 @@
  */
 
 import { h, render } from 'preact';
-import { registerEntry } from './entry-store';
+import { registerEntry, registerDropdownItem } from './entry-store';
 import { FocusWidget } from './focus-widget';
 
 /**
@@ -342,4 +342,136 @@ function addListeners(element) {
       render(null, container);
     }, 0);
   });
+}
+
+/**
+ * Applies dropdown items to DOM elements found via CSS selector chains.
+ *
+ * Iterates over all dropdown item entries from drupalSettings and uses
+ * their incremental CSS selector chains to find and mark DOM elements
+ * with data attributes — the same mechanism used by applyTemplateTokens.
+ * This causes the lightning bolt focus widget to appear on matched
+ * elements. The dropdown items are then rendered as link entries inside
+ * the template token popup alongside any regular template entries.
+ *
+ * @param {Array<Object>} items - Dropdown items from drupalSettings.
+ *   Each item has:
+ *   - selectors: CSS selector chain (array of strings).
+ *   - target: Target attribute selector (e.g. '[name]').
+ *   - label: Human-readable label for the link.
+ *   - url: URL to navigate to when the item is clicked.
+ *   - is_new: Whether this links to creating a new model.
+ * @param {Document|Element} context - The DOM context to search within.
+ */
+export function applyDropdownItems(items, context) {
+  if (!items || !Array.isArray(items)) {
+    return;
+  }
+
+  var root = context === document ? document.documentElement : context;
+
+  for (var i = 0; i < items.length; i++) {
+    applyDropdownItem(items[i], root, i);
+  }
+}
+
+/**
+ * Applies a single dropdown item to matched DOM elements.
+ *
+ * Walks the incremental CSS selector chain to find matching elements,
+ * marks them with data attributes so the focus widget appears, and
+ * registers the item in the entry store so the popup can render it.
+ *
+ * @param {Object} item - The dropdown item data.
+ * @param {Element} root - The root element to start selection from.
+ * @param {number} index - The item's index for generating a unique key.
+ */
+function applyDropdownItem(item, root, index) {
+  var selectors = item.selectors;
+
+  if (!selectors || !Array.isArray(selectors) || selectors.length === 0) {
+    return;
+  }
+
+  // Walk the selector chain to find matching elements.
+  var currentElements = [root];
+
+  for (var s = 0; s < selectors.length; s++) {
+    var selector = selectors[s];
+    var nextElements = [];
+
+    for (var e = 0; e < currentElements.length; e++) {
+      try {
+        var matches = currentElements[e].querySelectorAll(selector);
+        for (var m = 0; m < matches.length; m++) {
+          nextElements.push(matches[m]);
+        }
+      }
+      catch (err) {
+        console.warn(
+          '[modeler_api] Invalid CSS selector in dropdown item: ' + selector,
+          err
+        );
+        return;
+      }
+    }
+
+    currentElements = nextElements;
+
+    if (currentElements.length === 0) {
+      return;
+    }
+  }
+
+  // Generate a synthetic key for this dropdown item. This key is used
+  // in the data-template-token-select attribute to link DOM elements to
+  // the dropdown item in the entry store.
+  var dropdownKey = '__dropdown__' + index;
+
+  // Register the item in the store so the popup can retrieve it.
+  registerDropdownItem(dropdownKey, item);
+
+  // Mark all matched elements with data attributes and attach the
+  // focus widget, using the same mechanism as template token entries.
+  for (var j = 0; j < currentElements.length; j++) {
+    markDropdownElement(currentElements[j], dropdownKey);
+    attachFocusWidget(currentElements[j]);
+  }
+}
+
+/**
+ * Marks a DOM element with a dropdown item's data-attribute key.
+ *
+ * Uses the same data-template-token-select attribute as regular template
+ * tokens, so the focus widget and popup can discover dropdown items via
+ * the same mechanism. The key is stored under a synthetic token path
+ * so it does not collide with real token paths.
+ *
+ * @param {Element} element - The DOM element to mark.
+ * @param {string} dropdownKey - The synthetic key for the dropdown item.
+ */
+function markDropdownElement(element, dropdownKey) {
+  // Append to the main token attribute (space-separated paths).
+  var existing = element.getAttribute(ATTR_TOKEN) || '';
+  var paths = existing ? existing.split(' ') : [];
+  if (!paths.includes(dropdownKey)) {
+    paths.push(dropdownKey);
+    element.setAttribute(ATTR_TOKEN, paths.join(' '));
+  }
+
+  // Append to the select attribute: map the dropdown key to itself
+  // so the popup can discover it.
+  var selectAttr = ATTR_PREFIX + 'select';
+  var existingSelect = element.getAttribute(selectAttr);
+  var selectMap;
+  try {
+    selectMap = existingSelect ? JSON.parse(existingSelect) : {};
+  }
+  catch (e) {
+    selectMap = {};
+  }
+  if (!selectMap[dropdownKey]) {
+    selectMap[dropdownKey] = [dropdownKey];
+  }
+  element.setAttribute(selectAttr, JSON.stringify(selectMap));
 }

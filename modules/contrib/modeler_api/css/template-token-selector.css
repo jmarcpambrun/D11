@@ -398,3 +398,29 @@
   color: #9aa0a6;
   font-size: 11px;
 }
+
+/* ---- Dropdown link items in the popup ---- */
+
+.modeler-api-token-popup__item--dropdown {
+  border-top: 1px solid #e8eaed;
+}
+
+.modeler-api-token-popup__item--dropdown a {
+  display: block;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 12px;
+  text-align: left;
+  white-space: nowrap;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  color: #1a73e8;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.modeler-api-token-popup__item--dropdown a:hover {
+  background: #f1f3f4;
+}

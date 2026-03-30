@@ -89,25 +89,23 @@ class Api {
    * Constructs the modeler API plugin manager.
    */
   public function __construct(
-  protected AccountProxy $currentUser,
-  protected ModelOwnerPluginManager $modelOwnerPluginManager,
-  protected ModelerPluginManager $modelerPluginManager,
-  protected ConfigFactoryInterface $configFactory,
-  protected ManagedStorage $configStorage,
-  protected FileSystemInterface $fileSystem,
-  protected ContextPluginManager $contextPluginManager,
-  protected DependencyPluginManager $dependencyPluginManager,
-  protected TemplateTokenPluginManager $templateTokenPluginManager,
-
-  protected \Closure $menuLinkManagerFactory,
-  protected \Closure $entityTypeManagerFactory,
-  protected \Closure $routeProviderFactory,
-  protected \Closure $tokenFactory,
-  protected ?\Closure $tokenTreeBuilderFactory,
-
-  protected ContextListBuilder $contextListBuilder,
-  protected DependencyListBuilder $dependencyListBuilder,
-  protected TemplateTokenListBuilder $templateTokenListBuilder,
+    protected AccountProxy $currentUser,
+    protected ModelOwnerPluginManager $modelOwnerPluginManager,
+    protected ModelerPluginManager $modelerPluginManager,
+    protected ConfigFactoryInterface $configFactory,
+    protected ManagedStorage $configStorage,
+    protected FileSystemInterface $fileSystem,
+    protected MenuLinkManagerInterface $menuLinkManager,
+    protected ContextPluginManager $contextPluginManager,
+    protected DependencyPluginManager $dependencyPluginManager,
+    protected TemplateTokenPluginManager $templateTokenPluginManager,
+    protected ContextListBuilder $contextListBuilder,
+    protected DependencyListBuilder $dependencyListBuilder,
+    protected TemplateTokenListBuilder $templateTokenListBuilder,
+    protected \Closure $entityTypeManagerFactory,
+    protected \Closure $routeProviderFactory,
+    protected \Closure $tokenFactory,
+    protected ?\Closure $tokenTreeBuilderFactory = NULL,
   ) {}
 
   /**
@@ -148,11 +146,6 @@ class Api {
    */
   protected function getTokenTreeBuilder(): mixed {
     return is_callable($this->tokenTreeBuilderFactory) ? ($this->tokenTreeBuilderFactory)() : NULL;
-  }
-
-
-  protected function getMenuLinkManager() {
-    return ($this->menuLinkManagerFactory)();
   }
 
   /**
@@ -329,7 +322,7 @@ class Api {
       'metadata' => [
         'version' => $owner->getVersion($model),
         'label' => $owner->getLabel($model),
-        'description' => $owner->getDocumentation($model),
+        'documentation' => $owner->getDocumentation($model),
         'storage' => $owner->getStorage($model),
         'executable' => $owner->getStatus($model),
         'template' => $owner->getTemplate($model),
@@ -751,7 +744,7 @@ class Api {
     array_pop($parts);
     $path = implode('/', $parts);
     $url = Url::fromUri('internal:/' . $path);
-    $links = $this->getMenuLinkManager()->loadLinksByRoute($url->getRouteName(), $url->getRouteParameters());
+    $links = $this->menuLinkManager->loadLinksByRoute($url->getRouteName(), $url->getRouteParameters());
     if (!empty($links)) {
       $menuLink = reset($links);
       return $menuLink->getPluginId();

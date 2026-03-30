@@ -42,17 +42,19 @@ function LightningIcon() {
 }
 
 /**
- * Extracts the unique set of object IDs from a target element's data attributes.
+ * Extracts object IDs and dropdown keys from a target element's data attributes.
  *
  * Reads the data-template-token-select attribute (a JSON map of
- * {tokenPath: [objectId, ...]}) and returns a deduplicated array of
- * all object IDs. If the element itself does not carry the attribute,
- * walks up the DOM tree to find the nearest ancestor that does.
+ * {tokenPath: [objectId, ...]}) and separates regular object IDs from
+ * dropdown keys (which start with '__dropdown__'). If the element itself
+ * does not carry the attribute, walks up the DOM tree to find the nearest
+ * ancestor that does.
  *
  * @param {Element} element - The DOM element (or its focusable descendant).
- * @returns {string[]} Unique object IDs associated with this element.
+ * @returns {{objectIds: string[], dropdownKeys: string[]}} Unique object IDs
+ *   and dropdown keys associated with this element.
  */
-function getObjectIds(element) {
+function getObjectIdsAndDropdownKeys(element) {
   // Walk up to find the element carrying the select attribute.
   var el = element;
   var selectAttr = null;
@@ -65,7 +67,7 @@ function getObjectIds(element) {
   }
 
   if (!selectAttr) {
-    return [];
+    return { objectIds: [], dropdownKeys: [] };
   }
 
   var selectMap;
@@ -73,18 +75,25 @@ function getObjectIds(element) {
     selectMap = JSON.parse(selectAttr);
   }
   catch (e) {
-    return [];
+    return { objectIds: [], dropdownKeys: [] };
   }
 
   var ids = new Set();
+  var dkeys = new Set();
   for (var path in selectMap) {
     if (Array.isArray(selectMap[path])) {
       for (var i = 0; i < selectMap[path].length; i++) {
-        ids.add(selectMap[path][i]);
+        var value = selectMap[path][i];
+        if (value.indexOf('__dropdown__') === 0) {
+          dkeys.add(path);
+        }
+        else {
+          ids.add(value);
+        }
       }
     }
   }
-  return Array.from(ids);
+  return { objectIds: Array.from(ids), dropdownKeys: Array.from(dkeys) };
 }
 
 /**
@@ -176,7 +185,11 @@ export function FocusWidget({ targetElement, onDismiss }) {
     }
   }
 
-  var objectIds = targetElement ? getObjectIds(targetElement) : [];
+  var data = targetElement
+    ? getObjectIdsAndDropdownKeys(targetElement)
+    : { objectIds: [], dropdownKeys: [] };
+
+  var hasContent = data.objectIds.length > 0 || data.dropdownKeys.length > 0;
 
   return h('span', {
     ref: widgetRef,
@@ -193,9 +206,10 @@ export function FocusWidget({ targetElement, onDismiss }) {
     },
       h(LightningIcon, null)
     ),
-    open && objectIds.length > 0
+    open && hasContent
       ? h(TokenPopup, {
-          objectIds: objectIds,
+          objectIds: data.objectIds,
+          dropdownKeys: data.dropdownKeys,
           targetElement: targetElement,
           onClose: closePopup,
         })
