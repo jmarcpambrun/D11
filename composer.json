@@ -168,7 +168,12 @@
         "sort-packages": true
     },
     "extra": {
-		"merge-plugin": {
+       "patches": {
+        "drupal/modeler_api": {
+		"Drupal 11 full fix": "patches/modeler_api-drupal11-full-fix.patch"
+                }
+	},
+	"merge-plugin": {
             "include": [
                 "./modules/contrib/webform/composer.libraries.json"
             ]
