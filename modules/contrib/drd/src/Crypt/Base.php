@@ -50,9 +50,14 @@ abstract class Base implements BaseInterface {
    */
   public static function countAvailableMethods(?array $remote = NULL): int {
     $local = self::getMethods();
+     $new_local = [];
+    foreach ($local as $key => $value) {
+      $new_local[strtolower($key)] = $value;
+    }
     $count = 0;
+    $local = $new_local;
     foreach ($remote as $key => $value) {
-      if (isset($local[$key])) {
+      if (isset($local[strtolower($key)])) {
         $count++;
       }
     }

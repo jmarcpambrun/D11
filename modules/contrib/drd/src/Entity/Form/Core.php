@@ -308,10 +308,14 @@ class Core extends ContentEntityForm {
       $command = 'removeClass';
       $message = '';
       foreach (CryptBase::getMethods() as $key => $value) {
-        $response->addCommand(new InvokeCommand('#edit-drd-crypt-type option[value="' . $key . '"]', 'prop', [
-          'disabled',
-          !isset($crypt_methods[$key]),
-        ]));
+        $remote_key = $this->getRemoteKey($key, $crypt_methods);
+        if ($remote_key !== NULL) {
+          // This method is supported on the remote site.
+          $response->addCommand(new InvokeCommand('#edit-drd-crypt-type option[value="' . $remote_key . '"]', 'prop', [
+            'disabled',
+            !isset($crypt_methods[$remote_key]),
+          ]));
+        }
       }
     }
     else {
@@ -377,6 +381,32 @@ class Core extends ContentEntityForm {
     }
     $form_state->setRedirect('entity.drd_core.canonical', ['drd_core' => $core->id()]);
     return $status;
+  }
+
+  /**
+   * Find the correct key from the remote list, case insensitive.
+   *
+   * This is necessary as some encryption methods have different
+   * capitalization on different remote sites.
+   *
+   * @param string $key
+   *   The local key to search for.
+   * @param array $remote_encryption_methods
+   *   The list of remote encryption methods.
+   *
+   * @return string|null
+   *   The found key or NULL if not found.
+   */
+  private function getRemoteKey(string $key, array $remote_encryption_methods): ?string
+  {
+    foreach ($remote_encryption_methods as $remote_key => $method) {
+      // Look for a case-insensitive match.
+      if (strtolower($remote_key) === strtolower($key)) {
+        // Return the exact key as it is on the remote site.
+        return $remote_key;
+      }
+    }
+    return NULL;
   }
 
 }
