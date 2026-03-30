@@ -67,7 +67,13 @@ function content_access_user_update(EntityInterface $account) {
   $roles_removed = array_diff($account->original->getRoles(), $account->getRoles());
 
   if (!empty($roles_added) || !empty($roles_removed)) {
-    node_access_needs_rebuild(TRUE);
+    // Check if the user has 'access administration pages' permissions.
+    $account = \Drupal::currentUser();
+    if ($account->hasPermission('access administration pages')) {
+      // Rebuild the permissions.
+      \Drupal::messenger()->addMessage(t('Your changes have been saved. You may have to <a href=":rebuild">rebuild permissions</a> for your changes to take effect.',
+        [':rebuild' => Url::fromRoute('node.configure_rebuild_confirm')->toString()]));
+    }
   }
 }
 

@@ -22,7 +22,7 @@ class PathologicTest extends PathologicKernelTestBase {
    * Test all variations of URLs.
    */
   public function testPathologic() {
-    global $script_path;
+    global $_pathologic_script_path;
 
     // Start by testing our function to build protocol-relative URLs.
     $this->assertSame(
@@ -93,7 +93,7 @@ class PathologicTest extends PathologicKernelTestBase {
           $paths[$path] = _pathologic_url_to_protocol_relative($paths[$path]);
         }
       }
-      $clean = empty($script_path) ? 'Yes' : 'No';
+      $clean = empty($_pathologic_script_path) ? 'Yes' : 'No';
 
       $this->assertSame(
         '<a href="' . $paths['foo'] . '"><img src="' . $paths['foo/bar'] . '" /></a>',
@@ -124,6 +124,31 @@ class PathologicTest extends PathologicKernelTestBase {
         '<a href="#foo">',
         $this->runFilter('<a href="#foo">'),
         "Fragment-only href. Clean URLs: $clean; protocol style: $protocol_style.",
+      );
+      $this->assertSame(
+        '<source srcset="' . $paths['foo'] . ' 1x, ' . $paths['foo/bar'] . ' 2x" />',
+        $this->runFilter('<source srcset="foo 1x, foo/bar 2x" />'),
+        "srcset attribute with pixel density descriptors. Clean URLs: $clean protocol style $protocol_style.",
+      );
+      $this->assertSame(
+        '<img srcset="' . $paths['foo'] . ' 800w, ' . $paths['foo/bar'] . ' 1200w" />',
+        $this->runFilter('<img srcset="foo 800w, foo/bar 1200w" />'),
+        "srcset attribute with width descriptors. Clean URLs: $clean protocol style $protocol_style.",
+      );
+      $this->assertSame(
+        '<source srcset="' . $paths['foo'] . ' 800w, ' . $paths['foo/bar'] . '" />',
+        $this->runFilter('<source srcset="  foo  800w  , foo/bar" />'),
+        "srcset attribute with extra spaces and missing descriptor. Clean URLs: $clean protocol style $protocol_style.",
+      );
+      $this->assertSame(
+        '<source srcset="' . $paths['foo/bar?baz=qux&amp;quux=quuux#quuuux'] . '" />',
+        $this->runFilter('<source srcset="foo/bar?baz=qux&amp;quux=quuux#quuuux" />'),
+        "srcset attribute with query string and fragment. Clean URLs: $clean protocol style $protocol_style.",
+      );
+      $this->assertSame(
+        '<source srcset="' . $paths['foo'] . ' 800w, ' . $paths['foo/bar'] . '" />',
+        $this->runFilter('<source srcset="foo  800w , foo/bar" />'),
+        "srcset attribute escaped entities. Clean URLs: $clean protocol style $protocol_style.",
       );
       // @see https://drupal.org/node/2208223
       $this->assertSame(
@@ -228,7 +253,7 @@ class PathologicTest extends PathologicKernelTestBase {
 
     // Test paths to existing files when clean URLs are disabled.
     // @see http://drupal.org/node/1672430
-    $script_path = '';
+    $_pathologic_script_path = '';
     $filtered_tag = $this->runFilter('<img src="misc/druplicon.png" />');
     $this->assertTrue(
       strpos($filtered_tag, 'q=') === FALSE,
@@ -257,7 +282,7 @@ class PathologicTest extends PathologicKernelTestBase {
     try {
       $this->runFilter($original);
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       $this->fail('Fails miserably when \Drupal\Core\Url::fromUri() throws exception');
     }
 

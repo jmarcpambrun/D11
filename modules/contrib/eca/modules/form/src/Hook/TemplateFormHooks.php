@@ -8,6 +8,7 @@ use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Hook\Order\Order;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\PluginManager\Event;
 use Drupal\eca_form\Event\FormBuild;
@@ -18,6 +19,8 @@ use Drupal\modeler_api\TemplateTokenResolver;
  * Implements form hooks for templates.
  */
 class TemplateFormHooks {
+
+  use StringTranslationTrait;
 
   /**
    * Constructs a new TemplateFormHooks object.
@@ -50,7 +53,6 @@ class TemplateFormHooks {
       catch (PluginNotFoundException) {
         continue;
       }
-      $event = new FormBuild($form, $form_state);
       foreach ($templates[$eventName] ?? [] as $ecaId => $events) {
         $eca = Eca::load($ecaId);
         foreach ($events as $eventId => $wildcard) {
@@ -58,7 +60,8 @@ class TemplateFormHooks {
             $this->templateTokenResolver->addLabel($eca->get('events')[$eventId]['label'], 'eca', $ecaId, $eventId);
             if ($wildcard === '*:*:*:*') {
               $this->templateTokenResolver->addConfig('form_ids', $form['#form_id'], 'eca', $ecaId, $eventId);
-              $this->templateTokenResolver->addConfig('newModelId', 'form_' . $form['#form_id'], 'eca', $ecaId, $eventId);
+              $newEcaId = 'form_' . $form['#form_id'];
+              $formIds = $form['#form_id'];
             }
             else {
               foreach ($eca->get('events')[$eventId]['configuration'] as $key => $value) {
@@ -66,8 +69,14 @@ class TemplateFormHooks {
                   $this->templateTokenResolver->addConfig($key, $value, 'eca', $ecaId, $eventId);
                 }
               }
-              $this->templateTokenResolver->addConfig('newModelId', 'form_' . str_replace(['*', ':'], ['any', '_'], $wildcard), 'eca', $ecaId, $eventId);
+              $newEcaId = 'form_' . str_replace(['*', ':'], ['any', '_'], $wildcard);
+              $formIds = '';
             }
+            $this->templateTokenResolver->addConfig('newModelId', $newEcaId, 'eca', $ecaId, $eventId);
+            $this->templateTokenResolver->addDropdownItem('eca-template:select:form:field:all', $this->t('Edit in modeler'), 'eca', $newEcaId, 'eca_form', [
+              'form_ids' => $formIds,
+              'field_name' => '{{ target }}',
+            ]);
             foreach ($eca->getAllEventElements($eventId) as $id => $type) {
               foreach ($eca->get($type . 's')[$id]['configuration'] ?? [] as $value) {
                 $this->templateTokenResolver->addToken($value ?? '', 'eca', $ecaId, $eventId);

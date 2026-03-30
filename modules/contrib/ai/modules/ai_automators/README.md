@@ -18,6 +18,7 @@ depending on your specific needs.
 Some of the other sub-modules provided by the AI Core module interact with the
 AI Automators, and you may wish to use them depending on how complex your use
 case is.
+
 1. The AI CKEditor Integration module can be optionally enabled to allow content
    creators choose to run selected AI Automators against WYSIWYG fields. See the
    [Advanced section](#advanced-usage) for more details.

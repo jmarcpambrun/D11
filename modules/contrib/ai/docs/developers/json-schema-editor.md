@@ -40,6 +40,7 @@ will need to have `npm` running locally. The minimum required version of `node`
 is `20.14.0`.
 
 To build the editor assets follow the instructions:
+
 1. Go to `ui/json-schema-editor` folder.
 2. Run `npm install`
 3. Run `npm run build`

@@ -209,6 +209,46 @@ action.configuration.eca_render_add_class:
       constraints:
         NotBlank: []
 
+action.configuration.eca_render_add_attached_library:
+  type: mapping
+  label: 'Configuration for the "Render Add Attached Library" action'
+  mapping:
+    name:
+      type: string
+      label: 'Machine name'
+      constraints:
+        NotBlank: []
+    value:
+      type: string
+      label: 'Library ID'
+      constraints:
+        NotBlank: []
+
+action.configuration.eca_render_add_attached_setting:
+  type: mapping
+  label: 'Configuration for the "Render Add Attached Setting" action'
+  mapping:
+    name:
+      type: string
+      label: 'Machine name'
+      constraints:
+        NotBlank: []
+    collection:
+      type: string
+      label: 'Collection name'
+      constraints:
+        NotBlank: []
+    key:
+      type: string
+      label: 'Setting key'
+      constraints:
+        NotBlank: []
+    value:
+      type: string
+      label: 'Setting value'
+      constraints:
+        NotBlank: []
+
 action.configuration.eca_render_build:
   type: eca_render.action_base
   label: 'Configuration for the "Render Build" action'

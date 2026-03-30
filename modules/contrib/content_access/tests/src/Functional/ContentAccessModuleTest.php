@@ -102,7 +102,6 @@ class ContentAccessModuleTest extends BrowserTestBase {
       'grant own content access',
       'bypass node access',
       'access administration pages',
-      'administer nodes',
     ]);
     $this->drupalLogin($this->adminUser);
 

@@ -28,96 +28,155 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Provides services for normalizing and browsing tokens.
  */
-class Browser {
+final class Browser {
 
   /**
    * The private temp store.
    *
    * @var \Drupal\Core\TempStore\PrivateTempStore
    */
-  protected PrivateTempStore $privateTempStore;
+  private PrivateTempStore $privateTempStoreInstance;
 
   /**
    * The shared temp store.
    *
    * @var \Drupal\Core\TempStore\SharedTempStore
    */
-  protected SharedTempStore $sharedTempStore;
+  private SharedTempStore $sharedTempStoreInstance;
 
   /**
    * The main request.
    *
    * @var \Symfony\Component\HttpFoundation\Request
    */
-  protected Request $request;
+  private Request $request;
 
   /**
    * The token info.
    *
    * @var array|null
    */
-  protected ?array $tokenInfo = NULL;
+  private ?array $tokenInfo = NULL;
 
   /**
    * Prefix for compressed data to distinguish it from other strings.
    */
-  protected const string COMPRESS_PREFIX = "\x1f\x9d";
+  private const string COMPRESS_PREFIX = "\x1f\x9d";
 
   /**
    * Making sure that we don't run this twice.
    *
    * @var bool
    */
-  protected bool $isRunning = FALSE;
+  private bool $isRunning = FALSE;
 
   /**
    * The event classes indexed by event name.
    *
    * @var array
    */
-  protected array $eventClasses = [];
+  private array $eventClasses = [];
 
   /**
    * List of normalized values plus a hash of the original value.
    *
    * @var array
    */
-  protected array $processedValues = [];
+  private array $processedValues = [];
 
   /**
    * Max depth for token data.
    *
    * @var int
    */
-  protected int $depth;
+  private int $depth;
 
   /**
    * Max number of cases for history data.
    *
    * @var int
    */
-  protected int $cases;
+  private int $cases;
 
   /**
    * Constructs the browser object.
    */
   public function __construct(
-    protected EventDispatcherInterface $eventDispatcher,
-    protected TokenServices $token,
-    protected Event $eventPluginManager,
-    protected PrivateTempStoreFactory $privateTempStoreFactory,
-    protected SharedTempStoreFactory $sharedTempStoreFactory,
-    protected AccountProxyInterface $currentUser,
-    protected RequestStack $requestStack,
-    protected TimeInterface $time,
-    protected StateInterface $state,
-  ) {
-    $this->privateTempStore = $privateTempStoreFactory->get('eca_process_debugger');
-    $this->privateTempStore->delete('testing::');
-    $this->sharedTempStore = $sharedTempStoreFactory->get('eca_process_debugger');
-    $this->request = $requestStack->getCurrentRequest();
-    $this->depth = $this->state->get('_eca_internal_debug_data_depth', 5) ?? 5;
-    $this->cases = $this->state->get('_eca_internal_debug_data_cases', 10) ?? 10;
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly TokenServices $token,
+    private readonly Event $eventPluginManager,
+    private readonly PrivateTempStoreFactory $privateTempStoreFactory,
+    private readonly SharedTempStoreFactory $sharedTempStoreFactory,
+    private readonly AccountProxyInterface $currentUser,
+    private readonly RequestStack $requestStack,
+    private readonly TimeInterface $time,
+    private readonly StateInterface $state,
+  ) {}
+
+  /**
+   * Returns the private temp store, lazily initialized.
+   *
+   * @return \Drupal\Core\TempStore\PrivateTempStore
+   *   The private temp store.
+   */
+  private function privateTempStore(): PrivateTempStore {
+    if (!isset($this->privateTempStoreInstance)) {
+      $this->privateTempStoreInstance = $this->privateTempStoreFactory->get('eca_process_debugger');
+      $this->privateTempStoreInstance->delete('testing::');
+    }
+    return $this->privateTempStoreInstance;
+  }
+
+  /**
+   * Returns the shared temp store, lazily initialized.
+   *
+   * @return \Drupal\Core\TempStore\SharedTempStore
+   *   The shared temp store.
+   */
+  private function sharedTempStore(): SharedTempStore {
+    if (!isset($this->sharedTempStoreInstance)) {
+      $this->sharedTempStoreInstance = $this->sharedTempStoreFactory->get('eca_process_debugger');
+    }
+    return $this->sharedTempStoreInstance;
+  }
+
+  /**
+   * Returns the current request, lazily initialized.
+   *
+   * @return \Symfony\Component\HttpFoundation\Request
+   *   The current request.
+   */
+  private function request(): Request {
+    if (!isset($this->request)) {
+      $this->request = $this->requestStack->getCurrentRequest();
+    }
+    return $this->request;
+  }
+
+  /**
+   * Returns the max depth for token data, lazily initialized.
+   *
+   * @return int
+   *   The max depth.
+   */
+  private function depth(): int {
+    if (!isset($this->depth)) {
+      $this->depth = $this->state->get('_eca_internal_debug_data_depth', 5) ?? 5;
+    }
+    return $this->depth;
+  }
+
+  /**
+   * Returns the max number of cases for history data, lazily initialized.
+   *
+   * @return int
+   *   The max number of cases.
+   */
+  private function cases(): int {
+    if (!isset($this->cases)) {
+      $this->cases = $this->state->get('_eca_internal_debug_data_cases', 10) ?? 10;
+    }
+    return $this->cases;
   }
 
   /**
@@ -139,7 +198,7 @@ class Browser {
       $compressed = $this->compress($history);
       $hash = md5($compressed);
       try {
-        $this->privateTempStore->set($hash, $compressed);
+        $this->privateTempStore()->set($hash, $compressed);
       }
       catch (\Exception) {
         // Silently fail if temp store is not available.
@@ -148,9 +207,14 @@ class Browser {
       return $hash;
     }
     $testingKey = 'testing::' . $event;
-    $testingData = $this->sharedTempStore->get($testingKey);
+    $testingData = $this->sharedTempStore()->get($testingKey);
     if (is_string($testingData) && !str_starts_with($testingData, self::COMPRESS_PREFIX)) {
-      $this->sharedTempStore->set($testingKey, $this->compress($history));
+      try {
+        $this->sharedTempStore()->set($testingKey, $this->compress($history));
+      }
+      catch (\Exception) {
+        // Silently fail if temp store is not available.
+      }
     }
     $history += [
       'timestamp' => $this->time->getRequestTime(),
@@ -158,17 +222,17 @@ class Browser {
         'uid' => $this->currentUser->id(),
         'name' => $this->currentUser->getAccountName(),
       ],
-      'ip' => $this->request->getClientIp(),
-      'url' => $this->request->getRequestUri(),
+      'ip' => $this->request()->getClientIp(),
+      'url' => $this->request()->getRequestUri(),
     ];
     $data = $this->getRawHistoryByEvent($event);
     $data[] = $history;
     // Only store a number latest cases of that event.
-    if (count($data) > $this->cases) {
-      $data = array_slice($data, -1 * $this->cases);
+    if (count($data) > $this->cases()) {
+      $data = array_slice($data, -1 * $this->cases());
     }
     try {
-      $this->sharedTempStore->set($event, $this->compress($data));
+      $this->sharedTempStore()->set($event, $this->compress($data));
     }
     catch (\Exception) {
       // Silently fail if temp store is not available.
@@ -187,7 +251,7 @@ class Browser {
    *   The history data.
    */
   public function getHistoryByHash(string $hash): array {
-    return ProcessDebugger::expandHistory($this->decompress($this->privateTempStore->get($hash)));
+    return ProcessDebugger::expandHistory($this->decompress($this->privateTempStore()->get($hash)));
   }
 
   /**
@@ -215,8 +279,8 @@ class Browser {
    * @return array
    *   The raw history data.
    */
-  protected function getRawHistoryByEvent(string $event): array {
-    return $this->decompress($this->sharedTempStore->get($event));
+  private function getRawHistoryByEvent(string $event): array {
+    return $this->decompress($this->sharedTempStore()->get($event));
   }
 
   /**
@@ -232,11 +296,11 @@ class Browser {
    */
   public function initTesting(string $event): string {
     $jobId = (new Random())->string();
-    $this->sharedTempStore->set('testing::' . $event, $jobId);
-    $this->sharedTempStore->set('jobid::testing::' . $jobId, $event);
+    $this->sharedTempStore()->set('testing::' . $event, $jobId);
+    $this->sharedTempStore()->set('jobid::testing::' . $jobId, $event);
     if (!($this->state->get('_eca_internal_debug_mode', FALSE) ?? FALSE)) {
       $this->state->set('_eca_internal_debug_mode', TRUE);
-      $this->sharedTempStore->set('jobid::reset_debug::' . $jobId, TRUE);
+      $this->sharedTempStore()->set('jobid::reset_debug::' . $jobId, TRUE);
     }
     return $jobId;
   }
@@ -250,14 +314,14 @@ class Browser {
    * @throws \Drupal\Core\TempStore\TempStoreException
    */
   public function cancelTesting(string $jobId): void {
-    $event = $this->sharedTempStore->get('jobid::testing::' . $jobId);
+    $event = $this->sharedTempStore()->get('jobid::testing::' . $jobId);
     if ($event) {
-      $this->sharedTempStore->delete('testing::' . $event);
-      $this->sharedTempStore->delete('jobid::testing::' . $jobId);
+      $this->sharedTempStore()->delete('testing::' . $event);
+      $this->sharedTempStore()->delete('jobid::testing::' . $jobId);
     }
-    if ($this->sharedTempStore->get('jobid::reset_debug::' . $jobId)) {
+    if ($this->sharedTempStore()->get('jobid::reset_debug::' . $jobId)) {
       $this->state->set('_eca_internal_debug_mode', FALSE);
-      $this->sharedTempStore->delete('jobid::reset_debug::' . $jobId);
+      $this->sharedTempStore()->delete('jobid::reset_debug::' . $jobId);
     }
   }
 
@@ -273,17 +337,17 @@ class Browser {
    * @throws \Drupal\Core\TempStore\TempStoreException
    */
   public function pollTesting(string $jobId): ?array {
-    $event = $this->sharedTempStore->get('jobid::testing::' . $jobId);
-    $raw = $this->sharedTempStore->get('testing::' . $event);
+    $event = $this->sharedTempStore()->get('jobid::testing::' . $jobId);
+    $raw = $this->sharedTempStore()->get('testing::' . $event);
     // Distinguish between the jobId string (test pending) and compressed
     // history data (test completed) by checking for the compression prefix.
     if (is_string($raw) && $raw !== $jobId && str_starts_with($raw, self::COMPRESS_PREFIX)) {
       $data = $this->decompress($raw);
-      $this->sharedTempStore->delete('testing::' . $event);
-      $this->sharedTempStore->delete('jobid::testing::' . $jobId);
-      if ($this->sharedTempStore->get('jobid::reset_debug::' . $jobId)) {
+      $this->sharedTempStore()->delete('testing::' . $event);
+      $this->sharedTempStore()->delete('jobid::testing::' . $jobId);
+      if ($this->sharedTempStore()->get('jobid::reset_debug::' . $jobId)) {
         $this->state->set('_eca_internal_debug_mode', FALSE);
-        $this->sharedTempStore->delete('jobid::reset_debug::' . $jobId);
+        $this->sharedTempStore()->delete('jobid::reset_debug::' . $jobId);
       }
       return ProcessDebugger::expandHistory($data['history'] ?? []);
     }
@@ -349,7 +413,14 @@ class Browser {
     }
     $normalizedData = [];
     foreach ($data as $key => $value) {
-      $hash = md5(serialize($value));
+      try {
+        $hash = md5(serialize($value));
+      }
+      catch (\Throwable) {
+        // If serialization fails (e.g. closures or resources in the data),
+        // use a unique hash so the value is always re-normalized.
+        $hash = md5((new Random())->string(16));
+      }
       if (!isset($this->processedValues[$key]) || $this->processedValues[$key]['hash'] !== $hash) {
         $this->processedValues[$key] = [
           'data' => $this->normalizeValue($key, $value),
@@ -376,7 +447,7 @@ class Browser {
    * @return array
    *   The normalized data for this value.
    */
-  protected function normalizeValue(string $token, mixed $value, int $depth = 1): array {
+  private function normalizeValue(string $token, mixed $value, int $depth = 1): array {
     $keyParts = explode(':', $token);
     $key = end($keyParts);
     $normalized = [
@@ -418,7 +489,7 @@ class Browser {
       $normalized['value'] = $value;
     }
     elseif (is_array($value)) {
-      if ($depth < $this->depth) {
+      if ($depth < $this->depth()) {
         $normalized['data'] = [];
         foreach ($value as $subKey => $subValue) {
           $normalized['data'][$subKey] = $this->normalizeValue($token . ':' . $subKey, $subValue, $depth + 1);
@@ -444,7 +515,7 @@ class Browser {
       $normalized['data'] = $this->normalizeRecursive($token, $entityTypeId, [$entityTypeId => $value]);
     }
     elseif ($value instanceof DataTransferObject) {
-      // For complex DTOs, weÄve already converted its properties to an
+      // For complex DTOs, we've already converted its properties to an
       // array above.
       $normalized['value'] = $value->getString();
     }
@@ -474,9 +545,9 @@ class Browser {
    * @return array
    *   The normalized data for this level.
    */
-  protected function normalizeRecursive(string $tokenPath, string $tokenType, array $data, int $depth = 1): array {
+  private function normalizeRecursive(string $tokenPath, string $tokenType, array $data, int $depth = 1): array {
     $normalized = [];
-    if ($depth > $this->depth || !isset($this->tokenInfo['tokens'][$tokenType])) {
+    if ($depth > $this->depth() || !isset($this->tokenInfo['tokens'][$tokenType])) {
       return $normalized;
     }
 
@@ -622,8 +693,13 @@ class Browser {
    * @return string
    *   The compressed data string, prefixed with a marker.
    */
-  protected function compress(array $data): string {
-    return self::COMPRESS_PREFIX . gzcompress(serialize($data));
+  private function compress(array $data): string {
+    try {
+      return self::COMPRESS_PREFIX . gzcompress(serialize($data));
+    }
+    catch (\Throwable) {
+      return '';
+    }
   }
 
   /**
@@ -635,13 +711,18 @@ class Browser {
    * @return array
    *   The decompressed data array.
    */
-  protected function decompress(mixed $data): array {
+  private function decompress(mixed $data): array {
     if (is_string($data) && str_starts_with($data, self::COMPRESS_PREFIX)) {
-      $decompressed = gzuncompress(substr($data, strlen(self::COMPRESS_PREFIX)));
-      if ($decompressed === FALSE) {
+      try {
+        $decompressed = gzuncompress(substr($data, strlen(self::COMPRESS_PREFIX)));
+        if ($decompressed === FALSE) {
+          return [];
+        }
+        return unserialize($decompressed) ?: [];
+      }
+      catch (\Throwable) {
         return [];
       }
-      return unserialize($decompressed) ?: [];
     }
     return [];
   }

@@ -6,6 +6,7 @@ namespace Drupal\book\Hook;
 
 use Drupal\book\BookManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -23,6 +24,7 @@ class BookTokenHooks {
     #[Autowire(service: 'book.manager')]
     protected BookManagerInterface $bookManager,
     protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**
@@ -93,7 +95,14 @@ class BookTokenHooks {
 
         if (!empty($parents[$key]) && $parents[$key] != $current_nid) {
           if ($parent = $node_storage->load($parents[$key])) {
-            $titles[] = $parent->label();
+            // Make an array of node labels. If pathauto is installed, clean it.
+            if ($this->moduleHandler->moduleExists('pathauto')) {
+              // @phpstan-ignore globalDrupalDependencyInjection.useDependencyInjection
+              $titles[] = \Drupal::service('pathauto.alias_cleaner')->cleanString($parent->label(), $options);
+            }
+            else {
+              $titles[] = str_replace(' ', '-', $parent->label());
+            }
           }
         }
       }

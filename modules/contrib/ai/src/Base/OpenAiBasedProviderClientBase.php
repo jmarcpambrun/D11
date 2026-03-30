@@ -197,7 +197,10 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
 
     // Only set the API key if it is not empty.
     if ($this->hasAuthentication()) {
-      $this->setAuthentication($this->loadApiKey());
+      // Only set authentication when not set.
+      if (empty($this->apiKey)) {
+        $this->setAuthentication($this->loadApiKey());
+      }
       $clientFactory = $clientFactory->withApiKey($this->apiKey);
     }
 

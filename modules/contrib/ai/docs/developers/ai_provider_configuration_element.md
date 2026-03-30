@@ -124,6 +124,7 @@ $form['provider_config'] = [
 ```
 
 The element automatically:
+
 - Maps `chat_with_image_vision` to the actual operation type `chat`
 - Applies the `ChatWithImageVision` capability filter
 - Uses `chat` when loading configuration schemas
@@ -214,6 +215,7 @@ $form['provider_config'] = [
 ```
 
 This renders:
+
 1. Title/Label
 2. Provider dropdown
 3. "Select an AI provider and model." (inline_description)

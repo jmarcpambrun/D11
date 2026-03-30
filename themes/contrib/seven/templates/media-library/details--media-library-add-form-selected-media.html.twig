@@ -1,9 +1,7 @@
-{% extends "details.html.twig" %}
 {#
 /**
  * @file
- * Theme override for the "Additional selected media" area of the modal media
- * library dialog.
+ * Theme override for the "Additional selected media" area.
  *
  * Available variables
  * - attributes: A list of HTML attributes for the details element.
@@ -14,7 +12,8 @@
  * - children: (optional) The children of the element, may not be set.
  * - value: (optional) The value of the element, may not be set.
  *
- * @see template_preprocess_details()
+ * @see \Drupal\Core\Form\FormPreprocess::preprocessDetails()
  */
 #}
+{% extends "details.html.twig" %}
 {% set attributes = attributes.addClass('media-library-add-form__selected-media details') %}

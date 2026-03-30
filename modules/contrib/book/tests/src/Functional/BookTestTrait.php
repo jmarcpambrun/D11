@@ -101,7 +101,7 @@ trait BookTestTrait {
       if ($nodes !== NULL) {
         $book_navigation = $this->getSession()
           ->getPage()
-          ->find('css', sprintf('nav[aria-labelledby="book-label-%s"] ul', $this->book->id()));
+          ->find('css', 'nav[aria-label] ul');
         $this->assertNotNull($book_navigation);
         $links = $book_navigation->findAll('css', 'a');
         $this->assertCount(count($nodes), $links);

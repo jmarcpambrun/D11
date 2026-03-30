@@ -95,7 +95,15 @@ class ContentAccessTinyTest extends BrowserTestBase {
    * Test Viewing accessibility with permissions for single users.
    */
   public function testViewAccess() {
-    $this->enableContentAccessWithBaseSettings();
+    // Restrict access to this content type.
+    // Enable per node access control.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'per_node' => TRUE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
     // Allow access for test user.
     $edit = [
       'acl[view][add]' => $this->getAutocompleteInputString($this->testUser),
@@ -127,19 +135,6 @@ class ContentAccessTinyTest extends BrowserTestBase {
     $this->drupalLogin($this->testUser);
     $this->drupalGet('node/' . $this->node1->id());
     $this->assertSession()->pageTextContains('Access denied');
-  }
-
-  /**
-   * Test if the node.node_access_needs_rebuild is set when needed.
-   */
-  public function testNodeAccessRebuiltSet(): void {
-    $this->assertNotTrue(\Drupal::state()->get('node.node_access_needs_rebuild'), 'Node access permissions do not need to be rebuilt');
-    // Add a new role for the test user, this should trigger
-    // content_access_user_update() and a message about content
-    // access permissions have to be rebuilt.
-    $rid = $this->drupalCreateRole([]);
-    $this->testUser->addRole($rid)->save();
-    $this->assertTrue(\Drupal::state()->get('node.node_access_needs_rebuild'), 'Node access permissions need to be rebuilt');
   }
 
   /*

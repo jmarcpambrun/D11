@@ -7,6 +7,9 @@ namespace Drupal\pathologic;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
+/**
+ * The settings form.
+ */
 class PathologicSettingsForm extends ConfigFormBase {
 
   use PathologicCommonSettingsTrait;
@@ -53,6 +56,9 @@ class PathologicSettingsForm extends ConfigFormBase {
     parent::submitForm($form, $form_state);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function getEditableConfigNames() {
     return [
       'pathologic.settings',

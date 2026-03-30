@@ -30,7 +30,10 @@ class PathologicUITest extends BrowserTestBase {
     parent::setUp();
 
     $this->drupalCreateContentType(['type' => 'page', 'name' => 'Basic page']);
-    $this->drupalLogin($this->drupalCreateUser(['administer filters', 'create page content']));
+    $this->drupalLogin($this->drupalCreateUser([
+      'administer filters',
+      'create page content',
+    ]));
   }
 
   /**

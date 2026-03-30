@@ -54,7 +54,7 @@
  * - parent_title: Equivalent to title for the parent comment.
  * - parent_permalink: Equivalent to permalink for the parent comment.
  * - parent: A text string of parent comment submission information created from
- *   'parent_author' and 'parent_created' during template_preprocess_comment().
+ *   'parent_author' and 'parent_created'.
  *   This information is presented to help screen readers follow lengthy
  *   discussion threads. You can hide this from sighted users using the class
  *   visually-hidden.
@@ -63,7 +63,7 @@
  * - comment: Full comment object.
  * - commented_entity: Entity the comments are attached to.
  *
- * @see template_preprocess_comment()
+ * @see \Drupal\comment\CommentThemeHooks::preprocessComment()
  */
 #}
 {% if threaded %}

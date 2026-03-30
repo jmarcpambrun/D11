@@ -8,7 +8,7 @@ dependencies:
 type: module
 hidden: true
 
-# Information added by Drupal.org packaging script on 2024-12-05
-version: '2.0.0-alpha3'
+# Information added by Drupal.org packaging script on 2026-03-19
+version: '2.0.0'
 project: 'pathologic'
-datestamp: 1733441075
+datestamp: 1773879255

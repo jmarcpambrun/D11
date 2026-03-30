@@ -17,9 +17,9 @@ trait PathologicCommonSettingsTrait {
   /**
    * The module handler service.
    *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface|null
    */
-  protected $moduleHandler;
+  protected $moduleHandler = NULL;
 
   /**
    * Common elements for Pathologic configuration forms.
@@ -31,7 +31,7 @@ trait PathologicCommonSettingsTrait {
    *   An array of default values for the configuration form fields.
    *
    * @return array
-   *   The common form elements
+   *   The common form elements.
    */
   protected function commonPathologicSettingsForm(array $defaults) {
     $form = [

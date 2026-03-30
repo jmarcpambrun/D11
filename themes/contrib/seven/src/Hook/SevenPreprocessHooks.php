@@ -7,7 +7,6 @@ namespace Drupal\seven\Hook;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Extension\ThemeSettingsProvider;
 use Drupal\Core\Hook\Attribute\Hook;
-use Drupal\Core\StringTranslation\ByteSizeMarkup;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -208,7 +207,7 @@ class SevenPreprocessHooks {
    * functionality was removed in Drupal 8.1, but still necessary in some
    * instances.
    *
-   * @todo Remove in https://drupal.org/node/3120962
+   * @todo Remove in https://www.drupal.org/node/3120962
    */
   #[Hook("preprocess_links")]
   public function links(array &$variables): void {
@@ -242,6 +241,9 @@ class SevenPreprocessHooks {
 
   /**
    * Implements hook_preprocess_HOOK() for image widget templates.
+   *
+   * @todo Revisit in https://www.drupal.org/node/953034 and
+   *   in https://www.drupal.org/node/3114318
    */
   #[Hook("preprocess_image_widget")]
   public function imageWidget(array &$variables): void {
@@ -249,17 +251,8 @@ class SevenPreprocessHooks {
 
     // This prevents image widget templates from rendering preview container
     // HTML to users that do not have permission to access these previews.
-    // @todo Revisit in https://drupal.org/node/953034
-    // @todo Revisit in https://drupal.org/node/3114318
     if (isset($data['preview']['#access']) && $data['preview']['#access'] === FALSE) {
       unset($data['preview']);
-    }
-
-    // @todo Revisit everything in this conditional in
-    //   https://drupal.org/node/3117430
-    if (!empty($variables['element']['fids']['#value'])) {
-      $file = reset($variables['element']['#files']);
-      $data["file_{$file->id()}"]['filename']['#suffix'] = ' <span class="file-size">(' . ByteSizeMarkup::create($file->getSize()) . ')</span> ';
     }
   }
 

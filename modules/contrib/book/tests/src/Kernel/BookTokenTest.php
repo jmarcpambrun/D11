@@ -42,14 +42,15 @@ class BookTokenTest extends KernelTestBase {
   }
 
   /**
-   * Tests book:parents:join-path token generation.
+   * Tests book:parents:join-path token generation with pathauto.
    *
    * @throws \Exception
    */
-  public function testJoinedParentPathToken(): void {
+  public function testJoinedParentPathTokenWithPathauto(): void {
+    $this->enableModules(['pathauto', 'path_alias', 'token']);
     $root = Node::create([
       'type' => 'page',
-      'title' => 'Book',
+      'title' => 'Book Page',
       'book' => ['bid' => 'new'],
     ]);
     $root->save();
@@ -74,7 +75,8 @@ class BookTokenTest extends KernelTestBase {
 
     $hooks = new BookTokenHooks(
       $this->container->get('book.manager'),
-      $this->container->get('entity_type.manager')
+      $this->container->get('entity_type.manager'),
+      $this->container->get('module_handler'),
     );
 
     $tokens = [
@@ -86,7 +88,55 @@ class BookTokenTest extends KernelTestBase {
     $replacements = $hooks->tokens('node', $tokens, ['node' => $target], [], $bubbleable_metadata);
 
     $this->assertArrayHasKey('[node:book:parents:join-path]', $replacements);
-    $this->assertSame('Book/page-1/page-2/page-3', $replacements['[node:book:parents:join-path]']);
+    $this->assertSame('BookPage/page1/page2/page3', $replacements['[node:book:parents:join-path]']);
+  }
+
+  /**
+   * Tests book:parents:join-path token generation.
+   *
+   * @throws \Exception
+   */
+  public function testJoinedParentPathToken(): void {
+    $root = Node::create([
+      'type' => 'page',
+      'title' => 'Book Page',
+      'book' => ['bid' => 'new'],
+    ]);
+    $root->save();
+
+    $bid = $root->id();
+    $pid = $bid;
+
+    $pages = [];
+    for ($i = 1; $i <= 4; $i++) {
+      $page = Node::create([
+        'type' => 'page',
+        'title' => 'page-' . $i,
+        'book' => [
+          'bid' => $bid,
+          'pid' => $pid,
+        ],
+      ]);
+      $page->save();
+      $pages[] = $page;
+      $pid = $page->id();
+    }
+
+    $hooks = new BookTokenHooks(
+      $this->container->get('book.manager'),
+      $this->container->get('entity_type.manager'),
+      $this->container->get('module_handler'),
+    );
+
+    $tokens = [
+      'book' => '[node:book:parents:join-path]',
+    ];
+
+    $bubbleable_metadata = new BubbleableMetadata();
+    $target = end($pages);
+    $replacements = $hooks->tokens('node', $tokens, ['node' => $target], [], $bubbleable_metadata);
+
+    $this->assertSame('Book-Page/page-1/page-2/page-3', $replacements['[node:book:parents:join-path]']);
   }
 
 }

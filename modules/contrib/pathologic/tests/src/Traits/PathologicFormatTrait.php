@@ -16,9 +16,9 @@ trait PathologicFormatTrait {
   /**
    * The ID of a text format to be used in a test.
    *
-   * @var formatId
+   * @var string formatId
    */
-  protected $formatId = '';
+  protected string $formatId = '';
 
   /**
    * Build a text format with Pathologic configured a certain way.

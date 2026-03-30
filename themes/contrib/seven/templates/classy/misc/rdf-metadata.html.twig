@@ -5,14 +5,13 @@
  *
  * The XHTML+RDFa doctype allows either <span></span> or <span /> syntax to
  * be used, but for maximum browser compatibility, W3C recommends the
- * former when serving pages using the text/html media type, see
- * http://www.w3.org/TR/xhtml1/#C_3.
+ * former when serving pages using the text/html media type.
  *
  * Available variables:
  * - metadata: Each item within corresponds to its own set of attributes,
  *   and therefore, needs its own 'attributes' element.
  *
- * @see template_preprocess_rdf_metadata()
+ * @see https://www.w3.org/TR/xhtml1/#C_3
  */
 #}
 {% for attributes in metadata %}

@@ -11,6 +11,8 @@ use Drupal\Tests\node\Traits\NodeCreationTrait;
 use Drupal\Tests\pathologic\Traits\PathologicFormatTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
+// cspell:ignore référence français página referência português referencia
+
 /**
  * Test multilingual integration of Pathologic functionality.
  *

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Drupal\pathologic\Plugin\Filter;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\filter\FilterProcessResult;
 use Drupal\filter\Plugin\FilterBase;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\pathologic\PathologicCommonSettingsTrait;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Attempts to correct broken paths in content.
@@ -33,9 +36,32 @@ use Drupal\Core\Url;
  *   weight = 50
  * )
  */
-class FilterPathologic extends FilterBase {
+class FilterPathologic extends FilterBase implements ContainerFactoryPluginInterface {
 
   use PathologicCommonSettingsTrait;
+
+  /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected ConfigFactoryInterface $configFactory;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $configFactory) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+
+    $this->configFactory = $configFactory;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): FilterPathologic {
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('config.factory'));
+  }
 
   /**
    * {@inheritdoc}
@@ -85,7 +111,7 @@ class FilterPathologic extends FilterBase {
   public function process($text, $langcode) {
     $settings = $this->settings;
     if ($settings['settings_source'] === 'global') {
-      $config = \Drupal::config('pathologic.settings');
+      $config = $this->configFactory->get('pathologic.settings');
       $settings['protocol_style'] = $config->get('protocol_style');
       $settings['local_paths'] = $config->get('local_paths');
       $settings['keep_language_prefix'] = $config->get('keep_language_prefix');

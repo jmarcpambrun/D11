@@ -1,8 +1,7 @@
-{% extends "links.html.twig" %}
 {#
 /**
  * @file
- * Theme implementation of the media type menu in the media library dialog.
+ * Theme override of the media type menu in the media library dialog.
  *
  * Available variables:
  * - attributes: Attributes for the UL containing the list of links.
@@ -26,11 +25,11 @@
  *   the 'visually-hidden' CSS class. Do not use 'display:none', which
  *   removes it from screen readers and assistive technology. Headings allow
  *   screen reader and keyboard only users to navigate to or skip the links.
- *   See http://juicystudio.com/article/screen-readers-display-none.php and
- *   http://www.w3.org/TR/WCAG-TECHS/H42.html for more information.
  *
- * @see classy_preprocess_links__media_library_menu()
- * @see template_preprocess_links()
+ * @see \Drupal\Core\Theme\ThemePreprocess::preprocessLinks()
+ * @see https://juicystudio.com/article/screen-readers-display-none.php
+ * @see https://www.w3.org/WAI/WCAG22/Techniques/html/H42
  */
 #}
+{% extends "links.html.twig" %}
 {% set attributes = attributes.addClass('media-library-menu') %}

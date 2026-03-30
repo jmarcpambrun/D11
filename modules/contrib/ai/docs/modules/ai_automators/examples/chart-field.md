@@ -118,6 +118,7 @@ The `Automator Chart` plugin lives in `ai_automators/src/Plugin/FieldWidgetActio
 ## How the Chart Data is Structured
 
 The `LLM: Chart From Text` automator:
+
 - Generates CSV output where the first row contains column headers (keys) and subsequent rows contain data values
 - Supports both semicolon (;) and comma (,) delimiters, with semicolon being preferred. The delimiter is automatically detected.
 - Parses the CSV into a chart data structure where:

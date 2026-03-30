@@ -6,7 +6,6 @@
  */
 
 use Drupal\filter\Entity\FilterFormat;
-use Drupal\filter\FilterFormatInterface;
 use Drupal\filter\FilterPluginCollection;
 
 /**
@@ -15,8 +14,11 @@ use Drupal\filter\FilterPluginCollection;
 function pathologic_post_update_rename_scheme_allow_list() {
   $config_factory = \Drupal::configFactory();
   $config = $config_factory->getEditable('pathologic.settings');
+  // Yes it's a flag word. We're getting rid of it.
+  // cspell:ignore whitelist
   $existing_schema = $config->get('scheme_whitelist');
   $config->set('scheme_allow_list', $existing_schema);
+  // Be gone!
   $config->clear('scheme_whitelist');
   $config->save();
 }
@@ -31,7 +33,6 @@ function pathologic_post_update_set_keep_language_prefix() {
 
   if (\Drupal::service('plugin.manager.filter')->hasDefinition('filter_pathologic')) {
     foreach (FilterFormat::loadMultiple() as $format) {
-      assert($format instanceof FilterFormatInterface);
       $collection = $format->filters();
       $configuration = $collection->getConfiguration();
       assert($collection instanceof FilterPluginCollection);

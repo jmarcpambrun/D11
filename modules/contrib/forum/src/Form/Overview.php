@@ -2,6 +2,7 @@
 
 namespace Drupal\forum\Form;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
@@ -16,6 +17,38 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * @phpstan-ignore-next-line
  */
 class Overview extends OverviewTerms {
+
+  /**
+   * The name of the current operation.
+   *
+   * @var string
+   *
+   * Before Drupal 11.3, Drupal\taxonomy\Form\OverviewTerms extended FormBase
+   * instead of Drupal\Core\Entity\EntityForm. Because we are overriding
+   * getEntity() from EntityForm and it uses this property, we need to declare
+   * the property here to keep PHP happy on all core versions. It may be removed
+   * when we raise the minimal supported core version to above D11.3.
+   *
+   * @see https://www.drupal.org/node/3528300
+   * @see Drupal\Core\Entity\EntityForm
+   */
+  protected $operation;
+
+  /**
+   * The entity being used by this form.
+   *
+   * @var \Drupal\Core\Entity\EntityInterface
+   *
+   * Before Drupal 11.3, Drupal\taxonomy\Form\OverviewTerms extended FormBase
+   * instead of Drupal\Core\Entity\EntityForm. Because we are overriding
+   * getEntity() from EntityForm and it uses this property, we need to declare
+   * the property here to keep PHP happy on all core versions. It may be removed
+   * when we raise the minimal supported core version to above D11.3.
+   *
+   * @see https://www.drupal.org/node/3528300
+   * @see Drupal\Core\Entity\EntityForm
+   */
+  protected $entity;
 
   /**
    * {@inheritdoc}
@@ -35,12 +68,7 @@ class Overview extends OverviewTerms {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?VocabularyInterface $taxonomy_vocabulary = NULL) {
-    $forum_config = $this->config('forum.settings');
-    $vid = $forum_config->get('vocabulary');
-    $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($vid);
-    if (!$vocabulary) {
-      throw new NotFoundHttpException();
-    }
+    $vocabulary = $this->getEntity();
 
     // Build base taxonomy term overview.
     $form = parent::buildForm($form, $form_state, $vocabulary);
@@ -83,6 +111,41 @@ class Overview extends OverviewTerms {
       ':forum' => Url::fromRoute('forum.add_forum')->toString(),
     ]);
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEntity(): EntityInterface {
+    // Implement this here so that code expecting
+    // EntityFormInterface::getEntity() will work correctly.
+    if (!isset($this->entity)) {
+      $forum_config = $this->config('forum.settings');
+      $vid = $forum_config->get('vocabulary');
+
+      $entity = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($vid);
+
+      if (is_null($entity)) {
+        throw new NotFoundHttpException();
+      }
+
+      $this->entity = $entity;
+    }
+
+    return $this->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOperation(): string {
+    // Implement this here so that code expecting
+    // EntityFormInterface::getEntity() will work correctly.
+    if (!isset($this->operation)) {
+      $this->operation = 'overview';
+    }
+
+    return $this->operation;
   }
 
 }

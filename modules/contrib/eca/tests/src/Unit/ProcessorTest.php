@@ -2,9 +2,12 @@
 
 namespace Drupal\Tests\eca\Unit;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\eca\Entity\Eca;
 use Drupal\eca\Entity\Objects\EcaEvent;
 use Drupal\eca\Plugin\ECA\Event\EventInterface;
@@ -12,9 +15,11 @@ use Drupal\eca\PluginManager\Event as EventPluginManager;
 use Drupal\eca\Processor;
 use Drupal\eca\Token\Browser;
 use Drupal\eca\Token\TokenInterface;
+use Drupal\eca\Token\TokenServices;
 use Drupal\modeler_api\TemplateTokenResolver;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Unit tests for the ECA processor engine.
@@ -85,7 +90,17 @@ class ProcessorTest extends EcaUnitTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->logger = $this->createMock(LoggerChannelInterface::class);
-    $this->tokenBrowser = $this->createMock(Browser::class);
+    $this->tokenBrowser = new Browser(
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(TokenServices::class),
+      $this->createMock(EventPluginManager::class),
+      $this->createMock(PrivateTempStoreFactory::class),
+      $this->createMock(SharedTempStoreFactory::class),
+      $this->createMock(AccountProxyInterface::class),
+      $this->createMock(RequestStack::class),
+      $this->createMock(TimeInterface::class),
+      $this->createMock(StateInterface::class),
+    );
     $this->templateTokenResolver = $this->createMock(TemplateTokenResolver::class);
     $this->tokenService = $this->createMock(TokenInterface::class);
     $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);

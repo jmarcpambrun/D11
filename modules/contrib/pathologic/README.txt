@@ -7,6 +7,7 @@ http://drupal.org/project/pathologic
 By Garrett Albright
 http://drupal.org/user/191212
 
+# cspell:ignore intermedia
 Originally sponsored by Precision Intermedia
 http://www.precisionintermedia.com/
 

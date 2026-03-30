@@ -187,6 +187,7 @@ This is a full patch test for the 1.2.x branch. It includes all changes made sin
 7. Visit https://drupal11-test.ddev.site/admin/structure/block
 8. Under `Content Below` click `Place block`
 9 . Click `Place block` next to `AI DeepChat Chatbot`
+
 10. Under `AI Assistant` select `Content Type Assistant`
 11. Under `Styling settings` select `Style` as `Bard`, `width` as `500px`, `height` as `600px` and `Placement` as `Bottom right `
 12. Click `Save block`

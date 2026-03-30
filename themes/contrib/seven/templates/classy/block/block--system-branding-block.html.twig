@@ -1,4 +1,3 @@
-{% extends "block.html.twig" %}
 {#
 /**
  * @file
@@ -13,6 +12,7 @@
  * - site_slogan: Slogan for site as defined in Site information settings.
  */
 #}
+{% extends "block.html.twig" %}
 {% block content %}
   {% if site_logo %}
     <a href="{{ path('<front>') }}" rel="home" class="site-logo">

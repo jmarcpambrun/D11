@@ -82,6 +82,7 @@ via a VDB Provider (Vector Database Provider).
 ## Automated tests
 
 The automated tests uses:
+
 - test_ai_provider_mysql test module to generate embeddings as a Provider.
 - test_ai_vdb_provider_mysql test module to store and search the vector database as a VDB Provider.
 

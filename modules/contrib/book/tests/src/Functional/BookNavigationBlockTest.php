@@ -74,7 +74,11 @@ class BookNavigationBlockTest extends BookTestBase {
     $this->assertSession()->statusCodeEquals(403);
     $this->drupalGet($this->book->toUrl());
 
-    $this->assertSession()->elementTextContains('css', 'h2.visually-hidden#book-label-' . $this->book->id(), 'Book traversal links for ' . $this->book->label());
+    $args = [
+      ':label' => 'Book traversal links for ' . $this->book->label(),
+    ];
+    $xpath = $this->assertSession()->buildXPathQuery('//nav[@aria-label = :label]', $args);
+    $this->assertSession()->elementExists('xpath', $xpath);
     $this->assertSession()->responseNotContains($nodes[0]->getTitle());
     $this->assertSession()->responseNotContains($nodes[1]->getTitle());
     $this->assertSession()->responseNotContains($nodes[2]->getTitle());

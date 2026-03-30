@@ -40,10 +40,13 @@ Create a plugin class in `Plugin\FieldWidgetAction` namespace. It is recommended
 in order to focus on functionality of your plugin itself and not do any form integration. Of course you can implement
 all methods from the `FieldWidgetActionInterface` on your own. For actions with suggestions there are two helper methods
 in the base class:
+
 - `returnSuggestions` that will help to display the suggestions in a modal dialog with ability to use selected value in
 the form field directly in case the form element selector is provided;
+
 - `getSuggestionsTarget` - that gets the selector for the most common use cases of a suggestions action. In special
 cases the plugin can overwrite the method to use its own logic.
+
 - `getTargetElementDelta` - that gets the delta for the field widget form element.
 - `getTargetElementFieldName` - that gets the corresponding field name of the form element.
 

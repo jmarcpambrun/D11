@@ -40,6 +40,7 @@ The issues included in the security release are never public issues, but patches
 
 ## Reverting a Release
 While it's generally recommended to fix-forward with a new release, if you need to revert a release that has been tagged but not yet published, follow these steps:
+
 1. Identify the tag that needs to be reverted
 2. Use the command `git push --delete origin <tag_name>` to delete the tag from the remote repository
 3. Use the command `git tag -d <tag_name>` to delete the tag from the local repository

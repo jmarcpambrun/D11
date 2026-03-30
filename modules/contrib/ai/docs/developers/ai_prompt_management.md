@@ -125,6 +125,7 @@ my_prompt:
 # Updating an existing form to use the AI Prompt Element.
 
 To convert an existing prompt textarea to an AI prompt there are three steps:
+
 1. Create the AI Prompt Type configuration in your module's /config/install.
 2. Create the AI Prompt configuration in your module's /config/install.
 3. Write an update hook to convert the prompt string to the AI Prompt machine
