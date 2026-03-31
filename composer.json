@@ -92,7 +92,7 @@
         "drupal/modeler_api": "^1.1-beta",
         "drupal/multivalue_form_element": "1.0.0-beta8",
         "drupal/openai": "1.0.0-beta6",
-        "drupal/page_manager": "4.0-rc3",
+        "drupal/page_manager": "^4.0-rc4",
         "drupal/paragraphs": "1.20",
         "drupal/pathologic": "^2.0",
         "drupal/phpmailer_smtp": "2.4",
