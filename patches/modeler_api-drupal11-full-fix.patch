@@ -1,0 +1,42 @@
+diff --git a/src/Hook/EntityHooks.php b/src/Hook/EntityHooks.php
+index 0000000..1111111 100644
+--- a/src/Hook/EntityHooks.php
++++ b/src/Hook/EntityHooks.php
+@@ -1,7 +1,6 @@
+ <?php
+
+ namespace Drupal\modeler_api\Hook;
+
+-use Drupal\modeler_api\Api;
+ use Drupal\Core\Config\Entity\ConfigEntityInterface;
+ use Drupal\Core\Entity\EntityInterface;
+ use Drupal\Core\Hook\Attribute\Hook;
+@@ -12,13 +11,8 @@ use Drupal\modeler_api\Entity\AccessControlHandler;
+ use Drupal\modeler_api\Entity\ListBuilder;
+ use Drupal\modeler_api\Form\DeleteForm;
+ use Drupal\modeler_api\ModelerApiPermissions;
+-use Drupal\modeler_api\Plugin\ModelerPluginManager;
+-use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
+-use Drupal\Core\Session\AccountInterface;
+-use Drupal\Core\Entity\EntityTypeManagerInterface;
+
+ class EntityHooks {
+
+-  public function __construct(...) {}
+
+   #[Hook('entity_type_build')]
+   public function entityTypeBuild(array &$entity_types): void {
+
++    $modelOwnerPluginManager = \Drupal::service('plugin.manager.modeler_api.model_owner');
+
+     static $alreadyRunning;
+     if ($alreadyRunning) {
+@@ -28,7 +22,7 @@ class EntityHooks {
+     }
+     $alreadyRunning = TRUE;
+
+-    foreach ($this->modelOwnerPluginManager->getAllInstances(TRUE) as $owner) {
++    foreach ($modelOwnerPluginManager->getAllInstances(TRUE) as $owner) {
+
+       $basePath = $owner->configEntityBasePath();
+       if ($basePath === NULL) {
