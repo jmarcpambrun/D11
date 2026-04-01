@@ -1,0 +1,13 @@
+drush:
+  paths:
+    alias-path:
+      /var/www/D11\sites
+      
+core:
+    rsync:
+      options:
+        # Ensure all rsync commands use verbose output.
+        verbose: true
+drush:
+  paths:
+    backup-dir: /var/tmp/drush-backups   

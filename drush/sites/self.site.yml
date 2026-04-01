@@ -4,13 +4,12 @@ live:
   user: drupbut
   ssh:
      options: '-p 22'
-  root: /home/drupal/www/sites/default
+  root: /home/drupbut/www
   identityFile: /home/drupbut/www/.ssh/id_rsa
-  uri: http://drupbuilder.org
+  uri: https://www.drupbuilder.org
   os: Linux
 stage:
-  user: dpjmarc.pambrun
+  user: dpalicepeio
   root: sites/default
-  uri: http://localhost/drupal-10.2.1
-  os: Windows
- 
+  uri: http://localhost
+  os: Linux
