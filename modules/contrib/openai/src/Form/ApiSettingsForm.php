@@ -2,13 +2,46 @@
 
 namespace Drupal\openai\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure OpenAI client settings for this site.
  */
 class ApiSettingsForm extends ConfigFormBase {
+
+  /**
+   * Settings form constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface|null $typedConfigManager
+   *   The typed config manager.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
+   */
+  protected ModuleHandlerInterface $moduleHandler;
+
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typed_config_manager,
+    ModuleHandlerInterface $module_handler
+  ) {
+    parent::__construct($config_factory, $typed_config_manager);
+    $this->moduleHandler = $module_handler;
+   } 
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('module_handler')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -28,13 +61,24 @@ class ApiSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['api_key'] = [
-      '#required' => TRUE,
-      '#type' => 'textfield',
-      '#title' => $this->t('API Key'),
-      '#default_value' => $this->config('openai.settings')->get('api_key'),
-      '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.', [':link' => 'https://openai.com/api']),
-    ];
+    if ($this->moduleHandler->moduleExists('key')) {
+      $form['api_key'] = [
+        '#required' => TRUE,
+        '#type' => 'key_select',
+        '#title' => $this->t('API key'),
+        '#default_value' => $this->config('openai.settings')->get('api_key'),
+        '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.', [':link' => 'https://openai.com/api']),      ];
+    }
+    else {
+      $form['api_key'] = [
+        '#required' => TRUE,
+        '#type' => 'textfield',
+        '#title' => $this->t('API Key'),
+        '#default_value' => $this->config('openai.settings')->get('api_key'),
+        '#description' => $this->t('The API key is required to interface with OpenAI services. Get your API key by signing up on the <a href=":link" target="_blank">OpenAI website</a>.', [':link' => 'https://openai.com/api']),
+        '#maxlength' => 256,
+      ];
+    }
 
     $form['api_org'] = [
       '#type' => 'textfield',

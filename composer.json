@@ -89,7 +89,7 @@
         "drupal/message": "1.8",
         "drupal/message_notify": "1.5",
         "drupal/metatag": "2.2",
-        "drupal/modeler_api": "^1.1",
+        "drupal/modeler_api": "^1.1.1",
         "drupal/multivalue_form_element": "1.0.0-beta8",
         "drupal/openai": "1.0.0-beta6",
         "drupal/page_manager": "^4.0-rc4",
@@ -168,11 +168,11 @@
         "sort-packages": true
     },
     "extra": {
-       "patches": {
-        "drupal/modeler_api": {
+	 "patches": {
+           "drupal/modeler_api": {
 		"Drupal 11 full fix": "patches/modeler_api-drupal11-full-fix.patch"
-                }
-	},
+                   }
+	   },
 	"merge-plugin": {
             "include": [
                 "./modules/contrib/webform/composer.libraries.json"
@@ -183,8 +183,8 @@
                 "web-root": "./"
             }
         },
-		"installer-types": ["npm-asset"],
-        "installer-paths": {
+	"installer-types": ["npm-asset"],
+	"installer-paths": {
             "core": [
                 "type:drupal-core"
             ],
@@ -219,8 +219,8 @@
             "./libraries/chartjs-plugin-datalabels": [
                   "npm-asset/chartjs-plugin-datalabels"
             ],
-			"./libraries/{$name}": ["type:drupal-library", "vendor:npm-asset"]
-        },
+            "./libraries/{$name}": ["type:drupal-library", "vendor:npm-asset"]
+	 },
         "drupal-core-project-message": {
             "include-keys": [
                 "homepage",
@@ -241,13 +241,12 @@
                 "  * Remove the plugin that prints this message:",
                 "      composer remove drupal/core-project-message"
             ]
-        }
-    },
+	 },
 	"asset-packagist": {
             "type": "composer",
             "url": "https://asset-packagist.org"
         },
-    "scripts": {
+    	"scripts": {
             "clean-chartjs": "./scripts/clean-chartjs.sh",
             "post-install-cmd": [
               "@clean-chartjs"
@@ -256,7 +255,8 @@
               "@clean-chartjs"
             ]
         },
-    "require-dev": {
-        "mglaman/drupal-check": "^1.5"
-    }
+       "require-dev": {
+          "mglaman/drupal-check": "^1.5"
+      }
+   }
 }
