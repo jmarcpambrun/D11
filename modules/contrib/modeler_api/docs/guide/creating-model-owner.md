@@ -311,7 +311,65 @@ public function enforceDefaultStorageMethod(): bool {
     configuration is fully captured in the agent config entity itself -- no
     separate raw data storage is needed.
 
-## Step 6: Optional features
+## Step 6: Model constraints
+
+Override `modelConstraints()` to declare cardinality rules for component types.
+These constraints are validated server-side during save and delivered to the
+frontend for client-side enforcement.
+
+```php
+use Drupal\modeler_api\Api;
+
+public function modelConstraints(): array {
+  return [
+    // Exactly one start component, with exactly one successor.
+    Api::COMPONENT_TYPE_START => [
+      'min' => 1,
+      'max' => 1,
+      'successors' => ['min' => 1, 'max' => 1],
+    ],
+    // At least one element, no limit on how many.
+    Api::COMPONENT_TYPE_ELEMENT => [
+      'min' => 1,
+    ],
+    // Links must not have more than one successor.
+    Api::COMPONENT_TYPE_LINK => [
+      'successors' => ['max' => 1],
+    ],
+  ];
+}
+```
+
+All keys (`min`, `max`, `successors`, `successors.min`, `successors.max`) are
+optional. Omit a key to leave that dimension unconstrained. Return an empty
+array (the default) to impose no constraints at all.
+
+When constraints are declared, also implement `componentLabelsPlural()` so
+that validation error messages read naturally:
+
+```php
+public function componentLabels(): array {
+  return [
+    'start' => 'Trigger',
+    'element' => 'Action',
+    'link' => 'Condition',
+  ];
+}
+
+public function componentLabelsPlural(): array {
+  return [
+    'start' => 'Triggers',
+    'element' => 'Actions',
+    'link' => 'Conditions',
+  ];
+}
+```
+
+See the [Model Owner plugin manager](../plugin-managers/model-owner/index.md#model-constraints)
+documentation for the full constraint key reference and the error messages
+produced by validation.
+
+## Step 7: Optional features
 
 ### Replay data
 

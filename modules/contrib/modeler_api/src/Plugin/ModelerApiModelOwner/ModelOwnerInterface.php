@@ -147,11 +147,17 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    *
    * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
    *   The model.
+   * @param string|null $id
+   *   (optional) The ID for the cloned model. If NULL, a new ID will be
+   *   generated automatically.
+   * @param string|null $label
+   *   (optional) The label for the cloned model. If NULL, the label will be
+   *   derived from the original model with a "(clone)" suffix.
    *
    * @return \Drupal\Core\Config\Entity\ConfigEntityInterface
    *   The cloned model.
    */
-  public function clone(ConfigEntityInterface $model): ConfigEntityInterface;
+  public function clone(ConfigEntityInterface $model, ?string $id = NULL, ?string $label = NULL): ConfigEntityInterface;
 
   /**
    * Exports the model.
@@ -505,6 +511,31 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    *   type as they key and a unique name as the value.
    */
   public function supportedOwnerComponentTypes(): array;
+
+  /**
+   * Returns cardinality constraints for component types.
+   *
+   * Model owners can declare minimum and maximum counts for each component
+   * type. These constraints are enforced both server-side during save and
+   * client-side before the save request is sent.
+   *
+   * Example return value:
+   * @code
+   * [
+   *   Api::COMPONENT_TYPE_START   => ['min' => 1, 'max' => 1, 'successors' => ['min' => 1, 'max' => 1]],
+   *   Api::COMPONENT_TYPE_ELEMENT => ['min' => 1, 'max' => 1, 'successors' => ['max' => 0]],
+   *   Api::COMPONENT_TYPE_GATEWAY => ['successors' => ['min' => 1, 'max' => 1]],
+   * ]
+   * @endcode
+   *
+   * @return array<int, array{min?: int, max?: int, successors?: array{min?: int, max?: int}}>
+   *   An associative array keyed by component type constant. Each value is
+   *   an array with optional 'min' and 'max' keys for component count, and
+   *   an optional 'successors' key with its own 'min'/'max' for the number
+   *   of outgoing connections per component of that type. An empty array
+   *   means no constraints (the default).
+   */
+  public function modelConstraints(): array;
 
   /**
    * Provides a list of available plugins for a given type.

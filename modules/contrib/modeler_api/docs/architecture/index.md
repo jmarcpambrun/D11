@@ -51,9 +51,15 @@ When a model is saved from the modeler UI, the following sequence executes:
 6. For each component read from the raw data
    (`ModelerInterface::readComponents()`), the Model Owner adds it via
    `ModelOwnerInterface::addComponent()`.
-7. After all components are added, `ModelOwnerInterface::finalizeAddingComponents()` is called.
-8. The config entity is saved.
-9. Raw model data is stored according to the configured storage method.
+7. **Model constraints are validated** -- the Api service checks component
+   counts and per-component successor counts against the cardinality rules
+   declared by `ModelOwnerInterface::modelConstraints()`. Violations produce
+   translatable error messages.
+8. Components are validated using `Component::validate()`.
+9. After all components are added and validated,
+   `ModelOwnerInterface::finalizeAddingComponents()` is called.
+10. The config entity is saved.
+11. Raw model data is stored according to the configured storage method.
 
 ### Storage methods
 

@@ -223,12 +223,12 @@ final class Routes implements ContainerInjectionInterface {
       $routes->add('entity.' . $type . '.clone', new Route(
         '/' . $basePath . '/{' . $type . '}/clone',
         [
-          '_controller' => 'Drupal\modeler_api\Controller\ModelerApi::clone',
+          '_form' => 'Drupal\modeler_api\Form\CloneForm',
+          '_title' => 'Clone',
           'model' => '',
         ],
         [
           '_permission' => ModelerApiPermissions::getPermissionKey('edit', $ownerId),
-          '_csrf_token' => 'TRUE',
         ],
         $options,
       ));

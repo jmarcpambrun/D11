@@ -162,23 +162,6 @@ final class ModelerApi extends ControllerBase {
   }
 
   /**
-   * Clone the given entity and save it as a new one.
-   *
-   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
-   *   The config entity.
-   *
-   * @return \Symfony\Component\HttpFoundation\RedirectResponse
-   *   Redirect response to go to the collection page.
-   */
-  public function clone(ConfigEntityInterface $model): RedirectResponse {
-    $owner = $this->api->findOwner($model);
-    if ($owner->isEditable($model)) {
-      $owner->clone($model);
-    }
-    return $this->redirect('entity.' . $owner->configEntityTypeId() . '.collection');
-  }
-
-  /**
    * Export the model from the given entity.
    *
    * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model

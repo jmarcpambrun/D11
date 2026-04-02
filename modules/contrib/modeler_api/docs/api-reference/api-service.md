@@ -151,9 +151,36 @@ Returns the sole non-fallback Modeler plugin instance, if exactly one Modeler
 (besides the built-in fallback) is available. Returns `NULL` if zero or
 multiple modelers are installed.
 
+### `prepareModelConstraints(ModelOwnerInterface $owner): array`
+
+Translates the model owner's cardinality constraints from integer component
+type keys to string names (e.g. `'start'`, `'element'`, `'gateway'`) that the
+frontend understands. The result is attached to
+`drupalSettings.modeler_api.model_constraints`.
+
+Returns an empty array if the owner declares no constraints.
+
+### `validateModelConstraints(ModelOwnerInterface $owner, array $componentTypeCounts, array $successorCountsByType): void`
+
+Validates model-level cardinality constraints during the save cycle. Called
+internally by `prepareModelFromData()` after all components have been parsed.
+
+**Parameters:**
+
+- `$componentTypeCounts` -- an array keyed by component type constant with
+  the total count of components of that type in the model.
+- `$successorCountsByType` -- a per-type list of component successor info,
+  where each entry contains `id`, `label`, and `count` for a component.
+
+For each constraint declared by the Model Owner's `modelConstraints()`, this
+method checks both component counts and per-component successor counts. Any
+violations are appended to the internal error list, retrievable via
+`getErrors()`.
+
 ### `getErrors(): array`
 
 Returns error messages collected during the last `prepareModelFromData()` call.
+This includes any violations from model constraint validation.
 
 ## drupalSettings output
 
@@ -163,7 +190,9 @@ attached to `drupalSettings.modeler_api`:
 | Key | Type | Description |
 |-----|------|-------------|
 | `metadata` | `object` | Model metadata (version, label, description, storage, executable, template, tags, changelog) |
-| `component_labels` | `object` | Human-readable labels for each component type, from `ModelOwnerInterface::componentLabels()` |
+| `component_labels` | `object` | Human-readable singular labels for each component type, from `ModelOwnerInterface::componentLabels()` |
+| `component_labels_plural` | `object` | Human-readable plural labels for each component type, from `ModelOwnerInterface::componentLabelsPlural()` |
+| `model_constraints` | `object` | Cardinality constraints for component types keyed by type name string (e.g. `start`, `element`). Each entry may contain `min`, `max`, and `successors` (with its own `min`/`max`). From `ModelOwnerInterface::modelConstraints()`. |
 | `permissions` | `object` | Current user's permissions for this modeler |
 | `favorite_components` | `array` | Preferred component plugin IDs from the Model Owner |
 | `global_tokens` | `object` | Global Drupal token tree (requires `drupal/token`) |

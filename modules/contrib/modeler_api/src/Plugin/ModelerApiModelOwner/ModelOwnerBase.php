@@ -97,6 +97,13 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
   /**
    * {@inheritdoc}
    */
+  public function modelConstraints(): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm(): ?string {
     return NULL;
   }
@@ -155,10 +162,14 @@ abstract class ModelOwnerBase extends PluginBase implements ModelOwnerInterface 
   /**
    * {@inheritdoc}
    */
-  final public function clone(ConfigEntityInterface $model): ConfigEntityInterface {
+  final public function clone(ConfigEntityInterface $model, ?string $id = NULL, ?string $label = NULL): ConfigEntityInterface {
     $modeler = $this->getModeler($model);
-    $id = $modeler->generateId();
-    $label = $this->getLabel($model) . ' (' . $this->t('clone') . ')';
+    if ($id === NULL) {
+      $id = $modeler->generateId();
+    }
+    if ($label === NULL) {
+      $label = $this->getLabel($model) . ' (' . $this->t('clone') . ')';
+    }
     $data = $this->getModelData($model);
     $newModel = NULL;
     if ($data !== '') {

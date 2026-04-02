@@ -757,8 +757,8 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
         if (is_array($val) && isset($val[key($val)])) {
           $values[] = $val[key($val)];
         }
-        return $values;
       }
+      return $values;
     }
     // Sometimes it does not return with values in GPT 3.5.
     elseif (is_array($json) && isset($json[0][0])) {

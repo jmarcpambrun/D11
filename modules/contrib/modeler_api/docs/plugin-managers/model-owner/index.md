@@ -52,6 +52,8 @@ grouped by responsibility:
 |--------|--------|-------------|
 | `label()` | `string` | Plugin label |
 | `description()` | `string` | Plugin description |
+| `componentLabels()` | `array` | Human-readable singular labels for supported component types (e.g. `['start' => 'Event', 'element' => 'Action']`) |
+| `componentLabelsPlural()` | `array` | Human-readable plural labels for supported component types (e.g. `['start' => 'Events', 'element' => 'Actions']`). Used for grouping headings in the component panel, quick-add popups, and constraint validation error messages. |
 | `modelIdExistsCallback()` | `array` | Callback to check if a model ID already exists (e.g. `[MyEntity::class, 'load']`) |
 | `configEntityProviderId()` | `string` | Module name providing the config entity type |
 | `configEntityTypeId()` | `string` | Config entity type ID (e.g. `eca`) |
@@ -105,6 +107,7 @@ generic component type system.
 | Method | Return | Description |
 |--------|--------|-------------|
 | `supportedOwnerComponentTypes()` | `array` | Map of `COMPONENT_TYPE_*` constants to domain-specific names |
+| `modelConstraints()` | `array` | Cardinality constraints for component types and their successors. See [Model constraints](#model-constraints) below. |
 | `availableOwnerComponents($type)` | `PluginInspectionInterface[]` | All available plugins for a component type |
 | `favoriteOwnerComponents()` | `array` | Preferred plugin IDs grouped by type |
 | `componentLabels()` | `array` | Human-readable labels for supported component types (e.g. `['start' => 'Event', 'element' => 'Action']`) |
@@ -170,6 +173,76 @@ configuration values.
 | `docBaseUrl()` | `?string` | Base URL for external documentation |
 | `pluginDocUrl($plugin, $pluginType)` | `?string` | URL for a specific plugin's documentation |
 | `prepareFormFieldForValidation(&$value, &$replacement, $element)` | `?string` | Pre-validation hook for form fields |
+
+## Model constraints
+
+Model Owners can declare cardinality constraints on component types via
+`modelConstraints()`. These constraints control both the number of components
+of a given type allowed in a model and the number of outgoing connections
+(successors) each component of that type may have.
+
+Constraints are enforced in two places:
+
+- **Server-side** -- during the save cycle, the `Api` service calls
+  `validateModelConstraints()` and adds error messages for any violations.
+- **Client-side** -- constraints are delivered to the frontend via
+  `drupalSettings.modeler_api.model_constraints` so that the modeler UI can
+  prevent violations before the save request is sent.
+
+### Return format
+
+`modelConstraints()` returns an associative array keyed by `COMPONENT_TYPE_*`
+constants. Each value is an array with optional `min` and `max` keys for the
+component count, and an optional `successors` key with its own `min`/`max` for
+the number of outgoing connections per component of that type.
+
+```php
+public function modelConstraints(): array {
+  return [
+    Api::COMPONENT_TYPE_START => [
+      'min' => 1,
+      'max' => 1,
+      'successors' => ['min' => 1, 'max' => 1],
+    ],
+    Api::COMPONENT_TYPE_ELEMENT => [
+      'min' => 1,
+      'successors' => ['max' => 0],
+    ],
+    Api::COMPONENT_TYPE_GATEWAY => [
+      'successors' => ['min' => 2],
+    ],
+  ];
+}
+```
+
+### Constraint keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `min` | `int` | Minimum number of components of this type required in the model |
+| `max` | `int` | Maximum number of components of this type allowed in the model |
+| `successors` | `array` | Nested constraint for outgoing connections per component |
+| `successors.min` | `int` | Minimum number of successors each component of this type must have |
+| `successors.max` | `int` | Maximum number of successors each component of this type may have (`0` = no successors allowed) |
+
+All keys are optional. Omitting a key means "no constraint" for that dimension.
+Returning an empty array (the default in `ModelOwnerBase`) means no constraints
+at all.
+
+### Validation error messages
+
+The `Api` service generates human-readable, translatable error messages for
+constraint violations. The messages use singular labels from
+`componentLabels()` and plural labels from `componentLabelsPlural()` depending
+on the constraint value:
+
+- `"A model requires at least one @label."` (when `min` is 1)
+- `"A model requires at least @min @label_plural."` (when `min` > 1)
+- `"A model allows at most one @label."` (when `max` is 1)
+- `"A model allows at most @max @label_plural."` (when `max` > 1)
+- `"@label "@name" requires at least @min successor(s)."` (successor min)
+- `"@label "@name" must not have any successors."` (when successor `max` is 0)
+- `"@label "@name" allows at most @max successor(s)."` (successor max > 0)
 
 ## ComponentWrapperPlugin
 

@@ -331,6 +331,7 @@ class Api {
       ],
       'component_labels' => $owner->componentLabels(),
       'component_labels_plural' => $owner->componentLabelsPlural(),
+      'model_constraints' => $this->prepareModelConstraints($owner),
       'permissions' => ModelerApiPermissions::userPermissionsForModeler($this->currentUser, $owner->getPluginId()),
       'favorite_components' => $owner->favoriteOwnerComponents(),
       'global_tokens' => $this->prepareGlobalTokens(),
@@ -480,6 +481,10 @@ class Api {
     $annotations = [];
     $colors = [];
     $swimlanes = [];
+    $componentTypeCounts = [];
+    // Track successor counts per component for successor constraints.
+    // Key: component type, Value: array of successor counts per component.
+    $successorCountsByType = [];
     foreach ($modeler->readComponents() as $component) {
       if ($color = $component->getColor()) {
         $colors[$component->getId()] = $color;
@@ -503,6 +508,14 @@ class Api {
         $annotations[] = $component;
         continue;
       }
+      // Count components by type for cardinality constraint validation.
+      $type = $component->getType();
+      $componentTypeCounts[$type] = ($componentTypeCounts[$type] ?? 0) + 1;
+      $successorCountsByType[$type][] = [
+        'id' => $component->getId(),
+        'label' => $component->getLabel(),
+        'count' => count($component->getSuccessors()),
+      ];
       if ($errors = $component->validate()) {
         $this->errors = array_merge($this->errors, $errors);
       }
@@ -510,6 +523,8 @@ class Api {
         $this->errors[] = 'A component can not be added.';
       }
     }
+    // Validate model-level cardinality constraints.
+    $this->validateModelConstraints($owner, $componentTypeCounts, $successorCountsByType);
     $owner->setAnnotations($model, $annotations);
     $owner->setColors($model, $colors);
     $owner->setSwimlanes($model, $swimlanes);
@@ -522,6 +537,106 @@ class Api {
     }
     $this->errors = array_unique($this->errors);
     return NULL;
+  }
+
+  /**
+   * Prepares model constraints for the frontend.
+   *
+   * Translates integer component type keys to string names that the
+   * frontend understands (e.g., 'start', 'element', 'gateway').
+   *
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner.
+   *
+   * @return array<string, array{min?: int, max?: int}>
+   *   Constraints keyed by component type name string.
+   */
+  protected function prepareModelConstraints(ModelOwnerInterface $owner): array {
+    $constraints = $owner->modelConstraints();
+    if (empty($constraints)) {
+      return [];
+    }
+    $result = [];
+    foreach ($constraints as $type => $constraint) {
+      $typeName = self::COMPONENT_TYPE_NAMES[$type] ?? NULL;
+      if ($typeName !== NULL) {
+        $result[$typeName] = $constraint;
+      }
+    }
+    return $result;
+  }
+
+  /**
+   * Validates model-level cardinality constraints.
+   *
+   * Checks the component counts per type and per-component successor counts
+   * against the constraints declared by the model owner.
+   *
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner.
+   * @param array<int, int> $componentTypeCounts
+   *   Component counts keyed by component type constant.
+   * @param array<int, array<int, array{id: string, label: string, count: int}>> $successorCountsByType
+   *   Per-type list of component successor info.
+   */
+  protected function validateModelConstraints(ModelOwnerInterface $owner, array $componentTypeCounts, array $successorCountsByType): void {
+    $constraints = $owner->modelConstraints();
+    if (empty($constraints)) {
+      return;
+    }
+    $labels = $owner->componentLabels();
+    $labelsPlural = $owner->componentLabelsPlural();
+    foreach ($constraints as $type => $constraint) {
+      $count = $componentTypeCounts[$type] ?? 0;
+      $typeName = self::COMPONENT_TYPE_NAMES[$type] ?? 'unknown';
+      $label = $labels[$typeName] ?? $typeName;
+      $labelPlural = $labelsPlural[$typeName] ?? $label . 's';
+      if (isset($constraint['min']) && $count < $constraint['min']) {
+        $this->errors[] = $constraint['min'] === 1
+          ? (string) $this->t('A model requires at least one @label.', [
+            '@label' => $label,
+          ])
+          : (string) $this->t('A model requires at least @min @label_plural.', [
+            '@min' => $constraint['min'],
+            '@label_plural' => $labelPlural,
+          ]);
+      }
+      if (isset($constraint['max']) && $count > $constraint['max']) {
+        $this->errors[] = $constraint['max'] === 1
+          ? (string) $this->t('A model allows at most one @label.', [
+            '@label' => $label,
+          ])
+          : (string) $this->t('A model allows at most @max @label_plural.', [
+            '@max' => $constraint['max'],
+            '@label_plural' => $labelPlural,
+          ]);
+      }
+      // Validate successor cardinality per component.
+      if (isset($constraint['successors']) && isset($successorCountsByType[$type])) {
+        $sConstraint = $constraint['successors'];
+        foreach ($successorCountsByType[$type] as $info) {
+          if (isset($sConstraint['min']) && $info['count'] < $sConstraint['min']) {
+            $this->errors[] = (string) $this->t('@label "@name" requires at least @min successor(s).', [
+              '@label' => $label,
+              '@name' => $info['label'],
+              '@min' => $sConstraint['min'],
+            ]);
+          }
+          if (isset($sConstraint['max']) && $info['count'] > $sConstraint['max']) {
+            $this->errors[] = $sConstraint['max'] === 0
+              ? (string) $this->t('@label "@name" must not have any successors.', [
+                '@label' => $label,
+                '@name' => $info['label'],
+              ])
+              : (string) $this->t('@label "@name" allows at most @max successor(s).', [
+                '@label' => $label,
+                '@name' => $info['label'],
+                '@max' => $sConstraint['max'],
+              ]);
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -708,7 +823,7 @@ class Api {
    *   The error messages that got collected through data preparation.
    */
   public function getErrors(): array {
-    return $this->errors ?? [];
+    return $this->errors;
   }
 
   /**
