@@ -35,46 +35,91 @@ class StringHelper {
    *   The prepared text.
    */
   public static function prepareText(string $text, array $removeHtmlElements = [], int $max_length = 10000): string {
-    // Never include the contents of the following tags.
-    $removeHtmlElements += ['pre', 'code', 'script', 'iframe', 'drupal-media'];
 
-    // Ensure we have a root element since LIBXML_HTML_NOIMPLIED is being used.
-    // @see https://stackoverflow.com/questions/29493678/loadhtml-libxml-html-noimplied-on-an-html-fragment-generates-incorrect-tags
-    $text = '<div>' . $text . '</div>';
+  // 🛑 1. Guard ultra important
+  if ($text === NULL || trim($text) === '') {
+    return '';
+  }
 
-    $dom = new \DOMDocument('5.0', 'utf-8');
-    $dom->formatOutput = FALSE;
-    $dom->preserveWhiteSpace = TRUE;
-    $previous = libxml_use_internal_errors(TRUE);
-    $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
-    $dom->encoding = 'utf-8';
-    libxml_clear_errors();
-    libxml_use_internal_errors($previous);
-    $removeElements = [];
+  // Never include the contents of the following tags.
+  $removeHtmlElements += ['pre', 'code', 'script', 'iframe', 'drupal-media'];
 
-    // Collect a list of DOM nodes we want to remove.
-    foreach ($removeHtmlElements as $htmlElement) {
-      $tags = $dom->GetElementsByTagName($htmlElement);
+  // 🧼 2. Normalisation UTF-8 propre (sans casser le contenu)
+  if (!mb_check_encoding($text, 'UTF-8')) {
+    $text = mb_convert_encoding($text, 'UTF-8');
+  }
 
-      foreach ($tags as $tag) {
-        $removeElements[] = $tag;
-      }
+  // 🧱 3. Toujours encapsuler
+  $text = '<div>' . $text . '</div>';
+
+  $dom = new \DOMDocument('1.0', 'UTF-8');
+  $dom->formatOutput = FALSE;
+  $dom->preserveWhiteSpace = TRUE;
+
+  // 🛠️ 4. Gestion robuste des erreurs libxml
+  $previous = libxml_use_internal_errors(TRUE);
+
+  try {
+    // ✅ Chargement sécurisé (FINI le pipeline cassé)
+    $loaded = $dom->loadHTML(
+      '<?xml encoding="UTF-8">' . $text,
+      LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+
+    if (!$loaded) {
+      return '';
     }
+  }
+  catch (\Throwable $e) {
+    // 🧯 Sécurité ultime
+    return '';
+  }
 
-    // Delete the DOM nodes.
-    foreach ($removeElements as $removeElement) {
+  libxml_clear_errors();
+  libxml_use_internal_errors($previous);
+
+  $removeElements = [];
+
+  // 🔍 5. Collecte sécurisée
+  foreach ($removeHtmlElements as $htmlElement) {
+    $tags = $dom->getElementsByTagName($htmlElement);
+
+    foreach ($tags as $tag) {
+      $removeElements[] = $tag;
+    }
+  }
+
+  // ❌ 6. Suppression safe
+  foreach ($removeElements as $removeElement) {
+    if ($removeElement->parentNode) {
       $removeElement->parentNode->removeChild($removeElement);
     }
-
-    $text = $dom->saveHTML($dom->documentElement);
-    $text = html_entity_decode($text);
-    $text = strip_tags(trim($text));
-    $text = str_replace(["\r\n", "\r", "\n", "\\r", "\\n", "\\r\\n"], "", $text);
-    $text = trim($text);
-    $text = preg_replace("/  +/", ' ', $text);
-    $text = preg_replace("/[^\w.?!,' ]/iu", '', $text);
-    // @todo Here is where we could remove stopwords
-    return Unicode::truncate($text, $max_length, TRUE);
   }
+
+  // 🧾 7. Extraction texte
+  $text = $dom->saveHTML($dom->documentElement);
+
+  if ($text === FALSE) {
+    return '';
+  }
+
+  // 🧼 8. Nettoyage final robuste
+  $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  $text = strip_tags($text);
+  $text = trim($text);
+
+  // Normalisation whitespace
+  $text = preg_replace('/\s+/u', ' ', $text);
+
+  // Nettoyage caractères exotiques (option conservatrice)
+  $text = preg_replace("/[^\p{L}\p{N}\s\.\?\!\,\']+/u", '', $text);
+
+  // 🛑 Sécurité finale
+  if ($text === NULL || $text === '') {
+    return '';
+  }
+
+  return Unicode::truncate($text, $max_length, TRUE);
+ }
 
 }
