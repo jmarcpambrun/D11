@@ -155,6 +155,7 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
         ),
         'c' =>
         array (
+            'cweagans\\Composer\\' => 18,
             'chillerlan\\Settings\\' => 20,
             'chillerlan\\QRCode\\' => 18,
         ),
@@ -416,6 +417,11 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
         'dekor\\' =>
         array (
             0 => __DIR__ . '/..' . '/dekor/php-array-table/src',
+        ),
+        'cweagans\\Composer\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/cweagans/composer-patches/src',
+            1 => __DIR__ . '/..' . '/cweagans/composer-configurable-plugin/src',
         ),
         'chillerlan\\Settings\\' =>
         array (
