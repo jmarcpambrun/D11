@@ -3580,18 +3580,18 @@
         },
         {
             "name": "drupal/charts",
-            "version": "5.1.10",
-            "version_normalized": "5.1.10.0",
+            "version": "5.2.0",
+            "version_normalized": "5.2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/charts.git",
-                "reference": "5.1.10"
+                "reference": "5.2.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/charts-5.1.10.zip",
-                "reference": "5.1.10",
-                "shasum": "ad3c3225f3c747618d6330bb9775e78418c0cdb6"
+                "url": "https://ftp.drupal.org/files/projects/charts-5.2.0.zip",
+                "reference": "5.2.0",
+                "shasum": "6c51d85039407a6e68733f8068c3af86d97f460e"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11"
@@ -3599,8 +3599,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "5.1.10",
-                    "datestamp": "1765584158",
+                    "version": "5.2.0",
+                    "datestamp": "1775594157",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4137,17 +4137,17 @@
         },
         {
             "name": "drupal/core",
-            "version": "11.3.5",
-            "version_normalized": "11.3.5.0",
+            "version": "11.3.6",
+            "version_normalized": "11.3.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core.git",
-                "reference": "6de8a6ff360ad1c2719af077259c3ef77ba3d23f"
+                "reference": "728d09ef108bcbadf06cf8f0a5984450e089de9b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core/zipball/6de8a6ff360ad1c2719af077259c3ef77ba3d23f",
-                "reference": "6de8a6ff360ad1c2719af077259c3ef77ba3d23f",
+                "url": "https://api.github.com/repos/drupal/core/zipball/728d09ef108bcbadf06cf8f0a5984450e089de9b",
+                "reference": "728d09ef108bcbadf06cf8f0a5984450e089de9b",
                 "shasum": ""
             },
             "require": {
@@ -4236,7 +4236,7 @@
             "suggest": {
                 "ext-zip": "Needed to extend the plugin.manager.archiver service capability with the handling of files in the ZIP format."
             },
-            "time": "2026-03-06T09:54:42+00:00",
+            "time": "2026-04-08T09:15:33+00:00",
             "type": "drupal-core",
             "extra": {
                 "drupal-scaffold": {
@@ -4307,14 +4307,14 @@
             ],
             "description": "Drupal is an open source content management platform powering millions of websites and applications.",
             "support": {
-                "source": "https://github.com/drupal/core/tree/11.3.5"
+                "source": "https://github.com/drupal/core/tree/11.3.6"
             },
             "install-path": "../../core"
         },
         {
             "name": "drupal/core-composer-scaffold",
-            "version": "11.3.5",
-            "version_normalized": "11.3.5.0",
+            "version": "11.3.6",
+            "version_normalized": "11.3.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-composer-scaffold.git",
@@ -4360,14 +4360,14 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.3.5"
+                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.3.6"
             },
             "install-path": "../drupal/core-composer-scaffold"
         },
         {
             "name": "drupal/core-vendor-hardening",
-            "version": "10.6.5",
-            "version_normalized": "10.6.5.0",
+            "version": "10.6.6",
+            "version_normalized": "10.6.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-vendor-hardening.git",
@@ -4404,7 +4404,7 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.5"
+                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.6"
             },
             "install-path": "../drupal/core-vendor-hardening"
         },

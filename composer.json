@@ -36,7 +36,7 @@
         "drupal/bpmn_io": "^3.0.5",
         "drupal/burndown": "1.0.56",
         "drupal/captcha": "2.0.10",
-        "drupal/charts": "5.1.10",
+        "drupal/charts": "^5.2",
         "drupal/clientside_validation": "4.1.2",
         "drupal/composer_deploy": "1.10",
         "drupal/computed_field": "4.0.0",
