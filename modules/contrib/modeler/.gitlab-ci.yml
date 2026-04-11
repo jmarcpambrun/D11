@@ -1,0 +1,145 @@
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+variables:
+  _CSPELL_IGNORE_PATHS: "dist/*"
+  _MKDOCS_STRICT: '0'
+  SKIP_STYLELINT: '1'
+  SKIP_ESLINT: '1'
+  OPT_IN_TEST_PREVIOUS_MAJOR: 0
+  OPT_IN_TEST_CURRENT: 1
+  OPT_IN_TEST_NEXT_MINOR: 1
+  OPT_IN_TEST_NEXT_MAJOR: 1
+  RUN_JOB_UPGRADE_STATUS: 1
+stages:
+  - build
+  - validate
+  - test
+  - release
+
+reactapp build:
+  stage: build
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  script:
+    - cd ui
+    - npm ci
+    - npm run build:production
+  artifacts:
+    paths:
+      - dist/
+      - ui/node_modules/
+
+reactapp lint:
+  stage: validate
+  image: node:20.14.0-alpine
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  needs:
+    - reactapp build
+  script:
+    - cd ui
+    - npm run lint
+
+reactapp type check:
+  stage: validate
+  image: node:20.14.0-alpine
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  needs:
+    - reactapp build
+  script:
+    - cd ui
+    - npm run type-check
+
+reactapp unit tests:
+  stage: test
+  image: node:20.14.0-alpine
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  needs:
+    - reactapp build
+  script:
+    - cd ui
+    - npm run test:ci
+
+reactapp e2e:
+  stage: test
+  image: node:20-bookworm
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  needs:
+    - reactapp build
+  script:
+    - cd ui
+    - npx playwright install --with-deps chromium
+    - npm run e2e
+  artifacts:
+    when: always
+    paths:
+      - ui/tests/playwright-report/
+      - ui/tests/test-results/
+
+reactapp a11y:
+  stage: test
+  image: node:20-bookworm
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CHECKOUT: "true"
+  needs:
+    - reactapp build
+  script:
+    - cd ui
+    - npx playwright install --with-deps chromium
+    - npm run test-storybook:ci
+  artifacts:
+    when: always
+    paths:
+      - ui/tests/storybook-static/
+
+cspell:
+  allow_failure: false
+phpcs:
+  allow_failure: false
+phpstan:
+  allow_failure: false
+phpstan (next minor):
+  allow_failure: false
+phpstan (next major):
+  allow_failure: false
+phpunit (previous major):
+  allow_failure: false
+phpunit (next minor):
+  allow_failure: false
+phpunit (next major):
+  allow_failure: false
+upgrade status:
+  allow_failure: false
+
+release:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/
+  before_script:
+    - export VERSION=$(echo ${CI_COMMIT_TAG} | cut -c2-)
+    - git config --global user.email "no-reply@drupal.org"
+    - git config --global user.name "drupal.org GitLab CI"
+    - git remote set-url origin https://gitlab-ci-token:${GITLAB_CI_RELEASE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+  script:
+    - cd ui
+    - npm ci
+    - npm run build:production
+    - cd ..
+    - git add -f dist
+    - git commit -m "Add built assets for release ${VERSION}"
+    - git tag -f $VERSION
+    - git push origin $VERSION

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 260" font-family="Roboto, sans-serif">
+  <defs>
+    <style>
+      .box { fill: #fff; stroke: #b0bec5; stroke-width: 1.5; rx: 6; }
+      .header { fill: #009688; rx: 6; }
+      .label { fill: #37474f; font-size: 14px; text-anchor: middle; dominant-baseline: central; }
+      .label-light { fill: #fff; font-size: 14px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+      .sublabel { fill: #78909c; font-size: 11px; text-anchor: middle; dominant-baseline: central; }
+    </style>
+  </defs>
+  <!-- Outer border -->
+  <rect x="10" y="10" width="660" height="240" rx="8" fill="none" stroke="#cfd8dc" stroke-width="2"/>
+  <!-- Toolbar -->
+  <rect x="10" y="10" width="660" height="44" class="header"/>
+  <text x="340" y="32" class="label-light">Toolbar</text>
+  <!-- Canvas -->
+  <rect x="10" y="54" width="360" height="196" class="box" rx="0"/>
+  <text x="190" y="140" class="label">Canvas</text>
+  <text x="190" y="160" class="sublabel">(React Flow)</text>
+  <!-- Replay Panel -->
+  <rect x="370" y="54" width="140" height="196" class="box" rx="0"/>
+  <text x="440" y="140" class="label">Replay Panel</text>
+  <text x="440" y="160" class="sublabel">(execution)</text>
+  <!-- Property Panel -->
+  <rect x="510" y="54" width="160" height="196" class="box" rx="0"/>
+  <text x="590" y="140" class="label">Property Panel</text>
+  <text x="590" y="160" class="sublabel">(forms)</text>
+</svg>
