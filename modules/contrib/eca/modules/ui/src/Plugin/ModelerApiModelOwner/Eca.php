@@ -138,7 +138,7 @@ class Eca extends ModelOwnerBase {
    * {@inheritdoc}
    */
   public function configEntityBasePath(): string {
-    return 'admin/config/workflow/eca';
+    return 'route:entity.eca.collection';
   }
 
   /**
