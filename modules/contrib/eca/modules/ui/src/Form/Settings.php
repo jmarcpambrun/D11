@@ -78,11 +78,6 @@ class Settings extends ConfigFormBase {
       '#default_value' => $this->state->get('_eca_internal_debug_data_depth', 5) ?? 5,
       '#min' => 2,
       '#weight' => -30,
-      '#states' => [
-        'visible' => [
-          ':input[name="debug_mode"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
     $form['debug_data_cases'] = [
       '#type' => 'number',
@@ -90,11 +85,6 @@ class Settings extends ConfigFormBase {
       '#default_value' => $this->state->get('_eca_internal_debug_data_cases', 10) ?? 10,
       '#min' => 1,
       '#weight' => -31,
-      '#states' => [
-        'visible' => [
-          ':input[name="debug_mode"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
     $form['log_level'] = [
       '#type' => 'select',
