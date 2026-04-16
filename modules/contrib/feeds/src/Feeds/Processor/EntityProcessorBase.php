@@ -1138,7 +1138,6 @@ abstract class EntityProcessorBase extends ProcessorBase implements EntityProces
    * Deletes the feeds_item field.
    */
   protected function removeFeedItemField() {
-    $storage_in_use = FALSE;
     $instance_in_use = FALSE;
 
     foreach (FeedType::loadMultiple() as $feed_type) {
@@ -1151,8 +1150,6 @@ abstract class EntityProcessorBase extends ProcessorBase implements EntityProces
       }
 
       if ($processor->entityType() === $this->entityType()) {
-        $storage_in_use = TRUE;
-
         if ($processor->bundle() === $this->bundle()) {
           $instance_in_use = TRUE;
           break;
@@ -1164,19 +1161,12 @@ abstract class EntityProcessorBase extends ProcessorBase implements EntityProces
       return;
     }
 
-    // Delete the field instance.
+    // Delete the field instance. Core will automatically delete the associated
+    // field storage config if it's the last usage of it.
     if ($config = FieldConfig::loadByName($this->entityType(), $this->bundle(), 'feeds_item')) {
       $config->delete();
     }
 
-    if ($storage_in_use) {
-      return;
-    }
-
-    // Delte the field storage.
-    if ($storage = FieldStorageConfig::loadByName($this->entityType(), 'feeds_item')) {
-      $storage->delete();
-    }
   }
 
   /**

@@ -183,6 +183,105 @@ class EntityReferenceTest extends FeedsKernelTestBase {
     // Clear the logged messages so no failure is reported on tear down.
     $this->logger->clearMessages();
   }
+/**
+++   * Tests the `empty_reference_no_hash_reset` option.
+++   *
+++   * When this option is disabled, which is the default, this is tested by
+++   * `testUpdatingMissingReferences`. If this option is enabled, test empty
+++   * entity references are not re-imported when importing again.
+++   */
+  public function testNoResetHashMissingReferences() {
+    // Create a content type.
+    $type = NodeType::create([
+      'type' => 'page',
+      'name' => 'Page',
+    ]);
+    $type->save();
+    // Add an entityreference field to this content type.
+    $this->createEntityReferenceField('node', 'page', 'field_article', 'Article', 'node', 'default', [
+      'target_bundles' => ['article'],
+    ]);
+
+    // Create feed type for the 'article' content type.
+    $this->createFeedTypeForCsv([
+      'guid' => 'guid',
+      'title' => 'title',
+      ],
+      [
+        'id' => 'article_feed_type',
+        'label' => 'Article importer',
+        'processor_configuration' => [
+          'authorize' => FALSE,
+          'update_existing' => ProcessorInterface::UPDATE_EXISTING,
+          'values' => [
+            'type' => 'article',
+          ],
+        ],
+    ]);
+
+    // Create feed type for the 'page' content type, with a mapping to the
+    // entityreference field 'field_article'.
+    $this->createFeedTypeForCsv([
+            'guid' => 'guid',
+            'title' => 'title',
+            'article' => 'article',
+          ],
+          [
+            'id' => 'page_feed_type',
+            'label' => 'Page importer',
+            'processor_configuration' => [
+            'authorize' => FALSE,
+            'update_existing' => ProcessorInterface::UPDATE_EXISTING,
+            'values' => [
+            'type' => 'page',
+          ],
+        ],
+        'mappings' => array_merge($this->getDefaultMappings(), [
+          [
+            'target' => 'field_article',
+            'map' => ['target_id' => 'article'],
+            'settings' => [
+            'reference_by' => 'feeds_item',
+            'feeds_item' => 'guid',
+            'autocreate' => 0,
+            'empty_reference_no_hash_reset' => 1,
+          ],
+        ],
+      ]),
+    ]);
+
+    // Import pages.
+    $feed = $this->createFeed('page_feed_type', [
+      'source' => $this->resourcesPath() . '/csv/content-with-reference.csv',
+    ]);
+    $feed->import();
+
+    // Assert two created nodes.
+    $this->assertNodeCount(2);
+    $node = Node::load(1);
+    // Assert that field_article is empty at the moment.
+    $this->assertEquals([], $node->field_article->getValue());
+
+    // Check other node.
+    $node2 = Node::load(2);
+    $this->assertEquals([], $node->field_article->getValue());
+
+    // Ensure that the nodes aren't updated again. Change the titles of all page
+    // nodes, so we can check that these won't be updated by Feeds.
+    $node->title->value = 'Page 1';
+    $node->save();
+    $node2->title->value = 'Page 2';
+    $node2->save();
+
+    // Re-import feed.
+    $feed->import();
+
+    // Ensure that the nodes were not updated.
+    $node = $this->reloadEntity($node);
+    $this->assertEquals('Page 1', $node->title->value);
+    $node2 = $this->reloadEntity($node2);
+    $this->assertEquals('Page 2', $node2->title->value);
+  }
 
   /**
    * Tests if articles get an author later.

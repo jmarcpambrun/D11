@@ -117,15 +117,15 @@ class EntityReference extends FieldTargetBase implements ConfigurableTargetInter
         $this->prepareValue($delta, $columns);
         $values[] = $columns;
       }
-      catch (ReferenceNotFoundException $e) {
-        // The referenced entity is not found. We need to enforce Feeds to try
-        // to import the same item again on the next import.
-        // Feeds stores a hash of every imported item in order to make the
-        // import process more efficient by ignoring items it has already seen.
-        // In this case we need to destroy the hash in order to be able to
-        // import the reference on a next import.
-        $entity->get('feeds_item')->getItemByFeed($feed)->hash = NULL;
-        $feed->getState(StateInterface::PROCESS)->setMessage($e->getFormattedMessage(), 'warning', TRUE);
+        catch (ReferenceNotFoundException $e) {
+        if (!$this->configuration['empty_reference_no_hash_reset']) {
+          // Feeds stores a hash for every imported item, so that items with
+          // hashes can be ignored when re-importing. Since the referenced
+          // entity is not found, force Feeds to re-import this item on the
+          // next import by resetting the hash.
+          $entity->get('feeds_item')->hash = NULL;
+          $feed->getState(StateInterface::PROCESS)->setMessage($e->getFormattedMessage(), 'warning', TRUE);
+        }
       }
       catch (EmptyFeedException $e) {
         // Nothing wrong here.
@@ -378,6 +378,7 @@ class EntityReference extends FieldTargetBase implements ConfigurableTargetInter
   public function defaultConfiguration() {
     $config = parent::defaultConfiguration() + [
       'reference_by' => $this->getLabelKey(),
+      'empty_reference_no_hash_reset' => FALSE,
     ];
     if (array_key_exists('feeds_item', $this->getPotentialFields())) {
       $config['feeds_item'] = FALSE;
@@ -473,6 +474,13 @@ class EntityReference extends FieldTargetBase implements ConfigurableTargetInter
             ],
           ],
         ];
+
+        $form['empty_reference_no_hash_reset'] = [
+          '#type' => 'checkbox',
+          '#title' => $this->t('Do not reset hash when an entity reference was not found'),
+          '#description' => $this->t("When importing an entity reference, sometimes the referenced entity does not exist yet because it will be imported later. By default, the entity reference's hash is reset in these situations, so the entity reference can be re-imported on the next import. To override this behavior and not allow re-importing, enable this option."),
+          '#default_value' => $this->configuration['empty_reference_no_hash_reset'],
+          ];
       }
     }
 
