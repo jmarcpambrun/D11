@@ -44,6 +44,15 @@ class BookManagerTest extends KernelTestBase {
     $this->installSchema('book', ['book']);
     $this->installConfig(['node', 'book', 'book_content_type', 'field']);
     $this->container->get('current_user')->setAccount($this->createUser(['administer book outlines']));
+
+    $config_factory = \Drupal::configFactory();
+    $config = $config_factory->getEditable('book.settings');
+    $settings = [];
+    $settings[] = [
+      'content_type' => 'book',
+      'child_type' => 'book',
+    ];
+    $config->set('allowed_types', $settings)->save();
   }
 
   /**

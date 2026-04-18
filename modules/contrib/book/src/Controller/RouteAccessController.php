@@ -8,7 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\book\BookManagerInterface;
-use Drupal\book\Entity\Node\Book;
+use Drupal\book\BookInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -49,6 +49,10 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
+    if (!$node instanceof BookInterface) {
+      return AccessResult::forbidden();
+    }
+
     // Checks if user has permission to reorder pages.
     $hasAccess = $account->hasPermission('reorder book pages');
 
@@ -73,7 +77,7 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
    *   The book node.
    */
   public function checkIfBookHasChildren(NodeInterface $node): bool {
-    assert($node instanceof Book);
+    assert($node instanceof BookInterface);
     return (bool) ($node->getBook()['has_children'] ?? FALSE);
   }
 
@@ -84,7 +88,7 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
    *   The book node.
    */
   public function checkIfChildIsGreaterThanOne(NodeInterface $node): bool {
-    assert($node instanceof Book);
+    assert($node instanceof BookInterface);
     $children = $this->bookManager->bookSubtreeData($node->getBook());
     $child = reset($children);
 

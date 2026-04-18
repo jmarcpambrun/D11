@@ -646,7 +646,7 @@ class BookManager implements BookManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function bookTreeAllData(int $bid, ?array $link = NULL, ?int $max_depth = NULL, ?int $min_depth = NULL): array {
+  public function bookTreeAllData(int $bid, ?array $link = NULL, ?int $max_depth = NULL, ?int $min_depth = NULL, bool $expanded = FALSE): array {
     // Use $nid as flag for whether the data being loaded is for the whole tree.
     $nid = $link['nid'] ?? 0;
     $langcode = $this->languageManager->getCurrentLanguage(LanguageInterface::TYPE_CONTENT)->getId();
@@ -667,7 +667,7 @@ class BookManager implements BookManagerInterface {
     ];
     if ($nid) {
       $active_trail = $this->getActiveTrailIds($bid, $link);
-      $tree_parameters['expanded'] = $active_trail;
+      $tree_parameters['expanded'] = $expanded ? [] : $active_trail;
       $tree_parameters['active_trail'] = $active_trail;
       $tree_parameters['active_trail'][] = $nid;
     }

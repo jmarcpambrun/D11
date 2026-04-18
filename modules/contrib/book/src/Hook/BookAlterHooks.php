@@ -7,6 +7,7 @@ use Drupal\book\Access\BookNodePrintAccessCheck;
 use Drupal\book\BookHelperTrait;
 use Drupal\book\BookManager;
 use Drupal\book\BookManagerInterface;
+use Drupal\book\BookInterface;
 use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -46,7 +47,7 @@ class BookAlterHooks {
    */
   #[Hook('node_links_alter')]
   public function nodeLinkAlter(array &$links, NodeInterface $node, array $context): void {
-    if ($context['view_mode'] != 'rss') {
+    if ($node instanceof BookInterface && $context['view_mode'] != 'rss') {
       $book = $node->getBook();
       if (isset($book['depth'])) {
         if ($context['view_mode'] == 'full') {

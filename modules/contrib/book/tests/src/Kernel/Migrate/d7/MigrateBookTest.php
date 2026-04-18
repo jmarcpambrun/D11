@@ -34,6 +34,14 @@ class MigrateBookTest extends MigrateDrupal7TestBase {
     $this->installSchema('node', ['node_access']);
     $this->installConfig('book');
     $this->installConfig('book_content_type');
+    $book_config = $this->config('book.settings');
+    $allowed_types = $book_config->get('allowed_types') ?? [];
+    $allowed_types[] = [
+      'content_type' => 'book',
+      'child_type' => 'book',
+    ];
+    $book_config->set('allowed_types', $allowed_types)->save();
+
     $this->migrateUsers(FALSE);
     $this->migrateContentTypes();
     $this->executeMigrations([

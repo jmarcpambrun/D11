@@ -48,7 +48,6 @@ class BookConditionTest extends KernelTestBase {
     $this->installSchema('book', ['book']);
     $this->installSchema('node', ['node_access']);
     $this->installConfig(['node', 'book', 'book_content_type', 'field']);
-
     // Create user 1 who has special permissions.
     $this->setCurrentUser($this->drupalCreateUser());
   }
@@ -72,6 +71,7 @@ class BookConditionTest extends KernelTestBase {
       'content_type' => $content_type->id(),
       'child_type' => $content_type->id(),
     ];
+    $book_config->set('allowed_types', $allowed_types)->save();
 
     // Create a regular node and three books including one with children.
     $node_1 = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);

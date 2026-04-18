@@ -8,7 +8,7 @@
  */
 
 import { Node, Edge } from 'reactflow';
-import { ReplayStep, isNodeExecutionStep, isSuccessorStep, isAccessDeniedStep, isAddSuccessorStep, isConditionStep } from './replayStepUtils';
+import { ReplayStep, isNodeExecutionStep, isSuccessorStep, isAccessDeniedStep, isExceptionStep, isAddSuccessorStep, isConditionStep } from './replayStepUtils';
 
 // ============ Clear Highlights ============
 
@@ -119,9 +119,9 @@ export function highlightNodesForStep(
 
   if (!step.id) return cleared;
 
-  // For node execution steps (started, execute, access denied)
+  // For node execution steps (started, execute, access denied, exception)
   if (isNodeExecutionStep(step)) {
-    return applyNodeHighlight(cleared, step.id, isAccessDeniedStep(step));
+    return applyNodeHighlight(cleared, step.id, isAccessDeniedStep(step) || isExceptionStep(step));
   }
 
   // For successor steps without conditionId (treated as node steps)

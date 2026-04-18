@@ -66,6 +66,7 @@ services:
       # invalidates also this cache data.
       - { name: cache.bin.memory }
   book.setting_save.subscriber:
+    autowire: true
     class: Drupal\book\EventSubscriber\BookSettingsSaveEventSubscriber
     tags:
       - { name: event_subscriber }

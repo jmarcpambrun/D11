@@ -43,6 +43,14 @@ class BookUninstallTest extends KernelTestBase {
     $this->installConfig(['node', 'book', 'book_content_type', 'field']);
     // For uninstall to work.
     $this->installSchema('user', ['users_data']);
+
+    $book_config = $this->config('book.settings');
+    $allowed_types = $book_config->get('allowed_types') ?? [];
+    $allowed_types[] = [
+      'content_type' => 'book',
+      'child_type' => 'book',
+    ];
+    $book_config->set('allowed_types', $allowed_types)->save();
   }
 
   /**
@@ -67,6 +75,7 @@ class BookUninstallTest extends KernelTestBase {
       'content_type' => $content_type->id(),
       'child_type' => $content_type->id(),
     ];
+    $book_config->set('allowed_types', $allowed_types)->save();
 
     $node = Node::create(['title' => $this->randomString(), 'type' => $content_type->id()]);
     $node->setBookKey('bid', 'new');

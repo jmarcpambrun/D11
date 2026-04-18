@@ -143,3 +143,67 @@ release:
     - git commit -m "Add built assets for release ${VERSION}"
     - git tag -f $VERSION
     - git push origin $VERSION
+
+# Verify that non-v-prefixed tags contain built assets. A tag like "1.0.0"
+# (without "v" prefix) is expected to be created by the release job above,
+# which includes the compiled CSS and JS bundles. If someone manually creates
+# such a tag without going through the v-prefixed release flow, the assets
+# will be missing because dist/ is gitignored on regular branches.
+#
+# When assets are missing, this job automatically deletes the broken tag and
+# the pipeline fails.
+verify release assets:
+  stage: .pre
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/
+  script:
+    - |
+      echo "============================================="
+      echo " RELEASE TAG ASSET VERIFICATION"
+      echo "============================================="
+      echo ""
+      echo "Tag: ${CI_COMMIT_TAG}"
+      echo ""
+      MISSING=0
+      REQUIRED_FILES="dist/modeler.bundle.css dist/modeler.bundle.js"
+      for file in $REQUIRED_FILES; do
+        if [ ! -f "$file" ]; then
+          echo "MISSING: $file"
+          MISSING=1
+        else
+          echo "OK:      $file"
+        fi
+      done
+      echo ""
+      if [ "$MISSING" -eq 0 ]; then
+        echo "All required assets are present. Release tag is valid."
+        exit 0
+      fi
+      echo "============================================="
+      echo " ERROR: Built assets are missing!"
+      echo "============================================="
+      echo ""
+      echo "Tag '${CI_COMMIT_TAG}' does not contain the required"
+      echo "built assets (CSS/JS bundles). This most likely happened"
+      echo "because the tag was created without the required 'v' prefix."
+      echo ""
+      echo "Tags must start with 'v' (e.g. v${CI_COMMIT_TAG}) to trigger"
+      echo "the build pipeline that compiles and includes the assets."
+      echo ""
+
+      # --- Delete the broken tag ---
+      echo "Deleting broken tag '${CI_COMMIT_TAG}'..."
+      git remote set-url origin "https://gitlab-ci-token:${GITLAB_CI_RELEASE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+      if git push origin ":refs/tags/${CI_COMMIT_TAG}"; then
+        echo "Tag '${CI_COMMIT_TAG}' has been deleted."
+        echo ""
+        echo "To create a proper release, push the tag with 'v' prefix:"
+        echo "  git tag v${CI_COMMIT_TAG}"
+        echo "  git push origin v${CI_COMMIT_TAG}"
+      else
+        echo "WARNING: Failed to delete tag '${CI_COMMIT_TAG}'."
+        echo "Please delete it manually:"
+        echo "  git push origin :refs/tags/${CI_COMMIT_TAG}"
+      fi
+      echo ""
+      exit 1

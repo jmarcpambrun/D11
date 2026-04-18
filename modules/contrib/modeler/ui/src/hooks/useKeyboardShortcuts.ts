@@ -79,7 +79,7 @@ function isShortcutKey(
   capabilities: KeyboardCapabilities
 ): boolean {
   const ctrlOrMeta = event.ctrlKey || event.metaKey;
-  if (event.key === 'Delete' && capabilities.canDelete) return true;
+  if ((event.key === 'Delete' || event.key === 'Backspace') && capabilities.canDelete) return true;
   if (ctrlOrMeta && event.key === 'c' && capabilities.canCopy) return true;
   if (ctrlOrMeta && event.key === 'v' && capabilities.canPaste) return true;
   if (ctrlOrMeta && event.key === 'f' && capabilities.canSearch) return true;
@@ -117,7 +117,7 @@ function createShortcutHandler(
     const { onDelete, onCopy, onPaste, onToggleSearch, onEscape, onUndo, onRedo } = callbacks;
     const ctrlOrMeta = event.ctrlKey || event.metaKey;
     
-    if (event.key === 'Delete' && canDelete && onDelete) {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && canDelete && onDelete) {
       event.preventDefault();
       event.stopPropagation();
       onDelete();

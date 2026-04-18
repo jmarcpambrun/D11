@@ -50,7 +50,13 @@ function formatUser(user: ReplayEntry['user']): string {
 /** Extract a display string from a replay step exception. */
 function formatException(exc: StepInfo['exception']): string {
   if (!exc) return '';
-  if (typeof exc === 'object' && 'message' in exc && typeof exc.message === 'string') return exc.message;
+  if (typeof exc === 'object') {
+    const parts: string[] = [];
+    if ('class' in exc && typeof exc.class === 'string') parts.push(exc.class);
+    if ('message' in exc && typeof exc.message === 'string') parts.push(exc.message);
+    if ('file' in exc && typeof exc.file === 'string') parts.push(`at ${exc.file}`);
+    if (parts.length > 0) return parts.join(': ');
+  }
   return String(exc);
 }
 
@@ -61,7 +67,13 @@ interface StepInfo {
   successorType?: number;
   conditionId?: string;
   object?: unknown;
-  exception?: { message?: string } | Record<string, unknown>;
+  exception?: {
+    class?: string;
+    code?: number;
+    message?: string;
+    file?: string;
+    trace?: string;
+  } | Record<string, unknown>;
 }
 
 interface ReplayPanelProps {
@@ -211,12 +223,15 @@ const ReplayPanel: React.FC<ReplayPanelProps> = ({
   });
 
   // Build info items from stepInfo for the popup
+  const exc = stepInfo?.exception;
+  const excTrace = exc && typeof exc === 'object' && 'trace' in exc && typeof exc.trace === 'string' ? exc.trace : '';
   const infoItems: InfoItem[] = stepInfo ? [
     { label: t('Type'), value: stepInfo.type, show: true },
     { label: t('Component ID'), value: stepInfo.id || '', show: !!stepInfo.id },
     { label: t('Successor ID'), value: stepInfo.successorId || '', show: !!stepInfo.successorId },
     { label: t('Condition ID'), value: stepInfo.conditionId || '', show: !!stepInfo.conditionId },
     { label: t('Error'), value: formatException(stepInfo.exception), show: !!stepInfo.exception, isError: true },
+    { label: t('Stack Trace'), value: excTrace, show: !!excTrace, isError: true },
   ] : [];
 
   const copyToClipboard = (text: unknown, path: string) => {

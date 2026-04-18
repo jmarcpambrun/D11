@@ -33,11 +33,13 @@ interface BookManagerInterface {
    *   (optional) Minimum depth of links to retrieve. Typically useful if only
    *   one or two levels of a subtree are needed in conjunction with a non-NULL
    *   $link, in which case $min_depth should be greater than $link['depth'].
+   * @param bool $expanded
+   *   (optional) Whether to include the expanded flag in the returned tree.
    *
    * @return array
    *   A tree of menu links in an array, in the order they should be rendered.
    */
-  public function bookTreeAllData(int $bid, ?array $link = NULL, ?int $max_depth = NULL, ?int $min_depth = NULL): array;
+  public function bookTreeAllData(int $bid, ?array $link = NULL, ?int $max_depth = NULL, ?int $min_depth = NULL, bool $expanded = FALSE): array;
 
   /**
    * Gets the active trail IDs for the specified book at the provided path.

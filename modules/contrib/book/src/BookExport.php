@@ -6,7 +6,9 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilderInterface;
+use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\node\NodeInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides methods for exporting book to different formats.
@@ -14,6 +16,8 @@ use Drupal\node\NodeInterface;
  * If you would like to add another format, swap this class in container.
  */
 class BookExport {
+
+  use MessengerTrait;
 
   /**
    * The node storage.
@@ -71,7 +75,8 @@ class BookExport {
   public function bookExportHtml(NodeInterface $node): array {
     $book = $node->getBook();
     if (empty($book)) {
-      throw new \Exception();
+      $this->messenger()->addWarning(t('%title is not in a book and cannot be exported.', ['%title' => $node->label()]));
+      throw new NotFoundHttpException();
     }
 
     $tree = $this->bookManager->bookSubtreeData($book);

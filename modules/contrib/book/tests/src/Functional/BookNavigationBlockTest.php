@@ -330,4 +330,75 @@ class BookNavigationBlockTest extends BookTestBase {
     $this->assertSession()->responseMatches(sprintf('/%s.*%s/s', $book2->getTitle(), $book1->getTitle()));
   }
 
+  /**
+   * Tests the starting_level setting of the book navigation block.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
+   */
+  public function testBookNavigationBlockStartingLevel(): void {
+    $block = $this->drupalPlaceBlock('book_navigation', [
+      'block_mode' => 'book pages',
+      'starting_level' => 2,
+      'show_top_item' => TRUE,
+    ]);
+
+    // Create a book.
+    $nodes = $this->createBook();
+
+    // Give anonymous users the permission 'node test view'.
+    user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, ['node test view']);
+
+    $this->drupalGet($this->book->toUrl());
+    $this->assertBlockAppears($block);
+    $this->assertSession()->pageTextContains($nodes[0]->label());
+    $this->assertSession()->pageTextNotContains($nodes[1]->label());
+    $this->assertSession()->pageTextNotContains($nodes[2]->label());
+    $this->assertSession()->pageTextContains($nodes[3]->label());
+    $this->assertSession()->pageTextContains($nodes[4]->label());
+
+    $this->drupalGet($nodes[0]->toUrl());
+    $this->assertBlockAppears($block);
+    $this->assertSession()->pageTextContains($nodes[1]->label());
+    $this->assertSession()->pageTextContains($nodes[2]->label());
+    $this->assertSession()->pageTextNotContains($nodes[3]->label());
+    $this->assertSession()->pageTextNotContains($nodes[4]->label());
+  }
+
+  /**
+   * Tests the expanded setting of the book navigation block.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
+   */
+  public function testBookNavigationBlockExpandedSetting(): void {
+    $block = $this->drupalPlaceBlock('book_navigation', [
+      'block_mode' => 'book pages',
+      'starting_level' => 2,
+      'show_top_item' => TRUE,
+      'expanded' => TRUE,
+    ]);
+
+    // Create a book.
+    $nodes = $this->createBook();
+
+    // Give anonymous users the permission 'node test view'.
+    user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, ['node test view']);
+
+    $this->drupalGet($this->book->toUrl());
+    $this->assertBlockAppears($block);
+    $this->assertSession()->pageTextContains($nodes[0]->label());
+    $this->assertSession()->pageTextContains($nodes[1]->label());
+    $this->assertSession()->pageTextContains($nodes[2]->label());
+    $this->assertSession()->pageTextContains($nodes[3]->label());
+    $this->assertSession()->pageTextContains($nodes[4]->label());
+
+    $this->drupalGet($nodes[0]->toUrl());
+    $this->assertBlockAppears($block);
+    $this->assertSession()->pageTextContains($nodes[1]->label());
+    $this->assertSession()->pageTextContains($nodes[2]->label());
+    $this->assertSession()->pageTextNotContains($nodes[3]->label());
+    $this->assertSession()->pageTextNotContains($nodes[4]->label());
+  }
+
 }

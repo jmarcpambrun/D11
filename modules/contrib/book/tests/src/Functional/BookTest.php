@@ -429,14 +429,6 @@ class BookTest extends BookTestBase {
       ])
       ->save();
 
-    // Book author user has edit book field on non-book nodes if node is in
-    // an outline already.
-    $this->drupalGet('node/' . $non_book_node->id() . '/edit');
-    // Verify we can now edit books from the form.
-    $this->assertSession()->fieldExists('edit-book-bid');
-    // The outline local tasks link also appears.
-    $this->assertSession()->linkByHrefExists('node/' . $non_book_node->id() . '/outline');
-
     // Create a non-book node and place in an outline.
     $non_book_node_in_outline = $this->drupalCreateNode([
       'type' => 'page',

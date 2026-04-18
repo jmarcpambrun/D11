@@ -137,7 +137,13 @@ export interface ReplayDataEntry {
   /** ID of the condition plugin evaluated (for condition steps). */
   conditionId?: string;
   /** Exception information if the step failed. */
-  exception?: { message?: string } | Record<string, unknown>;
+  exception?: {
+    class?: string;
+    code?: number;
+    message?: string;
+    file?: string;
+    trace?: string;
+  } | Record<string, unknown>;
   /** Allow additional backend-provided properties. */
   [key: string]: unknown;
 }
@@ -274,16 +280,29 @@ interface ModelerApiSettings {
    */
   dependencies?: ModelerDependencies;
   /**
+   * URL for on-demand loading of global tokens.  The modeler fetches from
+   * this endpoint after mount to avoid blocking the initial page render.
+   * Mutually exclusive with `global_tokens` (inline data).
+   */
+  global_tokens_url?: string;
+  /**
    * Global tokens available across the entire site, keyed by raw token
    * string (e.g. `[current-date:custom:?]`). Each entry has a `name`,
    * optional `description`, `token` (without prefix), `raw token`,
    * `value`, and optionally `children` (recursive same structure).
+   * @deprecated Prefer `global_tokens_url` for lazy loading.
    */
   global_tokens?: Record<string, GlobalToken>;
+  /**
+   * URL for on-demand loading of template tokens.  The modeler fetches from
+   * this endpoint after mount.  Mutually exclusive with `template_tokens`.
+   */
+  template_tokens_url?: string;
   /**
    * Template tokens defined by the current template model, keyed by raw
    * token string. Uses the same recursive `GlobalToken` structure.
    * Only present when the model is a template (`metadata.template` is true).
+   * @deprecated Prefer `template_tokens_url` for lazy loading.
    */
   template_tokens?: Record<string, GlobalToken>;
   metadata?: {

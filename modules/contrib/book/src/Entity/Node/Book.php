@@ -2,12 +2,13 @@
 
 namespace Drupal\book\Entity\Node;
 
+use Drupal\book\BookInterface;
 use Drupal\node\Entity\Node;
 
 /**
  * Defines a custom Node Type class with an additional custom property.
  */
-class Book extends Node {
+class Book extends Node implements BookInterface {
 
   /**
    * Book object.

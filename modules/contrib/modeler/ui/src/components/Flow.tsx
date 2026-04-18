@@ -31,6 +31,7 @@ import { useStatusAnnouncer } from '../hooks/useStatusAnnouncer';
 import { useTestRunner } from '../hooks/useTestRunner';
 import { useExport } from '../hooks/useExport';
 import type { ExportFormat } from '../hooks/useExport';
+import { useLazyTokens } from '../hooks/useLazyTokens';
 import { useViewMode } from '../hooks/useViewMode';
 import { useHistory } from '../hooks/useHistory';
 import { exportModelData } from '../utils/modelUtils';
@@ -99,6 +100,18 @@ function FlowInner({ settings, drupal }: FlowProps) {
   validationEdgesRef.current = edges;
   const modelConstraints = settings?.modeler_api?.model_constraints;
   const modelConstraintsRef = useRef<ModelConstraints | undefined>(modelConstraints);
+
+  // Global and template tokens are loaded on demand from modeler_api endpoints
+  // to avoid blocking the initial page render.  Falls back to inline
+  // drupalSettings when the URL is not provided (older modeler_api versions).
+  const globalTokens = useLazyTokens(
+    settings.modeler_api?.global_tokens_url,
+    settings.modeler_api?.global_tokens,
+  );
+  const templateTokens = useLazyTokens(
+    settings.modeler_api?.template_tokens_url,
+    settings.modeler_api?.template_tokens,
+  );
   modelConstraintsRef.current = modelConstraints;
   const validateBeforeSave = useCallback((): string | null => {
     const currentNodes = validationNodesRef.current;
@@ -1140,8 +1153,8 @@ function FlowInner({ settings, drupal }: FlowProps) {
               testError={testError}
               onStartTest={startTest}
               onCancelTest={cancelTest}
-              globalTokens={settings.modeler_api?.global_tokens}
-              templateTokens={settings.modeler_api?.template_tokens}
+              globalTokens={globalTokens}
+              templateTokens={templateTokens}
               isTemplate={!!settings.modeler_api?.metadata?.template}
             />
           </PanelErrorBoundary>

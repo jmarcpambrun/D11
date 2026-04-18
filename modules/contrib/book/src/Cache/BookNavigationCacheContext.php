@@ -2,12 +2,12 @@
 
 namespace Drupal\book\Cache;
 
+use Drupal\book\BookInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\Context\CacheContextInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\book\BookManagerInterface;
-use Drupal\node\NodeInterface;
 
 /**
  * Defines the book navigation cache context service.
@@ -45,7 +45,7 @@ class BookNavigationCacheContext implements CacheContextInterface {
     // Find the current book's ID.
     $current_bid = 0;
     $node = $this->routeMatch->getParameter('node');
-    if ($node instanceof NodeInterface) {
+    if ($node instanceof BookInterface) {
       $book = $node->getBook();
       if (!empty($book['bid'])) {
         $current_bid = $book['bid'];
@@ -70,7 +70,7 @@ class BookNavigationCacheContext implements CacheContextInterface {
     // That information is however not stored as part of the node.
     $cacheable_metadata = new CacheableMetadata();
     $node = $this->routeMatch->getParameter('node');
-    if ($node instanceof NodeInterface) {
+    if ($node instanceof BookInterface) {
       $book = $node->getBook();
       // If the node is part of a book then we can use the cache tag for that
       // book. If not, then it can't be optimized away.

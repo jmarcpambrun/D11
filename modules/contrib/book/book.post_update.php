@@ -154,3 +154,17 @@ function book_post_update_6allowed_child_type_default(array &$sandbox = []): voi
     $config->set('allowed_types', $allowed_types)->save();
   }
 }
+
+/**
+ * Set starting_level to the book_navigation blocks.
+ */
+function book_post_update_prepopulate_starting_level_setting(&$sandbox): void {
+  \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'block', function (Block $block) {
+    if ($block->getPluginId() === 'book_navigation') {
+      $block->getPlugin()->setConfigurationValue('starting_level', 1);
+      $block->getPlugin()->setConfigurationValue('expanded', FALSE);
+      return TRUE;
+    }
+    return FALSE;
+  });
+}

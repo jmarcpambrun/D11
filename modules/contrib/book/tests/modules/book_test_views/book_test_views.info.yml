@@ -7,7 +7,7 @@ dependencies:
   - drupal:book
   - drupal:views
 
-# Information added by Drupal.org packaging script on 2026-03-20
-version: '3.0.1'
+# Information added by Drupal.org packaging script on 2026-04-16
+version: '3.0.2'
 project: 'book'
-datestamp: 1774022106
+datestamp: 1776376353

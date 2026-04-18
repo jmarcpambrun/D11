@@ -907,7 +907,6 @@ class Api {
     $tokenService = $this->getTokenService();
 
     $tokens = [];
-    $tokenInfo = $tokenService->getInfo();
     try {
       $tokenInfo = $tokenService->getInfo();
     }
@@ -969,7 +968,7 @@ class Api {
    */
   private function prepareTokenDefinition(array $def, BaseToken $tokenService): array {
     if (empty($def['children'])) {
-     try {
+      try {
         $def['value'] = $tokenService->replace($def['raw token'] ?? '', [], ['clear' => TRUE]);
       }
       catch (\Throwable) {

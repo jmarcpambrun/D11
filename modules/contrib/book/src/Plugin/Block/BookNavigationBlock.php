@@ -81,6 +81,8 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       'block_mode' => "all pages",
       'show_top_item' => FALSE,
       'use_top_level_title' => FALSE,
+      'starting_level' => 1,
+      'expanded' => FALSE,
     ];
   }
 
@@ -123,6 +125,29 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         'visible' => [':input[name="settings[book_block_mode]"]' => ['value' => 'book pages']],
       ],
     ];
+    $form['starting_level'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Starting level'),
+      '#options' => [
+        1 => $this->t('Level 1 (top level)'),
+        2 => $this->t('Level 2'),
+        3 => $this->t('Level 3'),
+        4 => $this->t('Level 4'),
+        5 => $this->t('Level 5'),
+        6 => $this->t('Level 6'),
+        7 => $this->t('Level 7'),
+        8 => $this->t('Level 8'),
+        9 => $this->t('Level 9'),
+      ],
+      '#default_value' => $this->configuration['starting_level'],
+      '#description' => $this->t('The level in the book hierarchy at which to start rendering. Level 1 shows the entire book, level 2 starts with children of the top page, etc.'),
+    ];
+    $form['expanded'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Expanded'),
+      '#description' => $this->t('If checked, the menu will be expanded by default.'),
+      '#default_value' => $this->configuration['expanded'],
+    ];
 
     return $form;
   }
@@ -134,6 +159,8 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
     $this->configuration['block_mode'] = $form_state->getValue('book_block_mode');
     $this->configuration['show_top_item'] = $form_state->getValue('book_block_mode_book_pages')['show_top_item'];
     $this->configuration['use_top_level_title'] = $form_state->getValue('use_top_level_title');
+    $this->configuration['starting_level'] = $form_state->getValue('starting_level');
+    $this->configuration['expanded'] = $form_state->getValue('expanded');
   }
 
   /**
@@ -160,7 +187,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         if ($book['bid'] == $current_bid) {
           // If the current page is a node associated with a book, the menu
           // needs to be retrieved.
-          $data = $this->bookManager->bookTreeAllData($book['bid'], $book);
+          $data = $this->bookManager->bookTreeAllData($book['bid'], $book, NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
           $book_menus[$book_id] = $this->bookManager->bookTreeOutput($data);
         }
         else {
@@ -196,7 +223,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       if ($nid) {
         $node = $this->routeMatch->getParameter('node');
         $current_nid = $node->id();
-        $tree = $this->bookManager->bookTreeAllData($book['bid'], $book);
+        $tree = $this->bookManager->bookTreeAllData($book['bid'], $book, NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
         $data = reset($tree);
 
         // Handle different display modes.
@@ -214,7 +241,22 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         }
 
         // Prepare the output based on settings.
-        if ($this->configuration['show_top_item']) {
+        $starting_level = $this->configuration['starting_level'];
+        $current_depth = $book['depth'];
+
+        // When starting_level > 1, and we're on a page at or below that level,
+        // show only the current page's subtree, not siblings.
+        if ($starting_level > 1 && $current_depth >= $starting_level) {
+          // Find the current page in the tree and show its children.
+          $current_subtree = $this->findNodeInTree($tree, $current_nid);
+          if ($current_subtree && !empty($current_subtree['below'])) {
+            $output = $this->bookManager->bookTreeOutput($current_subtree['below']);
+          }
+          else {
+            return [];
+          }
+        }
+        elseif ($this->configuration['show_top_item']) {
           $output = $this->bookManager->bookTreeOutput($tree);
         }
         else {
@@ -270,6 +312,32 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       }
     }
     return AccessResult::allowed();
+  }
+
+  /**
+   * Finds a node in the book tree by its ID.
+   *
+   * @param array $tree
+   *   The book tree structure.
+   * @param int|string $nid
+   *   The node ID to find.
+   *
+   * @return array|null
+   *   The tree entry for the node, or NULL if not found.
+   */
+  protected function findNodeInTree(array $tree, int|string $nid): ?array {
+    foreach ($tree as $item) {
+      if (isset($item['link']['nid']) && $item['link']['nid'] == $nid) {
+        return $item;
+      }
+      if (!empty($item['below'])) {
+        $found = $this->findNodeInTree($item['below'], $nid);
+        if ($found !== NULL) {
+          return $found;
+        }
+      }
+    }
+    return NULL;
   }
 
 }

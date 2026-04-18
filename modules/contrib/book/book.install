@@ -240,3 +240,10 @@ function book_update_103009(): void {
   $config_factory->getEditable('book.settings')
     ->set('use_alternative_form', FALSE)->save();
 }
+
+/**
+ * Trigger cache clear.
+ */
+function book_update_103010(): void {
+  // Purposely empty to trigger cache clear.
+}

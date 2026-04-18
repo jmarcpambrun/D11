@@ -3,6 +3,7 @@
 namespace Drupal\book\Plugin\Validation\Constraint;
 
 use Drupal\book\BookHelperTrait;
+use Drupal\book\BookInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -55,7 +56,7 @@ class BookOutlineConstraintValidator extends ConstraintValidator implements Cont
     // be populated even if the node is not part of the book. If the user cannot
     // manage book outlines, the book variable will be empty, and we can safely
     // ignore the constraints as the outline cannot be changed by this user.
-    if (isset($value) && !empty($value->getBook()) && !$value->isNew() && !$value->isDefaultRevision()) {
+    if ($value instanceof BookInterface && !empty($value->getBook()) && !$value->isNew() && !$value->isDefaultRevision()) {
       $book = $value->getBook();
 
       // Skip validation if the node type is not allowed in book outlines

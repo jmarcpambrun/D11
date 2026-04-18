@@ -117,12 +117,12 @@ export const useSimpleReplaySync = ({
       if (element) {
         if (element.type === 'node') {
           const step = replayData[stepIndex];
-          const isAccessDenied = step.type === 'access denied';
+          const isDanger = step.type === 'access denied' || step.type === 'exception';
           
           setNodes(prevNodes => applyNodeHighlight(
             prevNodes.map(n => ({ ...n, selected: n.id === element.id })),
             element.id,
-            isAccessDenied
+            isDanger
           ));
           const node = nodes.find(n => n.id === element.id);
           if (node) {

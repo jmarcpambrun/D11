@@ -62,6 +62,16 @@ block.settings.book_navigation:
     use_top_level_title:
       type: boolean
       label: 'Use the top-level page title as block title'
+    starting_level:
+      type: integer
+      label: 'Starting level'
+      constraints:
+        Range:
+          min: 1
+          max: 9
+    expanded:
+      type: boolean
+      label: 'Expanded'
 
 entity_reference_selection.book_node_selection:
   type: entity_reference_selection.default

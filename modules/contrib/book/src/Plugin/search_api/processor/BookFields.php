@@ -2,7 +2,7 @@
 
 namespace Drupal\book\Plugin\search_api\processor;
 
-use Drupal\book\Entity\Node\Book;
+use Drupal\book\BookInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\search_api\Attribute\SearchApiProcessor;
@@ -85,7 +85,7 @@ class BookFields extends ProcessorPluginBase {
    */
   public function addFieldValues(ItemInterface $item): void {
     $original = $item->getOriginalObject()->getValue();
-    if (!($original instanceof Book)) {
+    if (!($original instanceof BookInterface)) {
       return;
     }
 

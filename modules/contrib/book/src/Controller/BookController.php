@@ -2,6 +2,7 @@
 
 namespace Drupal\book\Controller;
 
+use Drupal\book\BookInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\CacheableResponse;
 use Drupal\Core\Controller\ControllerBase;
@@ -138,7 +139,7 @@ class BookController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
-    if (empty($node->getBook())) {
+    if (!$node instanceof BookInterface) {
       $this->messenger()->addWarning(t('%title is not in a book and cannot be exported.', ['%title' => $node->label()]));
       throw new NotFoundHttpException();
     }

@@ -11,7 +11,7 @@
  */
 
 import React from 'react';
-import { FiPlay, FiActivity, FiChevronRight, FiAlertTriangle, FiClock } from 'react-icons/fi';
+import { FiPlay, FiActivity, FiChevronRight, FiAlertTriangle, FiXCircle, FiClock } from 'react-icons/fi';
 import type { StoreNode as Node, StoreEdge as Edge, ReplayDataEntry } from '../types/settings';
 import { t } from './translation';
 
@@ -24,9 +24,9 @@ export type ReplayStep = ReplayDataEntry;
 
 // ============ Step Type Predicates ============
 
-/** Check if a step represents direct node execution (started, execute, access denied) */
+/** Check if a step represents direct node execution (started, execute, access denied, exception) */
 export function isNodeExecutionStep(step: ReplayStep): boolean {
-  return step.type === 'started' || step.type === 'execute' || step.type === 'access denied';
+  return step.type === 'started' || step.type === 'execute' || step.type === 'access denied' || step.type === 'exception';
 }
 
 /** Check if a step is a successor step (add successor or ignore successor) */
@@ -42,6 +42,11 @@ export function isAddSuccessorStep(step: ReplayStep): boolean {
 /** Check if a step is an 'access denied' step */
 export function isAccessDeniedStep(step: ReplayStep): boolean {
   return step.type === 'access denied';
+}
+
+/** Check if a step is an 'exception' step */
+export function isExceptionStep(step: ReplayStep): boolean {
+  return step.type === 'exception';
 }
 
 /** Check if a step is a condition step (successor step with conditionId) */
@@ -200,6 +205,8 @@ export function getStepIcon(step: ReplayStep): React.ReactNode {
       return <FiChevronRight className="step-icon ignore-successor" style={{ opacity: 0.5 }} />;
     case 'access denied':
       return <FiAlertTriangle className="step-icon access-denied" />;
+    case 'exception':
+      return <FiXCircle className="step-icon exception" />;
     default:
       return <FiClock className="step-icon default" />;
   }
@@ -255,6 +262,13 @@ export function getStepLabel(
     }
     case 'access denied':
       return `${index + 1}: ${t('Access Denied')}`;
+    case 'exception': {
+      const label = getNodeLabel(step.id || '');
+      const msg = step.exception && typeof step.exception === 'object' && 'message' in step.exception
+        ? `: ${String(step.exception.message)}`
+        : '';
+      return `${index + 1}: ${label}${msg}`;
+    }
     default:
       return `${index + 1}: ${step.type}`;
   }

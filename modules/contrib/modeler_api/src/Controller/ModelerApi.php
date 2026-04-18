@@ -397,6 +397,7 @@ final class ModelerApi extends ControllerBase {
     }
     return new JsonResponse($data);
   }
+
   /**
    * Checks access for the global tokens endpoint.
    *
@@ -470,4 +471,5 @@ final class ModelerApi extends ControllerBase {
     }
     return new JsonResponse($this->api->prepareTemplateTokens($owner));
   }
+
 }

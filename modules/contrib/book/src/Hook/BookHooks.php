@@ -5,6 +5,7 @@ namespace Drupal\book\Hook;
 use Drupal\book\Access\BookNodeOutlineAccessCheck;
 use Drupal\book\BookHelperTrait;
 use Drupal\book\BookManagerInterface;
+use Drupal\book\BookInterface;
 use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -98,7 +99,7 @@ class BookHooks {
     $valid_nids = [];
     $access_check = $this->bookNodeOutlineAccessCheck;
     foreach ($nodes as $key => $node) {
-      if ($access_check->access($node)) {
+      if ($node instanceof BookInterface && $access_check->access($node)) {
         $valid_nids[] = $key;
       }
     }
@@ -125,8 +126,26 @@ class BookHooks {
       ->setFormClass('book_outline', 'Drupal\book\Form\BookOutlineForm')
       ->setLinkTemplate('book-outline-form', '/node/{node}/outline')
       ->setLinkTemplate('book-remove-form', '/node/{node}/outline/remove')
-      ->setClass('Drupal\book\Entity\Node\Book')
       ->addConstraint('BookOutline', []);
+  }
+
+  /**
+   * Implements hook_entity_bundle_info_alter().
+   *
+   * Sets the Book entity class for book-allowed bundles that don't have a
+   * custom bundle class defined. This approach allows other modules to define
+   * their own bundle classes extending Node without conflicts.
+   */
+  #[Hook('entity_bundle_info_alter')]
+  public function entityBundleInfoAlter(array &$bundles): void {
+    $allowed_types = $this->configFactory->get('book.settings')->get('allowed_types') ?? [];
+    foreach ($allowed_types as $type_config) {
+      $type = $type_config['content_type'] ?? NULL;
+      // Only set the Book class if no custom bundle class is defined.
+      if ($type && isset($bundles['node'][$type]) && !isset($bundles['node'][$type]['class'])) {
+        $bundles['node'][$type]['class'] = 'Drupal\book\Entity\Node\Book';
+      }
+    }
   }
 
   /**
@@ -248,7 +267,7 @@ class BookHooks {
   #[Hook('node_presave')]
   public function nodePresave(EntityInterface $node): void {
     // Make sure a new node gets a new menu link.
-    if ($node->isNew()) {
+    if ($node->isNew() && $node instanceof BookInterface) {
       $node->setBookKey('nid', NULL);
     }
   }
@@ -258,8 +277,10 @@ class BookHooks {
    */
   #[Hook('node_insert')]
   public function nodeInsert(EntityInterface $node): void {
-    $book_manager = $this->bookManager;
-    $book_manager->updateOutline($node);
+    if ($node instanceof BookInterface) {
+      $book_manager = $this->bookManager;
+      $book_manager->updateOutline($node);
+    }
   }
 
   /**
@@ -267,8 +288,10 @@ class BookHooks {
    */
   #[Hook('node_update')]
   public function nodeUpdate(EntityInterface $node): void {
-    $book_manager = $this->bookManager;
-    $book_manager->updateOutline($node);
+    if ($node instanceof BookInterface) {
+      $book_manager = $this->bookManager;
+      $book_manager->updateOutline($node);
+    }
   }
 
   /**
@@ -276,10 +299,12 @@ class BookHooks {
    */
   #[Hook('node_predelete')]
   public function nodePredelete(EntityInterface $node): void {
-    $book = $node->getBook();
-    if (!empty($book['bid'])) {
-      $book_manager = $this->bookManager;
-      $book_manager->deleteFromBook($book['nid']);
+    if ($node instanceof BookInterface) {
+      $book = $node->getBook();
+      if (!empty($book['bid'])) {
+        $book_manager = $this->bookManager;
+        $book_manager->deleteFromBook($book['nid']);
+      }
     }
   }
 

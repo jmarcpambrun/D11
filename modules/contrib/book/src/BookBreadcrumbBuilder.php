@@ -14,7 +14,6 @@ use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\node\NodeInterface;
 
 /**
  * Provides a breadcrumb builder for nodes in a book.
@@ -61,7 +60,7 @@ class BookBreadcrumbBuilder implements BreadcrumbBuilderInterface {
     //   requirement, see https://www.drupal.org/project/drupal/issues/3459277.
     $cacheable_metadata?->addCacheContexts(['route.book_navigation']);
     $node = $route_match->getParameter('node');
-    return $node instanceof NodeInterface && !empty($node->getBook());
+    return $node instanceof BookInterface && !empty($node->getBook());
   }
 
   /**
