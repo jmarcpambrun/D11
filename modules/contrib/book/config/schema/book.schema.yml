@@ -69,6 +69,16 @@ block.settings.book_navigation:
         Range:
           min: 1
           max: 9
+    max_depth:
+      type: integer
+      label: 'Max Depth'
+      constraints:
+        Range:
+          min: 0
+          max: 9
+    book_select:
+      type: integer
+      label: 'Book Select'
     expanded:
       type: boolean
       label: 'Expanded'

@@ -15,6 +15,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\book\BookManagerInterface;
+use Drupal\book\BookInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -142,11 +143,42 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       '#default_value' => $this->configuration['starting_level'],
       '#description' => $this->t('The level in the book hierarchy at which to start rendering. Level 1 shows the entire book, level 2 starts with children of the top page, etc.'),
     ];
+    $form['max_depth'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Max depth'),
+      '#options' => [
+        0 => $this->t('No max'),
+        1 => $this->t('Level 1 (top level)'),
+        2 => $this->t('Level 2'),
+        3 => $this->t('Level 3'),
+        4 => $this->t('Level 4'),
+        5 => $this->t('Level 5'),
+        6 => $this->t('Level 6'),
+        7 => $this->t('Level 7'),
+        8 => $this->t('Level 8'),
+        9 => $this->t('Level 9'),
+      ],
+      '#default_value' => $this->configuration['max_depth'],
+      '#description' => $this->t('The maximum depth of the book that should be rendered.'),
+    ];
     $form['expanded'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Expanded'),
       '#description' => $this->t('If checked, the menu will be expanded by default.'),
       '#default_value' => $this->configuration['expanded'],
+    ];
+
+    $books = $this->bookManager->getAllBooks();
+    $book_titles = array_column($books, 'title');
+    $book_ids = array_column($books, 'bid');
+    $book_options = [0 => '- None -'] + array_combine($book_ids, $book_titles);
+    array_unshift($book_titles, '- None -');
+    $form['book_select'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select book menu (optional)'),
+      '#description' => $this->t('Select the book to display the contents of. Make a selection here if you want to use this block to display the contents of a specific book.'),
+      '#default_value' => $this->configuration['book_select'],
+      '#options' => $book_options,
     ];
 
     return $form;
@@ -161,6 +193,8 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
     $this->configuration['use_top_level_title'] = $form_state->getValue('use_top_level_title');
     $this->configuration['starting_level'] = $form_state->getValue('starting_level');
     $this->configuration['expanded'] = $form_state->getValue('expanded');
+    $this->configuration['book_select'] = $form_state->getValue('book_select');
+    $this->configuration['max_depth'] = $form_state->getValue('max_depth');
   }
 
   /**
@@ -170,6 +204,14 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
    */
   public function build(): array {
     $current_bid = 0;
+
+    if (!empty($this->configuration['book_select'])) {
+      $selected_book = $this->configuration['book_select'];
+    }
+
+    if (!empty($this->configuration['max_depth'])) {
+      $max_depth = $this->configuration['max_depth'];
+    }
 
     $node = $this->routeMatch->getParameter('node');
     if ($node instanceof NodeInterface) {
@@ -187,7 +229,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         if ($book['bid'] == $current_bid) {
           // If the current page is a node associated with a book, the menu
           // needs to be retrieved.
-          $data = $this->bookManager->bookTreeAllData($book['bid'], $book, NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
+          $data = $this->bookManager->bookTreeAllData($selected_book ?? $book['bid'], $book, $max_depth ?? NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
           $book_menus[$book_id] = $this->bookManager->bookTreeOutput($data);
         }
         else {
@@ -223,7 +265,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       if ($nid) {
         $node = $this->routeMatch->getParameter('node');
         $current_nid = $node->id();
-        $tree = $this->bookManager->bookTreeAllData($book['bid'], $book, NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
+        $tree = $this->bookManager->bookTreeAllData($selected_book ?? $book['bid'], $book, $max_depth ?? NULL, $this->configuration['starting_level'], $this->configuration['expanded']);
         $data = reset($tree);
 
         // Handle different display modes.
@@ -307,7 +349,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
   protected function blockAccess(AccountInterface $account): AccessResultInterface {
     if ($this->configuration['block_mode'] != 'all pages') {
       $node = $this->routeMatch->getParameter('node');
-      if (!$node || empty($node->getBook()['bid'])) {
+      if (!($node instanceof BookInterface) || empty($node->getBook()['bid'])) {
         return AccessResult::forbidden();
       }
     }

@@ -366,6 +366,51 @@ class BookNavigationBlockTest extends BookTestBase {
   }
 
   /**
+   * Tests the max_depth setting of the book navigation block.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
+   */
+  public function testBookNavigationBlockMaxDepth(): void {
+    $block = $this->drupalPlaceBlock('book_navigation', [
+      'block_mode' => 'book pages',
+      'max_depth' => 2,
+    ]);
+
+    // Create a book.
+    $nodes = $this->createBook();
+
+    // Give anonymous users the permission 'node test view'.
+    user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, ['node test view']);
+
+    $this->drupalGet($this->book->toUrl());
+    $html = $this->getSession()->getPage()->getContent();
+    $this->assertBlockAppears($block);
+
+    $selector = '#block-' . $block->id();
+    $block_element = $this->assertSession()->elementExists('css', $selector);
+    $block_text = $block_element->getText();
+
+    $this->assertStringContainsString($nodes[0]->label(), $block_text);
+    $this->assertStringNotContainsString($nodes[1]->label(), $block_text);
+    $this->assertStringNotContainsString($nodes[2]->label(), $block_text);
+    $this->assertStringContainsString($nodes[3]->label(), $block_text);
+    $this->assertStringContainsString($nodes[4]->label(), $block_text);
+
+    $this->drupalGet($nodes[0]->toUrl());
+    $this->assertBlockAppears($block);
+
+    $selector = '#block-' . $block->id();
+    $block_element = $this->assertSession()->elementExists('css', $selector);
+    $block_text = $block_element->getText();
+
+    $this->assertStringNotContainsString($nodes[1]->label(), $block_text);
+    $this->assertStringNotContainsString($nodes[2]->label(), $block_text);
+    $this->assertStringContainsString($nodes[3]->label(), $block_text);
+    $this->assertStringContainsString($nodes[4]->label(), $block_text);
+  }
+
+  /**
    * Tests the expanded setting of the book navigation block.
    *
    * @throws \Behat\Mink\Exception\ResponseTextException
@@ -399,6 +444,50 @@ class BookNavigationBlockTest extends BookTestBase {
     $this->assertSession()->pageTextContains($nodes[2]->label());
     $this->assertSession()->pageTextNotContains($nodes[3]->label());
     $this->assertSession()->pageTextNotContains($nodes[4]->label());
+  }
+
+  /**
+   * Tests the book_select option.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
+   */
+  public function testBookNavigationBlockSelectedBook(): void {
+    $book_one_nodes = $this->createBook();
+    $book_one = $this->book;
+
+    $book_two_nodes = $this->createBook();
+    $book_two = $this->book;
+
+    user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, [
+      'access content',
+      'node test view',
+    ]);
+
+    $block = $this->drupalPlaceBlock('book_navigation', [
+      'book_select' => $book_one->id(),
+      'show_top_item' => TRUE,
+      'expanded' => TRUE,
+    ]);
+
+    $selector = '#block-' . $block->id();
+
+    // Visit a page in book two.
+    $this->drupalGet($book_two_nodes[0]->toUrl());
+    $this->assertBlockAppears($block);
+
+    $block_element = $this->assertSession()->elementExists('css', $selector);
+    $block_text = $block_element->getText();
+
+    // The selected book's nodes should appear.
+    $this->assertStringContainsString($book_one_nodes[0]->label(), $block_text);
+    $this->assertStringContainsString($book_one_nodes[3]->label(), $block_text);
+    $this->assertStringContainsString($book_one_nodes[4]->label(), $block_text);
+
+    // The current page's book should not be shown instead.
+    $this->assertStringNotContainsString($book_two_nodes[0]->label(), $block_text);
+    $this->assertStringNotContainsString($book_two_nodes[3]->label(), $block_text);
+    $this->assertStringNotContainsString($book_two_nodes[4]->label(), $block_text);
   }
 
 }

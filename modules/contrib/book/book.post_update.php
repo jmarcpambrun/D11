@@ -168,3 +168,17 @@ function book_post_update_prepopulate_starting_level_setting(&$sandbox): void {
     return FALSE;
   });
 }
+
+/**
+ * Set starting_level to the book_navigation blocks.
+ */
+function book_post_update_prepopulate_max_depth_and_selected_book_settings(&$sandbox): void {
+  \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'block', function (Block $block) {
+    if ($block->getPluginId() === 'book_navigation') {
+      $block->getPlugin()->setConfigurationValue('max_depth', 0);
+      $block->getPlugin()->setConfigurationValue('select_book', 0);
+      return TRUE;
+    }
+    return FALSE;
+  });
+}
