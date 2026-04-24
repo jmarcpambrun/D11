@@ -8924,18 +8924,18 @@
         },
         {
             "name": "drupal/quiz",
-            "version": "7.0.4",
-            "version_normalized": "7.0.4.0",
+            "version": "7.1.0",
+            "version_normalized": "7.1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/quiz.git",
-                "reference": "7.0.4"
+                "reference": "7.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/quiz-7.0.4.zip",
-                "reference": "7.0.4",
-                "shasum": "0bcb2bda8e412c9d1de06198c9f50494bdcb1d22"
+                "url": "https://ftp.drupal.org/files/projects/quiz-7.1.0.zip",
+                "reference": "7.1.0",
+                "shasum": "022ba6c0800e803e8d2a21eb8ed1b0fae0d5cc65"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -8954,8 +8954,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "7.0.4",
-                    "datestamp": "1770151297",
+                    "version": "7.1.0",
+                    "datestamp": "1776715636",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -8988,7 +8988,7 @@
             "description": "Create and take graded quizzes.",
             "homepage": "https://www.drupal.org/project/quiz",
             "support": {
-                "source": "https://git.drupal.org/project/quiz.git",
+                "source": "http://git.drupal.org/project/quiz.git",
                 "issues": "https://www.drupal.org/project/issues/quiz"
             },
             "install-path": "../../modules/contrib/quiz"

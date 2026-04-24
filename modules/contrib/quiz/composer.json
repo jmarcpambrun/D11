@@ -11,7 +11,7 @@
     ],
     "support": {
         "issues": "https://www.drupal.org/project/issues/quiz",
-        "source": "https://git.drupal.org/project/quiz.git"
+        "source": "http://git.drupal.org/project/quiz.git"
     },
     "minimum-stability": "dev",
     "require": {

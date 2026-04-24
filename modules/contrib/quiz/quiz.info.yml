@@ -16,7 +16,7 @@ dependencies:
   - drupal:options
 configure: quiz.admin
 
-# Information added by Drupal.org packaging script on 2026-02-03
-version: '7.0.4'
+# Information added by Drupal.org packaging script on 2026-04-20
+version: '7.1.0'
 project: 'quiz'
-datestamp: 1770151301
+datestamp: 1776715640
