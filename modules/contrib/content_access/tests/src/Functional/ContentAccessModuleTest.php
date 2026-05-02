@@ -4,6 +4,7 @@ namespace Drupal\Tests\content_access\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 use Drupal\language\Entity\ConfigurableLanguage;
+use Drupal\user\Entity\Role;
 
 /**
  * Automated BrowserTest Case for content access module.
@@ -434,6 +435,359 @@ class ContentAccessModuleTest extends BrowserTestBase {
 
     // View node2, access must be granted.
     $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own view access when the settings are per-node.
+   */
+  public function testOwnViewAccessPerNodeSettings() {
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser2 = $this->drupalCreateUser();
+
+    // Change ownership of test nodes to test users.
+    $this->node1->setOwner($testUser1);
+    $this->node1->save();
+
+    $this->node2->setOwner($testUser2);
+    $this->node2->save();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Enable per node access.
+    $this->changeAccessPerNode();
+
+    // Allow view own content for test user 1 and 2 roles.
+    $this->changeAccessNodeKeyword($this->node1, 'view_own', TRUE);
+    $this->changeAccessNodeKeyword($this->node2, 'view_own', TRUE);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // View node2, access must be denied.
+    $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // View node2, access must be granted.
+    $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own edit access.
+   */
+  public function testOwnEditAccess() {
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser2 = $this->drupalCreateUser();
+
+    // Change ownership of test nodes to test users.
+    $this->node1->setOwner($testUser1);
+    $this->node1->save();
+
+    $this->node2->setOwner($testUser2);
+    $this->node2->save();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Allow view own content for test user 1 and 2 roles.
+    $this->changeAccessContentTypeKeyword('update_own', TRUE, $testUser1);
+    $this->changeAccessContentTypeKeyword('update_own', TRUE, $testUser2);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // View node2, access must be denied.
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // View node2, access must be granted.
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own edit access when the settings are per-node.
+   */
+  public function testOwnEditAccessPerNodeSettings() {
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser2 = $this->drupalCreateUser();
+
+    // Change ownership of test nodes to test users.
+    $this->node1->setOwner($testUser1);
+    $this->node1->save();
+
+    $this->node2->setOwner($testUser2);
+    $this->node2->save();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Enable per node access.
+    $this->changeAccessPerNode();
+
+    // Allow view own content for test user 1 and 2 roles.
+    $this->changeAccessNodeKeyword($this->node1, 'update_own', TRUE);
+    $this->changeAccessNodeKeyword($this->node2, 'update_own', TRUE);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // View node2, access must be denied.
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id() . '/edit');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // View node2, access must be granted.
+    $this->drupalGet('node/' . $this->node2->id() . '/edit');
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own delete access.
+   */
+  public function testOwnDeleteAccess() {
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser2 = $this->drupalCreateUser();
+
+    // Change ownership of test nodes to test users.
+    $this->node1->setOwner($testUser1);
+    $this->node1->save();
+
+    $this->node2->setOwner($testUser2);
+    $this->node2->save();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Allow view own content for test user 1 and 2 roles.
+    $this->changeAccessContentTypeKeyword('delete_own', TRUE, $testUser1);
+    $this->changeAccessContentTypeKeyword('delete_own', TRUE, $testUser2);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // View node2, access must be denied.
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // View node2, access must be granted.
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own delete access when the settings are per-node.
+   */
+  public function testOwnDeleteAccessPerNodeSettings() {
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser2 = $this->drupalCreateUser();
+
+    // Change ownership of test nodes to test users.
+    $this->node1->setOwner($testUser1);
+    $this->node1->save();
+
+    $this->node2->setOwner($testUser2);
+    $this->node2->save();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Enable per node access.
+    $this->changeAccessPerNode();
+
+    // Allow view own content for test user 1 and 2 roles.
+    $this->changeAccessNodeKeyword($this->node1, 'delete_own', TRUE);
+    $this->changeAccessNodeKeyword($this->node2, 'delete_own', TRUE);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // View node2, access must be denied.
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id() . '/delete');
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // View node2, access must be granted.
+    $this->drupalGet('node/' . $this->node2->id() . '/delete');
+    $this->assertSession()->pageTextNotContains('Access denied');
+  }
+
+  /**
+   * Test own view access after changing a user's roles.
+   */
+  public function testOwnViewAccessAfterRoleChange() {
+    $allowedRoleId = 'content_access_view_own_allowed';
+
+    Role::create([
+      'id' => $allowedRoleId,
+      'label' => 'Content access view own allowed',
+    ])->save();
+
+    $ownerUser = $this->drupalCreateUser();
+    $ownerUser->addRole($allowedRoleId);
+    $ownerUser->save();
+
+    // Restrict view to 'view_own' for the allowed role only. This must happen
+    // before the node owner assignments so that when $this->node1->save() fires
+    // hook_node_access_records() in this process, content_access_get_type_grant
+    // reads the correct (post-change) config rather than the module defaults.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view[' . $allowedRoleId . ']' => FALSE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+      'view_own[' . $allowedRoleId . ']' => TRUE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // content_access_get_type_grant() has its own drupal_static cache for the
+    // role-based default grants. It was primed by setUp()'s drupalCreateNode()
+    // calls before the content type settings were changed, so reset it here to
+    // force a fresh computation using the updated settings.
+    drupal_static_reset('content_access_get_type_grant');
+
+    // Assign ownership after the settings are in place so that the initial
+    // node_access grants are written with the correct view_own configuration.
+    $this->node1->setOwner($ownerUser);
+    $this->node1->save();
+
+    $this->drupalLogin($ownerUser);
+    $this->drupalGet('node/' . $this->node1->id());
+    // Owner with allowed role should be able to view their own node.
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    $this->drupalLogout();
+    $ownerUser->removeRole($allowedRoleId);
+    $ownerUser->save();
+
+    // Rebuild grants so owner access reflects the role change.
+    // @todo Ideally we wouldn't have to do this manually here.
+    node_access_rebuild();
+
+    $this->drupalLogin($ownerUser);
+    $this->drupalGet('node/' . $this->node1->id());
+    // Owner whose role no longer has view_own should be denied access to their
+    // own node.
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Now give the role back and check that access is restored.
+    $this->drupalLogout();
+    $ownerUser->addRole($allowedRoleId);
+    $ownerUser->save();
+
+    // Rebuild grants so owner access reflects the role change.
+    // @todo Ideally we wouldn't have to do this manually here.
+    node_access_rebuild();
+
+    $this->drupalLogin($ownerUser);
+    $this->drupalGet('node/' . $this->node1->id());
+    // Owner with allowed role should be able to view their own node.
     $this->assertSession()->pageTextNotContains('Access denied');
   }
 

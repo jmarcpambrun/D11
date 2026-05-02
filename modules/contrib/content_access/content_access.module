@@ -67,6 +67,11 @@ function content_access_user_update(EntityInterface $account) {
   $roles_removed = array_diff($account->original->getRoles(), $account->getRoles());
 
   if (!empty($roles_added) || !empty($roles_removed)) {
+    // Reset the per-owner role cache so that any subsequent call to
+    // content_access_own_op() (e.g. during node_access_rebuild()) picks up
+    // the updated role assignments instead of stale cached data.
+    drupal_static_reset('content_access_own_op');
+
     // Check if the user has 'access administration pages' permissions.
     $account = \Drupal::currentUser();
     if ($account->hasPermission('access administration pages')) {
@@ -300,6 +305,7 @@ function content_access_set_settings($settings, $type_name): void {
     $node_type->setThirdPartySetting('content_access', $key, $setting_value);
   }
   $node_type->save();
+  drupal_static_reset('content_access_get_type_grant');
 }
 
 /**
@@ -385,7 +391,7 @@ function content_access_get_permission_by_op($op, $type) {
  */
 function content_access_get_type_grant(NodeInterface $node) {
   // Cache per type default grants in a static array.
-  static $defaults = [];
+  $defaults = &drupal_static(__FUNCTION__, []);
 
   $node_type = $node->getType();
   $node_lang = $node->language()->getId();
@@ -462,7 +468,7 @@ function content_access_process_grant($grant, $gid, NodeInterface $node): array 
  *   Returns 0 if permission is granted, otherwise 1.
  */
 function content_access_own_op(NodeInterface $node, array $any_roles, array $own_roles) {
-  static $roles = [];
+  $roles = &drupal_static(__FUNCTION__, []);
 
   $owner = $node->getOwner();
   if (!isset($roles[$owner->id()])) {

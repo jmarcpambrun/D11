@@ -24,6 +24,7 @@ use Drupal\quiz\Form\QuizQuestionFeedbackForm;
 use Drupal\quiz\Services\QuizSessionInterface;
 use Drupal\quiz\Util\QuizUtil;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * QuizQuestion controller class.
@@ -47,6 +48,8 @@ class QuizQuestionController extends EntityController {
    *   The URL generator.
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The route match.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
    * @param \Drupal\quiz\Services\QuizSessionInterface $quizSession
    *   The quiz session service.
    * @param \Drupal\Core\Form\FormBuilderInterface $formBuilder
@@ -64,12 +67,22 @@ class QuizQuestionController extends EntityController {
     TranslationInterface $string_translation,
     UrlGeneratorInterface $url_generator,
     RouteMatchInterface $route_match,
+    RequestStack $request_stack,
     protected QuizSessionInterface $quizSession,
     protected FormBuilderInterface $formBuilder,
     protected ConfigFactoryInterface $configFactory,
     protected TimeInterface $time,
   ) {
-    parent::__construct($entity_type_manager, $entity_type_bundle_info, $entity_repository, $renderer, $string_translation, $url_generator, $route_match);
+    parent::__construct(
+      $entity_type_manager,
+      $entity_type_bundle_info,
+      $entity_repository,
+      $renderer,
+      $string_translation,
+      $url_generator,
+      $route_match,
+      $request_stack,
+    );
   }
 
   /**
@@ -84,6 +97,7 @@ class QuizQuestionController extends EntityController {
       $container->get('string_translation'),
       $container->get('url_generator'),
       $container->get('current_route_match'),
+      $container->get('request_stack'),
       $container->get('quiz.session'),
       $container->get('form_builder'),
       $container->get('config.factory'),

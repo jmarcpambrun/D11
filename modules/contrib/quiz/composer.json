@@ -15,7 +15,7 @@
     },
     "minimum-stability": "dev",
     "require": {
-        "drupal/core": "^10.3 || ^11",
+        "drupal/core": "^11.3",
         "drupal/field_group": "^3.6 || ^4.0",
         "drupal/entity": "^1.5",
         "drupal/paragraphs": "^1.18",

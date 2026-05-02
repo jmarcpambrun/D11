@@ -63,7 +63,7 @@ trait ContentAccessRoleBasedFormTrait {
           Checkboxes::class, 'processCheckboxes',
         ],
         [
-          $this,
+          static::class,
           'disableCheckboxes',
         ],
       ];
@@ -84,7 +84,7 @@ trait ContentAccessRoleBasedFormTrait {
    * Form API #process callback, that disables checkboxes for roles without
    * access to content.
    */
-  public function disableCheckboxes(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function disableCheckboxes(&$element, FormStateInterface $form_state, &$complete_form) {
     $access_roles = content_access_get_permission_access('access content');
     $admin_roles = content_access_get_permission_access('bypass node access');
 

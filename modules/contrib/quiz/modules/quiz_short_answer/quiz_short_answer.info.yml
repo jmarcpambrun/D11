@@ -6,7 +6,7 @@ type: module
 dependencies:
   - quiz:quiz
 
-# Information added by Drupal.org packaging script on 2026-04-20
-version: '7.1.0'
+# Information added by Drupal.org packaging script on 2026-05-01
+version: '7.1.1'
 project: 'quiz'
-datestamp: 1776715640
+datestamp: 1777650314

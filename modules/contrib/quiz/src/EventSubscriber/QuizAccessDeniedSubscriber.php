@@ -6,7 +6,7 @@ namespace Drupal\quiz\EventSubscriber;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelTrait;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Drupal\Core\EventSubscriber\DefaultExceptionHtmlSubscriber;
 use Drupal\Core\Routing\RedirectDestinationInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -65,6 +65,17 @@ final class QuizAccessDeniedSubscriber extends DefaultExceptionHtmlSubscriber {
   /**
    * {@inheritdoc}
    */
+  public function onException(ExceptionEvent $event) {
+    // Only handle 403 exceptions.
+    $exception = $event->getThrowable();
+    if ($exception instanceof HttpExceptionInterface && $exception->getStatusCode() === 403) {
+      parent::onException($event);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function on403(ExceptionEvent $event): void {
     $route_name = $this->routeMatch->getRouteName();
     $quiz_id = (int) $this->routeMatch->getRawParameter('quiz');
@@ -77,30 +88,6 @@ final class QuizAccessDeniedSubscriber extends DefaultExceptionHtmlSubscriber {
       $event->setResponse($response);
       $event->stopPropagation();
 
-    }
-  }
-
-  /**
-   * Handles 404 errors specifically for quiz-related routes.
-   *
-   * @param \Symfony\Component\HttpKernel\Event\ExceptionEvent $event
-   *   The exception event.
-   */
-  public function on404(ExceptionEvent $event): void {
-    $exception = $event->getThrowable();
-
-    if ($exception instanceof NotFoundHttpException) {
-      $this->getLogger('quiz_subscriber')->warning('Caught 404 exception.');
-    }
-
-    // Fetch the custom 404-page set in the system.site settings.
-    $config = $this->configFactory->get('system.site');
-    $custom_404_url = $config->get('page.404');
-
-    // Check if the 404 page is set.
-    if (!$custom_404_url) {
-      // If no custom 404 is set, proceed with default behavior (parent handler)
-      parent::on404($event);
     }
   }
 
