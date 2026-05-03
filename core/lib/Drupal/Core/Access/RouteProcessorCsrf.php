@@ -44,6 +44,9 @@ class RouteProcessorCsrf implements OutboundRouteProcessorInterface, TrustedCall
       // string when the route is compiled.
       if (!$bubbleable_metadata || $this->requestStack->getCurrentRequest()->getRequestFormat() !== 'html') {
         $parameters['token'] = $this->csrfToken->get($path);
+	if ($bubbleable_metadata) {
+          $bubbleable_metadata->addCacheContexts(['session']);
+        }
       }
       else {
         // Generate a placeholder and a render array to replace it.
