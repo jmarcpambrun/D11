@@ -6,6 +6,7 @@ use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\RouteProcessor\OutboundRouteProcessorInterface;
+use Drupal\Core\Session\SessionConfigurationInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Route;
 
@@ -26,6 +27,7 @@ class RouteProcessorCsrf implements OutboundRouteProcessorInterface, TrustedCall
    */
   public function __construct(
     protected CsrfTokenGenerator $csrfToken,
+    protected SessionConfigurationInterface $sessionConfiguration,
     protected ?RequestStack $requestStack = NULL,
   ) {
     if ($requestStack === NULL) {
@@ -38,7 +40,9 @@ class RouteProcessorCsrf implements OutboundRouteProcessorInterface, TrustedCall
    * {@inheritdoc}
    */
   public function processOutbound($route_name, Route $route, array &$parameters, ?BubbleableMetadata $bubbleable_metadata = NULL) {
-    if ($route->hasRequirement('_csrf_token')) {
+    // Per https://www.drupal.org/node/2319205 anonymous users do not need
+    // CSRF checking.
+    if ($route->hasRequirement('_csrf_token') && $this->sessionConfiguration->hasSession($this->requestStack->getCurrentRequest())) {
       $path = $this->generateRoutePath($route, $parameters);
       // Adding this to the parameters means it will get merged into the query
       // string when the route is compiled.
