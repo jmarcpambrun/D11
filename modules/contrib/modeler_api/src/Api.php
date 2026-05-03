@@ -29,6 +29,7 @@ use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
 use Drupal\modeler_api\Plugin\TemplateTokenPluginManager;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouterInterface;
 
 /**
  * Provides services of the modeler API.
@@ -102,6 +103,7 @@ class Api {
     protected ContextListBuilder $contextListBuilder,
     protected DependencyListBuilder $dependencyListBuilder,
     protected TemplateTokenListBuilder $templateTokenListBuilder,
+    protected RouterInterface $router,
     protected \Closure $entityTypeManagerFactory,
     protected \Closure $routeProviderFactory,
     protected \Closure $tokenFactory,
@@ -857,16 +859,18 @@ class Api {
    *   The menu name of the parent path, if we can find it, FALSE otherwise.
    */
   public function getParentMenuName(string $path): ?string {
-    $parts = explode('/', trim($path, '/'));
-    array_pop($parts);
-    $path = implode('/', $parts);
-    $url = Url::fromUri('internal:/' . $path);
-    $links = $this->menuLinkManager->loadLinksByRoute($url->getRouteName(), $url->getRouteParameters());
-    if (!empty($links)) {
-      $menuLink = reset($links);
-      return $menuLink->getPluginId();
+    $parentPath = substr($path, 0, strrpos(trim($path, '/'), '/'));
+    if (empty($parentPath)) {
+      return NULL;
     }
-    return NULL;
+
+    try {
+      $result = $this->router->match('/' . $parentPath);
+      return $result['_route'] ?? NULL;
+    }
+    catch (\Exception) {
+      return NULL;
+    }
   }
 
   /**
