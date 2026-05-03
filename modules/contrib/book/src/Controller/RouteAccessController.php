@@ -59,15 +59,7 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
     // Checks if book has children.
     $haveChildren = $this->checkIfBookHasChildren($node);
 
-    if ($haveChildren) {
-      // Checks if number of book page is more than one.
-      $ifExceedsCount = $this->checkIfChildIsGreaterThanOne($node);
-    }
-    else {
-      $ifExceedsCount = FALSE;
-    }
-
-    return AccessResult::allowedIf($hasAccess && $haveChildren && $ifExceedsCount);
+    return AccessResult::allowedIf($hasAccess && $haveChildren);
   }
 
   /**
@@ -79,20 +71,6 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
   public function checkIfBookHasChildren(NodeInterface $node): bool {
     assert($node instanceof BookInterface);
     return (bool) ($node->getBook()['has_children'] ?? FALSE);
-  }
-
-  /**
-   * Checks if child of a book is more than one.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The book node.
-   */
-  public function checkIfChildIsGreaterThanOne(NodeInterface $node): bool {
-    assert($node instanceof BookInterface);
-    $children = $this->bookManager->bookSubtreeData($node->getBook());
-    $child = reset($children);
-
-    return !empty($child['below']) && count($child['below']) > 1;
   }
 
 }

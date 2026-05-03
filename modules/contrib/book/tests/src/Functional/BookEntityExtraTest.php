@@ -42,6 +42,8 @@ class BookEntityExtraTest extends BookTestBase {
     $session->linkExists('Up');
     $session->linkExists($nodes[1]->label());
     $session->elementExists('css', "ul.menu-tree");
+    // Book traversal links are after the "Printer-friendly version" link.
+    $session->elementExists('xpath', '//nav[contains(@aria-label, "Book traversal links")]/preceding-sibling::ul[@class = "links inline"]');
 
     $form_display->removeComponent('book_navigation')->save();
     $form_display->setComponent('book_navigation_without_tree')->save();
@@ -50,6 +52,8 @@ class BookEntityExtraTest extends BookTestBase {
     $session->linkExists('Up');
     $session->linkExists($nodes[1]->label());
     $session->elementNotExists('css', "ul.menu-tree");
+    // Book traversal links are after the "Printer-friendly version" link.
+    $session->elementExists('xpath', '//nav[contains(@aria-label, "Book traversal links")]/preceding-sibling::ul[@class = "links inline"]');
   }
 
 }

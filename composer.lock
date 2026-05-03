@@ -3185,17 +3185,17 @@
         },
         {
             "name": "drupal/book",
-            "version": "3.0.3",
+            "version": "3.0.4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/book.git",
-                "reference": "3.0.3"
+                "reference": "3.0.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/book-3.0.3.zip",
-                "reference": "3.0.3",
-                "shasum": "fe491e95d92ba5ae3fc4e280b07d9bbc8acbe20c"
+                "url": "https://ftp.drupal.org/files/projects/book-3.0.4.zip",
+                "reference": "3.0.4",
+                "shasum": "d57c690d61a921db7caf6cc9164bf247d7d77013"
             },
             "require": {
                 "drupal/core": "^11.2",
@@ -3208,8 +3208,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.3",
-                    "datestamp": "1776788686",
+                    "version": "3.0.4",
+                    "datestamp": "1777759923",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -7432,7 +7432,7 @@
         },
         {
             "name": "drupal/mailer_transport",
-            "version": "2.0.0-beta4",
+            "version": "2.0.0",
             "require": {
                 "drupal/core": "^10.3 || ^11",
                 "drupal/symfony_mailer": "^2"
@@ -7440,11 +7440,11 @@
             "type": "metapackage",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0-beta4",
-                    "datestamp": "1769710929",
+                    "version": "2.0.0",
+                    "datestamp": "1777732137",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Beta releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -9468,17 +9468,17 @@
         },
         {
             "name": "drupal/symfony_mailer",
-            "version": "2.0.0-beta4",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/symfony_mailer.git",
-                "reference": "2.0.0-beta4"
+                "reference": "2.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/symfony_mailer-2.0.0-beta4.zip",
-                "reference": "2.0.0-beta4",
-                "shasum": "f69dc056f522199f7e9d575c07cb0392cf2aff5e"
+                "url": "https://ftp.drupal.org/files/projects/symfony_mailer-2.0.0.zip",
+                "reference": "2.0.0",
+                "shasum": "3867e5c9566a11e9a03c353a4ca9b450cfec6af5"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -9495,11 +9495,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0-beta4",
-                    "datestamp": "1769710929",
+                    "version": "2.0.0",
+                    "datestamp": "1777732137",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Beta releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 },
                 "drush": {

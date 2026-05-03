@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\book\Functional;
 
+use Drupal\node\Entity\Node;
 use Drupal\user\RoleInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -82,6 +83,16 @@ class BookNavigationBlockTest extends BookTestBase {
     $this->assertSession()->responseNotContains($nodes[0]->getTitle());
     $this->assertSession()->responseNotContains($nodes[1]->getTitle());
     $this->assertSession()->responseNotContains($nodes[2]->getTitle());
+
+    // Test that non-book content types are unaffected.
+    $this->createContentType(['type' => 'article']);
+    $article = Node::create([
+      'type' => 'article',
+      'title' => 'Article',
+    ]);
+    $article->save();
+    $this->drupalGet($article->toUrl());
+    $this->assertSession()->statusCodeEquals(200);
   }
 
   /**

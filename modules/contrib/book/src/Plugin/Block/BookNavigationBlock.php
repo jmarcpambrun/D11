@@ -16,7 +16,6 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\book\BookManagerInterface;
 use Drupal\book\BookInterface;
-use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -140,7 +139,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         8 => $this->t('Level 8'),
         9 => $this->t('Level 9'),
       ],
-      '#default_value' => $this->configuration['starting_level'],
+      '#default_value' => $this->configuration['starting_level'] ?? 1,
       '#description' => $this->t('The level in the book hierarchy at which to start rendering. Level 1 shows the entire book, level 2 starts with children of the top page, etc.'),
     ];
     $form['max_depth'] = [
@@ -158,7 +157,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
         8 => $this->t('Level 8'),
         9 => $this->t('Level 9'),
       ],
-      '#default_value' => $this->configuration['max_depth'],
+      '#default_value' => $this->configuration['max_depth'] ?? 0,
       '#description' => $this->t('The maximum depth of the book that should be rendered.'),
     ];
     $form['expanded'] = [
@@ -177,7 +176,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       '#type' => 'select',
       '#title' => $this->t('Select book menu (optional)'),
       '#description' => $this->t('Select the book to display the contents of. Make a selection here if you want to use this block to display the contents of a specific book.'),
-      '#default_value' => $this->configuration['book_select'],
+      '#default_value' => $this->configuration['book_select'] ?? 0,
       '#options' => $book_options,
     ];
 
@@ -214,7 +213,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
     }
 
     $node = $this->routeMatch->getParameter('node');
-    if ($node instanceof NodeInterface) {
+    if ($node instanceof BookInterface) {
       $book = $node->getBook();
       if (!empty($book['bid'])) {
         $current_bid = $book['bid'];

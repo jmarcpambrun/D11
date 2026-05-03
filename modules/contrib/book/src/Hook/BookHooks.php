@@ -180,7 +180,14 @@ class BookHooks {
    */
   #[Hook('node_view')]
   public function nodeView(array &$build, EntityInterface $node, EntityViewDisplayInterface $display, $view_mode): void {
-    if ($display->getComponent('book_navigation') || $display->getComponent('book_navigation_without_tree')) {
+    $field_key = NULL;
+    foreach (['book_navigation', 'book_navigation_without_tree'] as $key) {
+      if ($display->getComponent($key)) {
+        $field_key = $key;
+        break;
+      }
+    }
+    if ($field_key) {
       $book = $node->getBook();
 
       // Not all data is available in preview mode, load it here if needed.
@@ -193,7 +200,7 @@ class BookHooks {
         if (!$book_node?->access()) {
           return;
         }
-        $build['book_navigation'] = [
+        $build[$field_key] = [
           '#theme' => 'book_navigation',
           '#book_link' => $book,
           '#show_tree' => !$display->getComponent('book_navigation_without_tree'),
@@ -243,6 +250,13 @@ class BookHooks {
           $book_new['parent_parameter'] = $query->get('parent');
           $book_new['bid'] = $parent['bid'];
           $book_new['pid'] = $parent['nid'];
+          // Copy the parent's materialized path so the parent selector
+          // JS library can auto-populate the active trail.
+          for ($i = 1; $i <= 9; $i++) {
+            if (!empty($parent["p$i"])) {
+              $book_new["p$i"] = $parent["p$i"];
+            }
+          }
         }
       }
       // Set defaults.

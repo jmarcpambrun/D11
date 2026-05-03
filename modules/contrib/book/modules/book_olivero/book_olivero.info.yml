@@ -6,7 +6,7 @@ package: Book
 dependencies:
   - book:book
 
-# Information added by Drupal.org packaging script on 2026-04-21
-version: '3.0.3'
+# Information added by Drupal.org packaging script on 2026-05-02
+version: '3.0.4'
 project: 'book'
-datestamp: 1776788688
+datestamp: 1777759925

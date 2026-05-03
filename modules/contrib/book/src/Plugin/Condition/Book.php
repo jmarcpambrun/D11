@@ -2,6 +2,7 @@
 
 namespace Drupal\book\Plugin\Condition;
 
+use Drupal\book\BookInterface;
 use Drupal\Core\Condition\Attribute\Condition;
 use Drupal\Core\Condition\ConditionPluginBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -117,6 +118,9 @@ class Book extends ConditionPluginBase implements ContainerFactoryPluginInterfac
       return TRUE;
     }
     $node = $this->getContextValue('node');
+    if (!$node instanceof BookInterface) {
+      return FALSE;
+    }
     $book = $node->getBook();
     if (!empty($book['bid'])) {
       return !empty($this->configuration['books'][$book['bid']]);
