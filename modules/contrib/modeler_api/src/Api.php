@@ -859,6 +859,7 @@ class Api {
    *   The menu name of the parent path, if we can find it, FALSE otherwise.
    */
   public function getParentMenuName(string $path): ?string {
+    // Strip the last path segment to get the parent path.
     $parentPath = substr($path, 0, strrpos(trim($path, '/'), '/'));
     if (empty($parentPath)) {
       return NULL;
