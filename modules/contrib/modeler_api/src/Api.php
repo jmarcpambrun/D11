@@ -515,10 +515,20 @@ class Api {
       // Count components by type for cardinality constraint validation.
       $type = $component->getType();
       $componentTypeCounts[$type] = ($componentTypeCounts[$type] ?? 0) + 1;
+      $successors = $component->getSuccessors();
+      $successorInfo = [];
+      foreach ($successors as $successor) {
+        $successorInfo[] = [
+          'targetId' => $successor->getId(),
+          'conditionId' => $successor->getConditionId(),
+        ];
+      }
+
       $successorCountsByType[$type][] = [
         'id' => $component->getId(),
         'label' => $component->getLabel(),
-        'count' => count($component->getSuccessors()),
+        'count' => count($successors),
+        'successors' => $successorInfo,
       ];
       if ($errors = $component->validate()) {
         $this->errors = array_merge($this->errors, $errors);
@@ -578,7 +588,10 @@ class Api {
    *
    * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
    *   The model owner.
-   * @param array<int, int> $componentTypeCounts
+   * @param array<int, array<int, array{id: string, label: string, count: int, successors: array<int, array{targetId: string, conditionId: string}>}>> $successorCountsByType
+   *   Per-type list of component successor info. The 'successors' sub-array
+   *   contains one entry per outgoing edge, with the target component ID and
+   *   the condition ID (empty string when no condition is set).
    *   Component counts keyed by component type constant.
    * @param array<int, array<int, array{id: string, label: string, count: int}>> $successorCountsByType
    *   Per-type list of component successor info.
@@ -637,6 +650,33 @@ class Api {
                 '@name' => $info['label'],
                 '@max' => $sConstraint['max'],
               ]);
+          }
+	  // Validate the opt-in "parallel successors require conditions" rule.
+          // When two or more successors of the same component point at the
+          // same target, every one of them must carry a non-empty conditionId.
+          // Otherwise the runtime semantics are degenerate (the same target
+          // would be invoked multiple times unconditionally).
+          if (!empty($sConstraint['requireConditionWhenParallel']) && !empty($info['successors'])) {
+            $byTarget = [];
+            foreach ($info['successors'] as $successorInfo) {
+              $byTarget[$successorInfo['targetId']][] = $successorInfo;
+            }
+            foreach ($byTarget as $targetId => $group) {
+              if (count($group) < 2) {
+                continue;
+              }
+              foreach ($group as $successorInfo) {
+                if ($successorInfo['conditionId'] === '') {
+                  $this->errors[] = (string) $this->t('@label "@name" has parallel successors to "@target" without a condition on every edge. When multiple edges connect the same source and target, each edge must carry a condition.', [
+                    '@label' => $label,
+                    '@name' => $info['label'],
+                    '@target' => $targetId,
+                  ]);
+                  // One error per (source, target) pair is enough.
+                  break;
+                }
+              }
+            }
           }
         }
       }
