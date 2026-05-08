@@ -176,7 +176,7 @@ class EntityHooks {
           ];
         }
         $name = 'entity.' . $type . '.export_recipe';
-        if (\Drupal::service('modeler_api.service')->modelerApiService->getRouteByName($name)) {
+        if (\Drupal::service('modeler_api.service')->getRouteByName($name)) {
           $operations['export_recipe'] = [
             'title' => t('Export as recipe'),
             'url' => Url::fromRoute($name, [$type => $entity->id()]),
