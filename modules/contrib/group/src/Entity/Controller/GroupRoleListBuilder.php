@@ -27,9 +27,6 @@ class GroupRoleListBuilder extends DraggableListBuilder {
    */
   protected $groupType;
 
-  /**
-   * {@inheritdoc}
-   */
   public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RouteMatchInterface $route_match) {
     parent::__construct($entity_type, $storage);
 

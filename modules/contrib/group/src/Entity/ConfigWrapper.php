@@ -2,36 +2,40 @@
 
 namespace Drupal\group\Entity;
 
+use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\group\Entity\Access\ConfigWrapperAccessControlHandler;
+use Drupal\group\Entity\Storage\ConfigWrapperStorage;
+use Drupal\group\Entity\Storage\ConfigWrapperStorageSchema;
 
 /**
  * Defines the ConfigWrapper entity.
  *
  * @ingroup group
- *
- * @ContentEntityType(
- *   id = "group_config_wrapper",
- *   label = @Translation("Config wrapper"),
- *   label_singular = @Translation("config wrapper"),
- *   label_plural = @Translation("config wrappers"),
- *   label_count = @PluralTranslation(
- *     singular = "@count config wrapper",
- *     plural = "@count config wrappers"
- *   ),
- *   handlers = {
- *     "access" = "Drupal\group\Entity\Access\ConfigWrapperAccessControlHandler",
- *     "storage" = "Drupal\group\Entity\Storage\ConfigWrapperStorage",
- *     "storage_schema" = "Drupal\group\Entity\Storage\ConfigWrapperStorageSchema",
- *   },
- *   base_table = "group_config_wrapper",
- *   entity_keys = {
- *     "id" = "id",
- *     "bundle" = "bundle",
- *   },
- * )
  */
+#[ContentEntityType(
+  id: 'group_config_wrapper',
+  label: new TranslatableMarkup('Config wrapper'),
+  label_singular: new TranslatableMarkup('config wrapper'),
+  label_plural: new TranslatableMarkup('config wrappers'),
+  entity_keys: [
+    'id' => 'id',
+    'bundle' => 'bundle',
+  ],
+  handlers: [
+    'access' => ConfigWrapperAccessControlHandler::class,
+    'storage' => ConfigWrapperStorage::class,
+    'storage_schema' => ConfigWrapperStorageSchema::class,
+  ],
+  base_table: 'group_config_wrapper',
+  label_count: [
+    'singular' => '@count config wrapper',
+    'plural' => '@count config wrappers',
+  ],
+)]
 class ConfigWrapper extends ContentEntityBase implements ConfigWrapperInterface {
 
   /**

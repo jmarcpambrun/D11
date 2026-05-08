@@ -53,26 +53,26 @@ interface GroupInterface extends ContentEntityInterface, EntityOwnerInterface, E
   /**
    * Retrieves all relationship entities for the group.
    *
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\group\Entity\GroupRelationshipInterface[]
    *   A list of relationship entities matching the criteria.
    */
-  public function getRelationships($plugin_id = NULL);
+  public function getRelationships(?string $plugin_id = NULL);
 
   /**
    * Retrieves all relationship entities for a specific entity in the group.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity to load the relationship entities for in the group.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\group\Entity\GroupRelationshipInterface[]
    *   A list of relationship entities matching the criteria.
    */
-  public function getRelationshipsByEntity(EntityInterface $entity, $plugin_id = NULL);
+  public function getRelationshipsByEntity(EntityInterface $entity, ?string $plugin_id = NULL);
 
   /**
    * Retrieves all related entities for the group.
@@ -80,7 +80,7 @@ interface GroupInterface extends ContentEntityInterface, EntityOwnerInterface, E
    * Unlike GroupInterface::getRelationships(), this function actually returns
    * the entities that were added to the group through relationship entities.
    *
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\Core\Entity\EntityInterface[]
@@ -89,7 +89,7 @@ interface GroupInterface extends ContentEntityInterface, EntityOwnerInterface, E
    *
    * @see \Drupal\group\Entity\GroupInterface::getRelationships()
    */
-  public function getRelatedEntities($plugin_id = NULL);
+  public function getRelatedEntities(?string $plugin_id = NULL);
 
   /**
    * Adds a user as a member of the group.
@@ -121,7 +121,7 @@ interface GroupInterface extends ContentEntityInterface, EntityOwnerInterface, E
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user to load the membership for.
    *
-   * @return \Drupal\group\GroupMembership|false
+   * @return \Drupal\group\Entity\GroupMembership|false
    *   The loaded group membership or FALSE if none was found.
    */
   public function getMember(AccountInterface $account);
@@ -129,14 +129,14 @@ interface GroupInterface extends ContentEntityInterface, EntityOwnerInterface, E
   /**
    * Retrieves all group memberships for the group.
    *
-   * @param string|array $roles
-   *   (optional) A group role machine name or a list of group role machine
-   *   names to filter on. Results only need to match on one role (IN query).
+   * @param array $roles
+   *   (optional) A list of group role machine names to filter on. Results only
+   *   need to match on one role.
    *
-   * @return \Drupal\group\GroupMembership[]
+   * @return \Drupal\group\Entity\GroupMembership[]
    *   A list of group memberships.
    */
-  public function getMembers($roles = NULL);
+  public function getMembers(array $roles = []);
 
   /**
    * Checks whether a user has the requested permission.

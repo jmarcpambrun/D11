@@ -18,11 +18,16 @@ jest.mock('reactflow', () => ({
   },
 }));
 
-// Mock QuickAddConditionButton
-jest.mock('../../QuickAddConditionButton', () => (props: any) => (
-  <button data-testid="quick-add-condition" onClick={() => props.onAddCondition?.({ id: 'cond1' })}>
-    Add Condition
-  </button>
+// Mock QuickAddEdgeButton
+jest.mock('../../QuickAddEdgeButton', () => (props: any) => (
+  <div>
+    <button data-testid="quick-add-condition" onClick={() => props.onAddCondition?.({ id: 'cond1' })}>
+      Add Condition
+    </button>
+    <button data-testid="quick-add-action" onClick={() => props.onAddAction?.({ id: 'act1', type: 'element' })}>
+      Add Action
+    </button>
+  </div>
 ));
 
 describe('DefaultEdge', () => {
@@ -544,8 +549,8 @@ describe('DefaultEdge', () => {
     });
   });
 
-  describe('QuickAddConditionButton', () => {
-    it('should show QuickAddConditionButton when not in read-only mode and onAddCondition provided', () => {
+  describe('QuickAddEdgeButton', () => {
+    it('should show QuickAddEdgeButton when not in read-only mode and onAddCondition provided', () => {
       const onAddCondition = jest.fn();
       const data = { onAddCondition };
       render(
@@ -556,7 +561,7 @@ describe('DefaultEdge', () => {
       expect(screen.getByTestId('quick-add-condition')).toBeInTheDocument();
     });
 
-    it('should not show QuickAddConditionButton when no onAddCondition', () => {
+    it('should not show QuickAddEdgeButton when no onAddCondition', () => {
       render(
         <svg>
           <DefaultEdge {...defaultProps} data={{}} />
@@ -628,6 +633,19 @@ describe('DefaultEdge', () => {
       const transform = (wrapper as HTMLElement).style.transform;
       expect(transform).toBeDefined();
       expect(transform).toContain('translate(-50%, -50%)');
+    });
+
+    it('should call onAddActionOnEdge with edge id when action button clicked', () => {
+      const onAddCondition = jest.fn();
+      const onAddActionOnEdge = jest.fn();
+      const data = { onAddCondition, onAddActionOnEdge };
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} data={data} />
+        </svg>
+      );
+      fireEvent.click(screen.getByTestId('quick-add-action'));
+      expect(onAddActionOnEdge).toHaveBeenCalledWith('edge1', { id: 'act1', type: 'element' });
     });
   });
 

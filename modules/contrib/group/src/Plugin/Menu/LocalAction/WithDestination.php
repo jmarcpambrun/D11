@@ -18,30 +18,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class WithDestination extends LocalActionDefault {
 
-  /**
-   * The redirect destination.
-   *
-   * @var \Drupal\Core\Routing\RedirectDestinationInterface
-   */
-  private $redirectDestination;
-
-  /**
-   * Constructs a WithDestination object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
-   *   The route provider to load routes by name.
-   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
-   *   The redirect destination.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RouteProviderInterface $route_provider, RedirectDestinationInterface $redirect_destination) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    RouteProviderInterface $route_provider,
+    private RedirectDestinationInterface $redirectDestination,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $route_provider);
-    $this->redirectDestination = $redirect_destination;
   }
 
   /**

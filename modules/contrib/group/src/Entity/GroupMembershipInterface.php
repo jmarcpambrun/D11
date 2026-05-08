@@ -68,28 +68,28 @@ interface GroupMembershipInterface extends GroupRelationshipInterface {
    *
    * @param \Drupal\group\Entity\GroupInterface $group
    *   The group to load the memberships from.
-   * @param string|array $roles
-   *   (optional) A group role machine name or a list of group role machine
-   *   names to filter on. Valid results only need to match on one role.
+   * @param array $roles
+   *   (optional) A list of group role machine names to filter on. Valid results
+   *   only need to match on one role.
    *
    * @return \Drupal\group\Entity\GroupMembershipInterface[]
    *   The loaded group memberships matching the criteria.
    */
-  public static function loadByGroup(GroupInterface $group, $roles = NULL);
+  public static function loadByGroup(GroupInterface $group, array $roles = []);
 
   /**
    * Loads all memberships for a user.
    *
-   * @param \Drupal\Core\Session\AccountInterface $account
+   * @param ?\Drupal\Core\Session\AccountInterface $account
    *   (optional) The user to load the membership for. Leave blank to load the
    *   memberships of the currently logged in user.
-   * @param string|array $roles
-   *   (optional) A group role machine name or a list of group role machine
-   *   names to filter on. Valid results only need to match on one role.
+   * @param array $roles
+   *   (optional) A list of group role machine names to filter on. Valid results
+   *   only need to match on one role.
    *
    * @return \Drupal\group\Entity\GroupMembershipInterface[]
    *   The loaded group memberships matching the criteria.
    */
-  public static function loadByUser(?AccountInterface $account = NULL, $roles = NULL);
+  public static function loadByUser(?AccountInterface $account = NULL, array $roles = []);
 
 }

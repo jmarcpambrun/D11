@@ -24,7 +24,6 @@ import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
 import { useModelStore } from '../store/useModelStore';
 import { useUISettingsStore } from '../store/useUISettingsStore';
-import { useViewportStore } from '../store/useViewportStore';
 import { useComponentStore } from '../store/useComponentStore';
 import { useContextStore } from '../store/useContextStore';
 import { useFilterStore } from '../store/useFilterStore';
@@ -32,6 +31,7 @@ import { useLabelStore } from '../store/useLabelStore';
 import { useHistoryStore } from '../store/useHistoryStore';
 import { useErrorStore } from '../store/useErrorStore';
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
+import { routeParallelEdge } from '../utils/parallelEdgeRouter';
 import type {
   ModelerPluginApi,
   PluginNode,
@@ -155,6 +155,34 @@ export function clearMutationHooks(): void {
   saveHistoryHook = null;
   markUnsavedHook = null;
   autoLayoutHook = null;
+}
+
+// ── Viewport hooks ───────────────────────────────────────────────────
+// Flow.tsx registers viewport action callbacks so the plugin API can
+// pan/zoom without importing React hooks directly.
+
+type ViewportHookFocusNode = (nodeId: string) => void;
+type ViewportHookFitView = () => void;
+let viewportFocusNodeHook: ViewportHookFocusNode | null = null;
+let viewportFitViewHook: ViewportHookFitView | null = null;
+
+/**
+ * Register viewport action callbacks.  Called once by Flow.tsx on mount.
+ */
+export function setViewportHooks(hooks: {
+  focusNode: ViewportHookFocusNode;
+  fitView: ViewportHookFitView;
+}): void {
+  viewportFocusNodeHook = hooks.focusNode;
+  viewportFitViewHook = hooks.fitView;
+}
+
+/**
+ * Clear viewport hooks (called on unmount).
+ */
+export function clearViewportHooks(): void {
+  viewportFocusNodeHook = null;
+  viewportFitViewHook = null;
 }
 
 /**
@@ -445,20 +473,15 @@ export function createPluginApi(): ModelerPluginApi {
 
     focusNode(nodeId: string): void {
       const node = useGraphStore.getState().nodes.find((n) => n.id === nodeId);
-      if (node) {
-        useViewportStore.getState().setViewportTarget({
-          type: 'center',
-          nodeId,
-          options: { duration: 800 },
-        });
+      if (node && viewportFocusNodeHook) {
+        viewportFocusNodeHook(nodeId);
       }
     },
 
     fitView(): void {
-      useViewportStore.getState().setViewportTarget({
-        type: 'fit',
-        options: { padding: 0.1, duration: 800 },
-      });
+      if (viewportFitViewHook) {
+        viewportFitViewHook();
+      }
     },
 
     // ── Node mutations ──────────────────────────────────────────────
@@ -575,7 +598,7 @@ export function createPluginApi(): ModelerPluginApi {
     addEdge(sourceNodeId: string, targetNodeId: string): string | null {
       if (currentReadOnly) return null;
 
-      const { nodes } = useGraphStore.getState();
+      const { nodes, edges } = useGraphStore.getState();
       const sourceExists = nodes.some((n) => n.id === sourceNodeId);
       const targetExists = nodes.some((n) => n.id === targetNodeId);
       if (!sourceExists || !targetExists) return null;
@@ -591,7 +614,41 @@ export function createPluginApi(): ModelerPluginApi {
         data: {},
       };
 
-      useGraphStore.getState().addEdge(newEdge);
+      // Route around any existing connection between the same endpoints,
+      // mirroring the behavior of user-drag-to-connect (onConnect). The
+      // router seeds controlOffset on the new edge and may rebalance
+      // existing siblings whose offsets are still at the default zero.
+      const route = routeParallelEdge({
+        newEdge,
+        edges: [...edges, newEdge],
+        nodes,
+      });
+
+      const offsetUpdates = new Map<string, { x: number; y: number }>();
+      for (const update of route.updates) {
+        offsetUpdates.set(update.edgeId, update.controlOffset);
+      }
+      const newEdgeOffset = offsetUpdates.get(newEdgeId);
+      if (newEdgeOffset) {
+        newEdge.data = { ...newEdge.data, controlOffset: newEdgeOffset };
+        offsetUpdates.delete(newEdgeId);
+      }
+
+      // Apply offset updates to existing siblings, then append the new edge.
+      const store = useGraphStore.getState();
+      if (offsetUpdates.size > 0) {
+        store.setEdges((prev) =>
+          prev.map((edge) => {
+            const offset = offsetUpdates.get(edge.id);
+            if (!offset) return edge;
+            return {
+              ...edge,
+              data: { ...(edge.data || {}), controlOffset: offset },
+            };
+          }),
+        );
+      }
+      store.addEdge(newEdge);
       afterMutation();
       return newEdgeId;
     },

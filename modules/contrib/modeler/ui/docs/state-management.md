@@ -37,7 +37,7 @@ The monolithic store has been split into domain-specific stores. Import each sto
 | `useLabelStore` | `store/useLabelStore.ts` | Component labels |
 | `useModelStore` | `store/useModelStore.ts` | Model data and metadata |
 | `useErrorStore` | `store/useErrorStore.ts` | Error log |
-| `useViewportStore` | `store/useViewportStore.ts` | Viewport targets |
+| ~~useViewportStore~~ | *(removed)* | Replaced by `useViewportActions` hook — see `docs/viewport-management.md` |
 | `useConfigModalStore` | `store/useConfigModalStore.ts` | Modal state |
 
 ### Key Store Interfaces

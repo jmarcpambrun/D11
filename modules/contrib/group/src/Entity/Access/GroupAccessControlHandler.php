@@ -35,7 +35,7 @@ class GroupAccessControlHandler extends EntityAccessControlHandler implements En
   protected const REVISION_OPERATION_MAP = [
     'view all revisions' => ['view all group revisions', 'view'],
     'view revision' => ['view group revisions', 'view'],
-    'revert revision' => ['revert group revisions', 'update'],
+    'revert' => ['revert group revisions', 'update'],
     'delete revision' => ['delete group revisions', 'delete'],
   ];
 

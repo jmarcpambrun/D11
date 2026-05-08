@@ -122,14 +122,14 @@ trait GroupMembershipTrait {
   /**
    * {@inheritdoc}
    */
-  public static function loadByGroup(GroupInterface $group, $roles = NULL) {
+  public static function loadByGroup(GroupInterface $group, array $roles = []) {
     $storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
     $cache_backend = \Drupal::service('cache.group_memberships_chained');
     assert($cache_backend instanceof CacheBackendInterface);
 
     $cid = static::createCacheId([
       'gid' => $group->id(),
-      'roles' => $roles ?? 'any-roles',
+      'roles' => $roles ?: 'any-roles',
     ]);
 
     if ($cache = $cache_backend->get($cid)) {
@@ -144,8 +144,8 @@ trait GroupMembershipTrait {
       ->condition('gid', $group->id())
       ->condition('plugin_id', 'group_membership');
 
-    if (isset($roles)) {
-      $query->condition('group_roles', (array) $roles, 'IN');
+    if (!empty($roles)) {
+      $query->condition('group_roles', $roles, 'IN');
     }
 
     $cacheability = (new CacheableMetadata())
@@ -158,7 +158,7 @@ trait GroupMembershipTrait {
   /**
    * {@inheritdoc}
    */
-  public static function loadByUser(?AccountInterface $account = NULL, $roles = NULL) {
+  public static function loadByUser(?AccountInterface $account = NULL, array $roles = []) {
     $storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
     $cache_backend = \Drupal::service('cache.group_memberships_chained');
     assert($cache_backend instanceof CacheBackendInterface);
@@ -169,7 +169,7 @@ trait GroupMembershipTrait {
 
     $cid = static::createCacheId([
       'entity_id' => $account->id(),
-      'roles' => $roles ?? 'any-roles',
+      'roles' => $roles ?: 'any-roles',
     ]);
 
     if ($cache = $cache_backend->get($cid)) {
@@ -184,8 +184,8 @@ trait GroupMembershipTrait {
       ->condition('entity_id', $account->id())
       ->condition('plugin_id', 'group_membership');
 
-    if (isset($roles)) {
-      $query->condition('group_roles', (array) $roles, 'IN');
+    if (!empty($roles)) {
+      $query->condition('group_roles', $roles, 'IN');
     }
 
     $cacheability = (new CacheableMetadata())

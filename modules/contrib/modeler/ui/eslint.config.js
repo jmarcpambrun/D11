@@ -4,6 +4,7 @@ import tsparser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import noUntranslatedStrings from './eslint-rules/no-untranslated-strings.js';
+import noBareSetCenter from './eslint-rules/no-bare-set-center.js';
 
 export default [
   js.configs.recommended,
@@ -69,6 +70,11 @@ export default [
           'no-untranslated-strings': noUntranslatedStrings,
         },
       },
+      'viewport': {
+        rules: {
+          'no-bare-set-center': noBareSetCenter,
+        },
+      },
     },
     rules: {
       // TypeScript rules
@@ -99,6 +105,9 @@ export default [
         // Add additional regex patterns to ignore if needed
         ignorePatterns: [],
       }],
+
+      // Viewport rules - prevent invasive pan/zoom operations
+      'viewport/no-bare-set-center': 'error',
     },
     settings: {
       react: {

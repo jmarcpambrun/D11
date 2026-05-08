@@ -20,6 +20,7 @@ use Drupal\group\Plugin\Group\RelationHandler\AccessControlInterface;
 use Drupal\group\Plugin\Group\RelationHandler\AccessControlTrait;
 use Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface;
 use Drupal\group\Plugin\Group\RelationHandlerDefault\AccessControl;
+use Drupal\TestTools\Random;
 use Drupal\user\EntityOwnerInterface;
 use Prophecy\Argument;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -98,7 +99,7 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A list of testSupportsOperation method arguments.
    */
-  public function supportsOperationProvider() {
+  public static function supportsOperationProvider() {
     foreach (['relationship', 'entity'] as $target) {
       $keys[0] = $target;
 
@@ -139,7 +140,7 @@ class AccessControlTest extends UnitTestCase {
                   ]),
                   'operation' => 'some operation',
                   'target' => $target,
-                  'any_permission' => $any_permission,
+                  'permission' => $any_permission,
                   'own_permission' => $own_permission,
                   'is_ownable' => $is_ownable,
                   'is_publishable' => $is_publishable,
@@ -235,10 +236,10 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A list of testRelationshipAccess method arguments.
    */
-  public function relationshipAccessProvider() {
+  public static function relationshipAccessProvider() {
     $cases = [];
 
-    foreach ($this->getAccessControlHandlerScenarios() as $key => $scenario) {
+    foreach (self::getAccessControlHandlerScenarios() as $key => $scenario) {
       $keys[0] = $key;
 
       foreach (['any some permission name', FALSE] as $any_permission) {
@@ -293,7 +294,7 @@ class AccessControlTest extends UnitTestCase {
                 }
 
                 $case['has_own_permission'] = $has_own_permission;
-                $case['any_permission'] = $any_permission;
+                $case['permission'] = $any_permission;
                 $case['own_permission'] = $own_permission;
                 $case['is_owner'] = $is_owner;
                 $case['check_chain'] = $check_chain;
@@ -363,10 +364,10 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A list of testRelationshipCreateAccess method arguments.
    */
-  public function relationshipCreateAccessProvider() {
+  public static function relationshipCreateAccessProvider() {
     $cases = [];
 
-    foreach ($this->getAccessControlHandlerScenarios() as $key => $scenario) {
+    foreach (self::getAccessControlHandlerScenarios() as $key => $scenario) {
       $keys[0] = $key;
 
       foreach (['some permission name', FALSE] as $permission) {
@@ -538,8 +539,8 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A list of testEntityAccess method arguments.
    */
-  public function entityAccessProvider() {
-    foreach ($this->getAccessControlHandlerScenarios() as $key => $scenario) {
+  public static function entityAccessProvider() {
+    foreach (self::getAccessControlHandlerScenarios() as $key => $scenario) {
       $keys[0] = $key;
 
       foreach (['any some permission name', FALSE] as $any_permission) {
@@ -566,7 +567,7 @@ class AccessControlTest extends UnitTestCase {
                     foreach ([TRUE, FALSE] as $is_published) {
                       $keys[8] = $is_published ? 'is_published' : 'no_is_published';
 
-                      foreach (['view', $this->randomMachineName()] as $operation) {
+                      foreach (['view', Random::machineName(8)] as $operation) {
                         $keys[9] = $operation === 'view' ? 'op_view' : 'no_op_view';
 
                         foreach ([TRUE, FALSE] as $check_chain) {
@@ -653,7 +654,7 @@ class AccessControlTest extends UnitTestCase {
                           }
 
                           $case['has_own_permission'] = $has_own_permission;
-                          $case['any_permission'] = $any_permission;
+                          $case['permission'] = $any_permission;
                           $case['own_permission'] = $own_permission;
                           $case['is_grouped'] = $is_grouped;
                           $case['is_ownable'] = $is_ownable;
@@ -731,10 +732,10 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A list of entityCreateAccessProvider method arguments.
    */
-  public function entityCreateAccessProvider() {
+  public static function entityCreateAccessProvider() {
     $cases = [];
 
-    foreach ($this->getAccessControlHandlerScenarios() as $key => $scenario) {
+    foreach (self::getAccessControlHandlerScenarios() as $key => $scenario) {
       $keys[0] = $key;
 
       foreach (['some permission name', FALSE] as $permission) {
@@ -782,7 +783,7 @@ class AccessControlTest extends UnitTestCase {
    * @return array
    *   A set of test cases to be used in data providers.
    */
-  protected function getAccessControlHandlerScenarios() {
+  protected static function getAccessControlHandlerScenarios() {
     $scenarios = [];
 
     foreach (['administer foo', FALSE] as $admin_permission) {

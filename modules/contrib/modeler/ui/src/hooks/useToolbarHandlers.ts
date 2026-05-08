@@ -6,8 +6,6 @@
  */
 
 import { useCallback } from 'react';
-import { useReactFlow } from 'reactflow';
-import { getFitViewport } from '../utils/modelUtils';
 
 interface UseToolbarHandlersProps {
   onToggleLock?: () => void;
@@ -25,9 +23,6 @@ interface UseToolbarHandlersReturn {
   handlePaste: (e: React.MouseEvent) => void;
   handleToggleSearch: (e: React.MouseEvent) => void;
   handleClose: (e: React.MouseEvent) => void;
-  handleZoomIn: (e: React.MouseEvent) => void;
-  handleZoomOut: (e: React.MouseEvent) => void;
-  handleFitView: (e: React.MouseEvent) => void;
 }
 
 /**
@@ -50,44 +45,12 @@ export function useToolbarHandlers({
   onToggleSearch,
   onClose,
 }: UseToolbarHandlersProps): UseToolbarHandlersReturn {
-  const { zoomIn, zoomOut, fitView, setViewport, getNodes } = useReactFlow();
-
   const handleToggleLock = useToolbarHandler(onToggleLock);
   const handleAutoLayout = useToolbarHandler(onAutoLayout);
   const handleCopy = useToolbarHandler(onCopy);
   const handlePaste = useToolbarHandler(onPaste);
   const handleToggleSearch = useToolbarHandler(onToggleSearch);
   const handleClose = useToolbarHandler(onClose);
-  const handleZoomIn = useToolbarHandler(zoomIn);
-  const handleZoomOut = useToolbarHandler(zoomOut);
-
-  const handleFitView = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Get all nodes and filter out hidden ones
-    const allNodes = getNodes();
-    const visibleNodes = allNodes.filter(node => !node.hidden);
-
-    // If we have visible nodes, fit view to them only
-    if (visibleNodes.length > 0) {
-      // Get viewport dimensions (approximate)
-      const viewportWidth = window.innerWidth * 0.6; // Canvas is approximately 60% of window width
-      const viewportHeight = window.innerHeight - 100; // Account for toolbar and other UI
-
-      // Calculate the viewport to fit visible nodes
-      const viewport = getFitViewport(visibleNodes, viewportWidth, viewportHeight, 0.1);
-
-      // Apply the viewport with animation
-      setViewport(viewport, { duration: 500 });
-    } else {
-      // Fall back to standard fitView if no visible nodes
-      fitView({
-        padding: 0.1,
-        duration: 500
-      });
-    }
-  }, [getNodes, setViewport, fitView]);
 
   return {
     handleToggleLock,
@@ -96,9 +59,6 @@ export function useToolbarHandlers({
     handlePaste,
     handleToggleSearch,
     handleClose,
-    handleZoomIn,
-    handleZoomOut,
-    handleFitView,
   };
 }
 

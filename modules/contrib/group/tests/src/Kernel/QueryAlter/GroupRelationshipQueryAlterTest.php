@@ -24,14 +24,14 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $relationshipsAffectAccess = FALSE;
+  protected static $relationshipsAffectAccess = FALSE;
 
   /**
    * The plugin ID to use in testing.
    *
    * @var string
    */
-  protected $pluginId = 'user_relation';
+  protected static $pluginId = 'user_relation';
 
   /**
    * {@inheritdoc}
@@ -49,7 +49,7 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  public function queryAccessProvider() {
+  public static function queryAccessProvider() {
     $cases = parent::queryAccessProvider();
 
     // The mixed admin cases would add ALL installed plugins when the role is
@@ -90,24 +90,26 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function getPermission($operation, $scope, $unpublished = FALSE) {
+  protected static function getPermission($operation, $scope, $unpublished = FALSE) {
     if ($operation === 'unsupported') {
       return FALSE;
     }
+
+    $plugin_id = self::$pluginId;
     if ($operation === 'view') {
       if ($scope === 'own') {
         return FALSE;
       }
-      return "$operation $this->pluginId relationship";
+      return "$operation $plugin_id relationship";
     }
-    return "$operation $scope $this->pluginId relationship";
+    return "$operation $scope $plugin_id relationship";
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getAdminPermission() {
-    return "administer $this->pluginId";
+  protected static function getAdminPermission() {
+    return 'administer ' . self::$pluginId;
   }
 
   /**
@@ -116,7 +118,7 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   protected function setUpContent(GroupTypeInterface $group_type) {
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
-    $storage->save($storage->createFromPlugin($group_type, $this->pluginId));
+    $storage->save($storage->createFromPlugin($group_type, self::$pluginId));
     return $this->createGroup(['type' => $group_type->id()]);
   }
 
@@ -147,7 +149,7 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   protected function addSynchronizedConditions(array $allowed_ids, ConditionInterface $conditions, $outsider) {
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
-    $group_relationship_type_id = $storage->getRelationshipTypeId(reset($allowed_ids), $this->pluginId);
+    $group_relationship_type_id = $storage->getRelationshipTypeId(reset($allowed_ids), self::$pluginId);
 
     $conditions->condition($sub_condition = $conditions->andConditionGroup());
     $sub_condition->condition('group_relationship_field_data.type', [$group_relationship_type_id], 'IN');
@@ -165,7 +167,7 @@ class GroupRelationshipQueryAlterTest extends QueryAlterTestBase {
   protected function addIndividualConditions(array $allowed_ids, ConditionInterface $conditions) {
     $sub_condition = $conditions->andConditionGroup();
     $sub_condition->condition('group_relationship_field_data.gid', $allowed_ids, 'IN');
-    $sub_condition->condition('group_relationship_field_data.plugin_id', $this->pluginId);
+    $sub_condition->condition('group_relationship_field_data.plugin_id', self::$pluginId);
     $conditions->condition($sub_condition);
   }
 

@@ -1,3 +1,6 @@
+parameters:
+  group.skip_procedural_hook_scan: true
+
 services:
   access_check.group.permission:
     class: 'Drupal\group\Access\GroupPermissionAccessCheck'
@@ -73,7 +76,7 @@ services:
       - { name: 'cache.context'}
   cache_context.user.is_group_member:
     class: 'Drupal\group\Cache\Context\IsGroupMemberCacheContext'
-    arguments: ['@current_user', '@entity_type.manager', '@group.membership_loader']
+    arguments: ['@current_user', '@entity_type.manager']
     tags:
       - { name: 'cache.context'}
 
@@ -91,28 +94,24 @@ services:
     class: 'Drupal\group\Entity\Routing\GroupLatestRevisionRouteSubscriber'
     tags:
       - { name: 'event_subscriber' }
-  group.revision.route_subscriber:
-    class: 'Drupal\group\Entity\Routing\GroupRevisionRouteSubscriber'
-    tags:
-      - { name: 'event_subscriber' }
   group.config_subscriber:
     class: 'Drupal\group\EventSubscriber\ConfigSubscriber'
     arguments: ['@entity_type.manager', '@group_relation_type.manager']
     tags:
       - { name: 'event_subscriber' }
 
+  group.create_form_enhancer:
+    class: 'Drupal\group\Form\CreateFormEnhancer'
+    arguments: ['@entity_type.manager', '@current_user', '@string_translation']
+  Drupal\group\Form\CreateFormEnhancerInterface: '@group.create_form_enhancer'
   group.group_route_context:
     class: 'Drupal\group\Context\GroupRouteContext'
     arguments: ['@current_route_match', '@entity_type.manager', '@string_translation']
     tags:
       - { name: 'context_provider' }
-  group.membership_loader:
-    class: 'Drupal\group\GroupMembershipLoader'
-    arguments: ['@entity_type.manager', '@current_user']
   group.permissions:
     class: 'Drupal\group\Access\GroupPermissionHandler'
     arguments: ['@module_handler', '@string_translation', '@controller_resolver', '@group_relation_type.manager', '@extension.list.module']
-
   group_permission.hash_generator:
     class: 'Drupal\group\Access\GroupPermissionsHashGenerator'
     arguments: ['@private_key', '@cache.static', '@group_permission.calculator', '@entity_type.manager', '@database']
@@ -120,22 +119,21 @@ services:
   # Wrappers for Flexible permissions services.
   group_permission.calculator:
     class: 'Drupal\group\Access\GroupPermissionCalculator'
-    arguments: ['@flexible_permissions.chain_calculator']
+    arguments: ['@access_policy_processor']
   group_permission.checker:
     class: 'Drupal\group\Access\GroupPermissionChecker'
-    arguments: ['@group_permission.calculator', '@group.membership_loader']
+    arguments: ['@group_permission.calculator']
 
-  # Flexible permissions calculators.
-  group_permission.individual_calculator:
-    class: 'Drupal\group\Access\IndividualGroupPermissionCalculator'
-    arguments: ['@entity_type.manager', '@group.membership_loader']
-    tags:
-      - { name: flexible_permission_calculator, priority: -100 }
-  group_permission.synchronized_calculator:
-    class: 'Drupal\group\Access\SynchronizedGroupPermissionCalculator'
+  access_policy.individual_group_role:
+    class: 'Drupal\group\Access\IndividualGroupRoleAccessPolicy'
     arguments: ['@entity_type.manager']
     tags:
-      - { name: flexible_permission_calculator, priority: -50 }
+      - { name: access_policy, priority: -100 }
+  access_policy.synchronized_group_role:
+    class: 'Drupal\group\Access\SynchronizedGroupRoleAccessPolicy'
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: access_policy, priority: -50 }
 
   group.uninstall_validator.group_relationship:
     class: 'Drupal\group\UninstallValidator\GroupRelationshipUninstallValidator'
@@ -154,6 +152,7 @@ services:
     arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@entity_type.manager']
     tags:
       - { name: plugin_manager_cache_clear }
+  Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface: '@group_relation_type.manager'
 
   # Default group relation handlers.
   group.relation_handler.access_control:

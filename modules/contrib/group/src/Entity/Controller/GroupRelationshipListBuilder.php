@@ -25,35 +25,13 @@ class GroupRelationshipListBuilder extends EntityListBuilder {
    */
   protected $group;
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The redirect destination.
-   *
-   * @var \Drupal\Core\Routing\RedirectDestinationInterface
-   */
-  protected $redirectDestination;
-
-  /**
-   * Constructs a new GroupRelationshipListBuilder object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
-   *   The redirect destination.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
-   *   The route match.
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
-   */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, RedirectDestinationInterface $redirect_destination, RouteMatchInterface $route_match, EntityTypeInterface $entity_type) {
-    parent::__construct($entity_type, $entity_type_manager->getStorage($entity_type->id()));
-    $this->entityTypeManager = $entity_type_manager;
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    RedirectDestinationInterface $redirect_destination,
+    RouteMatchInterface $route_match,
+    EntityTypeInterface $entity_type,
+  ) {
+    parent::__construct($entity_type, $entityTypeManager->getStorage($entity_type->id()));
     $this->redirectDestination = $redirect_destination;
     // There should always be a group on the route for relationship lists.
     $this->group = $route_match->getParameters()->get('group');

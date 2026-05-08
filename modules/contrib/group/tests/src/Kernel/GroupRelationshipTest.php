@@ -21,7 +21,7 @@ class GroupRelationshipTest extends GroupKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['group_test', 'group_test_plugin', 'node'];
+  protected static $modules = ['group_test_plugin', 'node'];
 
   /**
    * Tests that entity url templates are functional.
@@ -34,7 +34,7 @@ class GroupRelationshipTest extends GroupKernelTestBase {
 
     $account = $this->createUser();
     $group->addMember($account);
-    $group_relationship = $group->getMember($account)->getGroupRelationship();
+    $group_relationship = $group->getMember($account);
 
     // Canonical.
     $expected = "/group/{$group->id()}/content/{$group_relationship->id()}";
@@ -70,23 +70,27 @@ class GroupRelationshipTest extends GroupKernelTestBase {
   }
 
   /**
-   * Tests that after adding an entity to a group, it gets saved again.
+   * Tests that adding an entity to a group invalidates its cache tags.
    *
    * @covers ::postSave
-   *
-   * @see group_test_user_update()
    */
-  public function testSubjectResaved() {
-    $changed = 123456789;
-    $account = $this->createUser([], NULL, FALSE, ['changed' => $changed]);
+  public function testSubjectCacheTagsInvalidated() {
+    $cid = 'test_group_relationship';
+    $cache = \Drupal::cache();
+    $account = $this->createUser();
+
+    $cache->set($cid, 'hello', tags: $account->getCacheTags());
+    $this->assertNotFalse($cache->get($cid), 'Cache entry based on account cache tags exists.');
 
     $group = $this->createGroup(['type' => $this->createGroupType()->id()]);
-    $group->addRelationship($account, 'group_membership');
+    $group_relationship = $group->addRelationship($account, 'group_membership');
+    $this->assertFalse($cache->get($cid), 'Cache entry based on account cache tags is flushed when account is added to a group.');
 
-    // All users whose changed time was set to 123456789 get their changed time
-    // set to 530496000 in group_test_user_update() when the account is updated.
-    $account_unchanged = $this->entityTypeManager->getStorage('user')->loadUnchanged($account->id());
-    $this->assertEquals(530496000, $account_unchanged->getChangedTime(), 'Account was saved as part of being added to a group.');
+    $cache->set($cid, 'hello', tags: $account->getCacheTags());
+    $this->assertNotFalse($cache->get($cid), 'Cache entry based on account cache tags exists.');
+
+    $group_relationship->delete();
+    $this->assertFalse($cache->get($cid), 'Cache entry based on account cache tags is flushed when account is removed from a group.');
   }
 
   /**

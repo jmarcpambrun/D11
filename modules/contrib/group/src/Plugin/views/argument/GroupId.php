@@ -3,38 +3,23 @@
 namespace Drupal\group\Plugin\views\argument;
 
 use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\views\Attribute\ViewsArgument;
 use Drupal\views\Plugin\views\argument\NumericArgument;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Argument handler to accept a group ID.
- *
- * @ViewsArgument("group_id")
  */
+#[ViewsArgument('group_id')]
 class GroupId extends NumericArgument {
 
-  /**
-   * The group storage.
-   *
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
-  protected $groupStorage;
-
-  /**
-   * Constructs the Gid object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Entity\ContentEntityStorageInterface $group_storage
-   *   The group entity storage handler.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ContentEntityStorageInterface $group_storage) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected ContentEntityStorageInterface $groupStorage,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->groupStorage = $group_storage;
   }
 
   /**

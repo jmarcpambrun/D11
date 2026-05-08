@@ -14,31 +14,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 class AnonymousUserResponseSubscriber implements EventSubscriberInterface {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The group permission calculator.
-   *
-   * @var \Drupal\group\Access\GroupPermissionCalculatorInterface
-   */
-  protected $groupPermissionCalculator;
-
-  /**
-   * Constructs an AnonymousUserResponseSubscriber object.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
-   * @param \Drupal\group\Access\GroupPermissionCalculatorInterface $permission_calculator
-   *   The group permission calculator.
-   */
-  public function __construct(AccountInterface $current_user, GroupPermissionCalculatorInterface $permission_calculator) {
-    $this->currentUser = $current_user;
-    $this->groupPermissionCalculator = $permission_calculator;
+  public function __construct(
+    protected AccountInterface $currentUser,
+    protected GroupPermissionCalculatorInterface $groupPermissionCalculator,
+  ) {
   }
 
   /**

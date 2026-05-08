@@ -61,6 +61,11 @@ function field_group_theme_registry_alter(&$theme_registry) {
     }
   }
 
+  // External entities use the external_entity as theme function.
+  if (isset($theme_registry['external_entity'])) {
+    $entity_types[] = 'external_entity';
+  }
+
   foreach ($theme_registry as $theme_hook => $info) {
     if (in_array($theme_hook, $entity_types) || (!empty($info['base hook']) && in_array($info['base hook'], $entity_types))) {
       $theme_registry[$theme_hook]['preprocess functions'][] = 'field_group_build_entity_groups';
@@ -70,11 +75,6 @@ function field_group_theme_registry_alter(&$theme_registry) {
   // ECK does not use the eck as theme function.
   if (isset($theme_registry['eck_entity'])) {
     $theme_registry['eck_entity']['preprocess functions'][] = 'field_group_build_entity_groups';
-  }
-
-  // External entities use the external_entity as theme function.
-  if (isset($theme_registry['external_entity'])) {
-    $theme_registry['external_entity']['preprocess functions'][] = 'field_group_build_entity_groups';
   }
 }
 
@@ -429,12 +429,32 @@ function field_group_form_process(array &$element, ?FormStateInterface $form_sta
 }
 
 /**
+ * Get a settings key to store the JavaScript settings in.
+ *
+ * The settings key should be the format type. If the format type has variations
+ * like Vertical and Horizontal tabs, the key can be made unique here.
+ *
+ * @param \stdClass $group
+ *   The group.
+ *
+ * @return string
+ *   The settings key to store the attached JavaScript settings in.
+ */
+function field_group_get_settings_key(stdClass $group): string {
+  $settings_key = $group->format_type;
+  if (!empty($group->format_settings['direction'])) {
+    $settings_key .= $group->format_settings['direction'];
+  }
+  return $settings_key;
+}
+
+/**
  * Implements hook_field_group_form_process().
  */
 function field_group_field_group_form_process(array &$element, &$group, &$complete_form) {
   // Add all field_group format types to the js settings.
   $element['#attached']['drupalSettings']['field_group'] = [
-    $group->format_type => [
+    field_group_get_settings_key($group) => [
       'mode' => $group->mode,
       'context' => $group->context,
       'settings' => $group->format_settings,
@@ -461,10 +481,10 @@ function field_group_field_group_form_process(array &$element, &$group, &$comple
 /**
  * Implements hook_field_group_pre_render().
  */
-function field_group_field_group_pre_render(array &$element, &$group, &$rendering_object) {
+function field_group_field_group_pre_render(array &$element, &$group, &$render_array) {
   // Add all field_group format types to the js settings.
   $element['#attached']['drupalSettings']['field_group'] = [
-    $group->format_type => [
+    field_group_get_settings_key($group) => [
       'mode' => $group->mode,
       'context' => $group->context,
       'settings' => $group->format_settings,
@@ -484,7 +504,7 @@ function field_group_field_group_pre_render(array &$element, &$group, &$renderin
     'group' => $group,
   ]);
   if ($plugin) {
-    $plugin->preRender($element, $rendering_object);
+    $plugin->preRender($element, $render_array);
   }
 }
 
@@ -796,12 +816,12 @@ function field_group_field_layout_fields_nest(array &$element, ?array &$vars = N
  *   Render array of group element that needs to be created.
  * @param object $group
  *   Object with the group information.
- * @param object $rendering_object
- *   The entity / form being rendered.
+ * @param array $render_array
+ *   The render array of the entity or form this group belongs to.
  *
  * @see field_group_fields_nest()
  */
-function field_group_pre_render(array &$element, $group, &$rendering_object) {
+function field_group_pre_render(array &$element, $group, &$render_array) {
 
   // Only run the pre_render function if the group has elements.
   // $group->group_name.
@@ -816,20 +836,20 @@ function field_group_pre_render(array &$element, $group, &$rendering_object) {
   // Note, implement $element by reference!
   if (method_exists(Drupal::moduleHandler(), 'invokeAllWith')) {
     // On Drupal >= 9.4 use the new method.
-    Drupal::moduleHandler()->invokeAllWith('field_group_pre_render', function (callable $hook) use (&$element, &$group, &$rendering_object) {
-      $hook($element, $group, $rendering_object);
+    Drupal::moduleHandler()->invokeAllWith('field_group_pre_render', function (callable $hook) use (&$element, &$group, &$render_array) {
+      $hook($element, $group, $render_array);
     });
   }
   else {
     // @phpstan-ignore-next-line
     foreach (Drupal::moduleHandler()->getImplementations('field_group_pre_render') as $module) {
       $function = $module . '_field_group_pre_render';
-      $function($element, $group, $rendering_object);
+      $function($element, $group, $render_array);
     }
   }
 
   // Allow others to alter the pre_render.
-  Drupal::moduleHandler()->alter('field_group_pre_render', $element, $group, $rendering_object);
+  Drupal::moduleHandler()->alter('field_group_pre_render', $element, $group, $render_array);
 
 }
 

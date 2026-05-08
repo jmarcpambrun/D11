@@ -18,6 +18,16 @@ jest.mock('reactflow', () => ({
   },
 }));
 
+// Mock QuickAddEdgeButton
+jest.mock('../../QuickAddEdgeButton', () => (props: any) => (
+  <button
+    data-testid={`quick-add-edge-${props.edgeId}`}
+    onClick={() => props.onAddCondition?.({ id: 'cond1', type: 'link' })}
+  >
+    Quick Add
+  </button>
+));
+
 describe('ConditionEdge', () => {
   const defaultProps = {
     id: 'edge1',
@@ -466,6 +476,63 @@ describe('ConditionEdge', () => {
         </svg>
       );
       expect(document.querySelector('.react-flow__edge-path')).toBeInTheDocument();
+    });
+  });
+
+  describe('QuickAddEdgeButton before/after condition', () => {
+    it('should show before button when onInsertBeforeCondition provided', () => {
+      const data = {
+        condition: 'test_condition',
+        onInsertBeforeCondition: jest.fn(),
+      };
+      render(
+        <svg>
+          <ConditionEdge {...defaultProps} data={data} label="Test" />
+        </svg>
+      );
+      const buttons = screen.getAllByTestId(/quick-add-edge/);
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should show after button when onInsertAfterCondition provided', () => {
+      const data = {
+        condition: 'test_condition',
+        onInsertAfterCondition: jest.fn(),
+      };
+      render(
+        <svg>
+          <ConditionEdge {...defaultProps} data={data} label="Test" />
+        </svg>
+      );
+      const buttons = screen.getAllByTestId(/quick-add-edge/);
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should show both buttons when both callbacks provided', () => {
+      const data = {
+        condition: 'test_condition',
+        onInsertBeforeCondition: jest.fn(),
+        onInsertAfterCondition: jest.fn(),
+      };
+      render(
+        <svg>
+          <ConditionEdge {...defaultProps} data={data} label="Test" />
+        </svg>
+      );
+      const buttons = screen.getAllByTestId(/quick-add-edge/);
+      expect(buttons.length).toBe(2);
+    });
+
+    it('should not show buttons when no insert callbacks provided', () => {
+      const data = {
+        condition: 'test_condition',
+      };
+      render(
+        <svg>
+          <ConditionEdge {...defaultProps} data={data} label="Test" />
+        </svg>
+      );
+      expect(screen.queryByTestId(/quick-add-edge/)).not.toBeInTheDocument();
     });
   });
 });

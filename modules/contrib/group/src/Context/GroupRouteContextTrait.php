@@ -2,6 +2,8 @@
 
 namespace Drupal\group\Context;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\group\Entity\GroupInterface;
 
 /**
@@ -15,19 +17,11 @@ use Drupal\group\Entity\GroupInterface;
  */
 trait GroupRouteContextTrait {
 
-  /**
-   * The current route match object.
-   *
-   * @var \Drupal\Core\Routing\RouteMatchInterface
-   */
-  protected $currentRouteMatch;
-
-  /**
-   * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
+  public function __construct(
+    protected RouteMatchInterface $currentRouteMatch,
+    protected EntityTypeManagerInterface $entityTypeManager,
+  ) {
+  }
 
   /**
    * Gets the current route match object.

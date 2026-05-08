@@ -23,14 +23,6 @@ class AccessControl implements AccessControlInterface {
 
   use AccessControlTrait;
 
-  /**
-   * Constructs a new AccessControl.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $groupRelationTypeManager
-   *   The group relation type manager.
-   */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, GroupRelationTypeManagerInterface $groupRelationTypeManager) {
     $this->entityTypeManager = $entity_type_manager;
     $this->groupRelationTypeManager = $groupRelationTypeManager;

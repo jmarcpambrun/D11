@@ -20,7 +20,7 @@ class EntityQueryAlterTest extends EntityQueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $pluginId = 'entity_test_relation';
+  protected static $pluginId = 'entity_test_relation';
 
   /**
    * {@inheritdoc}

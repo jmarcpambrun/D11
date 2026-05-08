@@ -8,6 +8,7 @@ import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
 import { generateUniqueEdgeId } from '../utils/clipboardUtils';
+import { routeParallelEdge } from '../utils/parallelEdgeRouter';
 import { t } from '../utils/translation';
 
 interface UseFlowEventHandlersProps {
@@ -204,20 +205,67 @@ export function useFlowEventHandlers({
     saveHistory
   ]);
 
-  // Handle new connections between nodes
+  // Handle new connections between nodes.
+  //
+  // When the user drags a new edge between two nodes that already have a
+  // connection (either directly via a parallel edge, or indirectly via a
+  // chain of intermediate nodes), the new edge would visually overlap the
+  // existing connection. We delegate to `routeParallelEdge` to compute a
+  // sideways `controlOffset` for the new edge — and, when appropriate, to
+  // rebalance offsets across the sibling group — so that all connections
+  // remain visually distinguishable without moving any nodes.
   const onConnect = useCallback((connection: { source: string | null; target: string | null; sourceHandle?: string | null; targetHandle?: string | null }) => {
     if (!connection.source || !connection.target) return;
     if (saveHistory) saveHistory();
     const id = generateUniqueEdgeId();
-    const newEdge = {
+    const newEdge: Edge = {
       id,
       source: connection.source,
       target: connection.target,
       type: 'default',
+      data: {},
     };
-    setEdges(prev => [...prev, newEdge]);
+
+    // Compute parallel-edge routing against the current graph state. The
+    // result is empty when no collision exists; otherwise it contains
+    // controlOffset updates for the new edge and (when rebalancing) for
+    // existing siblings whose offsets are still at the default zero.
+    const route = routeParallelEdge({
+      newEdge,
+      edges: [...edges, newEdge],
+      nodes,
+    });
+
+    // Build an id → controlOffset lookup so we can apply updates in a
+    // single setEdges pass without iterating multiple times.
+    const offsetUpdates = new Map<string, { x: number; y: number }>();
+    for (const update of route.updates) {
+      offsetUpdates.set(update.edgeId, update.controlOffset);
+    }
+
+    // Seed the new edge's controlOffset directly on the object we append.
+    const newEdgeOffset = offsetUpdates.get(id);
+    if (newEdgeOffset) {
+      newEdge.data = { ...newEdge.data, controlOffset: newEdgeOffset };
+      offsetUpdates.delete(id);
+    }
+
+    setEdges(prev => {
+      // Apply offset updates to existing edges (rebalanced siblings).
+      const updated = offsetUpdates.size > 0
+        ? prev.map(edge => {
+            const offset = offsetUpdates.get(edge.id);
+            if (!offset) return edge;
+            return {
+              ...edge,
+              data: { ...(edge.data || {}), controlOffset: offset },
+            };
+          })
+        : prev;
+      return [...updated, newEdge];
+    });
     setHasUnsavedChanges(true);
-  }, [setEdges, setHasUnsavedChanges, saveHistory]);
+  }, [edges, nodes, setEdges, setHasUnsavedChanges, saveHistory]);
 
   // Handle canvas pane clicks (deselect all)
   const onPaneClick = useCallback(() => {

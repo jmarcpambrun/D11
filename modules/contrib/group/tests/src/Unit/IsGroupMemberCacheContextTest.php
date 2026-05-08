@@ -3,16 +3,15 @@
 namespace Drupal\Tests\group\Unit;
 
 use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\group\Cache\Context\IsGroupMemberCacheContext;
 use Drupal\group\Entity\GroupInterface;
-use Drupal\group\GroupMembership;
-use Drupal\group\GroupMembershipLoaderInterface;
-use Drupal\user\UserInterface;
 use Prophecy\Argument;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests the user.is_group_member:%group_id cache context.
@@ -41,8 +40,14 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
    */
   public function setUp(): void {
     parent::setUp();
-    $this->currentUser = $this->prophesize(AccountProxyInterface::class)->reveal();
-    $this->group = $this->prophesize(GroupInterface::class)->reveal();
+
+    $account_proxy = $this->prophesize(AccountProxyInterface::class);
+    $account_proxy->id()->willReturn(1337);
+    $this->currentUser = $account_proxy->reveal();
+
+    $group = $this->prophesize(GroupInterface::class);
+    $group->id()->willReturn(1);
+    $this->group = $group->reveal();
   }
 
   /**
@@ -53,9 +58,10 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
   public function testGetContextWithoutId() {
     $cache_context = new IsGroupMemberCacheContext(
       $this->currentUser,
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(FALSE)->reveal()
+      $this->createEntityTypeManager()->reveal(),
     );
+
+    $this->setUpGroupMembership(FALSE);
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('No group ID provided for user.is_group_member cache context.');
@@ -70,9 +76,10 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
   public function testGetContextWithInvalidGroupId() {
     $cache_context = new IsGroupMemberCacheContext(
       $this->currentUser,
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(FALSE)->reveal()
+      $this->createEntityTypeManager()->reveal(),
     );
+
+    $this->setUpGroupMembership(FALSE);
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('Incorrect group ID provided for user.is_group_member cache context.');
@@ -87,9 +94,9 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
   public function testGetContextMember() {
     $cache_context = new IsGroupMemberCacheContext(
       $this->currentUser,
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(TRUE)->reveal()
+      $this->createEntityTypeManager()->reveal(),
     );
+    $this->setUpGroupMembership(TRUE);
     $this->assertSame('1', $cache_context->getContext(1));
   }
 
@@ -101,9 +108,9 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
   public function testGetContextNotMember() {
     $cache_context = new IsGroupMemberCacheContext(
       $this->currentUser,
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(FALSE)->reveal()
+      $this->createEntityTypeManager()->reveal(),
     );
+    $this->setUpGroupMembership(FALSE);
     $this->assertSame('0', $cache_context->getContext(1));
   }
 
@@ -115,9 +122,10 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
   public function testGetCacheableMetadataWithoutId() {
     $cache_context = new IsGroupMemberCacheContext(
       $this->currentUser,
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(FALSE)->reveal()
+      $this->createEntityTypeManager()->reveal(),
     );
+
+    $this->setUpGroupMembership(FALSE);
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('No group ID provided for user.is_group_member cache context.');
@@ -130,58 +138,59 @@ class IsGroupMemberCacheContextTest extends UnitTestCase {
    * @covers ::getCacheableMetadata
    */
   public function testGetCacheableMetadata() {
-    $user = $this->prophesize(UserInterface::class);
-    $user->getCacheContexts()->willReturn([]);
-    $user->getCacheTags()->willReturn(['user:1']);
-    $user->getCacheMaxAge()->willReturn(-1);
-    $user = $user->reveal();
-
-    $current_user = $this->prophesize(AccountProxyInterface::class);
-    $current_user->getAccount()->willReturn($user);
-
     $cache_context = new IsGroupMemberCacheContext(
-      $current_user->reveal(),
-      $this->createEntityTypeManager(1)->reveal(),
-      $this->createGroupMembershipLoader(TRUE)->reveal()
+      $this->currentUser,
+      $this->createEntityTypeManager()->reveal(),
     );
 
-    $this->assertEquals(CacheableMetadata::createFromObject($user), $cache_context->getCacheableMetadata(1));
+    $this->setUpGroupMembership(TRUE);
+
+    $expected = (new CacheableMetadata())->addCacheTags(['group_relationship_list:plugin:group_membership:entity:1337']);
+    $this->assertEquals($expected, $cache_context->getCacheableMetadata(1));
   }
 
   /**
    * Creates an EntityTypeManagerInterface prophecy.
    *
-   * @param int $group_id
-   *   The group ID that the group storage will be able to load.
-   *
    * @return \Prophecy\Prophecy\ObjectProphecy
-   *   The prophesized entity type manager.
+   *   The mock entity type manager.
    */
-  protected function createEntityTypeManager($group_id) {
+  protected function createEntityTypeManager() {
     $prophecy = $this->prophesize(EntityTypeManagerInterface::class);
 
     $storage = $this->prophesize(ContentEntityStorageInterface::class);
     $storage->load(Argument::any())->willReturn(NULL);
-    $storage->load($group_id)->willReturn($this->group);
+    $storage->load(1)->willReturn($this->group);
     $prophecy->getStorage('group')->willReturn($storage->reveal());
 
     return $prophecy;
   }
 
   /**
-   * Creates a GroupMembershipLoaderInterface prophecy.
+   * Sets up the GroupMembership so the static methods return what we want.
    *
    * @param bool $is_member
    *   Whether this will find the member or not.
-   *
-   * @return \Prophecy\Prophecy\ObjectProphecy
-   *   The prophesized group membership loader.
    */
-  protected function createGroupMembershipLoader($is_member) {
-    $prophecy = $this->prophesize(GroupMembershipLoaderInterface::class);
-    $return = $is_member ? $this->prophesize(GroupMembership::class)->reveal() : $is_member;
-    $prophecy->load($this->group, $this->currentUser)->willReturn($return);
-    return $prophecy;
+  protected function setUpGroupMembership($is_member): void {
+    $cache_backend = $this->prophesize(CacheBackendInterface::class);
+    $entity_type_manager = $this->prophesize(EntityTypeManagerInterface::class);
+
+    $container = $this->prophesize(ContainerInterface::class);
+    $container->get('cache.group_memberships_chained')->willReturn($cache_backend->reveal());
+    $container->get('entity_type.manager')->willReturn($entity_type_manager->reveal());
+    \Drupal::setContainer($container->reveal());
+
+    // Pretend member ID is 1986.
+    $cid = 'group_memberships:entity_id[1337]:roles[any-roles]';
+    $cache_data = (object) ['data' => $is_member ? [1 => 1986] : []];
+    $cache_backend->get($cid)->willReturn($cache_data);
+
+    if ($is_member) {
+      $storage = $this->prophesize(ContentEntityStorageInterface::class);
+      $storage->load(1986)->willReturn(TRUE);
+      $entity_type_manager->getStorage('group_relationship')->willReturn($storage->reveal());
+    }
   }
 
 }

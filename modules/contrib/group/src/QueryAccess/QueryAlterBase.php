@@ -14,7 +14,6 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Access\GroupPermissionCalculatorInterface;
 use Drupal\group\PermissionScopeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Base class for query alter classes.
@@ -22,34 +21,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * @internal
  */
 abstract class QueryAlterBase implements ContainerInjectionInterface {
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The group permission calculator.
-   *
-   * @var \Drupal\group\Access\GroupPermissionCalculatorInterface
-   */
-  protected $permissionCalculator;
-
-  /**
-   * The renderer.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
 
   /**
    * The query to alter.
@@ -93,27 +64,12 @@ abstract class QueryAlterBase implements ContainerInjectionInterface {
    */
   protected $joinAliasMemberships = FALSE;
 
-  /**
-   * Constructs a new QueryAlterBase object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\Access\GroupPermissionCalculatorInterface $permission_calculator
-   *   The group permission calculator.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param \Drupal\Core\Session\AccountInterface|\Symfony\Component\HttpFoundation\RequestStack $current_user
-   *   The current user.
-   */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, GroupPermissionCalculatorInterface $permission_calculator, RendererInterface $renderer, AccountInterface|RequestStack $current_user) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->permissionCalculator = $permission_calculator;
-    $this->renderer = $renderer;
-    $this->currentUser = $current_user;
-    if ($this->currentUser instanceof RequestStack) {
-      $this->currentUser = func_get_arg(4);
-      @trigger_error('Calling ' . __CLASS__ . '::_construct() with the $request_stack argument is deprecated in group:3.3.0 and is removed from group:4.0.0. See https://www.drupal.org/node/3427339', E_USER_DEPRECATED);
-    }
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected GroupPermissionCalculatorInterface $permissionCalculator,
+    protected RendererInterface $renderer,
+    protected AccountInterface $currentUser,
+  ) {
     $this->cacheableMetadata = new CacheableMetadata();
   }
 

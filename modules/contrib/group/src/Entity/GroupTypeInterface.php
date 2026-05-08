@@ -55,18 +55,15 @@ interface GroupTypeInterface extends ConfigEntityInterface, EntityDescriptionInt
   /**
    * Returns whether the group creator automatically receives a membership.
    *
+   * This only works through the Group entity form, as we inject the fields for
+   * the membership there. Programmatically created groups must manually call
+   * $group->addMember($account) and ensure all the necessary membership data is
+   * filled out.
+   *
    * @return bool
    *   Whether the group creator automatically receives a membership.
    */
   public function creatorGetsMembership();
-
-  /**
-   * Returns whether the group creator must complete their membership.
-   *
-   * @return bool
-   *   Whether the group creator must complete their membership.
-   */
-  public function creatorMustCompleteMembership();
 
   /**
    * Gets the IDs of the group roles a group creator should receive.

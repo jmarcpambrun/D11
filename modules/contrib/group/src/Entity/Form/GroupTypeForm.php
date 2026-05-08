@@ -17,21 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class GroupTypeForm extends BundleEntityFormBase {
 
-  /**
-   * The entity field manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected $entityFieldManager;
-
-  /**
-   * Constructs a new GroupTypeForm.
-   *
-   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
-   *   The entity field manager service.
-   */
-  public function __construct(EntityFieldManagerInterface $entity_field_manager) {
-    $this->entityFieldManager = $entity_field_manager;
+  public function __construct(protected EntityFieldManagerInterface $entityFieldManager) {
   }
 
   /**
@@ -121,16 +107,6 @@ class GroupTypeForm extends BundleEntityFormBase {
       '#type' => 'checkbox',
       '#default_value' => $type->creatorGetsMembership(),
       '#description' => $this->t('This will make sure that anyone who creates a group of this type will automatically become a member of it.'),
-    ];
-
-    $form['creator_settings']['creator_wizard'] = [
-      '#title' => $this->t('Group creator must complete their membership'),
-      '#type' => 'checkbox',
-      '#default_value' => $type->creatorMustCompleteMembership(),
-      '#description' => $this->t('This will first show you the form to create the group and then a form to fill out your membership details.<br />You can choose to disable this wizard if you did not or will not add any fields to the membership.<br /><strong>Warning:</strong> If you do have fields on the membership and do not use the wizard, you may end up with required fields not being filled out.'),
-      '#states' => [
-        'visible' => [':input[name="creator_membership"]' => ['checked' => TRUE]],
-      ],
     ];
 
     $access_information = $this->t('

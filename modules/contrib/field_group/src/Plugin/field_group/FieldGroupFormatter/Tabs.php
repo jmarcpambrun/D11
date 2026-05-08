@@ -5,6 +5,7 @@ namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Form\FormState;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element\VerticalTabs;
 use Drupal\Core\Render\Markup;
 use Drupal\field_group\Element\HorizontalTabs;
@@ -28,10 +29,10 @@ class Tabs extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function process(&$element, $processed_object) {
+  public function process(&$element, $processed_array) {
 
     // Keep using preRender parent for BC.
-    parent::preRender($element, $processed_object);
+    parent::preRender($element, $processed_array);
 
     $element += [
       '#prefix' => '<div class="' . implode(' ', $this->getClasses()) . '">',
@@ -67,9 +68,9 @@ class Tabs extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function preRender(&$element, $rendering_object) {
+  public function preRender(&$element, $render_array) {
 
-    $this->process($element, $rendering_object);
+    $this->process($element, $render_array);
 
     if ($this->getSetting('direction') == 'vertical') {
       $form_state = new FormState();
@@ -94,9 +95,9 @@ class Tabs extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function settingsForm() {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
 
-    $form = parent::settingsForm();
+    $form = parent::settingsForm($form, $form_state);
 
     $form['direction'] = [
       '#title' => $this->t('Direction'),

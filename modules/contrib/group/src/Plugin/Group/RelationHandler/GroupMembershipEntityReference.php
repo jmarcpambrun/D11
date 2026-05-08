@@ -11,12 +11,6 @@ class GroupMembershipEntityReference implements EntityReferenceInterface {
 
   use EntityReferenceTrait;
 
-  /**
-   * Constructs a new GroupMembershipEntityReference.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\EntityReferenceInterface $parent
-   *   The default entity reference handler.
-   */
   public function __construct(EntityReferenceInterface $parent) {
     $this->parent = $parent;
   }

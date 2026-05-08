@@ -5,11 +5,12 @@ namespace Drupal\group\Plugin\views\access;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\ContextProviderInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\Access\GroupPermissionHandlerInterface;
+use Drupal\views\Attribute\ViewsAccess;
 use Drupal\views\Plugin\views\access\AccessPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Route;
@@ -18,33 +19,18 @@ use Symfony\Component\Routing\Route;
  * Access plugin that provides group permission-based access control.
  *
  * @ingroup views_access_plugins
- *
- * @ViewsAccess(
- *   id = "group_permission",
- *   title = @Translation("Group permission"),
- *   help = @Translation("Access will be granted to users with the specified group permission string.")
- * )
  */
+#[ViewsAccess(
+  id: 'group_permission',
+  title: new TranslatableMarkup('Group permission'),
+  help: new TranslatableMarkup('Access will be granted to users with the specified group permission string.'),
+)]
 class GroupPermission extends AccessPluginBase implements CacheableDependencyInterface {
 
   /**
    * {@inheritdoc}
    */
   protected $usesOptions = TRUE;
-
-  /**
-   * The group permission handler.
-   *
-   * @var \Drupal\group\Access\GroupPermissionHandlerInterface
-   */
-  protected $permissionHandler;
-
-  /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $moduleHandler;
 
   /**
    * The group entity from the route.
@@ -60,30 +46,15 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    */
   protected $context;
 
-  /**
-   * Constructs a Permission object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\group\Access\GroupPermissionHandlerInterface $permission_handler
-   *   The group permission handler.
-   * @param \Drupal\Core\Extension\ModuleExtensionList|\Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module extension list.
-   * @param \Drupal\Core\Plugin\Context\ContextProviderInterface $context_provider
-   *   The group route context.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, GroupPermissionHandlerInterface $permission_handler, ModuleHandlerInterface|ModuleExtensionList $module_handler, ContextProviderInterface $context_provider) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected GroupPermissionHandlerInterface $permissionHandler,
+    protected ModuleExtensionList $moduleHandler,
+    ContextProviderInterface $context_provider,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    if ($module_handler instanceof ModuleHandlerInterface) {
-      @trigger_error('Calling ' . __METHOD__ . '() with a $module_handler argument as \Drupal\Core\Extension\ModuleHandlerInterface instead of \Drupal\Core\Extension\ModuleExtensionList is deprecated in group:3.3.0 and will be required in group:4.0.0. See https://www.drupal.org/node/3431243', E_USER_DEPRECATED);
-      $module_handler = \Drupal::service('extension.list.module');
-    }
-    $this->permissionHandler = $permission_handler;
-    $this->moduleHandler = $module_handler;
 
     $contexts = $context_provider->getRuntimeContexts(['group']);
     $this->context = $contexts['group'];

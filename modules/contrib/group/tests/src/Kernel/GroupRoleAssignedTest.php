@@ -91,7 +91,7 @@ class GroupRoleAssignedTest extends GroupKernelTestBase {
    * @return array
    *   A list of testSynchronizedRole method arguments.
    */
-  public function synchronizedRoleProvider() {
+  public static function synchronizedRoleProvider() {
     return [
       'insider' => ['scope' => PermissionScopeInterface::INSIDER_ID],
       'outsider' => ['scope' => PermissionScopeInterface::OUTSIDER_ID],

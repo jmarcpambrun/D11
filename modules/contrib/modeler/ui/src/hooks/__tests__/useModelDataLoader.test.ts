@@ -14,8 +14,16 @@ const mockSetSelectedNode = jest.fn();
 const mockSetDependencies = jest.fn();
 const mockSetVisibleStartNodeIds = jest.fn();
 
-// Controls the reactFlowReady store value returned by the mock
-let mockReactFlowReady = false;
+const mockViewportActions = {
+  panToNode: jest.fn(),
+  panToNodeIfOffscreen: jest.fn(),
+  fitToNodes: jest.fn(),
+  topAlignNode: jest.fn(),
+  focusNode: jest.fn(),
+  fitToNodePair: jest.fn(),
+  selectAndFocus: jest.fn(),
+  setReady: jest.fn(),
+};
 
 jest.mock('../../store/useGraphStore', () => ({
   useGraphStore: jest.fn((selector) => {
@@ -85,15 +93,6 @@ jest.mock('../../store/useLabelStore', () => ({
   }),
 }));
 
-jest.mock('../../store/useViewportStore', () => ({
-  useViewportStore: jest.fn((selector) => {
-    const state = {
-      reactFlowReady: mockReactFlowReady,
-    };
-    return selector(state);
-  }),
-}));
-
 // Mock parseModelData
 jest.mock('../../utils/modelUtils', () => ({
   parseModelData: jest.fn((data) => ({
@@ -104,13 +103,9 @@ jest.mock('../../utils/modelUtils', () => ({
 }));
 
 describe('useModelDataLoader', () => {
-  let mockSetViewportTarget: jest.Mock;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSetViewportTarget = jest.fn();
     mockSetFavoriteComponents.mockClear();
-    mockReactFlowReady = false;
     // Reset document query selector mock
     document.querySelector = jest.fn(() => null);
   });
@@ -119,7 +114,7 @@ describe('useModelDataLoader', () => {
     const hookResult = renderHook(() =>
       useModelDataLoader({
         settings,
-        setViewportTarget: mockSetViewportTarget,
+        viewportActions: mockViewportActions,
       })
     );
     return {
@@ -458,14 +453,6 @@ describe('useModelDataLoader', () => {
   });
 
   describe('auto-selection', () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should auto-select node when selectComponentId is specified', () => {
       const modelData = JSON.stringify({
         nodes: [
@@ -475,19 +462,18 @@ describe('useModelDataLoader', () => {
         edges: [],
       });
 
-      const { rerender } = renderUseModelDataLoader({
+      renderUseModelDataLoader({
         modeler: { modelData, selectComponentId: 'node-1' },
       });
 
-      // Simulate ReactFlow becoming ready (triggers the pending viewport effect)
-      mockReactFlowReady = true;
-      rerender();
-      jest.runAllTimers();
-
-      expect(mockSetSelectedNode).toHaveBeenCalled();
+      // Selection is now done through viewportActions.selectAndFocus()
+      expect(mockViewportActions.selectAndFocus).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'node-1' }),
+        'focusNode',
+      );
     });
 
-    it('should set viewport target for event nodes with top alignment', () => {
+    it('should call selectAndFocus with topAlignNode for event nodes', () => {
       const modelData = JSON.stringify({
         nodes: [
           { id: 'event-1', type: 'start', position: { x: 100, y: 100 }, data: { label: 'Event' } },
@@ -495,23 +481,17 @@ describe('useModelDataLoader', () => {
         edges: [],
       });
 
-      const { rerender } = renderUseModelDataLoader({
+      renderUseModelDataLoader({
         modeler: { modelData, selectComponentId: 'event-1' },
       });
 
-      mockReactFlowReady = true;
-      rerender();
-      jest.runAllTimers();
-
-      expect(mockSetViewportTarget).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'top-align',
-          nodeId: 'event-1',
-        })
+      expect(mockViewportActions.selectAndFocus).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'event-1' }),
+        'topAlignNode',
       );
     });
 
-    it('should set viewport target with center for non-event nodes', () => {
+    it('should call selectAndFocus with focusNode for non-event nodes', () => {
       const modelData = JSON.stringify({
         nodes: [
           { id: 'action-1', position: { x: 100, y: 100 }, data: { label: 'Action' } },
@@ -519,19 +499,13 @@ describe('useModelDataLoader', () => {
         edges: [],
       });
 
-      const { rerender } = renderUseModelDataLoader({
+      renderUseModelDataLoader({
         modeler: { modelData, selectComponentId: 'action-1' },
       });
 
-      mockReactFlowReady = true;
-      rerender();
-      jest.runAllTimers();
-
-      expect(mockSetViewportTarget).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'center',
-          nodeId: 'action-1',
-        })
+      expect(mockViewportActions.selectAndFocus).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'action-1' }),
+        'focusNode',
       );
     });
 
@@ -543,19 +517,11 @@ describe('useModelDataLoader', () => {
         edges: [],
       });
 
-      const { rerender } = renderUseModelDataLoader({
+      renderUseModelDataLoader({
         modeler: { modelData },
       });
 
-      mockReactFlowReady = true;
-      rerender();
-      jest.runAllTimers();
-
-      expect(mockSetViewportTarget).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'fit',
-        })
-      );
+      expect(mockViewportActions.fitToNodes).toHaveBeenCalled();
     });
 
     it('should not select node when selectComponentId does not match any node', () => {
@@ -566,13 +532,9 @@ describe('useModelDataLoader', () => {
         edges: [],
       });
 
-      const { rerender } = renderUseModelDataLoader({
+      renderUseModelDataLoader({
         modeler: { modelData, selectComponentId: 'non-existent' },
       });
-
-      mockReactFlowReady = true;
-      rerender();
-      jest.runAllTimers();
 
       // Should not call setSelectedNode for non-existent node
       // It will still try to set nodes with selection marker but won't find the node

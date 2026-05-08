@@ -22,9 +22,8 @@ const Flow: React.FC<FlowProps> = ({ settings, drupal }) => {
     selectedEdge
   });
   
-  const { zoomIn, zoomOut, panToNode } = useViewportMath({
-    nodes
-  });
+  // Unified viewport actions — see docs/viewport-management.md
+  const viewportActions = useViewportActions();
 
   return (
     <div className="workflow-modeler">

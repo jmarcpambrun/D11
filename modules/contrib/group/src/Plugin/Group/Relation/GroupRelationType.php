@@ -19,7 +19,7 @@ class GroupRelationType extends PluginDefinition implements GroupRelationTypeInt
   /**
    * The name of the deriver of this plugin, if any.
    *
-   * @var string|null
+   * @var ?string
    */
   protected $deriver;
 
@@ -141,13 +141,7 @@ class GroupRelationType extends PluginDefinition implements GroupRelationTypeInt
    */
   protected $admin_permission = FALSE;
 
-  /**
-   * Constructs a new GroupRelationType.
-   *
-   * @param array $definition
-   *   An array of values from the annotation.
-   */
-  public function __construct($definition) {
+  public function __construct(array $definition) {
     foreach ($definition as $property => $value) {
       $this->set($property, $value);
     }

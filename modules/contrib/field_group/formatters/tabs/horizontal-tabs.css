@@ -96,7 +96,6 @@
 .horizontal-tabs ul.horizontal-tabs-list li.selected a {
   display: block;
   text-decoration: none;
-  padding: 0.6em 1em;
   position: relative;
   top: 0;
 }

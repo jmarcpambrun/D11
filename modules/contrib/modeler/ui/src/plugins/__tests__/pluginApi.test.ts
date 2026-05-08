@@ -107,10 +107,6 @@ const uiSettingsStore = createStoreMock({
   toggleDarkMode: jest.fn(),
 });
 
-const viewportStore = createStoreMock({
-  setViewportTarget: jest.fn(),
-});
-
 const componentStore = createStoreMock({
   components: [
     {
@@ -178,10 +174,6 @@ jest.mock('../../store/useUISettingsStore', () => ({
   useUISettingsStore: uiSettingsStore,
 }));
 
-jest.mock('../../store/useViewportStore', () => ({
-  useViewportStore: viewportStore,
-}));
-
 jest.mock('../../store/useComponentStore', () => ({
   useComponentStore: componentStore,
 }));
@@ -228,6 +220,8 @@ import {
   setApiReadOnly,
   setMutationHooks,
   clearMutationHooks,
+  setViewportHooks,
+  clearViewportHooks,
   createPluginApi,
 } from '../pluginApi';
 
@@ -268,8 +262,6 @@ function resetStores() {
 
   uiSettingsStore.setState({ darkMode: false });
   (uiSettingsStore.getState().toggleDarkMode as jest.Mock).mockClear();
-
-  (viewportStore.getState().setViewportTarget as jest.Mock).mockClear();
 
   componentStore.setState({
     components: [
@@ -320,6 +312,7 @@ function resetStores() {
   // Reset read-only to false
   setApiReadOnly(false);
   clearMutationHooks();
+  clearViewportHooks();
 }
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -1105,28 +1098,42 @@ describe('pluginApi', () => {
     });
 
     describe('focusNode', () => {
-      it('sets viewport target for existing node', () => {
+      it('calls the viewport focusNode hook for existing node', () => {
+        const mockFocusNode = jest.fn();
+        setViewportHooks({ focusNode: mockFocusNode, fitView: jest.fn() });
+
         api.focusNode('node-1');
-        expect(viewportStore.getState().setViewportTarget).toHaveBeenCalledWith({
-          type: 'center',
-          nodeId: 'node-1',
-          options: { duration: 800 },
-        });
+        expect(mockFocusNode).toHaveBeenCalledWith('node-1');
       });
 
       it('does nothing when node does not exist', () => {
+        const mockFocusNode = jest.fn();
+        setViewportHooks({ focusNode: mockFocusNode, fitView: jest.fn() });
+
         api.focusNode('nonexistent');
-        expect(viewportStore.getState().setViewportTarget).not.toHaveBeenCalled();
+        expect(mockFocusNode).not.toHaveBeenCalled();
+      });
+
+      it('does nothing when no viewport hooks are registered', () => {
+        clearViewportHooks();
+        // Should not throw
+        expect(() => api.focusNode('node-1')).not.toThrow();
       });
     });
 
     describe('fitView', () => {
-      it('sets viewport target to fit', () => {
+      it('calls the viewport fitView hook', () => {
+        const mockFitView = jest.fn();
+        setViewportHooks({ focusNode: jest.fn(), fitView: mockFitView });
+
         api.fitView();
-        expect(viewportStore.getState().setViewportTarget).toHaveBeenCalledWith({
-          type: 'fit',
-          options: { padding: 0.1, duration: 800 },
-        });
+        expect(mockFitView).toHaveBeenCalledTimes(1);
+      });
+
+      it('does nothing when no viewport hooks are registered', () => {
+        clearViewportHooks();
+        // Should not throw
+        expect(() => api.fitView()).not.toThrow();
       });
     });
   });
@@ -1426,6 +1433,9 @@ describe('pluginApi', () => {
     describe('addEdge', () => {
       it('creates an edge between two existing nodes', () => {
         (generateEdgeId as jest.Mock).mockReturnValue('edge_node-1_node-2');
+        // Start with a clean edge list so the new edge is the only one and
+        // does not collide with any existing parallel connection.
+        graphStore.setState({ edges: [] });
 
         const result = api.addEdge('node-1', 'node-2');
         expect(result).toBe('edge_node-1_node-2');
@@ -1440,6 +1450,31 @@ describe('pluginApi', () => {
         );
         expect(saveHistory).toHaveBeenCalledTimes(1);
         expect(markUnsaved).toHaveBeenCalledTimes(1);
+      });
+
+      it('routes a parallel edge with a sideways controlOffset', () => {
+        (generateEdgeId as jest.Mock).mockReturnValue('edge_node-1_node-2_b');
+        // Fixture already contains mockEdge1 (node-1 → node-2), so adding a
+        // second edge between the same endpoints triggers fan-out routing.
+        graphStore.setState({
+          edges: [
+            { id: 'edge-1', source: 'node-1', target: 'node-2', type: 'default', data: {} },
+          ] as StoreEdge[],
+        });
+
+        const result = api.addEdge('node-1', 'node-2');
+        expect(result).toBe('edge_node-1_node-2_b');
+
+        // The new edge must arrive with a non-zero controlOffset.x, distinct
+        // from the existing edge (which has been rebalanced to the other side).
+        const addEdgeCalls = (graphStore.getState().addEdge as jest.Mock).mock.calls;
+        const newEdgeArg = addEdgeCalls[addEdgeCalls.length - 1][0];
+        expect(newEdgeArg.id).toBe('edge_node-1_node-2_b');
+        expect(newEdgeArg.data.controlOffset).toBeDefined();
+        expect(newEdgeArg.data.controlOffset.x).not.toBe(0);
+
+        // The router must also rebalance the existing sibling via setEdges.
+        expect(graphStore.getState().setEdges).toHaveBeenCalled();
       });
 
       it('returns null when source node does not exist', () => {

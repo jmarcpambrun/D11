@@ -3,20 +3,23 @@
  * Manages search terms, highlighting, and focus.
  *
  * When a search result is selected the corresponding element is selected on
- * the canvas (node or edge) and the viewport pans/zooms to bring it into
- * view.  For edges (conditions) the viewport centers on the edge's source
- * node since edges don't have a fixed position of their own.
+ * the canvas (node or edge) and the viewport pans to bring it into view.
+ * For edges (conditions) the viewport centers on the edge's source node
+ * since edges don't have a fixed position of their own.
  */
 
 import { useState, useCallback } from 'react';
 import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
-import { useViewportStore } from '../store/useViewportStore';
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
-import { TIMING } from '../constants/dimensions';
+import type { ViewportActions } from './useViewportActions';
 
-export function useSearch() {
-  const setViewportTarget = useViewportStore(state => state.setViewportTarget);
+interface UseSearchProps {
+  /** Unified viewport actions for pan/zoom operations */
+  viewportActions: ViewportActions;
+}
+
+export function useSearch({ viewportActions }: UseSearchProps) {
   const selectNode = useSelectionStore(state => state.selectNode);
   const selectEdge = useSelectionStore(state => state.selectEdge);
   const nodes = useGraphStore(state => state.nodes);
@@ -27,17 +30,14 @@ export function useSearch() {
 
   /**
    * Center the viewport on the given node (by id).
+   * Preserves the current zoom level.
    */
   const centerOnNode = useCallback((nodeId: string) => {
-    setViewportTarget({
-      type: 'center',
-      nodeId,
-      options: { zoom: 1.2, duration: TIMING.VIEWPORT_PAN_DURATION },
-    });
-  }, [setViewportTarget]);
+    viewportActions.focusNode(nodeId);
+  }, [viewportActions]);
 
   /**
-   * Select a search result on the canvas and pan/zoom to it.
+   * Select a search result on the canvas and pan to it.
    *
    * - Nodes are selected directly and the viewport centers on them.
    * - Edges (conditions) are selected and the viewport centers on the

@@ -129,7 +129,7 @@ const QuickAddConditionButton: React.FC<QuickAddConditionButtonProps> = ({
         aria-label={t('Add @type', { '@type': linkLabel.toLowerCase() })}
         data-edge-id={edgeId}
       >
-        <FiPlus size={12} />
+        <FiPlus size={14} />
       </button>
 
       <QuickAddPopup

@@ -14,16 +14,6 @@ class GroupMembershipOperationProvider implements OperationProviderInterface {
 
   use OperationProviderTrait;
 
-  /**
-   * Constructs a new GroupMembershipOperationProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\OperationProviderInterface $parent
-   *   The default operation provider.
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
-   */
   public function __construct(OperationProviderInterface $parent, AccountProxyInterface $current_user, TranslationInterface $string_translation) {
     $this->parent = $parent;
     $this->currentUser = $current_user;

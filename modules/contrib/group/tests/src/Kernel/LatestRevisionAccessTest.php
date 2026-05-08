@@ -59,10 +59,7 @@ class LatestRevisionAccessTest extends GroupKernelTestBase {
 
     $this->accessManager = $this->container->get('access_manager');
     $this->routeProvider = $this->container->get('router.route_provider');
-    $this->groupType = $this->createGroupType([
-      'id' => 'revision_test',
-      'creator_membership' => FALSE,
-    ]);
+    $this->groupType = $this->createGroupType(['id' => 'revision_test']);
 
     $workflow = $this->createEditorialWorkflow();
     $this->addEntityTypeAndBundleToWorkflow($workflow, 'group', $this->groupType->id());

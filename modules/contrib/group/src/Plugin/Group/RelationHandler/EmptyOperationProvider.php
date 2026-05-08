@@ -12,12 +12,6 @@ class EmptyOperationProvider implements OperationProviderInterface {
 
   use OperationProviderTrait;
 
-  /**
-   * Constructs a new EmptyOperationProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\OperationProviderInterface $parent
-   *   The parent operation provider.
-   */
   public function __construct(OperationProviderInterface $parent) {
     $this->parent = $parent;
   }

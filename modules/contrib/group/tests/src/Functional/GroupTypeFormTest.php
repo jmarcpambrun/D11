@@ -2,8 +2,9 @@
 
 namespace Drupal\Tests\group\Functional;
 
-use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
-use Drupal\group\GroupMembership;
+use Drupal\group\Entity\GroupMembership;
+use Drupal\group\PermissionScopeInterface;
+use Drupal\user\RoleInterface;
 
 /**
  * Tests the behavior of the group type form.
@@ -60,18 +61,46 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
   }
 
   /**
-   * Sets up the group type add form and runs common assertions.
+   * Sets up and submits the group type add form.
    *
-   * @return string
-   *   The submit button label.
+   * This also makes sure the groupCreator account can then create groups.
+   *
+   * @param array $edit
+   *   The group type values to fill out. Will be completed with commonValues.
    */
-  protected function setUpAddFormAndGetSubmitButton() {
+  protected function createGroupTypeAndAssignCreatePermission(array $edit = []): void {
     $this->drupalGet('/admin/group/types/add');
     $this->assertSession()->statusCodeEquals(200);
 
     $submit_button = 'Save group type';
     $this->assertSession()->buttonExists($submit_button);
-    return $submit_button;
+    $this->submitForm($edit + $this->commonValues, $submit_button);
+
+    foreach ($this->groupCreator->getRoles(TRUE) as $role_id) {
+      $role = $this->entityTypeManager()->getStorage('user_role')->load($role_id);
+      $this->assertInstanceOf(RoleInterface::class, $role);
+      $role->grantPermission('create ' . $this->groupTypeId . ' group')->save();
+    }
+  }
+
+  /**
+   * Sets up and submits the group add form.
+   *
+   * @param array $edit
+   *   The group values to fill out.
+   * @param bool $creator_membership
+   *   Whether the group type was configured to grant a creator membership.
+   */
+  protected function createGroupViaForm(array $edit, bool $creator_membership = FALSE): void {
+    $this->drupalGet('group/add/' . $this->groupTypeId);
+
+    $submit_button = 'Create My first group type';
+    if ($creator_membership) {
+      $submit_button .= ' and become a member';
+    }
+
+    $this->assertSession()->buttonExists($submit_button);
+    $this->submitForm($edit, $submit_button);
   }
 
   /**
@@ -79,54 +108,74 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    */
   public function testCustomGroupTitleFieldLabel() {
     $title_field_label = 'Title for foo';
-    $edit = ['Title field label' => $title_field_label] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['Title field label' => $title_field_label]);
 
-    $fields = $this->entityFieldManager->getFieldDefinitions('group', $this->groupTypeId);
-    $this->assertEquals($title_field_label, $fields['label']->getLabel());
+    $this->drupalGet('group/add/' . $this->groupTypeId);
+    $this->assertSession()->pageTextContains($title_field_label);
   }
 
   /**
    * Tests not granting the group creator a membership.
    */
   public function testNoCreatorMembership() {
-    $edit = ['The group creator automatically becomes a member' => 0] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['The group creator automatically becomes a member' => 0]);
+    $this->createGroupViaForm(['label[0][value]' => 'Foo']);
 
-    $group = $this->createGroup(['type' => $this->groupTypeId]);
-    $this->assertEquals(\Drupal::currentUser()->id(), $group->getOwnerId());
-    $this->assertFalse($group->getMember(\Drupal::currentUser()));
+    $group = $this->entityTypeManager()->getStorage('group')->load(1);
+    $this->assertEquals($this->groupCreator->id(), $group->getOwnerId());
+    $this->assertFalse($group->getMember($this->groupCreator));
   }
 
   /**
    * Tests granting the group creator a membership.
    */
   public function testCreatorMembership() {
-    $edit = [
-      'The group creator automatically becomes a member' => 1,
-      'Group creator must complete their membership' => 0,
-    ] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['The group creator automatically becomes a member' => 1]);
+    $this->createGroupViaForm(['label[0][value]' => 'Foo']);
 
-    // The group creation below will trigger a new membership, which gets
-    // validated on pre-save. Because we saved the new group type in another
-    // request, the bundle info is out of date and aforementioned validation
-    // will fail.
-    $bundle_info = \Drupal::service('entity_type.bundle.info');
-    assert($bundle_info instanceof EntityTypeBundleInfoInterface);
-    $bundle_info->clearCachedBundles();
+    $group = $this->entityTypeManager()->getStorage('group')->load(1);
+    $this->assertEquals($this->groupCreator->id(), $group->getOwnerId());
+    $this->assertInstanceOf(GroupMembership::class, $group->getMember($this->groupCreator));
+  }
 
-    $group = $this->createGroup(['type' => $this->groupTypeId]);
-    $this->assertEquals(\Drupal::currentUser()->id(), $group->getOwnerId());
-    $this->assertInstanceOf(GroupMembership::class, $group->getMember(\Drupal::currentUser()));
+  /**
+   * Tests granting the group creator a membership with roles.
+   *
+   * @depends testCreatorMembership
+   */
+  public function testCreatorMembershipRoles() {
+    $this->createGroupTypeAndAssignCreatePermission(['The group creator automatically becomes a member' => 1]);
+
+    // Create a group role we can set as a creator role.
+    $group_role = $this->createGroupRole([
+      'group_type' => $this->groupTypeId,
+      'scope' => PermissionScopeInterface::INDIVIDUAL_ID,
+    ]);
+
+    // Update the group type.
+    $this->drupalGet('/admin/group/types/manage/' . $this->groupTypeId);
+    $submit_button = 'Save group type';
+    $this->assertSession()->buttonExists($submit_button);
+    $this->submitForm(['creator_roles[' . $group_role->id() . ']' => TRUE], $submit_button);
+
+    // Now create a group and check the creator roles.
+    $this->createGroupViaForm(['label[0][value]' => 'Foo']);
+    $group = $this->entityTypeManager()->getStorage('group')->load(1);
+    $this->assertEquals($this->groupCreator->id(), $group->getOwnerId());
+
+    // Check that the roles assigned to the created member are the same as what
+    // we configured in the group defaults.
+    $member = $group->getMember($this->groupCreator);
+    $this->assertInstanceOf(GroupMembership::class, $member);
+    $ids = array_column($member->get('group_roles')->getValue(), 'target_id');
+    $this->assertEquals([$group_role->id()], $ids, 'Set the correct creator roles.');
   }
 
   /**
    * Tests not creating the default roles.
    */
   public function testNoCreateDefaultRoles() {
-    $edit = ['Automatically configure useful default roles' => 0] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['Automatically configure useful default roles' => 0]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNull($storage->load($this->groupTypeId . '-anonymous'));
@@ -138,8 +187,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    * Tests creating the default roles.
    */
   public function testCreateDefaultRoles() {
-    $edit = ['Automatically configure useful default roles' => 1] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['Automatically configure useful default roles' => 1]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNotNull($storage->load($this->groupTypeId . '-anonymous'));
@@ -151,8 +199,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    * Tests not creating the admin role.
    */
   public function testNoCreateAdminRole() {
-    $edit = ['Automatically configure an administrative role' => 0] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['Automatically configure an administrative role' => 0]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNull($storage->load($this->groupTypeId . '-admin'));
@@ -162,8 +209,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    * Tests creating the admin role.
    */
   public function testCreateAdminRole() {
-    $edit = ['Automatically configure an administrative role' => 1] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['Automatically configure an administrative role' => 1]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNotNull($storage->load($this->groupTypeId . '-admin'));
@@ -178,22 +224,15 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
   public function testNoAssignAdminRole() {
     $edit = [
       'The group creator automatically becomes a member' => 1,
-      'Group creator must complete their membership' => 0,
       'Automatically configure an administrative role' => 1,
       'Automatically assign this administrative role to group creators' => 0,
-    ] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    ];
+    $this->createGroupTypeAndAssignCreatePermission($edit);
+    $this->createGroupViaForm(['label[0][value]' => 'Foo']);
 
-    // The group creation below will trigger a new membership, which gets
-    // validated on pre-save. Because we saved the new group type in another
-    // request, the bundle info is out of date and aforementioned validation
-    // will fail.
-    $bundle_info = \Drupal::service('entity_type.bundle.info');
-    assert($bundle_info instanceof EntityTypeBundleInfoInterface);
-    $bundle_info->clearCachedBundles();
-
-    $membership = $this->createGroup(['type' => $this->groupTypeId])->getMember(\Drupal::currentUser());
-    $ids = array_column($membership->getGroupRelationship()->get('group_roles')->getValue(), 'target_id');
+    $group = $this->entityTypeManager()->getStorage('group')->load(1);
+    $membership = $group->getMember($this->groupCreator);
+    $ids = array_column($membership->get('group_roles')->getValue(), 'target_id');
     $this->assertNotContains($this->groupTypeId . '-admin', $ids);
   }
 
@@ -206,35 +245,35 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
   public function testAssignAdminRole() {
     $edit = [
       'The group creator automatically becomes a member' => 1,
-      'Group creator must complete their membership' => 0,
       'Automatically configure an administrative role' => 1,
       'Automatically assign this administrative role to group creators' => 1,
-    ] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    ];
+    $this->createGroupTypeAndAssignCreatePermission($edit);
+    $this->createGroupViaForm(['label[0][value]' => 'Foo']);
+    $this->assertSession()->addressEquals('group/1');
 
-    // The group creation below will trigger a new membership, which gets
-    // validated on pre-save. Because we saved the new group type in another
-    // request, the bundle info is out of date and aforementioned validation
-    // will fail.
-    $bundle_info = \Drupal::service('entity_type.bundle.info');
-    assert($bundle_info instanceof EntityTypeBundleInfoInterface);
-    $bundle_info->clearCachedBundles();
-
-    $membership = $this->createGroup(['type' => $this->groupTypeId])->getMember(\Drupal::currentUser());
-    $ids = array_column($membership->getGroupRelationship()->get('group_roles')->getValue(), 'target_id');
+    $group = $this->entityTypeManager()->getStorage('group')->load(1);
+    $membership = $group->getMember($this->groupCreator);
+    $ids = array_column($membership->get('group_roles')->getValue(), 'target_id');
     $this->assertContains($this->groupTypeId . '-admin', $ids);
   }
 
   /**
-   * Tests that the presence of a global admin role makes new options show up.
+   * Tests that the absence of a global admin role makes options disappear.
    */
   public function testGlobalAdminRoleDetection() {
-    $this->setUpAddFormAndGetSubmitButton();
+    $this->drupalGet('/admin/group/types/add');
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->pageTextNotContains('We have detected that your site has an all-access global role called');
+  }
 
+  /**
+   * Tests that the presence of a global admin role makes options show up.
+   */
+  public function testNoGlobalAdminRoleDetection() {
     $this->createAdminRole();
-
-    $this->setUpAddFormAndGetSubmitButton();
+    $this->drupalGet('/admin/group/types/add');
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->pageTextContains('We have detected that your site has an all-access global role called');
   }
 
@@ -245,8 +284,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    */
   public function testNoOutsiderAdminRoleCreation() {
     $this->createAdminRole();
-    $edit = ['add_admin_outsider' => 0] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['add_admin_outsider' => 0]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNull($storage->load($this->groupTypeId . '-admin_out'));
@@ -259,8 +297,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    */
   public function testOutsiderAdminRoleCreation() {
     $this->createAdminRole();
-    $edit = ['add_admin_outsider' => 1] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['add_admin_outsider' => 1]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNotNull($storage->load($this->groupTypeId . '-admin_out'));
@@ -273,8 +310,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    */
   public function testNoInsiderAdminRoleCreation() {
     $this->createAdminRole();
-    $edit = ['add_admin_insider' => 0] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['add_admin_insider' => 0]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNull($storage->load($this->groupTypeId . '-admin_in'));
@@ -287,8 +323,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    */
   public function testInsiderAdminRoleCreation() {
     $this->createAdminRole();
-    $edit = ['add_admin_insider' => 1] + $this->commonValues;
-    $this->submitForm($edit, $this->setUpAddFormAndGetSubmitButton());
+    $this->createGroupTypeAndAssignCreatePermission(['add_admin_insider' => 1]);
 
     $storage = $this->entityTypeManager->getStorage('group_role');
     $this->assertNotNull($storage->load($this->groupTypeId . '-admin_in'));

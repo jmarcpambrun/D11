@@ -9,12 +9,6 @@ class GroupMembershipPermissionProvider implements PermissionProviderInterface {
 
   use PermissionProviderTrait;
 
-  /**
-   * Constructs a new GroupMembershipPermissionProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface $parent
-   *   The default permission provider.
-   */
   public function __construct(PermissionProviderInterface $parent) {
     $this->parent = $parent;
   }

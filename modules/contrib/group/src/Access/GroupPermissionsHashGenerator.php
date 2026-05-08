@@ -18,61 +18,13 @@ use Drupal\group\PermissionScopeInterface;
  */
 class GroupPermissionsHashGenerator implements GroupPermissionsHashGeneratorInterface {
 
-  /**
-   * The private key service.
-   *
-   * @var \Drupal\Core\PrivateKey
-   */
-  protected $privateKey;
-
-  /**
-   * The cache backend interface to use for the static cache.
-   *
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  protected $static;
-
-  /**
-   * The group permission calculator.
-   *
-   * @var \Drupal\group\Access\GroupPermissionCalculatorInterface
-   */
-  protected $groupPermissionCalculator;
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
-   * Constructs a GroupPermissionsHashGenerator object.
-   *
-   * @param \Drupal\Core\PrivateKey $private_key
-   *   The private key service.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $static
-   *   The cache backend interface to use for the static cache.
-   * @param \Drupal\group\Access\GroupPermissionCalculatorInterface $permission_calculator
-   *   The group permission calculator.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Database\Connection $database
-   *   The database connection.
-   */
-  public function __construct(PrivateKey $private_key, CacheBackendInterface $static, GroupPermissionCalculatorInterface $permission_calculator, EntityTypeManagerInterface $entity_type_manager, Connection $database) {
-    $this->privateKey = $private_key;
-    $this->static = $static;
-    $this->groupPermissionCalculator = $permission_calculator;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->database = $database;
+  public function __construct(
+    protected PrivateKey $privateKey,
+    protected CacheBackendInterface $static,
+    protected GroupPermissionCalculatorInterface $groupPermissionCalculator,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected Connection $database,
+  ) {
   }
 
   /**

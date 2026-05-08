@@ -23,12 +23,6 @@ class SupportRevisionsPermissionProvider implements PermissionProviderInterface 
    */
   protected bool $implementsRevisionableInterface;
 
-  /**
-   * Constructs a new SupportRevisionsPermissionProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface $parent
-   *   The parent permission provider.
-   */
   public function __construct(PermissionProviderInterface $parent) {
     $this->parent = $parent;
   }

@@ -25,12 +25,12 @@ class GroupQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $isPublishable = TRUE;
+  protected static $isPublishable = TRUE;
 
   /**
    * {@inheritdoc}
    */
-  protected $relationshipsAffectAccess = FALSE;
+  protected static $relationshipsAffectAccess = FALSE;
 
   /**
    * Whether the query has joined the data table.
@@ -48,8 +48,6 @@ class GroupQueryAlterTest extends QueryAlterTestBase {
 
   /**
    * Tests the conditions for mixed (own and any) view unpublished access.
-   *
-   * @covers ::getConditions
    */
   public function testMixedViewUnpublishedAccess() {
     $this->createRole([], RoleInterface::AUTHENTICATED_ID);
@@ -91,7 +89,7 @@ class GroupQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function getPermission($operation, $scope, $unpublished = FALSE) {
+  protected static function getPermission($operation, $scope, $unpublished = FALSE) {
     if ($scope === 'own' && !$unpublished) {
       return FALSE;
     }
@@ -117,7 +115,7 @@ class GroupQueryAlterTest extends QueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function getAdminPermission() {
+  protected static function getAdminPermission() {
     return FALSE;
   }
 

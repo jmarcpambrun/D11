@@ -35,8 +35,6 @@ class SimplenewsSubscriberMailer extends ComponentMailerBase implements Simplene
     $address = new Address($subscriber->getMail(), '', $subscriber->getLangcode(), $subscriber->getUser());
     return $this->newEmail($operation)
       ->setEntityParam($subscriber)
-      // Non-standard token type (!= entity type).
-      ->setParam('token_data', ['simplenews_subscriber' => NULL])
       ->setTo($address)
       ->send();
   }

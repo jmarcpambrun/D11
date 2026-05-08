@@ -18,24 +18,25 @@ abstract class EntityQueryAlterTestBase extends QueryAlterTestBase {
    *
    * @var string
    */
-  protected $pluginId;
+  protected static $pluginId;
 
   /**
    * {@inheritdoc}
    */
-  protected function getPermission($operation, $scope, $unpublished = FALSE) {
+  protected static function getPermission($operation, $scope, $unpublished = FALSE) {
     if ($operation === 'unsupported') {
       return FALSE;
     }
     $status = $unpublished ? 'unpublished ' : '';
-    return "$operation $scope $status$this->pluginId entity";
+    $plugin_id = static::$pluginId;
+    return "$operation $scope $status$plugin_id entity";
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getAdminPermission() {
-    return "administer $this->pluginId";
+  protected static function getAdminPermission() {
+    return 'administer ' . static::$pluginId;
   }
 
   /**
@@ -57,7 +58,7 @@ abstract class EntityQueryAlterTestBase extends QueryAlterTestBase {
       'group_relationship_field_data',
       'gcfd',
       "$base_table.$id_key=%alias.entity_id AND %alias.plugin_id IN (:plugin_ids_in_use[])",
-      [':plugin_ids_in_use[]' => [$this->pluginId]]
+      [':plugin_ids_in_use[]' => [static::$pluginId]]
     );
   }
 
@@ -81,7 +82,7 @@ abstract class EntityQueryAlterTestBase extends QueryAlterTestBase {
   protected function setUpContent(GroupTypeInterface $group_type) {
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
-    $storage->save($storage->createFromPlugin($group_type, $this->pluginId));
+    $storage->save($storage->createFromPlugin($group_type, static::$pluginId));
     return $this->createGroup(['type' => $group_type->id()]);
   }
 
@@ -107,7 +108,7 @@ abstract class EntityQueryAlterTestBase extends QueryAlterTestBase {
   protected function addSynchronizedConditions(array $allowed_ids, ConditionInterface $conditions, $outsider) {
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
-    $group_relationship_type_id = $storage->getRelationshipTypeId(reset($allowed_ids), $this->pluginId);
+    $group_relationship_type_id = $storage->getRelationshipTypeId(reset($allowed_ids), static::$pluginId);
 
     $conditions->condition($sub_condition = $conditions->andConditionGroup());
     $sub_condition->condition('gcfd.type', [$group_relationship_type_id], 'IN');
@@ -125,7 +126,7 @@ abstract class EntityQueryAlterTestBase extends QueryAlterTestBase {
   protected function addIndividualConditions(array $allowed_ids, ConditionInterface $conditions) {
     $sub_condition = $conditions->andConditionGroup();
     $sub_condition->condition('gcfd.gid', $allowed_ids, 'IN');
-    $sub_condition->condition('gcfd.plugin_id', $this->pluginId);
+    $sub_condition->condition('gcfd.plugin_id', static::$pluginId);
     $conditions->condition($sub_condition);
   }
 

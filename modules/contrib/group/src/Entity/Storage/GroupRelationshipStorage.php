@@ -159,7 +159,7 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
   /**
    * {@inheritdoc}
    */
-  public function loadByGroup(GroupInterface $group, $plugin_id = NULL) {
+  public function loadByGroup(GroupInterface $group, ?string $plugin_id = NULL) {
     if (!$this->loadByPluginSanityCheck($plugin_id)) {
       return [];
     }
@@ -196,13 +196,13 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
    *
    * @param \Drupal\group\Entity\GroupInterface $group
    *   The group entity to load the relationship entities for.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return bool
    *   Whether the sanity checks succeeded or not.
    */
-  protected function loadByGroupSanityCheck(GroupInterface $group, $plugin_id = NULL) {
+  protected function loadByGroupSanityCheck(GroupInterface $group, ?string $plugin_id = NULL) {
     // An unsaved group cannot have any relationships.
     return $group->id() !== NULL;
   }
@@ -210,7 +210,7 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
   /**
    * {@inheritdoc}
    */
-  public function loadByEntity(EntityInterface $entity, $plugin_id = NULL) {
+  public function loadByEntity(EntityInterface $entity, ?string $plugin_id = NULL) {
     if (!$this->loadByPluginSanityCheck($plugin_id)) {
       return [];
     }
@@ -229,20 +229,27 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
 
       $result = [];
       if (!empty($plugin_ids)) {
-        // If the entity is config, we need to use the wrapper for it.
+        $query_entity_id = $entity_id;
+
+        // If no wrapper exists for a config entity, it means the entity was
+        // never grouped, so we can safely skip the query below.
         if ($entity instanceof ConfigEntityInterface) {
           $storage = $this->entityTypeManager->getStorage('group_config_wrapper');
           assert($storage instanceof ConfigWrapperStorageInterface);
-          $entity_id = $storage->wrapEntity($entity)->id();
+          $query_entity_id = ($wrapper = $storage->wrapEntity($entity, FALSE))
+            ? $wrapper->id()
+            : FALSE;
         }
 
-        $result = $this->database
-          ->select($this->dataTable, 'd')
-          ->fields('d', ['id'])
-          ->condition('entity_id', $entity_id)
-          ->condition('plugin_id', $plugin_ids, 'IN')
-          ->execute()
-          ->fetchCol();
+        if ($query_entity_id !== FALSE) {
+          $result = $this->database
+            ->select($this->dataTable, 'd')
+            ->fields('d', ['id'])
+            ->condition('entity_id', $query_entity_id)
+            ->condition('plugin_id', $plugin_ids, 'IN')
+            ->execute()
+            ->fetchCol();
+        }
       }
 
       $this->loadByEntityCache[$entity_type_id][$entity_id][$cache_key] = $result;
@@ -261,7 +268,7 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity to load the relationship entities for.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return bool
@@ -269,7 +276,7 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  protected function loadByEntitySanityCheck(EntityInterface $entity, $plugin_id = NULL) {
+  protected function loadByEntitySanityCheck(EntityInterface $entity, ?string $plugin_id = NULL) {
     // An unsaved entity cannot have any relationships.
     if ($entity->id() === NULL) {
       return FALSE;
@@ -286,7 +293,7 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
   /**
    * {@inheritdoc}
    */
-  public function loadByEntityAndGroup(EntityInterface $entity, GroupInterface $group, $plugin_id = NULL) {
+  public function loadByEntityAndGroup(EntityInterface $entity, GroupInterface $group, ?string $plugin_id = NULL) {
     if (!$this->loadByPluginSanityCheck($plugin_id)) {
       return [];
     }
@@ -310,21 +317,28 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
 
       $result = [];
       if (!empty($plugin_ids)) {
-        // If the entity is config, we need to use the wrapper for it.
+        $query_entity_id = $entity_id;
+
+        // If no wrapper exists for a config entity, it means the entity was
+        // never grouped, so we can safely skip the query below.
         if ($entity instanceof ConfigEntityInterface) {
           $storage = $this->entityTypeManager->getStorage('group_config_wrapper');
           assert($storage instanceof ConfigWrapperStorageInterface);
-          $entity_id = $storage->wrapEntity($entity)->id();
+          $query_entity_id = ($wrapper = $storage->wrapEntity($entity, FALSE))
+            ? $wrapper->id()
+            : FALSE;
         }
 
-        $result = $this->database
-          ->select($this->dataTable, 'd')
-          ->fields('d', ['id'])
-          ->condition('gid', $group_id)
-          ->condition('entity_id', $entity_id)
-          ->condition('plugin_id', $plugin_ids, 'IN')
-          ->execute()
-          ->fetchCol();
+        if ($query_entity_id !== FALSE) {
+          $result = $this->database
+            ->select($this->dataTable, 'd')
+            ->fields('d', ['id'])
+            ->condition('gid', $group_id)
+            ->condition('entity_id', $query_entity_id)
+            ->condition('plugin_id', $plugin_ids, 'IN')
+            ->execute()
+            ->fetchCol();
+        }
       }
 
       $this->loadByEntityAndGroupCache[$entity_type_id][$entity_id][$group_id][$cache_key] = $result;
@@ -366,13 +380,13 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
   /**
    * Runs some sanity checks for loading by plugin ID.
    *
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return bool
    *   Whether the sanity checks succeeded or not.
    */
-  protected function loadByPluginSanityCheck($plugin_id = NULL) {
+  protected function loadByPluginSanityCheck(?string $plugin_id = NULL) {
     if ($plugin_id && !in_array($plugin_id, $this->pluginManager->getAllInstalledIds(), TRUE)) {
       return FALSE;
     }

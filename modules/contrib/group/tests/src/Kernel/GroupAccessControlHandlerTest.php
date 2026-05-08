@@ -33,7 +33,7 @@ class GroupAccessControlHandlerTest extends GroupKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installConfig(['user']);
-    $this->groupType = $this->createGroupType(['id' => 'foo', 'creator_membership' => FALSE]);
+    $this->groupType = $this->createGroupType(['id' => 'foo']);
     $this->group = $this->createGroup(['type' => 'foo']);
   }
 
@@ -81,7 +81,7 @@ class GroupAccessControlHandlerTest extends GroupKernelTestBase {
    * @return array
    *   A list of testUpdateOrDeleteAccess method arguments.
    */
-  public function updateOrDeleteAccessProvider() {
+  public static function updateOrDeleteAccessProvider() {
     return [
       'update-access' => [
         'update',

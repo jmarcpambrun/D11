@@ -5,6 +5,7 @@ namespace Drupal\group\Plugin\views\relationship;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\group\Plugin\Group\Relation\GroupRelationTypeInterface;
 use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
+use Drupal\views\Attribute\ViewsRelationship;
 use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\views\Plugin\views\query\Sql;
 use Drupal\views\Plugin\views\relationship\RelationshipPluginBase;
@@ -14,43 +15,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * A relationship handler for group relationships.
  *
  * @ingroup views_relationship_handlers
- *
- * @ViewsRelationship("group_to_group_relationship")
  */
+#[ViewsRelationship('group_to_group_relationship')]
 class GroupToGroupRelationship extends RelationshipPluginBase {
 
-  /**
-   * The Views join plugin manager.
-   *
-   * @var \Drupal\views\Plugin\ViewsHandlerManager
-   */
-  protected $joinManager;
-
-  /**
-   * The group relation type manager.
-   *
-   * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
-   */
-  protected $pluginManager;
-
-  /**
-   * Constructs a GroupToGroupRelationship object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\views\Plugin\ViewsHandlerManager $join_manager
-   *   The views plugin join manager.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $plugin_manager
-   *   The group relation type manager.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ViewsHandlerManager $join_manager, GroupRelationTypeManagerInterface $plugin_manager) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected ViewsHandlerManager $joinManager,
+    protected GroupRelationTypeManagerInterface $pluginManager,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->joinManager = $join_manager;
-    $this->pluginManager = $plugin_manager;
   }
 
   /**

@@ -4,7 +4,9 @@
  * The condition label is rendered as a compact, wide card:
  *   header (icon + type + annotation indicator + trash), body (single-line label).
  *
- * Also supports draggable control points, replay highlighting, and edge order badges.
+ * Also supports draggable control points, replay highlighting, edge order badges,
+ * and quick-add buttons before and after the condition card for inserting
+ * actions or adding conditions (with auto-gateway creation).
  */
 import React, { Profiler, useMemo } from 'react';
 import { EdgeLabelRenderer, EdgeProps } from 'reactflow';
@@ -13,16 +15,20 @@ import classNames from 'classnames';
 import { useEdgePath } from '../../hooks/useEdgePath';
 import { useControlPointDrag } from '../../hooks/useControlPointDrag';
 import EdgeOrderBadge from './EdgeOrderBadge';
+import QuickAddEdgeButton from '../QuickAddEdgeButton';
 import { t } from '../../utils/translation';
 import { getComponentLabel } from '../../utils/componentUtils';
 import { onRenderCallback } from '../../utils/profiling';
-import { UI_DIMENSIONS } from '../../constants/dimensions';
+import { EDGE_STYLING, UI_DIMENSIONS } from '../../constants/dimensions';
+import type { StoreComponent as Component } from '../../types/settings';
 import type { BaseEdgeData } from '../../types/settings';
 
 interface ConditionEdgeData extends BaseEdgeData {
   condition?: string;
   annotation?: string;
   onDeleteCondition?: (id: string) => void;
+  onInsertBeforeCondition?: (edgeId: string, component: Component) => void;
+  onInsertAfterCondition?: (edgeId: string, component: Component) => void;
 }
 
 interface ConditionEdgeProps extends EdgeProps {
@@ -89,6 +95,12 @@ const ConditionEdge: React.FC<ConditionEdgeProps> = ({
       data.onDeleteCondition(id);
     }
   };
+
+  // Calculate positions for quick-add buttons before and after the condition card.
+  // Place them at a fixed offset from the condition card so they stay visually
+  // attached regardless of the distance between source/target and label.
+  const beforeButtonY = useMemo(() => labelY - EDGE_STYLING.CONDITION_BUTTON_OFFSET, [labelY]);
+  const afterButtonY = useMemo(() => labelY + EDGE_STYLING.CONDITION_BUTTON_OFFSET, [labelY]);
 
   // Apply replay highlight if present
   const edgeStyle = replayHighlight ? {
@@ -192,6 +204,40 @@ const ConditionEdge: React.FC<ConditionEdgeProps> = ({
             )}
           </div>
 
+          {/* Quick-add button BEFORE the condition (between source and condition card) */}
+          {data?.onInsertBeforeCondition && (
+            <div
+              className="edge-quick-add-wrapper"
+              style={{
+                transform: `translate(-50%, -50%) translate(${labelX}px,${beforeButtonY}px)`,
+              }}
+            >
+              <QuickAddEdgeButton
+                edgeId={id}
+                onAddCondition={(component) => data.onInsertBeforeCondition!(id, component)}
+                onAddAction={(component) => data.onInsertBeforeCondition!(id, component)}
+                disabled={false}
+              />
+            </div>
+          )}
+
+          {/* Quick-add button AFTER the condition (between condition card and target) */}
+          {data?.onInsertAfterCondition && (
+            <div
+              className="edge-quick-add-wrapper"
+              style={{
+                transform: `translate(-50%, -50%) translate(${labelX}px,${afterButtonY}px)`,
+              }}
+            >
+              <QuickAddEdgeButton
+                edgeId={id}
+                onAddCondition={(component) => data.onInsertAfterCondition!(id, component)}
+                onAddAction={(component) => data.onInsertAfterCondition!(id, component)}
+                disabled={false}
+              />
+            </div>
+          )}
+
           {/* Draggable control point when edge is selected */}
           {isEdgeSelected && (
             <div
@@ -209,18 +255,23 @@ const ConditionEdge: React.FC<ConditionEdgeProps> = ({
             </div>
           )}
 
-          {/* Edge Order Number Badge — visible even in read-only/locked mode,
-              but drag-reorder is disabled when any lock is active.
-              When a condition card is present, shift the badge up so its
-              vertical center aligns with the top border of the card header. */}
+          {/* Edge Order Number Badge — positioned northeast of the
+              quick-add button (the "before" button when a condition card
+              is present, or the edge center otherwise).  Uses
+              labelX/labelY (the actual rendered edge midpoint) so the
+              badge stays anchored on initial load. */}
           {data?.edgeOrdersVisible && data?.edgeOrderInfo && (
             <EdgeOrderBadge
               edgeId={id}
-              edgeOrderInfo={
-                hasCondition && label
-                  ? { ...data.edgeOrderInfo, pathY: (data.edgeOrderInfo.pathY ?? 0) - 30 }
-                  : data.edgeOrderInfo
-              }
+              edgeOrderInfo={{
+                ...data.edgeOrderInfo,
+                pathX: data.edgeOrderInfo.pathX != null
+                  ? labelX + EDGE_STYLING.BADGE_NE_OFFSET
+                  : undefined,
+                pathY: hasCondition && label
+                  ? labelY - EDGE_STYLING.CONDITION_BUTTON_OFFSET
+                  : labelY,
+              }}
               isLocked={!!data?.globalLocked}
               onReorderEdge={data.onReorderEdge}
             />

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\ai_automators\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\ai_automators\AiAutomatorInterface;
 
 /**
@@ -130,6 +131,22 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
    * The plugin config.
    */
   protected array $plugin_config;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE): void {
+    parent::postSave($storage, $update);
+    \Drupal::service('plugin.manager.action')->clearCachedDefinitions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function postDelete(EntityStorageInterface $storage, array $entities): void {
+    parent::postDelete($storage, $entities);
+    \Drupal::service('plugin.manager.action')->clearCachedDefinitions();
+  }
 
   /**
    * {@inheritdoc}

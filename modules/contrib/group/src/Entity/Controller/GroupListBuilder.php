@@ -21,56 +21,17 @@ use Symfony\Component\Routing\RouterInterface;
  */
 class GroupListBuilder extends EntityListBuilder {
 
-  /**
-   * The redirect destination service.
-   *
-   * @var \Drupal\Core\Routing\RedirectDestinationInterface
-   */
-  protected $redirectDestination;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * The router.
-   *
-   * @var \Symfony\Component\Routing\RouterInterface
-   */
-  protected $router;
-
-  /**
-   * Constructs a new GroupListBuilder object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
-   *   The entity storage class.
-   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
-   *   The redirect destination service.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
-   * @param \Symfony\Component\Routing\RouterInterface $router
-   *   The router.
-   */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RedirectDestinationInterface $redirect_destination, AccountInterface $current_user, ModuleHandlerInterface $module_handler, RouterInterface $router) {
+  public function __construct(
+    EntityTypeInterface $entity_type,
+    EntityStorageInterface $storage,
+    RedirectDestinationInterface $redirect_destination,
+    protected AccountInterface $currentUser,
+    ModuleHandlerInterface $module_handler,
+    protected RouterInterface $router,
+  ) {
     parent::__construct($entity_type, $storage);
     $this->redirectDestination = $redirect_destination;
-    $this->currentUser = $current_user;
     $this->moduleHandler = $module_handler;
-    $this->router = $router;
   }
 
   /**

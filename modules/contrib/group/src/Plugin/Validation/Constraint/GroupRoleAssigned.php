@@ -2,18 +2,19 @@
 
 namespace Drupal\group\Plugin\Validation\Constraint;
 
-use Symfony\Component\Validator\Constraint;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Validation\Attribute\Constraint;
+use Symfony\Component\Validator\Constraint as SymfonyConstraint;
 
 /**
  * Checks if a group role is assigned to a membership even though it can't be.
- *
- * @Constraint(
- *   id = "GroupRoleAssigned",
- *   label = @Translation("Group role assignment check", context = "Validation"),
- *   type = "entity:group_role"
- * )
  */
-class GroupRoleAssigned extends Constraint {
+#[Constraint(
+  id: 'GroupRoleAssigned',
+  label: new TranslatableMarkup('Group role assignment check', [], ['context' => 'Validation']),
+  type: 'entity:group_role',
+)]
+class GroupRoleAssigned extends SymfonyConstraint {
 
   /**
    * When a group role is already assigned and put in a synchronized scope.

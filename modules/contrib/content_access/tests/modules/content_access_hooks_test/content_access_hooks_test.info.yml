@@ -7,7 +7,7 @@ dependencies:
   - content_access:content_access
 hidden: true
 
-# Information added by Drupal.org packaging script on 2026-04-27
-version: '2.1.0-rc5'
+# Information added by Drupal.org packaging script on 2026-05-05
+version: '2.1.0'
 project: 'content_access'
-datestamp: 1777319272
+datestamp: 1777974854

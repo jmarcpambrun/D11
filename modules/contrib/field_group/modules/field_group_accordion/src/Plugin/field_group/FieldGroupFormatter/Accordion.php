@@ -4,6 +4,7 @@ namespace Drupal\field_group_accordion\Plugin\field_group\FieldGroupFormatter;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormState;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\field_group\FieldGroupFormatterBase;
 use Drupal\field_group_accordion\Element\Accordion as AccordionElement;
 
@@ -25,10 +26,10 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function process(&$element, $processed_object) {
+  public function process(&$element, $processed_array) {
 
     // Keep using preRender parent for BC.
-    parent::preRender($element, $processed_object);
+    parent::preRender($element, $processed_array);
 
     $element += [
       '#type' => 'field_group_accordion',
@@ -49,8 +50,8 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function preRender(&$element, $rendering_object) {
-    $this->process($element, $rendering_object);
+  public function preRender(&$element, $render_array) {
+    $this->process($element, $render_array);
 
     $form_state = new FormState();
     AccordionElement::processAccordion($element, $form_state);
@@ -59,9 +60,9 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function settingsForm() {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
 
-    $form = parent::settingsForm();
+    $form = parent::settingsForm($form, $form_state);
 
     $form['effect'] = [
       '#title' => $this->t('Effect'),

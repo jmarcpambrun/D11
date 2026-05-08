@@ -23,11 +23,6 @@ trait MailerTestTrait {
   protected Email $email;
 
   /**
-   * An xpath for the most recently sent email HTML body.
-   */
-  protected ?\DOMXPath $xpath;
-
-  /**
    * Gets the next email, removing it from the list.
    *
    * @param bool $last
@@ -40,7 +35,6 @@ trait MailerTestTrait {
     $this->init();
     $this->assertNotEmpty($this->emails);
     $this->email = array_shift($this->emails);
-    $this->xpath = NULL;
 
     if ($last) {
       $this->noMail();
@@ -72,33 +66,6 @@ trait MailerTestTrait {
   public function assertBodyNotContains(string $value): static {
     $this->assertStringNotContainsString($value, $this->email->getHtmlBody());
     return $this;
-  }
-
-  /**
-   * Gets an XPath object for the HTML body.
-   *
-   * @return \DOMXPath
-   *   The XPath object.
-   */
-  public function getXpath(): \DOMXPath {
-    if (!$this->xpath) {
-      $dom = new \DOMDocument();
-      $dom->loadHTML($this->email->getHtmlBody());
-      $this->xpath = new \DOMXPath($dom);
-    }
-    return $this->xpath;
-  }
-
-  /**
-   * Finds the first link with the specified text.
-   *
-   * @return string
-   *   The link.
-   */
-  public function findLink(string $text): string {
-    $nodes = $this->getXpath()->query("//a[text()='$text']");
-    $this->assertNotEmpty($nodes->count());
-    return $nodes->item(0)->getAttribute('href');
   }
 
   /**

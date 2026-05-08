@@ -32,7 +32,7 @@ interface GroupRoleStorageInterface extends ConfigEntityStorageInterface {
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to reset the cached group roles for.
-   * @param \Drupal\group\Entity\GroupInterface $group
+   * @param ?\Drupal\group\Entity\GroupInterface $group
    *   (optional) The group to reset the user's cached group roles for. Leave
    *   blank to reset the user's roles in all groups.
    */

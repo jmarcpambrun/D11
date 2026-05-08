@@ -55,7 +55,7 @@ class ConfigWrapperAccessControlHandlerTest extends GroupKernelTestBase {
    * @return array
    *   A list of testOperationAccess method arguments.
    */
-  public function operationAccessProvider() {
+  public static function operationAccessProvider() {
     $cases = [];
     foreach (['view', 'update', 'delete', 'anything_really'] as $operation) {
       $cases[$operation] = [$operation];

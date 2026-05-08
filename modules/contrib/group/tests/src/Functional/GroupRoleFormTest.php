@@ -34,12 +34,7 @@ class GroupRoleFormTest extends GroupBrowserTestBase {
     $this->setUpAccount();
 
     $this->groupRoleStorage = $this->entityTypeManager->getStorage('group_role');
-
-    $this->groupType = $this->createGroupType([
-      'id' => 'gt',
-      'label' => 'community',
-      'creator_membership' => FALSE,
-    ]);
+    $this->groupType = $this->createGroupType(['id' => 'gt', 'label' => 'community']);
   }
 
   /**

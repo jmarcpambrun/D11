@@ -8,6 +8,7 @@ use Drupal\Core\Url;
 use Drupal\field\FieldStorageConfigInterface;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\Tests\field_group\Functional\FieldGroupTestTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Tests horizontal tabs labels.
@@ -40,7 +41,7 @@ class HorizontalTabsLabelsTest extends WebDriverTestBase {
    *
    * @var string[]
    */
-  protected $themeList = [
+  protected static $themeList = [
     'claro',
     'olivero',
     'stable9',
@@ -113,9 +114,8 @@ class HorizontalTabsLabelsTest extends WebDriverTestBase {
 
   /**
    * Tests horizontal tabs labels.
-   *
-   * @dataProvider providerTestHorizontalTabsLabels
    */
+  #[DataProvider('providerTestHorizontalTabsLabels')]
   public function testHorizontalTabsLabels(string $theme_name) {
     $entity_type_manager = $this->container->get('entity_type.manager');
     $tab1 = [
@@ -275,8 +275,8 @@ class HorizontalTabsLabelsTest extends WebDriverTestBase {
    * @return string[][][]
    *   The test cases with the theme machine names.
    */
-  public function providerTestHorizontalTabsLabels() {
-    return array_reduce($this->themeList, function (array $carry, string $theme_name) {
+  public static function providerTestHorizontalTabsLabels() {
+    return array_reduce(self::$themeList, function (array $carry, string $theme_name) {
       $carry[$theme_name] = [
         'theme_name' => $theme_name,
       ];

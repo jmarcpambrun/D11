@@ -12,12 +12,6 @@ class EmptyPostInstall implements PostInstallInterface {
 
   use PostInstallTrait;
 
-  /**
-   * Constructs a new EmptyPostInstall.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PostInstallInterface $parent
-   *   The parent post install handler.
-   */
   public function __construct(PostInstallInterface $parent) {
     $this->parent = $parent;
   }

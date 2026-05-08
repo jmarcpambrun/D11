@@ -13,14 +13,6 @@ class FullEntityPermissionProvider implements PermissionProviderInterface {
 
   use PermissionProviderTrait;
 
-  /**
-   * Constructs a new FullEntityPermissionProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface $parent
-   *   The parent permission provider.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   */
   public function __construct(PermissionProviderInterface $parent, EntityTypeManagerInterface $entity_type_manager) {
     $this->parent = $parent;
     $this->entityTypeManager = $entity_type_manager;

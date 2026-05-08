@@ -46,7 +46,7 @@ variables:
 
   # Opt-in to more tests.
   OPT_IN_TEST_MAX_PHP: '1'
-  OPT_IN_TEST_NEXT_MAJOR: '1'
+  OPT_IN_TEST_NEXT_MAJOR: 0
 
 #
 # Composer overrides and configuration.

@@ -269,7 +269,35 @@ $input = $guardrail_helper->applyGuardrailSetToChatInput('my_guardrail_set', $in
 $response = $provider->chat($input, $model_id, ['my_module']);
 ```
 
-The method clones the input and calls `setGuardrailSet()` on it. When the AI provider fires its pre/post-generation events, the `GuardrailsEventSubscriber` picks up the attached set and runs the configured guardrails.
+The method clones the input and calls `addGuardrailSet()` on it. When the AI provider fires its pre/post-generation events, the `GuardrailsEventSubscriber` iterates every attached set and runs its configured guardrails.
+
+### Attaching multiple guardrail sets
+
+An input may carry more than one guardrail set — e.g. one attached by the caller and one by middleware. Call `applyGuardrailSetToChatInput()` repeatedly, or use the input API directly:
+
+```php
+$input->addGuardrailSet($set_a);
+$input->addGuardrailSet($set_b);
+// Or replace the whole list:
+$input->setGuardrailSets([$set_a, $set_b]);
+```
+
+Sets are keyed by id; re-adding the same id via `addGuardrailSet()` replaces that entry in place. `setGuardrailSets()` replaces the entire list in one call and accepts either a list or a keyed map — keys are ignored and re-derived from each set's id. Each set's `stop_threshold` is evaluated independently — scores are not aggregated across sets. If any set crosses its own threshold, processing of remaining sets is short-circuited and the stop message is returned as the output.
+
+The legacy single-set methods `setGuardrailSet()` / `getGuardrailSet()` are deprecated — use `addGuardrailSet()` / `getGuardrailSets()` instead.
+
+### Global guardrails
+
+Site administrators can configure one or more guardrail sets to be applied to **every** AI request, regardless of whether the caller opted in. Configure them at *Configuration → AI → AI Guardrails → Global guardrails* (`/admin/config/ai/guardrails/global`). The selected ids are stored under `ai.settings:global_guardrails`.
+
+Under the hood, `GlobalGuardrailsEventSubscriber` listens on `PreGenerateResponseEvent` at priority `100` (before the regular `GuardrailsEventSubscriber`). It **prepends** each configured global set to the input via `setGuardrailSets()`, so global safety/PII checks always evaluate the original prompt and the raw provider output before any caller-attached guardrail can rewrite them.
+
+Important consequences of that ordering:
+
+- A global set that crosses its `stop_threshold` short-circuits the pipeline before any caller-attached set runs. Global stops are non-negotiable.
+- If a caller and a site-wide config both reference the same guardrail set id, the global wins and the set sits at the front — the caller's ordering intent is intentionally overridden by the site-wide configuration.
+
+If you build your own pre-request subscriber and need to attach a set from code, subscribe at any priority `> 0` and call `$event->getInput()->addGuardrailSet($set)` (append) or `$event->getInput()->setGuardrailSets($yourSets + $event->getInput()->getGuardrailSets())` (prepend, same pattern as the global subscriber).
 
 ## Built-in Guardrail Plugins
 

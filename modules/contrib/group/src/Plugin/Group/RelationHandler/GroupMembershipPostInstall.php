@@ -15,16 +15,6 @@ class GroupMembershipPostInstall implements PostInstallInterface {
   use PostInstallTrait;
   use StringTranslationTrait;
 
-  /**
-   * Constructs a new GroupMembershipPostInstall.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PostInstallInterface $parent
-   *   The default post install handler.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
-   */
   public function __construct(PostInstallInterface $parent, EntityTypeManagerInterface $entity_type_manager, TranslationInterface $string_translation) {
     $this->parent = $parent;
     $this->entityTypeManager = $entity_type_manager;

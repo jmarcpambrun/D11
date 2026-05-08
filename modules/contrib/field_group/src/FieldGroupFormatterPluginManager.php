@@ -134,6 +134,9 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
       'settings' => [],
     ];
 
+    // Ensure $configuration['settings'] is an array:
+    $configuration['settings'] = is_array($configuration['settings']) ? $configuration['settings'] : [];
+
     // Fill in default settings values for the formatter.
     $configuration['settings'] += $this->getDefaultSettings($format_type, $context);
 

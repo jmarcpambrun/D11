@@ -18,8 +18,6 @@ class GroupConfigTest extends EntityKernelTestBase {
    */
   protected static $modules = [
     'block',
-    'entity',
-    'flexible_permissions',
     'group',
     'options',
     'views',

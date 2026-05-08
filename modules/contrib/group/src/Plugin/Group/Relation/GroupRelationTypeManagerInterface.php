@@ -204,7 +204,7 @@ interface GroupRelationTypeManagerInterface extends PluginManagerInterface, Cach
   /**
    * Installs all plugins which are marked as enforced.
    *
-   * @param \Drupal\group\Entity\GroupTypeInterface $group_type
+   * @param ?\Drupal\group\Entity\GroupTypeInterface $group_type
    *   (optional) The group type to install enforced plugins on. Leave blank to
    *   run the installation process for all group types.
    */
@@ -240,7 +240,7 @@ interface GroupRelationTypeManagerInterface extends PluginManagerInterface, Cach
   /**
    * Clears the static per group type plugin collection cache.
    *
-   * @param \Drupal\group\Entity\GroupTypeInterface $group_type
+   * @param ?\Drupal\group\Entity\GroupTypeInterface $group_type
    *   (optional) The group type to clear the cache for. Leave blank to clear
    *   the cache for all group types.
    */

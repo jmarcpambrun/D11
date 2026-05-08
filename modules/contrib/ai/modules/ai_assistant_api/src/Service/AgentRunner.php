@@ -72,6 +72,13 @@ class AgentRunner {
     $this->jobId = $job_id;
     /** @var \Drupal\ai_agents\PluginInterfaces\ConfigAiAgentInterface $agent */
     $agent = $this->aiAgentPluginManager->createInstance($assistant_id);
+
+    // Set a stable IDs so the agent identity persists across turns.
+    // This allows event subscribers to use the ID as a consistent
+    // key across multiple requests.
+    $agent->setRunnerId($job_id);
+    $agent->setProgressThreadId($job_id);
+
     // Load the agent from temp store if it exists.
     if ($agent_data = $this->tempStore->get('ai_assistant_threads')->get($job_id)) {
       $agent->fromArray($agent_data);
@@ -86,6 +93,7 @@ class AgentRunner {
       $agent->setChatInput($input);
       $agent->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
       $agent->setModelName($defaults['model_id']);
+      $agent->setConfiguration($defaults['configuration'] ?? []);
       $agent->setCreateDirectly(TRUE);
       if ($verbose_mode) {
         // We only want to run one loop at a time.

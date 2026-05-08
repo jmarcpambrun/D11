@@ -9,12 +9,6 @@ class GroupMembershipAccessControl implements AccessControlInterface {
 
   use AccessControlTrait;
 
-  /**
-   * Constructs a new GroupMembershipAccessControl.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\AccessControlInterface $parent
-   *   The parent access control handler.
-   */
   public function __construct(AccessControlInterface $parent) {
     $this->parent = $parent;
   }

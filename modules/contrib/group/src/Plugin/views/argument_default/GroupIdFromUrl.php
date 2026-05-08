@@ -6,17 +6,18 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Plugin\Context\ContextInterface;
 use Drupal\Core\Plugin\Context\ContextProviderInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\views\Attribute\ViewsArgumentDefault;
 use Drupal\views\Plugin\views\argument_default\ArgumentDefaultPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Default argument plugin to extract a group ID.
- *
- * @ViewsArgumentDefault(
- *   id = "group_id_from_url",
- *   title = @Translation("Group ID from URL")
- * )
  */
+#[ViewsArgumentDefault(
+  id: 'group_id_from_url',
+  title: new TranslatableMarkup('Group ID from URL'),
+)]
 class GroupIdFromUrl extends ArgumentDefaultPluginBase implements CacheableDependencyInterface {
 
   /**

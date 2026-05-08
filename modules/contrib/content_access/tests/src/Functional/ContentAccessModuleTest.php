@@ -836,4 +836,82 @@ class ContentAccessModuleTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Access denied');
   }
 
+  /**
+   * Test that adding a brand-new role doesn't change the access permissions.
+   */
+  public function testViewAccessAfterRoleAdd() {
+    // Create a role that will grant access to a node.
+    $allowedRoleId = 'content_access_view_allowed';
+
+    Role::create([
+      'id' => $allowedRoleId,
+      'label' => 'Content access view allowed',
+    ])->save();
+
+    // Setup 2 test users.
+    $testUser1 = $this->testUser;
+    $testUser1->addRole($allowedRoleId);
+    $testUser1->save();
+    $testUser2 = $this->drupalCreateUser();
+
+    // Remove all view permissions for this content type.
+    $accessPermissions = [
+      'view[anonymous]' => FALSE,
+      'view[authenticated]' => FALSE,
+      'view[' . $allowedRoleId . ']' => TRUE,
+      'view_own[anonymous]' => FALSE,
+      'view_own[authenticated]' => FALSE,
+      'view_own[' . $allowedRoleId . ']' => TRUE,
+    ];
+    $this->changeAccessContentType($accessPermissions);
+
+    // Logout admin and try to access both nodes anonymously.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Now add a totally new role, and add it to both users.
+    $unrelatedRoleId = 'content_access_unrelated';
+
+    Role::create([
+      'id' => $unrelatedRoleId,
+      'label' => 'Content access unrelated',
+    ])->save();
+
+    // Setup 2 test users.
+    $testUser1->addRole($unrelatedRoleId);
+    $testUser1->save();
+    $testUser2->addRole($unrelatedRoleId);
+    $testUser2->save();
+
+    // Re-run the previous tests, nothing should have changed.
+    $this->drupalLogout();
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+    $this->drupalGet('node/' . $this->node2->id());
+    $this->assertSession()->pageTextContains('Access denied');
+
+    // Login test user 1, view node1, access must be granted.
+    $this->drupalLogin($testUser1);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextNotContains('Access denied');
+
+    // Login test user 2, view node1, access must be denied.
+    $this->drupalLogin($testUser2);
+    $this->drupalGet('node/' . $this->node1->id());
+    $this->assertSession()->pageTextContains('Access denied');
+  }
+
 }

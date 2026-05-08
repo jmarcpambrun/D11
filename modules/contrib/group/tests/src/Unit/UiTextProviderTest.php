@@ -144,7 +144,7 @@ class UiTextProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetAddPageDescription method arguments.
    */
-  public function getAddPageDescriptionProvider() {
+  public static function getAddPageDescriptionProvider() {
     $cases['add-no-bundle'] = [
       'Add existing %entity_type to the group.',
       FALSE,

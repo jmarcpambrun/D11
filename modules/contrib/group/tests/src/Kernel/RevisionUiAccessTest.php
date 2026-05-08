@@ -22,7 +22,6 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  * in for extra hardening. This is why you'll notice some test cases being
  * specific about there being one revision.
  *
- * @covers \Drupal\group\Entity\Access\GroupRevisionCheck
  * @group group
  */
 class RevisionUiAccessTest extends GroupKernelTestBase {
@@ -63,10 +62,7 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
 
     $this->accessManager = $this->container->get('access_manager');
     $this->routeProvider = $this->container->get('router.route_provider');
-    $this->groupType = $this->createGroupType([
-      'id' => 'revision_test',
-      'creator_membership' => FALSE,
-    ]);
+    $this->groupType = $this->createGroupType(['id' => 'revision_test']);
 
     $this->adminRole = $this->createGroupRole([
       'group_type' => $this->groupType->id(),
@@ -124,7 +120,7 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
    * @return array
    *   A list of testOverviewAccess method arguments.
    */
-  public function overviewAccessProvider() {
+  public static function overviewAccessProvider() {
     $cases = [];
 
     $cases['view-one-revision-no-new-rev'] = [
@@ -256,7 +252,7 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
    * @return array
    *   A list of testViewAccess method arguments.
    */
-  public function viewAccessProvider() {
+  public static function viewAccessProvider() {
     $cases = [];
 
     $cases['view-one-revision-no-new-rev'] = [
@@ -677,7 +673,7 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
    * @return array
    *   A list of testUpdateDeleteAccess method arguments.
    */
-  public function updateDeleteAccessProvider() {
+  public static function updateDeleteAccessProvider() {
     $cases = [];
 
     $cases['edit-revision-default'] = [

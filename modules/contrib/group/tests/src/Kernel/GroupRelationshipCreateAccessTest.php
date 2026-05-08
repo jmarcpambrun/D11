@@ -69,10 +69,7 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
 
     $this->accessManager = $this->container->get('access_manager');
     $this->routeProvider = $this->container->get('router.route_provider');
-    $this->groupType = $this->createGroupType([
-      'id' => 'create_access_test',
-      'creator_membership' => FALSE,
-    ]);
+    $this->groupType = $this->createGroupType(['id' => 'create_access_test']);
 
     // Enable the test plugins on the group type.
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
@@ -126,7 +123,7 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
    * @return array
    *   A list of testPageAccess method arguments.
    */
-  public function pageAccessProvider() {
+  public static function pageAccessProvider() {
     $cases = [];
 
     $cases['create-page-access-one'] = [
@@ -231,7 +228,7 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
    * @return array
    *   A list of testFormAccess method arguments.
    */
-  public function formAccessProvider() {
+  public static function formAccessProvider() {
     $cases = [];
 
     $cases['create-form-access'] = [
@@ -304,13 +301,13 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
    *   The route name.
    * @param \Drupal\group\Entity\GroupInterface $group
    *   The group.
-   * @param string|null $plugin_id
+   * @param ?string $plugin_id
    *   (optional) The plugin ID.
    *
    * @return \Symfony\Component\HttpFoundation\Request
    *   The request.
    */
-  protected function createRequest($route_name, GroupInterface $group, $plugin_id = NULL) {
+  protected function createRequest($route_name, GroupInterface $group, ?string $plugin_id = NULL) {
     $params = ['group' => $group->id()];
     $attributes = ['group' => $group];
 

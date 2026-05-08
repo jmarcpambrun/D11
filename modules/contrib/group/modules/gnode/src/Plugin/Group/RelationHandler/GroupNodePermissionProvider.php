@@ -12,12 +12,6 @@ class GroupNodePermissionProvider implements PermissionProviderInterface {
 
   use PermissionProviderTrait;
 
-  /**
-   * Constructs a new GroupMembershipPermissionProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface $parent
-   *   The parent permission provider.
-   */
   public function __construct(PermissionProviderInterface $parent) {
     $this->parent = $parent;
   }

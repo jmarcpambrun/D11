@@ -53,64 +53,20 @@ class GroupPermissionHandler implements GroupPermissionHandlerInterface {
   use StringTranslationTrait;
 
   /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * The YAML discovery class to find all .group.permissions.yml files.
    *
    * @var \Drupal\Component\Discovery\YamlDiscovery
    */
   protected $yamlDiscovery;
 
-  /**
-   * The controller resolver.
-   *
-   * @var \Drupal\Core\Controller\ControllerResolverInterface
-   */
-  protected $controllerResolver;
-
-  /**
-   * The group relation type manager.
-   *
-   * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
-   */
-  protected $pluginManager;
-
-  /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $extensionListModule;
-
-  /**
-   * Constructs a new PermissionHandler.
-   *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation.
-   * @param \Drupal\Core\Controller\ControllerResolverInterface $controller_resolver
-   *   The controller resolver.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $plugin_manager
-   *   The group relation type manager.
-   * @param \Drupal\Core\Extension\ModuleExtensionList|null $extension_list_module
-   *   The module extension list.
-   */
-  public function __construct(ModuleHandlerInterface $module_handler, TranslationInterface $string_translation, ControllerResolverInterface $controller_resolver, GroupRelationTypeManagerInterface $plugin_manager, ?ModuleExtensionList $extension_list_module = NULL) {
-    if ($extension_list_module === NULL) {
-      @trigger_error('Calling ' . __METHOD__ . ' without the $extension_list_module argument is deprecated in group:3.3.0 and will be required in group:4.0.0. See https://www.drupal.org/node/3431243', E_USER_DEPRECATED);
-      $extension_list_module = \Drupal::service('extension.list.module');
-    }
-    $this->moduleHandler = $module_handler;
+  public function __construct(
+    protected ModuleHandlerInterface $moduleHandler,
+    TranslationInterface $string_translation,
+    protected ControllerResolverInterface $controllerResolver,
+    protected GroupRelationTypeManagerInterface $pluginManager,
+    protected ModuleExtensionList $extensionListModule,
+  ) {
     $this->stringTranslation = $string_translation;
-    $this->controllerResolver = $controller_resolver;
-    $this->pluginManager = $plugin_manager;
-    $this->extensionListModule = $extension_list_module;
   }
 
   /**

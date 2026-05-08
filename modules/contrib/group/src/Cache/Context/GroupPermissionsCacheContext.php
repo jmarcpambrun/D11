@@ -16,31 +16,10 @@ use Drupal\group\Access\GroupPermissionsHashGeneratorInterface;
  */
 class GroupPermissionsCacheContext implements CacheContextInterface {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The permissions hash generator.
-   *
-   * @var \Drupal\group\Access\GroupPermissionsHashGeneratorInterface
-   */
-  protected $permissionsHashGenerator;
-
-  /**
-   * Constructs a new GroupMembershipPermissionsCacheContext class.
-   *
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
-   *   The current user.
-   * @param \Drupal\group\Access\GroupPermissionsHashGeneratorInterface $hash_generator
-   *   The permissions hash generator.
-   */
-  public function __construct(AccountProxyInterface $current_user, GroupPermissionsHashGeneratorInterface $hash_generator) {
-    $this->currentUser = $current_user;
-    $this->permissionsHashGenerator = $hash_generator;
+  public function __construct(
+    protected AccountProxyInterface $currentUser,
+    protected GroupPermissionsHashGeneratorInterface $permissionsHashGenerator,
+  ) {
   }
 
   /**

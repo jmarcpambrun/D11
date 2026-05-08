@@ -2,50 +2,37 @@
 
 namespace Drupal\group\Plugin\Condition;
 
+use Drupal\Core\Condition\Attribute\Condition;
 use Drupal\Core\Condition\ConditionPluginBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a 'Group Type' condition.
- *
- * @Condition(
- *   id = "group_type",
- *   label = @Translation("Group type"),
- *   context_definitions = {
- *     "group" = @ContextDefinition("entity:group", label = @Translation("Group"))
- *   }
- * )
  */
+#[Condition(
+  id: 'group_type',
+  label: new TranslatableMarkup('Group type'),
+  context_definitions: [
+    'group' => new EntityContextDefinition(
+      'entity:group',
+      new TranslatableMarkup('Group'),
+    ),
+  ],
+)]
 class GroupType extends ConditionPluginBase implements ContainerFactoryPluginInterface {
 
-  /**
-   * The entity storage.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected $entityStorage;
-
-  /**
-   * Creates a new GroupType instance.
-   *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
-   *   The entity storage.
-   * @param array $configuration
-   *   The plugin configuration, i.e. an array with configuration values keyed
-   *   by configuration option name. The special key 'context' may be used to
-   *   initialize the defined contexts by setting it to an array of context
-   *   values keyed by context names.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   */
-  public function __construct(EntityStorageInterface $entity_storage, array $configuration, $plugin_id, $plugin_definition) {
+  public function __construct(
+    protected EntityStorageInterface $entityStorage,
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->entityStorage = $entity_storage;
   }
 
   /**

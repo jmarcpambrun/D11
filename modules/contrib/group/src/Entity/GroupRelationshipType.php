@@ -3,8 +3,14 @@
 namespace Drupal\group\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\group\Entity\Access\GroupRelationshipTypeAccessControlHandler;
+use Drupal\group\Entity\Form\GroupRelationshipTypeDeleteForm;
+use Drupal\group\Entity\Form\GroupRelationshipTypeForm;
+use Drupal\group\Entity\Storage\GroupRelationshipTypeStorage;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
 
@@ -12,44 +18,44 @@ use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
  * Defines the Group relationship type configuration entity.
  *
  * @ingroup group
- *
- * @ConfigEntityType(
- *   internal = TRUE,
- *   id = "group_relationship_type",
- *   label = @Translation("Group relationship type"),
- *   label_singular = @Translation("group relationship type"),
- *   label_plural = @Translation("group relationship types"),
- *   label_count = @PluralTranslation(
- *     singular = "@count group relationship type",
- *     plural = "@count group relationship types"
- *   ),
- *   handlers = {
- *     "storage" = "Drupal\group\Entity\Storage\GroupRelationshipTypeStorage",
- *     "access" = "Drupal\group\Entity\Access\GroupRelationshipTypeAccessControlHandler",
- *     "form" = {
- *       "add" = "Drupal\group\Entity\Form\GroupRelationshipTypeForm",
- *       "edit" = "Drupal\group\Entity\Form\GroupRelationshipTypeForm",
- *       "delete" = "Drupal\group\Entity\Form\GroupRelationshipTypeDeleteForm"
- *     },
- *   },
- *   admin_permission = "administer group",
- *   config_prefix = "relationship_type",
- *   bundle_of = "group_relationship",
- *   static_cache = TRUE,
- *   entity_keys = {
- *     "id" = "id",
- *   },
- *   config_export = {
- *     "id",
- *     "group_type",
- *     "content_plugin",
- *     "plugin_config",
- *   },
- *   links = {
- *     "edit-form" = "/admin/group/content/manage/{group_relationship_type}",
- *   }
- * )
  */
+#[ConfigEntityType(
+  id: 'group_relationship_type',
+  label: new TranslatableMarkup('Group relationship type'),
+  label_collection: new TranslatableMarkup('Group relationship types'),
+  label_singular: new TranslatableMarkup('group relationship type'),
+  label_plural: new TranslatableMarkup('group relationship types'),
+  config_prefix: 'relationship_type',
+  static_cache: TRUE,
+  entity_keys: [
+    'id' => 'id',
+  ],
+  handlers: [
+    'access' => GroupRelationshipTypeAccessControlHandler::class,
+    'storage' => GroupRelationshipTypeStorage::class,
+    'form' => [
+      'add' => GroupRelationshipTypeForm::class,
+      'edit' => GroupRelationshipTypeForm::class,
+      'delete' => GroupRelationshipTypeDeleteForm::class,
+    ],
+  ],
+  links: [
+    'edit-form' => '/admin/group/content/manage/{group_relationship_type}',
+  ],
+  admin_permission: 'administer group',
+  bundle_of: 'group_relationship',
+  internal: TRUE,
+  label_count: [
+    'singular' => '@count group relationship type',
+    'plural' => '@count group relationship types',
+  ],
+  config_export: [
+    'id',
+    'group_type',
+    'content_plugin',
+    'plugin_config',
+  ],
+)]
 class GroupRelationshipType extends ConfigEntityBundleBase implements GroupRelationshipTypeInterface {
 
   use StringTranslationTrait;

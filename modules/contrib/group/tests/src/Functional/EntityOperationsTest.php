@@ -38,6 +38,7 @@ class EntityOperationsTest extends GroupBrowserTestBase {
    */
   public function testEntityOperations($visible, $invisible, $permissions = [], $modules = []) {
     $group = $this->createGroup(['type' => $this->createGroupType()->id()]);
+    $group->addMember($this->groupCreator);
 
     if (!empty($permissions)) {
       $this->createGroupRole([
@@ -68,7 +69,7 @@ class EntityOperationsTest extends GroupBrowserTestBase {
   /**
    * Data provider for testEntityOperations().
    */
-  public function provideEntityOperationScenarios() {
+  public static function provideEntityOperationScenarios() {
     $scenarios['withoutAccess'] = [
       [],
       [

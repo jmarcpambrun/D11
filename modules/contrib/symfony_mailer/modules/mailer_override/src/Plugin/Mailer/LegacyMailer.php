@@ -9,7 +9,6 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mailer_override\ImportHelperInterface;
 use Drupal\mailer_override\LegacyMailerHelperInterface;
-use Drupal\mailer_transport\AutowireTrait;
 use Drupal\symfony_mailer\EmailInterface;
 use Drupal\symfony_mailer\Exception\SkipMailException;
 use Drupal\symfony_mailer\Component\ComponentMailerBase;
@@ -19,7 +18,6 @@ use Drupal\symfony_mailer\Component\ComponentMailerBase;
  */
 class LegacyMailer extends ComponentMailerBase implements LegacyMailerInterface, ContainerFactoryPluginInterface {
 
-  use AutowireTrait;
 
   /**
    * LegacyMailer constructor.

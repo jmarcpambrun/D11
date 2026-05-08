@@ -107,8 +107,15 @@ looking clean and professional.
 ## Smart node positioning
 
 When you add a node using quick-add or the event button, the canvas
-**automatically pans** to center the new node in the viewport with a smooth
-animation. The modeler also finds a free position that:
+**automatically pans** to bring the new node into view — but **only if it
+would otherwise be off-screen**.  If the new node is already visible, the
+canvas stays put.  The current zoom level is always preserved.
+
+When a node is inserted on an existing edge, the target node (and
+everything below it) is shifted downward only if there is not enough
+vertical space for the new node.  All other nodes remain in place.
+
+The modeler also finds a free position that:
 
 - Does not overlap with existing nodes.
 - Stays within the boundaries of the current workflow flow.

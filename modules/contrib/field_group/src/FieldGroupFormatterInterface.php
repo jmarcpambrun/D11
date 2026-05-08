@@ -3,6 +3,7 @@
 namespace Drupal\field_group;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Interface definition for fieldgroup formatter plugins.
@@ -22,10 +23,10 @@ interface FieldGroupFormatterInterface extends PluginInspectionInterface {
    *
    * @param array $element
    *   The field group render array.
-   * @param object $processed_object
-   *   The object / entity being processed.
+   * @param array $processed_array
+   *   The render array of the form this group is being built within.
    */
-  public function process(array &$element, $processed_object);
+  public function process(array &$element, $processed_array);
 
   /**
    * Field formatter prerender function.
@@ -35,10 +36,10 @@ interface FieldGroupFormatterInterface extends PluginInspectionInterface {
    *
    * @param array $element
    *   The field group render array.
-   * @param object $rendering_object
-   *   The object / entity being rendered.
+   * @param array $render_array
+   *   The render array of the entity or form this group is being built within.
    */
-  public function preRender(array &$element, $rendering_object);
+  public function preRender(array &$element, $render_array);
 
   /**
    * Returns a form to configure settings for the formatter.
@@ -47,10 +48,15 @@ interface FieldGroupFormatterInterface extends PluginInspectionInterface {
    * administrators to configure the formatter. The field_group module takes
    * care of handling submitted form values.
    *
+   * @param $form
+   *    An associative array containing the structure of the form.
+   * @param $form_state
+   *    The current state of the form.
+   *
    * @return array
    *   The form elements for the formatter settings.
    */
-  public function settingsForm();
+  public function settingsForm(array $form, FormStateInterface $form_state);
 
   /**
    * Returns a short summary for the current formatter settings.

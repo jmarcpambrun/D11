@@ -2,15 +2,18 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\CalculatedPermissionsItem;
+use Drupal\Core\Session\RefinableCalculatedPermissions;
 use Drupal\Tests\UnitTestCase;
-use Drupal\flexible_permissions\CalculatedPermissionsItem;
-use Drupal\flexible_permissions\RefinableCalculatedPermissions;
 use Drupal\group\Access\GroupPermissionCalculatorInterface;
 use Drupal\group\Access\GroupPermissionChecker;
 use Drupal\group\Entity\GroupInterface;
-use Drupal\group\GroupMembershipLoaderInterface;
 use Drupal\group\PermissionScopeInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests the group permission checker service.
@@ -21,18 +24,25 @@ use Drupal\group\PermissionScopeInterface;
 class GroupPermissionCheckerTest extends UnitTestCase {
 
   /**
+   * The cache backend.
+   *
+   * @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Cache\CacheBackendInterface>
+   */
+  protected $cacheBackend;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeManagerInterface>
+   */
+  protected $entityTypeManager;
+
+  /**
    * The group permission calculator.
    *
    * @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\group\Access\GroupPermissionCalculatorInterface>
    */
   protected $permissionCalculator;
-
-  /**
-   * The group membership loader.
-   *
-   * @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\group\GroupMembershipLoaderInterface>
-   */
-  protected $membershipLoader;
 
   /**
    * The group permission checker.
@@ -46,9 +56,15 @@ class GroupPermissionCheckerTest extends UnitTestCase {
    */
   public function setUp(): void {
     parent::setUp();
+    $this->cacheBackend = $this->prophesize(CacheBackendInterface::class);
+    $this->entityTypeManager = $this->prophesize(EntityTypeManagerInterface::class);
     $this->permissionCalculator = $this->prophesize(GroupPermissionCalculatorInterface::class);
-    $this->membershipLoader = $this->prophesize(GroupMembershipLoaderInterface::class);
-    $this->permissionChecker = new GroupPermissionChecker($this->permissionCalculator->reveal(), $this->membershipLoader->reveal());
+    $this->permissionChecker = new GroupPermissionChecker($this->permissionCalculator->reveal());
+
+    $container = $this->prophesize(ContainerInterface::class);
+    $container->get('cache.group_memberships_chained')->willReturn($this->cacheBackend->reveal());
+    $container->get('entity_type.manager')->willReturn($this->entityTypeManager->reveal());
+    \Drupal::setContainer($container->reveal());
   }
 
   /**
@@ -78,8 +94,11 @@ class GroupPermissionCheckerTest extends UnitTestCase {
    * @covers ::hasPermissionInGroup
    * @dataProvider provideHasPermissionInGroupScenarios
    */
-  public function testHasPermissionInGroup($is_member, $outsider_permissions, $outsider_admin, $insider_permissions, $insider_admin, $individual_permissions, $individual_admin, $permission, $has_permission, $message) {
-    $account = $this->prophesize(AccountInterface::class)->reveal();
+  public function testHasPermissionInGroup($is_member, $outsider_permissions, $outsider_admin, $insider_permissions, $insider_admin, $individual_permissions, $individual_admin, $permission, $has_permission, $message): void {
+    $account = $this->prophesize(AccountInterface::class);
+    $account->id()->willReturn(1337);
+    $account = $account->reveal();
+
     $group = $this->prophesize(GroupInterface::class);
     $group->id()->willReturn(1);
     $group->bundle()->willReturn('foo');
@@ -87,22 +106,29 @@ class GroupPermissionCheckerTest extends UnitTestCase {
 
     $calculated_permissions = new RefinableCalculatedPermissions();
     foreach ($outsider_permissions as $identifier => $permissions) {
-      $calculated_permissions->addItem(new CalculatedPermissionsItem(PermissionScopeInterface::OUTSIDER_ID, $identifier, $permissions, $outsider_admin));
+      $calculated_permissions->addItem(new CalculatedPermissionsItem($permissions, $outsider_admin, PermissionScopeInterface::OUTSIDER_ID, $identifier));
     }
     foreach ($insider_permissions as $identifier => $permissions) {
-      $calculated_permissions->addItem(new CalculatedPermissionsItem(PermissionScopeInterface::INSIDER_ID, $identifier, $permissions, $insider_admin));
+      $calculated_permissions->addItem(new CalculatedPermissionsItem($permissions, $insider_admin, PermissionScopeInterface::INSIDER_ID, $identifier));
     }
     foreach ($individual_permissions as $identifier => $permissions) {
-      $calculated_permissions->addItem(new CalculatedPermissionsItem(PermissionScopeInterface::INDIVIDUAL_ID, $identifier, $permissions, $individual_admin));
+      $calculated_permissions->addItem(new CalculatedPermissionsItem($permissions, $individual_admin, PermissionScopeInterface::INDIVIDUAL_ID, $identifier));
     }
 
     $this->permissionCalculator
       ->calculateFullPermissions($account)
       ->willReturn($calculated_permissions);
 
-    $this->membershipLoader
-      ->load($group, $account)
-      ->willReturn($is_member);
+    // Pretend member ID is 1986.
+    $cid = 'group_memberships:entity_id[1337]:roles[any-roles]';
+    $cache_data = (object) ['data' => $is_member ? [1 => 1986] : []];
+    $this->cacheBackend->get($cid)->willReturn($cache_data);
+
+    if ($is_member) {
+      $storage = $this->prophesize(ContentEntityStorageInterface::class);
+      $storage->load(1986)->willReturn(TRUE);
+      $this->entityTypeManager->getStorage('group_relationship')->willReturn($storage->reveal());
+    }
 
     $result = $this->permissionChecker->hasPermissionInGroup($permission, $account, $group);
     $this->assertSame($has_permission, $result, $message);
@@ -113,7 +139,7 @@ class GroupPermissionCheckerTest extends UnitTestCase {
    *
    * All scenarios assume group ID 1 and type 'foo'.
    */
-  public function provideHasPermissionInGroupScenarios() {
+  public static function provideHasPermissionInGroupScenarios(): array {
     $scenarios['outsiderWithAdmin'] = [
       'is_member' => FALSE,
       'outsider_permissions' => ['foo' => []],

@@ -3,73 +3,82 @@
 namespace Drupal\group\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
+use Drupal\Core\Entity\EntityDeleteForm;
 use Drupal\Core\Entity\EntityMalformedException;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\group\Entity\Access\GroupRoleAccessControlHandler;
+use Drupal\group\Entity\Controller\GroupRoleListBuilder;
+use Drupal\group\Entity\Form\GroupRoleForm;
+use Drupal\group\Entity\Routing\GroupRoleRouteProvider;
+use Drupal\group\Entity\Storage\GroupRoleStorage;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
 /**
  * Defines the Group role configuration entity.
  *
- * @ConfigEntityType(
- *   id = "group_role",
- *   label = @Translation("Group role"),
- *   label_singular = @Translation("group role"),
- *   label_plural = @Translation("group roles"),
- *   label_collection = @Translation("Group roles"),
- *   label_count = @PluralTranslation(
- *     singular = "@count group role",
- *     plural = "@count group roles"
- *   ),
- *   handlers = {
- *     "storage" = "Drupal\group\Entity\Storage\GroupRoleStorage",
- *     "access" = "Drupal\group\Entity\Access\GroupRoleAccessControlHandler",
- *     "form" = {
- *       "add" = "Drupal\group\Entity\Form\GroupRoleForm",
- *       "edit" = "Drupal\group\Entity\Form\GroupRoleForm",
- *       "delete" = "Drupal\Core\Entity\EntityDeleteForm"
- *     },
- *     "route_provider" = {
- *       "html" = "Drupal\group\Entity\Routing\GroupRoleRouteProvider",
- *     },
- *     "list_builder" = "Drupal\group\Entity\Controller\GroupRoleListBuilder",
- *   },
- *   admin_permission = "administer group",
- *   config_prefix = "role",
- *   static_cache = TRUE,
- *   entity_keys = {
- *     "id" = "id",
- *     "weight" = "weight",
- *     "label" = "label"
- *   },
- *   links = {
- *     "add-form" = "/admin/group/types/manage/{group_type}/roles/add",
- *     "collection" = "/admin/group/types/manage/{group_type}/roles",
- *     "delete-form" = "/admin/group/types/manage/{group_type}/roles/{group_role}/delete",
- *     "edit-form" = "/admin/group/types/manage/{group_type}/roles/{group_role}",
- *     "permissions-form" = "/admin/group/types/manage/{group_type}/roles/{group_role}/permissions"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "weight",
- *     "admin",
- *     "scope",
- *     "global_role",
- *     "group_type",
- *     "permissions"
- *   },
- *   lookup_keys = {
- *     "scope",
- *     "global_role",
- *     "group_type"
- *   },
- *   constraints = {
- *     "GroupRoleScope" = {},
- *     "GroupRoleAssigned" = {}
- *   }
- * )
+ * @ingroup group
  */
+#[ConfigEntityType(
+  id: 'group_role',
+  label: new TranslatableMarkup('Group role'),
+  label_collection: new TranslatableMarkup('Group roles'),
+  label_singular: new TranslatableMarkup('group role'),
+  label_plural: new TranslatableMarkup('group roles'),
+  config_prefix: 'role',
+  static_cache: TRUE,
+  entity_keys: [
+    'id' => 'id',
+    'weight' => 'weight',
+    'label' => 'label',
+  ],
+  handlers: [
+    'access' => GroupRoleAccessControlHandler::class,
+    'storage' => GroupRoleStorage::class,
+    'list_builder' => GroupRoleListBuilder::class,
+    'form' => [
+      'add' => GroupRoleForm::class,
+      'edit' => GroupRoleForm::class,
+      'delete' => EntityDeleteForm::class,
+    ],
+    'route_provider' => [
+      'html' => GroupRoleRouteProvider::class,
+    ],
+  ],
+  links: [
+    'add-form' => '/admin/group/types/manage/{group_type}/roles/add',
+    'collection' => '/admin/group/types/manage/{group_type}/roles',
+    'delete-form' => '/admin/group/types/manage/{group_type}/roles/{group_role}/delete',
+    'edit-form' => '/admin/group/types/manage/{group_type}/roles/{group_role}',
+    'permissions-form' => '/admin/group/types/manage/{group_type}/roles/{group_role}/permissions',
+  ],
+  admin_permission: 'administer group',
+  label_count: [
+    'singular' => '@count group role',
+    'plural' => '@count group roles',
+  ],
+  constraints: [
+    'GroupRoleScope' => [],
+    'GroupRoleAssigned' => [],
+  ],
+  lookup_keys: [
+    "scope",
+    "global_role",
+    "group_type",
+  ],
+  config_export: [
+    'id',
+    'label',
+    'weight',
+    'admin',
+    'scope',
+    'global_role',
+    'group_type',
+    'permissions',
+  ],
+)]
 class GroupRole extends ConfigEntityBase implements GroupRoleInterface {
 
   /**

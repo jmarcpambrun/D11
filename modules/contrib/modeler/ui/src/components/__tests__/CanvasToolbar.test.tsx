@@ -59,6 +59,7 @@ const defaultProps = {
   canUndo: false,
   canRedo: false,
   onAutoLayout: jest.fn(),
+  onFitView: jest.fn(),
   contexts: [] as ModelerContext[],
   selectedContextId: null as string | null,
   onContextChange: jest.fn(),
@@ -420,36 +421,12 @@ describe('CanvasToolbar', () => {
   // ─── Fit View action ────────────────────────────────────────
 
   describe('fit view', () => {
-    it('should call fitView when no visible unlocked nodes exist', () => {
-      mockGetNodes.mockReturnValue([]);
-      renderToolbar();
+    it('should call onFitView when Fit View is clicked', () => {
+      const onFitView = jest.fn();
+      renderToolbar({ onFitView });
       fireEvent.click(screen.getByLabelText('View options'));
       fireEvent.click(screen.getByText('Fit View'));
-      expect(mockFitView).toHaveBeenCalledWith({ padding: 0.1, duration: 500 });
-    });
-
-    it('should call setViewport when visible unlocked nodes exist', () => {
-      mockGetNodes.mockReturnValue([
-        { id: '1', position: { x: 0, y: 0 }, data: {}, hidden: false },
-      ]);
-      renderToolbar();
-      fireEvent.click(screen.getByLabelText('View options'));
-      fireEvent.click(screen.getByText('Fit View'));
-      expect(mockSetViewport).toHaveBeenCalledWith(
-        { x: 0, y: 0, zoom: 1 },
-        { duration: 500 },
-      );
-    });
-
-    it('should filter out hidden nodes for fit view', () => {
-      mockGetNodes.mockReturnValue([
-        { id: '1', position: { x: 0, y: 0 }, data: {}, hidden: true },
-      ]);
-      renderToolbar();
-      fireEvent.click(screen.getByLabelText('View options'));
-      fireEvent.click(screen.getByText('Fit View'));
-      expect(mockFitView).toHaveBeenCalledWith({ padding: 0.1, duration: 500 });
-      expect(mockSetViewport).not.toHaveBeenCalled();
+      expect(onFitView).toHaveBeenCalledTimes(1);
     });
 
     it('should close menu after fit view', () => {
@@ -645,6 +622,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.getByLabelText('Copy Selected Elements (Ctrl+C)')).toBeInTheDocument();
@@ -657,6 +635,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.getByLabelText('Copy Selected Elements (Ctrl+C)')).toBeDisabled();
@@ -669,6 +648,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.getByLabelText('Paste Elements (Ctrl+V)')).toBeDisabled();
@@ -681,6 +661,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.getByLabelText('Undo (Ctrl+Z)')).toBeDisabled();
@@ -693,6 +674,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.getByLabelText('Redo (Ctrl+Shift+Z)')).toBeDisabled();
@@ -705,6 +687,7 @@ describe('CanvasToolbar', () => {
           onCopy={jest.fn()}
           onPaste={jest.fn()}
           onAutoLayout={jest.fn()}
+          onFitView={jest.fn()}
         />,
       );
       expect(screen.queryByLabelText('Select Context')).not.toBeInTheDocument();
@@ -750,40 +733,18 @@ describe('CanvasToolbar', () => {
   // ─── Fit view with mixed nodes ──────────────────────────────
 
   describe('fit view with mixed node states', () => {
-    it('should use setViewport when some nodes are visible', () => {
+    it('should delegate to onFitView regardless of node visibility', () => {
+      // Fit view logic (filtering hidden nodes, computing viewport) is now
+      // handled by useViewportActions.fitToNodes, not the toolbar itself.
+      const onFitView = jest.fn();
       mockGetNodes.mockReturnValue([
         { id: '1', position: { x: 0, y: 0 }, data: {}, hidden: false },
-        { id: '2', position: { x: 100, y: 100 }, data: {}, hidden: false },
-      ]);
-      renderToolbar();
-      fireEvent.click(screen.getByLabelText('View options'));
-      fireEvent.click(screen.getByText('Fit View'));
-      expect(mockSetViewport).toHaveBeenCalled();
-      expect(mockFitView).not.toHaveBeenCalled();
-    });
-
-    it('should use fitView when all nodes are hidden', () => {
-      mockGetNodes.mockReturnValue([
-        { id: '1', position: { x: 0, y: 0 }, data: {}, hidden: true },
         { id: '2', position: { x: 100, y: 100 }, data: {}, hidden: true },
       ]);
-      renderToolbar();
+      renderToolbar({ onFitView });
       fireEvent.click(screen.getByLabelText('View options'));
       fireEvent.click(screen.getByText('Fit View'));
-      expect(mockFitView).toHaveBeenCalled();
-      expect(mockSetViewport).not.toHaveBeenCalled();
-    });
-
-    it('should handle nodes with no data property gracefully', () => {
-      mockGetNodes.mockReturnValue([
-        { id: '1', position: { x: 0, y: 0 }, data: undefined },
-      ]);
-      renderToolbar();
-      fireEvent.click(screen.getByLabelText('View options'));
-      // hidden is undefined => !undefined => true => not hidden
-      // So this node is visible
-      fireEvent.click(screen.getByText('Fit View'));
-      expect(mockSetViewport).toHaveBeenCalled();
+      expect(onFitView).toHaveBeenCalledTimes(1);
     });
   });
 

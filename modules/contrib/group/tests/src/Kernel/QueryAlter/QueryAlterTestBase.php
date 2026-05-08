@@ -31,21 +31,21 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    *
    * @var bool
    */
-  protected $isPublishable = FALSE;
+  protected static $isPublishable = FALSE;
 
   /**
    * Whether the entity type supports ownership.
    *
    * @var bool
    */
-  protected $isOwnable = TRUE;
+  protected static $isOwnable = TRUE;
 
   /**
    * Whether access might be different if relationships do (not) exist.
    *
    * @var bool
    */
-  protected $relationshipsAffectAccess = TRUE;
+  protected static $relationshipsAffectAccess = TRUE;
 
   /**
    * Tests query access in various scenarios.
@@ -113,7 +113,6 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    * @param bool $insider_unpublished_owner_check
    *   Whether the insider owner unpublished permissions should be checked.
    *
-   * @covers ::getConditions
    * @dataProvider queryAccessProvider
    */
   public function testQueryAccess(
@@ -153,7 +152,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
     $checks_status = $checks_owner = $checks_member = FALSE;
     foreach (['individual', 'outsider', 'insider'] as $key) {
       // @todo Ideally isOwnable is passed in as an argument.
-      if (!$this->isOwnable) {
+      if (!static::$isOwnable) {
         $this->assertFalse(${$key . '_owner_check'}, 'Cannot check owner if owning is not supported.');
       }
 
@@ -198,6 +197,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
     $data_table = $definition->getDataTable() ?: $definition->getBaseTable();
     $group_type = $this->createGroupType();
 
+    $group_member_values = [];
     if ($individual_permissions || $individual_is_admin) {
       $group_role = $this->createGroupRole([
         'group_type' => $group_type->id(),
@@ -205,8 +205,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
         'permissions' => $individual_is_admin ? [] : $individual_permissions,
         'admin' => $individual_is_admin,
       ]);
-      $group_type->set('creator_roles', [$group_role->id()]);
-      $group_type->save();
+      $group_member_values['group_roles'] = [$group_role->id()];
     }
 
     if ($outsider_permissions || $outsider_is_admin) {
@@ -231,6 +230,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
 
     if ($has_relationships) {
       $group = $this->setUpContent($group_type);
+      $group->addMember(\Drupal::currentUser()->getAccount(), $group_member_values);
     }
 
     $query = $this->createAlterableQuery($operation);
@@ -267,7 +267,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
           $this->addIndividualConditions([$group->id()], $scope_conditions);
         }
 
-        if ($this->isOwnable && !$operation_supports_status) {
+        if (static::$isOwnable && !$operation_supports_status) {
           if ($individual_owner_check || $outsider_owner_check || $insider_owner_check) {
             $owner_key = $definition->getKey('owner');
             $scope_conditions->condition($owner_group = $control->andConditionGroup());
@@ -354,11 +354,11 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    * @return array
    *   A list of testQueryAccess method arguments.
    */
-  public function queryAccessProvider() {
+  public static function queryAccessProvider() {
     foreach (['view', 'update', 'delete', 'unsupported'] as $operation) {
-      $operation_supports_status = $this->isPublishable && $operation === 'view';
+      $operation_supports_status = static::$isPublishable && $operation === 'view';
 
-      if ($this->relationshipsAffectAccess) {
+      if (static::$relationshipsAffectAccess) {
         // Case when there is no relationship for the entity type.
         $cases["no-relationships-$operation"] = [
           'operation' => $operation,
@@ -466,23 +466,23 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
       ];
 
       // Add the own permission (if applicable) to prove it's never checked.
-      $single_permissions = [$this->getPermission($operation, 'any')];
-      if ($this->isOwnable) {
-        $single_permissions[] = $this->getPermission($operation, 'own');
+      $single_permissions = [static::getPermission($operation, 'any')];
+      if (static::$isOwnable) {
+        $single_permissions[] = static::getPermission($operation, 'own');
       }
       $single_permissions = array_filter($single_permissions);
 
       // Do the same for unpublished, if applicable.
       if ($operation_supports_status) {
-        $unpublished_permissions = [$this->getPermission($operation, 'any', TRUE)];
-        if ($this->isOwnable) {
-          $unpublished_permissions[] = $this->getPermission($operation, 'own', TRUE);
+        $unpublished_permissions = [static::getPermission($operation, 'any', TRUE)];
+        if (static::$isOwnable) {
+          $unpublished_permissions[] = static::getPermission($operation, 'own', TRUE);
         }
         $unpublished_permissions = array_filter($unpublished_permissions);
       }
 
       // Check if there is an admin permission.
-      $admin_permission = $this->getAdminPermission();
+      $admin_permission = static::getAdminPermission();
 
       // Single scope cases.
       foreach (['outsider', 'insider', 'individual'] as $copy_key) {
@@ -494,8 +494,8 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
           $cases["single-$copy_key-any-$operation"]["{$copy_key}_permissions"] = $single_permissions;
           $cases["single-$copy_key-any-$operation"]["{$copy_key}_simple_check"] = TRUE;
 
-          if ($this->isOwnable) {
-            if ($own_permission = $this->getPermission($operation, 'own')) {
+          if (static::$isOwnable) {
+            if ($own_permission = static::getPermission($operation, 'own')) {
               $cases["single-$copy_key-own-$operation"] = $scope_base;
               $cases["single-$copy_key-own-$operation"]["{$copy_key}_permissions"] = [$own_permission];
               $cases["single-$copy_key-own-$operation"]["{$copy_key}_owner_check"] = TRUE;
@@ -520,9 +520,9 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
           $cases["single-$copy_key-any-mixed_published-$operation"]["{$copy_key}_published_simple_check"] = TRUE;
           $cases["single-$copy_key-any-mixed_published-$operation"]["{$copy_key}_unpublished_simple_check"] = TRUE;
 
-          if ($this->isOwnable) {
-            $pub_permission = $this->getPermission($operation, 'own');
-            $unpublished_permission = $this->getPermission($operation, 'own', TRUE);
+          if (static::$isOwnable) {
+            $pub_permission = static::getPermission($operation, 'own');
+            $unpublished_permission = static::getPermission($operation, 'own', TRUE);
 
             if ($pub_permission) {
               $cases["single-$copy_key-own-published-$operation"] = $status_base;
@@ -601,7 +601,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
           $cases["mixed-insider-individual_admin_permission-any-" . $operation]['individual_permissions'] = $admin_permissions;
         }
 
-        if ($this->isOwnable && ($own_permission = $this->getPermission($operation, 'own'))) {
+        if (static::$isOwnable && ($own_permission = static::getPermission($operation, 'own'))) {
           $cases["mixed-outsider-insider-own-" . $operation] = $cases["single-outsider-own-$operation"];
           $cases["mixed-outsider-insider-own-" . $operation]['insider_permissions'] = [$own_permission];
           $cases["mixed-outsider-insider-own-" . $operation]['insider_owner_check'] = TRUE;
@@ -737,9 +737,9 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
           $cases["mixed-insider-individual_admin_permission-any-mixed_published-" . $operation]['individual_permissions'] = $admin_permissions;
         }
 
-        if ($this->isOwnable) {
-          $own_published_permission = $this->getPermission($operation, 'own');
-          $own_unpublished_permission = $this->getPermission($operation, 'own', TRUE);
+        if (static::$isOwnable) {
+          $own_published_permission = static::getPermission($operation, 'own');
+          $own_unpublished_permission = static::getPermission($operation, 'own', TRUE);
 
           if ($own_published_permission) {
             $cases["mixed-outsider-insider-own-published-" . $operation] = $cases["single-outsider-own-published-$operation"];
@@ -877,7 +877,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    * @return string
    *   The permission name.
    */
-  abstract protected function getPermission($operation, $scope, $unpublished = FALSE);
+  abstract protected static function getPermission($operation, $scope, $unpublished = FALSE);
 
   /**
    * Gets the admin permission name.
@@ -885,7 +885,7 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    * @return string|false
    *   The admin permission name or FALSE if there is none.
    */
-  abstract protected function getAdminPermission();
+  abstract protected static function getAdminPermission();
 
   /**
    * Builds and returns a query that will be altered.

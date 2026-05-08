@@ -60,19 +60,6 @@ jest.mock('../../store/useModelStore', () => ({
   }),
 }));
 
-jest.mock('../../store/useViewportStore', () => ({
-  useViewportStore: jest.fn((selector) => {
-    const state = {
-      viewportTarget: null,
-      setViewportTarget: jest.fn(),
-      reactFlowReady: false,
-      setReactFlowReady: jest.fn(),
-    };
-    if (typeof selector === 'function') return selector(state);
-    return state;
-  }),
-}));
-
 jest.mock('../../store/usePanelStore', () => ({
   usePanelStore: jest.fn((selector) => {
     const state = {
@@ -149,8 +136,17 @@ jest.mock('../../hooks/useReplayCoordination', () => ({
   })),
 }));
 
-jest.mock('../../hooks/useViewportEffects', () => ({
-  useViewportEffects: jest.fn(),
+jest.mock('../../hooks/useViewportActions', () => ({
+  useViewportActions: jest.fn(() => ({
+    panToNode: jest.fn(),
+    panToNodeIfOffscreen: jest.fn(),
+    fitToNodes: jest.fn(),
+    topAlignNode: jest.fn(),
+    focusNode: jest.fn(),
+    fitToNodePair: jest.fn(),
+    selectAndFocus: jest.fn(),
+    setReady: jest.fn(),
+  })),
 }));
 
 jest.mock('../../hooks/useDragAndDrop', () => ({
@@ -325,6 +321,8 @@ jest.mock('../../plugins/pluginApi', () => ({
   setApiReadOnly: jest.fn(),
   setMutationHooks: jest.fn(),
   clearMutationHooks: jest.fn(),
+  setViewportHooks: jest.fn(),
+  clearViewportHooks: jest.fn(),
 }));
 
 jest.mock('../../plugins/pluginRegistry', () => ({
@@ -550,27 +548,11 @@ describe('Flow', () => {
     });
   });
 
-  describe('useViewportEffects onViewportChange callback', () => {
-    it('should clear viewport target when viewport changes', () => {
-      const { useViewportEffects } = require('../../hooks/useViewportEffects');
-      let capturedOnViewportChange: any;
-      useViewportEffects.mockImplementation((opts: any) => {
-        capturedOnViewportChange = opts.onViewportChange;
-      });
-
-      const { useViewportStore } = require('../../store/useViewportStore');
-      const mockSetViewportTarget = jest.fn();
-      useViewportStore.mockImplementation((selector: any) => {
-        const state = {
-          viewportTarget: { nodeId: 'n1' }, setViewportTarget: mockSetViewportTarget,
-          reactFlowReady: false, setReactFlowReady: jest.fn(),
-        };
-        return typeof selector === 'function' ? selector(state) : state;
-      });
-
+  describe('useViewportActions integration', () => {
+    it('should call useViewportActions and receive viewport actions object', () => {
+      const { useViewportActions } = require('../../hooks/useViewportActions');
       render(<Flow {...defaultProps} />);
-      capturedOnViewportChange();
-      expect(mockSetViewportTarget).toHaveBeenCalledWith(null);
+      expect(useViewportActions).toHaveBeenCalled();
     });
   });
 

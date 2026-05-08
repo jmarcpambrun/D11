@@ -82,8 +82,8 @@ class ContentEntityAccessComplexTest extends GroupKernelTestBase {
     $this->createNodeType(['type' => 'page']);
     $this->createNodeType(['type' => 'article']);
 
-    $this->groupTypeA = $this->createGroupType(['id' => 'foo', 'creator_membership' => FALSE]);
-    $this->groupTypeB = $this->createGroupType(['id' => 'bar', 'creator_membership' => FALSE]);
+    $this->groupTypeA = $this->createGroupType(['id' => 'foo']);
+    $this->groupTypeB = $this->createGroupType(['id' => 'bar']);
 
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);

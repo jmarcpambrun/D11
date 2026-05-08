@@ -3,13 +3,15 @@ import { EdgeLabelRenderer, EdgeProps } from 'reactflow';
 import { useEdgePath } from '../../hooks/useEdgePath';
 import { useControlPointDrag } from '../../hooks/useControlPointDrag';
 import EdgeOrderBadge from './EdgeOrderBadge';
-import QuickAddConditionButton from '../QuickAddConditionButton';
+import QuickAddEdgeButton from '../QuickAddEdgeButton';
 import type { StoreComponent as Component } from '../../types/settings';
 import { onRenderCallback } from '../../utils/profiling';
+import { EDGE_STYLING } from '../../constants/dimensions';
 import type { BaseEdgeData } from '../../types/settings';
 
 interface DefaultEdgeData extends BaseEdgeData {
   onAddCondition?: (edgeId: string, component: Component) => void;
+  onAddActionOnEdge?: (edgeId: string, component: Component) => void;
 }
 
 interface DefaultEdgeProps extends EdgeProps {
@@ -110,7 +112,7 @@ const DefaultEdge: React.FC<DefaultEdgeProps> = ({
         </>
       )}
       <EdgeLabelRenderer>
-        {/* Quick Add Condition Button - show on edges without conditions */}
+        {/* Quick Add Button - show on edges without conditions to add conditions or insert nodes */}
         {data?.onAddCondition && (
           <div
             className="edge-quick-add-wrapper"
@@ -118,9 +120,10 @@ const DefaultEdge: React.FC<DefaultEdgeProps> = ({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             }}
           >
-            <QuickAddConditionButton
+            <QuickAddEdgeButton
               edgeId={id}
               onAddCondition={(component) => data.onAddCondition!(id, component)}
+              onAddAction={(component) => data.onAddActionOnEdge?.(id, component)}
               disabled={false}
             />
           </div>
@@ -143,12 +146,21 @@ const DefaultEdge: React.FC<DefaultEdgeProps> = ({
           </div>
         )}
 
-        {/* Edge Order Number Badge — visible even in read-only/locked mode,
-            but drag-reorder is disabled when any lock is active. */}
+        {/* Edge Order Number Badge — positioned northeast of the quick-add
+            button.  Uses labelX/labelY (the actual rendered edge midpoint)
+            instead of edgeOrderInfo.pathX/pathY (computed from node positions)
+            so the badge stays anchored to the button even on initial load
+            before node dimensions are fully measured. */}
         {data?.edgeOrdersVisible && data?.edgeOrderInfo && (
           <EdgeOrderBadge
             edgeId={id}
-            edgeOrderInfo={data.edgeOrderInfo}
+            edgeOrderInfo={{
+              ...data.edgeOrderInfo,
+              pathX: data.edgeOrderInfo.pathX != null
+                ? labelX + EDGE_STYLING.BADGE_NE_OFFSET
+                : undefined,
+              pathY: labelY,
+            }}
             isLocked={!!data?.globalLocked}
             onReorderEdge={data.onReorderEdge}
           />

@@ -80,6 +80,8 @@ export interface NodeColors {
   typeEventText: string;
   typeCondition: string;
   typeGateway: string;
+  typeGatewayLight: string;
+  typeGatewayHeader: string;
   annotationBg: string;
   annotationBorder: string;
   annotationText: string;
@@ -101,6 +103,8 @@ export function resolveColors(): NodeColors {
     typeEventText: resolveVar('--modeler-color-warning-darker') || '#b45309',
     typeCondition: resolveVar('--modeler-color-type-condition') || '#2196f3',
     typeGateway: resolveVar('--modeler-color-type-gateway') || '#9c27b0',
+    typeGatewayLight: resolveVar('--modeler-color-type-gateway-light') || '#f3e5f5',
+    typeGatewayHeader: resolveVar('--modeler-color-type-gateway-header') || '#7b1fa2',
     annotationBg: resolveVar('--modeler-color-warning-light') || '#fef3c7',
     annotationBorder: resolveVar('--modeler-color-warning') || '#f59e0b',
     annotationText: resolveVar('--modeler-color-warning-darkest') || '#92400e',
@@ -174,26 +178,39 @@ export interface NodeInfo {
   annotationsVisible: boolean;
 }
 
-/** Rounded rectangle node (action / condition / start / subprocess). */
+/** Rounded rectangle node (action / start / subprocess / gateway). */
 export function renderRectNode(
   n: NodeInfo,
   c: NodeColors,
 ): string {
   const isStart = n.type === 'start';
   const isSubprocess = n.type === 'subprocess';
+  const isGateway = n.type === 'gateway';
   const borderColor = isStart
     ? c.typeEvent
     : isSubprocess
       ? c.typeCondition
-      : c.borderLight;
-  const headerBg = isStart ? c.typeEventLight : c.bgSurface;
-  const headerText = isStart ? c.typeEventText : c.textSecondary;
+      : isGateway
+        ? c.typeGateway
+        : c.borderLight;
+  const headerBg = isStart
+    ? c.typeEventLight
+    : isGateway
+      ? c.typeGatewayLight
+      : c.bgSurface;
+  const headerText = isStart
+    ? c.typeEventText
+    : isGateway
+      ? c.typeGatewayHeader
+      : c.textSecondary;
   const borderStyle = isSubprocess ? 'stroke-dasharray="6 4"' : '';
   const typeLabel = isStart
     ? getComponentLabel('start')
     : isSubprocess
       ? getComponentLabel('subprocess')
-      : getComponentLabel('element');
+      : isGateway
+        ? getComponentLabel('gateway')
+        : getComponentLabel('element');
 
   const r = 8; // border-radius
   const headerH = 28;
@@ -248,46 +265,10 @@ export function renderRectNode(
   ].join('\n');
 }
 
-/** Diamond gateway node. */
-export function renderGatewayNode(
-  n: NodeInfo,
-  c: NodeColors,
-): string {
-  // The diamond is centered at (x + w/2, y + h/2)
-  const size = Math.max(56, Math.min(120, n.w));
-  const half = size / 2;
-  const cx = n.x + n.w / 2;
-  const cy = n.y + n.h / 2;
-
-  const labelLines = wrapText(n.label, size * 0.65, 10);
-
-  let annotationEl = '';
-  if (n.annotation && n.annotationsVisible) {
-    annotationEl = [
-      `<rect x="${cx - 60}" y="${cy - half - 24}" width="120" height="18" rx="3"`,
-      `  fill="${c.annotationBg}" stroke="${c.annotationBorder}" stroke-width="1"/>`,
-      `<text x="${cx}" y="${cy - half - 11}" text-anchor="middle" fill="${c.annotationText}"`,
-      `  font-size="10">${escapeXml(n.annotation.slice(0, 25))}${n.annotation.length > 25 ? '…' : ''}</text>`,
-    ].join('\n');
-  }
-
-  const textEls = labelLines.map((line, i) => {
-    const yOff = -((labelLines.length - 1) * 6) + i * 13;
-    return `<text x="${cx}" y="${cy + yOff + 4}" text-anchor="middle" ` +
-      `fill="${c.textPrimary}" font-size="10" font-weight="500">${escapeXml(line)}</text>`;
-  });
-
-  return [
-    `<g>`,
-    annotationEl,
-    `  <rect x="${cx - half}" y="${cy - half}" width="${size}" height="${size}"`,
-    `    transform="rotate(45, ${cx}, ${cy})"`,
-    `    fill="${c.bgPrimary}" stroke="${c.typeGateway}" stroke-width="2"`,
-    `    rx="4" ry="4"/>`,
-    ...textEls,
-    `</g>`,
-  ].join('\n');
-}
+/**
+ * @deprecated Gateway nodes are now rendered as rectangular cards (same as
+ * all other node types).  Kept temporarily for reference; will be removed.
+ */
 
 // ---------------------------------------------------------------------------
 // Render edge labels (conditions, annotations, order badges) as SVG.
@@ -406,11 +387,10 @@ export function exportCanvasToSvg(): string {
   let maxY = -Infinity;
 
   nodeInfos.forEach(n => {
-    const extra = n.type === 'gateway' ? 20 : 0; // gateway diamond extends beyond bounding box
-    minX = Math.min(minX, n.x - extra);
-    minY = Math.min(minY, n.y - extra - (n.annotation && n.annotationsVisible ? 30 : 0));
-    maxX = Math.max(maxX, n.x + n.w + extra);
-    maxY = Math.max(maxY, n.y + n.h + extra);
+    minX = Math.min(minX, n.x);
+    minY = Math.min(minY, n.y - (n.annotation && n.annotationsVisible ? 30 : 0));
+    maxX = Math.max(maxX, n.x + n.w);
+    maxY = Math.max(maxY, n.y + n.h);
   });
 
   const padding = 40;
@@ -482,11 +462,7 @@ export function exportCanvasToSvg(): string {
   // ---------------------------------------------------------------------------
   // 5.  Build the SVG.
   // ---------------------------------------------------------------------------
-  const nodeSvgParts = nodeInfos.map(n =>
-    n.type === 'gateway'
-      ? renderGatewayNode(n, colors)
-      : renderRectNode(n, colors),
-  );
+  const nodeSvgParts = nodeInfos.map(n => renderRectNode(n, colors));
 
   const edgeLabelParts = [
     ...edgeLabelInfos.map(info => renderEdgeLabel(info, colors)),

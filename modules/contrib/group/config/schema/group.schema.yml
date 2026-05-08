@@ -27,9 +27,6 @@ group.type.*:
     creator_membership:
       type: 'boolean'
       label: 'The group creator receives a membership'
-    creator_wizard:
-      type: 'boolean'
-      label: 'The group creator must immediately complete their membership.'
     creator_roles:
       type: 'sequence'
       label: 'Group creator roles'
@@ -44,10 +41,6 @@ group_relation.config.group_cardinality:
 group_relation.config.entity_cardinality:
   type: 'integer'
   label: 'Entity cardinality'
-
-group_relation.config.use_creation_wizard:
-  type: 'boolean'
-  label: 'Use creation wizard'
 
 # Follows the pattern group.role.GROUP_TYPE_ID-GROUP_ROLE_ID.
 group.role.*:

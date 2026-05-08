@@ -20,19 +20,11 @@ class GroupRouteContext implements ContextProviderInterface {
   use GroupRouteContextTrait;
   use StringTranslationTrait;
 
-  /**
-   * Constructs a new GroupRouteContext.
-   *
-   * @param \Drupal\Core\Routing\RouteMatchInterface $current_route_match
-   *   The current route match object.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
-   */
-  public function __construct(RouteMatchInterface $current_route_match, EntityTypeManagerInterface $entity_type_manager, TranslationInterface $string_translation) {
-    $this->currentRouteMatch = $current_route_match;
-    $this->entityTypeManager = $entity_type_manager;
+  public function __construct(
+    protected RouteMatchInterface $currentRouteMatch,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    TranslationInterface $string_translation,
+  ) {
     $this->stringTranslation = $string_translation;
   }
 

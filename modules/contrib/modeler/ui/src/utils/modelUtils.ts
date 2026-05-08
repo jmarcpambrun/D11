@@ -2,16 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import type { StoreNode as Node, StoreEdge as Edge, ModelData } from '../types/settings';
 import { EDGE_STYLING, LAYOUT, NODE_DIMENSIONS, VIEWPORT } from '../constants/dimensions';
 import { resolveNodeType } from './componentUtils';
-import {
-  findStartNodes,
-  buildGraphData,
-} from './layoutHelpers';
-import {
-  processFlowLayout,
-  convertPositionsToCoordinates,
-  groupNodesByRow,
-  optimizeRowAlignment,
-} from './layoutStrategies';
+import { simulateIncrementalBuild } from './incrementalLayout';
+import { routeAllParallelEdges } from './parallelEdgeRouter';
 
 // Type definitions for React Flow
 interface Viewport {
@@ -80,6 +72,10 @@ export function parseModelData(modelData: ModelData | string | null): { nodes: N
   // Create a set of valid node IDs for edge validation
   const nodeIds = new Set(nodes.map((n: any) => n.id));
   
+  // Track assigned edge IDs so parallel edges (same source and target)
+  // that arrive with duplicate IDs from the backend get deduplicated.
+  const seenEdgeIds = new Set<string>();
+
   // Filter edges to only include those that reference existing nodes
   const edges = (data.edges || [])
     .filter((edge: any, _index: number) => {
@@ -88,8 +84,14 @@ export function parseModelData(modelData: ModelData | string | null): { nodes: N
       return sourceExists && targetExists;
     })
     .map((edge: any, index: number) => {
-      // Ensure unique edge ID
-      const edgeId = edge.id || `${edge.source}-${edge.target}-${index}`;
+      // Ensure unique edge ID.  If the backend sent a duplicate (e.g.
+      // parallel edges before the backend fix), append the array index
+      // to make it unique so ReactFlow receives distinct keys.
+      let edgeId = edge.id || `${edge.source}-${edge.target}-${index}`;
+      if (seenEdgeIds.has(edgeId)) {
+        edgeId = `${edgeId}_${index}`;
+      }
+      seenEdgeIds.add(edgeId);
       
       // Determine edge type based on content
       // Only two edge types: 'condition' (has a condition) or 'default' (no condition).
@@ -135,7 +137,11 @@ export function parseModelData(modelData: ModelData | string | null): { nodes: N
   const needsLayout = unlockedNodes.length > 1 && unlockedNodes.every((n: any) => n.position.x === LAYOUT.DEFAULT_POSITION_X && n.position.y === LAYOUT.DEFAULT_POSITION_Y);
   if (needsLayout) {
     const layoutedNodes = autoLayout(nodes, edges);
-    return { nodes: layoutedNodes || nodes, edges, modelData: data };
+    // After auto-layout positions nodes, route parallel edges so that
+    // multiple edges between the same source/target spread out
+    // horizontally instead of overlapping.
+    const routedEdges = routeAllParallelEdges(edges);
+    return { nodes: layoutedNodes || nodes, edges: routedEdges, modelData: data };
   }
   
   return { nodes, edges, modelData: data };
@@ -231,44 +237,21 @@ export function exportModelData(nodes: Node[], edges: Edge[], metadata: Record<s
 }
 
 /**
- * Generate automatic layout for nodes based on edge flow
- * Refactored into smaller, maintainable functions
+ * Generate automatic layout for nodes based on edge flow.
+ *
+ * Delegates to {@link simulateIncrementalBuild}, which walks the graph
+ * from each start node and places successors using the same primitives
+ * that quick-add and drag-to-connect use.  This guarantees that the
+ * auto-layout output is by definition equivalent to "what the user
+ * would have seen if they had built this model node-by-node with
+ * quick-add" — there is one source of placement truth.
+ *
+ * Signature and return shape are preserved: returns `null` for empty
+ * input, otherwise returns a node array with freshly assigned positions.
  */
 export function autoLayout(nodes: Node[], edges: Edge[]): Node[] | null {
-  // Safety checks
   if (!nodes || nodes.length === 0) return null;
-  if (!edges) edges = []; // Default to empty array if edges is undefined
-  
-  const layoutNodes = [...nodes];
-
-  // Default starting position for layout
-  const startPos = { x: LAYOUT.LAYOUT_START_X, y: LAYOUT.LAYOUT_START_Y };
-
-  // Build graph data structure
-  const graphData = buildGraphData(layoutNodes, edges);
-
-  // Find start nodes for layout
-  const actualStartNodes = findStartNodes(layoutNodes, graphData.inDegree);
-
-  // Process flow layout to determine row/column positions
-  const nodePositions = processFlowLayout(actualStartNodes, layoutNodes, graphData);
-  
-  // Convert positions to actual coordinates (pass edges for condition-aware spacing)
-  const nodesWithCoordinates = convertPositionsToCoordinates(
-    layoutNodes,
-    nodePositions,
-    startPos,
-    [],
-    edges,
-  );
-  
-  // Group nodes by row for optimization
-  const rowNodes = groupNodesByRow(nodePositions, nodesWithCoordinates);
-  
-  // Optimize alignment within rows
-  optimizeRowAlignment(nodesWithCoordinates, edges, rowNodes);
-  
-  return nodesWithCoordinates;
+  return simulateIncrementalBuild(nodes, edges || []);
 }
 
 /**

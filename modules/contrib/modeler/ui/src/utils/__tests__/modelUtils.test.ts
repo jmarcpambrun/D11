@@ -269,6 +269,45 @@ describe('modelUtils', () => {
       const result = parseModelData(data as any);
       expect(result.edges).toEqual([]);
     });
+
+    it('should deduplicate edge IDs for parallel edges with the same source and target', () => {
+      const data = {
+        nodes: [
+          { id: 'event1', type: 'start', position: { x: 0, y: 0 } },
+          { id: 'action1', type: 'element', position: { x: 200, y: 0 } },
+        ],
+        edges: [
+          { id: 'event1_action1', source: 'event1', target: 'action1', condition: 'cond_a', conditionLabel: 'Cond A' },
+          { id: 'event1_action1', source: 'event1', target: 'action1', condition: 'cond_b', conditionLabel: 'Cond B' },
+        ],
+      };
+      const result = parseModelData(data as any);
+      expect(result.edges).toHaveLength(2);
+      // IDs must be unique
+      const ids = result.edges.map(e => e.id);
+      expect(new Set(ids).size).toBe(2);
+      // First edge keeps the original ID
+      expect(ids[0]).toBe('event1_action1');
+      // Second edge gets a disambiguated ID
+      expect(ids[1]).toContain('event1_action1');
+      expect(ids[1]).not.toBe('event1_action1');
+    });
+
+    it('should preserve distinct edge IDs without modification', () => {
+      const data = {
+        nodes: [
+          { id: 'n1', type: 'start', position: { x: 0, y: 0 } },
+          { id: 'n2', type: 'element', position: { x: 200, y: 0 } },
+          { id: 'n3', type: 'element', position: { x: 400, y: 0 } },
+        ],
+        edges: [
+          { id: 'n1_n2', source: 'n1', target: 'n2' },
+          { id: 'n1_n3', source: 'n1', target: 'n3' },
+        ],
+      };
+      const result = parseModelData(data as any);
+      expect(result.edges.map(e => e.id)).toEqual(['n1_n2', 'n1_n3']);
+    });
   });
 
   describe('exportModelData', () => {
@@ -604,6 +643,64 @@ describe('modelUtils', () => {
       const result = autoLayout(nodes, edges);
       expect(result).toBeDefined();
       expect(result?.length).toBe(2);
+    });
+
+    it('should place a linear chain in a single column (incremental contract)', () => {
+      // Issue #3588454: auto-layout simulates incremental quick-add, so a
+      // simple event → action → action chain must come back as a tidy
+      // single-column layout — not as a fanned-out tree.
+      const nodes: Node[] = [
+        { id: 'a', type: 'start', position: { x: 0, y: 0 }, data: {} },
+        { id: 'b', type: 'element', position: { x: 0, y: 0 }, data: {} },
+        { id: 'c', type: 'element', position: { x: 0, y: 0 }, data: {} },
+      ];
+      const edges: Edge[] = [
+        { id: 'e1', source: 'a', target: 'b' },
+        { id: 'e2', source: 'b', target: 'c' },
+      ];
+      const result = autoLayout(nodes, edges)!;
+      const xs = new Set(result.map(n => n.position.x));
+      expect(xs.size).toBe(1);
+    });
+
+    it('should NOT fan out non-gateway parents with multiple successors', () => {
+      // Behavior change introduced by issue #3588454.  A plain element
+      // node with two successors keeps them in its own column instead
+      // of spreading them horizontally.
+      const nodes: Node[] = [
+        { id: 'a', type: 'start', position: { x: 0, y: 0 }, data: {} },
+        { id: 'b', type: 'element', position: { x: 0, y: 0 }, data: {} },
+        { id: 'c', type: 'element', position: { x: 0, y: 0 }, data: {} },
+      ];
+      const edges: Edge[] = [
+        { id: 'e1', source: 'a', target: 'b' },
+        { id: 'e2', source: 'a', target: 'c' },
+      ];
+      const result = autoLayout(nodes, edges)!;
+      const a = result.find(n => n.id === 'a')!;
+      // No child is placed to the LEFT of the parent (which is what the
+      // legacy auto-layout used to do for plain action parents).
+      const childrenX = result.filter(n => n.id !== 'a').map(n => n.position.x);
+      expect(childrenX.every(x => x >= a.position.x)).toBe(true);
+    });
+
+    it('should still fan out gateway successors horizontally', () => {
+      const nodes: Node[] = [
+        { id: 'a', type: 'start', position: { x: 0, y: 0 }, data: {} },
+        { id: 'g', type: 'gateway', position: { x: 0, y: 0 }, data: {} },
+        { id: 'x', type: 'element', position: { x: 0, y: 0 }, data: {} },
+        { id: 'y', type: 'element', position: { x: 0, y: 0 }, data: {} },
+      ];
+      const edges: Edge[] = [
+        { id: 'e1', source: 'a', target: 'g' },
+        { id: 'e2', source: 'g', target: 'x' },
+        { id: 'e3', source: 'g', target: 'y' },
+      ];
+      const result = autoLayout(nodes, edges)!;
+      const x = result.find(n => n.id === 'x')!;
+      const y = result.find(n => n.id === 'y')!;
+      // Gateway children get distinct X positions (horizontal fan-out).
+      expect(x.position.x).not.toBe(y.position.x);
     });
   });
 

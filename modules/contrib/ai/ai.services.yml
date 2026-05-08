@@ -68,6 +68,7 @@ services:
     tags:
       - { name: 'event_subscriber' }
   Drupal\ai\EventSubscriber\GuardrailsEventSubscriber: ~
+  Drupal\ai\EventSubscriber\GlobalGuardrailsEventSubscriber: ~
   Drupal\ai\Guardrail\AiGuardrailRepository: ~
   Drupal\ai\Guardrail\AiGuardrailHelper: ~
   ai.guardrail_helper: '@Drupal\ai\Guardrail\AiGuardrailHelper'
@@ -85,3 +86,8 @@ services:
   ai.hostname_filter_service:
     class: Drupal\ai\Service\HostnameFilter
     arguments: ['@logger.factory', '@config.factory']
+  plugin.manager.ai.chat_processor:
+    class: Drupal\ai\PluginManager\ChatProcessorPluginManager
+    parent: default_plugin_manager
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
+  Drupal\ai\PluginManager\ChatProcessorPluginManager: '@plugin.manager.ai.chat_processor'

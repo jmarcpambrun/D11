@@ -2,18 +2,19 @@
 
 namespace Drupal\group\Plugin\Validation\Constraint;
 
-use Symfony\Component\Validator\Constraint;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Validation\Attribute\Constraint;
+use Symfony\Component\Validator\Constraint as SymfonyConstraint;
 
 /**
  * Checks the roles assigned to a group membership.
- *
- * @Constraint(
- *   id = "GroupMembershipRoles",
- *   label = @Translation("Group membership roles check", context = "Validation"),
- *   type = "entity:group_relationship"
- * )
  */
-class GroupMembershipRoles extends Constraint {
+#[Constraint(
+  id: 'GroupMembershipRoles',
+  label: new TranslatableMarkup('Group membership roles check', [], ['context' => 'Validation']),
+  type: 'entity:group_relationship',
+)]
+class GroupMembershipRoles extends SymfonyConstraint {
 
   /**
    * When a role does not exist.

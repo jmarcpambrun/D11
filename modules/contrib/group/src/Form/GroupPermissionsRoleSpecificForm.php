@@ -38,13 +38,14 @@ class GroupPermissionsRoleSpecificForm extends GroupPermissionsForm {
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
-   * @param \Drupal\group\Entity\GroupRoleInterface $group_role
+   * @param ?\Drupal\group\Entity\GroupRoleInterface $group_role
    *   The group role used for this form.
    *
    * @return array
    *   The form structure.
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?GroupRoleInterface $group_role = NULL) {
+    // @todo Check for group role and throw exception.
     $this->groupRole = $group_role;
     return parent::buildForm($form, $form_state);
   }

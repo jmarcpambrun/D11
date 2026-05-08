@@ -20,29 +20,13 @@ class OperationProvider implements OperationProviderInterface {
 
   use OperationProviderTrait;
 
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * Constructs a new OperationProvider.
-   *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $groupRelationTypeManager
-   *   The group relation type manager.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
-   */
-  public function __construct(ModuleHandlerInterface $module_handler, AccountProxyInterface $current_user, EntityTypeManagerInterface $entity_type_manager, GroupRelationTypeManagerInterface $groupRelationTypeManager, TranslationInterface $string_translation) {
-    $this->moduleHandler = $module_handler;
+  public function __construct(
+    protected ModuleHandlerInterface $moduleHandler,
+    AccountProxyInterface $current_user,
+    EntityTypeManagerInterface $entity_type_manager,
+    GroupRelationTypeManagerInterface $groupRelationTypeManager,
+    TranslationInterface $string_translation,
+  ) {
     $this->currentUser = $current_user;
     $this->entityTypeManager = $entity_type_manager;
     $this->groupRelationTypeManager = $groupRelationTypeManager;

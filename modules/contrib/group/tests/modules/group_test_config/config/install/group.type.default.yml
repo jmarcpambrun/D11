@@ -6,5 +6,4 @@ label: 'Default label'
 description: 'Default description.'
 new_revision: true
 creator_membership: true
-creator_wizard: true
 creator_roles: {  }

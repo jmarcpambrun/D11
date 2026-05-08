@@ -2,79 +2,96 @@
 
 namespace Drupal\group\Entity;
 
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\group\Entity\Access\GroupRelationshipAccessControlHandler;
+use Drupal\group\Entity\Controller\GroupRelationshipListBuilder;
+use Drupal\group\Entity\Form\GroupRelationshipDeleteForm;
+use Drupal\group\Entity\Form\GroupRelationshipForm;
+use Drupal\group\Entity\Routing\GroupRelationshipRouteProvider;
+use Drupal\group\Entity\Storage\GroupRelationshipStorage;
 use Drupal\group\Entity\Storage\GroupRelationshipStorageInterface;
+use Drupal\group\Entity\Storage\GroupRelationshipStorageSchema;
 use Drupal\group\Entity\Storage\GroupRoleStorageInterface;
+use Drupal\group\Entity\Views\GroupRelationshipViewsData;
+use Drupal\group\Form\GroupJoinForm;
+use Drupal\group\Form\GroupLeaveForm;
 use Drupal\user\EntityOwnerTrait;
+use Drupal\user\UserInterface;
+use Drupal\workspaces\Entity\Handler\IgnoredWorkspaceHandler;
 
 /**
  * Defines the relationship entity.
  *
  * @ingroup group
- *
- * @ContentEntityType(
- *   id = "group_relationship",
- *   label = @Translation("Group relationship"),
- *   label_singular = @Translation("group relationship"),
- *   label_plural = @Translation("group relationships"),
- *   label_count = @PluralTranslation(
- *     singular = "@count group relationship",
- *     plural = "@count group relationships"
- *   ),
- *   bundle_label = @Translation("Group relationship type"),
- *   handlers = {
- *     "storage" = "Drupal\group\Entity\Storage\GroupRelationshipStorage",
- *     "storage_schema" = "Drupal\group\Entity\Storage\GroupRelationshipStorageSchema",
- *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "views_data" = "Drupal\group\Entity\Views\GroupRelationshipViewsData",
- *     "list_builder" = "Drupal\group\Entity\Controller\GroupRelationshipListBuilder",
- *     "route_provider" = {
- *       "html" = "Drupal\group\Entity\Routing\GroupRelationshipRouteProvider",
- *     },
- *     "form" = {
- *       "add" = "Drupal\group\Entity\Form\GroupRelationshipForm",
- *       "edit" = "Drupal\group\Entity\Form\GroupRelationshipForm",
- *       "delete" = "Drupal\group\Entity\Form\GroupRelationshipDeleteForm",
- *       "group-join" = "Drupal\group\Form\GroupJoinForm",
- *       "group-leave" = "Drupal\group\Form\GroupLeaveForm",
- *     },
- *     "access" = "Drupal\group\Entity\Access\GroupRelationshipAccessControlHandler",
- *   },
- *   base_table = "group_relationship",
- *   data_table = "group_relationship_field_data",
- *   translatable = TRUE,
- *   entity_keys = {
- *     "id" = "id",
- *     "uuid" = "uuid",
- *     "owner" = "uid",
- *     "langcode" = "langcode",
- *     "bundle" = "type",
- *     "label" = "label"
- *   },
- *   links = {
- *     "add-form" = "/group/{group}/content/add/{plugin_id}",
- *     "add-page" = "/group/{group}/content/add",
- *     "canonical" = "/group/{group}/content/{group_relationship}",
- *     "collection" = "/group/{group}/content",
- *     "create-form" = "/group/{group}/content/create/{plugin_id}",
- *     "create-page" = "/group/{group}/content/create",
- *     "delete-form" = "/group/{group}/content/{group_relationship}/delete",
- *     "edit-form" = "/group/{group}/content/{group_relationship}/edit"
- *   },
- *   bundle_entity_type = "group_relationship_type",
- *   field_ui_base_route = "entity.group_relationship_type.edit_form",
- *   permission_granularity = "bundle",
- *   constraints = {
- *     "GroupRelationshipCardinality" = {},
- *     "GroupMembershipRoles" = {}
- *   }
- * )
  */
+#[ContentEntityType(
+  id: 'group_relationship',
+  label: new TranslatableMarkup('Group relationship'),
+  label_collection: new TranslatableMarkup('Group relationships'),
+  label_singular: new TranslatableMarkup('group relationship'),
+  label_plural: new TranslatableMarkup('group relationships'),
+  entity_keys: [
+    'id' => 'id',
+    'uuid' => 'uuid',
+    'owner' => 'uid',
+    'langcode' => 'langcode',
+    'bundle' => 'type',
+    'label' => 'label',
+  ],
+  handlers: [
+    'access' => GroupRelationshipAccessControlHandler::class,
+    'storage' => GroupRelationshipStorage::class,
+    'storage_schema' => GroupRelationshipStorageSchema::class,
+    'view_builder' => EntityViewBuilder::class,
+    'list_builder' => GroupRelationshipListBuilder::class,
+    'views_data' => GroupRelationshipViewsData::class,
+    'form' => [
+      'add' => GroupRelationshipForm::class,
+      'edit' => GroupRelationshipForm::class,
+      'delete' => GroupRelationshipDeleteForm::class,
+      'group-join' => GroupJoinForm::class,
+      'group-leave' => GroupLeaveForm::class,
+    ],
+    'route_provider' => [
+      'html' => GroupRelationshipRouteProvider::class,
+    ],
+    'workspace' => IgnoredWorkspaceHandler::class,
+  ],
+  links: [
+    'add-form' => '/group/{group}/content/add/{plugin_id}',
+    'add-page' => '/group/{group}/content/add',
+    'canonical' => '/group/{group}/content/{group_relationship}',
+    'collection' => '/group/{group}/content',
+    'create-form' => '/group/{group}/content/create/{plugin_id}',
+    'create-page' => '/group/{group}/content/create',
+    'delete-form' => '/group/{group}/content/{group_relationship}/delete',
+    'edit-form' => '/group/{group}/content/{group_relationship}/edit',
+  ],
+  permission_granularity: 'bundle',
+  bundle_entity_type: 'group_relationship_type',
+  bundle_label: new TranslatableMarkup('Group relationship type'),
+  base_table: 'group_relationship',
+  data_table: 'group_relationship_field_data',
+  translatable: TRUE,
+  label_count: [
+    'singular' => '@count group relationship',
+    'plural' => '@count group relationships',
+  ],
+  field_ui_base_route: 'entity.group_relationship_type.edit_form',
+  constraints: [
+    'GroupRelationshipCardinality' => [],
+    'GroupMembershipRoles' => [],
+  ],
+)]
 class GroupRelationship extends ContentEntityBase implements GroupRelationshipInterface {
 
   use EntityChangedTrait;
@@ -177,7 +194,7 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
    * {@inheritdoc}
    */
   public function label() {
-    return _group_relation_type_manager()
+    return static::groupRelationTypeManager()
       ->getUiTextProvider($this->getPluginId())
       ->getRelationshipLabel($this);
   }
@@ -257,11 +274,19 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
 
     if ($update === FALSE) {
       // We want to make sure that the entity we just added to the group behaves
-      // as a grouped entity. This means we may need to update access records,
-      // flush some caches containing the entity or perform other operations we
-      // cannot possibly know about. Lucky for us, all of that behavior usually
-      // happens when saving an entity so let's re-save the added entity.
-      $this->getEntity()->save();
+      // as a grouped entity. Any code that runs "live" should get the new
+      // information, but we want to invalidate cache entries that listed the
+      // entity as a cacheable dependency.
+      //
+      // One drawback to the above is that not everything gets cached. Some
+      // things get calculated and stored as entities (or other DB entries) of
+      // their own without any cacheable metadata attached. One example being
+      // the Pathauto module generating path aliases upon entity save.
+      //
+      // It is up to these modules to listen to hook_group_relationship_insert()
+      // and call ::getEntity() on the relationship to also run their code on
+      // the entity that got added to a group.
+      Cache::invalidateTags($this->getEntity()->getCacheTags());
     }
 
     // If a membership gets updated, but the member's roles haven't changed, we
@@ -292,13 +317,14 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
     foreach ($entities as $group_relationship) {
       assert($group_relationship instanceof GroupRelationshipInterface);
       if ($entity = $group_relationship->getEntity()) {
-        // For the same reasons we re-save entities that are added to a group,
-        // we need to re-save entities that were removed from one. See
-        // ::postSave(). We only save the entity if it still exists to avoid
-        // trying to save an entity that just got deleted and triggered the
-        // deletion of its relationship entities.
-        // @todo Revisit when https://www.drupal.org/node/2754399 lands.
-        $entity->save();
+        // For the same reason we invalidate the cache tags of entities that are
+        // added to a group, we need to invalidate the cache tags of those that
+        // were removed from one. See ::postSave().
+        //
+        // We can only invalidate the cache tags of entities that still exist
+        // and not the ones that were just deleted and triggered the deletion of
+        // their group relationship entities.
+        Cache::invalidateTags($entity->getCacheTags());
 
         // If a membership gets deleted, we need to reset the internal group
         // roles cache for the member in that group, but only if the user still
@@ -306,7 +332,8 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
         if ($group_relationship->getPluginId() == 'group_membership') {
           $role_storage = \Drupal::entityTypeManager()->getStorage('group_role');
           assert($role_storage instanceof GroupRoleStorageInterface);
-          $role_storage->resetUserGroupRoleCache($group_relationship->getEntity(), $group_relationship->getGroup());
+          assert($entity instanceof UserInterface);
+          $role_storage->resetUserGroupRoleCache($entity, $group_relationship->getGroup());
         }
       }
     }
@@ -440,7 +467,7 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
     if ($relationship_type = GroupRelationshipType::load($bundle)) {
       assert($relationship_type instanceof GroupRelationshipTypeInterface);
       $fields['entity_id'] = clone $base_field_definitions['entity_id'];
-      _group_relation_type_manager()
+      static::groupRelationTypeManager()
         ->getEntityReferenceHandler($relationship_type->getPluginId())
         ->configureField($fields['entity_id']);
 
@@ -448,6 +475,18 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
     }
 
     return [];
+  }
+
+  /**
+   * Gets the group relation type manager.
+   *
+   * @return \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
+   *   The group relation type manager.
+   *
+   * @internal Try to properly inject the service when possible.
+   */
+  protected static function groupRelationTypeManager() {
+    return \Drupal::service('group_relation_type.manager');
   }
 
 }

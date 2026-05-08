@@ -390,6 +390,7 @@ describe('A11y Audit: Documentation Components', () => {
 
 import QuickAddButton from '../QuickAddButton';
 import QuickAddConditionButton from '../QuickAddConditionButton';
+import QuickAddEdgeButton from '../QuickAddEdgeButton';
 import QuickAddEventButton from '../QuickAddEventButton';
 
 describe('A11y Audit: Quick-Add Components', () => {
@@ -401,6 +402,13 @@ describe('A11y Audit: Quick-Add Components', () => {
   test('QuickAddConditionButton has no a11y violations', async () => {
     const results = await audit(
       <QuickAddConditionButton edgeId="edge_1" onAddCondition={jest.fn()} />
+    );
+    expect(results).toHaveNoViolations();
+  });
+
+  test('QuickAddEdgeButton has no a11y violations', async () => {
+    const results = await audit(
+      <QuickAddEdgeButton edgeId="edge_1" onAddCondition={jest.fn()} onAddAction={jest.fn()} />
     );
     expect(results).toHaveNoViolations();
   });

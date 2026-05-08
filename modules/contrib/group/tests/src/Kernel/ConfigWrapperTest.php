@@ -56,7 +56,7 @@ class ConfigWrapperTest extends GroupKernelTestBase {
   /**
    * Tests the wrapped config entity ID getter.
    *
-   * @covers ::testGetConfigEntityId
+   * @covers ::getConfigEntityId
    */
   public function testGetConfigEntityId() {
     $this->installNodeTypePlugin();
@@ -68,7 +68,7 @@ class ConfigWrapperTest extends GroupKernelTestBase {
   /**
    * Tests that wrappers are deleted along with their config entity.
    *
-   * @covers \group_entity_delete
+   * @covers \Drupal\group\Hook\EntityHooks::entityDelete
    */
   public function testDeleteConfigEntity() {
     $this->installNodeTypePlugin();
@@ -85,7 +85,7 @@ class ConfigWrapperTest extends GroupKernelTestBase {
   /**
    * Tests that everything works with wrappers unsupported.
    *
-   * @covers \group_entity_delete
+   * @covers \Drupal\group\Hook\EntityHooks::entityDelete
    */
   public function testDeleteConfigEntityNoWrapper() {
     $node_type = $this->createNodeType();

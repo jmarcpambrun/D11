@@ -12,12 +12,6 @@ class EmptyEntityReference implements EntityReferenceInterface {
 
   use EntityReferenceTrait;
 
-  /**
-   * Constructs a new EmptyEntityReference.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\EntityReferenceInterface $parent
-   *   The parent entity reference handler.
-   */
   public function __construct(EntityReferenceInterface $parent) {
     $this->parent = $parent;
   }

@@ -9,7 +9,7 @@ dependencies:
   - drupal:field
   - jquery_ui_accordion:jquery_ui_accordion
 
-# Information added by Drupal.org packaging script on 2025-04-23
-version: '4.0.0'
+# Information added by Drupal.org packaging script on 2026-04-29
+version: '4.1.0-alpha1'
 project: 'field_group'
-datestamp: 1745408691
+datestamp: 1777451591

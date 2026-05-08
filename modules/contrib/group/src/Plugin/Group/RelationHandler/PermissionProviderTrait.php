@@ -100,14 +100,14 @@ trait PermissionProviderTrait {
    *
    * @param string $title
    *   The permission title.
-   * @param string $description
+   * @param ?string $description
    *   (optional) The permission description.
    *
    * @return array
    *   The permission with a default translatable markup replacement for both
    *   %plugin_name and %entity_type.
    */
-  protected function buildPermission($title, $description = NULL) {
+  protected function buildPermission($title, ?string $description = NULL) {
     $t_args = [
       '%plugin_name' => $this->groupRelationType->getLabel(),
       '%entity_type' => $this->entityType->getSingularLabel(),

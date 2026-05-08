@@ -21,7 +21,7 @@ class EntityOperationsTest extends GroupEntityOperationsTest {
   /**
    * {@inheritdoc}
    */
-  public function provideEntityOperationScenarios() {
+  public static function provideEntityOperationScenarios() {
     $scenarios['withoutAccess'] = [
       [],
       ['group/1/nodes' => 'Nodes'],

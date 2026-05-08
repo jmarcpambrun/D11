@@ -86,6 +86,7 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
     $group_role_storage->save($group_role->grantPermission('view group_node:page entity'));
 
     $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $group->addMember($this->groupCreator);
     $group->addRelationship($node, 'group_node:page');
 
     $this->drupalGet($path);
@@ -129,6 +130,7 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
     $group_role_storage->save($group_role->grantPermission('view group_node:page entity'));
 
     $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $group->addMember($this->groupCreator);
     $group->addRelationship($node, 'group_node:page');
 
     $this->drupalGet($path);
@@ -185,6 +187,7 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
     ]));
 
     $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $group->addMember($this->groupCreator);
     $group->addRelationship($node, 'group_node:page');
 
     $this->drupalGet($path);
@@ -211,19 +214,21 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
    * @return array
    *   A list of test scenarios.
    */
-  public function revisionsOperationsProvider(): array {
+  public static function revisionsOperationsProvider(): array {
+    // Cannot use named arguments here because we also use @depends, see note 2:
+    // https://github.com/sebastianbergmann/phpunit/pull/5225
     $cases['revert'] = [
-      'name' => 'Revert',
-      'href' => 'node/1/revisions/1/revert',
-      'crud_permission' => 'update any group_node:page entity',
-      'group_permission' => 'revert group_node:page entity revisions',
+      'Revert',
+      'node/1/revisions/1/revert',
+      'update any group_node:page entity',
+      'revert group_node:page entity revisions',
     ];
 
     $cases['delete'] = [
-      'name' => 'Delete',
-      'href' => 'node/1/revisions/1/delete',
-      'crud_permission' => 'delete any group_node:page entity',
-      'group_permission' => 'delete group_node:page entity revisions',
+      'Delete',
+      'node/1/revisions/1/delete',
+      'delete any group_node:page entity',
+      'delete group_node:page entity revisions',
     ];
 
     return $cases;

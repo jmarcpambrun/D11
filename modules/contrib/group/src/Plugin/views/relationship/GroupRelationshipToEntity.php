@@ -2,6 +2,8 @@
 
 namespace Drupal\group\Plugin\views\relationship;
 
+use Drupal\views\Attribute\ViewsRelationship;
+
 /**
  * A relationship handler for group relationship entity references.
  *
@@ -9,9 +11,8 @@ namespace Drupal\group\Plugin\views\relationship;
  * - target_entity_type: The ID of the entity type this relationship maps to.
  *
  * @ingroup views_relationship_handlers
- *
- * @ViewsRelationship("group_relationship_to_entity")
  */
+#[ViewsRelationship('group_relationship_to_entity')]
 class GroupRelationshipToEntity extends GroupRelationshipToEntityBase {
 
   /**

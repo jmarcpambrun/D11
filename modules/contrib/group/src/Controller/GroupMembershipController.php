@@ -18,30 +18,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class GroupMembershipController extends ControllerBase {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The entity form builder.
-   *
-   * @var \Drupal\Core\Entity\EntityFormBuilderInterface
-   */
-  protected $entityFormBuilder;
-
-  /**
-   * Constructs a new GroupMembershipController.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityFormBuilderInterface $entity_form_builder
-   *   The entity form builder.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   */
   public function __construct(AccountInterface $current_user, EntityFormBuilderInterface $entity_form_builder, EntityTypeManagerInterface $entity_type_manager) {
     $this->currentUser = $current_user;
     $this->entityFormBuilder = $entity_form_builder;
@@ -102,7 +78,7 @@ class GroupMembershipController extends ControllerBase {
    *   A group leave form.
    */
   public function leave(GroupInterface $group) {
-    $group_relationship = $group->getMember($this->currentUser)->getGroupRelationship();
+    $group_relationship = $group->getMember($this->currentUser);
     return $this->entityFormBuilder->getForm($group_relationship, 'group-leave');
   }
 

@@ -2,18 +2,19 @@
 
 namespace Drupal\group\Plugin\Validation\Constraint;
 
-use Symfony\Component\Validator\Constraint;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Validation\Attribute\Constraint;
+use Symfony\Component\Validator\Constraint as SymfonyConstraint;
 
 /**
  * Checks the scope limitations for a group role.
- *
- * @Constraint(
- *   id = "GroupRoleScope",
- *   label = @Translation("Group role scope check", context = "Validation"),
- *   type = "entity:group_role"
- * )
  */
-class GroupRoleScope extends Constraint {
+#[Constraint(
+  id: 'GroupRoleScope',
+  label: new TranslatableMarkup('Group role scope check', [], ['context' => 'Validation']),
+  type: 'entity:group_role',
+)]
+class GroupRoleScope extends SymfonyConstraint {
 
   /**
    * When someone attempts to create an anonymous insider group role.

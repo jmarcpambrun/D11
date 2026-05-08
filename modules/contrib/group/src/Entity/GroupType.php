@@ -4,61 +4,68 @@ namespace Drupal\group\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
 use Drupal\Core\Config\Entity\Exception\ConfigEntityIdLengthException;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\group\Entity\Access\GroupTypeAccessControlHandler;
+use Drupal\group\Entity\Controller\GroupTypeListBuilder;
+use Drupal\group\Entity\Form\GroupTypeDeleteForm;
+use Drupal\group\Entity\Form\GroupTypeForm;
 use Drupal\group\PermissionScopeInterface;
 
 /**
  * Defines the Group type configuration entity.
  *
- * @ConfigEntityType(
- *   id = "group_type",
- *   label = @Translation("Group type"),
- *   label_singular = @Translation("group type"),
- *   label_plural = @Translation("group types"),
- *   label_collection = @Translation("Group types"),
- *   label_count = @PluralTranslation(
- *     singular = "@count group type",
- *     plural = "@count group types"
- *   ),
- *   handlers = {
- *     "access" = "Drupal\group\Entity\Access\GroupTypeAccessControlHandler",
- *     "form" = {
- *       "add" = "Drupal\group\Entity\Form\GroupTypeForm",
- *       "edit" = "Drupal\group\Entity\Form\GroupTypeForm",
- *       "delete" = "Drupal\group\Entity\Form\GroupTypeDeleteForm"
- *     },
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
- *     },
- *     "list_builder" = "Drupal\group\Entity\Controller\GroupTypeListBuilder",
- *   },
- *   admin_permission = "administer group",
- *   config_prefix = "type",
- *   bundle_of = "group",
- *   static_cache = TRUE,
- *   entity_keys = {
- *     "id" = "id",
- *     "label" = "label"
- *   },
- *   links = {
- *     "add-form" = "/admin/group/types/add",
- *     "collection" = "/admin/group/types",
- *     "content-plugins" = "/admin/group/types/manage/{group_type}/content",
- *     "delete-form" = "/admin/group/types/manage/{group_type}/delete",
- *     "edit-form" = "/admin/group/types/manage/{group_type}",
- *     "permissions-form" = "/admin/group/types/manage/{group_type}/permissions"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "description",
- *     "new_revision",
- *     "creator_membership",
- *     "creator_wizard",
- *     "creator_roles",
- *   }
- * )
+ * @ingroup group
  */
+#[ConfigEntityType(
+  id: 'group_type',
+  label: new TranslatableMarkup('Group type'),
+  label_collection: new TranslatableMarkup('Group types'),
+  label_singular: new TranslatableMarkup('group type'),
+  label_plural: new TranslatableMarkup('group types'),
+  config_prefix: 'type',
+  static_cache: TRUE,
+  entity_keys: [
+    'id' => 'id',
+    'label' => 'label',
+  ],
+  handlers: [
+    'access' => GroupTypeAccessControlHandler::class,
+    'list_builder' => GroupTypeListBuilder::class,
+    'form' => [
+      'add' => GroupTypeForm::class,
+      'edit' => GroupTypeForm::class,
+      'delete' => GroupTypeDeleteForm::class,
+    ],
+    'route_provider' => [
+      'html' => DefaultHtmlRouteProvider::class,
+    ],
+  ],
+  links: [
+    'add-form' => '/admin/group/types/add',
+    'collection' => '/admin/group/types',
+    'content-plugins' => '/admin/group/types/manage/{group_type}/content',
+    'delete-form' => '/admin/group/types/manage/{group_type}/delete',
+    'edit-form' => '/admin/group/types/manage/{group_type}',
+    'permissions-form' => '/admin/group/types/manage/{group_type}/permissions',
+  ],
+  admin_permission: 'administer group',
+  bundle_of: 'group',
+  label_count: [
+    'singular' => '@count group type',
+    'plural' => '@count group types',
+  ],
+  config_export: [
+    'id',
+    'label',
+    'description',
+    'new_revision',
+    'creator_membership',
+    'creator_roles',
+  ],
+)]
 class GroupType extends ConfigEntityBundleBase implements GroupTypeInterface {
 
   /**
@@ -95,13 +102,6 @@ class GroupType extends ConfigEntityBundleBase implements GroupTypeInterface {
    * @var bool
    */
   protected $creator_membership = TRUE;
-
-  /**
-   * The group creator must immediately complete their membership.
-   *
-   * @var bool
-   */
-  protected $creator_wizard = TRUE;
 
   /**
    * The IDs of the group roles a group creator should receive.
@@ -184,13 +184,6 @@ class GroupType extends ConfigEntityBundleBase implements GroupTypeInterface {
    */
   public function creatorGetsMembership() {
     return $this->creator_membership;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function creatorMustCompleteMembership() {
-    return $this->creator_membership && $this->creator_wizard;
   }
 
   /**

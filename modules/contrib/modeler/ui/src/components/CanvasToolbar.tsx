@@ -23,7 +23,6 @@ import {
 import { useReactFlow, useStore } from 'reactflow';
 import type { ReactFlowState } from 'reactflow';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { getFitViewport } from '../utils/modelUtils';
 import { t } from '../utils/translation';
 import { VIEWPORT } from '../constants/dimensions';
 import StartFlowFilter from './StartFlowFilter';
@@ -52,6 +51,8 @@ interface CanvasToolbarProps {
   canRedo?: boolean;
   /** Trigger auto layout */
   onAutoLayout: () => void;
+  /** Fit the viewport to all visible nodes */
+  onFitView: () => void;
   /** Available contexts from drupalSettings.modeler_api.contexts */
   contexts?: ModelerContext[];
   /** Currently selected context ID (null = none) */
@@ -83,6 +84,7 @@ const CanvasToolbar = memo<CanvasToolbarProps>(({
   canUndo = false,
   canRedo = false,
   onAutoLayout,
+  onFitView,
   contexts = EMPTY_CONTEXTS,
   selectedContextId = null,
   onContextChange,
@@ -115,20 +117,9 @@ const CanvasToolbar = memo<CanvasToolbarProps>(({
 
   // View menu actions
   const handleFitView = useCallback(() => {
-    const allNodes = reactFlow.getNodes();
-    const visibleNodes = allNodes.filter(
-      (node: { hidden?: boolean }) => !node.hidden,
-    );
-    if (visibleNodes.length > 0) {
-      const viewportWidth = window.innerWidth * 0.6;
-      const viewportHeight = window.innerHeight - 100;
-      const viewport = getFitViewport(visibleNodes, viewportWidth, viewportHeight, 0.1);
-      reactFlow.setViewport(viewport, { duration: 500 });
-    } else {
-      reactFlow.fitView({ padding: 0.1, duration: 500 });
-    }
+    onFitView();
     setViewMenuOpen(false);
-  }, [reactFlow]);
+  }, [onFitView]);
 
   const handleAutoLayout = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

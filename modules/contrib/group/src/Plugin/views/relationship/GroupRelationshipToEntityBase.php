@@ -16,44 +16,20 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class GroupRelationshipToEntityBase extends RelationshipPluginBase {
 
   /**
-   * The Views join plugin manager.
-   *
-   * @var \Drupal\views\Plugin\ViewsHandlerManager
-   */
-  protected $joinManager;
-
-  /**
-   * The group relation type manager.
-   *
-   * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
-   */
-  protected $pluginManager;
-
-  /**
    * A list of plugins that can serve the configured entity type.
    *
    * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeInterface[]
    */
   protected $validPlugins;
 
-  /**
-   * Constructs an GroupRelationshipToEntityBase object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\views\Plugin\ViewsHandlerManager $join_manager
-   *   The views plugin join manager.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $plugin_manager
-   *   The group relation type manager.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ViewsHandlerManager $join_manager, GroupRelationTypeManagerInterface $plugin_manager) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected ViewsHandlerManager $joinManager,
+    protected GroupRelationTypeManagerInterface $pluginManager,
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->joinManager = $join_manager;
-    $this->pluginManager = $plugin_manager;
   }
 
   /**

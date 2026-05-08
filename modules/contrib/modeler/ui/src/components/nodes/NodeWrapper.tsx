@@ -5,7 +5,7 @@
  * and SubprocessNode: className construction, node footer with annotation
  * indicator and delete button, and QuickAddButton rendering.
  *
- * Layout:
+ * Layout (standard):
  *   ┌──────────────────────┐
  *   │  header (icon + type)│
  *   ├──────────────────────┤
@@ -14,6 +14,17 @@
  *   │  footer (ann | trash)│
  *   └──────────────────────┘
  *        [+] (hover)
+ *
+ * Layout (compact — used by GatewayNode):
+ *   ┌──────────────────────────────┐
+ *   │  header (icon + type + actions)│
+ *   ├──────────────────────────────┤
+ *   │  body (label)                │
+ *   └──────────────────────────────┘
+ *        [+] (hover)
+ *
+ * In compact mode the footer is suppressed; callers embed actions
+ * (annotation indicator + delete) directly in the header.
  */
 import React from 'react';
 import { FiTrash2, FiFileText } from 'react-icons/fi';
@@ -28,6 +39,8 @@ interface NodeWrapperProps {
   selected: boolean;
   /** The node-specific CSS class (e.g., 'action-node', 'start-node') */
   nodeClass: string;
+  /** When true, the footer is suppressed (compact card layout). */
+  compact?: boolean;
   children: React.ReactNode;
 }
 
@@ -35,6 +48,7 @@ const NodeWrapper: React.FC<NodeWrapperProps> = ({
   data,
   selected,
   nodeClass,
+  compact = false,
   children,
 }) => {
   const handleDelete = (e: React.MouseEvent) => {
@@ -46,7 +60,7 @@ const NodeWrapper: React.FC<NodeWrapperProps> = ({
 
   const isLocked = !!data.isLocked;
   const hasAnnotation = !!data.annotation;
-  const showFooter = hasAnnotation || !isLocked;
+  const showFooter = !compact && (hasAnnotation || !isLocked);
 
   return (
     <div className={classNames('custom-node', nodeClass, {

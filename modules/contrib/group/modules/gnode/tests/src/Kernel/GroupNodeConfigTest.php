@@ -17,8 +17,6 @@ class GroupNodeConfigTest extends EntityKernelTestBase {
    * @var array
    */
   protected static $modules = [
-    'entity',
-    'flexible_permissions',
     'gnode',
     'group',
     'node',

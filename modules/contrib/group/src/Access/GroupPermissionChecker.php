@@ -4,7 +4,7 @@ namespace Drupal\group\Access;
 
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\GroupInterface;
-use Drupal\group\GroupMembershipLoaderInterface;
+use Drupal\group\Entity\GroupMembership;
 use Drupal\group\PermissionScopeInterface;
 
 /**
@@ -12,31 +12,7 @@ use Drupal\group\PermissionScopeInterface;
  */
 class GroupPermissionChecker implements GroupPermissionCheckerInterface {
 
-  /**
-   * The group permission calculator.
-   *
-   * @var \Drupal\group\Access\GroupPermissionCalculatorInterface
-   */
-  protected $groupPermissionCalculator;
-
-  /**
-   * The group membership loader.
-   *
-   * @var \Drupal\group\GroupMembershipLoaderInterface
-   */
-  protected $groupMembershipLoader;
-
-  /**
-   * Constructs a GroupPermissionChecker object.
-   *
-   * @param \Drupal\group\Access\GroupPermissionCalculatorInterface $permission_calculator
-   *   The group permission calculator.
-   * @param \Drupal\group\GroupMembershipLoaderInterface $group_membership_loader
-   *   The group membership loader.
-   */
-  public function __construct(GroupPermissionCalculatorInterface $permission_calculator, GroupMembershipLoaderInterface $group_membership_loader) {
-    $this->groupPermissionCalculator = $permission_calculator;
-    $this->groupMembershipLoader = $group_membership_loader;
+  public function __construct(protected GroupPermissionCalculatorInterface $groupPermissionCalculator) {
   }
 
   /**
@@ -52,7 +28,7 @@ class GroupPermissionChecker implements GroupPermissionCheckerInterface {
     }
 
     // Then check their synchronized access depending on if they are a member.
-    if ($this->groupMembershipLoader->load($group, $account)) {
+    if (GroupMembership::loadSingle($group, $account)) {
       $item = $calculated_permissions->getItem(PermissionScopeInterface::INSIDER_ID, $group->bundle());
     }
     else {

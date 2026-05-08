@@ -95,6 +95,24 @@ export interface CardinalityRange {
 }
 
 /**
+ * Successor cardinality constraint with an optional parallel-edge condition rule.
+ *
+ * Extends {@link CardinalityRange} with a flag that model owners can set to
+ * require every edge in a parallel group (same source + same target) to carry
+ * a condition.  When `requireConditionWhenParallel` is `true` and two or more
+ * edges connect the same source/target pair, the model is invalid unless every
+ * edge in that group has a condition assigned.
+ */
+export interface SuccessorCardinality extends CardinalityRange {
+  /**
+   * When `true`, parallel successors (multiple edges from the same source to
+   * the same target) must all carry a condition.  Opt-in per source component
+   * type; defaults to `false` / absent.
+   */
+  requireConditionWhenParallel?: boolean;
+}
+
+/**
  * Cardinality constraint for a single component type.
  *
  * Model owners can declare minimum and maximum counts for each component type,
@@ -106,7 +124,7 @@ export interface CardinalityRange {
  */
 export interface CardinalityConstraint extends CardinalityRange {
   /** Successor (outgoing edge) cardinality per node of this type. */
-  successors?: CardinalityRange;
+  successors?: SuccessorCardinality;
 }
 
 /**
@@ -572,17 +590,3 @@ export type StoreNode = RFNode<NodeData>;
  */
 export type StoreEdge = RFEdge<EdgeData>;
 
-/**
- * Viewport navigation target used to pan/zoom the canvas to a specific
- * node or to fit the entire graph into view.
- */
-export interface ViewportTarget {
-  type: 'center' | 'fit' | 'none' | 'top-align';
-  nodeId?: string;
-  options?: {
-    zoom?: number;
-    duration?: number;
-    padding?: number;
-    nodes?: StoreNode[];
-  };
-}

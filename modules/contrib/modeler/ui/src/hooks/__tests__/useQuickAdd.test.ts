@@ -37,7 +37,12 @@ const mockSetCenter = jest.fn();
 const mockFitView = jest.fn();
 jest.mock('reactflow', () => ({
   ...jest.requireActual('reactflow'),
-  useReactFlow: () => ({ setCenter: mockSetCenter, fitView: mockFitView }),
+  useReactFlow: () => ({
+    setCenter: mockSetCenter,
+    fitView: mockFitView,
+    getZoom: jest.fn(() => 1),
+    getViewport: jest.fn(() => ({ x: 0, y: 0, zoom: 1 })),
+  }),
 }));
 
 // Mock utility functions
@@ -49,6 +54,17 @@ jest.mock('../../utils/clipboardUtils', () => ({
 jest.mock('../../utils/modelUtils', () => ({
   autoLayout: jest.fn((nodes) => nodes),
 }));
+
+const mockViewportActions = {
+  panToNode: jest.fn(),
+  panToNodeIfOffscreen: jest.fn(),
+  fitToNodes: jest.fn(),
+  topAlignNode: jest.fn(),
+  focusNode: jest.fn(),
+  fitToNodePair: jest.fn(),
+  selectAndFocus: jest.fn(),
+  setReady: jest.fn(),
+};
 
 describe('useQuickAdd', () => {
   let mockSetHasUnsavedChanges: jest.Mock;
@@ -75,6 +91,7 @@ describe('useQuickAdd', () => {
     return renderHook(() =>
       useQuickAdd({
         setHasUnsavedChanges: mockSetHasUnsavedChanges,
+        viewportActions: mockViewportActions,
       })
     );
   };
@@ -517,6 +534,7 @@ describe('useQuickAdd', () => {
         useQuickAdd({
           setHasUnsavedChanges: mockSetHasUnsavedChanges,
           saveHistory: mockSaveHistory,
+          viewportActions: mockViewportActions,
         })
       );
       

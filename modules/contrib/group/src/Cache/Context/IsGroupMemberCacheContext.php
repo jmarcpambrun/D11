@@ -6,7 +6,7 @@ use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\Context\CalculatedCacheContextInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\group\GroupMembershipLoaderInterface;
+use Drupal\group\Entity\GroupMembership;
 
 /**
  * Defines a cache context for "is a group member or not" caching.
@@ -31,41 +31,10 @@ use Drupal\group\GroupMembershipLoaderInterface;
  */
 class IsGroupMemberCacheContext implements CalculatedCacheContextInterface {
 
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The membership loader service.
-   *
-   * @var \Drupal\group\GroupMembershipLoaderInterface
-   */
-  protected $membershipLoader;
-
-  /**
-   * Constructs a new GroupMembershipPermissionsCacheContext class.
-   *
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\GroupMembershipLoaderInterface $membership_loader
-   *   The group membership loader service.
-   */
-  public function __construct(AccountProxyInterface $current_user, EntityTypeManagerInterface $entity_type_manager, GroupMembershipLoaderInterface $membership_loader) {
-    $this->currentUser = $current_user;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->membershipLoader = $membership_loader;
+  public function __construct(
+    protected AccountProxyInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+  ) {
   }
 
   /**
@@ -88,7 +57,7 @@ class IsGroupMemberCacheContext implements CalculatedCacheContextInterface {
       throw new \LogicException('Incorrect group ID provided for user.is_group_member cache context.');
     }
 
-    return $this->membershipLoader->load($group, $this->currentUser) ? '1' : '0';
+    return GroupMembership::loadSingle($group, $this->currentUser) ? '1' : '0';
   }
 
   /**
@@ -99,10 +68,11 @@ class IsGroupMemberCacheContext implements CalculatedCacheContextInterface {
       throw new \LogicException('No group ID provided for user.is_group_member cache context.');
     }
 
+    // @todo Reconsider cache tag for a specific yet-to-be-created  membership.
     // The value of this context is affected when the user joins or leaves the
-    // group. Both of which trigger a user save, so we can simply add the user's
-    // cacheable metadata here.
-    return CacheableMetadata::createFromObject($this->currentUser->getAccount());
+    // group. The closest thing we have right now is a cache tag for any of the
+    // user's memberships.
+    return (new CacheableMetadata())->addCacheTags(['group_relationship_list:plugin:group_membership:entity:' . $this->currentUser->id()]);
   }
 
 }

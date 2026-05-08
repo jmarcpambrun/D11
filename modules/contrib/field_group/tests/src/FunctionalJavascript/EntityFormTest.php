@@ -194,6 +194,107 @@ class EntityFormTest extends WebDriverTestBase {
   }
 
   /**
+   * Tests required marker when both tab orientations share a page.
+   *
+   * Regression coverage for https://www.drupal.org/project/field_group/issues/3505096:
+   * previously the tabs.js effect was keyed on the bare "tabs" format type, so
+   * drupalSettings would hold only one direction's config and the JS would
+   * mark just that side's tab label as required.
+   */
+  public function testTabsRequiredMarkersAcrossOrientations(): void {
+    // Add a second required field so each orientation has its own.
+    $storage = FieldStorageConfig::create([
+      'field_name' => 'field_test_h',
+      'entity_type' => 'node',
+      'type' => 'test_field',
+    ]);
+    $storage->save();
+    FieldConfig::create([
+      'field_storage' => $storage,
+      'bundle' => $this->type,
+      'label' => 'field_test_h',
+      'required' => TRUE,
+    ])->save();
+
+    $form_display = EntityFormDisplay::load('node.' . $this->type . '.default');
+    $form_display->setComponent('field_test_h', [
+      'type' => 'string_textfield',
+      'region' => 'content',
+      'settings' => ['size' => 60],
+    ]);
+    $form_display->save();
+
+    // Vertical side: tab wraps the original required field_test.
+    $tab_v = $this->createGroup('node', $this->type, 'form', 'default', [
+      'label' => 'Tab V',
+      'group_name' => 'group_tab_v',
+      'weight' => 1,
+      'children' => ['field_test'],
+      'format_type' => 'tab',
+      'format_settings' => [
+        'label' => 'Tab V',
+        'formatter' => 'open',
+        'required_fields' => TRUE,
+      ],
+    ]);
+    $this->createGroup('node', $this->type, 'form', 'default', [
+      'label' => 'Vertical tabs',
+      'group_name' => 'group_tabs_v',
+      'weight' => 1,
+      'children' => [$tab_v->group_name],
+      'format_type' => 'tabs',
+      'format_settings' => [
+        'direction' => 'vertical',
+        'label' => 'Vertical tabs',
+      ],
+    ]);
+
+    // Horizontal side: tab wraps the second required field.
+    $tab_h = $this->createGroup('node', $this->type, 'form', 'default', [
+      'label' => 'Tab H',
+      'group_name' => 'group_tab_h',
+      'weight' => 2,
+      'children' => ['field_test_h'],
+      'format_type' => 'tab',
+      'format_settings' => [
+        'label' => 'Tab H',
+        'formatter' => 'open',
+        'required_fields' => TRUE,
+      ],
+    ]);
+    $this->createGroup('node', $this->type, 'form', 'default', [
+      'label' => 'Horizontal tabs',
+      'group_name' => 'group_tabs_h',
+      'weight' => 2,
+      'children' => [$tab_h->group_name],
+      'format_type' => 'tabs',
+      'format_settings' => [
+        'direction' => 'horizontal',
+        'label' => 'Horizontal tabs',
+      ],
+    ]);
+
+    $this->drupalGet('node/add/' . $this->type);
+
+    // Both orientations render.
+    $this->assertSession()->elementExists('xpath', $this->assertSession()
+      ->buildXPathQuery('//div[@data-vertical-tabs-panes=""]'));
+    $this->assertSession()->elementExists('xpath', $this->assertSession()
+      ->buildXPathQuery('//div[@data-horizontal-tabs-panes=""]'));
+
+    // JS must process both directions — each tab link's strong should pick up
+    // form-required. waitForElement ensures we see the post-attach state.
+    $this->assertNotNull(
+      $this->assertSession()->waitForElement('css', 'a[href="#edit-group-tab-v"] strong.form-required'),
+      'Vertical tab label was marked required by tabs.js.'
+    );
+    $this->assertNotNull(
+      $this->assertSession()->waitForElement('css', 'a[href="#edit-group-tab-h"] strong.form-required'),
+      'Horizontal tab label was marked required by tabs.js.'
+    );
+  }
+
+  /**
    * Tests the required field_test to assert its visibility.
    */
   private function requiredFieldVisibilityAssertions(): void {

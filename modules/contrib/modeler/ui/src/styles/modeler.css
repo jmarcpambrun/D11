@@ -1357,8 +1357,8 @@ g.replay-transition-highlighted path {
   transition: transform var(--modeler-duration-default);
 }
 
-.edge-quick-add-wrapper:hover {
-  transform: scale(1.1);
+.edge-quick-add-wrapper:hover .quick-add-condition-button {
+  transform: scale(1.15);
 }
 
 .quick-add-condition-button {
@@ -1367,24 +1367,25 @@ g.replay-transition-highlighted path {
   justify-content: center;
   width: 22px;
   height: 22px;
+  padding: 0;
   border-radius: var(--modeler-radius-full);
-  background: var(--modeler-color-border-light);
-  color: var(--modeler-color-text-primary);
+  background: var(--modeler-color-primary);
+  color: white;
   border: 2px solid white;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  transition: var(--modeler-transition-default);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+  transition: opacity var(--modeler-duration-default), transform var(--modeler-duration-default), background var(--modeler-duration-default);
+  z-index: 15;
 }
 
 .quick-add-condition-button:hover {
-  background: var(--modeler-color-accent-indigo);
-  color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  background: var(--modeler-color-primary-hover);
+  transform: scale(1.15);
 }
 
 .quick-add-condition-button svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
 }
 
 /* Condition-specific popup styling */
@@ -1799,15 +1800,37 @@ g.replay-transition-highlighted path {
   animation: none;
 }
 
-/* Gateway Node — now a regular card like all other nodes */
+/* Gateway Node — compact card matching condition card height.
+   Annotation + delete live in the header (no footer).
+   height: auto overrides the base .custom-node height (120px)
+   so the card sizes to its content — identical to condition cards. */
 .gateway-node {
   border-color: var(--modeler-color-type-gateway);
+  height: auto;
 }
 
 /* WCAG 2.2 SC 1.4.3 — header text uses the darker -header variant for ≥ 4.5:1 contrast */
 .gateway-node .node-header {
   background: var(--modeler-color-type-gateway-light);
   color: var(--modeler-color-type-gateway-header);
+}
+
+/* Compact body: tighter padding and single-line label like condition cards */
+.gateway-node .node-body {
+  padding: 6px 10px;
+}
+
+.gateway-node .node-label {
+  -webkit-line-clamp: 1;
+}
+
+/* Header actions — annotation indicator + trash pushed to the right,
+   same pattern as condition-edge-header-actions. */
+.node-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Subprocess Node */

@@ -8,6 +8,7 @@ import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
 import { autoLayout } from '../utils/modelUtils';
 import { getEdgeType, getEdgeTypeWithCondition } from '../utils/edgeTypeUtils';
+import { routeParallelEdge, applyParallelEdgeRouting } from '../utils/parallelEdgeRouter';
 import type { StoreEdge as Edge, NodeData, EdgeData } from '../types/settings';
 
 interface UseConfigurationProps {
@@ -107,9 +108,21 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
       };
     };
 
-    const updatedEdges = edges.map(edge =>
+    let updatedEdges = edges.map(edge =>
       edge.id === edgeId ? computeUpdatedEdge(edge) : edge,
     );
+
+    // Re-route parallel edges when condition status changes (issue #3588937).
+    // This redistributes offsets to account for condition card width.
+    const updatedEdge = updatedEdges.find(e => e.id === edgeId);
+    if (updatedEdge && targetEdge) {
+      const routeResult = routeParallelEdge({
+        newEdge: updatedEdge,
+        edges: updatedEdges,
+        nodes,
+      });
+      updatedEdges = applyParallelEdgeRouting(updatedEdges, routeResult.updates);
+    }
 
     // When a condition is removed, re-run auto-layout with the updated edges
     // so the spacing algorithm reclaims the extra space cleanly.

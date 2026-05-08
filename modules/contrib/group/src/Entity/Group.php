@@ -2,13 +2,26 @@
 
 namespace Drupal\group\Entity;
 
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Entity\EditorialContentEntityBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Form\RevisionDeleteForm;
+use Drupal\Core\Entity\Form\RevisionRevertForm;
+use Drupal\Core\Entity\Routing\RevisionHtmlRouteProvider;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\group\Entity\Access\GroupAccessControlHandler;
+use Drupal\group\Entity\Controller\GroupListBuilder;
+use Drupal\group\Entity\Form\GroupForm;
+use Drupal\group\Entity\Routing\GroupRouteProvider;
+use Drupal\group\Entity\Storage\GroupStorage;
+use Drupal\group\Entity\ViewBuilder\GroupViewBuilder;
+use Drupal\group\Entity\Views\GroupViewsData;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\StatusItem;
 use Drupal\user\UserInterface;
@@ -17,85 +30,76 @@ use Drupal\user\UserInterface;
  * Defines the Group entity.
  *
  * @ingroup group
- *
- * @ContentEntityType(
- *   id = "group",
- *   label = @Translation("Group"),
- *   label_singular = @Translation("group"),
- *   label_plural = @Translation("groups"),
- *   label_collection = @Translation("Groups"),
- *   label_count = @PluralTranslation(
- *     singular = "@count group",
- *     plural = "@count groups"
- *   ),
- *   bundle_label = @Translation("Group type"),
- *   handlers = {
- *     "storage" = "Drupal\group\Entity\Storage\GroupStorage",
- *     "view_builder" = "Drupal\group\Entity\ViewBuilder\GroupViewBuilder",
- *     "views_data" = "Drupal\group\Entity\Views\GroupViewsData",
- *     "list_builder" = "Drupal\group\Entity\Controller\GroupListBuilder",
- *     "route_provider" = {
- *       "html" = "Drupal\group\Entity\Routing\GroupRouteProvider",
- *       "revision" = "\Drupal\entity\Routing\RevisionRouteProvider",
- *     },
- *     "form" = {
- *       "add" = "Drupal\group\Entity\Form\GroupForm",
- *       "edit" = "Drupal\group\Entity\Form\GroupForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *     },
- *     "access" = "Drupal\group\Entity\Access\GroupAccessControlHandler",
- *   },
- *   base_table = "groups",
- *   data_table = "groups_field_data",
- *   revision_table = "groups_revision",
- *   revision_data_table = "groups_field_revision",
- *   show_revision_ui = TRUE,
- *   translatable = TRUE,
- *   entity_keys = {
- *     "id" = "id",
- *     "uuid" = "uuid",
- *     "owner" = "uid",
- *     "langcode" = "langcode",
- *     "bundle" = "type",
- *     "label" = "label",
- *     "published" = "status",
- *     "revision" = "revision_id",
- *   },
- *   revision_metadata_keys = {
- *     "revision_user" = "revision_user",
- *     "revision_created" = "revision_created",
- *     "revision_log_message" = "revision_log_message",
- *   },
- *   links = {
- *     "add-form" = "/group/add/{group_type}",
- *     "add-page" = "/group/add",
- *     "canonical" = "/group/{group}",
- *     "collection" = "/admin/group",
- *     "edit-form" = "/group/{group}/edit",
- *     "delete-form" = "/group/{group}/delete",
- *     "version-history" = "/group/{group}/revisions",
- *     "revision" = "/group/{group}/revisions/{group_revision}/view",
- *     "revision-revert-form" = "/group/{group}/revisions/{group_revision}/revert",
- *     "revision-delete-form" = "/group/{group}/revisions/{group_revision}/delete",
- *   },
- *   bundle_entity_type = "group_type",
- *   field_ui_base_route = "entity.group_type.edit_form",
- *   permission_granularity = "bundle"
- * )
  */
+#[ContentEntityType(
+  id: 'group',
+  label: new TranslatableMarkup('Group'),
+  label_collection: new TranslatableMarkup('Groups'),
+  label_singular: new TranslatableMarkup('group'),
+  label_plural: new TranslatableMarkup('groups'),
+  entity_keys: [
+    'id' => 'id',
+    'uuid' => 'uuid',
+    'owner' => 'uid',
+    'langcode' => 'langcode',
+    'bundle' => 'type',
+    'label' => 'label',
+    'published' => 'status',
+    'revision' => 'revision_id',
+  ],
+  handlers: [
+    'access' => GroupAccessControlHandler::class,
+    'storage' => GroupStorage::class,
+    'view_builder' => GroupViewBuilder::class,
+    'list_builder' => GroupListBuilder::class,
+    'views_data' => GroupViewsData::class,
+    'form' => [
+      'add' => GroupForm::class,
+      'edit' => GroupForm::class,
+      'delete' => ContentEntityDeleteForm::class,
+      'revision-delete' => RevisionDeleteForm::class,
+      'revision-revert' => RevisionRevertForm::class,
+    ],
+    'route_provider' => [
+      'html' => GroupRouteProvider::class,
+      'revision' => RevisionHtmlRouteProvider::class,
+    ],
+  ],
+  links: [
+    'add-form' => '/group/add/{group_type}',
+    'add-page' => '/group/add',
+    'canonical' => '/group/{group}',
+    'collection' => '/admin/group',
+    'edit-form' => '/group/{group}/edit',
+    'delete-form' => '/group/{group}/delete',
+    'version-history' => '/group/{group}/revisions',
+    'revision' => '/group/{group}/revisions/{group_revision}/view',
+    'revision-revert-form' => '/group/{group}/revisions/{group_revision}/revert',
+    'revision-delete-form' => '/group/{group}/revisions/{group_revision}/delete',
+  ],
+  permission_granularity: 'bundle',
+  bundle_entity_type: 'group_type',
+  bundle_label: new TranslatableMarkup('Group type'),
+  base_table: 'groups',
+  data_table: 'groups_field_data',
+  revision_table: 'groups_revision',
+  revision_data_table: 'groups_field_revision',
+  translatable: TRUE,
+  show_revision_ui: TRUE,
+  label_count: [
+    'singular' => '@count group',
+    'plural' => '@count groups',
+  ],
+  field_ui_base_route: 'entity.group_type.edit_form',
+  revision_metadata_keys: [
+    'revision_user' => 'revision_uid',
+    'revision_created' => 'revision_created',
+    'revision_log_message' => 'revision_log_message',
+  ],
+)]
 class Group extends EditorialContentEntityBase implements GroupInterface {
 
   use EntityOwnerTrait;
-
-  /**
-   * Gets the group membership loader.
-   *
-   * @return \Drupal\group\GroupMembershipLoaderInterface
-   *   The group.membership_loader service.
-   */
-  protected function membershipLoader() {
-    return \Drupal::service('group.membership_loader');
-  }
 
   /**
    * Gets the group permission checker.
@@ -151,21 +155,21 @@ class Group extends EditorialContentEntityBase implements GroupInterface {
   /**
    * {@inheritdoc}
    */
-  public function getRelationships($plugin_id = NULL) {
+  public function getRelationships(?string $plugin_id = NULL) {
     return $this->relationshipStorage()->loadByGroup($this, $plugin_id);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getRelationshipsByEntity(EntityInterface $entity, $plugin_id = NULL) {
+  public function getRelationshipsByEntity(EntityInterface $entity, ?string $plugin_id = NULL) {
     return $this->relationshipStorage()->loadByEntityAndGroup($entity, $this, $plugin_id);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getRelatedEntities($plugin_id = NULL) {
+  public function getRelatedEntities(?string $plugin_id = NULL) {
     $entities = [];
 
     foreach ($this->getRelationships($plugin_id) as $relationship) {
@@ -189,7 +193,7 @@ class Group extends EditorialContentEntityBase implements GroupInterface {
    */
   public function removeMember(UserInterface $account) {
     if ($member = $this->getMember($account)) {
-      $member->getGroupRelationship()->delete();
+      $member->delete();
     }
   }
 
@@ -197,14 +201,14 @@ class Group extends EditorialContentEntityBase implements GroupInterface {
    * {@inheritdoc}
    */
   public function getMember(AccountInterface $account) {
-    return $this->membershipLoader()->load($this, $account);
+    return GroupMembership::loadSingle($this, $account);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getMembers($roles = NULL) {
-    return $this->membershipLoader()->loadByGroup($this, $roles);
+  public function getMembers(array $roles = []) {
+    return GroupMembership::loadByGroup($this, $roles);
   }
 
   /**
@@ -350,25 +354,6 @@ class Group extends EditorialContentEntityBase implements GroupInterface {
 
     if ($this->isNewRevision() && empty($record->revision_created)) {
       $record->revision_created = \Drupal::time()->getRequestTime();
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function postSave(EntityStorageInterface $storage, $update = TRUE) {
-    parent::postSave($storage, $update);
-
-    // If a new group is created and the group type is configured to grant group
-    // creators a membership by default, add the creator as a member unless it
-    // is being created using the wizard.
-    // @todo Deprecate in 8.x-2.x in favor of a form-only approach. API-created
-    //   groups should not get this functionality because it may create
-    //   incomplete group memberships.
-    $group_type = $this->getGroupType();
-    if ($update === FALSE && $group_type->creatorGetsMembership() && !$group_type->creatorMustCompleteMembership()) {
-      $values = ['group_roles' => $group_type->getCreatorRoleIds()];
-      $this->addMember($this->getOwner(), $values);
     }
   }
 

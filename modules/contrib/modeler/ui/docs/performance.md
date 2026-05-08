@@ -88,25 +88,23 @@ useEffect(() => {
 }} />
 ```
 
-## Viewport Effects
+## Viewport Management
 
-### Effects-Based Viewport Management
+### Unified Viewport Actions
+
+All programmatic pan/zoom operations go through `useViewportActions`
+(see `docs/viewport-management.md` for the full reference).
+
 ```typescript
-// ✅ CORRECT: Use viewport targets
-const setViewportTarget = useStore(state => state.setViewportTarget);
+// ✅ CORRECT: Use useViewportActions methods
+const viewportActions = useViewportActions();
+viewportActions.focusNode(nodeId);       // pan, preserve zoom
+viewportActions.panToNodeIfOffscreen(id); // pan only if off-screen
+viewportActions.fitToNodes();             // fit all visible nodes
 
-const centerOnNode = (nodeId: string) => {
-  setViewportTarget({
-    type: 'center',
-    nodeId,
-    options: { zoom: 1.2, duration: 800 }
-  });
-};
-
-// ❌ WRONG: Direct viewport calls cause race conditions
-const centerOnNode = (nodeId: string) => {
-  reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.1 });
-};
+// ❌ WRONG: Direct ReactFlow calls bypass zoom preservation
+reactFlowInstance.setCenter(x, y);  // defaults to maxZoom (4x)!
+reactFlowInstance.fitView();         // no maxZoom cap
 ```
 
 ## Input Debouncing

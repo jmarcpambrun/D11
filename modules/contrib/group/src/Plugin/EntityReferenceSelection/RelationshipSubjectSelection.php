@@ -2,19 +2,20 @@
 
 namespace Drupal\group\Plugin\EntityReferenceSelection;
 
+use Drupal\Core\Entity\Attribute\EntityReferenceSelection;
 use Drupal\Core\Entity\Plugin\EntityReferenceSelection\DefaultSelection;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Shows wrapper config entities rather than config wrappers.
- *
- * @EntityReferenceSelection(
- *   id = "group_config_wrapper:target_entity",
- *   label = @Translation("Group relationship target selection"),
- *   entity_types = {"group_config_wrapper"},
- *   group = "group_config_wrapper",
- *   weight = 0
- * )
  */
+#[EntityReferenceSelection(
+  id: 'group_config_wrapper:target_entity',
+  label: new TranslatableMarkup('Group relationship target selection'),
+  group: 'group_config_wrapper',
+  weight: 0,
+  entity_types: ['group_config_wrapper'],
+)]
 class RelationshipSubjectSelection extends DefaultSelection {
 
   /**

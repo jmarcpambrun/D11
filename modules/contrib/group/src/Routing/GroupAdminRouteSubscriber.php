@@ -11,21 +11,7 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class GroupAdminRouteSubscriber extends RouteSubscriberBase {
 
-  /**
-   * The config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * Constructs a new GroupAdminRouteSubscriber.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory.
-   */
-  public function __construct(ConfigFactoryInterface $config_factory) {
-    $this->configFactory = $config_factory;
+  public function __construct(protected ConfigFactoryInterface $configFactory) {
   }
 
   /**

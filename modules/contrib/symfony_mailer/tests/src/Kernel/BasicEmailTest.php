@@ -22,7 +22,6 @@ class BasicEmailTest extends SymfonyMailerKernelTestBase {
     $this->readMail();
     $this->assertSubject("Verification email from Example");
     $this->assertTo($this->addressTo);
-    $this->assertEquals('https://www.drupal.org/project/symfony_mailer', $this->findLink('Mailer Plus'));
   }
 
 }

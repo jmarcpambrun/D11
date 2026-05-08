@@ -49,9 +49,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetAdminPermission method arguments.
    */
-  public function adminPermissionProvider() {
+  public static function adminPermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       $case = $scenario;
       $case['expected'] = $case['definition']->getAdminPermission();
       $cases[] = $case;
@@ -89,9 +89,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetRelationViewPermission method arguments.
    */
-  public function relationViewPermissionProvider() {
+  public static function relationViewPermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -137,9 +137,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetRelationUpdatePermission method arguments.
    */
-  public function relationUpdatePermissionProvider() {
+  public static function relationUpdatePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -180,9 +180,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetRelationDeletePermission method arguments.
    */
-  public function relationDeletePermissionProvider() {
+  public static function relationDeletePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -221,9 +221,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetRelationCreatePermission method arguments.
    */
-  public function relationCreatePermissionProvider() {
+  public static function relationCreatePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       $case = $scenario;
       $case['expected'] = "create {$scenario['plugin_id']} relationship";
       $cases[] = $case;
@@ -261,9 +261,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetEntityViewPermission method arguments.
    */
-  public function entityViewPermissionProvider() {
+  public static function entityViewPermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -310,9 +310,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetEntityViewUnpublishedPermission method arguments.
    */
-  public function entityViewUnpublishedPermissionProvider() {
+  public static function entityViewUnpublishedPermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -358,9 +358,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetEntityUpdatePermission method arguments.
    */
-  public function entityUpdatePermissionProvider() {
+  public static function entityUpdatePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -406,9 +406,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetEntityDeletePermission method arguments.
    */
-  public function entityDeletePermissionProvider() {
+  public static function entityDeletePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       foreach (['any', 'own'] as $scope) {
         $case = $scenario;
         $case['scope'] = $scope;
@@ -452,9 +452,9 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testGetEntityCreatePermission method arguments.
    */
-  public function entityCreatePermissionProvider() {
+  public static function entityCreatePermissionProvider() {
     $cases = [];
-    foreach ($this->getPermissionProviderScenarios() as $scenario) {
+    foreach (self::getPermissionProviderScenarios() as $scenario) {
       $case = $scenario;
       $case['expected'] = FALSE;
       if ($case['definition']->definesEntityAccess()) {
@@ -517,8 +517,8 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A list of testBuildPermissions method arguments.
    */
-  public function buildPermissionsProvider() {
-    $cases = $this->getPermissionProviderScenarios();
+  public static function buildPermissionsProvider() {
+    $cases = self::getPermissionProviderScenarios();
     foreach ($cases as &$case) {
       unset($case['expected']);
     }
@@ -531,7 +531,7 @@ class PermissionProviderTest extends UnitTestCase {
    * @return array
    *   A set of test cases to be used in data providers.
    */
-  protected function getPermissionProviderScenarios() {
+  protected static function getPermissionProviderScenarios() {
     $scenarios = [];
 
     foreach ([TRUE, FALSE] as $implements_owner) {

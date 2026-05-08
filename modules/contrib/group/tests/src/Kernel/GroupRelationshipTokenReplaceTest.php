@@ -23,8 +23,9 @@ class GroupRelationshipTokenReplaceTest extends GroupTokenReplaceKernelTestBase 
 
     // Create a group and retrieve the relationship for the owner's membership.
     $group = $this->createGroup(['type' => $this->createGroupType()->id()]);
-    $account = $group->getOwner();
-    $group_relationship = $group->getMember($account)->getGroupRelationship();
+    $account = \Drupal::currentUser()->getAccount();
+    $group->addMember($account);
+    $group_relationship = $group->getMember($account);
 
     // Generate and test tokens.
     $tests = [];
@@ -59,7 +60,7 @@ class GroupRelationshipTokenReplaceTest extends GroupTokenReplaceKernelTestBase 
     foreach ($tests as $token => $expected) {
       $bubbleable_metadata = new BubbleableMetadata();
       $output = $this->tokenService->replace($token, ['group_relationship' => $group_relationship], ['langcode' => $this->interfaceLanguage->getId()], $bubbleable_metadata);
-      $this->assertEquals($output, $expected, sprintf('Group relationship token %s replaced.', $token));
+      $this->assertEquals($expected, $output, sprintf('Group relationship token %s replaced.', $token));
       $this->assertEquals($bubbleable_metadata, $metadata_tests[$token]);
     }
   }

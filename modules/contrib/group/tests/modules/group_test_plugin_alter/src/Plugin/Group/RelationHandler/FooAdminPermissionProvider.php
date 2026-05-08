@@ -12,12 +12,6 @@ class FooAdminPermissionProvider implements PermissionProviderInterface {
 
   use PermissionProviderTrait;
 
-  /**
-   * Constructs a new FooAdminPermissionProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\PermissionProviderInterface $parent
-   *   The parent permission provider.
-   */
   public function __construct(PermissionProviderInterface $parent) {
     $this->parent = $parent;
   }

@@ -77,6 +77,7 @@ import { sanitizeHtml } from '../utils/sanitize';
 - No `debugger` statements
 - React hooks rules enforced
 - Custom i18n rule: Wrap user-facing strings with `t()`
+- Custom viewport rule: `setCenter()` must always include `zoom` (see below)
 
 ```typescript
 import { t } from '../utils/translation';
@@ -87,6 +88,26 @@ import { t } from '../utils/translation';
 
 // ❌ Wrong
 <button>Save Changes</button>
+```
+
+### Viewport Operations (No Invasive Pan/Zoom)
+When panning or zooming programmatically after adding/inserting nodes, follow these rules:
+- **Never call `setCenter()` without an explicit `zoom` option.** ReactFlow defaults to maxZoom when `zoom` is omitted, causing jarring zoom jumps. The custom ESLint rule `viewport/no-bare-set-center` enforces this at lint time.
+- **Preserve the user's current zoom level** by passing `zoom: getZoom()`.
+- **Only pan when the target node is off-screen.** Check the viewport bounds before calling `setCenter()`. If the node is already visible, do nothing.
+- **Avoid `fitView()` for single-node operations** — it changes the zoom level. Prefer `setCenter()` with the current zoom preserved.
+
+```typescript
+// ❌ Wrong — zoom defaults to maxZoom, jarring viewport jump
+setCenter(x, y, { duration: 800 });
+
+// ✅ Correct — preserves current zoom, only pans if off-screen
+const currentZoom = getZoom();
+const vp = getViewport();
+// ... check if point is within viewport bounds ...
+if (!isVisible) {
+  setCenter(x, y, { zoom: currentZoom, duration: 800 });
+}
 ```
 
 ### Store Patterns (Zustand)
@@ -162,7 +183,8 @@ try {
   - `useContextStore` — contexts, selectedContextId
   - `useFilterStore` — visibleStartNodeIds
   - `useModelStore` — model data, metadata
-  - And others: `useComponentStore`, `useLabelStore`, `useErrorStore`, `useViewportStore`, `useConfigModalStore`
+  - And others: `useComponentStore`, `useLabelStore`, `useErrorStore`, `useConfigModalStore`
+- **Viewport**: `useViewportActions` hook (not a store) — see `docs/viewport-management.md`
 - **No React Flow State**: Use store selectors only
 - **ReactFlow Integration**: Canvas component handles flow-specific logic
 

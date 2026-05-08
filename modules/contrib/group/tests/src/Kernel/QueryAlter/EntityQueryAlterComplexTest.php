@@ -27,12 +27,12 @@ class EntityQueryAlterComplexTest extends EntityQueryAlterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $isPublishable = TRUE;
+  protected static $isPublishable = TRUE;
 
   /**
    * {@inheritdoc}
    */
-  protected $pluginId = 'node_relation:page';
+  protected static $pluginId = 'node_relation:page';
 
   /**
    * {@inheritdoc}
@@ -57,7 +57,7 @@ class EntityQueryAlterComplexTest extends EntityQueryAlterTestBase {
     // Add two nodes, one of which belongs to a group.
     $this->createNodeType(['id' => 'page']);
     $this->createNode(['type' => 'page']);
-    $group->addRelationship($this->createNode(['type' => 'page']), $this->pluginId);
+    $group->addRelationship($this->createNode(['type' => 'page']), self::$pluginId);
     return $group;
   }
 

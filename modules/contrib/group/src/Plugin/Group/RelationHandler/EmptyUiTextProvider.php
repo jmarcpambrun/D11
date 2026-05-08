@@ -12,12 +12,6 @@ class EmptyUiTextProvider implements UiTextProviderInterface {
 
   use UiTextProviderTrait;
 
-  /**
-   * Constructs a new EmptyUiTextProvider.
-   *
-   * @param \Drupal\group\Plugin\Group\RelationHandler\UiTextProviderInterface $parent
-   *   The parent UI text provider.
-   */
   public function __construct(UiTextProviderInterface $parent) {
     $this->parent = $parent;
   }

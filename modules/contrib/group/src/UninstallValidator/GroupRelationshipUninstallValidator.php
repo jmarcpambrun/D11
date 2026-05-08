@@ -17,34 +17,12 @@ class GroupRelationshipUninstallValidator implements ModuleUninstallValidatorInt
 
   use StringTranslationTrait;
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The group relation type manager.
-   *
-   * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
-   */
-  protected $pluginManager;
-
-  /**
-   * Constructs a new GroupRelationshipUninstallValidator object.
-   *
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $plugin_manager
-   *   The group relation type manager.
-   */
-  public function __construct(TranslationInterface $string_translation, EntityTypeManagerInterface $entity_type_manager, GroupRelationTypeManagerInterface $plugin_manager) {
+  public function __construct(
+    TranslationInterface $string_translation,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected GroupRelationTypeManagerInterface $pluginManager,
+  ) {
     $this->stringTranslation = $string_translation;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->pluginManager = $plugin_manager;
   }
 
   /**

@@ -607,6 +607,7 @@ components/
 ├── DocumentationButton.tsx  # Reusable documentation link button
 ├── QuickAddButton.tsx       # Node hover button to add successor nodes (context-filtered, with type filter)
 ├── QuickAddConditionButton.tsx # Edge hover button to add conditions (context-filtered)
+├── QuickAddEdgeButton.tsx     # Edge hover button to add conditions or insert action/gateway nodes (context-filtered)
 ├── QuickAddEventButton.tsx  # Canvas button to add event/start nodes (context-filtered)
 ├── QuickAddPopup.tsx        # Shared popup with search, sections, and collapsible type-filter panel
 ├── PanelErrorBoundary.tsx   # Granular error boundary with auto-retry for panels
@@ -683,13 +684,22 @@ New messages always interrupt and show regardless of the current mode, restartin
 ## Quick-Add Component Behavior
 
 ### Context and Dependency Filtering
-All three quick-add components (`QuickAddButton`, `QuickAddConditionButton`, `QuickAddEventButton`) use the `useContextFilter` hook to filter their component lists.
+All four quick-add components (`QuickAddButton`, `QuickAddConditionButton`, `QuickAddEdgeButton`, `QuickAddEventButton`) use the `useContextFilter` hook to filter their component lists.
 
 ### Type Filter Panel
 `QuickAddButton` includes a collapsible **type filter** panel (powered by `QuickAddPopup`'s `typeFilters` config) that lets users narrow the component list by type (All / Actions / Conditions / Gateways). The filter is defined via `TypeFilterOption[]` and applied between the `componentFilter` and search/sort steps.
 
 ### Condition-First Authoring
 When a user selects a **condition** from the `QuickAddButton` popup, the `handleQuickAdd` callback in `Flow.tsx` routes to `useQuickAdd.addConditionWithPlaceholder()`, which creates a placeholder node + condition edge. The condition edge is auto-selected so the Property Panel opens on the condition for immediate configuration.
+
+### Edge Insertion
+When a user clicks the "+" button on a **default edge** (no condition), the `QuickAddEdgeButton` popup offers both conditions and actions/gateways. Selecting a condition attaches it to the edge via `handleAddCondition`. Selecting an action/gateway inserts a new node between the two connected nodes via `handleAddActionOnEdge`, splitting the edge into two.
+
+### Condition Edge Insertion
+**Condition edges** show two "+" buttons: one before and one after the condition card. Selecting an **action/gateway** inserts a new node, preserving the original condition on the appropriate side. Selecting a **condition** inserts a gateway node in a linear chain — the original condition stays on one side and the new condition goes on the other:
+
+- **"+" before condition**: `source --[new cond]--> gateway --[orig cond]--> target`
+- **"+" after condition**: `source --[orig cond]--> gateway --[new cond]--> target`
 
 ### Context and Dependency Filtering
 - When a context is selected, only plugins defined in the active context's component entries are shown
@@ -817,40 +827,37 @@ This atomic update ensures the canvas never shows an intermediate state where th
 - **Keyboard Shortcut**: Ctrl+F (Cmd+F on Mac) toggles search mode, overriding browser find
 - Implementation: `src/components/SearchBar.tsx`
 
-## Viewport Management (February 2026)
+## Viewport Management (April 2026)
+
+All programmatic viewport operations are managed by `useViewportActions`
+(`src/hooks/useViewportActions.ts`).  See `docs/viewport-management.md`
+for the comprehensive reference.
+
+### Key Behaviors
+- **Zoom preservation**: All pan operations preserve the current zoom
+  level.  Only `fitToNodes()` and `fitToNodePair()` change zoom.
+- **Off-screen check**: Node insertions use `panToNodeIfOffscreen()` —
+  the canvas only pans if the new node would be invisible.
+- **Accessibility**: Respects `prefers-reduced-motion` (instant
+  transitions when enabled).
 
 ### Smart Auto-Selection Positioning
-When a model is loaded with an element to be auto-selected, the viewport now intelligently positions based on node type:
+When a model is loaded with an element to be auto-selected:
 
-- **Event Nodes** (start, Events, Triggers categories):
-  - **Top-aligned**: Positioned 150px from top of viewport
-  - **Rationale**: Event nodes typically start workflows, so top alignment allows viewing the flow downward
-  
-- **Other Nodes** (Actions, Conditions, Gateways):
-  - **Center-aligned**: Standard center positioning with zoom
-  - **Rationale**: These nodes are often in the middle of workflows
+- **Event Nodes** (start nodes): Top-aligned via `topAlignNode()` —
+  positioned 150px from the top of the viewport so the user can see the
+  flow downward.
+- **Other Nodes**: Centered via `focusNode()` — panned to center
+  without changing zoom.
 
-### Viewport Effects Architecture
-- **Effects-based management**: Uses `useViewportEffects` hook for controlled viewport changes
-- **No race conditions**: Eliminates conflicts between automatic and manual navigation
-- **Smooth animations**: Configurable duration and zoom for viewport transitions
-- **Type-safe targets**: ViewportTarget type with 'center', 'fit', 'top-align', 'none' options
-
-### Implementation Details
+### Implementation
 ```typescript
-// Smart positioning based on node type
-const isEventNode = node.type === 'start' || 
-                   node.data?.category === 'Events' || 
-                   node.data?.category === 'Triggers';
-
-setViewportTarget({
-  type: isEventNode ? 'top-align' : 'center',
-  nodeId: node.id,
-  options: { zoom: 1.2, duration: 800 }
-});
+// In useModelDataLoader — queues for deferred execution
+const viewportKind = isStartNode ? 'topAlignNode' : 'focusNode';
+viewportActions.selectAndFocus(nodeToSelect, viewportKind);
 ```
 
-- Implementation: `src/hooks/useViewportEffects.ts`
+- Implementation: `src/hooks/useViewportActions.ts`
 
 ## FlowCanvas Prop Grouping (February 2026)
 

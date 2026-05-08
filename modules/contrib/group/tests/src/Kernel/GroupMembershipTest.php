@@ -69,7 +69,7 @@ class GroupMembershipTest extends GroupKernelTestBase {
     parent::setUp();
 
     $this->account = $this->createUser();
-    $this->groupType = $this->createGroupType(['creator_membership' => FALSE]);
+    $this->groupType = $this->createGroupType();
     $this->groupRoleInsider = $this->createGroupRole([
       'group_type' => $this->groupType->id(),
       'scope' => PermissionScopeInterface::INSIDER_ID,

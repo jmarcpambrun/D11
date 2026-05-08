@@ -15,21 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class GroupRelationshipTypeForm extends EntityForm {
 
-  /**
-   * The group relation type manager.
-   *
-   * @var \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface
-   */
-  protected $pluginManager;
-
-  /**
-   * Constructs a new GroupRelationshipTypeForm.
-   *
-   * @param \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface $plugin_manager
-   *   The group relation type manager.
-   */
-  public function __construct(GroupRelationTypeManagerInterface $plugin_manager) {
-    $this->pluginManager = $plugin_manager;
+  public function __construct(protected GroupRelationTypeManagerInterface $pluginManager) {
   }
 
   /**

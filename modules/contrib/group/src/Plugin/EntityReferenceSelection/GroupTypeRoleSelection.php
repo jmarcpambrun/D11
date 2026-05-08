@@ -2,7 +2,9 @@
 
 namespace Drupal\group\Plugin\EntityReferenceSelection;
 
+use Drupal\Core\Entity\Attribute\EntityReferenceSelection;
 use Drupal\Core\Entity\Plugin\EntityReferenceSelection\DefaultSelection;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\PermissionScopeInterface;
 
 /**
@@ -10,15 +12,14 @@ use Drupal\group\PermissionScopeInterface;
  *
  * The only handler setting is 'group_type_id', a required string that points
  * to the ID of the group type for which this handler will be run.
- *
- * @EntityReferenceSelection(
- *   id = "group_type:group_role",
- *   label = @Translation("Group type role selection"),
- *   entity_types = {"group_role"},
- *   group = "group_type",
- *   weight = 0
- * )
  */
+#[EntityReferenceSelection(
+  id: 'group_type:group_role',
+  label: new TranslatableMarkup('Group type role selection'),
+  group: 'group_type',
+  weight: 0,
+  entity_types: ['group_role'],
+)]
 class GroupTypeRoleSelection extends DefaultSelection {
 
   /**

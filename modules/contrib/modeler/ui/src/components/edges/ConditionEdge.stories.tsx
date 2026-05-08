@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import { ReactFlowProvider } from 'reactflow';
 import ConditionEdge from './ConditionEdge';
+import { withStore } from '../../../.storybook/decorators';
 
 const EdgeSvgWrapper = (Story: React.ComponentType) => (
   <ReactFlowProvider>
@@ -14,10 +15,28 @@ const EdgeSvgWrapper = (Story: React.ComponentType) => (
   </ReactFlowProvider>
 );
 
+// Mock components for store — needed so QuickAddEdgeButton renders (not null)
+const mockEdgeComponents = [
+  { plugin: 'condition:entity_is_new', label: 'Entity is New', type: 'link', componentType: 5 },
+  { plugin: 'condition:user_role', label: 'User Has Role', type: 'link', componentType: 5 },
+  { plugin: 'action:save_entity', label: 'Save Entity', type: 'element', componentType: 4 },
+  { plugin: 'action:publish', label: 'Publish Content', type: 'element', componentType: 4 },
+  { plugin: 'gateway:split', label: 'Split Flow', type: 'gateway', componentType: 6 },
+];
+
 const meta: Meta<typeof ConditionEdge> = {
   title: 'Components/Edges/ConditionEdge',
   component: ConditionEdge,
-  decorators: [EdgeSvgWrapper],
+  decorators: [
+    EdgeSvgWrapper,
+    withStore({
+      initialState: {
+        nodes: [],
+        edges: [],
+        components: mockEdgeComponents,
+      },
+    }),
+  ],
   parameters: {
     layout: 'centered',
   },
@@ -148,6 +167,22 @@ export const WithOrderBadge: Story = {
       onDeleteCondition: fn(),
       onEdgeUpdate: fn(),
       onReorderEdge: fn(),
+    },
+  },
+};
+
+/**
+ * Condition edge with quick-add buttons before and after the condition
+ */
+export const WithQuickAddButtons: Story = {
+  args: {
+    data: {
+      condition: 'user_has_role',
+      onDeleteCondition: fn(),
+      onEdgeUpdate: fn(),
+      onReorderEdge: fn(),
+      onInsertBeforeCondition: fn(),
+      onInsertAfterCondition: fn(),
     },
   },
 };

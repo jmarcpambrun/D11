@@ -1,8 +1,19 @@
 import { renderHook, act } from '@testing-library/react';
 import { useSearch } from '../useSearch';
 
+// Mock viewport actions
+const mockViewportActions = {
+  panToNode: jest.fn(),
+  panToNodeIfOffscreen: jest.fn(),
+  fitToNodes: jest.fn(),
+  topAlignNode: jest.fn(),
+  focusNode: jest.fn(),
+  fitToNodePair: jest.fn(),
+  selectAndFocus: jest.fn(),
+  setReady: jest.fn(),
+};
+
 // Mock the store
-const mockSetViewportTarget = jest.fn();
 const mockSelectNode = jest.fn();
 const mockSelectEdge = jest.fn();
 const mockNodes = [
@@ -29,15 +40,6 @@ jest.mock('../../store/useSelectionStore', () => ({
   }),
 }));
 
-jest.mock('../../store/useViewportStore', () => ({
-  useViewportStore: jest.fn((selector) => {
-    const state = {
-      setViewportTarget: mockSetViewportTarget,
-    };
-    return selector(state);
-  }),
-}));
-
 describe('useSearch', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,19 +47,19 @@ describe('useSearch', () => {
 
   describe('initial state', () => {
     it('should initialize with empty search term', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       expect(result.current.searchTerm).toBe('');
     });
 
     it('should initialize with no highlighted result', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       expect(result.current.highlightedSearchResult).toBeNull();
     });
   });
 
   describe('onSearchHighlight', () => {
     it('should set highlighted result', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       const mockResult = {
         id: 'node1',
         type: 'node',
@@ -72,7 +74,7 @@ describe('useSearch', () => {
     });
 
     it('should select and center viewport for node results', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       const nodeData = { id: 'node1', position: { x: 0, y: 0 }, data: { label: 'Test Node' } };
       const mockResult = {
         id: 'node1',
@@ -85,17 +87,11 @@ describe('useSearch', () => {
       });
 
       expect(mockSelectNode).toHaveBeenCalledWith(nodeData);
-      expect(mockSetViewportTarget).toHaveBeenCalledWith({
-        type: 'center',
-        nodeId: 'node1',
-        options: expect.objectContaining({
-          zoom: 1.2,
-        }),
-      });
+      expect(mockViewportActions.focusNode).toHaveBeenCalledWith('node1');
     });
 
     it('should select and center viewport on source node for edge results', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       const edgeData = { id: 'edge1', source: 'node1', target: 'node2', data: { condition: 'cond' } };
       const mockResult = {
         id: 'edge1',
@@ -108,17 +104,11 @@ describe('useSearch', () => {
       });
 
       expect(mockSelectEdge).toHaveBeenCalledWith(edgeData);
-      expect(mockSetViewportTarget).toHaveBeenCalledWith({
-        type: 'center',
-        nodeId: 'node1',
-        options: expect.objectContaining({
-          zoom: 1.2,
-        }),
-      });
+      expect(mockViewportActions.focusNode).toHaveBeenCalledWith('node1');
     });
 
     it('should not trigger viewport centering for results without data', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
       const mockResult = {
         id: 'node1',
         type: 'node',
@@ -128,11 +118,11 @@ describe('useSearch', () => {
         result.current.onSearchHighlight(mockResult);
       });
 
-      expect(mockSetViewportTarget).not.toHaveBeenCalled();
+      expect(mockViewportActions.focusNode).not.toHaveBeenCalled();
     });
 
     it('should handle null result', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       act(() => {
         result.current.onSearchHighlight({
@@ -149,20 +139,20 @@ describe('useSearch', () => {
 
   describe('onSearchFocus', () => {
     it('should be a no-op (selection handled by onSearchHighlight)', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       act(() => {
         result.current.onSearchFocus({ type: 'node', id: 'node1' });
       });
 
       // onSearchFocus no longer drives viewport changes
-      expect(mockSetViewportTarget).not.toHaveBeenCalled();
+      expect(mockViewportActions.focusNode).not.toHaveBeenCalled();
     });
   });
 
   describe('clearSearch', () => {
     it('should clear search term', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       act(() => {
         result.current.onSearchHighlight({
@@ -177,7 +167,7 @@ describe('useSearch', () => {
     });
 
     it('should clear highlighted result', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       act(() => {
         result.current.onSearchHighlight({
@@ -192,7 +182,7 @@ describe('useSearch', () => {
     });
 
     it('should reset all search state at once', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       act(() => {
         result.current.onSearchHighlight({
@@ -210,7 +200,7 @@ describe('useSearch', () => {
 
   describe('return value structure', () => {
     it('should return all expected properties', () => {
-      const { result } = renderHook(() => useSearch());
+      const { result } = renderHook(() => useSearch({ viewportActions: mockViewportActions }));
 
       // State
       expect(result.current).toHaveProperty('searchTerm');

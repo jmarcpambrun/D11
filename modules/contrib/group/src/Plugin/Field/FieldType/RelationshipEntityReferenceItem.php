@@ -3,25 +3,27 @@
 namespace Drupal\group\Plugin\Field\FieldType;
 
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Field\Attribute\FieldType;
+use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\Entity\Storage\ConfigWrapperStorageInterface;
 
 /**
  * Defines the 'group_relationship_target' entity field type.
  *
  * Extends EntityReferenceItem to dynamically support config entities.
- *
- * @FieldType(
- *   id = "group_relationship_target",
- *   label = @Translation("Group relationship target"),
- *   description = @Translation("A reference to either a content or wrapped config entity."),
- *   category = @Translation("Reference"),
- *   default_widget = "entity_reference_autocomplete",
- *   default_formatter = "entity_reference_label",
- *   list_class = "\Drupal\Core\Field\EntityReferenceFieldItemList",
- *   no_ui = TRUE,
- * )
  */
+#[FieldType(
+  id: 'group_relationship_target',
+  label: new TranslatableMarkup('Group relationship target'),
+  description: new TranslatableMarkup('A reference to either a content or wrapped config entity.'),
+  category: 'reference',
+  default_widget: 'entity_reference_autocomplete',
+  default_formatter: 'entity_reference_label',
+  no_ui: TRUE,
+  list_class: EntityReferenceFieldItemList::class,
+)]
 class RelationshipEntityReferenceItem extends EntityReferenceItem {
 
   /**

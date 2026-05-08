@@ -623,6 +623,113 @@ describe('useFlowEventHandlers', () => {
 
       expect(mockSetEdges).not.toHaveBeenCalled();
     });
+
+    describe('parallel-edge routing', () => {
+      it('routes a new direct parallel edge with a sideways controlOffset', () => {
+        // Fixture already contains edge-1 (node-1 → node-2). Adding a new
+        // edge between the same endpoints must trigger fan-out routing.
+        const { result } = renderUseFlowEventHandlers();
+
+        act(() => {
+          result.current.onConnect({ source: 'node-1', target: 'node-2' });
+        });
+
+        // Find the new edge in the resulting state.
+        const newEdge = mockEdges.find(e => e.id === 'edge-new-123');
+        expect(newEdge).toBeDefined();
+        expect(newEdge.data?.controlOffset).toBeDefined();
+        expect(newEdge.data.controlOffset.x).not.toBe(0);
+
+        // The existing sibling must have been rebalanced to the other side.
+        const existing = mockEdges.find(e => e.id === 'edge-1');
+        expect(existing).toBeDefined();
+        expect(existing.data?.controlOffset).toBeDefined();
+        expect(existing.data.controlOffset.x).not.toBe(0);
+        // Opposite signs — the two siblings sit on opposite sides.
+        expect(
+          Math.sign(newEdge.data.controlOffset.x) *
+            Math.sign(existing.data.controlOffset.x),
+        ).toBeLessThan(0);
+      });
+
+      it('does not add a controlOffset when no parallel collision exists', () => {
+        // Empty edge list → first edge between node-1 and node-2 is plain.
+        mockEdges = [];
+        const { result } = renderUseFlowEventHandlers();
+
+        act(() => {
+          result.current.onConnect({ source: 'node-1', target: 'node-2' });
+        });
+
+        const newEdge = mockEdges[0];
+        expect(newEdge.data?.controlOffset).toBeUndefined();
+      });
+
+      it('shifts a condition-bearing existing edge further out than the new edge', () => {
+        // Existing edge between node-1 and node-2 carries a condition card.
+        mockEdges = [
+          {
+            id: 'edge-1',
+            source: 'node-1',
+            target: 'node-2',
+            type: 'condition',
+            data: {
+              condition: 'eca_some_condition',
+              conditionLabel: 'Test condition',
+            },
+          },
+        ];
+        const { result } = renderUseFlowEventHandlers();
+
+        act(() => {
+          result.current.onConnect({ source: 'node-1', target: 'node-2' });
+        });
+
+        const existing = mockEdges.find(e => e.id === 'edge-1');
+        const newEdge = mockEdges.find(e => e.id === 'edge-new-123');
+        expect(existing).toBeDefined();
+        expect(newEdge).toBeDefined();
+
+        // Both must have non-zero offsets on opposite sides.
+        const existingX = existing.data.controlOffset.x;
+        const newX = newEdge.data.controlOffset.x;
+        expect(existingX).not.toBe(0);
+        expect(newX).not.toBe(0);
+        expect(Math.sign(existingX) * Math.sign(newX)).toBeLessThan(0);
+        // The condition-bearing existing edge must have been shifted
+        // further out than the plain new edge.
+        expect(Math.abs(existingX)).toBeGreaterThan(Math.abs(newX));
+      });
+
+      it('routes a bypass curve when a chain connects source to target', () => {
+        mockNodes = [
+          { id: 'node-1', position: { x: 0, y: 0 }, data: {}, selected: false, width: 180, height: 120 },
+          { id: 'node-mid', position: { x: 0, y: 200 }, data: {}, selected: false, width: 180, height: 120 },
+          { id: 'node-2', position: { x: 0, y: 400 }, data: {}, selected: false, width: 180, height: 120 },
+        ];
+        // Existing chain: node-1 → node-mid → node-2.
+        mockEdges = [
+          { id: 'e1', source: 'node-1', target: 'node-mid', type: 'default', data: {} },
+          { id: 'e2', source: 'node-mid', target: 'node-2', type: 'default', data: {} },
+        ];
+        const { result } = renderUseFlowEventHandlers();
+
+        // Drag a new direct edge node-1 → node-2.
+        act(() => {
+          result.current.onConnect({ source: 'node-1', target: 'node-2' });
+        });
+
+        const newEdge = mockEdges.find(e => e.id === 'edge-new-123');
+        expect(newEdge).toBeDefined();
+        expect(newEdge.data?.controlOffset).toBeDefined();
+        expect(newEdge.data.controlOffset.x).not.toBe(0);
+        // The chain edges themselves must NOT be modified by a bypass.
+        const chainE1 = mockEdges.find(e => e.id === 'e1');
+        const chainE2 = mockEdges.find(e => e.id === 'e2');
+        expect(chainE1.data?.controlOffset).toBeUndefined();
+        expect(chainE2.data?.controlOffset).toBeUndefined();
+      });
+    });
   });
 
   describe('onPaneClick', () => {

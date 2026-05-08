@@ -10,8 +10,8 @@ use Drupal\user\RoleInterface;
  * Tests the group permission hash generator service.
  *
  * @covers \Drupal\group\Access\GroupPermissionsHashGenerator
- * @covers \Drupal\group\Access\IndividualGroupPermissionCalculator
- * @covers \Drupal\group\Access\SynchronizedGroupPermissionCalculator
+ * @covers \Drupal\group\Access\IndividualGroupRoleAccessPolicy
+ * @covers \Drupal\group\Access\SynchronizedGroupRoleAccessPolicy
  * @group group
  */
 class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
@@ -86,7 +86,7 @@ class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
    * @return array
    *   A list of testIndividual method arguments.
    */
-  public function individualProvider() {
+  public static function individualProvider() {
     $cases['regular'] = ['role_config' => ['permissions' => ['edit group']]];
     $cases['admin'] = ['role_config' => ['admin' => TRUE]];
     return $cases;
@@ -134,7 +134,7 @@ class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
    * @return array
    *   A list of testSynchronized method arguments.
    */
-  public function synchronizedProvider() {
+  public static function synchronizedProvider() {
     $cases['insider-regular'] = [
       'role_config' => [
         'scope' => PermissionScopeInterface::INSIDER_ID,

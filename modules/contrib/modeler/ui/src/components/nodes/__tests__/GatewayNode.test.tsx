@@ -67,10 +67,21 @@ describe('GatewayNode', () => {
       expect(container.firstChild).toHaveClass('gateway-node');
     });
 
-    it('should render with header and body (uniform card layout)', () => {
+    it('should render with header and body (compact card layout, no footer)', () => {
       const { container } = render(<GatewayNode {...defaultProps} />);
       expect(container.querySelector('.node-header')).toBeInTheDocument();
       expect(container.querySelector('.node-body')).toBeInTheDocument();
+      expect(container.querySelector('.node-footer')).not.toBeInTheDocument();
+    });
+
+    it('should render header actions (annotation + delete) inside the header', () => {
+      const { container } = render(
+        <GatewayNode {...defaultProps} data={{ label: 'Test', annotation: 'Note' }} />
+      );
+      const headerActions = container.querySelector('.node-header-actions');
+      expect(headerActions).toBeInTheDocument();
+      expect(headerActions!.querySelector('.node-footer-delete')).toBeInTheDocument();
+      expect(headerActions!.querySelector('.node-footer-annotation')).toBeInTheDocument();
     });
   });
 
@@ -146,7 +157,7 @@ describe('GatewayNode', () => {
   });
 
   describe('annotation', () => {
-    it('should show annotation icon in footer when annotation exists', () => {
+    it('should show annotation icon in header when annotation exists', () => {
       const { container } = render(
         <GatewayNode
           {...defaultProps}

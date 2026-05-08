@@ -11,35 +11,14 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 /**
- * Checks the amount of times a single content entity can be added to a group.
+ * Checks the amount of times a single entity can be grouped.
  */
 class GroupRelationshipCardinalityValidator extends ConstraintValidator implements ContainerInjectionInterface {
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
-   * Constructs a GroupRelationshipCardinalityValidator object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Database\Connection $database
-   *   The database.
-   */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->database = $database;
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected Connection $database,
+  ) {
   }
 
   /**
@@ -59,13 +38,23 @@ class GroupRelationshipCardinalityValidator extends ConstraintValidator implemen
     assert($group_relationship instanceof GroupRelationshipInterface);
     assert($constraint instanceof GroupRelationshipCardinality);
 
-    // Only run our checks if a group was referenced.
+    // Both the group and entity field are required, so their presence is
+    // checked by the NotNull constraint that gets added by default in the
+    // TypedDataManager's ::getDefaultConstraints() method. Instead of blindly
+    // relying on the entities being set, we quietly fail if they're not there
+    // so NotNull can give a clear failure message.
     if (!$group = $group_relationship->getGroup()) {
       return;
     }
-
-    // Only run our checks if an entity was referenced.
     if (!$entity = $group_relationship->getEntity()) {
+      return;
+    }
+
+    // If the entity is new, it can't belong to any groups yet. So both the
+    // group and entity cardinality can not be surpassed. Note that this should
+    // only occur when on a combined form where the entity that is to be added
+    // to a group has not been saved yet.
+    if ($entity->isNew()) {
       return;
     }
 
@@ -99,7 +88,10 @@ class GroupRelationshipCardinalityValidator extends ConstraintValidator implemen
         ->condition('group_type', $group_relationship->getGroupTypeId())
         ->condition('plugin_id', $group_relationship->getPluginId())
         ->condition('entity_id', $entity_id)
-        ->condition('gid', $group->id(), '!=')
+        // We allow new group entities on the create group form, where we
+        // validate the group relationship for the member. For this single use
+        // case we need to cast NULL to 0.
+        ->condition('gid', $group->id() ?? 0, '!=')
         ->distinct()
         ->countQuery()
         ->execute()

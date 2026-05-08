@@ -62,9 +62,9 @@ class GroupRelationshipCardinalityTest extends GroupKernelTestBase {
     $this->relationshipStorage = $this->entityTypeManager->getStorage('group_relationship');
     $this->relationshipTypeStorage = $this->entityTypeManager->getStorage('group_relationship_type');
 
-    // Make sure members can view the group and grouped entity.
+    // Make sure outsiders can view the group and grouped entity.
     $base = [
-      'scope' => PermissionScopeInterface::INSIDER_ID,
+      'scope' => PermissionScopeInterface::OUTSIDER_ID,
       'global_role' => RoleInterface::AUTHENTICATED_ID,
       'permissions' => ['view group', 'view any entity_test_relation entity'],
     ];
@@ -100,17 +100,17 @@ class GroupRelationshipCardinalityTest extends GroupKernelTestBase {
     // Try creating a first relationship.
     $relationship = $this->relationshipStorage->createForEntityInGroup($entity, $this->createGroup(['type' => $this->groupTypeA->id()]), 'entity_test_relation');
     $violations = $relationship->validate();
-    $this->assertEquals(0, $violations->count(), 'No violations when unsaved entity did not reach limit');
+    $this->assertEquals(0, $violations->count(), 'No violations when unsaved relationship did not reach limit');
 
     // Save the relationship and check again.
     $this->relationshipStorage->save($relationship);
     $violations = $relationship->validate();
-    $this->assertEquals(0, $violations->count(), 'No violations when saved entity did not reach limit');
+    $this->assertEquals(0, $violations->count(), 'No violations when saved relationship did not reach limit');
 
     // Create a second one in a different group and check for violations.
     $relationship = $this->relationshipStorage->createForEntityInGroup($entity, $this->createGroup(['type' => $this->groupTypeA->id()]), 'entity_test_relation');
     $violations = $relationship->validate();
-    $this->assertEquals(1, $violations->count(), 'Violation when unsaved entity reaches limit');
+    $this->assertEquals(1, $violations->count(), 'Violation when unsaved relationship reaches limit');
     $message = new TranslatableMarkup(
       '@field: %content has reached the maximum amount of groups of type %group_type it can be added to',
       [
@@ -119,6 +119,20 @@ class GroupRelationshipCardinalityTest extends GroupKernelTestBase {
         '%group_type' => $this->groupTypeA->label(),
       ]
     );
+    $this->assertEquals((string) $message, (string) $violations->get(0)->getMessage());
+
+    // Create a second one in an unsaved group and check for violations.
+    $unsaved_group = $this->entityTypeManager()->getStorage('group')->create([
+      'type' => $this->groupTypeA->id(),
+      'label' => $this->randomString(),
+    ]);
+    $relationship = $this->relationshipStorage->create([
+      'type' => $relationship_type->id(),
+      'entity_id' => $entity->id(),
+    ]);
+    $relationship->set('gid', $unsaved_group);
+    $violations = $relationship->validate();
+    $this->assertEquals(1, $violations->count(), 'Violation when unsaved relationship reaches limit with unsaved group');
     $this->assertEquals((string) $message, (string) $violations->get(0)->getMessage());
 
     // Create one in the second group type to prove that doesn't collide.
@@ -145,17 +159,17 @@ class GroupRelationshipCardinalityTest extends GroupKernelTestBase {
     // Try creating a first relationship.
     $relationship = $this->relationshipStorage->createForEntityInGroup($entity, $group, 'entity_test_relation');
     $violations = $relationship->validate();
-    $this->assertEquals(0, $violations->count(), 'No violations when unsaved entity did not reach limit');
+    $this->assertEquals(0, $violations->count(), 'No violations when unsaved relationship did not reach limit');
 
     // Save the relationship and check again.
     $this->relationshipStorage->save($relationship);
     $violations = $relationship->validate();
-    $this->assertEquals(0, $violations->count(), 'No violations when saved entity did not reach limit');
+    $this->assertEquals(0, $violations->count(), 'No violations when saved relationship did not reach limit');
 
     // Create a second one in a different group and check for violations.
     $relationship = $this->relationshipStorage->createForEntityInGroup($entity, $group, 'entity_test_relation');
     $violations = $relationship->validate();
-    $this->assertEquals(1, $violations->count(), 'Violation when unsaved entity reaches limit');
+    $this->assertEquals(1, $violations->count(), 'Violation when unsaved relationship reaches limit');
     $message = new TranslatableMarkup(
       '@field: %content has reached the maximum amount of times it can be added to %group',
       [
@@ -165,6 +179,20 @@ class GroupRelationshipCardinalityTest extends GroupKernelTestBase {
       ]
     );
     $this->assertEquals((string) $message, (string) $violations->get(0)->getMessage());
+
+    // Verify that a new entity cannot have any violations.
+    $unsaved_entity = $this->entityTypeManager()->getStorage('entity_test_with_owner')->create([
+      'name' => $this->randomString(),
+      'type' => $this->randomMachineName(),
+    ]);
+    $relationship = $this->relationshipStorage->create([
+      'type' => $relationship_type->id(),
+      'gid' => $group->id(),
+    ]);
+    $relationship->set('entity_id', $unsaved_entity);
+    $violations = $relationship->validate();
+    $this->assertEquals(0, $violations->count(), 'No violations for unsaved entity');
+
   }
 
   /**

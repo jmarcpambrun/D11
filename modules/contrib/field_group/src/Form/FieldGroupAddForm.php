@@ -238,7 +238,7 @@ class FieldGroupAddForm extends FormBase {
       '#tree' => TRUE,
     ];
 
-    $form['format_settings'] += $plugin->settingsForm();
+    $form['format_settings'] += $plugin->settingsForm($form, $form_state);
 
     $form['actions'] = ['#type' => 'actions'];
     $form['actions']['submit'] = [

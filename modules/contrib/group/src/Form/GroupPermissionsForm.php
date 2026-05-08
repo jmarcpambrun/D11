@@ -3,7 +3,6 @@
 namespace Drupal\group\Form;
 
 use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\group\Access\GroupPermissionHandlerInterface;
@@ -16,35 +15,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 abstract class GroupPermissionsForm extends FormBase {
 
-  /**
-   * The permission handler.
-   *
-   * @var \Drupal\group\Access\GroupPermissionHandlerInterface
-   */
-  protected $groupPermissionHandler;
-
-  /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $moduleHandler;
-
-  /**
-   * Constructs a new GroupPermissionsForm.
-   *
-   * @param \Drupal\group\Access\GroupPermissionHandlerInterface $permission_handler
-   *   The group permission handler.
-   * @param \Drupal\Core\Extension\ModuleExtensionList|\Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module extension list.
-   */
-  public function __construct(GroupPermissionHandlerInterface $permission_handler, ModuleHandlerInterface|ModuleExtensionList $module_handler) {
-    if ($module_handler instanceof ModuleHandlerInterface) {
-      @trigger_error('Calling ' . __METHOD__ . '() with a $module_handler argument as \Drupal\Core\Extension\ModuleHandlerInterface instead of \Drupal\Core\Extension\ModuleExtensionList is deprecated in group:3.3.0 and will be required in group:4.0.0. See https://www.drupal.org/node/3431243', E_USER_DEPRECATED);
-      $module_handler = \Drupal::service('extension.list.module');
-    }
-    $this->groupPermissionHandler = $permission_handler;
-    $this->moduleHandler = $module_handler;
+  public function __construct(
+    protected GroupPermissionHandlerInterface $groupPermissionHandler,
+    protected ModuleExtensionList $moduleHandler,
+  ) {
   }
 
   /**

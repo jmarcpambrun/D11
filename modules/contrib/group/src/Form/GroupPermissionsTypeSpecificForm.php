@@ -15,32 +15,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GroupPermissionsTypeSpecificForm extends GroupPermissionsForm {
 
   /**
-   * The specific group role for this form.
+   * The specific group type for this form.
    *
    * @var \Drupal\group\Entity\GroupTypeInterface
    */
   protected $groupType;
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * Constructs a new GroupPermissionsTypeSpecificForm.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\group\Access\GroupPermissionHandlerInterface $permission_handler
-   *   The group permission handler.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
-   */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, GroupPermissionHandlerInterface $permission_handler, ModuleHandlerInterface $module_handler) {
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    GroupPermissionHandlerInterface $permission_handler,
+    ModuleHandlerInterface $module_handler,
+  ) {
     parent::__construct($permission_handler, $module_handler);
-    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -77,13 +63,14 @@ class GroupPermissionsTypeSpecificForm extends GroupPermissionsForm {
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
-   * @param \Drupal\group\Entity\GroupTypeInterface $group_type
+   * @param ?\Drupal\group\Entity\GroupTypeInterface $group_type
    *   The group type used for this form.
    *
    * @return array
    *   The form structure.
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?GroupTypeInterface $group_type = NULL) {
+    // @todo Check for group type and throw exception.
     $this->groupType = $group_type;
     return parent::buildForm($form, $form_state);
   }

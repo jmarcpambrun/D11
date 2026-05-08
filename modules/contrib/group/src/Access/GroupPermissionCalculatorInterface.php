@@ -3,6 +3,7 @@
 namespace Drupal\group\Access;
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\CalculatedPermissionsInterface;
 
 /**
  * Aggregates the calculated permissions from all scopes into one set.
@@ -17,9 +18,9 @@ interface GroupPermissionCalculatorInterface {
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user account for which to retrieve the permissions.
    *
-   * @return \Drupal\flexible_permissions\CalculatedPermissionsInterface
+   * @return \Drupal\Core\Session\CalculatedPermissionsInterface
    *   An object representing the full group permissions.
    */
-  public function calculateFullPermissions(AccountInterface $account);
+  public function calculateFullPermissions(AccountInterface $account): CalculatedPermissionsInterface;
 
 }

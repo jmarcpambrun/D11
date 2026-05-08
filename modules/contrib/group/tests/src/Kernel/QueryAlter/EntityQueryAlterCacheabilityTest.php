@@ -47,7 +47,7 @@ class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
     $this->createNodeType(['type' => 'page']);
 
     $this->storage = $this->entityTypeManager->getStorage('node');
-    $this->groupType = $this->createGroupType(['creator_membership' => FALSE]);
+    $this->groupType = $this->createGroupType();
   }
 
   /**

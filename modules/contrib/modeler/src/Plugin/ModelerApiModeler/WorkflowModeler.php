@@ -117,6 +117,12 @@ class WorkflowModeler extends ModelerBase {
         }
       }
 
+      // Track edge ID base strings to detect parallel edges (same source
+      // and target) and assign unique IDs.  The first edge keeps the
+      // legacy "{source}_{target}" format for backward compatibility;
+      // subsequent parallel edges get a counter suffix.
+      $edgeIdCounts = [];
+
       // Second pass: build nodes and edges with full condition data available.
       foreach ($usedComponents as $component) {
         $componentId = $component->getId();
@@ -147,8 +153,17 @@ class WorkflowModeler extends ModelerBase {
           $successorId = $successor->getId();
           $conditionId = $successor->getConditionId();
 
+          // Build a unique edge ID.  The base format "{source}_{target}"
+          // is unique when at most one edge connects a given pair.  For
+          // parallel edges (same source and target, different conditions)
+          // append a counter so ReactFlow receives distinct keys.
+          $edgeIdBase = $componentId . '_' . $successorId;
+          $count = $edgeIdCounts[$edgeIdBase] ?? 0;
+          $edgeId = $count === 0 ? $edgeIdBase : $edgeIdBase . '_' . $count;
+          $edgeIdCounts[$edgeIdBase] = $count + 1;
+
           $edge = [
-            'id' => $componentId . '_' . $successorId,
+            'id' => $edgeId,
             'source' => $componentId,
             'target' => $successorId,
           ];

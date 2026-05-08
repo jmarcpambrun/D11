@@ -9,6 +9,46 @@
 
 import { LAYOUT, NODE_DIMENSIONS } from '../constants/dimensions';
 
+// ============ Vertical Gap Helpers ============
+
+/**
+ * Calculate the required vertical gap between the bottom of one node and the
+ * top of the next, using the same spacing values as auto-layout.
+ *
+ * @param hasCondition - Whether the connecting edge carries a condition card
+ * @returns Gap in pixels (top-left coordinate system)
+ */
+export function requiredVerticalGap(hasCondition: boolean): number {
+  return LAYOUT.NODE_SPACING_Y + (hasCondition ? LAYOUT.CONDITION_EXTRA_SPACING : 0);
+}
+
+/**
+ * Shift all nodes whose top-left Y position is at or below a threshold
+ * downward by a given amount.  Used when inserting elements between existing
+ * nodes to create room without running a full auto-layout pass.
+ *
+ * @param nodes        - Current node array
+ * @param thresholdY   - Y coordinate; nodes with position.y >= this value are shifted
+ * @param shiftAmount  - Pixels to shift downward (ignored when <= 0)
+ * @param excludeIds   - Optional set of node IDs to exclude from shifting
+ * @returns A new array with updated positions (unchanged nodes are returned by reference)
+ */
+export function shiftNodesDown<T extends { id?: string; position: { x: number; y: number } }>(
+  nodes: T[],
+  thresholdY: number,
+  shiftAmount: number,
+  excludeIds?: Set<string>,
+): T[] {
+  if (shiftAmount <= 0) return nodes;
+  return nodes.map(node => {
+    if (excludeIds && node.id && excludeIds.has(node.id)) return node;
+    if (node.position.y >= thresholdY) {
+      return { ...node, position: { x: node.position.x, y: node.position.y + shiftAmount } };
+    }
+    return node;
+  });
+}
+
 interface NodeLike {
   id?: string;
   position: { x: number; y: number };

@@ -50,7 +50,7 @@ class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase
    * Tests that a group's owner (default member) is returned by the view.
    */
   public function testGroupOwnerIsListed() {
-    $this->createGroup();
+    $this->createGroup()->addMember(\Drupal::currentUser()->getAccount());
     $this->assertEquals(1, count($this->getViewResults()), 'The view displays the user for the default member.');
   }
 
@@ -61,6 +61,7 @@ class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase
    */
   public function testAddedMemberIsListed() {
     $group = $this->createGroup();
+    $group->addMember(\Drupal::currentUser()->getAccount());
     $group->addMember($this->createUser());
     $this->assertEquals(2, count($this->getViewResults()), 'The view displays the users for both the default and the added member.');
   }
@@ -72,6 +73,7 @@ class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase
    */
   public function testOtherContentIsNotListed() {
     $group = $this->createGroup();
+    $group->addMember(\Drupal::currentUser()->getAccount());
     $group->addRelationship($this->createUser(), 'user_relation');
     $this->assertEquals(1, count($this->getViewResults()), 'The view only displays the user for default member and not the one that was simply related.');
   }

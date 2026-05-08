@@ -21,8 +21,6 @@ class GroupMembershipRolesTest extends GroupKernelTestBase {
 
   /**
    * Tests the role validation.
-   *
-   * @covers ::validate
    */
   public function testValidate(): void {
     $grt_storage = $this->entityTypeManager->getStorage('group_relationship_type');

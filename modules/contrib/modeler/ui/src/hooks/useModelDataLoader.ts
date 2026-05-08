@@ -8,20 +8,18 @@ import { useGraphStore } from '../store/useGraphStore';
 import { useComponentStore } from '../store/useComponentStore';
 import { useContextStore } from '../store/useContextStore';
 import { useModelStore } from '../store/useModelStore';
-import { useSelectionStore } from '../store/useSelectionStore';
 import { useFilterStore } from '../store/useFilterStore';
 import { useLabelStore } from '../store/useLabelStore';
-import { useViewportStore } from '../store/useViewportStore';
 import { parseModelData } from '../utils/modelUtils';
 import { validateModelDataShape } from '../utils/validation';
-import { VIEWPORT, TIMING } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import { getComponentLabel, setActiveComponentLabels, setActiveComponentLabelsPlural, DEFAULT_TYPE_MAP } from '../utils/componentUtils';
-import type { Settings, ViewportTarget, StoreComponent, StoreNode, StoreEdge, ModelData } from '../types/settings';
+import type { Settings, StoreComponent, StoreNode, StoreEdge, ModelData } from '../types/settings';
+import type { ViewportActions } from './useViewportActions';
 
 interface UseModelDataLoaderProps {
   settings: Settings;
-  setViewportTarget: (target: ViewportTarget) => void;
+  viewportActions: ViewportActions;
 }
 
 // ============ Extracted Helper Functions ============
@@ -184,12 +182,11 @@ function buildDefaultModel(settings: Settings): ModelData {
 // ============ Hook ============
 
 /** Viewport operation queued during model loading, applied once ReactFlow is ready. */
-interface PendingViewport {
-  target: ViewportTarget;
-  nodeToSelect?: StoreNode;
-}
+type PendingViewportOp =
+  | { kind: 'fitToNodes' }
+  | { kind: 'selectAndFocus'; node: StoreNode; targetKind: 'topAlignNode' | 'focusNode' };
 
-export function useModelDataLoader({ settings, setViewportTarget }: UseModelDataLoaderProps) {
+export function useModelDataLoader({ settings, viewportActions }: UseModelDataLoaderProps) {
   const setNodes = useGraphStore(state => state.setNodes);
   const setEdges = useGraphStore(state => state.setEdges);
   const setComponents = useComponentStore(state => state.setComponents);
@@ -200,12 +197,12 @@ export function useModelDataLoader({ settings, setViewportTarget }: UseModelData
   const setContextConfig = useContextStore(state => state.setContextConfig);
   const setComponentLabels = useLabelStore(state => state.setComponentLabels);
   const setModelData = useModelStore(state => state.setModelData);
-  const setSelectedNode = useSelectionStore(state => state.setSelectedNode);
   const setVisibleStartNodeIds = useFilterStore(state => state.setVisibleStartNodeIds);
-  const reactFlowReady = useViewportStore(state => state.reactFlowReady);
 
-  // Queued viewport operation — set during model loading, applied once ReactFlow fires onInit.
-  const pendingViewportRef = useRef<PendingViewport | null>(null);
+  // Queued viewport operation — set during model loading, applied once
+  // useViewportActions signals readiness (deferred execution is handled
+  // internally by the viewport actions hook).
+  const pendingViewportRef = useRef<PendingViewportOp | null>(null);
 
   // Process replay data
   const replayData = useMemo(() => settings.modeler?.replayData || [], [settings.modeler?.replayData]);
@@ -306,32 +303,18 @@ export function useModelDataLoader({ settings, setViewportTarget }: UseModelData
               setVisibleStartNodeIds([nodeToSelect.id]);
             }
 
-            // Check if this is a start node
-            const isStartType = isStartNode;
-
-            // Queue the viewport operation — it will be applied once ReactFlow
-            // signals readiness via the onInit callback, eliminating the race
-            // condition caused by arbitrary setTimeout delays.
+            // Queue the viewport operation — useViewportActions handles
+            // deferred execution internally until ReactFlow is ready.
+            const viewportKind = isStartNode ? 'topAlignNode' : 'focusNode';
             pendingViewportRef.current = {
-              nodeToSelect,
-              target: {
-                type: isStartType ? 'top-align' : 'center',
-                nodeId: nodeToSelect.id,
-                options: {
-                  zoom: VIEWPORT.AUTO_CENTER_ZOOM,
-                  duration: TIMING.VIEWPORT_PAN_DURATION
-                }
-              }
+              kind: 'selectAndFocus',
+              node: nodeToSelect,
+              targetKind: viewportKind,
             };
           }
         } else if (parsed.nodes.length > 0) {
           // No specific selection requested - just fit the view
-          pendingViewportRef.current = {
-            target: {
-              type: 'fit',
-              options: { padding: VIEWPORT.FIT_VIEW_PADDING }
-            }
-          };
+          pendingViewportRef.current = { kind: 'fitToNodes' };
         }
       }
     } else {
@@ -347,12 +330,7 @@ export function useModelDataLoader({ settings, setViewportTarget }: UseModelData
 
           // Fit the workflow in view without auto-selecting any node
           if (parsed.nodes.length > 0) {
-            pendingViewportRef.current = {
-              target: {
-                type: 'fit',
-                options: { padding: VIEWPORT.FIT_VIEW_PADDING }
-              }
-            };
+            pendingViewportRef.current = { kind: 'fitToNodes' };
           }
         }
       }
@@ -364,32 +342,27 @@ export function useModelDataLoader({ settings, setViewportTarget }: UseModelData
     }
   }, [settings, setComponents, setFavoriteComponents, setContexts, setDependencies, setSelectedContextId, setContextConfig, setComponentLabels, setModelData, setNodes, setEdges, setVisibleStartNodeIds]);
 
-  // Apply the pending viewport operation once ReactFlow signals readiness.
-  // This replaces the previous approach of using nested setTimeout delays
-  // (100ms + 200ms) which was a guess at when ReactFlow would be ready.
-  // The onInit callback is the authoritative signal that the ReactFlow
-  // instance is fully initialized and viewport operations will succeed.
+  // Apply the pending viewport operation.  useViewportActions handles
+  // deferred execution internally — if ReactFlow is not ready yet, the
+  // operation is queued and applied once setReady() is called.
+  // This effect runs once after the initialization effect above has set
+  // pendingViewportRef.current.
   useEffect(() => {
-    if (!reactFlowReady) return;
-
     const pending = pendingViewportRef.current;
     if (!pending) return;
 
     // Consume the pending operation so it fires only once.
     pendingViewportRef.current = null;
 
-    // Brief delay for React to flush the node/edge state into ReactFlow's
-    // internal store so that node dimensions are measured before we pan.
-    setTimeout(() => {
-      if (pending.nodeToSelect) {
-        setSelectedNode(pending.nodeToSelect);
-      }
-      // Give the selection one tick to propagate, then set the viewport target.
-      setTimeout(() => {
-        setViewportTarget(pending.target);
-      }, TIMING.SYNC_DELAY);
-    }, TIMING.SYNC_DELAY);
-  }, [reactFlowReady, setSelectedNode, setViewportTarget]);
+    switch (pending.kind) {
+      case 'fitToNodes':
+        viewportActions.fitToNodes();
+        break;
+      case 'selectAndFocus':
+        viewportActions.selectAndFocus(pending.node, pending.targetKind);
+        break;
+    }
+  }, [viewportActions]);
 
   return {
     replayData

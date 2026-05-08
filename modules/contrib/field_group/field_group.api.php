@@ -19,10 +19,10 @@ use Drupal\Core\Form\FormStateInterface;
  *   Group being rendered.
  * @param object $group
  *   The Field group info.
- * @param object $rendering_object
- *   The entity / form being rendered.
+ * @param array $render_array
+ *   The render array of the entity or form this group belongs to.
  */
-function hook_field_group_pre_render(array &$element, &$group, &$rendering_object) {
+function hook_field_group_pre_render(array &$element, &$group, &$render_array) {
   // Add all field_group format types to the js settings.
   $element['#attached']['drupalSettings']['field_group'] = [
     $group->format_type => [
@@ -44,7 +44,7 @@ function hook_field_group_pre_render(array &$element, &$group, &$rendering_objec
     ],
     'group' => $group,
   ]);
-  $plugin->preRender($element, $rendering_object);
+  $plugin->preRender($element, $render_array);
 }
 
 /**
@@ -54,10 +54,10 @@ function hook_field_group_pre_render(array &$element, &$group, &$rendering_objec
  *   Group being rendered.
  * @param object $group
  *   The Field group info.
- * @param object $rendering_object
- *   The entity / form being rendered.
+ * @param array $render_array
+ *   The render array of the entity or form this group belongs to.
  */
-function hook_field_group_pre_render_alter(array &$element, &$group, &$rendering_object) {
+function hook_field_group_pre_render_alter(array &$element, &$group, &$render_array) {
   if ($group->format_type == 'htab') {
     $element['#theme_wrappers'] = [
       'container' => [

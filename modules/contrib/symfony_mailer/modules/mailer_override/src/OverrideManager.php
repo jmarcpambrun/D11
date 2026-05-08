@@ -25,6 +25,7 @@ use Drupal\symfony_mailer\Attribute\MailerInfo;
 use Drupal\symfony_mailer\MailerLookupInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
+
 /**
  * Mailer override plugin manager.
  */
@@ -422,7 +423,9 @@ class OverrideManager extends DefaultPluginManager implements OverrideManagerInt
       // Set defaults for hidden fields.
       foreach ($alter['default'] as $key => $default) {
         if (empty($form[$key]['#default_value'])) {
-          $form[$key]['#default_value'] = $this->token->replace($default);
+	  $form[$key]['#default_value'] = $default;
+          // Invoking the token service here causes a circular dependency error. Do it later.
+          $form[$key]['#pre_render'][] = [$this, 'preRenderTokenReplace'];
         }
       }
 
@@ -433,6 +436,22 @@ class OverrideManager extends DefaultPluginManager implements OverrideManagerInt
         $form['mailer_policy'] = $this->policyHelper->renderPolicy($tag, $entity);
       }
     }
+  }
+
+   /**
+   * Pre-render callback to replace tokens in a form element's default value.
+   *
+   * @param array $element
+   *   The form element.
+   *
+   * @return array
+   *   The updated form element.
+   *
+   * @internal
+   */
+  public function preRenderTokenReplace(array $element): array {
+    $element['#default_value'] = $this->token->replace($element['#default_value'], [], ['clear' => TRUE]);
+    return $element;
   }
 
   /**
@@ -635,6 +654,23 @@ class OverrideManager extends DefaultPluginManager implements OverrideManagerInt
         $this->mailerLookup->getDefinitions();
       }
     }
+  }
+
+
+  /**
+   * Retrieves the token service instance.
+   *
+   * This method checks if the token service is already initialized. If not,
+   * it initializes the token service using the provided token closure.
+   *
+   * @return \Drupal\Core\Utility\Token
+   *   The initialized token service instance.
+   */
+  protected function getTokenService(): Token {
+    if ($this->token === NULL) {
+      $this->token = ($this->tokenClosure)();
+    }
+    return $this->token;
   }
 
 }

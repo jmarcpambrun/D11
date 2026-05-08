@@ -138,7 +138,7 @@ class Eca extends ModelOwnerBase {
    * {@inheritdoc}
    */
   public function configEntityBasePath(): string {
-    return 'route:entity.eca.collection';
+    return 'admin/config/workflow/eca';
   }
 
   /**
@@ -206,6 +206,23 @@ class Eca extends ModelOwnerBase {
       $this->actionsService = $this->getContainer()->get('eca.service.action');
     }
     return $this->actionsService;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function modelConstraints(): array {
+    return [
+      Api::COMPONENT_TYPE_START => [
+        'successors' => ['requireConditionWhenParallel' => TRUE],
+      ],
+      Api::COMPONENT_TYPE_ELEMENT => [
+        'successors' => ['requireConditionWhenParallel' => TRUE],
+      ],
+      Api::COMPONENT_TYPE_GATEWAY => [
+        'successors' => ['requireConditionWhenParallel' => TRUE],
+      ],
+    ];
   }
 
   /**

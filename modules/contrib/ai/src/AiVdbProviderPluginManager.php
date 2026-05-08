@@ -130,7 +130,7 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
       // Otherwise create the collection.
       $provider->createCollection(
         $configuration['database_settings']['collection'],
-        (int) $configuration['embeddings_engine_configuration']['dimensions'],
+        $configuration['embeddings_engine_configuration']['dimensions'],
         $metric,
         $configuration['database_settings']['database_name'],
       );

@@ -4,8 +4,6 @@ namespace Drupal\group\Cache\Context;
 
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\Context\CacheContextInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\group\Context\GroupRouteContextTrait;
 
 /**
@@ -21,19 +19,6 @@ use Drupal\group\Context\GroupRouteContextTrait;
 class RouteGroupCacheContext implements CacheContextInterface {
 
   use GroupRouteContextTrait;
-
-  /**
-   * Constructs a new RouteGroupCacheContext.
-   *
-   * @param \Drupal\Core\Routing\RouteMatchInterface $current_route_match
-   *   The current route match object.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   */
-  public function __construct(RouteMatchInterface $current_route_match, EntityTypeManagerInterface $entity_type_manager) {
-    $this->currentRouteMatch = $current_route_match;
-    $this->entityTypeManager = $entity_type_manager;
-  }
 
   /**
    * {@inheritdoc}

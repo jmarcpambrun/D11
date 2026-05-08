@@ -75,10 +75,10 @@ namespace Drupal\Tests\group\Unit {
      * @return array
      *   A list of testGetOperations method arguments.
      */
-    public function getOperationsProvider() {
+    public static function getOperationsProvider() {
       $cases = [];
 
-      foreach ($this->getOperationProviderScenarios() as $key => $scenario) {
+      foreach (self::getOperationProviderScenarios() as $key => $scenario) {
         $keys[0] = $key;
 
         foreach ([TRUE, FALSE] as $installed) {
@@ -154,10 +154,10 @@ namespace Drupal\Tests\group\Unit {
      * @return array
      *   A list of testGetGroupOperations method arguments.
      */
-    public function getGroupOperationsProvider() {
+    public static function getGroupOperationsProvider() {
       $cases = [];
 
-      foreach ($this->getOperationProviderScenarios() as $key => $scenario) {
+      foreach (self::getOperationProviderScenarios() as $key => $scenario) {
         $keys[0] = $key;
 
         foreach ([TRUE, FALSE] as $has_create_permission) {
@@ -194,7 +194,7 @@ namespace Drupal\Tests\group\Unit {
      * @return array
      *   A set of test cases to be used in data providers.
      */
-    protected function getOperationProviderScenarios() {
+    protected static function getOperationProviderScenarios() {
       $scenarios = [];
 
       foreach ([TRUE, FALSE] as $is_enforced) {

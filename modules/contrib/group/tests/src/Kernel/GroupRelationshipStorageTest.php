@@ -202,6 +202,7 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    */
   public function testLoadByGroup() {
     $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $group->addMember($this->getCurrentUser());
     $this->assertCount(1, $this->storage->loadByGroup($group), 'Managed to load the group creator membership by group.');
     $this->assertCount(1, $this->storage->loadByGroup($group, 'group_membership'), 'Managed to load the group creator membership by group and plugin ID.');
   }
@@ -235,12 +236,13 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    * @covers ::loadByEntity
    */
   public function testLoadByContentEntity() {
-    $group_a = $this->createGroup(['type' => $this->groupType->id()]);
-    $group_b = $this->createGroup(['type' => $this->createGroupType(['id' => 'default'])->id()]);
     $account = $this->getCurrentUser();
 
-    // Both entities should have ID 2 to test.
-    $this->assertSame($group_b->id(), $account->id());
+    $group_a = $this->createGroup(['type' => $this->groupType->id()]);
+    $group_a->addMember($account);
+
+    $group_b = $this->createGroup(['type' => $this->createGroupType(['id' => 'default'])->id()]);
+    $group_b->addMember($account);
 
     // Relate the group so we can verify only the user is returned.
     $group_a->addRelationship($group_b, 'group_relation');
@@ -254,21 +256,30 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    * @covers ::loadByEntity
    */
   public function testLoadByConfigEntity() {
-    $group = $this->createGroup(['type' => $this->groupType->id()]);
-    $node_type = $this->createNodeType();
-    $group->addRelationship($node_type, 'node_type_relation');
-
     $storage = $this->entityTypeManager->getStorage('group_config_wrapper');
     assert($storage instanceof ConfigWrapperStorageInterface);
-    $wrapper = $storage->wrapEntity($node_type);
 
-    $group_relationships = $this->storage->loadByEntity($node_type);
+    $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $node_type_a = $this->createNodeType();
+    $node_type_b = $this->createNodeType();
+
+    $this->assertFalse($storage->wrapEntity($node_type_a, FALSE), 'No wrapper exists yet for ungrouped node type A.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'No wrapper exists yet for ungrouped node type B.');
+    $group->addRelationship($node_type_a, 'node_type_relation');
+    $this->assertNotFalse($wrapper = $storage->wrapEntity($node_type_a, FALSE), 'A wrapper exists for grouped node type A.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'No wrapper exists for ungrouped node type B.');
+
+    $group_relationships = $this->storage->loadByEntity($node_type_a);
     $this->assertCount(1, $group_relationships, 'Managed to load the grouped node types by node type.');
-    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id);
+    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id, 'Storage properly used the wrapper.');
 
-    $group_relationships = $this->storage->loadByEntity($node_type, 'node_type_relation');
+    $group_relationships = $this->storage->loadByEntity($node_type_a, 'node_type_relation');
     $this->assertCount(1, $group_relationships, 'Managed to load the grouped node types by node type and plugin ID.');
-    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id);
+    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id, 'Storage properly used the wrapper.');
+
+    $group_relationships = $this->storage->loadByEntity($node_type_b);
+    $this->assertCount(0, $group_relationships, 'Could not load relationships for ungrouped node type B.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'Trying to load relationships for ungrouped node type B did not create a wrapper.');
   }
 
   /**
@@ -277,12 +288,13 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    * @covers ::loadByEntityAndGroup
    */
   public function testLoadByContentEntityAndGroup() {
-    $group_a = $this->createGroup(['type' => $this->groupType->id()]);
-    $group_b = $this->createGroup(['type' => $this->createGroupType(['id' => 'default'])->id()]);
     $account = $this->getCurrentUser();
 
-    // Both entities should have ID 2 to test.
-    $this->assertSame($group_b->id(), $account->id());
+    $group_a = $this->createGroup(['type' => $this->groupType->id()]);
+    $group_a->addMember($account);
+
+    $group_b = $this->createGroup(['type' => $this->createGroupType(['id' => 'default'])->id()]);
+    $group_b->addMember($account);
 
     // Add the group as content so we can verify only the user is returned.
     $group_a->addRelationship($group_b, 'group_relation');
@@ -296,21 +308,30 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    * @covers ::loadByEntityAndGroup
    */
   public function testLoadByConfigEntityAndGroup() {
-    $group = $this->createGroup(['type' => $this->groupType->id()]);
-    $node_type = $this->createNodeType();
-    $group->addRelationship($node_type, 'node_type_relation');
-
     $storage = $this->entityTypeManager->getStorage('group_config_wrapper');
     assert($storage instanceof ConfigWrapperStorageInterface);
-    $wrapper = $storage->wrapEntity($node_type);
 
-    $group_relationships = $this->storage->loadByEntityAndGroup($node_type, $group);
+    $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $node_type_a = $this->createNodeType();
+    $node_type_b = $this->createNodeType();
+
+    $this->assertFalse($storage->wrapEntity($node_type_a, FALSE), 'No wrapper exists yet for ungrouped node type A.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'No wrapper exists yet for ungrouped node type B.');
+    $group->addRelationship($node_type_a, 'node_type_relation');
+    $this->assertNotFalse($wrapper = $storage->wrapEntity($node_type_a, FALSE), 'A wrapper exists for grouped node type A.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'No wrapper exists for ungrouped node type B.');
+
+    $group_relationships = $this->storage->loadByEntityAndGroup($node_type_a, $group);
     $this->assertCount(1, $group_relationships, 'Managed to load the grouped node types by node type and group.');
-    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id);
+    $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id, 'Storage properly used the wrapper.');
 
-    $group_relationships = $this->storage->loadByEntityAndGroup($node_type, $group, 'node_type_relation');
+    $group_relationships = $this->storage->loadByEntityAndGroup($node_type_a, $group, 'node_type_relation');
     $this->assertCount(1, $group_relationships, 'Managed to load the grouped node types by node type, group and plugin ID.');
     $this->assertSame($wrapper->id(), reset($group_relationships)->get('entity_id')->target_id);
+
+    $group_relationships = $this->storage->loadByEntityAndGroup($node_type_b, $group);
+    $this->assertCount(0, $group_relationships, 'Could not load relationships for ungrouped node type B.');
+    $this->assertFalse($storage->wrapEntity($node_type_b, FALSE), 'Trying to load relationships for ungrouped node type B did not create a wrapper.');
   }
 
   /**
@@ -319,7 +340,8 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
    * @covers ::loadByPluginId
    */
   public function testLoadByPluginId() {
-    $this->createGroup(['type' => $this->groupType->id()]);
+    $group = $this->createGroup(['type' => $this->groupType->id()]);
+    $group->addMember($this->getCurrentUser());
     $this->assertCount(1, $this->storage->loadByPluginId('group_membership'), 'Managed to load the group creator membership by plugin ID.');
   }
 

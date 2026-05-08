@@ -4,6 +4,7 @@ namespace Drupal\field_group_accordion\Plugin\field_group\FieldGroupFormatter;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
@@ -29,10 +30,10 @@ class AccordionItem extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function process(&$element, $processed_object) {
+  public function process(&$element, $processed_array) {
 
     // Keep using preRender parent for BC.
-    parent::preRender($element, $processed_object);
+    parent::preRender($element, $processed_array);
 
     $element += [
       '#type' => 'field_group_accordion_item',
@@ -71,17 +72,17 @@ class AccordionItem extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function preRender(&$element, $rendering_object) {
-    parent::preRender($element, $rendering_object);
-    $this->process($element, $rendering_object);
+  public function preRender(&$element, $render_array) {
+    parent::preRender($element, $render_array);
+    $this->process($element, $render_array);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function settingsForm() {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
 
-    $form = parent::settingsForm();
+    $form = parent::settingsForm($form, $form_state);
 
     $form['formatter'] = [
       '#title' => $this->t('Default state'),

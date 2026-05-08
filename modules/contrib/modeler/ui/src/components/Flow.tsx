@@ -3,7 +3,6 @@ import { useReactFlow } from 'reactflow';
 import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
 import { useModelStore } from '../store/useModelStore';
-import { useViewportStore } from '../store/useViewportStore';
 import { usePanelStore } from '../store/usePanelStore';
 import { useFilterStore } from '../store/useFilterStore';
 import { useContextStore } from '../store/useContextStore';
@@ -13,7 +12,7 @@ import { useSimpleReplaySync, ReplayStep } from '../hooks/useSimpleReplaySync';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useClipboard } from '../hooks/useClipboard';
 import { useReplayCoordination } from '../hooks/useReplayCoordination';
-import { useViewportEffects } from '../hooks/useViewportEffects';
+import { useViewportActions } from '../hooks/useViewportActions';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useFlowEventHandlers } from '../hooks/useFlowEventHandlers';
 import { useReplayIndicators } from '../hooks/useReplayIndicators';
@@ -36,9 +35,9 @@ import { useViewMode } from '../hooks/useViewMode';
 import { useHistory } from '../hooks/useHistory';
 import { exportModelData } from '../utils/modelUtils';
 import { t } from '../utils/translation';
-import { getComponentLabel, getComponentLabelPlural } from '../utils/componentUtils';
+import { validateModelConstraints } from '../utils/constraintValidation';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
-import type { Settings, DrupalAjax, ModelConstraints, ComponentLabels } from '../types/settings';
+import type { Settings, DrupalAjax, ModelConstraints } from '../types/settings';
 import { hasPermission } from '../utils/permissions';
 
 // Component imports
@@ -52,7 +51,7 @@ import PanelErrorBoundary from './PanelErrorBoundary';
 import PluginPanelSlot from './PluginPanelContainer';
 import { onRenderCallback } from '../utils/profiling';
 import { usePluginPanels, usePluginWidgets } from '../hooks/usePluginPanels';
-import { createPluginApi, setApiReadOnly, setMutationHooks, clearMutationHooks } from '../plugins/pluginApi';
+import { createPluginApi, setApiReadOnly, setMutationHooks, clearMutationHooks, setViewportHooks, clearViewportHooks } from '../plugins/pluginApi';
 import { markReady, markUnready } from '../plugins/pluginRegistry';
 import type { ModelerPluginApi } from '../types/pluginApi';
 import type { ModelerContext } from '../types/settings';
@@ -68,7 +67,7 @@ interface FlowProps {
 
 function FlowInner({ settings, drupal }: FlowProps) {
   // ReactFlow hooks
-  const { fitView, setCenter, setViewport: _setViewport, getViewport } = useReactFlow();
+  const { getViewport } = useReactFlow();
 
   const modelerRef = useRef<HTMLDivElement>(null);
 
@@ -127,58 +126,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
     // Validate model-level cardinality constraints.
     const constraints = modelConstraintsRef.current;
     if (constraints) {
-      const typeCounts: Record<string, number> = {};
-      for (const node of currentNodes) {
-        if (node.type && node.type !== 'placeholder') {
-          typeCounts[node.type] = (typeCounts[node.type] ?? 0) + 1;
-        }
-      }
-      const errors: string[] = [];
-      for (const [typeName, constraint] of Object.entries(constraints)) {
-        const count = typeCounts[typeName] ?? 0;
-        const label = getComponentLabel(typeName as keyof ComponentLabels);
-        const labelPlural = getComponentLabelPlural(typeName as keyof ComponentLabels);
-        if (constraint.min !== undefined && count < constraint.min) {
-          errors.push(constraint.min === 1
-            ? t('A model requires at least one @label.', { '@label': label })
-            : t('A model requires at least @min @label_plural.', { '@min': String(constraint.min), '@label_plural': labelPlural }),
-          );
-        }
-        if (constraint.max !== undefined && count > constraint.max) {
-          errors.push(constraint.max === 1
-            ? t('A model allows at most one @label.', { '@label': label })
-            : t('A model allows at most @max @label_plural.', { '@max': String(constraint.max), '@label_plural': labelPlural }),
-          );
-        }
-        // Validate successor cardinality per node.
-        if (constraint.successors) {
-          const sConstraint = constraint.successors;
-          for (const node of currentNodes) {
-            if (node.type !== typeName) continue;
-            const outgoing = currentEdges.filter(e => e.source === node.id).length;
-            if (sConstraint.min !== undefined && outgoing < sConstraint.min) {
-              errors.push(t('@label "@name" requires at least @min successor(s).', {
-                '@label': label,
-                '@name': node.data?.label ?? node.id,
-                '@min': String(sConstraint.min),
-              }));
-            }
-            if (sConstraint.max !== undefined && outgoing > sConstraint.max) {
-              errors.push(sConstraint.max === 0
-                ? t('@label "@name" must not have any successors.', {
-                  '@label': label,
-                  '@name': node.data?.label ?? node.id,
-                })
-                : t('@label "@name" allows at most @max successor(s).', {
-                  '@label': label,
-                  '@name': node.data?.label ?? node.id,
-                  '@max': String(sConstraint.max),
-                }),
-              );
-            }
-          }
-        }
-      }
+      const errors = validateModelConstraints(currentNodes, currentEdges, constraints);
       if (errors.length > 0) {
         return t('Cannot save: ') + errors.join(' ');
       }
@@ -194,21 +142,11 @@ function FlowInner({ settings, drupal }: FlowProps) {
   const setSelectedNodes = useSelectionStore(state => state.setSelectedNodes);
   const setSelectedEdges = useSelectionStore(state => state.setSelectedEdges);
   const modelData = useModelStore(state => state.modelData);
-  const viewportTarget = useViewportStore(state => state.viewportTarget);
-  const setViewportTarget = useViewportStore(state => state.setViewportTarget);
   const setReplayPanelCollapsed = usePanelStore(state => state.setReplayPanelCollapsed);
   const setPropertyPanelCollapsed = usePanelStore(state => state.setPropertyPanelCollapsed);
 
-  // Use viewport effects to handle viewport changes
-  useViewportEffects({
-    viewportTarget,
-    nodes,
-    setCenter,
-    fitView,
-    onViewportChange: () => {
-      setViewportTarget(null);
-    }
-  });
+  // Unified viewport actions — handles all programmatic pan/zoom
+  const viewportActions = useViewportActions();
 
   // Read-only mode: no modifications are allowed when:
   //  1. explicitly set via drupalSettings.modeler_api.readOnly, OR
@@ -256,6 +194,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
     return () => {
       markUnready();
       clearMutationHooks();
+      clearViewportHooks();
       if (window.WorkflowModeler) {
         window.WorkflowModeler.api = null;
       }
@@ -302,7 +241,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
     onSearchHighlight,
     onSearchFocus,
     clearSearch,
-  } = useSearch();
+  } = useSearch({ viewportActions });
   
   // Drag and drop functionality
   const {
@@ -399,7 +338,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
   }, [closeMetadataModal, settings?.modeler_api?.isNew]);
 
   // Model data loading and management
-  const { replayData: initialReplayData } = useModelDataLoader({ settings, setViewportTarget });
+  const { replayData: initialReplayData } = useModelDataLoader({ settings, viewportActions });
 
   // Active replay data: use selected entry's data if available, otherwise use initial data.
   // Memoized to keep a stable reference — many hooks depend on replayData identity.
@@ -430,13 +369,23 @@ function FlowInner({ settings, drupal }: FlowProps) {
       markUnsaved: () => setHasUnsavedChanges(true),
       autoLayout: () => handleAutoLayout(),
     });
-  }, [saveHistory, setHasUnsavedChanges, handleAutoLayout]);
+    setViewportHooks({
+      focusNode: (nodeId: string) => viewportActions.focusNode(nodeId),
+      fitView: () => viewportActions.fitToNodes(),
+    });
+  }, [saveHistory, setHasUnsavedChanges, handleAutoLayout, viewportActions]);
 
   // Quick add functionality
-  const { addSuccessorNode, addConditionWithPlaceholder } = useQuickAdd({ setHasUnsavedChanges, saveHistory });
+  const { addSuccessorNode, addConditionWithPlaceholder } = useQuickAdd({ setHasUnsavedChanges, saveHistory, viewportActions });
 
-  // Node and edge action handlers (add condition, add event)
-  const { handleAddCondition, handleAddEvent } = useNodeEdgeActions({ setHasUnsavedChanges, saveHistory });
+  // Node and edge action handlers (add condition, insert action on edge, add event, condition edge insert)
+  const {
+    handleAddCondition,
+    handleAddEvent,
+    handleAddActionOnEdge,
+    handleInsertBeforeCondition,
+    handleInsertAfterCondition,
+  } = useNodeEdgeActions({ setHasUnsavedChanges, saveHistory, viewportActions });
 
   // Combined quick-add handler: routes condition selections to the
   // condition-with-placeholder flow, everything else to addSuccessorNode.
@@ -937,10 +886,9 @@ function FlowInner({ settings, drupal }: FlowProps) {
   const onConnectEnd = useCallback(() => {}, []);
   const onDragEnter = useCallback(() => {}, []);
   const onDragLeave = useCallback(() => {}, []);
-  const setReactFlowReady = useViewportStore(state => state.setReactFlowReady);
   const onInit = useCallback(() => {
-    setReactFlowReady(true);
-  }, [setReactFlowReady]);
+    viewportActions.setReady();
+  }, [viewportActions]);
 
   // ── Stable Toolbar callbacks ──────────────────────────────────────
   // Using functional updaters (prev => ...) so these callbacks have no
@@ -1055,6 +1003,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
             canUndo={canUndo()}
             canRedo={canRedo()}
             onAutoLayout={handleAutoLayout}
+            onFitView={() => viewportActions.fitToNodes()}
             contexts={toolbarContexts}
             selectedContextId={selectedContextId}
             onContextChange={setSelectedContextId}
@@ -1114,6 +1063,9 @@ function FlowInner({ settings, drupal }: FlowProps) {
               quickAdd={{
                 onQuickAdd: handleQuickAdd,
                 onAddCondition: handleAddCondition,
+                onAddActionOnEdge: handleAddActionOnEdge,
+                onInsertBeforeCondition: handleInsertBeforeCondition,
+                onInsertAfterCondition: handleInsertAfterCondition,
                 onReplacePlaceholder: handleReplacePlaceholder,
               }}
               modelConstraints={modelConstraints}

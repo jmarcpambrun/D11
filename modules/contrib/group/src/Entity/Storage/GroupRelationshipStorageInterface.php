@@ -33,26 +33,26 @@ interface GroupRelationshipStorageInterface extends ContentEntityStorageInterfac
    *
    * @param \Drupal\group\Entity\GroupInterface $group
    *   The group entity to load the relationship entities for.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\group\Entity\GroupRelationshipInterface[]
    *   A list of GroupRelationship entities indexed by their IDs.
    */
-  public function loadByGroup(GroupInterface $group, $plugin_id = NULL);
+  public function loadByGroup(GroupInterface $group, ?string $plugin_id = NULL);
 
   /**
    * Retrieves all GroupRelationship entities that represent a given entity.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity to load the relationship entities for.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\group\Entity\GroupRelationshipInterface[]
    *   A list of GroupRelationship entities indexed by their IDs.
    */
-  public function loadByEntity(EntityInterface $entity, $plugin_id = NULL);
+  public function loadByEntity(EntityInterface $entity, ?string $plugin_id = NULL);
 
   /**
    * Retrieves all group relationships that represent a given entity in a group.
@@ -61,13 +61,13 @@ interface GroupRelationshipStorageInterface extends ContentEntityStorageInterfac
    *   The entity to load the relationship entities for.
    * @param \Drupal\group\Entity\GroupInterface $group
    *   The group entity to load the relationship entities for.
-   * @param string $plugin_id
+   * @param ?string $plugin_id
    *   (optional) A group relation type ID to filter on.
    *
    * @return \Drupal\group\Entity\GroupRelationshipInterface[]
    *   A list of GroupRelationship entities indexed by their IDs.
    */
-  public function loadByEntityAndGroup(EntityInterface $entity, GroupInterface $group, $plugin_id = NULL);
+  public function loadByEntityAndGroup(EntityInterface $entity, GroupInterface $group, ?string $plugin_id = NULL);
 
   /**
    * Retrieves all GroupRelationship entities by their responsible plugin ID.

@@ -34,7 +34,7 @@ class PageCacheTest extends GroupBrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->groupType = $this->createGroupType(['creator_membership' => FALSE]);
+    $this->groupType = $this->createGroupType();
     $this->group = $this->createGroup(['type' => $this->groupType->id()]);
 
     $outsider_base = [

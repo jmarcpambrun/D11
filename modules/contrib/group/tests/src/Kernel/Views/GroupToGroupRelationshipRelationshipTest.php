@@ -43,7 +43,7 @@ class GroupToGroupRelationshipRelationshipTest extends GroupViewsKernelTestBase 
    */
   public function testGroupOwnerIsListed() {
     $this->assertEquals(0, count($this->getViewResults()), 'The view displays no members.');
-    $this->createGroup();
+    $this->createGroup()->addMember(\Drupal::currentUser()->getAccount());
     $this->assertEquals(1, count($this->getViewResults()), 'The view displays the default member.');
   }
 
@@ -54,6 +54,7 @@ class GroupToGroupRelationshipRelationshipTest extends GroupViewsKernelTestBase 
    */
   public function testAddedMemberIsListed() {
     $group = $this->createGroup();
+    $group->addMember(\Drupal::currentUser()->getAccount());
     $group->addMember($this->createUser());
     $this->assertEquals(2, count($this->getViewResults()), 'The view displays both the default and the added member.');
   }
@@ -65,6 +66,7 @@ class GroupToGroupRelationshipRelationshipTest extends GroupViewsKernelTestBase 
    */
   public function testOtherContentIsNotListed() {
     $group = $this->createGroup();
+    $group->addMember(\Drupal::currentUser()->getAccount());
     $group->addRelationship($this->createUser(), 'user_relation');
     $this->assertEquals(1, count($this->getViewResults()), 'The view only displays the default member and not the user that was simply related.');
   }

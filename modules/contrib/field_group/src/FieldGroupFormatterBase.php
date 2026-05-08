@@ -83,7 +83,7 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
   /**
    * {@inheritdoc}
    */
-  public function settingsForm() {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
 
     $class = get_class($this);
 
@@ -202,7 +202,7 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
   /**
    * {@inheritdoc}
    */
-  public function preRender(&$element, $rendering_object) {
+  public function preRender(&$element, $render_array) {
     $element['#group_name'] = $this->group->group_name;
     $element['#entity_type'] = $this->group->entity_type;
     $element['#bundle'] = $this->group->bundle;
@@ -212,14 +212,14 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
   /**
    * {@inheritdoc}
    */
-  public function process(&$element, $processed_object) {
+  public function process(&$element, $processed_array) {
 
     $element['#group_name'] = $this->group->group_name;
     $element['#entity_type'] = $this->group->entity_type;
     $element['#bundle'] = $this->group->bundle;
 
     // BC: Call the pre render layer to not break contrib plugins.
-    return $this->preRender($element, $processed_object);
+    return $this->preRender($element, $processed_array);
   }
 
   /**

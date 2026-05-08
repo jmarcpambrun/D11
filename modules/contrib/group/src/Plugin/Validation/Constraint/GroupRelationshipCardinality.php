@@ -2,7 +2,9 @@
 
 namespace Drupal\group\Plugin\Validation\Constraint;
 
-use Symfony\Component\Validator\Constraint;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Validation\Attribute\Constraint;
+use Symfony\Component\Validator\Constraint as SymfonyConstraint;
 
 /**
  * Checks the cardinality limits for a relationship.
@@ -10,14 +12,13 @@ use Symfony\Component\Validator\Constraint;
  * Group relation plugins may limit the amount of times a single entity can be
  * added to a group as well as the amount of groups that single entity can be
  * added to. This constraint will enforce that behavior.
- *
- * @Constraint(
- *   id = "GroupRelationshipCardinality",
- *   label = @Translation("Relation cardinality check", context = "Validation"),
- *   type = "entity:group_relationship"
- * )
  */
-class GroupRelationshipCardinality extends Constraint {
+#[Constraint(
+  id: 'GroupRelationshipCardinality',
+  label: new TranslatableMarkup('Relation cardinality check', [], ['context' => 'Validation']),
+  type: 'entity:group_relationship',
+)]
+class GroupRelationshipCardinality extends SymfonyConstraint {
 
   /**
    * The message to show when an entity has reached the group cardinality.

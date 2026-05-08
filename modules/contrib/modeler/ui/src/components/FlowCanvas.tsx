@@ -99,6 +99,9 @@ interface FlowCanvasReplayState {
 interface FlowCanvasQuickAddProps {
   onQuickAdd?: (component: StoreComponent, sourceNodeId: string) => void;
   onAddCondition?: (edgeId: string, component: StoreComponent) => void;
+  onAddActionOnEdge?: (edgeId: string, component: StoreComponent) => void;
+  onInsertBeforeCondition?: (edgeId: string, component: StoreComponent) => void;
+  onInsertAfterCondition?: (edgeId: string, component: StoreComponent) => void;
   onReplacePlaceholder?: (nodeId: string, component: StoreComponent) => void;
 }
 
@@ -181,7 +184,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   const { isDragActive, isLocked, showEdgeOrderNumbers, showAllAnnotations } = uiState;
   const { searchTerm, highlightedSearchResult } = search;
   const { replayData, currentReplayStep, isReplayMode, replayIndicators } = replay;
-  const { onQuickAdd, onAddCondition, onReplacePlaceholder } = quickAdd;
+  const { onQuickAdd, onAddCondition, onAddActionOnEdge, onInsertBeforeCondition, onInsertAfterCondition, onReplacePlaceholder } = quickAdd;
   // Edge ordering hook - handles drag/drop reordering and order info calculation
   const {
     handleDragStart,
@@ -235,8 +238,12 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
           onDrop: handleEdgeOrderDrop,
           onReorderEdge: handleReorderEdge,
           onEdgeUpdate: onEdgeUpdate,
-          // Only show quick add condition button on edges without conditions
+          // Only show quick add button on edges without conditions
           onAddCondition: !hasCondition && onAddCondition && !isLocked ? onAddCondition : undefined,
+          onAddActionOnEdge: !hasCondition && onAddActionOnEdge && !isLocked ? onAddActionOnEdge : undefined,
+          // Quick-add buttons on condition edges (before and after the condition card)
+          onInsertBeforeCondition: hasCondition && onInsertBeforeCondition && !isLocked ? onInsertBeforeCondition : undefined,
+          onInsertAfterCondition: hasCondition && onInsertAfterCondition && !isLocked ? onInsertAfterCondition : undefined,
           // Wire up condition deletion from the canvas trash icon
           onDeleteCondition: hasCondition && onEdgeConfigurationChange && !isLocked ? (edgeId: string) => {
             onEdgeConfigurationChange(edgeId, null);
@@ -262,6 +269,9 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
     onEdgeUpdate,
     onEdgeConfigurationChange,
     onAddCondition,
+    onAddActionOnEdge,
+    onInsertBeforeCondition,
+    onInsertAfterCondition,
     isLocked,
     searchTerm,
     highlightedSearchResult,

@@ -25,9 +25,6 @@ abstract class GroupRelationBase extends PluginBase implements GroupRelationInte
    */
   protected $groupTypeId;
 
-  /**
-   * {@inheritdoc}
-   */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
@@ -116,7 +113,6 @@ abstract class GroupRelationBase extends PluginBase implements GroupRelationInte
     return [
       'group_cardinality' => 0,
       'entity_cardinality' => 0,
-      'use_creation_wizard' => 0,
     ];
   }
 
@@ -149,15 +145,6 @@ abstract class GroupRelationBase extends PluginBase implements GroupRelationInte
       '#min' => 0,
       '#required' => TRUE,
     ];
-
-    if ($this->getRelationType()->definesEntityAccess()) {
-      $form['use_creation_wizard'] = [
-        '#type' => 'checkbox',
-        '#title' => $this->t('Use 2-step wizard when creating a new %entity_type entity within a %group_type group', $replace),
-        '#description' => $this->t('This will first show you the form to create the actual entity and then a form to create the relationship between the entity and the group.<br />You can choose to disable this wizard if you did not or will not add any fields to the relationship (i.e. this plugin).<br /><strong>Warning:</strong> If you do have fields on the relationship and do not use the wizard, you may end up with required fields not being filled out.'),
-        '#default_value' => $this->configuration['use_creation_wizard'],
-      ];
-    }
 
     return $form;
   }

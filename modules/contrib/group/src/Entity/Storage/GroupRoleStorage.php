@@ -14,7 +14,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\GroupInterface;
-use Drupal\group\GroupMembershipLoaderInterface;
+use Drupal\group\Entity\GroupMembership;
 use Drupal\group\PermissionScopeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,7 +35,6 @@ class GroupRoleStorage extends ConfigEntityStorage implements GroupRoleStorageIn
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
-    protected GroupMembershipLoaderInterface $groupMembershipLoader,
     EntityTypeInterface $entity_type,
     ConfigFactoryInterface $config_factory,
     UuidInterface $uuid_service,
@@ -52,7 +51,6 @@ class GroupRoleStorage extends ConfigEntityStorage implements GroupRoleStorageIn
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     return new static(
       $container->get('entity_type.manager'),
-      $container->get('group.membership_loader'),
       $entity_type,
       $container->get('config.factory'),
       $container->get('uuid'),
@@ -87,8 +85,8 @@ class GroupRoleStorage extends ConfigEntityStorage implements GroupRoleStorageIn
       $ids = [];
 
       // Get the IDs from the 'group_roles' field, without loading the roles.
-      if ($membership = $this->groupMembershipLoader->load($group, $account)) {
-        $ids = array_column($membership->getGroupRelationship()->get('group_roles')->getValue(), 'target_id');
+      if ($membership = GroupMembership::loadSingle($group, $account)) {
+        $ids = array_column($membership->get('group_roles')->getValue(), 'target_id');
       }
 
       if ($include_synchronized) {
