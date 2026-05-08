@@ -18,7 +18,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Utility\Token;
+/*JMP_DBG use Drupal\Core\Utility\Token; JMP_DBG */
 use Drupal\mailer_override\Plugin\Mailer\LegacyMailer;
 use Drupal\mailer_policy\PolicyHelperInterface;
 use Drupal\symfony_mailer\Attribute\MailerInfo;
@@ -135,7 +135,7 @@ class OverrideManager extends DefaultPluginManager implements OverrideManagerInt
     protected readonly StorageInterface $configStorage,
     protected readonly ImportHelperInterface $importHelper,
     protected readonly PolicyHelperInterface $policyHelper,
-    protected readonly Token $token,
+    /*JMP_DBG  protected readonly Token $token, JMP_DBG */
   ) {
     parent::__construct('Plugin/MailerOverride', $namespaces, $module_handler, 'Drupal\mailer_override\OverrideInterface', 'Drupal\mailer_override\Attribute\Override');
     $this->setCacheBackend($cache_backend, 'mailer_override_definitions');
@@ -423,7 +423,8 @@ class OverrideManager extends DefaultPluginManager implements OverrideManagerInt
       // Set defaults for hidden fields.
       foreach ($alter['default'] as $key => $default) {
         if (empty($form[$key]['#default_value'])) {
-	  $form[$key]['#default_value'] = $default;
+	  /*JMP_DBG $form[$key]['#default_value'] = $default; JMP_DBG */
+	  $form[$key]['#default_value'] = \Drupal::token()->replace($default);
           // Invoking the token service here causes a circular dependency error. Do it later.
           $form[$key]['#pre_render'][] = [$this, 'preRenderTokenReplace'];
         }
