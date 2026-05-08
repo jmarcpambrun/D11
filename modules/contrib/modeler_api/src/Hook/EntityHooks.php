@@ -85,7 +85,7 @@ class EntityHooks {
   #[Hook('entity_operation')]
   public function entityOperation(EntityInterface $entity): array {
     $operations = [];
-    $modelers = \Drupal::service('plugin.manager.modeler')->getAllInstances();
+    $modelers = \Drupal::service('plugin.manager.modeler_api.modeler')->getAllInstances();
     $numberOfModelers = count($modelers);
     if ($numberOfModelers === 1) {
       // There is only the fallback modeler, no operation provided.
@@ -206,7 +206,7 @@ class EntityHooks {
     if (!isset($operations['edit'])) {
       return;
     }
-    $modelers = \Drupal::service('plugin.manager.modeler')->getAllInstances();
+    $modelers = \Drupal::service('plugin.manager.modeler_api.modeler')->getAllInstances();
     if (count($modelers) <= 2) {
       return;
     }
