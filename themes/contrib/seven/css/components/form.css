@@ -73,7 +73,7 @@ fieldset {
 .form-datetime-wrapper {
   margin-bottom: 1.4em;
   & .container-inline {
-    margin-bottom: -1.4em;
+    margin-bottom: -0.6em;
   }
 }
 
@@ -107,11 +107,17 @@ td > .form-item:only-child {
   margin-bottom: 20px;
 }
 
-.label {
+label {
   display: table;
   margin: 0 0 0.1em;
   padding: 0;
   font-weight: bold;
+  &.error {
+    color: #a51b00;
+  }
+  &[for] {
+    cursor: pointer;
+  }
   .form-item &.option {
     text-transform: none;
     & input {

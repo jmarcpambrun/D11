@@ -15,8 +15,8 @@ function counter_views_data() {
   // Advertise this table as a possible base table.
   $data['counter']['table']['base'] = [
     'field' => 'counter_id',
-    'title' => t('Counter'),
-    'help' => t('Counter list.'),
+    'title' => t('Counter', [], ['context' => 'counter']),
+    'help' => t('Counter list.', [], ['context' => 'counter']),
     'weight' => 10,
   ];
 
@@ -29,8 +29,8 @@ function counter_views_data() {
   ];
 
   $data['counter']['counter_id'] = [
-    'title' => t('Counter ID'),
-    'help' => t('The Counter ID.'),
+    'title' => t('Counter ID', [], ['context' => 'counter']),
+    'help' => t('The Counter ID.', [], ['context' => 'counter']),
     'field' => [
       'id' => 'numeric',
     ],
@@ -46,8 +46,8 @@ function counter_views_data() {
   ];
 
   $data['counter']['ip'] = [
-    'title' => t('IP Address'),
-    'help' => t('The Counter IP Address.'),
+    'title' => t('IP Address', [], ['context' => 'counter']),
+    'help' => t('The Counter IP Address.', [], ['context' => 'counter']),
     'field' => [
       'id' => 'standard',
     ],
@@ -63,8 +63,8 @@ function counter_views_data() {
   ];
 
   $data['counter']['url'] = [
-    'title' => t('URL'),
-    'help' => t('The URL when Counter counted.'),
+    'title' => t('URL', [], ['context' => 'counter']),
+    'help' => t('The URL when Counter counted.', [], ['context' => 'counter']),
     'field' => [
       'id' => 'standard',
     ],
@@ -80,8 +80,12 @@ function counter_views_data() {
   ];
 
   $data['counter']['created'] = [
-     'title' => t('Created'),
-    'help' => t('The created time of Counter item.'),
+    'title' => t('Created', [], ['context' => 'counter']),
+    'help' => t(
+      'The created time of Counter item.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'date',
     ],
@@ -94,15 +98,19 @@ function counter_views_data() {
   ];
 
   $data['counter']['uid'] = [
-    'title' => t('UID'),
-    'help' => t('The UID who visit Counter URL.'),
+    'title' => t('UID', [], ['context' => 'counter']),
+    'help' => t('The UID who visit Counter URL.', [], ['context' => 'counter']),
     'relationship' => [
-      'title' => t('Counter user'),
-      'help' => t('Relate content to the user for which the data was counted.'),
+      'title' => t('Counter user', [], ['context' => 'counter']),
+      'help' => t(
+        'Relate content to the user for which the data was counted.',
+        [],
+        ['context' => 'counter'],
+      ),
       'base' => 'users_field_data',
       'base field' => 'uid',
       'id' => 'standard',
-       'label' => t('Counter User'),
+      'label' => t('Counter User', [], ['context' => 'counter']),
     ],
     'field' => [
       'id' => 'numeric',
@@ -120,8 +128,12 @@ function counter_views_data() {
 
   // Data definition for nid, type, browser_name, browser_version, platform.
   $data['counter']['nid'] = [
-    'title' => t('Node ID'),
-    'help' => t('The NID of URL if node was visited.'),
+    'title' => t('Node ID', [], ['context' => 'counter']),
+    'help' => t(
+      'The NID of URL if node was visited.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'numeric',
     ],
@@ -137,8 +149,12 @@ function counter_views_data() {
   ];
 
   $data['counter']['type'] = [
-   'title' => t('Content Type'),
-    'help' => t('The content type of node if node was visited.'),
+    'title' => t('Content Type', [], ['context' => 'counter']),
+    'help' => t(
+      'The content type of node if node was visited.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'standard',
     ],
@@ -154,8 +170,12 @@ function counter_views_data() {
   ];
 
   $data['counter']['browser_name'] = [
-    'title' => t('Browser name'),
-    'help' => t('The Browser Name of Client Browser.'),
+    'title' => t('Browser name', [], ['context' => 'counter']),
+    'help' => t(
+      'The Browser Name of Client Browser.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'standard',
     ],
@@ -171,8 +191,12 @@ function counter_views_data() {
   ];
 
   $data['counter']['browser_version'] = [
-    'title' => t('Browser version'),
-    'help' => t('The Browser Version of Client Browser.'),
+    'title' => t('Browser version', [], ['context' => 'counter']),
+    'help' => t(
+      'The Browser Version of Client Browser.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'standard',
     ],
@@ -188,8 +212,12 @@ function counter_views_data() {
   ];
 
   $data['counter']['platform'] = [
-    'title' => t('Platform'),
-    'help' => t('The Platform Name of Client System/OS.'),
+    'title' => t('Platform', [], ['context' => 'counter']),
+    'help' => t(
+      'The Platform Name of Client System/OS.',
+      [],
+      ['context' => 'counter'],
+    ),
     'field' => [
       'id' => 'standard',
     ],

@@ -58,11 +58,10 @@ class Groups extends AbstractApi
      *     @var bool   $owned            limit by groups owned by the current user
      *     @var int    $min_access_level limit by groups in which the current user has at least this access level
      *     @var bool   $top_level_only   limit to top level groups, excluding all subgroups
+     *     @var string $visibility       limit by visibility public, internal, or private
      * }
-     *
-     * @return mixed
      */
-    public function all(array $parameters = [])
+    public function all(array $parameters = []): mixed
     {
         $resolver = $this->getGroupSearchResolver();
 
@@ -70,28 +69,32 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $id
+     * @param array $parameters {
      *
-     * @return mixed
+     *     @var bool $with_custom_attributes include custom attributes in response
+     *     @var bool $with_projects          Include details from projects that belong to the group.
+     * }
      */
-    public function show($id)
+    public function show(int|string $id, array $parameters = []): mixed
     {
-        return $this->get('groups/'.self::encodePath($id));
+        $resolver = $this->createOptionsResolver();
+        $booleanNormalizer = function (Options $resolver, $value): string {
+            return $value ? 'true' : 'false';
+        };
+
+        $resolver->setDefined('with_custom_attributes')
+            ->setAllowedTypes('with_custom_attributes', 'bool')
+            ->setNormalizer('with_custom_attributes', $booleanNormalizer)
+        ;
+        $resolver->setDefined('with_projects')
+            ->setAllowedTypes('with_projects', 'bool')
+            ->setNormalizer('with_projects', $booleanNormalizer)
+        ;
+
+        return $this->get('groups/'.self::encodePath($id), $resolver->resolve($parameters));
     }
 
-    /**
-     * @param string $name
-     * @param string $path
-     * @param string $description
-     * @param string $visibility
-     * @param bool   $lfs_enabled
-     * @param bool   $request_access_enabled
-     * @param int    $parent_id
-     * @param int    $shared_runners_minutes_limit
-     *
-     * @return mixed
-     */
-    public function create(string $name, string $path, string $description = null, string $visibility = 'private', bool $lfs_enabled = null, bool $request_access_enabled = null, int $parent_id = null, int $shared_runners_minutes_limit = null)
+    public function create(string $name, string $path, ?string $description = null, string $visibility = 'private', ?bool $lfs_enabled = null, ?bool $request_access_enabled = null, ?int $parent_id = null, ?int $shared_runners_minutes_limit = null): mixed
     {
         $params = [
             'name' => $name,
@@ -109,45 +112,22 @@ class Groups extends AbstractApi
         }));
     }
 
-    /**
-     * @param int|string $id
-     * @param array      $params
-     *
-     * @return mixed
-     */
-    public function update($id, array $params)
+    public function update(int|string $id, array $params): mixed
     {
         return $this->put('groups/'.self::encodePath($id), $params);
     }
 
-    /**
-     * @param int|string $group_id
-     *
-     * @return mixed
-     */
-    public function remove($group_id)
+    public function remove(int|string $group_id): mixed
     {
         return $this->delete('groups/'.self::encodePath($group_id));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int|string $project_id
-     *
-     * @return mixed
-     */
-    public function transfer($group_id, $project_id)
+    public function transfer(int|string $group_id, int|string $project_id): mixed
     {
         return $this->post('groups/'.self::encodePath($group_id).'/projects/'.self::encodePath($project_id));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param array      $parameters
-     *
-     * @return mixed
-     */
-    public function allMembers($group_id, array $parameters = [])
+    public function allMembers(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $resolver->setDefined('query');
@@ -162,15 +142,12 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var string $query A query string to search for members.
      * }
-     *
-     * @return mixed
      */
-    public function members($group_id, array $parameters = [])
+    public function members(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $resolver->setDefined('query');
@@ -184,37 +161,17 @@ class Groups extends AbstractApi
         return $this->get('groups/'.self::encodePath($group_id).'/members', $resolver->resolve($parameters));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $user_id
-     *
-     * @return mixed
-     */
-    public function member($group_id, int $user_id)
+    public function member(int|string $group_id, int $user_id): mixed
     {
         return $this->get('groups/'.self::encodePath($group_id).'/members/'.self::encodePath($user_id));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $user_id
-     *
-     * @return mixed
-     */
-    public function allMember($group_id, int $user_id)
+    public function allMember(int|string $group_id, int $user_id): mixed
     {
         return $this->get('groups/'.self::encodePath($group_id).'/members/all/'.self::encodePath($user_id));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $user_id
-     * @param int        $access_level
-     * @param array      $parameters
-     *
-     * @return mixed
-     */
-    public function addMember($group_id, int $user_id, int $access_level, array $parameters = [])
+    public function addMember(int|string $group_id, int $user_id, int $access_level, array $parameters = []): mixed
     {
         $dateNormalizer = function (OptionsResolver $optionsResolver, \DateTimeInterface $date): string {
             return $date->format('Y-m-d');
@@ -234,14 +191,7 @@ class Groups extends AbstractApi
         return $this->post('groups/'.self::encodePath($group_id).'/members', $parameters);
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $user_id
-     * @param int        $access_level
-     *
-     * @return mixed
-     */
-    public function saveMember($group_id, int $user_id, int $access_level)
+    public function saveMember(int|string $group_id, int $user_id, int $access_level): mixed
     {
         return $this->put('groups/'.self::encodePath($group_id).'/members/'.self::encodePath($user_id), [
             'access_level' => $access_level,
@@ -249,16 +199,13 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var int    $group_access the access level to grant the group
      *     @var string $expires_at   share expiration date in ISO 8601 format: 2016-09-26
      * }
-     *
-     * @return mixed
      */
-    public function addShare($group_id, array $parameters = [])
+    public function addShare(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
 
@@ -281,44 +228,40 @@ class Groups extends AbstractApi
         return $this->post('groups/'.self::encodePath($group_id).'/share', $resolver->resolve($parameters));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $user_id
-     *
-     * @return mixed
-     */
-    public function removeMember($group_id, int $user_id)
+    public function removeMember(int|string $group_id, int $user_id): mixed
     {
         return $this->delete('groups/'.self::encodePath($group_id).'/members/'.self::encodePath($user_id));
     }
 
     /**
-     * @param int|string $id
      * @param array      $parameters {
      *
-     *     @var bool   $archived                    limit by archived status
-     *     @var string $visibility                  limit by visibility public, internal, or private
-     *     @var string $order_by                    Return projects ordered by id, name, path, created_at, updated_at, or last_activity_at fields.
-     *                                              Default is created_at.
-     *     @var string $sort                        Return projects sorted in asc or desc order (default is desc)
-     *     @var string $search                      return list of authorized projects matching the search criteria
-     *     @var bool   $simple                      return only the ID, URL, name, and path of each project
-     *     @var bool   $owned                       limit by projects owned by the current user
-     *     @var bool   $starred                     limit by projects starred by the current user
-     *     @var bool   $with_issues_enabled         Limit by projects with issues feature enabled (default is false)
-     *     @var bool   $with_merge_requests_enabled Limit by projects with merge requests feature enabled (default is false)
-     *     @var bool   $with_shared                 Include projects shared to this group (default is true)
-     *     @var bool   $include_subgroups           Include projects in subgroups of this group (default is false)
-     *     @var bool   $with_custom_attributes      Include custom attributes in response (admins only).
+     *     @var bool               $archived                    limit by archived status
+     *     @var string             $visibility                  limit by visibility public, internal, or private
+     *     @var string             $order_by                    Return projects ordered by id, name, path, created_at, updated_at, or last_activity_at fields.
+     *                                                          Default is created_at.
+     *     @var string             $sort                        Return projects sorted in asc or desc order (default is desc)
+     *     @var string             $search                      return list of authorized projects matching the search criteria
+     *     @var bool               $simple                      return only the ID, URL, name, and path of each project
+     *     @var bool               $owned                       limit by projects owned by the current user
+     *     @var bool               $starred                     limit by projects starred by the current user
+     *     @var bool               $with_issues_enabled         Limit by projects with issues feature enabled (default is false)
+     *     @var bool               $with_merge_requests_enabled Limit by projects with merge requests feature enabled (default is false)
+     *     @var bool               $with_shared                 Include projects shared to this group (default is true)
+     *     @var bool               $include_subgroups           Include projects in subgroups of this group (default is false)
+     *     @var bool               $with_custom_attributes      include custom attributes in response (admins only)
+     *     @var \DateTimeInterface $last_activity_after         Limit by last_activity after specified time
+     *     @var \DateTimeInterface $last_activity_before        Limit by last_activity before specified time
      * }
-     *
-     * @return mixed
      */
-    public function projects($id, array $parameters = [])
+    public function projects(int|string $id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
             return $value ? 'true' : 'false';
+        };
+        $datetimeNormalizer = function (Options $resolver, \DateTimeInterface $value): string {
+            return $value->format('c');
         };
 
         $resolver->setDefined('archived')
@@ -367,12 +310,19 @@ class Groups extends AbstractApi
             ->setAllowedTypes('with_custom_attributes', 'bool')
             ->setNormalizer('with_custom_attributes', $booleanNormalizer)
         ;
+        $resolver->setDefined('last_activity_after')
+            ->setAllowedTypes('last_activity_after', \DateTimeInterface::class)
+            ->setNormalizer('last_activity_after', $datetimeNormalizer)
+        ;
+        $resolver->setDefined('last_activity_before')
+            ->setAllowedTypes('last_activity_before', \DateTimeInterface::class)
+            ->setNormalizer('last_activity_before', $datetimeNormalizer)
+        ;
 
         return $this->get('groups/'.self::encodePath($id).'/projects', $resolver->resolve($parameters));
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var int[]  $skip_groups   skip the group IDs passes
@@ -383,10 +333,8 @@ class Groups extends AbstractApi
      *     @var bool   $statistics    include group statistics (admins only)
      *     @var bool   $owned         Limit by groups owned by the current user.
      * }
-     *
-     * @return mixed
      */
-    public function subgroups($group_id, array $parameters = [])
+    public function subgroups(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->getSubgroupSearchResolver();
 
@@ -394,7 +342,6 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var string   $assignee_id              Return issues assigned to the given user id. Mutually exclusive with assignee_username.
@@ -424,10 +371,8 @@ class Groups extends AbstractApi
      *     @var int      $weight                   Return issues with the specified weight. None returns issues with no weight assigned. Any returns issues with a weight assigned.
      *     @var bool     $with_labels_details      If true, the response returns more details for each label in labels field: :name, :color, :description, :description_html, :text_color. Default is false.
      * }
-     *
-     * @return mixed
      */
-    public function issues($group_id, array $parameters = [])
+    public function issues(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
@@ -507,7 +452,6 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var bool     $with_counts               Whether or not to include issue and merge request counts. Defaults to false.
@@ -516,10 +460,8 @@ class Groups extends AbstractApi
      *     @var bool     $only_group_labels         Toggle to include only group labels or also project labels. Defaults to true.
      *     @var string   $search                    Keyword to filter labels by.
      * }
-     *
-     * @return mixed
      */
-    public function labels($group_id, array $parameters = [])
+    public function labels(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
 
@@ -541,78 +483,41 @@ class Groups extends AbstractApi
         return $this->get('groups/'.self::encodePath($group_id).'/labels', $resolver->resolve($parameters));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param array      $params
-     *
-     * @return mixed
-     */
-    public function addLabel($group_id, array $params)
+    public function addLabel(int|string $group_id, array $params): mixed
     {
         return $this->post('groups/'.self::encodePath($group_id).'/labels', $params);
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $label_id
-     * @param array      $params
-     *
-     * @return mixed
-     */
-    public function updateLabel($group_id, int $label_id, array $params)
+    public function updateLabel(int|string $group_id, int $label_id, array $params): mixed
     {
         return $this->put('groups/'.self::encodePath($group_id).'/labels/'.self::encodePath($label_id), $params);
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $label_id
-     *
-     * @return mixed
-     */
-    public function removeLabel($group_id, int $label_id)
+    public function removeLabel(int|string $group_id, int $label_id): mixed
     {
         return $this->delete('groups/'.self::encodePath($group_id).'/labels/'.self::encodePath($label_id));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param array      $parameters
-     *
-     * @return mixed
-     */
-    public function variables($group_id, array $parameters = [])
+    public function variables(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
 
         return $this->get('groups/'.self::encodePath($group_id).'/variables', $resolver->resolve($parameters));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param string     $key
-     *
-     * @return mixed
-     */
-    public function variable($group_id, string $key)
+    public function variable(int|string $group_id, string $key): mixed
     {
         return $this->get('groups/'.self::encodePath($group_id).'/variables/'.self::encodePath($key));
     }
 
     /**
-     * @param int|string $group_id
-     * @param string     $key
-     * @param string     $value
-     * @param bool|null  $protected
      * @param array      $parameters {
      *
      *      @var string $masked         true or false
      *      @var string $variable_type  env_var (default) or file
      * }
-     *
-     * @return mixed
      */
-    public function addVariable($group_id, string $key, string $value, ?bool $protected = null, array $parameters = [])
+    public function addVariable(int|string $group_id, string $key, string $value, ?bool $protected = null, array $parameters = []): mixed
     {
         $payload = [
             'key' => $key,
@@ -634,15 +539,7 @@ class Groups extends AbstractApi
         return $this->post('groups/'.self::encodePath($group_id).'/variables', $payload);
     }
 
-    /**
-     * @param int|string $group_id
-     * @param string     $key
-     * @param string     $value
-     * @param bool|null  $protected
-     *
-     * @return mixed
-     */
-    public function updateVariable($group_id, string $key, string $value, ?bool $protected = null)
+    public function updateVariable(int|string $group_id, string $key, string $value, ?bool $protected = null): mixed
     {
         $payload = [
             'value' => $value,
@@ -655,19 +552,12 @@ class Groups extends AbstractApi
         return $this->put('groups/'.self::encodePath($group_id).'/variables/'.self::encodePath($key), $payload);
     }
 
-    /**
-     * @param int|string $group_id
-     * @param string     $key
-     *
-     * @return mixed
-     */
-    public function removeVariable($group_id, string $key)
+    public function removeVariable(int|string $group_id, string $key): mixed
     {
         return $this->delete('groups/'.self::encodePath($group_id).'/variables/'.self::encodePath($key));
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var int[]              $iids           return the request having the given iid
@@ -683,10 +573,8 @@ class Groups extends AbstractApi
      *     @var \DateTimeInterface $created_after  return merge requests created after the given time (inclusive)
      *     @var \DateTimeInterface $created_before return merge requests created before the given time (inclusive)
      * }
-     *
-     * @return mixed
      */
-    public function mergeRequests($group_id, array $parameters = [])
+    public function mergeRequests(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $datetimeNormalizer = function (Options $resolver, \DateTimeInterface $value): string {
@@ -769,7 +657,6 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var string $state               Return opened, upcoming, current (previously started), closed, or all iterations.
@@ -777,10 +664,8 @@ class Groups extends AbstractApi
      *     @var string $search              return only iterations with a title matching the provided string
      *     @var bool   $include_ancestors   Include iterations from parent group and its ancestors. Defaults to true.
      * }
-     *
-     * @return mixed
      */
-    public function iterations($group_id, array $parameters = [])
+    public function iterations(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
@@ -800,7 +685,6 @@ class Groups extends AbstractApi
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var bool   $exclude_subgroups   if the parameter is included as true, packages from projects from subgroups
@@ -816,10 +700,8 @@ class Groups extends AbstractApi
      *     @var string $status              filter the returned packages by status. one of default (default),
      *                                      hidden, or processing.
      * }
-     *
-     * @return mixed
      */
-    public function packages($group_id, array $parameters = [])
+    public function packages(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
@@ -851,10 +733,12 @@ class Groups extends AbstractApi
         return $this->get('groups/'.self::encodePath($group_id).'/packages', $resolver->resolve($parameters));
     }
 
-    /**
-     * @return OptionsResolver
-     */
-    private function getGroupSearchResolver()
+    public function registryRepositories(int|string $group_id): mixed
+    {
+        return $this->get('groups/'.self::encodePath($group_id).'/registry/repositories');
+    }
+
+    private function getGroupSearchResolver(): OptionsResolver
     {
         $resolver = $this->getSubgroupSearchResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
@@ -865,14 +749,14 @@ class Groups extends AbstractApi
             ->setAllowedTypes('top_level_only', 'bool')
             ->setNormalizer('top_level_only', $booleanNormalizer)
         ;
+        $resolver->setDefined('visibility')
+            ->setAllowedValues('visibility', ['public', 'internal', 'private'])
+        ;
 
         return $resolver;
     }
 
-    /**
-     * @return OptionsResolver
-     */
-    private function getSubgroupSearchResolver()
+    private function getSubgroupSearchResolver(): OptionsResolver
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {
@@ -911,19 +795,12 @@ class Groups extends AbstractApi
         return $resolver;
     }
 
-    /**
-     * @param int|string $group_id
-     * @param bool|null  $active
-     *
-     * @return mixed
-     */
-    public function deployTokens($group_id, bool $active = null)
+    public function deployTokens(int|string $group_id, ?bool $active = null): mixed
     {
         return $this->get('groups/'.self::encodePath($group_id).'/deploy_tokens', (null !== $active) ? ['active' => $active] : []);
     }
 
     /**
-     * @param int|string $group_id
      * @param array      $parameters {
      *
      *     @var string $name                    the name of the deploy token
@@ -931,10 +808,8 @@ class Groups extends AbstractApi
      *     @var string $username                the username for the deploy token
      *     @var array  $scopes                  the scopes, one or many of: read_repository, read_registry, write_registry, read_package_registry, write_package_registry
      * }
-     *
-     * @return mixed
      */
-    public function createDeployToken($group_id, array $parameters = [])
+    public function createDeployToken(int|string $group_id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $datetimeNormalizer = function (Options $resolver, \DateTimeInterface $value): string {
@@ -971,19 +846,12 @@ class Groups extends AbstractApi
         return $this->post('groups/'.self::encodePath($group_id).'/deploy_tokens', $resolver->resolve($parameters));
     }
 
-    /**
-     * @param int|string $group_id
-     * @param int        $token_id
-     *
-     * @return mixed
-     */
-    public function deleteDeployToken($group_id, int $token_id)
+    public function deleteDeployToken(int|string $group_id, int $token_id): mixed
     {
         return $this->delete('groups/'.self::encodePath($group_id).'/deploy_tokens/'.self::encodePath($token_id));
     }
 
     /**
-     * @param int|string $id
      * @param array $parameters {
      *
      *     @var string $scope        The scope to search in
@@ -996,10 +864,8 @@ class Groups extends AbstractApi
      *
      * @throws UndefinedOptionsException If an option name is undefined
      * @throws InvalidOptionsException   If an option doesn't fulfill the specified validation rules
-     *
-     * @return mixed
      */
-    public function search($id, array $parameters = [])
+    public function search(int|string $id, array $parameters = []): mixed
     {
         $resolver = $this->createOptionsResolver();
         $booleanNormalizer = function (Options $resolver, $value): string {

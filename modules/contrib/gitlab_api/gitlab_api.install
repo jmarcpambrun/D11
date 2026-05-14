@@ -2,11 +2,45 @@
 
 /**
  * @file
- * GitLab API install file.
+ * Install/update hooks for gitlab_api.
  */
 
+declare(strict_types=1);
+
+use Drupal\Core\Extension\Requirement\RequirementSeverity;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\gitlab_api\Entity\GitlabServer;
+
+/**
+ * Implements hook_schema().
+ *
+ * The `gitlab_seen_event` table is the webhook idempotency record. Rows
+ * TTL ~10 min via gitlab_api_cron().
+ */
+function gitlab_api_schema(): array {
+  $schema['gitlab_seen_event'] = [
+    'description' => 'Idempotency record for inbound GitLab webhook events. Rows TTL ~10 min via cron.',
+    'fields' => [
+      'event_id' => [
+        'description' => 'sha256(project_id . ":" . X-Gitlab-Event-UUID), or hash of payload body if header missing.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'seen_at' => [
+        'description' => 'Unix timestamp when the event was first observed.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['event_id'],
+    'indexes' => [
+      'seen_at' => ['seen_at'],
+    ],
+  ];
+  return $schema;
+}
 
 /**
  * Migrate configuration to a config entity.
@@ -29,5 +63,130 @@ function gitlab_api_update_8001(): void {
     if ($server->save()) {
       \Drupal::configFactory()->getEditable('gitlab_api.settings')->delete();
     }
+  }
+}
+
+/**
+ * Install the Key module (now required for per-project access tokens).
+ */
+function gitlab_api_update_9001(): void {
+  $installer = \Drupal::service('module_installer');
+  if (!\Drupal::service('module_handler')->moduleExists('key')) {
+    $installer->install(['key']);
+  }
+}
+
+/**
+ * Create the gitlab_seen_event idempotency table for webhook deduplication.
+ */
+function gitlab_api_update_9002(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('gitlab_seen_event')) {
+    $tables = gitlab_api_schema();
+    $schema->createTable('gitlab_seen_event', $tables['gitlab_seen_event']);
+  }
+}
+
+/**
+ * Implements hook_requirements().
+ *
+ * Detects auth_token values that survive the 9003 migration via runtime
+ * config overrides (typically `$config[...][auth_token]` in settings.php).
+ *
+ * gitlab_api_update_9003() can only see and clean the *stored* config layer.
+ * If a site additionally sets the token via a config override, the override
+ * is applied at read-time and is invisible to update hooks. After the
+ * migration the override is dead — nothing in the module reads `auth_token`
+ * any more — but the secret still sits in plaintext on disk where a future
+ * maintainer might assume it's wired up. Surface that via the status report
+ * so it can be cleaned up by hand.
+ *
+ * @todo Remove this check once all known sites have cleaned up their
+ *   overrides. Target: gitlab_api 4.x.
+ */
+function gitlab_api_requirements(string $phase): array {
+  $requirements = [];
+  if ($phase !== 'runtime') {
+    return $requirements;
+  }
+
+  $configFactory = \Drupal::configFactory();
+  $stale = [];
+  foreach ($configFactory->listAll('gitlab_api.gitlab_server.') as $configName) {
+    $config = $configFactory->get($configName);
+    $effective = $config->get('auth_token');
+    $stored = $config->getOriginal('auth_token', FALSE);
+    if ($stored === NULL && $effective !== NULL && $effective !== '') {
+      $stale[] = $configName;
+    }
+  }
+
+  if (count($stale) > 0) {
+    $requirements['gitlab_api_orphan_auth_token'] = [
+      'title' => t('GitLab API: orphaned auth_token override'),
+      'value' => t('Found on @count config object(s).', ['@count' => count($stale)]),
+      'description' => t("A runtime config override (typically <code>\$config[...]['auth_token']</code> in <code>settings.php</code>) still exposes an inline GitLab token on: %list. The token has already been migrated to a Key entity, so the override has no effect - but it should be removed so the secret is no longer stored in plaintext on disk.", [
+        '%list' => implode(', ', $stale),
+      ]),
+      'severity' => RequirementSeverity::Warning,
+    ];
+  }
+
+  return $requirements;
+}
+
+/**
+ * Migrate GitlabServer.auth_token (plain string) to a Key entity reference.
+ *
+ * For every server that still has an inline `auth_token`, create a Key entity
+ * (provider: config) holding the value, then point the server at that Key
+ * via `auth_token_key` and drop the inline field. Idempotent: skips servers
+ * that already have a Key reference or no inline token.
+ */
+function gitlab_api_update_9003(): void {
+  $configFactory = \Drupal::configFactory();
+  $keyStorage = \Drupal::entityTypeManager()->getStorage('key');
+
+  foreach ($configFactory->listAll('gitlab_api.gitlab_server.') as $configName) {
+    $config = $configFactory->getEditable($configName);
+    $existingKey = (string) $config->get('auth_token_key');
+    $rawToken = (string) $config->get('auth_token');
+    if ($existingKey !== '' || $rawToken === '') {
+      // Already migrated, or nothing to migrate. Drop any leftover inline
+      // field so the config matches the new schema cleanly.
+      if ($config->get('auth_token') !== NULL) {
+        $config->clear('auth_token')->save();
+      }
+      continue;
+    }
+
+    $serverId = (string) $config->get('id');
+    $candidate = 'gitlab_api_server_' . $serverId . '_token';
+    $i = 0;
+    while ($keyStorage->load($candidate) !== NULL) {
+      $i++;
+      $candidate = 'gitlab_api_server_' . $serverId . '_token_' . $i;
+    }
+
+    /** @var \Drupal\key\Entity\Key $key */
+    $key = $keyStorage->create([
+      'id' => $candidate,
+      'label' => 'GitLab server "' . $serverId . '" authentication token',
+      'description' => 'Auto-created by gitlab_api_update_9005 to migrate the inline auth_token to a Key entity.',
+      'key_type' => 'authentication',
+      'key_type_settings' => [],
+      'key_provider' => 'config',
+      'key_provider_settings' => [
+        'key_value' => $rawToken,
+        'base64_encoded' => FALSE,
+      ],
+      'key_input' => 'text_field',
+      'key_input_settings' => [],
+    ]);
+    $key->save();
+
+    $config->set('auth_token_key', $candidate);
+    $config->clear('auth_token');
+    $config->save();
   }
 }

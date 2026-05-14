@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Module hooks for gitlab_api.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_cron().
+ *
+ * Purges idempotency rows older than 600s (10-minute TTL).
+ */
+function gitlab_api_cron(): void {
+  if (\Drupal::database()->schema()->tableExists('gitlab_seen_event')) {
+    \Drupal::database()->delete('gitlab_seen_event')
+      ->condition('seen_at', time() - 600, '<')
+      ->execute();
+  }
+}

@@ -14,7 +14,8 @@ class GitlabServerListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader(): array {
-    $header['label'] = $this->t('Server URL');
+    $header['label'] = $this->t('Label');
+    $header['url'] = $this->t('Server URL');
     $header['id'] = $this->t('Machine name');
     $header['status'] = $this->t('Status');
     $header['default_server'] = $this->t('Default');
@@ -27,6 +28,7 @@ class GitlabServerListBuilder extends ConfigEntityListBuilder {
   public function buildRow(EntityInterface $entity): array {
     /** @var \Drupal\gitlab_api\Entity\GitlabServer $entity */
     $row['label'] = $entity->label();
+    $row['url'] = $entity->getUrl();
     $row['id'] = $entity->id();
     $row['status'] = $entity->status() ? $this->t('Enabled') : $this->t('Disabled');
     $row['default_server'] = $entity->isDefault() ? $this->t('Yes') : '';

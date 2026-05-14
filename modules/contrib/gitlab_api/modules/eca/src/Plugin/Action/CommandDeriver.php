@@ -36,7 +36,6 @@ class CommandDeriver extends DeriverBase {
       $class = $returnType->getName();
       $parts = explode('\\', $class);
       $className = array_pop($parts);
-      /** @var array $parts */
       $parts = preg_split('/(?=[A-Z])/', $className);
       $name = implode(' ', $parts);
       $classId = strtolower($className);
@@ -54,7 +53,6 @@ class CommandDeriver extends DeriverBase {
         if ($id === '__construct') {
           continue;
         }
-        /** @var array $parts */
         $parts = preg_split('/(?=[A-Z])/', $id);
         $methodName = implode(' ', $parts);
         $id = strtolower($id);
@@ -69,7 +67,7 @@ class CommandDeriver extends DeriverBase {
             'name' => $parameter->getName(),
             'optional' => $parameter->isOptional(),
             'default' => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : $default,
-            'omittable' => $parameter->allowsNull(),
+            'omissible' => $parameter->allowsNull(),
           ];
         }
         $this->derivatives[$classId . '_' . $id] = [

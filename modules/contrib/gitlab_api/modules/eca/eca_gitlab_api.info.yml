@@ -7,7 +7,7 @@ dependencies:
   - eca:eca (^2)
   - gitlab_api:gitlab_api
 
-# Information added by Drupal.org packaging script on 2024-06-20
-version: '2.3.0-beta1'
+# Information added by Drupal.org packaging script on 2026-05-12
+version: '3.0.0-alpha1'
 project: 'gitlab_api'
-datestamp: 1718876280
+datestamp: 1778571269

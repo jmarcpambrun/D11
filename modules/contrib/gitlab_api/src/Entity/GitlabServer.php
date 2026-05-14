@@ -5,6 +5,7 @@ namespace Drupal\gitlab_api\Entity;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityStorageInterface;
 
 /**
  * Defines the gitlab server entity type.
@@ -37,14 +38,17 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *   },
  *   entity_keys = {
  *     "id" = "id",
- *     "label" = "url",
- *     "uuid" = "uuid"
+ *     "label" = "label",
+ *     "uuid" = "uuid",
+ *     "status" = "status"
  *   },
  *   config_export = {
  *     "id",
+ *     "label",
  *     "url",
- *     "auth_token",
- *     "default_server"
+ *     "auth_token_key",
+ *     "default_server",
+ *     "status"
  *   }
  * )
  */
@@ -58,6 +62,13 @@ class GitlabServer extends ConfigEntityBase {
   protected string $id;
 
   /**
+   * Human-readable label.
+   *
+   * @var string
+   */
+  protected string $label = '';
+
+  /**
    * The gitlab server url.
    *
    * @var string
@@ -65,11 +76,11 @@ class GitlabServer extends ConfigEntityBase {
   protected string $url;
 
   /**
-   * The gitlab_server auth_token.
+   * Key entity ID holding the GitLab authentication token.
    *
    * @var string
    */
-  protected string $auth_token;
+  protected string $auth_token_key = '';
 
   /**
    * Is it the default server.
@@ -102,20 +113,41 @@ class GitlabServer extends ConfigEntityBase {
    * Get the server URL.
    *
    * @return string
-   *   The server URL.
+   *   The server URL, with no trailing slash.
    */
   public function getUrl(): string {
-    return $this->get('url');
+    return rtrim((string) $this->get('url'), '/');
   }
 
   /**
-   * Get the auth token.
+   * Alias for getUrl().
+   */
+  public function getBaseUrl(): string {
+    return $this->getUrl();
+  }
+
+  /**
+   * Returns the Key entity ID holding the auth token.
+   */
+  public function getAuthTokenKeyId(): string {
+    return (string) $this->get('auth_token_key');
+  }
+
+  /**
+   * Resolves the Key entity to its plaintext token value.
    *
    * @return string|null
-   *   The auth token or NULL if none is available.
+   *   The auth token, or NULL when no key is configured / resolvable.
    */
   public function getAuthToken(): ?string {
-    return $this->get('auth_token');
+    $id = $this->getAuthTokenKeyId();
+    if ($id === '') {
+      return NULL;
+    }
+    /** @var \Drupal\key\KeyRepositoryInterface $repo */
+    $repo = \Drupal::service('key.repository');
+    $key = $repo->getKey($id);
+    return $key ? (string) $key->getKeyValue() : NULL;
   }
 
   /**
@@ -139,6 +171,34 @@ class GitlabServer extends ConfigEntityBase {
    */
   public function setDefault(bool $isDefault = TRUE): GitlabServer {
     $this->set('default_server', $isDefault);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preSave(EntityStorageInterface $storage): void {
+    parent::preSave($storage);
+    $this->url = rtrim((string) $this->url, '/');
+    if ($this->label === '') {
+      $this->label = $this->url;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies(): static {
+    parent::calculateDependencies();
+
+    $keyId = $this->getAuthTokenKeyId();
+    if ($keyId !== '') {
+      $key = \Drupal::entityTypeManager()->getStorage('key')->load($keyId);
+      if ($key !== NULL) {
+        $this->addDependency('config', $key->getConfigDependencyName());
+      }
+    }
+
     return $this;
   }
 

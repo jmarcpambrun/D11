@@ -69,7 +69,7 @@ class CounterEventsSubscriber implements EventSubscriberInterface {
    * @return array
    *   The event names to listen for, and the methods that should be executed.
    */
-    public static function getSubscribedEvents(): array {
+  public static function getSubscribedEvents() {
     return [
       KernelEvents::REQUEST => 'counterInsert',
     ];
@@ -99,7 +99,7 @@ class CounterEventsSubscriber implements EventSubscriberInterface {
 
     $path = $request->getPathInfo();
 
-    $skip = strpos($path, '/sites/') === 0 || preg_match('/^\/history\/\d+\/read$/', $path);
+    $skip = strpos($path, '/sites/') === 0 || preg_match('/^\/history\/\d+\/read$/', $path) || strpos($path, '/admin/config/counter') === 0;
 
     $this->moduleHandler->alter('counter_request', $event, $skip);
 

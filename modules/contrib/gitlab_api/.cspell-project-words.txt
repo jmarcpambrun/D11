@@ -1,3 +1,9 @@
 CREATEPROJECT
+drupalcode
 Webform
 webform
+triagex
+mygroup
+myproject
+glpat
+updatedb

@@ -15,8 +15,11 @@ function counter_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'help.page.counter':
       $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('The counter module is used for displaying details like Site Counter, Node Count, Unique Visitor and Client IP in a block.') . ' </p>';
+      $output .= '<h3>' . t('About', [], ['context' => 'counter']) . '</h3>';
+      $output .= '<p>' . t(
+          'The counter module is used for displaying details like Site Counter, Node Count, Unique Visitor and Client IP in a block.',
+          [], ['context' => 'counter'],
+        ) . ' </p>';
       return $output;
   }
 }
@@ -64,6 +67,7 @@ function counter_theme($existing, $type, $theme, $path) {
     ],
     'counter_dashboard' => [
       'variables' => [
+        'counter_menu' => [],
         'site_counter' => NULL,
         'unique_visitor' => NULL,
         'registered_user' => NULL,
@@ -82,6 +86,11 @@ function counter_theme($existing, $type, $theme, $path) {
         'unique_visitor_year' => NULL,
         'top_nodes' => NULL,
         'top_urls' => NULL,
+      ],
+    ],
+    'counter_statistics' => [
+      'variables' => [
+        'counter_menu' => [],
       ],
     ],
   ];

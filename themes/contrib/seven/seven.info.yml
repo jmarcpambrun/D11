@@ -3,7 +3,6 @@ type: theme
 base theme: false
 description: 'The Seven theme from Drupal 9 moved to a contrib project.'
 core_version_requirement: '^11.3'
-
 libraries:
   - seven/classy.messages
   - core/normalize
@@ -44,7 +43,6 @@ libraries-override:
       component:
         css/components/system-status-counter.css: css/components/system-status-counter.css
         css/components/system-status-report-general-info.css: css/components/system-status-report-general-info.css
-
 libraries-extend:
   core/drupal.autocomplete:
     - seven/autocomplete
@@ -77,14 +75,12 @@ libraries-extend:
     - seven/tour-styling
   user/drupal.user:
     - seven/user
-
 ckeditor_stylesheets:
   - css/classy/components/media-embed-error.css
 ckeditor5-stylesheets:
   - css/classy/components/media-embed-error.css
 quickedit_stylesheets:
   - css/components/quickedit.css
-
 regions:
   header: Header
   pre_content: Pre-content
@@ -98,7 +94,7 @@ regions:
 regions_hidden:
   - sidebar_first
 
-# Information added by Drupal.org packaging script on 2026-03-15
-version: '2.0.0-beta6'
+# Information added by Drupal.org packaging script on 2026-05-14
+version: '2.0.0-beta7'
 project: 'seven'
-datestamp: 1773585163
+datestamp: 1778764166

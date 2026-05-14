@@ -14,3 +14,7 @@ services:
     arguments: [ '@counter.counter_utility' ]
     tags:
       - { name: http_middleware, priority: 210 }
+
+  counter.statistics_service:
+    class: '\Drupal\counter\Service\StatisticsService'
+    arguments: [ '@database', '@request_stack', '@module_handler' ]

@@ -18,7 +18,7 @@ function counter_schema() {
       ],
       'ip' => [
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 45,
         'not null' => TRUE,
         'default' => '',
       ],
@@ -109,6 +109,24 @@ function counter_update_8101() {
  * (to support IPv6).
  */
 function counter_update_8102() {
+  $schema = \Drupal::database()->schema();
+
+  if ($schema->tableExists('counter') && $schema->fieldExists('counter', 'ip')) {
+    $schema->changeField('counter', 'ip', 'ip', [
+      'type' => 'varchar',
+      'length' => 45,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'IP address of the visitor (supports IPv4 and IPv6)',
+    ]);
+  }
+}
+
+/**
+ * Provides IPv6 support for the "ip" field on already installed sites after the fix.
+ * (to support IPv6).
+ */
+function counter_update_8103() {
   $schema = \Drupal::database()->schema();
 
   if ($schema->tableExists('counter') && $schema->fieldExists('counter', 'ip')) {

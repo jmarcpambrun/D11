@@ -15,7 +15,7 @@
         {% for key, label in counters %}
             {% if (_context[key]) is not null %}
                 <div class="counter__item {{ key }}">
-                    <div class="counter__item-label">{{ label|t }}</div>
+                    <div class="counter__item-label">{{ label|t({}, {'context': 'counter'}) }}</div>
                     <div class="counter__item-value">{{ _context[key] }}</div>
                 </div>
             {% endif %}
@@ -24,7 +24,7 @@
 
     {% if statistic_today or statistic_week or statistic_month or statistic_year %}
         <div class="statistic">
-            <h3 class="statistic__title">{{ 'Visitors'|t }}</h3>
+            <h3 class="statistic__title">{{ 'Visitors'|t({}, {'context': 'counter'}) }}</h3>
             <div class="statistic__items">
                 {% set statistics = {
                     'statistic_today': 'Today:',
@@ -35,7 +35,7 @@
                 {% for key, label in statistics %}
                     {% if (_context[key]) is not null %}
                         <div class="statistic__item {{ key }}">
-                            <div class="statistic__item-label">{{ label|t }}</div>
+                            <div class="statistic__item-label">{{ label|t({}, {'context': 'counter'}) }}</div>
                             <div class="statistic__item-value">{{ _context[key] }}</div>
                         </div>
                     {% endif %}

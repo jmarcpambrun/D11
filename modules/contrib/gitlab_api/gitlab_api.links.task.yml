@@ -1,0 +1,11 @@
+gitlab_api.tab.servers:
+  route_name: entity.gitlab_server.collection
+  title: 'Servers'
+  base_route: entity.gitlab_server.collection
+  weight: 0
+
+gitlab_api.tab.projects:
+  route_name: entity.gitlab_project.collection
+  title: 'Projects'
+  base_route: entity.gitlab_server.collection
+  weight: 10

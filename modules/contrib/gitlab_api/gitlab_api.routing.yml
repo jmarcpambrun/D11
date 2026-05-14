@@ -29,3 +29,17 @@ entity.gitlab_server.delete_form:
     _title: 'Delete a gitlab server'
   requirements:
     _permission: 'administer gitlab_server'
+
+gitlab_api.webhook:
+  path: '/gitlab-api/webhook/{project}'
+  defaults:
+    _controller: '\Drupal\gitlab_api\Controller\WebhookController::receive'
+  methods: [POST]
+  requirements:
+    # Public, unauthenticated endpoint — GitLab posts directly without a
+    # session. The controller authenticates each request via the
+    # X-Gitlab-Token header (per-project shared secret).
+    _access: 'TRUE'
+    project: '[a-z0-9_]+'
+  options:
+    no_cache: TRUE

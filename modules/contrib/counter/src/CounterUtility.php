@@ -341,8 +341,7 @@ class CounterUtility {
       ->fields([
         'ip' => $data['ip'],
         'created' => time(),
-        #'url' => substr($data['url'], 0, 255),
-        'url' => substr(urldecode($data['url']), 0, 255),
+        'url' => substr($data['url'], 0, 255),
         'uid' => $data['uid'],
         'nid' => $data['nid'],
         'type' => $data['type'],

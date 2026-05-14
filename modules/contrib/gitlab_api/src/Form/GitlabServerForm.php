@@ -5,6 +5,7 @@ namespace Drupal\gitlab_api\Form;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\gitlab_api\Entity\GitlabServer;
+use Drupal\key\Entity\Key;
 
 /**
  * Gitlab Server form.
@@ -20,11 +21,20 @@ class GitlabServerForm extends EntityForm {
     $server = $this->entity;
     $form = parent::form($form, $form_state);
 
+    $form['label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Label'),
+      '#maxlength' => 255,
+      '#default_value' => $server->label() ?: $server->getUrl(),
+      '#description' => $this->t('Human-readable label for this server.'),
+      '#required' => TRUE,
+    ];
+
     $form['url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Server URL with no trailing slash'),
       '#maxlength' => 255,
-      '#default_value' => $server->label(),
+      '#default_value' => $server->getUrl(),
       '#description' => $this->t('The url of the gitlab instance (eg : <em>https://gitlab.com</em> or <em>https://gitlab.mysite.com</em>)'),
       '#required' => TRUE,
     ];
@@ -33,18 +43,23 @@ class GitlabServerForm extends EntityForm {
       '#type' => 'machine_name',
       '#default_value' => $server->id(),
       '#machine_name' => [
-        'source' => ['url'],
+        'source' => ['label'],
         'exists' => '\Drupal\gitlab_api\Entity\GitlabServer::load',
       ],
       '#disabled' => !$server->isNew(),
     ];
 
-    $form['auth_token'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Authentication token'),
-      '#maxlength' => 255,
-      '#default_value' => $server->getAuthToken(),
-      '#description' => $this->t('Get this by creating a new personal access token on your gitlab profile (uri : <em>/profile/personal_access_tokens</em>)'),
+    $key_options = [];
+    foreach (Key::loadMultiple() as $id => $key) {
+      $key_options[$id] = $key->label();
+    }
+    $form['auth_token_key'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Authentication token (Key entity)'),
+      '#options' => $key_options,
+      '#default_value' => $server->getAuthTokenKeyId(),
+      '#empty_option' => $this->t('- Select -'),
+      '#description' => $this->t('A GitLab Personal or Project Access Token, stored in a Key entity. Used as the default token for any project that inherits the server token.'),
       '#required' => TRUE,
     ];
 
@@ -92,8 +107,10 @@ class GitlabServerForm extends EntityForm {
   public function save(array $form, FormStateInterface $form_state): int {
 
     if ($this->entity->isDefault() && $defaultServer = GitlabServer::loadDefaultServer()) {
-      $defaultServer->setDefault(FALSE);
-      $defaultServer->save();
+      if ($defaultServer->id() !== $this->entity->id()) {
+        $defaultServer->setDefault(FALSE);
+        $defaultServer->save();
+      }
     }
 
     $result = parent::save($form, $form_state);

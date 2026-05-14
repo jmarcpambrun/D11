@@ -1,0 +1,38 @@
+gitlab_api.gitlab_project.*:
+  type: config_entity
+  label: 'GitLab Project'
+  mapping:
+    id:
+      type: machine_name
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    server:
+      type: string
+      label: 'GitLab Server'
+    gitlab_project_id:
+      type: integer
+      label: 'GitLab project ID'
+    gitlab_project_path:
+      type: string
+      label: 'GitLab project path'
+    access_token_source:
+      type: string
+      label: 'Access token source (server|key)'
+    access_token_key:
+      type: string
+      label: 'Access token (Key entity ID)'
+    webhook_secret_keys:
+      type: sequence
+      label: 'Webhook secret Key entity IDs'
+      sequence:
+        type: string
+    maintainers:
+      type: sequence
+      label: 'Maintainer GitLab usernames'
+      sequence:
+        type: string
+    status:
+      type: boolean
+      label: 'Enabled'

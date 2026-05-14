@@ -1,2 +1,12 @@
 administer gitlab_server:
   title: 'Administer gitlab servers'
+  restrict access: true
+
+administer gitlab_project:
+  title: 'Administer gitlab projects'
+  restrict access: true
+
+use gitlab_api tools:
+  title: 'Use GitLab API tools'
+  description: 'Allows write operations against GitLab via the gitlab_api Tool plugins (open/close issue, comment, label, etc.). Equivalent to the access granted to whichever GitLab token the project is configured with, so grant only to trusted users and AI agents.'
+  restrict access: true

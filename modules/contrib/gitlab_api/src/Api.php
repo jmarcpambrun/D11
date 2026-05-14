@@ -79,7 +79,7 @@ class Api {
    * @param string|null $server_id
    *   The GitLab server config entity ID.
    */
-  public function switchServer(string $server_id = NULL): void {
+  public function switchServer(?string $server_id = NULL): void {
     if ($server_id && $server = GitlabServer::load($server_id)) {
       $this->server = $server;
     }
@@ -186,7 +186,7 @@ class Api {
    * @return array
    *   The issue.
    */
-  public function createIssue(int $project_id, string $title, string $body, array $assignee_ids = [], \DateTime $due_date = NULL, array $labels = []): array {
+  public function createIssue(int $project_id, string $title, string $body, array $assignee_ids = [], ?\DateTime $due_date = NULL, array $labels = []): array {
     $this->init();
     $params = [
       'title' => $title,
@@ -363,7 +363,7 @@ class Api {
    * @return array
    *   The list of project issues.
    */
-  public function issues(int $project_id, string $state = NULL, int $assignee_id = NULL, array $additionalParams = []): array {
+  public function issues(int $project_id, ?string $state = NULL, ?int $assignee_id = NULL, array $additionalParams = []): array {
     $this->init();
     $pager = new ResultPager($this->client);
     $params = [];

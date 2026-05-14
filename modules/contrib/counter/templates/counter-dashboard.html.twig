@@ -1,4 +1,6 @@
-  <div class="w3-main">
+<div class="counter-wrapper">
+    <div class="counter-page">
+        <div class="w3-main">
     <div class="w3-row-padding w3-margin-bottom">
         {% if site_counter is not null %}
             <div class="w3-quarter">
@@ -9,7 +11,7 @@
                         <h3>{{ site_counter }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Site Counter:'|t }}</h4>
+                    <h4>{{ 'Views for all time:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -22,7 +24,7 @@
                         <h3>{{ unique_visitor }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Unique Visitor:'|t }}</h4>
+                    <h4>{{ 'Visitors for all time:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -35,7 +37,7 @@
                         <h3>{{ registered_user }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Registered Users:'|t }}</h4>
+                    <h4>{{ 'Registered Users:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -48,7 +50,7 @@
                         <h3>{{ unregistered_user }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Unregistered Users:'|t }}</h4>
+                    <h4>{{ 'Unregistered Users:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -63,7 +65,7 @@
                         <h3>{{ blocked_user }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Blocked Users:'|t }}</h4>
+                    <h4>{{ 'Blocked Users:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -76,7 +78,7 @@
                         <h3>{{ published_nodes }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Published Nodes:'|t }}</h4>
+                    <h4>{{ 'Published Nodes:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -89,7 +91,7 @@
                         <h3>{{ unpublished_nodes }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Unublished Nodes:'|t }}</h4>
+                    <h4>{{ 'Unublished Nodes:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -102,7 +104,7 @@
                         <h3>{{ counter_since }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Counter Since:'|t }}</h4>
+                    <h4>{{ 'Counter Since:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -117,7 +119,7 @@
                         <h3>{{ statistic_today }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'Today:'|t }}</h4>
+                    <h4>{{ 'Views Today:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -130,7 +132,7 @@
                         <h3>{{ statistic_week }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'This week:'|t }}</h4>
+                    <h4>{{ 'Views This Week:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -143,7 +145,7 @@
                         <h3>{{ statistic_month }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'This month:'|t }}</h4>
+                    <h4>{{ 'Views This Month:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -156,7 +158,7 @@
                         <h3>{{ statistic_year }}</h3>
                     </div>
                     <div class="w3-clear"></div>
-                    <h4>{{ 'This year:'|t }}</h4>
+                    <h4>{{ 'Views This Year:'|t({}, {'context': 'counter'}) }}</h4>
                 </div>
             </div>
         {% endif %}
@@ -170,7 +172,7 @@
                     <h3>{{ unique_visitor_today }}</h3>
                 </div>
                 <div class="w3-clear"></div>
-                <h4>{{ 'Unique visitor per day:'|t }}</h4>
+                <h4>{{ 'Visitors Today:'|t({}, {'context': 'counter'}) }}</h4>
             </div>
         </div>
         <div class="w3-quarter">
@@ -181,7 +183,7 @@
                     <h3>{{ unique_visitor_week }}</h3>
                 </div>
                 <div class="w3-clear"></div>
-                <h4>{{ 'Unique visitor per week:'|t }}</h4>
+                <h4>{{ 'Visitors This Week:'|t({}, {'context': 'counter'}) }}</h4>
             </div>
         </div>
         <div class="w3-quarter">
@@ -192,7 +194,7 @@
                     <h3>{{ unique_visitor_month }}</h3>
                 </div>
                 <div class="w3-clear"></div>
-                <h4>{{ 'Unique visitor per month:'|t }}</h4>
+                <h4>{{ 'Visitors This Month:'|t({}, {'context': 'counter'}) }}</h4>
             </div>
         </div>
         <div class="w3-quarter">
@@ -203,34 +205,45 @@
                     <h3>{{ unique_visitor_year }}</h3>
                 </div>
                 <div class="w3-clear"></div>
-                <h4>{{ 'Unique visitor per year:'|t }}</h4>
+                <h4>{{ 'Visitors This Year:'|t({}, {'context': 'counter'}) }}</h4>
             </div>
         </div>
     </div>
     <div class="w3-row-padding w3-margin-bottom w3-half">
-        <h3>{{ 'Top views nodes'|t }}</h3>
+        <h3>{{ 'Top views nodes'|t({}, {'context': 'counter'}) }}</h3>
         <ol class="w3-ol">
             {% for top_node in top_nodes %}
-                <li>{{ 'Name'|t }} {{ top_node.type }}
+                <li>{{ 'Name'|t({}, {'context': 'counter'}) }} {{ top_node.type }}
                     :
                     <a href="{{ top_node.url }}">{{ top_node.title }}</a>
-                    ({{ top_node.views }} {{ 'views'|t }})
+                    ({{ top_node.views }} {{ 'views'|t({}, {'context': 'counter'}) }})
                 </li>
             {% endfor %}
         </ol>
     </div>
     <div class="w3-row-padding w3-margin-bottom w3-half">
-        <h3>{{ 'Top views url'|t }}</h3>
+        <h3>{{ 'Top views url'|t({}, {'context': 'counter'}) }}</h3>
         <ol class="w3-ol">
             {% for top_url in top_urls %}
                 <li>
-                    {{ 'Page'|t }}:
+                    {{ 'Page'|t({}, {'context': 'counter'}) }}:
                     <a href="{{ top_url.url }}">
                         {{ top_url.url }}
                     </a>
-                    ({{ top_url.views }} {{ 'views'|t }})
+                    ({{ top_url.views }} {{ 'views'|t({}, {'context': 'counter'}) }})
                 </li>
             {% endfor %}
         </ol>
+    </div>
+        </div>
+    </div>
+    <div class="counter-menu">
+        <ul class="counter-menu-list">
+            {% for item in counter_menu %}
+                <li class="counter-menu-item {{ item.active ? 'is-active' : '' }}">
+                    <a href="{{ item.url }}">{{ item.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
 </div>

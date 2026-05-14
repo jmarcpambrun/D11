@@ -24,7 +24,7 @@ services:
         vendor/bin/drush \
           --yes \
           --db-url=mysql://tugboat:tugboat@mysql:3306/tugboat \
-          --site-name=Seven \
+          --site-name="Live preview for ${TUGBOAT_PREVIEW_NAME}" \
           --account-pass=admin \
           site:install standard
 

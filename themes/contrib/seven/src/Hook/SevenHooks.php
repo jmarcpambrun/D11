@@ -14,7 +14,7 @@ use Drupal\views\ViewExecutable;
  *
  * @see https://www.drupal.org/node/3569107
  */
-class SevenHooks {
+final class SevenHooks {
 
   /**
    * Implements hook_element_info_alter().

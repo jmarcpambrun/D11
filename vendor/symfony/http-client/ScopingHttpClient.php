@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\HttpClient;
 
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\Exception\InvalidArgumentException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -24,20 +22,15 @@ use Symfony\Contracts\Service\ResetInterface;
  *
  * @author Anthony Martin <anthony.martin@sensiolabs.com>
  */
-class ScopingHttpClient implements HttpClientInterface, ResetInterface, LoggerAwareInterface
+class ScopingHttpClient implements HttpClientInterface, ResetInterface
 {
     use HttpClientTrait;
 
-    private HttpClientInterface $client;
-    private array $defaultOptionsByRegexp;
-    private ?string $defaultRegexp;
-
-    public function __construct(HttpClientInterface $client, array $defaultOptionsByRegexp, ?string $defaultRegexp = null)
-    {
-        $this->client = $client;
-        $this->defaultOptionsByRegexp = $defaultOptionsByRegexp;
-        $this->defaultRegexp = $defaultRegexp;
-
+    public function __construct(
+        private HttpClientInterface $client,
+        private array $defaultOptionsByRegexp,
+        private ?string $defaultRegexp = null,
+    ) {
         if (null !== $defaultRegexp && !isset($defaultOptionsByRegexp[$defaultRegexp])) {
             throw new InvalidArgumentException(\sprintf('No options are mapped to the provided "%s" default regexp.', $defaultRegexp));
         }
@@ -100,20 +93,10 @@ class ScopingHttpClient implements HttpClientInterface, ResetInterface, LoggerAw
         return $this->client->stream($responses, $timeout);
     }
 
-    /**
-     * @return void
-     */
-    public function reset()
+    public function reset(): void
     {
         if ($this->client instanceof ResetInterface) {
             $this->client->reset();
-        }
-    }
-
-    public function setLogger(LoggerInterface $logger): void
-    {
-        if ($this->client instanceof LoggerAwareInterface) {
-            $this->client->setLogger($logger);
         }
     }
 

@@ -1,0 +1,103 @@
+UPGRADING gitlab_api
+====================
+
+Upgrading to 3.0
+----------------
+
+3.0 makes the Key module a hard dependency and stores every GitLab
+authentication token as a Key entity instead of an inline string on the
+GitLab server config entity.
+
+The update path is automatic. `drush updatedb` runs the following hooks:
+
+  * gitlab_api_update_9001 - installs the Key module.
+  * gitlab_api_update_9002 - installs the gitlab_seen_event idempotency
+    table.
+  * gitlab_api_update_9003 - for every existing
+    `gitlab_api.gitlab_server.<id>` config, captures the inline
+    `auth_token` value, creates a Key entity named
+    `gitlab_api_server_<id>_token` that wraps it, points the server at
+    that Key via the new `auth_token_key` field, and clears the inline
+    `auth_token` from the server config.
+
+After update_9003 has finished the server config no longer contains the
+secret in plaintext. The Key entity does.
+
+================================================================================
+SECURITY: READ THIS BEFORE YOUR NEXT `drush config:export`
+================================================================================
+
+The Key entity created by update_9003 uses `key_provider: config`. That
+means the plaintext token is stored inside ACTIVE CONFIG and will be
+written into a YAML file by `drush config:export` (or any equivalent
+config-sync workflow). If you commit and push exported config without
+first changing this, you will publish your GitLab access token to your
+git repository.
+
+This applies regardless of where the original token came from:
+
+  * If your token was stored in active config (the default if you set it
+    via the GitLab Server admin form before 3.0): the migration moves
+    that value into the Key entity, where it remains exportable.
+  * If your token was set via a runtime override in `settings.php` /
+    `services.yml` / an environment variable (for example
+    `$config['gitlab_api.gitlab_server.foo']['auth_token'] = getenv(...)`):
+    the migration cannot see the override and will leave the new Key
+    entity with an empty value. The override itself is now dead code
+    (nothing reads `auth_token` any more) and the module's status-report
+    requirement check (gitlab_api_requirements) will surface a warning
+    about it.
+
+What to do BEFORE you next export config
+----------------------------------------
+
+For every Key entity the migration created (one per GitLab server),
+switch it off the `config` provider and onto a provider that reads the
+secret at runtime instead of storing it in YAML. Two common choices:
+
+  1. Environment variable (preferred for CI/CD setups):
+       /admin/config/system/keys
+       → edit the key_id `gitlab_api_server_<id>_token`
+       → Key provider: "Environment"
+       → Environment variable name: e.g. GITLAB_TOKEN_<ID>
+       → Save
+     Then set GITLAB_TOKEN_<ID> in your hosting environment, .env file,
+     CI secret store, etc.
+
+  2. File on disk outside the docroot:
+       /admin/config/system/keys
+       → edit the key_id `gitlab_api_server_<id>_token`
+       → Key provider: "File"
+       → File location: an absolute path outside the docroot, readable
+         only by the web user
+       → Save
+
+After the switch, re-export config. The exported Key entity YAML will
+no longer contain the token value, only the provider configuration -
+safe to commit.
+
+What to do if you already exported and pushed
+---------------------------------------------
+
+Treat the token as compromised:
+
+  1. Revoke the GitLab Personal/Project Access Token in GitLab.
+  2. Issue a new token.
+  3. Configure the Key entity to use the `env` or `file` provider as
+    above, with the new token value.
+  4. Re-export and push the now-safe config.
+  5. Consider history-rewriting the leaked commit out of git (and
+    invalidate any clones), though revocation in step 1 is what
+    actually mitigates the leak.
+
+Cleaning up runtime overrides
+-----------------------------
+
+If you previously set `auth_token` via `settings.php`, environment
+variables, or a similar runtime override, that override does not affect
+3.0 any more. Remove it. The module's status report check
+(/admin/reports/status) will list any servers that still have a stale
+`auth_token` override so you can find them.
+
+This requirement check is intended to be temporary and will be removed
+once known sites have cleaned up their overrides.

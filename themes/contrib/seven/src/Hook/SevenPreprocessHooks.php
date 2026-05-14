@@ -17,11 +17,11 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * @see https://www.drupal.org/node/3569107
  */
-class SevenPreprocessHooks {
+final class SevenPreprocessHooks {
 
   public function __construct(
-    protected readonly RequestStack $requestStack,
-    protected readonly ThemeSettingsProvider $themeSettingsProvider,
+    private readonly RequestStack $requestStack,
+    private readonly ThemeSettingsProvider $themeSettingsProvider,
   ) {}
 
   /**
@@ -207,7 +207,7 @@ class SevenPreprocessHooks {
    * functionality was removed in Drupal 8.1, but still necessary in some
    * instances.
    *
-   * @todo Remove in https://www.drupal.org/node/3120962
+   * @todo Remove in https://www.drupal.org/project/drupal/issues/3120962
    */
   #[Hook("preprocess_links")]
   public function links(array &$variables): void {
@@ -242,8 +242,8 @@ class SevenPreprocessHooks {
   /**
    * Implements hook_preprocess_HOOK() for image widget templates.
    *
-   * @todo Revisit in https://www.drupal.org/node/953034 and
-   *   in https://www.drupal.org/node/3114318
+   * @todo Revisit in https://www.drupal.org/project/drupal/issues/953034 and
+   *   in https://www.drupal.org/project/drupal/issues/3114318
    */
   #[Hook("preprocess_image_widget")]
   public function imageWidget(array &$variables): void {

@@ -171,7 +171,6 @@ class Configuration implements ConfigurationInterface
         $this->addAssetMapperSection($rootNode, $enableIfStandalone);
         $this->addTranslatorSection($rootNode, $enableIfStandalone);
         $this->addValidationSection($rootNode, $enableIfStandalone);
-        $this->addAnnotationsSection($rootNode);
         $this->addSerializerSection($rootNode, $enableIfStandalone);
         $this->addPropertyAccessSection($rootNode, $willBeAvailable);
         $this->addTypeInfoSection($rootNode, $enableIfStandalone);
@@ -362,7 +361,7 @@ class Configuration implements ConfigurationInterface
                         ->booleanNode('only_exceptions')->defaultFalse()->end()
                         ->booleanNode('only_main_requests')->defaultFalse()->end()
                         ->scalarNode('dsn')->defaultValue('file:%kernel.cache_dir%/profiler')->end()
-                        ->booleanNode('collect_serializer_data')->info('Enables the serializer data collector and profiler panel.')->defaultFalse()->end()
+                        ->enumNode('collect_serializer_data')->values([true])->defaultTrue()->end() // to be @deprecated in Symfony 8.1
                     ->end()
                 ->end()
             ->end()
@@ -732,10 +731,6 @@ class Configuration implements ConfigurationInterface
                     ->children()
                         ->scalarNode('resource')->isRequired()->end()
                         ->scalarNode('type')->end()
-                        ->scalarNode('cache_dir')
-                            ->defaultValue('%kernel.build_dir%')
-                            ->setDeprecated('symfony/framework-bundle', '7.1', 'Setting the "%path%.%node%" configuration option is deprecated. It will be removed in version 8.0.')
-                        ->end()
                         ->scalarNode('default_uri')
                             ->info('The default URI used to generate URLs in a non-HTTP context.')
                             ->defaultNull()
@@ -796,16 +791,6 @@ class Configuration implements ConfigurationInterface
                         ->integerNode('metadata_update_threshold')
                             ->defaultValue(0)
                             ->info('Seconds to wait between 2 session metadata updates.')
-                        ->end()
-                        ->integerNode('sid_length')
-                            ->min(22)
-                            ->max(256)
-                            ->setDeprecated('symfony/framework-bundle', '7.2', 'Setting the "%path%.%node%" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.')
-                        ->end()
-                        ->integerNode('sid_bits_per_character')
-                            ->min(4)
-                            ->max(6)
-                            ->setDeprecated('symfony/framework-bundle', '7.2', 'Setting the "%path%.%node%" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.')
                         ->end()
                     ->end()
                 ->end()
@@ -1135,9 +1120,6 @@ class Configuration implements ConfigurationInterface
                     ->info('Validation configuration')
                     ->{$enableIfStandalone('symfony/validator', Validation::class)}()
                     ->children()
-                        ->scalarNode('cache')
-                            ->setDeprecated('symfony/framework-bundle', '7.3', 'Setting the "%path%.%node%" configuration option is deprecated. It will be removed in version 8.0.')
-                        ->end()
                         ->booleanNode('enable_attributes')->{class_exists(FullStack::class) ? 'defaultFalse' : 'defaultTrue'}()->end()
                         ->arrayNode('static_method')
                             ->acceptAndWrap(['string'])
@@ -1146,7 +1128,7 @@ class Configuration implements ConfigurationInterface
                             ->treatFalseLike([])
                         ->end()
                         ->scalarNode('translation_domain')->defaultValue('validators')->end()
-                        ->enumNode('email_validation_mode')->values(['html5', 'html5-allow-no-tld', 'strict', 'loose'])->defaultValue('html5')->end()
+                        ->enumNode('email_validation_mode')->values(['html5', 'html5-allow-no-tld', 'strict'])->defaultValue('html5')->end()
                         ->arrayNode('mapping')
                             ->addDefaultsIfNotSet()
                             ->children()
@@ -1211,20 +1193,6 @@ class Configuration implements ConfigurationInterface
                             ->end()
                         ->end()
                     ->end()
-                ->end()
-            ->end()
-        ;
-    }
-
-    private function addAnnotationsSection(ArrayNodeDefinition $rootNode): void
-    {
-        $rootNode
-            ->children()
-                ->arrayNode('annotations')
-                    ->canBeEnabled()
-                    ->validate()
-                        ->ifTrue(static fn ($v) => $v['enabled'])
-                        ->thenInvalid('Enabling the doctrine/annotations integration is not supported anymore.')
                 ->end()
             ->end()
         ;
@@ -1328,19 +1296,10 @@ class Configuration implements ConfigurationInterface
                     ->children()
                         ->booleanNode('with_constructor_extractor')
                             ->info('Registers the constructor extractor.')
+                            ->defaultTrue()
                         ->end()
                     ->end()
                 ->end()
-            ->end()
-            ->validate()
-                ->ifTrue(static fn ($v) => $v['property_info']['enabled'] && !isset($v['property_info']['with_constructor_extractor']))
-                ->then(static function ($v) {
-                    $v['property_info']['with_constructor_extractor'] = false;
-
-                    trigger_deprecation('symfony/framework-bundle', '7.3', 'Not setting the "property_info.with_constructor_extractor" option explicitly is deprecated because its default value will change in version 8.0.');
-
-                    return $v;
-                })
             ->end()
         ;
     }
@@ -1701,23 +1660,11 @@ class Configuration implements ConfigurationInterface
                             ->beforeNormalization()
                                 ->ifArray()
                                 ->then(static function ($config) {
-                                    // If XML config with only one routing attribute
-                                    if (2 === \count($config) && isset($config['message-class']) && isset($config['sender'])) {
-                                        $config = [0 => $config];
-                                    }
-
                                     $newConfig = [];
                                     foreach ($config as $k => $v) {
-                                        if (!\is_int($k)) {
-                                            $newConfig[$k] = [
-                                                'senders' => $v['senders'] ?? (\is_array($v) ? array_values($v) : [$v]),
-                                            ];
-                                        } else {
-                                            $newConfig[$v['message-class']]['senders'] = array_map(
-                                                static fn ($a) => \is_string($a) ? $a : $a['service'],
-                                                array_values($v['sender'])
-                                            );
-                                        }
+                                        $newConfig[$k] = [
+                                            'senders' => $v['senders'] ?? (\is_array($v) ? array_values($v) : [$v]),
+                                        ];
                                     }
 
                                     return $newConfig;

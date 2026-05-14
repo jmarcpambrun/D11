@@ -38,28 +38,28 @@ class CounterSettingsAdvanced extends ConfigFormBase {
     $form['counter_advanced'] = [
       '#type' => 'details',
       '#weight' => -20,
-     '#title' => $this->t('Advanced settings'),
+      '#title' => $this->t('Advanced settings', [], ['context' => 'counter']),
     ];
 
     $form['counter_advanced']['counter_skip_admin'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Skip admin'),
+      '#title' => $this->t('Skip admin', [], ['context' => 'counter']),
       '#default_value' => $config->get('counter_skip_admin'),
-      '#description' => $this->t("Do not count when visitor has an administrator role."),
+      '#description' => $this->t("Do not count when visitor has an administrator role.", [], ['context' => 'counter']),
     ];
 
     $form['counter_advanced']['counter_only_pages'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Only pages'),
+      '#title' => $this->t('Only pages', [], ['context' => 'counter']),
       '#default_value' => $config->get('counter_only_pages'),
-      '#description' => $this->t('Only considers user visits'),
+      '#description' => $this->t('Only considers user visits', [], ['context' => 'counter']),
     ];
 
     $form['counter_advanced']['counter_refresh_on_cron'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Refresh counter values on cron run.'),
+      '#title' => $this->t('Refresh counter values on cron run.', [], ['context' => 'counter']),
       '#default_value' => $config->get('counter_refresh_on_cron'),
-      '#description' => $this->t("It will make sure cache of the counter block is cleared on cron run. Strongly recommended to keep this enabled for performance reasons."),
+      '#description' => $this->t("It will make sure cache of the counter block is cleared on cron run. Strongly recommended to keep this enabled for performance reasons.", [], ['context' => 'counter']),
     ];
 
     return parent::buildForm($form, $form_state);

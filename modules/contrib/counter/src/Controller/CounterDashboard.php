@@ -163,6 +163,22 @@ class CounterDashboard extends ControllerBase {
       '#attached' => [
         'library' => ['counter/counter.dashboard'],
       ],
+      '#counter_menu' => [
+        [
+          'title' => $this->t(
+            'Counter Dashboard',
+            [],
+            ['context' => 'counter'],
+          ),
+          'url' => '/admin/config/counter/dashboard',
+          'active' => TRUE,
+        ],
+        [
+          'title' => $this->t('Statistics views', [], ['context' => 'counter']),
+          'url' => '/admin/config/counter/statistics',
+          'active' => FALSE,
+        ],
+      ],
       '#site_counter' => $site_counter ?? NULL,
       '#unique_visitor' => $unique_visitor ?? NULL,
       '#registered_user' => $registered_user ?? NULL,

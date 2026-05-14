@@ -1,0 +1,3 @@
+services:
+  eca_gitlab_api.slash_command_parser:
+    class: Drupal\eca_gitlab_api\Service\SlashCommandParser

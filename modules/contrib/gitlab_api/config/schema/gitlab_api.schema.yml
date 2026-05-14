@@ -5,14 +5,20 @@ gitlab_api.gitlab_server.*:
     id:
       type: string
       label: ID
+    label:
+      type: label
+      label: Label
     url:
       type: string
       label: 'Server Url'
-    auth_token:
+    auth_token_key:
       type: string
-      label: 'Authentication token'
+      label: 'Authentication token (Key entity ID)'
     default_server:
       type: boolean
       label: 'Default server'
+    status:
+      type: boolean
+      label: 'Enabled'
     uuid:
       type: string

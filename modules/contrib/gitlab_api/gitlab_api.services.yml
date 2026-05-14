@@ -2,3 +2,13 @@ services:
   gitlab_api.api:
     class: Drupal\gitlab_api\Api
     arguments: ['@config.factory']
+
+  logger.channel.gitlab_api:
+    parent: logger.channel_base
+    arguments: ['gitlab_api']
+
+  gitlab_api.signature_verifier:
+    class: Drupal\gitlab_api\Service\SignatureVerifier
+
+  gitlab_api.client_factory:
+    class: Drupal\gitlab_api\Service\GitLabApiClientFactory

@@ -18,7 +18,7 @@ use Drupal\views\Form\ViewsForm;
  *
  * @see https://www.drupal.org/node/3569107
  */
-class SevenFormHooks {
+final class SevenFormHooks {
 
   use StringTranslationTrait;
 

@@ -60,8 +60,10 @@ class CounterDayBlock extends BlockBase implements ContainerFactoryPluginInterfa
    */
   public function build() {
     $count = $this->counterUtility->getTimeRangeData(strtotime('today'));
-    $count = $count > 999 ? number_format($count / 1000, 1) . t('k') : number_format($count);
-    if (in_array('administrator', \Drupal::currentUser()->getRoles(), TRUE)) {
+    $count = $count > 999 ? number_format($count / 1000,
+        1,
+      ) . t('k', [], ['context' => 'counter']) : number_format($count);
+    if (!in_array('administrator', \Drupal::currentUser()->getRoles(), TRUE)) {
       return [];
     }
     return [
