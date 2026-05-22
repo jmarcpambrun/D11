@@ -56,9 +56,9 @@ class WrapAndConvertEmailAdjuster extends EmailAdjusterBase implements Container
     $plain = $html = NULL;
 
     if ($orig_html && !$this->configuration['plain']) {
-      $html = $this->render($email, $orig_html, TRUE);
+      $html = (string) $this->render($email, $orig_html, TRUE);
     }
-    $email->setHtmlBody((string) $html);
+    $email->setHtmlBody($html);
 
     if ($orig_plain = $email->getTextBody()) {
       // To wrap the plain text we need to convert to HTML to render the

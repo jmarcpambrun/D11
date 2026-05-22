@@ -80,6 +80,7 @@ class HorizontalTabs extends RenderElementBase {
         if (!empty($element['#groups'][$group_identifier][$key]['#open'])) {
           $element['#default_tab'] = $element['#groups'][$group_identifier][$key]['#id'];
           $element[str_replace('][', '__', $group_identifier) . '__active_tab']['#value'] = $element['#default_tab'];
+          break;
         }
       }
     }

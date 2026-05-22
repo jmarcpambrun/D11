@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\symfony_mailer\Component;
 
-use Drupal\mailer_transport\AutowireTrait;
 use Drupal\symfony_mailer\EmailInterface;
 use Drupal\symfony_mailer\MailerPlusInterface;
 use Drupal\symfony_mailer\MailerLookupInterface;
@@ -17,7 +16,6 @@ use Drupal\symfony_mailer\Processor\EmailProcessorTrait;
  */
 abstract class ComponentMailerBase implements ComponentMailerInterface {
 
-  use AutowireTrait;
   use EmailProcessorTrait;
 
   /**
@@ -62,6 +60,13 @@ abstract class ComponentMailerBase implements ComponentMailerInterface {
    */
   public function getBaseTag(): string {
     return $this->baseTag;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWeight(int $phase): int {
+    return static::DEFAULT_WEIGHT;
   }
 
   /**

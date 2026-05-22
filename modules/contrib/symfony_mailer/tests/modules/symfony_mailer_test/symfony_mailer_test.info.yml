@@ -6,7 +6,7 @@ hidden: true
 dependencies:
   - symfony_mailer:symfony_mailer
 
-# Information added by Drupal.org packaging script on 2026-05-02
-version: '2.0.0'
+# Information added by Drupal.org packaging script on 2026-05-22
+version: '2.0.1'
 project: 'symfony_mailer'
-datestamp: 1777732139
+datestamp: 1779430121

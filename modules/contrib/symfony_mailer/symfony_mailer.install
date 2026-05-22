@@ -77,7 +77,7 @@ function symfony_mailer_update_20002() {
 
   if ($settings = $config_factory->getEditable('symfony_mailer.settings')) {
     $config_factory->getEditable('mailer_transport.settings')->set('default_transport', $settings->get('default_transport'))->save();
-    $override = $settings->get('override');
+    $override = $settings->get('override') ?? [];
 
     // Check we can combine the 2 contact overrides.
     if (isset($override['contact_form']) && (($override['contact_form'] == 3) xor ($override['contact'] == 3))) {

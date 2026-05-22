@@ -22,6 +22,7 @@
               $this.find('.form-required').length > 0)
           ) {
             $('legend', $this).first().addClass('form-required');
+            $('.fieldset__label', $this).addClass('form-required');
           }
         },
       );

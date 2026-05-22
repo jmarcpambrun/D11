@@ -455,7 +455,7 @@ function _burndown_task_ajax_submit(array $form, FormStateInterface &$form_state
 /**
  * Callback to set the allowed values for the estimate field on Task.
  */
-function burndown_allowed_estimate_values(BaseFieldDefinition $definition, ContentEntityInterface $entity = NULL, $cacheable) {
+function burndown_allowed_estimate_values(BaseFieldDefinition $definition, ?ContentEntityInterface $entity = NULL, $cacheable) {
   $options = [
     '_none' => '- None -',
   ];
