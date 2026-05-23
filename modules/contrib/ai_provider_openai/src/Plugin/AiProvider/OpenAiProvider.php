@@ -688,7 +688,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
         'chat_with_complex_json' => 'gpt-5.2',
         'chat_with_tools' => 'gpt-5.2',
         'chat_with_structured_response' => 'gpt-5.2',
-		'text_to_image' => 'gpt-image-1',
+        'text_to_image' => 'gpt-image-1',
         'embeddings' => 'text-embedding-3-small',
         'moderation' => 'omni-moderation-latest',
         'text_to_speech' => 'tts-1-hd',
@@ -897,3 +897,4 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
   }
 
 }
+
