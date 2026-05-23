@@ -1,0 +1,7 @@
+ai_media_image.settings:
+  type: config_object
+  label: 'AI Media Image Settings'
+  mapping:
+    provider_configuration_open:
+      type: boolean
+      label: 'If the Provider Configuration fieldset should be open by default, or not.'

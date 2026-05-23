@@ -1,0 +1,5 @@
+ai_media_image.settings:
+  title: 'AI Media Image Settings'
+  description: 'AI Media Image Settings'
+  parent: ai.admin_settings
+  route_name: ai_media_image.settings_form

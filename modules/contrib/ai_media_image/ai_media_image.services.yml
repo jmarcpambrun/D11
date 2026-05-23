@@ -1,0 +1,8 @@
+services:
+  ai_media_image.add_form:
+    class: Drupal\ai_media_image\Form\AiMediaImageAddForm
+    arguments:
+      - '@entity_type.manager'
+      - '@media_library.ui_builder'
+      - '@media_library.opener_resolver'
+      - '@config.factory'

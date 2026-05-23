@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Install hook for AI Media Image module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function ai_media_image_install() {
+  _ai_media_image_check_default_provider_and_model();
+}

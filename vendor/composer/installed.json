@@ -3000,6 +3000,54 @@
             "install-path": "../../modules/contrib/ai_agents"
         },
         {
+            "name": "drupal/ai_media_image",
+            "version": "1.0.0-alpha4",
+            "version_normalized": "1.0.0.0-alpha4",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/ai_media_image.git",
+                "reference": "1.0.0-alpha4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/ai_media_image-1.0.0-alpha4.zip",
+                "reference": "1.0.0-alpha4",
+                "shasum": "f0f5343bdd1c748a381558ff7765e501a3caee24"
+            },
+            "require": {
+                "drupal/ai": "*",
+                "drupal/core": "^10.2 || ^11"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.0-alpha4",
+                    "datestamp": "1749753508",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "coffeymachine",
+                    "homepage": "https://www.drupal.org/user/794774"
+                }
+            ],
+            "description": "Create a media entity image from a prompt to the AI text-to-image model.",
+            "homepage": "https://www.drupal.org/project/ai_media_image",
+            "support": {
+                "source": "https://git.drupalcode.org/project/ai_media_image"
+            },
+            "install-path": "../../modules/contrib/ai_media_image"
+        },
+        {
             "name": "drupal/ai_provider_openai",
             "version": "1.2.1",
             "version_normalized": "1.2.1.0",

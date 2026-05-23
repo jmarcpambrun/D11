@@ -1,0 +1,13 @@
+name: AI Media Image
+type: module
+description: Create a media entity image from a prompt to the AI text-to-image model.
+package: AI Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - ai:ai
+  - drupal:media_library
+
+# Information added by Drupal.org packaging script on 2025-06-12
+version: '1.0.0-alpha4'
+project: 'ai_media_image'
+datestamp: 1749753509
