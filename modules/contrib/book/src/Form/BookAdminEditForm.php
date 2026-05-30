@@ -279,7 +279,6 @@ class BookAdminEditForm extends FormBase {
           '#required' => $title_field_definition->isRequired(),
           '#title' => $title_field_definition->getLabel(),
           '#title_display' => 'hidden',
-          '#wrapper_attributes' => ['class' => ['container-inline']],
           '#default_value' => $data['link']['title'],
         ];
       }

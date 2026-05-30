@@ -48,3 +48,37 @@ function ai_agents_post_update_10001() {
     }
   }
 }
+
+/**
+ * Update to set the value for the new hostname_filter_disabled property.
+ */
+function ai_agents_post_update_10002() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $storage = $entity_type_manager->getStorage('ai_agent');
+
+  // Load all agents.
+  $agents = $storage->loadMultiple();
+
+  foreach ($agents as $agent) {
+    // Set the default value for hostname_filter_disabled to FALSE if not set.
+    if ($agent->get('hostname_filter_disabled') === NULL) {
+      $agent->set('hostname_filter_disabled', FALSE);
+      $agent->save();
+    }
+  }
+}
+
+/**
+ * Set max_loops_message to an empty string on existing agents where it is NULL.
+ *
+ * @see https://git.drupalcode.org/project/ai_agents/-/work_items/3547457
+ */
+function ai_agents_post_update_10003() {
+  $storage = \Drupal::entityTypeManager()->getStorage('ai_agent');
+  foreach ($storage->loadMultiple() as $agent) {
+    if ($agent->get('max_loops_message') === NULL) {
+      $agent->set('max_loops_message', '');
+      $agent->save();
+    }
+  }
+}

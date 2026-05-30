@@ -30,6 +30,12 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - pymdownx.blocks.caption
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 extra:
   social:
     - icon: fontawesome/brands/gitlab
@@ -170,5 +176,6 @@ nav:
     - How to Contribute to UX: ux/how_to_contribute.md
   - Documentation (How to): documentation/index.md
   - Changelog: changelog.md
+  - Security: security.md
 docs_dir: docs
 site_dir: site

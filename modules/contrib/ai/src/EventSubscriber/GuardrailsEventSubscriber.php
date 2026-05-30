@@ -8,6 +8,7 @@ use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Guardrail\AiGuardrailPluginManager;
 use Drupal\ai\Guardrail\NonDeterministicGuardrailInterface;
 use Drupal\ai\Guardrail\NonStreamableGuardrailInterface;
+use Drupal\ai\Guardrail\StreamableGuardrailInterface;
 use Drupal\ai\Guardrail\Result\PassResult;
 use Drupal\ai\Guardrail\Result\RewriteInputResult;
 use Drupal\ai\Guardrail\Result\RewriteOutputResult;
@@ -155,9 +156,21 @@ class GuardrailsEventSubscriber implements EventSubscriberInterface {
       $aggregated_score = 0;
       $aggregated_messages = [];
 
+      $streaming_iterator = ($output->getNormalized() instanceof StreamedChatMessageIteratorInterface)
+        ? $output->getNormalized()
+        : NULL;
+
       foreach ($guardrail_set->getPostGenerateGuardrails() as $guardrail) {
         if ($guardrail instanceof NonDeterministicGuardrailInterface) {
           $guardrail->setAiPluginManager($this->aiProviderPluginManager);
+        }
+
+        // Register streaming guardrails directly with the iterator. They
+        // operate in real-time during stream iteration, so they must not be
+        // run as regular post-generate guardrails.
+        if ($streaming_iterator !== NULL && $guardrail instanceof StreamableGuardrailInterface) {
+          $streaming_iterator->addStreamingGuardrail($guardrail);
+          continue;
         }
 
         if (

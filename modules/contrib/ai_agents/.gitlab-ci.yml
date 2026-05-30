@@ -14,7 +14,7 @@ variables:
   OPT_IN_TEST_NEXT_MINOR: 0
   OPT_IN_TEST_NEXT_MAJOR: 0
   _PHPUNIT_CONCURRENT: 1
-  _CSPELL_IGNORE_PATHS: "'.cspell-project-words.txt', 'tests/assets'"
+  _CSPELL_IGNORE_PATHS: "'.cspell-project-words.txt', 'tests/assets', 'js/micromodal.min.js'"
 pages:
   stage: .post
 

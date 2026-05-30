@@ -30,12 +30,12 @@ class AiProviderConfiguration extends FormElementBase {
       '#process' => [
         [static::class, 'processElement'],
       ],
+      "#tree" => TRUE,
       '#value_callback' => [static::class, 'valueCallback'],
       '#theme_wrappers' => ['form_element'],
       '#operation_type' => '',
       '#advanced_config' => TRUE,
       '#default_provider_allowed' => TRUE,
-      '#default_value' => NULL,
       '#pseudo_operation_types' => [],
       '#empty_option' => NULL,
       '#empty_value' => NULL,
@@ -83,17 +83,15 @@ class AiProviderConfiguration extends FormElementBase {
     }
 
     // Get the selected value from the dropdown.
-    // The $input parameter is the value at the element's parents path.
-    // Since the select element is nested under 'provider_model', we need to
-    // extract it from the input array structure.
-    $parents = $element['#parents'];
-    $select_parents = array_merge($parents, ['provider_model']);
-
+    // The $input parameter from FormBuilder::handleInputElement() is already
+    // scoped to $element['#parents'] — it is the raw POST data at that path.
+    // Therefore we must use relative keys (e.g. ['provider_model']) to index
+    // into $input, NOT full #parents-based paths.
     $selected_value = '';
     if (is_array($input)) {
       // Input is an array structure like
       // ['provider_model' => 'provider__model', 'config' => [...]].
-      $selected_value = NestedArray::getValue($form_state->getUserInput(), $select_parents) ?? '';
+      $selected_value = $input['provider_model'] ?? '';
     }
     elseif (is_string($input)) {
       // If input is a string (legacy/fallback), use it directly.
@@ -118,6 +116,7 @@ class AiProviderConfiguration extends FormElementBase {
         'provider' => '',
         'model' => '',
         'config' => [],
+        'use_default' => TRUE,
       ];
     }
 
@@ -150,18 +149,17 @@ class AiProviderConfiguration extends FormElementBase {
     $advanced_config = $element['#advanced_config'] ?? TRUE;
     if ($advanced_config) {
       // Get config from the input array structure.
-      $parents = $element['#parents'];
-      $config_parents = array_merge($parents, ['config']);
-
-      // Try to get config from $input first (if it's an array structure).
+      // $input is already scoped to $element['#parents'], so use relative key.
       $config_input = [];
       if (is_array($input)) {
-        $config_input = NestedArray::getValue($form_state->getUserInput(), $config_parents) ?? [];
+        $config_input = $input['config'] ?? [];
       }
 
       // Fallback to user input if not found in $input.
+      // getUserInput() contains the full form input tree, so use full path.
       if (empty($config_input)) {
         $user_input = $form_state->getUserInput();
+        $config_parents = array_merge($element['#parents'], ['config']);
         $config_input = NestedArray::getValue($user_input, $config_parents) ?? [];
       }
 
@@ -176,8 +174,8 @@ class AiProviderConfiguration extends FormElementBase {
             if (isset($schema[$key])) {
               $type = $schema[$key]['type'] ?? 'string';
               $config[$key] = CastUtility::typeCast($type, trim($value));
-              if ($type == 'boolean' || $type == 'bool') {
-                $config[$key] = empty($value) || $value == 'false' ? FALSE : TRUE;
+              if ($type === 'boolean' || $type === 'bool') {
+                $config[$key] = !(empty($value) || $value === 'false');
               }
             }
           }
@@ -237,7 +235,7 @@ class AiProviderConfiguration extends FormElementBase {
     if ($default_provider_allowed) {
       $default = $provider_manager->getDefaultProviderForOperationType($operation_type);
       if (!empty($default['provider_id']) && !empty($default['model_id'])) {
-        $options = [AiProviderInterface::DEFAULT_MODEL_VALUE => t('Default')] + $options;
+        $options = [AiProviderInterface::DEFAULT_MODEL_VALUE => new TranslatableMarkup('Default')] + $options;
       }
     }
 
@@ -245,7 +243,12 @@ class AiProviderConfiguration extends FormElementBase {
     $default_value = $element['#default_value'] ?? NULL;
     $selected_value = '';
     if (is_array($default_value) && isset($default_value['provider']) && isset($default_value['model'])) {
-      $selected_value = $default_value['provider'] . '__' . $default_value['model'];
+      if (!empty($default_value['use_default']) && $default_provider_allowed) {
+        $selected_value = AiProviderInterface::DEFAULT_MODEL_VALUE;
+      }
+      elseif ($default_value['provider'] !== '' || $default_value['model'] !== '') {
+        $selected_value = $default_value['provider'] . '__' . $default_value['model'];
+      }
     }
     else {
       // Try to get default provider for operation type.
@@ -294,7 +297,7 @@ class AiProviderConfiguration extends FormElementBase {
     }
     elseif (!$selected_value) {
       // Default behavior: show empty option if no value is selected.
-      $select_element['#empty_option'] = t('- Select -');
+      $select_element['#empty_option'] = new TranslatableMarkup('- Select -');
     }
 
     $element['provider_model'] = $select_element;

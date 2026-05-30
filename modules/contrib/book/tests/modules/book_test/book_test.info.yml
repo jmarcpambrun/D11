@@ -6,7 +6,7 @@ package: Testing
 dependencies:
   - drupal:book
 
-# Information added by Drupal.org packaging script on 2026-05-02
-version: '3.0.4'
+# Information added by Drupal.org packaging script on 2026-05-29
+version: '3.0.5'
 project: 'book'
-datestamp: 1777759925
+datestamp: 1780070717

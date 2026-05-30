@@ -11,6 +11,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Guardrail\AiGuardrailHelper;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -29,6 +30,8 @@ abstract class EntityReference extends RuleBase {
    *   The form helper.
    * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
    *   The prompt JSON decoder.
+   * @param \Drupal\ai\Guardrail\AiGuardrailHelper $aiGuardrailHelper
+   *   The AI guardrail helper.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -42,12 +45,13 @@ abstract class EntityReference extends RuleBase {
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
+    AiGuardrailHelper $aiGuardrailHelper,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected AccountProxyInterface $currentUser,
     protected EntityTypeBundleInfo $entityTypeBundleInfo,
     protected EntityFieldManagerInterface $entityFieldManager,
   ) {
-    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
+    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder, $aiGuardrailHelper);
   }
 
   /**
@@ -58,6 +62,7 @@ abstract class EntityReference extends RuleBase {
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
+      $container->get('ai.guardrail_helper'),
       $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('entity_type.bundle.info'),

@@ -63,11 +63,11 @@ class BookSettingsFormTest extends KernelTestBase {
     $form_state->setValues([
       'allowed_types' => [
         'page' => [
-          'enabled' => TRUE,
+          'content_type' => 'page',
           'child_type' => 'page',
         ],
         'chapter' => [
-          'enabled' => TRUE,
+          'content_type' => 'chapter',
           'child_type' => 'page',
         ],
       ],
@@ -80,6 +80,34 @@ class BookSettingsFormTest extends KernelTestBase {
     $content_types = $this->getBookContentTypes($allowed_types_config);
     $this->assertSame(['chapter', 'page'], $content_types);
     $this->assertSame('page', $allowed_types_config[0]['child_type']);
+    $this->assertSame('weight', $config->get('book_sort'));
+  }
+
+  /**
+   * Tests form can be saved even if previous config was invalid.
+   *
+   * @throws \Exception
+   */
+  public function testUpdateInvalidConfig(): void {
+    // This is invalid config, as the child_type is not in allowed_types.
+    $config = $this->config('book.settings');
+    $config->set('allowed_types', [
+      ['content_type' => 'book', 'child_type' => 'page'],
+    ])->save();
+
+    $form_state = new FormState();
+    $form_state->setValue('allowed_types', [
+      'book' => [
+        'content_type' => 'book',
+        'child_type' => 'page',
+      ],
+      'page' => [
+        'content_type' => 'page',
+        'child_type' => 'page',
+      ],
+    ]);
+    $this->container->get('form_builder')->submitForm(BookSettingsForm::class, $form_state);
+    $this->assertEmpty($form_state->getErrors(), 'Failed submitting config form to fix broken config.');
   }
 
   /**
@@ -154,7 +182,8 @@ class BookSettingsFormTest extends KernelTestBase {
     $form_state->setValues([
       'allowed_types' => [
         'page' => [
-          'enabled' => TRUE,
+          'content_type' => 'page',
+          'child_type' => NULL,
         ],
       ],
     ]);

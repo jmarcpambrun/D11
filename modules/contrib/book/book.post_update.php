@@ -170,15 +170,39 @@ function book_post_update_prepopulate_starting_level_setting(&$sandbox): void {
 }
 
 /**
- * Set starting_level to the book_navigation blocks.
+ * Set max_depth and book_select on book_navigation blocks.
  */
 function book_post_update_prepopulate_max_depth_and_selected_book_settings(&$sandbox): void {
   \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'block', function (Block $block) {
     if ($block->getPluginId() === 'book_navigation') {
       $block->getPlugin()->setConfigurationValue('max_depth', 0);
-      $block->getPlugin()->setConfigurationValue('select_book', 0);
+      $block->getPlugin()->setConfigurationValue('book_select', 0);
       return TRUE;
     }
     return FALSE;
+  });
+}
+
+/**
+ * Rename the invalid select_book block setting to book_select.
+ */
+function book_post_update_fix_book_navigation_book_select_setting(&$sandbox): void {
+  \Drupal::classResolver(ConfigEntityUpdater::class)->update($sandbox, 'block', function (Block $block) {
+    if ($block->getPluginId() !== 'book_navigation') {
+      return FALSE;
+    }
+
+    $settings = $block->get('settings') ?? [];
+    if (!array_key_exists('select_book', $settings)) {
+      return FALSE;
+    }
+
+    if (!array_key_exists('book_select', $settings)) {
+      $settings['book_select'] = $settings['select_book'];
+    }
+    unset($settings['select_book']);
+    $block->set('settings', $settings);
+
+    return TRUE;
   });
 }

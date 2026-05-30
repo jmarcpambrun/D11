@@ -217,11 +217,8 @@ class Agent extends ModelOwnerBase {
             $config[$key . '___' . $valueKey] = is_array($value) ? implode("\n", $value) : $value;
           }
         }
-        $config['return_directly'] = (bool) ($model->get('tool_settings')[$id]['return_directly'] ?? 0);
-        $config['require_usage'] = (bool) ($model->get('tool_settings')[$id]['require_usage'] ?? 0);
-        $config['use_artifacts'] = (bool) ($model->get('tool_settings')[$id]['use_artifacts'] ?? 0);
-        $config['progress_message'] = (string) ($model->get('tool_settings')[$id]['progress_message'] ?? '');
-
+        $toolSettingsEntry = $model->get('tool_settings')[$id] ?? [];
+        $config = array_merge($toolSettingsEntry, $config);
         $components[] = new Component(
           $this,
           $componentId,
@@ -478,31 +475,21 @@ class Agent extends ModelOwnerBase {
         $elementSettings = $model->get('tool_settings');
 
         $elements[$id] = TRUE;
-        $elementSettings[$id] = [
-          'progress_message' => $config['progress_message'] ?? "",
-          'use_artifacts' => $config['use_artifacts'] ?? FALSE,
-          'require_usage' => $config['require_usage'] ?? FALSE,
-          'return_directly' => $config['return_directly'] ?? FALSE,
-          'description_override' => $config['description_override'] ?? '',
-        ];
         $config += $this->ownerComponentDefaultConfig(Api::COMPONENT_TYPE_ELEMENT, $id);
-        unset($config['use_artifacts']);
-        unset($config['return_directly']);
-        unset($config['progress_message']);
-        unset($config['require_usage']);
-        unset($config['description_override']);
+        $elementSettings[$id] = [];
         foreach ($config as $key => $value) {
-          // Only process keys in property restriction format.
-          if (!str_contains($key, '___')) {
-            continue;
+          if (str_contains($key, '___')) {
+            [$plugin, $field] = explode('___', $key);
+            $plugin = str_replace('__colon__', ':', $plugin);
+            $value = match ($field) {
+              'values' => empty($value) ? '' : explode("\n", $value),
+              default => $value,
+            };
+            $elementUsageLimits[$id][$plugin][$field] = $value;
           }
-          [$plugin, $field] = explode('___', $key);
-          $plugin = str_replace('__colon__', ':', $plugin);
-          $value = match ($field) {
-            'values' => empty($value) ? '' : explode("\n", $value),
-            default => $value,
-          };
-          $elementUsageLimits[$id][$plugin][$field] = $value;
+          else {
+            $elementSettings[$id][$key] = $value;
+          }
         }
 
         $model->set('tools', $elements);

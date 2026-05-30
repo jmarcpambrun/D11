@@ -3,6 +3,23 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.10.5 - 2025-05-27
+
+### Fixed
+
+- Defer cURL multi cancellation cleanup until after progress callbacks return
+- Classify additional stream handler connection failures as `ConnectException`
+
+
+## 7.10.4 - 2025-05-22
+
+### Fixed
+
+- Fix IPv6 literal matching in no-proxy rules
+- Handle cURL multi completion messages without handles after cancelled transfers
+- Fix magic client request methods such as `options()` to uppercase inferred HTTP methods
+
+
 ## 7.10.3 - 2025-05-20
 
 ### Fixed

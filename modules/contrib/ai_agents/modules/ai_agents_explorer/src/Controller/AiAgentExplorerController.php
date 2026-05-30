@@ -125,7 +125,7 @@ class AiAgentExplorerController extends ControllerBase {
     $prompt = $request->request->get('prompt');
     $agent_name = $request->request->get('agent');
     $provider_name = $request->request->get('model');
-    $images = $request->request->get('images');
+    $images = array_filter($request->request->all('images'));
     $runner_id = $request->request->get('runner_id');
     $markdown = $request->request->get('markdown');
 
@@ -167,7 +167,7 @@ class AiAgentExplorerController extends ControllerBase {
     $agent->setCreateDirectly(TRUE);
 
     if ($agent instanceof ConfigAiAgentInterface) {
-      $token_input = array_filter($request->request->get('tokens') ?? []);
+      $token_input = array_filter($request->request->all('tokens'));
       $tokens = [];
       foreach ($token_input as $token_type => $token_value) {
         if ($this->entityTypeManager->hasDefinition($token_type)) {

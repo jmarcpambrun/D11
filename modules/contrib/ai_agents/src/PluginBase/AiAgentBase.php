@@ -29,6 +29,15 @@ use Symfony\Component\Yaml\Yaml;
 
 /**
  * Helper for worker agents.
+ *
+ * @deprecated in ai_agents:1.3.0 and is removed from ai:2.0.0 and possibly even
+ * earlier in ai_agents.
+ *   Extend \Drupal\my_module\Plugin\NewPluginBase instead.
+ * phpcs:ignore
+ * @see https://git.drupalcode.org/project/ai_agents/-/work_items/3546513
+ *
+ * We do not set this in the constructor because the config agent still uses
+ * them. Follow up deprecation might come.
  */
 abstract class AiAgentBase extends PluginBase implements AiAgentInterface, ContainerFactoryPluginInterface {
 

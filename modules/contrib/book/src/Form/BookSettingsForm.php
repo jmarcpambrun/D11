@@ -2,9 +2,14 @@
 
 namespace Drupal\book\Form;
 
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure book settings for this site.
@@ -27,13 +32,33 @@ class BookSettingsForm extends ConfigFormBase {
     return ['book.settings'];
   }
 
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    protected TypedConfigManagerInterface $typedConfigManager,
+    protected readonly EntityTypeBundleInfoInterface $entityTypeBundleInfo,
+    protected readonly CacheBackendInterface $cache,
+  ) {
+    parent::__construct($config_factory, $typedConfigManager);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): static {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('cache.default'),
+    );
+  }
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('book.settings');
-    // @phpstan-ignore-next-line
-    $types = node_type_get_names();
+    $types = $this->entityTypeBundleInfo->getBundleLabels('node');
 
     $allowed_types = $config->get('allowed_types') ?? [];
 
@@ -45,6 +70,8 @@ class BookSettingsForm extends ConfigFormBase {
     $form['allowed_types'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Allowed content types and their children'),
+      '#tree' => TRUE,
+      '#config_target' => 'book.settings:allowed_types',
     ];
 
     foreach ($types as $type => $label) {
@@ -53,11 +80,11 @@ class BookSettingsForm extends ConfigFormBase {
         '#attributes' => ['id' => 'allowed-types-wrapper-' . $type],
       ];
 
-      $form['allowed_types'][$type]['enabled'] = [
+      $form['allowed_types'][$type]['content_type'] = [
         '#type' => 'checkbox',
         '#title' => $label,
         '#default_value' => isset($allowed_types_indexed[$type]),
-        '#parents' => ['allowed_types', $type, 'enabled'],
+        '#return_value' => $type,
         '#id' => 'allowed-types-' . $type . '-enabled',
       ];
 
@@ -66,7 +93,6 @@ class BookSettingsForm extends ConfigFormBase {
         '#title' => $this->t('Allowed child type for %type', ['%type' => $label]),
         '#options' => $types,
         '#default_value' => $allowed_types_indexed[$type] ?? NULL,
-        '#parents' => ['allowed_types', $type, 'child_type'],
         '#id' => 'allowed-types-' . $type . '-child-type',
         '#states' => [
           'visible' => [
@@ -80,6 +106,7 @@ class BookSettingsForm extends ConfigFormBase {
       '#type' => 'radios',
       '#title' => $this->t('Book list sorting for administrative pages, outlines, and menus'),
       '#default_value' => $config->get('book_sort'),
+      '#config_target' => 'book.settings:book_sort',
       '#options' => [
         'weight' => $this->t('Sort by weight'),
         'title' => $this->t('Sort alphabetically by title'),
@@ -119,39 +146,36 @@ class BookSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    parent::validateForm($form, $form_state);
-
-    $values = $form_state->getValue('allowed_types') ?? [];
     // Check if there is at least one child type for enabled content types.
-    foreach ($values as $content_type => $type_data) {
-      if (!empty($type_data['enabled'])) {
-        if (empty($type_data['child_type'])) {
-          $form_state->setErrorByName("allowed_types][$content_type][child_type", $this->t('You must select a child type for the enabled content type.'));
-        }
+    foreach ($form_state->getValue('allowed_types') as $content_type => $type_data) {
+      if (!empty($type_data['content_type']) && empty($type_data['child_type'])) {
+        $form_state->setErrorByName("allowed_types][$content_type][child_type", $this->t('You must select a child type for the enabled content type.'));
       }
     }
+
+    // Do not store disabled types, keeps config clean.
+    $allowed_types = array_values(array_filter(
+      $form_state->getValue('allowed_types'),
+      static fn (array $type_data) => !empty($type_data['content_type']) && $type_data['child_type'] !== NULL
+    ));
+    $form_state->setValue('allowed_types', $allowed_types);
+
+    parent::validateForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    parent::submitForm($form, $form_state);
-    $values = $form_state->getValue('allowed_types') ?? [];
-    $allowed_types_config = [];
-    foreach ($values as $content_type => $type_data) {
-      if (!empty($type_data['enabled'])) {
-        $allowed_types_config[] = [
-          'content_type' => $content_type,
-          'child_type' => $type_data['child_type'] ?? "",
-        ];
-      }
-    }
+    $config = $this->config('book.settings');
+    $needs_cache_rebuild = $config->get('allowed_types') != $config->getOriginal('allowed_types');
 
-    $this->config('book.settings')
-      ->set('allowed_types', $allowed_types_config)
-      ->set('book_sort', $form_state->getValue('book_sort'))
-      ->save();
+    parent::submitForm($form, $form_state);
+
+    if ($needs_cache_rebuild) {
+      // Needed for \Drupal\book\Hook\BookHooks::entityBundleInfoAlter.
+      $this->cache->deleteAll();
+    }
   }
 
 }

@@ -56,6 +56,7 @@ use Drupal\ai_automators\AiAutomatorInterface;
  *     "base_field",
  *     "prompt",
  *     "token",
+ *     "guardrail_set_id",
  *     "plugin_config",
  *   },
  * )
@@ -128,6 +129,11 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
   protected string|null $token;
 
   /**
+   * The guardrail set applied to this Automator's AI calls.
+   */
+  protected string|null $guardrail_set_id = NULL;
+
+  /**
    * The plugin config.
    */
   protected array $plugin_config;
@@ -155,6 +161,14 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
     $dependencies = parent::calculateDependencies();
     // Set the dependencies its connected to.
     $this->addDependency('config', 'field.field.' . $this->entity_type . '.' . $this->bundle . '.' . $this->field_name);
+    if (!empty($this->guardrail_set_id)) {
+      $guardrail_set = \Drupal::entityTypeManager()
+        ->getStorage('ai_guardrail_set')
+        ->load($this->guardrail_set_id);
+      if ($guardrail_set) {
+        $this->addDependency($guardrail_set->getConfigDependencyKey(), $guardrail_set->getConfigDependencyName());
+      }
+    }
     return $dependencies;
   }
 

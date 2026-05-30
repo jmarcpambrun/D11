@@ -35,6 +35,11 @@ services:
     class: Drupal\ai\Breadcrumb\AiModelSettingsBreadcrumbBuilder
     tags:
       - { name: breadcrumb_builder, priority: 100 }
+  ai.exception_event_subscriber:
+    class: Drupal\ai\EventSubscriber\AiExceptionEventSubscriber
+    arguments: ['@logger.factory']
+    tags:
+      - { name: event_subscriber }
   plugin.manager.ai.function_calls:
     class: Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager
     parent: default_plugin_manager

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_agents\PluginBase;
 
+use Drupal\ai\Guardrail\AiGuardrailHelper;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
@@ -11,9 +12,11 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Dto\HostnameFilterDto;
 use Drupal\ai\Exception\AiFunctionCallingExecutionError;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
 use Drupal\ai\OperationType\GenericType\ImageFile;
@@ -64,7 +67,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *
    * @var array
    */
-  protected $aiConfiguration;
+  protected $aiConfiguration = [];
 
   /**
    * The Task.
@@ -194,6 +197,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected $callerAgentRunnerId = NULL;
 
   /**
+   * Images collected from tool results, to be sent on the next LLM turn.
+   *
+   * @var \Drupal\ai\OperationType\GenericType\ImageFile[]
+   */
+  protected array $pendingToolImages = [];
+
+  /**
    * The constructor.
    *
    * @param \Drupal\ai_agents\AiAgentInterface $aiAgent
@@ -216,6 +226,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The artifact helper service.
    * @param \Drupal\Component\Uuid\UuidInterface $uuid
    *   The UUID service.
+   * @param \Drupal\ai\Guardrail\AiGuardrailHelper $aiGuardrailHelper
+   *   The AI guardrail helper.
    */
   public function __construct(
     protected AiAgentInterface $aiAgent,
@@ -228,6 +240,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     protected AiProviderPluginManager $aiProviderPluginManager,
     protected ArtifactHelper $artifactHelper,
     protected UuidInterface $uuid,
+    protected AiGuardrailHelper $aiGuardrailHelper,
   ) {
   }
 
@@ -436,21 +449,28 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $this->aiProvider = $this->aiProviderPluginManager->createInstance($defaults['provider_id']);
       $this->modelName = $defaults['model_id'];
     }
+    // Check max loops before dispatching the started event. Otherwise the
+    // started event creates tracking state that never gets a corresponding
+    // finished event.
+    // @see https://www.drupal.org/i/3553458
+    $this->looped++;
+    if ($this->looped > $this->aiAgent->get('max_loops')) {
+      $this->finished = TRUE;
+      $message = new ChatMessage('assistant', $this->getMaxLoopsMessage());
+      $this->chatHistory[] = $message;
+      return PluginInterfacesAiAgentInterface::JOB_NOT_SOLVABLE;
+    }
     // Trigger the agent runner event.
     $event = new AgentStartedExecutionEvent(
       $this,
       $this->aiAgent->id(),
       $this->chatHistory,
       $this->runnerId,
-      $this->looped,
+      $this->looped - 1,
       $this->threadId,
       $this->callerAgentRunnerId,
     );
     $this->eventDispatcher->dispatch($event, AgentStartedExecutionEvent::EVENT_NAME);
-    $this->looped++;
-    if ($this->looped > $this->aiAgent->get('max_loops')) {
-      return PluginInterfacesAiAgentInterface::JOB_NOT_SOLVABLE;
-    }
     // Get the system prompt.
     $system_prompt = $this->getSystemPrompt();
     // Check if someone wants to change something.
@@ -502,6 +522,27 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         $message->setToolsId($tool->getToolsId());
         $this->chatHistory[] = $message;
       }
+
+      // Collect images from tool results to send on the next LLM turn.
+      // Images cannot be part of tool-role messages (OpenAI requires tool
+      // content to be a plain string) and must not be injected between
+      // tool responses (breaks parallel tool_calls). Instead, store them
+      // and prepend a user message with the images on the next iteration.
+      foreach ($this->contextTools as $tool) {
+        if (method_exists($tool, 'getPluginInstance')) {
+          $pluginInstance = $tool->getPluginInstance();
+          if ($pluginInstance && method_exists($pluginInstance, 'getResult')) {
+            $result = $pluginInstance->getResult();
+            if ($result && !empty($result->getContextValues()['_images'])) {
+              foreach ($result->getContextValues()['_images'] as $image) {
+                if ($image instanceof ImageFile) {
+                  $this->pendingToolImages[] = $image;
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     // Reset all tools between runs.
@@ -517,12 +558,30 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $tags[] = 'ai_agents_runner_' . $this->runnerId;
     }
 
+    // Append any pending images from the previous tool execution as a user
+    // message. This ensures the LLM sees screenshots on this turn without
+    // breaking the tool_calls message sequence.
+    if (!empty($this->pendingToolImages)) {
+      $imageMessage = new ChatMessage('user', 'Screenshot(s) from the tool results above:');
+      foreach ($this->pendingToolImages as $image) {
+        $imageMessage->setImage($image);
+      }
+      $this->chatHistory[] = $imageMessage;
+      $this->pendingToolImages = [];
+    }
+
     // Empty the system prompt, until this is fixed
     // https://www.drupal.org/project/ai/issues/3573100
     $this->aiProvider->setChatSystemRole('');
 
     $input = new ChatInput($this->chatHistory);
     $input->setSystemPrompt($system_prompt);
+    // Only set if it exists a guardrail set.
+    if ($this->aiAgent->get('guardrail_set')) {
+      $guardrail_set_id = $this->aiAgent->get('guardrail_set');
+      $input = $this->aiGuardrailHelper->applyGuardrailSetToChatInput($guardrail_set_id, $input);
+    }
+
     if (count($functions) && count($functions['normalized'])) {
       $input->setChatTools(new ToolsInput($functions['normalized']));
     }
@@ -546,7 +605,42 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     );
     $this->eventDispatcher->dispatch($request_event, AgentRequestEvent::EVENT_NAME);
 
-    $return = $this->aiProvider->chat($input, $this->modelName, $tags);
+    // Check if we should turn off the hostname filtering for this request.
+    if ($this->aiAgent->get('hostname_filter_disabled')) {
+      $hostnameFilterDto = new HostnameFilterDto(
+        fullTrust: TRUE,
+      );
+      $input->setHostnameFilter($hostnameFilterDto);
+    }
+
+    try {
+      $return = $this->aiProvider->chat($input, $this->modelName, $tags);
+    }
+    catch (\Exception $e) {
+      // If the chat call fails (e.g. no budget/quota left), dispatch a
+      // finished event so tracking does not get stuck in "started" state.
+      // @see https://www.drupal.org/i/3553458
+      $this->finished = TRUE;
+      $dummy_output = new ChatOutput(
+        new ChatMessage('assistant', ''),
+        NULL,
+        NULL,
+      );
+      $finished_event = new AgentFinishedExecutionEvent(
+        $this,
+        $system_prompt,
+        $this->aiAgent->id(),
+        $user_prompt,
+        $this->chatHistory,
+        $dummy_output,
+        $this->looped,
+        $this->runnerId,
+        $this->threadId,
+        $this->callerAgentRunnerId,
+      );
+      $this->eventDispatcher->dispatch($finished_event, AgentFinishedExecutionEvent::EVENT_NAME);
+      return PluginInterfacesAiAgentInterface::JOB_NOT_SOLVABLE;
+    }
     $response = $return->getNormalized();
     // Trigger the response event.
     $response_event = new AgentResponseEvent(
@@ -888,8 +982,17 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The default information.
    */
   public function getDefaultInformationTools() {
-    $tools_yaml = $this->applyTokens($this->aiAgent->get('default_information_tools') ?? '[]');
-    $data = Yaml::parse($tools_yaml);
+    // Parse YAML before token replacement so that token values containing
+    // special characters (e.g. single quotes) do not corrupt YAML syntax.
+    $data = Yaml::parse($this->aiAgent->get('default_information_tools') ?? '[]');
+    // Apply tokens to each string value in the parsed array.
+    if (is_array($data)) {
+      array_walk_recursive($data, function (mixed &$value): void {
+        if (is_string($value)) {
+          $value = $this->applyTokens($value);
+        }
+      });
+    }
     $dynamic = "This is the ";
     if ($this->looped == 1) {
       $dynamic .= "first ";
@@ -1023,6 +1126,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     // Use overridden functions, if set.
     $required_not_ran = [];
     $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
+    if (empty($settings)) {
+      return $required_not_ran;
+    }
     foreach ($settings as $plugin_id => $tool_settings) {
       if (!empty($tool_settings['require_usage'])) {
         $function_name = $this->functionCallPluginManager->getDefinition($plugin_id)['function_name'];
@@ -1067,9 +1173,15 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected function applyToolUsageLimitsToContext(FunctionCallInterface $function_call) {
     // Use overridden functions, if set.
     $tool_limits = $this->functionsOverride['tool_usage_limits'] ?? $this->aiAgent->get('tool_usage_limits');
+    $context_definitions = $function_call->getContextDefinitions();
 
     // Process each property with limits.
     foreach ($tool_limits[$function_call->getPluginId()] ?? [] as $property_name => $limit) {
+      // Skip properties that are not valid context definitions.
+      if (!array_key_exists($property_name, $context_definitions)) {
+        continue;
+      }
+
       $context_definition = $function_call->getContextDefinition($property_name);
 
       // Apply token in values if an action is set.
@@ -1178,18 +1290,23 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       }
     }
     $this->validateTool($tool);
+    // Default information tools are system-triggered and may not include a
+    // tool ID. Generate a deterministic ID from runner, plugin, and context
+    // values so execution can be tracked consistently. Context values are part
+    // of the key to distinguish calls to the same tool with different inputs.
+    if (!$agent_decision && empty($tool->getToolsId())) {
+      $args_hash = md5(serialize($tool->getContextValues()));
+      $tool->setToolsId(md5($this->runnerId . '_' . $tool->getPluginId() . '_' . $args_hash));
+    }
     $progress_message = $this->aiAgent->get('tool_settings')[$tool->getPluginId()]['progress_message'] ?? '';
-    if ($agent_decision) {
-      // Trigger pre execution event.
-      $tool_pre_execution = new AgentToolPreExecuteEvent($this, $this->runnerId, $tool, $tool->getToolsId(), $this->threadId, $this->callerAgentRunnerId, $progress_message);
-      $this->eventDispatcher->dispatch($tool_pre_execution, AgentToolPreExecuteEvent::EVENT_NAME);
-    }
+    // Trigger pre execution event for all tools, passing whether this was an
+    // agent decision or an automatic default information tool.
+    $tool_pre_execution = new AgentToolPreExecuteEvent($this, $this->runnerId, $tool, $tool->getToolsId(), $this->threadId, $this->callerAgentRunnerId, $progress_message, $agent_decision);
+    $this->eventDispatcher->dispatch($tool_pre_execution, AgentToolPreExecuteEvent::EVENT_NAME);
     $tool->execute();
-    if ($agent_decision) {
-      // Trigger post execution event.
-      $tool_executed = new AgentToolFinishedExecutionEvent($this, $this->runnerId, $tool, $tool->getToolsId(), $this->threadId, $this->callerAgentRunnerId, $progress_message);
-      $this->eventDispatcher->dispatch($tool_executed, AgentToolFinishedExecutionEvent::EVENT_NAME);
-    }
+    // Trigger post execution event for all tools.
+    $tool_executed = new AgentToolFinishedExecutionEvent($this, $this->runnerId, $tool, $tool->getToolsId(), $this->threadId, $this->callerAgentRunnerId, $progress_message, $agent_decision);
+    $this->eventDispatcher->dispatch($tool_executed, AgentToolFinishedExecutionEvent::EVENT_NAME);
   }
 
   /**
@@ -1285,6 +1402,20 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function isFinished(): bool {
     return $this->finished;
+  }
+
+  /**
+   * Gets the message to display when max loops is exceeded.
+   *
+   * @return string
+   *   The max loops message from agent config, or a default.
+   */
+  protected function getMaxLoopsMessage(): string {
+    $message = $this->aiAgent->get('max_loops_message');
+    if (!empty($message)) {
+      return $message;
+    }
+    return 'I was unable to fully answer your question within the allowed number of processing steps. Please try rephrasing or narrowing your question.';
   }
 
   /**

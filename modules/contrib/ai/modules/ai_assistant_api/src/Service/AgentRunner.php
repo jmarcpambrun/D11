@@ -93,7 +93,7 @@ class AgentRunner {
       $agent->setChatInput($input);
       $agent->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
       $agent->setModelName($defaults['model_id']);
-      $agent->setConfiguration($defaults['configuration'] ?? []);
+      $agent->setAiConfiguration($defaults['configuration'] ?? []);
       $agent->setCreateDirectly(TRUE);
       if ($verbose_mode) {
         // We only want to run one loop at a time.
