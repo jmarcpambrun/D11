@@ -14,9 +14,9 @@
 $rest_index = NULL;
 $options = getopt('vm', ['verbose', 'more'], $rest_index);
 $quiet = !array_key_exists('v', $options) && !array_key_exists('verbose', $options);
-$nodetails = !array_key_exists('m', $options) && !array_key_exists('more', $options);
-$quiet = $quiet && $nodetails;
-$quiet ?: print "quiet=$quiet\nnodetails=$nodetails\noptions=" . print_r($options, TRUE) . "\n";
+$more = array_key_exists('m', $options) || array_key_exists('more', $options);
+$quiet = $quiet && !$more;
+$quiet ?: print "quiet=$quiet\nmore=$more\noptions=" . print_r($options, TRUE) . "\n";
 
 // Get the positional arguments.
 $pos_args = array_slice($argv, $rest_index);
@@ -39,14 +39,14 @@ if (empty($baseline)) {
 }
 
 foreach ($baseline as $row => $line) {
-  $nodetails ?: print "row=$row, line=$line";
+  !$more ?: print "row=$row, line=$line";
 
   // Match against 'message' or 'count' or 'path' followed by :
   if (preg_match('/\s*(message|count|path)\:\s(.*)$/', $line, $matches)) {
-    $nodetails ?: print_r($matches);
+    !$more ?: print_r($matches);
     $type = $matches[1];
     $value = stripslashes(trim($matches[2], $trim_chars));
-    $nodetails ?: print "\$type=$type, \$value=$value\n";
+    !$more ?: print "\$type=$type, \$value=$value\n";
 
     switch ($type) {
 
@@ -54,7 +54,7 @@ foreach ($baseline as $row => $line) {
         if ($value == '') {
           // Sometimes the message is long and does not start until the next
           // line. So if empty read from $row+1.
-          $nodetails ?: print "row=$row, line=$line\nnext row={$baseline[$row+1]} \n";
+          !$more ?: print "row=$row, line=$line\nnext row={$baseline[$row+1]} \n";
           $value = stripslashes(trim($baseline[$row + 1], $trim_chars));
         }
         // Remove all double-backslashes.
@@ -65,12 +65,12 @@ foreach ($baseline as $row => $line) {
         $count = $value;
         isset($summary[$msg]['count']) ? $summary[$msg]['count'] += $count : $summary[$msg]['count'] = $count;
         $total += $count;
-        $nodetails ?: print "\$summary[$msg]['count']={$summary[$msg]['count']}\n";
+        !$more ?: print "\$summary[$msg]['count']={$summary[$msg]['count']}\n";
         break;
 
       case 'path':
         $summary[$msg]['paths'][] = $value;
-        $nodetails ?: print "\$summary[$msg]=" . print_r($summary[$msg], TRUE) . "\n";
+        !$more ?: print "\$summary[$msg]=" . print_r($summary[$msg], TRUE) . "\n";
         isset($overall[$value]) ? $overall[$value] += $count : $overall[$value] = $count;
         break;
 
