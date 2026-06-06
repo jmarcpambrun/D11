@@ -523,7 +523,6 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    * @code
    * [
    *   Api::COMPONENT_TYPE_START   => ['min' => 1, 'max' => 1, 'successors' => ['min' => 1, 'max' => 1]],
-   *   Api::COMPONENT_TYPE_ELEMENT => ['min' => 1, 'max' => 1, 'successors' => ['max' => 0]],
    *   Api::COMPONENT_TYPE_ELEMENT => [
    *     'min' => 1,
    *     'max' => 1,
@@ -539,7 +538,7 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    * ]
    * @endcode
    *
-   * @return array<int, array{min?: int, max?: int, successors?: array{min?: int, max?: int,
+   * @return array<int, array{min?: int, max?: int, successors?: array{min?: int, max?: int, requireConditionWhenParallel?: bool}}>
    *   An associative array keyed by component type constant. Each value is
    *   an array with optional 'min' and 'max' keys for component count, and
    *   an optional 'successors' key with its own 'min'/'max' for the number
@@ -548,7 +547,6 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    *   TRUE, any group of two or more successors of the same component that
    *   share the same target must each carry a non-empty conditionId. An
    *   empty array means no constraints (the default).
-
    */
   public function modelConstraints(): array;
 

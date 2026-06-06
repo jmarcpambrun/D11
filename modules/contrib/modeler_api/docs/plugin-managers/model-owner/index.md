@@ -230,7 +230,6 @@ All keys are optional. Omitting a key means "no constraint" for that dimension.
 Returning an empty array (the default in `ModelOwnerBase`) means no constraints
 at all.
 
-
 ### Parallel successors with conditions (opt-in)
 
 By default, the modeler API permits multiple successors between the same
@@ -281,7 +280,6 @@ on the constraint value:
 - `"@label "@name" requires at least @min successor(s)."` (successor min)
 - `"@label "@name" must not have any successors."` (when successor `max` is 0)
 - `"@label "@name" allows at most @max successor(s)."` (successor max > 0)
-
 - `'@label "@name" has parallel successors to "@target" without a
   condition on every edge. When multiple edges connect the same source
   and target, each edge must carry a condition.'` (parallel successors

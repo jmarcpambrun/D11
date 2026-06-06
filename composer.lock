@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d14d42abe170aba7bd02462787a1452d",
+    "content-hash": "02503e66f5b83caef87a6d3791f0cd9e",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -7863,17 +7863,17 @@
         },
         {
             "name": "drupal/modeler_api",
-            "version": "1.1.2",
+            "version": "1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler_api.git",
-                "reference": "1.1.2"
+                "reference": "1.1.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.2.zip",
-                "reference": "1.1.2",
-                "shasum": "da5d8f2644f8d85cca208cdaae2557d5a9469872"
+                "url": "https://ftp.drupal.org/files/projects/modeler_api-1.1.3.zip",
+                "reference": "1.1.3",
+                "shasum": "f66fb69dc94a9404cf963fb58398b5203f3b3387"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -7882,8 +7882,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.2",
-                    "datestamp": "1776350984",
+                    "version": "1.1.3",
+                    "datestamp": "1780496337",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -21616,7 +21616,6 @@
         "drupal/klaro": 5,
         "drupal/mailer_transport": 15,
         "drupal/modeler": 15,
-        "drupal/modeler_api": 5,
         "drupal/multivalue_form_element": 10,
         "drupal/openai": 10,
         "drupal/page_manager": 5,

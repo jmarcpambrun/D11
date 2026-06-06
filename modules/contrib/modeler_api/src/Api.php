@@ -523,7 +523,6 @@ class Api {
           'conditionId' => $successor->getConditionId(),
         ];
       }
-
       $successorCountsByType[$type][] = [
         'id' => $component->getId(),
         'label' => $component->getLabel(),
@@ -588,13 +587,12 @@ class Api {
    *
    * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
    *   The model owner.
+   * @param array<int, int> $componentTypeCounts
+   *   Component counts keyed by component type constant.
    * @param array<int, array<int, array{id: string, label: string, count: int, successors: array<int, array{targetId: string, conditionId: string}>}>> $successorCountsByType
    *   Per-type list of component successor info. The 'successors' sub-array
    *   contains one entry per outgoing edge, with the target component ID and
    *   the condition ID (empty string when no condition is set).
-   *   Component counts keyed by component type constant.
-   * @param array<int, array<int, array{id: string, label: string, count: int}>> $successorCountsByType
-   *   Per-type list of component successor info.
    */
   protected function validateModelConstraints(ModelOwnerInterface $owner, array $componentTypeCounts, array $successorCountsByType): void {
     $constraints = $owner->modelConstraints();
@@ -651,7 +649,7 @@ class Api {
                 '@max' => $sConstraint['max'],
               ]);
           }
-	  // Validate the opt-in "parallel successors require conditions" rule.
+          // Validate the opt-in "parallel successors require conditions" rule.
           // When two or more successors of the same component point at the
           // same target, every one of them must carry a non-empty conditionId.
           // Otherwise the runtime semantics are degenerate (the same target
