@@ -115,7 +115,7 @@
         "drupal/rules": "4.0.1",
         "drupal/scheduler": "^2.3",
         "drupal/schema_based_config_forms": "1.0-beta6",
-        "drupal/search_api": "1.40",
+        "drupal/search_api": "^1.41",
         "drupal/seckit": "2.0.3",
         "drupal/session_limit": "2.0.2",
         "drupal/seven": "^2.0-beta6",
