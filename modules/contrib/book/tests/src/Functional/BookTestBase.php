@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\book\Functional;
 
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\node\NodeAccessRebuild;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\block\Functional\AssertBlockAppearsTrait;
 use Drupal\user\UserInterface;
@@ -69,7 +71,8 @@ abstract class BookTestBase extends BrowserTestBase {
     $this->drupalPlaceBlock('local_tasks_block');
 
     // node_access_test requires a node_access_rebuild().
-    node_access_rebuild();
+    // @phpstan-ignore-next-line class.notFound
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(NodeAccessRebuild::class)->rebuild(), fn() => node_access_rebuild());
 
     // Create users.
     $this->bookAuthor = $this->drupalCreateUser([

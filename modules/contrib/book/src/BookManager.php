@@ -7,6 +7,7 @@ use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\Context\CacheContextsManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -51,32 +52,6 @@ class BookManager implements BookManagerInterface {
    */
   protected array $bookTreeFlattened;
 
-  /**
-   * Constructs a BookManager object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The string translation service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The config factory.
-   * @param \Drupal\book\BookOutlineStorageInterface $bookOutlineStorage
-   *   The book outline storage.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
-   *   The language manager.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   *   The entity repository service.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $backendChainedCache
-   *   The book chained backend cache service.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $memoryCache
-   *   The book memory cache service.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
-   *   The route match.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
-   *   The logger.factory service.
-   */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected TranslationInterface $translation,
@@ -89,8 +64,14 @@ class BookManager implements BookManagerInterface {
     protected CacheBackendInterface $memoryCache,
     protected RouteMatchInterface $route_match,
     protected LoggerChannelFactoryInterface $loggerFactory,
+    protected ?CacheContextsManager $cacheContextsManager = NULL,
   ) {
     $this->stringTranslation = $translation;
+    if ($this->cacheContextsManager === NULL) {
+      @trigger_error('Calling ' . __METHOD__ . '() without the $cacheContextsManager argument is deprecated in book:3.0.6 and will be required in book:4.0.0. See https://www.drupal.org/node/3593389', E_USER_DEPRECATED);
+      // @phpstan-ignore-next-line
+      $this->cacheContextsManager = \Drupal::service('cache_contexts_manager');
+    }
   }
 
   /**
@@ -1298,7 +1279,13 @@ class BookManager implements BookManagerInterface {
   public function bookSubtreeData(array $link): array {
     // Generate a cache ID (cid) specific for this $link.
     $langcode = $this->languageManager->getCurrentLanguage(LanguageInterface::TYPE_CONTENT)->getId();
-    $cid = "book-links:subtree-data:{$link['nid']}:$langcode";
+    // Include the current user's permissions context in the cache key so
+    // that the per-user access-filtered subtree is not shared between users
+    // with different view permissions on book children.
+    $context_keys = $this->cacheContextsManager
+      ->convertTokensToKeys(['user.permissions'])
+      ->getKeys();
+    $cid = 'book-links:subtree-data:' . $link['nid'] . ':' . $langcode . ':' . implode(':', $context_keys);
     // Get it from cache, if available.
     if ($cache = $this->backendChainedCache->get($cid)) {
       return $cache->data;

@@ -115,9 +115,10 @@ class BookExport {
 
     $build = [];
     foreach ($tree as $data) {
-      // Access checking is already performed when building the tree.
+      // Defense-in-depth: verify both publish status and the current user's
+      // view access. The cached tree may have been built for a different user.
       if ($node = $this->nodeStorage->load($data['link']['nid'])) {
-        if ($node->isPublished()) {
+        if ($node->isPublished() && $node->access('view')) {
           $node = $this->entityRepository->getTranslationFromContext($node);
           $children = $data['below'] ? $this->exportTraverse($data['below'], $callable) : '';
           $build[] = call_user_func($callable, $node, $children);

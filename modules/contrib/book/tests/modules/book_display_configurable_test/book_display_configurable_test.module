@@ -5,25 +5,22 @@
  * A module for testing making node base fields' displays configurable.
  */
 
+use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\book_display_configurable_test\Hook\BookDisplayConfigurableTestHooks;
 use Drupal\Core\Entity\EntityTypeInterface;
 
 /**
  * Implements hook_entity_base_field_info_alter().
  */
+#[LegacyHook]
 function book_display_configurable_test_entity_base_field_info_alter($base_field_definitions, EntityTypeInterface $entity_type): void {
-  if ($entity_type->id() == 'node') {
-    foreach (['created', 'uid', 'title'] as $field) {
-      /** @var \Drupal\Core\Field\BaseFieldDefinition[] $base_field_definitions */
-      $base_field_definitions[$field]->setDisplayConfigurable('view', TRUE);
-    }
-  }
+  \Drupal::service(BookDisplayConfigurableTestHooks::class)->entityBaseFieldInfoAlter($base_field_definitions, $entity_type);
 }
 
 /**
  * Implements hook_entity_type_build().
  */
+#[LegacyHook]
 function book_display_configurable_test_entity_type_build(array $entity_types): void {
-  // Allow skipping of extra preprocessing for configurable display.
-  $entity_types['node']->set('enable_base_field_custom_preprocess_skipping', TRUE);
-  $entity_types['node']->set('enable_page_title_template', TRUE);
+  \Drupal::service(BookDisplayConfigurableTestHooks::class)->entityTypeBuild($entity_types);
 }

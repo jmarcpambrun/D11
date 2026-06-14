@@ -6,7 +6,7 @@ services:
       - { name: breadcrumb_builder, priority: 701 }
   book.manager:
     class: Drupal\book\BookManager
-    arguments: ['@entity_type.manager', '@string_translation', '@config.factory', '@book.outline_storage', '@renderer', '@language_manager', '@entity.repository', '@book.backend_chained_cache', '@cache.book_memory', '@current_route_match', '@logger.factory']
+    arguments: ['@entity_type.manager', '@string_translation', '@config.factory', '@book.outline_storage', '@renderer', '@language_manager', '@entity.repository', '@book.backend_chained_cache', '@cache.book_memory', '@current_route_match', '@logger.factory', '@cache_contexts_manager']
     lazy: true
   Drupal\book\BookManagerInterface: '@book.manager'
   book.outline:

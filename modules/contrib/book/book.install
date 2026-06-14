@@ -5,6 +5,8 @@
  * Install, update and uninstall functions for the book module.
  */
 
+use Drupal\Component\Utility\DeprecationHelper;
+
 /**
  * Implements hook_uninstall().
  */
@@ -161,9 +163,10 @@ function book_update_103001(): void {
  */
 function book_update_103002(): void {
   $config_factory = \Drupal::configFactory();
-  $config_factory->getEditable('book.settings')
+  DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => $config_factory->getEditable('book.settings')
+    ->set('book_sort', 'weight')->save(), fn() => $config_factory->getEditable('book.settings')
     ->set('book_sort', 'weight')
-    ->save(TRUE);
+    ->save(TRUE));
 }
 
 /**

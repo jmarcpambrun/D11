@@ -333,7 +333,11 @@ export function useExport({
             exportData.components = usedComponents;
           }
 
-          const json = JSON.stringify(exportData, null, 2);
+          // Export compact JSON. The exported model — including any replay
+          // data — only has technical consumers, so indentation is pure
+          // overhead that can roughly double the file size. Humans who want
+          // to inspect an export can prettify it with jq or any JSON tool.
+          const json = JSON.stringify(exportData);
           const filename = `${data.id || 'model'}.json`;
           downloadFile(json, filename, 'application/json');
           announce?.(t('JSON exported successfully'));

@@ -4,7 +4,7 @@ description: 'Content type for book.'
 core_version_requirement: ^11
 package: Testing
 
-# Information added by Drupal.org packaging script on 2026-05-29
-version: '3.0.5'
+# Information added by Drupal.org packaging script on 2026-06-12
+version: '3.0.7'
 project: 'book'
-datestamp: 1780070717
+datestamp: 1781286456

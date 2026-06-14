@@ -12,6 +12,7 @@ import { useExport } from '../useExport';
 import type { Settings } from '../../types/settings';
 import type { StoreNode as Node, StoreEdge as Edge, StoreComponent as Component } from '../../types/settings';
 import type { ReplayStep } from '../useSimpleReplaySync';
+import { TOKEN_DATA_PREV, TOKEN_DATA_REF, TOKEN_DATA_SAME, expandReplayStep } from '../../utils/replayExpansion';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -659,6 +660,159 @@ describe('useExport', () => {
       // Download should still happen with empty configForms
       expect(createObjectURL).toHaveBeenCalled();
       expect(props.announce).toHaveBeenCalledWith('JSON exported successfully');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Replay marker compactness (C17)
+  //
+  // ECA delivers replay data in compact `@prev`/`@ref` marker form. The
+  // modeler expands those markers lazily for DISPLAY only, on a copy. The
+  // JSON export must keep the markers unexpanded even after a step has been
+  // viewed, so the exported `replayData` stays compact.
+  // -------------------------------------------------------------------------
+  describe('replay marker compactness (C17)', () => {
+    /** Compact replay data with both @prev and @ref markers. */
+    function makeCompactReplayData(): ReplayStep[] {
+      return [
+        {
+          id: 'node_0',
+          type: 'started',
+          data: {
+            node: { label: 'Node', token: '[node]', data: { title: 'A' } },
+            entity: { label: 'Entity', token: '[entity]', [TOKEN_DATA_REF]: 'node' },
+          },
+        },
+        { id: 'node_1', type: 'execute', successorId: 'node_1', data: TOKEN_DATA_PREV },
+      ];
+    }
+
+    it('keeps @prev/@ref markers compact in the JSON export after a step is viewed', async () => {
+      const replayData = makeCompactReplayData();
+      const props = { ...defaultProps(), replayData };
+      const { result } = renderHook(() => useExport(props));
+
+      // Capture the exact string written to the downloaded Blob. jsdom does
+      // not implement Blob.text(), so intercept the constructor parts.
+      const blobParts: string[] = [];
+      const RealBlob = globalThis.Blob;
+      const blobSpy = jest
+        .spyOn(globalThis, 'Blob')
+        .mockImplementation((parts?: BlobPart[]) => {
+          if (parts) {
+            for (const part of parts) {
+              blobParts.push(String(part));
+            }
+          }
+          return new RealBlob(parts ?? []);
+        });
+
+      // Simulate the display path viewing each step. This is the exact
+      // expansion the ReplayPanel triggers; it must not mutate replayData.
+      expandReplayStep(replayData, 0);
+      expandReplayStep(replayData, 1);
+
+      await act(async () => {
+        await result.current.executeExport('json', true);
+      });
+
+      blobSpy.mockRestore();
+
+      const json = blobParts.join('');
+      const parsed = JSON.parse(json) as { replayData: ReplayStep[] };
+
+      // The step-level @prev marker survives.
+      expect(parsed.replayData[1].data).toBe(TOKEN_DATA_PREV);
+
+      // The @ref marker survives, and no expanded `data` was written.
+      const firstData = parsed.replayData[0].data as Record<string, Record<string, unknown>>;
+      expect(firstData.entity[TOKEN_DATA_REF]).toBe('node');
+      expect('data' in firstData.entity).toBe(false);
+    });
+
+    it('does not mutate the source replayData array when a step is viewed', () => {
+      const replayData = makeCompactReplayData();
+      const snapshot = JSON.parse(JSON.stringify(replayData));
+
+      expandReplayStep(replayData, 0);
+      expandReplayStep(replayData, 1);
+
+      expect(replayData).toEqual(snapshot);
+    });
+
+    /** Compact replay data with a cross-step @same marker. */
+    function makeSameReplayData(): ReplayStep[] {
+      return [
+        {
+          id: 'node_0',
+          type: 'started',
+          data: {
+            node: { label: 'Node', token: '[node]', data: { title: 'A' } },
+          },
+        },
+        {
+          id: 'node_1',
+          type: 'execute',
+          successorId: 'node_1',
+          data: {
+            node: {
+              label: 'Node',
+              token: '[node]',
+              [TOKEN_DATA_SAME]: { step: 0, path: 'node' },
+            },
+          },
+        },
+      ];
+    }
+
+    it('keeps @same markers compact in the JSON export after a step is viewed', async () => {
+      const replayData = makeSameReplayData();
+      const props = { ...defaultProps(), replayData };
+      const { result } = renderHook(() => useExport(props));
+
+      // Capture the exact string written to the downloaded Blob.
+      const blobParts: string[] = [];
+      const RealBlob = globalThis.Blob;
+      const blobSpy = jest
+        .spyOn(globalThis, 'Blob')
+        .mockImplementation((parts?: BlobPart[]) => {
+          if (parts) {
+            for (const part of parts) {
+              blobParts.push(String(part));
+            }
+          }
+          return new RealBlob(parts ?? []);
+        });
+
+      // Simulate the display path viewing each step. This is the exact
+      // expansion the ReplayPanel triggers; it must not mutate replayData.
+      expandReplayStep(replayData, 0);
+      expandReplayStep(replayData, 1);
+
+      await act(async () => {
+        await result.current.executeExport('json', true);
+      });
+
+      blobSpy.mockRestore();
+
+      const json = blobParts.join('');
+      const parsed = JSON.parse(json) as { replayData: ReplayStep[] };
+
+      // The cross-step @same marker survives, and no expanded `data` was
+      // written for the second occurrence.
+      const secondData = parsed.replayData[1].data as Record<string, Record<string, unknown>>;
+      expect(secondData.node[TOKEN_DATA_SAME]).toEqual({ step: 0, path: 'node' });
+      expect('data' in secondData.node).toBe(false);
+    });
+
+    it('does not mutate the source replayData when a @same step is viewed', () => {
+      const replayData = makeSameReplayData();
+      const snapshot = JSON.parse(JSON.stringify(replayData));
+
+      expandReplayStep(replayData, 0);
+      expandReplayStep(replayData, 1);
+
+      expect(replayData).toEqual(snapshot);
     });
   });
 

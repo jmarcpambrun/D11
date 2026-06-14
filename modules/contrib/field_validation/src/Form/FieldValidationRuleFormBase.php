@@ -26,7 +26,7 @@ abstract class FieldValidationRuleFormBase extends FormBase {
   /**
    * The fieldValidationRuleSet.
    *
-   * @var \Drupal\field_validation\FieldValidationRuleSetInterface
+   * @var \Drupal\field_validation\FieldValidationRuleSetInterface|null
    */
   protected $fieldValidationRuleSet;
 
@@ -99,7 +99,7 @@ abstract class FieldValidationRuleFormBase extends FormBase {
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
-   * @param \Drupal\field_validation\FieldValidationRuleSetInterface $field_validation_rule_set
+   * @param \Drupal\field_validation\FieldValidationRuleSetInterface|null $field_validation_rule_set
    *   The field_validation_rule_set.
    * @param string $field_validation_rule
    *   The field_validation_rule ID.
@@ -111,7 +111,7 @@ abstract class FieldValidationRuleFormBase extends FormBase {
    *
    * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
    */
-  public function buildForm(array $form, FormStateInterface $form_state, FieldValidationRuleSetInterface $field_validation_rule_set = NULL, $field_validation_rule = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?FieldValidationRuleSetInterface $field_validation_rule_set = NULL, $field_validation_rule = NULL) {
     $this->fieldValidationRuleSet = $field_validation_rule_set;
     try {
       $this->fieldValidationRule = $this->prepareFieldValidationRule($field_validation_rule);

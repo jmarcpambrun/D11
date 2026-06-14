@@ -36,6 +36,7 @@ import { useHistory } from '../hooks/useHistory';
 import { exportModelData } from '../utils/modelUtils';
 import { t } from '../utils/translation';
 import { validateModelConstraints } from '../utils/constraintValidation';
+import { expandReplayStep } from '../utils/replayExpansion';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
 import type { Settings, DrupalAjax, ModelConstraints } from '../types/settings';
 import { hasPermission } from '../utils/permissions';
@@ -351,6 +352,16 @@ function FlowInner({ settings, drupal }: FlowProps) {
     }
     return initialReplayData;
   }, [selectedReplayEntryIndex, loadedReplayEntries, initialReplayData]);
+
+  // Lazily expand the selected step's compact `@prev`/`@ref` markers for
+  // display ONLY. ECA delivers `replayData` in its compact, marker-bearing
+  // form; expansion happens here on a non-mutating deep copy so the stored
+  // `replayData` (and therefore the JSON export) keeps the markers intact.
+  // Recomputed only when the selected step or the underlying data changes.
+  const expandedStepData = useMemo(
+    () => expandReplayStep(replayData, currentReplayStep),
+    [replayData, currentReplayStep],
+  );
   
   // Configuration management
   const {
@@ -1085,7 +1096,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
               edges={edges}
               nodes={nodes}
               isVisible={true}
-              stepData={currentReplayStep >= 0 && currentReplayStep < replayData.length ? replayData[currentReplayStep].data || null : null}
+              stepData={expandedStepData}
               stepInfo={currentReplayStep >= 0 && currentReplayStep < replayData.length ? {
                 type: replayData[currentReplayStep].type,
                 id: replayData[currentReplayStep].id,

@@ -5,6 +5,7 @@
  * Post update functions for the book module.
  */
 
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\Config\Entity\ConfigEntityUpdater;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\block\Entity\Block;
@@ -109,9 +110,10 @@ function book_post_update_add_default_label_truncate_settings(): ?string {
   $config = \Drupal::configFactory()->getEditable('book.settings');
   if ($config->get('truncate_label') === NULL) {
     // Specify the default setting if not specified.
-    $config
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => $config
+      ->set('truncate_label', TRUE)->save(), fn() => $config
       ->set('truncate_label', TRUE)
-      ->save(TRUE);
+      ->save(TRUE));
     return 'Updated the default truncate setting.';
   }
   return NULL;

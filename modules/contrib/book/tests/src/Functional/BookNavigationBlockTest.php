@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\book\Functional;
 
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\node\NodeAccessRebuild;
 use Drupal\node\Entity\Node;
 use Drupal\user\RoleInterface;
 use PHPUnit\Framework\Attributes\Group;
@@ -64,7 +66,8 @@ class BookNavigationBlockTest extends BookTestBase {
     /** @var \Drupal\Core\Extension\ModuleInstaller $installer */
     $installer = $this->container->get('module_installer');
     $installer->uninstall(['node_access_test']);
-    node_access_rebuild();
+    // @phpstan-ignore-next-line class.notFound
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(NodeAccessRebuild::class)->rebuild(), fn() => node_access_rebuild());
 
     // Verify the user does not have access to the unpublished node.
     $this->assertFalse($nodes[0]->access('view', $this->webUser));

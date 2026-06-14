@@ -11,14 +11,15 @@
  * @see \Drupal\Tests\book\Functional\BookTest::testBookNavigationCacheContext()
  */
 
+use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\book_test\Hook\BookTestHooks;
+
 /**
  * Implements hook_page_attachments().
  */
+#[LegacyHook]
 function book_test_page_attachments(array &$page): void {
-  $page['#cache']['tags'][] = 'book_test.debug_book_navigation_cache_context';
-  if (\Drupal::state()->get('book_test.debug_book_navigation_cache_context', FALSE)) {
-    \Drupal::messenger()->addStatus(\Drupal::service('cache_contexts_manager')->convertTokensToKeys(['route.book_navigation'])->getKeys()[0]);
-  }
+  \Drupal::service(BookTestHooks::class)->pageAttachments($page);
 }
 
 /**
@@ -26,8 +27,7 @@ function book_test_page_attachments(array &$page): void {
  *
  * @see \Drupal\Tests\book\Functional\BookTest::testBookWithFieldViolations()
  */
+#[LegacyHook]
 function book_test_entity_type_build(array &$entity_types): void {
-  /** @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types */
-  $entity_types['node']
-    ->addConstraint('BookTestTitle', []);
+  \Drupal::service(BookTestHooks::class)->entityTypeBuild($entity_types);
 }
