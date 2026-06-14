@@ -219,9 +219,8 @@ function locale_translate_file_attach_properties($file, array $options = []) {
   else {
     $uri = $file->uri;
     $filename = $file->filename;
-    $options['langcode'] = LanguageInterface::LANGCODE_NOT_SPECIFIED;
   }
-  return LocaleFile::createFromPath($filename, $uri, $options['langcode']);
+  return LocaleFile::createFromPath($filename, $uri, $options['langcode'] ?? NULL);
 }
 
 /**
