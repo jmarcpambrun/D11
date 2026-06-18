@@ -70,14 +70,17 @@ class UpdateTest extends UpdatePathTestBase {
   /**
    * @covers \entity_usage_post_update_clean_up_regenerate_queue
    * @covers \entity_usage_post_update_remove_unsupported_source_entity_types
+   * @covers \entity_usage_post_update_remove_paragraph_tracking_for_inline_plugin
    */
   public function testPostUpdates(): void {
     $this->assertSame(1, \Drupal::queue('entity_usage_regenerate_queue')->numberOfItems());
-    $this->assertSame(['filter_format', 'node'], \Drupal::config('entity_usage.settings')->get('track_enabled_source_entity_types'));
+    $this->assertSame(['filter_format', 'node', 'paragraph'], \Drupal::config('entity_usage.settings')->get('track_enabled_source_entity_types'));
+    $this->assertSame(['ckeditor_image', 'entity_reference_revision_field', 'link'], \Drupal::config('entity_usage.settings')->get('track_enabled_plugins'));
 
     $this->runUpdates();
     $this->assertSame(0, \Drupal::queue('entity_usage_regenerate_queue')->numberOfItems());
     $this->assertSame(['node'], \Drupal::config('entity_usage.settings')->get('track_enabled_source_entity_types'));
+    $this->assertSame(['ckeditor_image', 'link'], \Drupal::config('entity_usage.settings')->get('track_enabled_plugins'));
   }
 
 }

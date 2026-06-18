@@ -9,6 +9,8 @@ use Drupal\burndown\Entity\Task;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +19,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Controller for the Burndown Board object.
  */
-class BoardController extends ControllerBase {
+class BoardController extends ControllerBase implements ContainerInjectionInterface {
 
   /**
    * The entity type manager.
@@ -34,16 +36,26 @@ class BoardController extends ControllerBase {
   protected $requestStack;
 
   /**
+   * The user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
    * Constructs a BoardController object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entityTypeManager.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   A request stack.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
+   
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
     $this->requestStack = $request_stack;
+    $this->currentUser = $currentUser;
   }
 
   /**
@@ -53,7 +65,26 @@ class BoardController extends ControllerBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('request_stack'),
+      $container->get('current_user')
     );
+  }
+
+  /**
+   * Callback for page title.
+   */
+  public function getPageTitle($shortcode) {
+    // Sanitize input.
+    $code = Html::escape($shortcode);
+
+    $project = Project::loadFromShortcode($code);
+    if ($project !== FALSE) {
+      $projectName = $project->getName();
+      return $this->t('Board: %projectname', [
+        '%projectname' => $projectName,
+      ]);
+    }
+
+    return $this->t('Board');
   }
 
   /**
@@ -137,8 +168,7 @@ class BoardController extends ControllerBase {
       ];
     }
 
-    // Return data.
-    return [
+    $theme = [
       '#theme' => 'burndown_board',
       '#data' => [
         'project' => $code,
@@ -146,15 +176,30 @@ class BoardController extends ControllerBase {
         'swimlanes' => $data,
         'users' => $users,
       ],
-      '#attached' => [
-        'library' => [
-          'burndown/drupal.burndown.board',
-        ],
-      ],
       '#cache' => [
         'max-age' => 0,
       ],
     ];
+
+    // We need to maintain Drupal 9 compatibility for now, so can't use
+    // D10's access manager.
+    if ($this->currentUser->hasPermission('reorder burndown backlog')) {
+      $theme['#attached'] = [
+        'library' => [
+          'burndown/drupal.burndown.board',
+        ],
+      ];
+    }
+    // Version of the library that only has css for the board.
+    else {
+      $theme['#attached'] = [
+        'library' => [
+          'burndown/drupal.burndown.unsortable_board',
+        ],
+      ];
+    }
+
+    return $theme;
   }
 
   /**

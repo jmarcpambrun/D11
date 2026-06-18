@@ -70,7 +70,7 @@ interface EntityUsageTrackInterface extends PluginInspectionInterface {
    *
    * @return string[]
    *   An indexed array of field type names, as defined in the plugin's
-   *   annotation under the key "field_types".
+   *   attribute under the property "field_types".
    */
   public function getApplicableFieldTypes(): array;
 

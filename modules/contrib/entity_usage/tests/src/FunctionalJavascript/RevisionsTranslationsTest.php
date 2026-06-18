@@ -301,12 +301,12 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
     $assert_session->elementsCount('xpath', '//table/tbody/tr', 2);
     $first_row_title = $this->xpath('//table/tbody/tr[1]/td[1]')[0];
     $this->assertEquals('Test entity', $first_row_title->getText());
-    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[6]')[0];
-    $this->assertEquals('Default', $first_row_used_in->getText());
+    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
+    $this->assertEquals('Current revision', $first_row_used_in->getText());
     $second_row_title = $this->xpath('//table/tbody/tr[2]/td[1]')[0];
     $this->assertEquals('Node 2', $second_row_title->getText());
-    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[6]')[0];
-    $this->assertEquals('Old revision(s)', $second_row_used_in->getText());
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
+    $this->assertEquals('2 old revisions', $second_row_used_in->getText());
 
     // Create a pending revision of node 2 that links to node 1.
     $node2 = \Drupal::entityTypeManager()->getStorage('node')->loadUnchanged($node2->id());
@@ -319,10 +319,10 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
     $assert_session->elementsCount('xpath', '//table/tbody/tr', 2);
     $second_row_title = $this->xpath('//table/tbody/tr[2]/td[1]')[0];
     $this->assertEquals('Node 2', $second_row_title->getText());
-    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[6]/ul/li[1]')[0];
-    $this->assertEquals('Pending revision(s) / Draft(s)', $second_row_used_in->getText());
-    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[6]/ul/li[2]')[0];
-    $this->assertEquals('Old revision(s)', $second_row_used_in->getText());
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]/ul/li[1]')[0];
+    $this->assertEquals('Draft revision', $second_row_used_in->getText());
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]/ul/li[2]')[0];
+    $this->assertEquals('2 old revisions', $second_row_used_in->getText());
 
     // If we remove a node only being targeted in previous revisions (N1), all
     // usages tracked should also be deleted.
@@ -528,8 +528,8 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
     $this->assertEquals('English', $first_row_langcode->getText());
     $first_row_field_label = $this->xpath('//table/tbody/tr[1]/td[4]')[0];
     $this->assertEquals('Related nodes', $first_row_field_label->getText());
-    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[6]')[0];
-    $this->assertEquals('Default: ES.', $first_row_used_in->getText());
+    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
+    $this->assertEquals('Published revision (ES)', $first_row_used_in->getText());
     // There's no second row.
     $assert_session->elementNotExists('xpath', '//table/tbody/tr[2]');
 

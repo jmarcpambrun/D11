@@ -42,6 +42,14 @@ drupal.burndown.board:
     - core/drupal.ajax
     - core/sortable
 
+drupal.burndown.unsortable_board:
+  version: version
+  css:
+    component:
+      css/burndown.board.css: {}
+      css/burndown.task.css: {}
+      css/background-colors.css: {}
+
 drupal.burndown.completed:
   version: VERSION
   css:

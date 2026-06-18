@@ -3,6 +3,7 @@
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\entity_usage\EntityUsageInlineTrackingInterface;
 use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -299,6 +300,9 @@ class ConfigurationFormTest extends EntityUsageJavascriptTestBase {
     $assert_session->pageTextContains('The following plugins were found in the system and can provide usage tracking. Check all plugins that should be active.');
     $plugins = \Drupal::service('plugin.manager.entity_usage.track')->getDefinitions();
     foreach ($plugins as $plugin_id => $plugin) {
+      if (is_subclass_of($plugin['class'], EntityUsageInlineTrackingInterface::class)) {
+        continue;
+      }
       $field_name = "track_enabled_plugins[plugins][$plugin_id]";
       $assert_session->fieldExists($field_name);
       $assert_session->pageTextContains($plugin['label']);

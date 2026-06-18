@@ -5,7 +5,6 @@
  */
 
 use Drupal\Core\Batch\BatchBuilder;
-use Drupal\Core\Language\LanguageInterface;
 use Drupal\file\FileInterface;
 use Drupal\locale\File\LocaleFile;
 use Drupal\locale\File\LocaleFileManager;

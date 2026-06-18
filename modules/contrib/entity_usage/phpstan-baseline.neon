@@ -1,38 +1,10 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Method Drupal\entity_usage\EntityUsageTrackManager::processDefinition() has parameter $definition with no type specified.'
-			identifier: missingType.parameter
-			count: 1
-			path: src/EntityUsageTrackManager.php
-
-		-
-			rawMessage: 'Method Drupal\entity_usage\EntityUsageTrackManager::processDefinition() has parameter $plugin_id with no type specified.'
-			identifier: missingType.parameter
-			count: 1
-			path: src/EntityUsageTrackManager.php
-
-		-
 			rawMessage: 'Method Drupal\entity_usage\EntityUsageTrackMultipleLoadInterface::getTargetEntitiesFromField() has parameter $field with generic interface Drupal\Core\Field\FieldItemListInterface but does not specify its types: T'
 			identifier: missingType.generics
 			count: 1
 			path: src/EntityUsageTrackMultipleLoadInterface.php
-
-		-
-			rawMessage: '''
-				Call to deprecated method invalidateAll() of interface Drupal\Core\Cache\CacheBackendInterface:
-				in drupal:11.2.0 and is removed from drupal:12.0.0. Use
-				  CacheBackendInterface::deleteAll() or cache tag invalidation instead.
-			'''
-			identifier: method.deprecated
-			count: 1
-			path: src/Form/EntityUsageSettingsForm.php
-
-		-
-			rawMessage: 'Method Drupal\entity_usage\Form\EntityUsageSettingsForm::submitForm() has no return type specified.'
-			identifier: missingType.return
-			count: 1
-			path: src/Form/EntityUsageSettingsForm.php
 
 		-
 			rawMessage: 'Method Drupal\entity_usage\OptimizedRouteEnhancer::copyRawVariables() return type with generic class Symfony\Component\HttpFoundation\InputBag does not specify its types: TInput'

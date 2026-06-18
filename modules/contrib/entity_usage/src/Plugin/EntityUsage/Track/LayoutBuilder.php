@@ -3,7 +3,6 @@
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_usage\Attribute\EntityUsageTrack;
@@ -19,7 +18,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   label: new TranslatableMarkup('Layout Builder'),
   description: new TranslatableMarkup("Tracks relationships in layout builder layouts."),
   field_types: ["layout_section"],
-  source_entity_class: FieldableEntityInterface::class,
 )]
 class LayoutBuilder extends EntityUsageTrackBase {
 

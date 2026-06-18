@@ -34,7 +34,7 @@ burndown.backlog:
   path: '/burndown/backlog/{shortcode}'
   defaults:
     _controller: '\Drupal\burndown\Controller\BacklogController::getBacklog'
-    _title: 'Backlog'
+    _title_callback: '\Drupal\burndown\Controller\BacklogController::getPageTitle'
     shortcode: ''
   requirements:
     _permission: 'access burndown backlog'
@@ -87,7 +87,7 @@ burndown.board:
   path: '/burndown/board/{shortcode}'
   defaults:
     _controller: '\Drupal\burndown\Controller\BoardController::getBoard'
-    _title: 'Board'
+    _title_callback: '\Drupal\burndown\Controller\BoardController::getPageTitle'
     shortcode: ''
   requirements:
     _permission: 'access burndown board'
@@ -108,7 +108,7 @@ burndown.board_reorder:
     _controller: '\Drupal\burndown\Controller\BoardController::reorderBoard'
   methods:  [POST]
   requirements:
-    _permission: 'access burndown board'
+    _permission: 'reorder burndown backlog'
 
 burndown.board_send_to_backlog:
   path: '/burndown/api/board/send_to_backlog/{ticket_id}'
@@ -117,13 +117,13 @@ burndown.board_send_to_backlog:
     ticket_id: ''
   methods:  [GET]
   requirements:
-    _permission: 'access burndown backlog'
+    _permission: 'send tasks to backlog'
 
 burndown.completed:
   path: '/burndown/completed/{shortcode}'
   defaults:
     _controller: '\Drupal\burndown\Controller\CompletedController::getCompleted'
-    _title: 'Completed Tasks'
+    _title_callback: '\Drupal\burndown\Controller\CompletedController::getPageTitle'
     shortcode: ''
   requirements:
     _permission: 'access completed board'

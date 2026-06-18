@@ -259,7 +259,7 @@ class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
     $first_row_field_label = $this->xpath('//table/tbody/tr[1]/td[4]')[0];
     $this->assertEquals('Related Views', $first_row_field_label->getText());
     $first_row_status = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
-    $this->assertEquals('Published', $first_row_status->getText());
+    $this->assertEquals('Published revision', $first_row_status->getText());
   }
 
   /**
@@ -375,7 +375,7 @@ class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
     $first_row_field_label = $this->xpath('//table/tbody/tr[1]/td[4]')[0];
     $this->assertEquals('Related Blocks', $first_row_field_label->getText());
     $first_row_status = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
-    $this->assertEquals('Published', $first_row_status->getText());
+    $this->assertEquals('Published revision', $first_row_status->getText());
   }
 
 }

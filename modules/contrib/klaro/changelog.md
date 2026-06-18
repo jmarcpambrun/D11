@@ -1,12 +1,17 @@
 
+**V.3.1.0**
+
+- Issue #3586970: Make URL scanning more resilient to invalid URLs [Bugfix]
+- Issue #3568940: Required apps still get blocked on first load when Process final HTML is active [Bugfix]
+
 **V.3.1.0-RC2**
 
 - Issue #3584237: Update-Hook breaks services and produces WPOD [Bugfix]
 
 **V.3.1.0-RC1**
 
-- Issue #3504281: Option optOut is broken - scripts will not be loaded
-- Issue #3508237: Bugfix for #536: Check for optOut state while contextual rendering
+- Issue #3504281: Option optOut is broken - scripts will not be loaded [Bugfix]
+- Issue #3508237: Bugfix for #536: Check for optOut state while contextual rendering [Bugfix]
 
 **V.3.0.9**
 

@@ -30,7 +30,6 @@ $connection->update('config')
 
 // Add entity_usage.settings.
 $config_data = Yaml::decode(file_get_contents(__DIR__ . '/entity_usage.settings.yml'));
-$config_data['track_enabled_source_entity_types'] = ['filter_format', 'node'];
 $connection->insert('config')
   ->fields([
     'collection',

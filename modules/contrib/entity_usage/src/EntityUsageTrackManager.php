@@ -3,17 +3,13 @@
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Cache\CacheBackendInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Drupal\entity_usage\Annotation\EntityUsageTrack as AnnotationEntityUsageTrack;
 use Drupal\entity_usage\Attribute\EntityUsageTrack as AttributeEntityUsageTrack;
 
 /**
  * Manages entity_usage track plugins.
- *
- * @method \Drupal\entity_usage\EntityUsageTrackInterface createInstance($plugin_id, array $configuration = [])
  */
 class EntityUsageTrackManager extends DefaultPluginManager {
 
@@ -23,6 +19,27 @@ class EntityUsageTrackManager extends DefaultPluginManager {
    * @var class-string[]
    */
   protected array $sourceEntityClasses = [];
+
+  /**
+   * A list of instantiated plugins, keyed by plugin ID.
+   *
+   * @var array<string, \Drupal\entity_usage\EntityUsageTrackInterface>
+   */
+  protected array $instantiatedPlugins = [];
+
+  /**
+   * A list of the plugin IDs of all inline entity usage tracking plugins.
+   *
+   * @var string[]|null
+   */
+  protected ?array $inlinePluginIds = NULL;
+
+  /**
+   * A list of all the inline entity type IDs.
+   *
+   * @var string[]|null
+   */
+  protected ?array $inlineEntityTypeIds = NULL;
 
   /**
    * Constructs a new EntityUsageTrackManager.
@@ -42,8 +59,6 @@ class EntityUsageTrackManager extends DefaultPluginManager {
       $module_handler,
       EntityUsageTrackInterface::class,
       AttributeEntityUsageTrack::class,
-      // @todo Remove this parameter if not supporting BC annotation plugins.
-      AnnotationEntityUsageTrack::class,
     );
     $this->alterInfo('entity_usage_track_info');
     $this->setCacheBackend($cache_backend, 'entity_usage_track_plugins');
@@ -74,22 +89,98 @@ class EntityUsageTrackManager extends DefaultPluginManager {
   }
 
   /**
-   * {@inheritdoc}
+   * Returns entity type IDs that are inline across all plugins.
+   *
+   * @return string[]
+   *   An array of entity type IDs.
    */
-  public function clearCachedDefinitions(): void {
-    parent::clearCachedDefinitions();
-    $this->sourceEntityClasses = [];
+  public function getInlineEntityTypeIds(): array {
+    if (!is_array($this->inlineEntityTypeIds)) {
+      $this->inlineEntityTypeIds = [];
+      foreach ($this->getInlinePluginIds() as $plugin_id) {
+        $plugin = $this->createInstance($plugin_id);
+        assert($plugin instanceof EntityUsageInlineTrackingInterface);
+        $this->inlineEntityTypeIds = array_merge($this->inlineEntityTypeIds, $plugin->getInlineEntityTypeIds());
+      }
+      $this->inlineEntityTypeIds = array_unique($this->inlineEntityTypeIds);
+    }
+    return $this->inlineEntityTypeIds;
+  }
+
+  /**
+   * Returns the plugin IDs of all inline entity usage tracking plugins.
+   *
+   * @return string[]
+   *   An array of plugin IDs.
+   */
+  public function getInlinePluginIds(): array {
+    if (!is_array($this->inlinePluginIds)) {
+      $this->inlinePluginIds = [];
+      foreach ($this->getDefinitions() as $definition) {
+        if (is_subclass_of($definition['class'], EntityUsageInlineTrackingInterface::class)) {
+          $this->inlinePluginIds[] = $definition['id'];
+        }
+      }
+    }
+    return $this->inlinePluginIds;
+  }
+
+  /**
+   * Instantiates the enabled tracking plugins.
+   *
+   * Inline entity usage tracking plugins are always included regardless of the
+   * configured value.
+   *
+   * @param array|null $enabled_plugin_ids
+   *   The value of the 'track_enabled_plugins' config setting, or NULL to use
+   *   all defined plugins.
+   * @param string|null $exclude_plugin_id
+   *   A plugin ID to omit from the result (used by inline plugins themselves
+   *   to avoid recursing into their own implementation).
+   *
+   * @return array<string, \Drupal\entity_usage\EntityUsageTrackInterface>
+   *   The enabled plugin instances keyed by plugin ID.
+   */
+  public function getEnabledPlugins(?array $enabled_plugin_ids, ?string $exclude_plugin_id = NULL): array {
+    $all_plugin_ids = array_keys($this->getDefinitions());
+    $enabled_plugin_ids ??= $all_plugin_ids;
+    // Always include inline entity usage tracking plugins.
+    $enabled_plugin_ids = array_unique(array_merge($enabled_plugin_ids, $this->getInlinePluginIds()));
+
+    $plugins = [];
+    foreach (array_intersect($all_plugin_ids, $enabled_plugin_ids) as $plugin_id) {
+      if ($plugin_id === $exclude_plugin_id) {
+        continue;
+      }
+      $plugins[$plugin_id] = $this->createInstance($plugin_id);
+    }
+    return $plugins;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function processDefinition(&$definition, $plugin_id): void {
-    parent::processDefinition($definition, $plugin_id);
-    if (!isset($definition['source_entity_class'])) {
-      @trigger_error(sprintf("The plugin definition '%s' not defining the 'source_entity_class' property is deprecated in entity_usage:8.x-2.0-beta20 and will cause an exception in entity_usage:5.0.0. See https://www.drupal.org/node/3505220", $definition['class']), E_USER_DEPRECATED);
-      $definition['source_entity_class'] = EntityInterface::class;
+  public function clearCachedDefinitions(): void {
+    parent::clearCachedDefinitions();
+    $this->sourceEntityClasses = [];
+    $this->instantiatedPlugins = [];
+    $this->inlinePluginIds = NULL;
+    $this->inlineEntityTypeIds = NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createInstance($plugin_id, array $configuration = []): EntityUsageTrackInterface {
+    if ($configuration === [] && isset($this->instantiatedPlugins[$plugin_id])) {
+      return $this->instantiatedPlugins[$plugin_id];
     }
+    $plugin = parent::createInstance($plugin_id, $configuration);
+    assert($plugin instanceof EntityUsageTrackInterface);
+    if ($configuration === []) {
+      $this->instantiatedPlugins[$plugin_id] = $plugin;
+    }
+    return $plugin;
   }
 
 }

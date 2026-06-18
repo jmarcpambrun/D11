@@ -57,3 +57,5 @@ services:
   # \Drupal\entity_usage\EntityUsageServiceProvider::register().
   Drupal\entity_usage\UrlToEntityIntegrations\EntityRouting: ~
   Drupal\entity_usage\UrlToEntityIntegrations\LanguageIntegration: ~
+
+  Drupal\entity_usage\EventSubscriber\ConfigSubscriber: ~

@@ -162,14 +162,14 @@ class EntityUsageLayoutBuilderTest extends BrowserTestBase {
     // but its name, link, and status should be that of its host entity (the
     // layout builder node) since inline blocks don't exist outside their
     // host entity (similar to paragraphs).
-    $this->assertInnerEntityUsage($innerEntityReferencedByInlineBlock, $layoutBuilderNode->label(), $layoutBuilderNode->toUrl()->toString(), 'Published');
+    $this->assertInnerEntityUsage($innerEntityReferencedByInlineBlock, $layoutBuilderNode->label(), $layoutBuilderNode->toUrl()->toString(), 'Published revision');
 
     // The reusable block should be displayed as a usage of its referenced
     // entity, but its name and status should be that of the block and NOT
     // the layout builder node that uses the block. We don't jump the reference
     // to layout builder node using the reusable block because this block can
     // be used by MANY layout builder nodes.
-    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published');
+    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published revision');
 
     // Unpublish the parent node and verify that the "Status" column for the
     // inline block usage updates accordingly.
@@ -177,8 +177,8 @@ class EntityUsageLayoutBuilderTest extends BrowserTestBase {
     $layoutBuilderNode->setUnpublished();
     $layoutBuilderNode->save();
 
-    $this->assertInnerEntityUsage($innerEntityReferencedByInlineBlock, $layoutBuilderNode->label(), $layoutBuilderNode->toUrl()->toString(), 'Unpublished');
-    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published');
+    $this->assertInnerEntityUsage($innerEntityReferencedByInlineBlock, $layoutBuilderNode->label(), $layoutBuilderNode->toUrl()->toString(), 'Draft revision');
+    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published revision');
 
     $layoutBuilderNode->delete();
 
@@ -190,7 +190,7 @@ class EntityUsageLayoutBuilderTest extends BrowserTestBase {
 
     // The usage data for the entity referenced by the reusable block should
     // not show any differences than before.
-    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published');
+    $this->assertInnerEntityUsage($innerEntityReferencedByReusableBlock, $reusableBlock->label(), NULL, 'Published revision');
   }
 
   /**

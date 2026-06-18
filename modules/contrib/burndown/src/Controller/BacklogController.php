@@ -47,6 +47,24 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
   }
 
   /**
+   * Callback for page title.
+   */
+  public function getPageTitle($shortcode) {
+    // Sanitize input.
+    $code = Html::escape($shortcode);
+
+    $project = Project::loadFromShortcode($code);
+    if ($project !== FALSE) {
+      $projectName = $project->getName();
+      return $this->t('Backlog: %projectname', [
+        '%projectname' => $projectName,
+      ]);
+    }
+
+    return $this->t('Backlog');
+  }
+
+  /**
    * Callback for `burndown/backlog/{shortcode} route.
    */
   public function getBacklog($shortcode) {

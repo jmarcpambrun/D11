@@ -3,6 +3,7 @@
   data-ticket-id="{{ data.ticket_id }}">
 
   <div class="action_links">
+    {% if user.hasPermission('burndown close task') %}
     <div class="action_link">
 	  <a href="{{ url('<front>') }}burndown/close_task/{{ data.ticket_id }}/board"
 	    title="Close the task. This will open a modal form."
@@ -12,7 +13,9 @@
 	    Close Task
 	  </a>
     </div>
+    {% endif %}
 
+    {% if user.hasPermission('edit task entities') %}
     <div class="action_link">
       <a href="{{ url('<front>') }}burndown/task/{{ data.id }}/edit"
         title="Edit task"
@@ -22,7 +25,9 @@
         Edit task
       </a>
     </div>
+    {% endif %}
 
+    {% if user.hasPermission('send tasks to backlog') %}
     {% if not data.sprint %}
     <div class="action_link">
       <a href="{{ url('<front>') }}burndown/api/board/send_to_backlog/{{ data.ticket_id }}"
@@ -32,6 +37,7 @@
         Send Task to Backlog
       </a>
     </div>
+    {% endif %}
     {% endif %}
 
   </div>
@@ -57,12 +63,16 @@
       {% endif %}
 
       <div class="ticket_id">
+        {% if user.hasPermission('edit task entities') %}
         <a href="{{ url('<front>') }}burndown/task/{{ data.id }}/edit"
           class="use-ajax task_id{% if data.is_completed %} completed{% endif %}"
           data-dialog-type="modal"
           data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+        {% endif %}
           {{ data.ticket_id }}
+        {% if user.hasPermission('edit task entities') %}
         </a>
+        {% endif %}
       </div>
 
       {% if data.assigned_to %}

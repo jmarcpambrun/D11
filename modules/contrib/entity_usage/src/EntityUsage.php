@@ -42,6 +42,7 @@ class EntityUsage implements EntityUsageBulkInterface {
     private EventDispatcherInterface $eventDispatcher,
     private ConfigFactoryInterface $configFactory,
     private ModuleHandlerInterface $moduleHandler,
+    private EntityUsageTrackManager $trackManager,
     private string $tableName,
   ) {
   }
@@ -100,6 +101,13 @@ class EntityUsage implements EntityUsageBulkInterface {
    * {@inheritdoc}
    */
   public function registerUsage($target_id, $target_type, $source_id, $source_type, $source_langcode, $source_vid, $method, $field_name, $count = 1): void {
+    // Inline entity types (e.g. paragraphs) are never recorded as a source or
+    // target — their inline tracking plugin records the host entity instead.
+    $inline_entity_type_ids = $this->trackManager->getInlineEntityTypeIds();
+    if (in_array($target_type, $inline_entity_type_ids, TRUE) || in_array($source_type, $inline_entity_type_ids, TRUE)) {
+      return;
+    }
+
     // Check if target entity type is enabled, all entity types are enabled by
     // default.
     $enabled_target_entity_types = $this
@@ -298,7 +306,8 @@ class EntityUsage implements EntityUsageBulkInterface {
       ->orderBy('source_type')
       ->orderBy('source_id', 'DESC')
       ->orderBy('source_vid', 'DESC')
-      ->orderBy('source_langcode');
+      ->orderBy('source_langcode')
+      ->orderBy('field_name');
 
     if ($limit > 0) {
       $query->range(0, $limit);

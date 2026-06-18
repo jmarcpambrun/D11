@@ -8,7 +8,7 @@ include:
 
 variables:
   _PHPUNIT_CONCURRENT: '1'
-  OPT_IN_TEST_PREVIOUS_MAJOR: 1
+  OPT_IN_TEST_PREVIOUS_MAJOR: 0
   RUN_JOB_UPGRADE_STATUS: '1'
 
 phpunit:

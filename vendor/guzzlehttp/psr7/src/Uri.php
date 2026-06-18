@@ -371,10 +371,25 @@ class Uri implements UriInterface, \JsonSerializable
         $result = self::getFilteredQueryString($uri, array_keys($keyValueArray));
 
         foreach ($keyValueArray as $key => $value) {
-            $result[] = self::generateQueryString((string) $key, $value !== null ? (string) $value : null);
+            $result[] = self::generateQueryString((string) $key, $value !== null ? self::stringifyQueryValue($value) : null);
         }
 
         return $uri->withQuery(implode('&', $result));
+    }
+
+    /**
+     * Converts non-finite floats to the strings PHP coerces them to, as
+     * implicit coercion of NAN emits a warning on PHP 8.5.
+     *
+     * @param mixed $value
+     */
+    private static function stringifyQueryValue($value): string
+    {
+        if (is_float($value) && !is_finite($value)) {
+            return is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
+        }
+
+        return (string) $value;
     }
 
     /**
@@ -515,6 +530,15 @@ class Uri implements UriInterface, \JsonSerializable
 
     public function withPort($port): UriInterface
     {
+        if ($port !== null && !\is_int($port)) {
+            \trigger_deprecation(
+                'guzzlehttp/psr7',
+                '2.11',
+                'Passing %s to UriInterface::withPort() is deprecated; guzzlehttp/psr7 3.0 requires int|null.',
+                \get_debug_type($port)
+            );
+        }
+
         $port = $this->filterPort($port);
 
         if ($this->port === $port) {
@@ -623,7 +647,18 @@ class Uri implements UriInterface, \JsonSerializable
             throw new \InvalidArgumentException('Scheme must be a string');
         }
 
-        return \strtr($scheme, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+        $scheme = \strtr($scheme, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+
+        if ($scheme !== '' && !preg_match('/^[a-z][a-z0-9.+-]*$/D', $scheme)) {
+            \trigger_deprecation(
+                'guzzlehttp/psr7',
+                '2.11',
+                'Passing "%s" as a URI scheme is deprecated; guzzlehttp/psr7 3.0 requires URI schemes to match RFC 3986 syntax and begin with a letter.',
+                $scheme
+            );
+        }
+
+        return $scheme;
     }
 
     /**

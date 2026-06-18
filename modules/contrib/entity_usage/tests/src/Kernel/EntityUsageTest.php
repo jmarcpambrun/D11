@@ -555,6 +555,7 @@ class EntityUsageTest extends EntityKernelTestBase {
       'method' => 'entity_reference',
       'field_name' => 'body0',
       'count' => 1,
+      'usage_id' => 1,
     ];
     $this->assertEquals([(object) $expected_result], $result);
 

@@ -3,7 +3,6 @@
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
 use Drupal\Component\Utility\Html;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_usage\Attribute\EntityUsageTrack;
 
@@ -15,7 +14,6 @@ use Drupal\entity_usage\Attribute\EntityUsageTrack;
   label: new TranslatableMarkup('LinkIt'),
   description: new TranslatableMarkup("Tracks relationships created with 'LinkIt' in formatted text fields."),
   field_types: ["text", "text_long", "text_with_summary"],
-  source_entity_class: FieldableEntityInterface::class,
 )]
 class LinkIt extends TextFieldEmbedBase {
 

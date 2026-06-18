@@ -247,7 +247,7 @@ return array(
     'SensitiveParameter' => $vendorDir . '/symfony/polyfill-php82/Resources/stubs/SensitiveParameter.php',
     'SensitiveParameterValue' => $vendorDir . '/symfony/polyfill-php82/Resources/stubs/SensitiveParameterValue.php',
     'SortDirection' => $vendorDir . '/symfony/polyfill-php86/Resources/stubs/SortDirection.php',
-    'Stringable' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
+    'Stringable' => $vendorDir . '/marc-mabe/php-enum/stubs/Stringable.php',
     'System' => $vendorDir . '/pear/pear-core-minimal/src/System.php',
     'TCPDF' => $vendorDir . '/tecnickcom/tcpdf/tcpdf.php',
     'TCPDF2DBarcode' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_barcodes_2d.php',

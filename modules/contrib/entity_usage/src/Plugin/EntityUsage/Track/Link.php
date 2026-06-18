@@ -2,7 +2,6 @@
 
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_usage\Attribute\EntityUsageTrack;
@@ -16,7 +15,6 @@ use Drupal\entity_usage\EntityUsageTrackBase;
   label: new TranslatableMarkup('Link Fields'),
   description: new TranslatableMarkup("Tracks relationships created with 'Link' fields."),
   field_types: ["link", "link_tree"],
-  source_entity_class: FieldableEntityInterface::class,
 )]
 class Link extends EntityUsageTrackBase {
 

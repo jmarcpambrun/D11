@@ -9,12 +9,13 @@ use Drupal\burndown\Entity\Task;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Controller for the Burndown module's Completed task listing.
  */
-class CompletedController extends ControllerBase {
+class CompletedController extends ControllerBase implements ContainerInjectionInterface {
   /**
    * The entity type manager.
    *
@@ -39,6 +40,24 @@ class CompletedController extends ControllerBase {
     return new static(
       $container->get('entity_type.manager')
     );
+  }
+
+  /**
+   * Callback for page title.
+   */
+  public function getPageTitle($shortcode) {
+    // Sanitize input.
+    $code = Html::escape($shortcode);
+
+    $project = Project::loadFromShortcode($code);
+    if ($project !== FALSE) {
+      $projectName = $project->getName();
+      return $this->t('Completed Tasks: %projectname', [
+        '%projectname' => $projectName,
+      ]);
+    }
+
+    return $this->t('Completed Tasks');
   }
 
   /**

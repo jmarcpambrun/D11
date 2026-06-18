@@ -14,6 +14,9 @@ reorder burndown backlog:
 send tasks to board:
   title: 'Send Tasks to Board'
 
+send tasks to backlog:
+  title: 'Send Tasks to Backlog'
+
 modify sprint tasks:
   title: 'Modify Tasks in a Sprint'
 

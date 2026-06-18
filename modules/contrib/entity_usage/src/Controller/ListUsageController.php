@@ -16,8 +16,8 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_usage\EntityUsageInterface;
+use Drupal\entity_usage\SourceEntityStatus;
 use Drupal\layout_builder\InlineBlockUsageInterface;
-use Drupal\paragraphs\ParagraphInterface;
 use Drupal\trash\TrashManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -190,7 +190,6 @@ class ListUsageController extends ControllerBase {
       $this->t('Type'),
       $this->t('Language'),
       $this->t('Field name'),
-      $this->t('Status'),
       $this->t('Used in'),
     ];
 
@@ -198,25 +197,7 @@ class ListUsageController extends ControllerBase {
     $pager = $this->pagerManager->createPager($total, $this->itemsPerPage);
     $page = $pager->getCurrentPage();
     $page_rows = $this->getPageRows($page, $this->itemsPerPage, $entity_type, $entity_id);
-    // If all rows on this page are of entities that have usage on their default
-    // revision, we don't need the "Used in" column.
-    $used_in_previous_revisions = FALSE;
-    foreach ($page_rows as $row) {
-      $used_in = $row[5]['data'];
-      $only_default = fn(array $row) => count($row) === 1 &&
-        !empty($row[0]['#plain_text']) &&
-        $row[0]['#plain_text'] == $this->t('Default');
-      if (!$only_default($used_in)) {
-        $used_in_previous_revisions = TRUE;
-        break;
-      }
-    }
-    if (!$used_in_previous_revisions) {
-      unset($header[5]);
-      array_walk($page_rows, function (&$row, $key) {
-        unset($row[5]);
-      });
-    }
+
     $build[] = [
       '#theme' => 'table',
       '#rows' => $page_rows,
@@ -265,12 +246,6 @@ class ListUsageController extends ControllerBase {
     $languages = $this->languageManager()->getLanguages(LanguageInterface::STATE_ALL);
     $all_usages = $this->entityUsage->listSources($entity);
 
-    $revision_groups = [
-      static::REVISION_DEFAULT => $this->t("Default"),
-      static::REVISION_PENDING => $this->t("Pending revision(s) / Draft(s)"),
-      static::REVISION_OLD => $this->t("Old revision(s)"),
-    ];
-
     foreach ($all_usages as $source_type => $ids) {
       $type_storage = $this->entityTypeManager->getStorage($source_type);
       foreach ($ids as $source_id => $records) {
@@ -292,25 +267,69 @@ class ListUsageController extends ControllerBase {
           }
         }
 
+        // The effective published status of the source (or its host, for inline
+        // blocks).
+        $source_entity_status = $this->getSourceEntityStatus($source_entity);
+
         $field_definitions = $this->entityFieldManager->getFieldDefinitions($source_type, $source_entity->bundle());
         $default_langcode = $source_entity->language()->getId();
         $used_in = [];
         $revisions = [];
+
         if ($source_entity instanceof RevisionableInterface) {
           $default_revision_id = $source_entity->getRevisionId();
-          foreach (array_reverse($records) as $record) {
+          // Track the distinct vids seen per (group, langcode) so multiple
+          // records that share a vid (e.g. a host with both a direct
+          // entity_reference field and an entity_reference_revisions field
+          // pointing at the same target) are not counted as separate
+          // revisions.
+          $pending_vids_by_lang = [];
+          $old_vids = [];
+          foreach ($records as $record) {
             [
               'source_vid' => $source_vid,
               'source_langcode' => $source_langcode,
-              'field_name' => $field_name,
             ] = $record;
+
             // Track which languages are used in pending, default and old
             // revisions.
             $revision_group = (int) $source_vid <=> (int) $default_revision_id;
-            $revisions[$revision_group][$source_langcode] = $field_name;
+            // If the default revision is unpublished, it is really a draft.
+            if ($revision_group === static::REVISION_DEFAULT && $source_entity_status === SourceEntityStatus::Unpublished) {
+              $revision_group = static::REVISION_PENDING;
+            }
+            // If a different pending vid for this language has already been
+            // recorded, demote this record to OLD. An editor only sees the
+            // latest draft per translation via the edit UI. Records that share
+            // the same vid (different field/method) are ignored here so they
+            // do not get spuriously demoted.
+            if ($revision_group === static::REVISION_PENDING
+              && isset($pending_vids_by_lang[$source_langcode])
+              && !isset($pending_vids_by_lang[$source_langcode][$source_vid])
+            ) {
+              $revision_group = static::REVISION_OLD;
+            }
+            if ($revision_group === static::REVISION_PENDING) {
+              $pending_vids_by_lang[$source_langcode][$source_vid] = TRUE;
+            }
+
+            if ($revision_group === static::REVISION_OLD) {
+              // Record the old vids so we can show the number of distinct
+              // revisions.
+              $old_vids[$source_vid] = TRUE;
+            }
+            $revisions[$revision_group][$source_langcode] = TRUE;
           }
 
-          foreach ($revision_groups as $index => $label) {
+          $has_default = !empty($revisions[static::REVISION_DEFAULT]);
+          $revision_group_labels = [
+            static::REVISION_PENDING => $this->t('Draft revision'),
+            static::REVISION_OLD => $this->formatPlural(count($old_vids), '@count old revision', '@count old revisions'),
+          ];
+          if ($has_default) {
+            $used_in[] = $this->summarizeRevisionGroup($default_langcode, $source_entity_status->label(), $revisions[static::REVISION_DEFAULT]);
+          }
+          foreach ($revision_group_labels as $index => $label) {
             if (!empty($revisions[$index])) {
               $used_in[] = $this->summarizeRevisionGroup($default_langcode, $label, $revisions[$index]);
             }
@@ -324,22 +343,22 @@ class ListUsageController extends ControllerBase {
             ];
           }
         }
+        else {
+          $used_in[] = $source_entity_status->label();
+        }
         $link = $this->getSourceEntityLink($source_entity);
         // If the label is empty it means this usage shouldn't be shown
         // on the UI, just skip this row.
         if (empty($link)) {
           continue;
         }
-        $published = $this->getSourceEntityStatus($source_entity);
-        $get_field_name = function (array $field_names) use ($default_langcode, $revision_groups) {
-          foreach (array_keys($revision_groups) as $group) {
-            if (isset($field_names[$group])) {
-              return $field_names[$group][$default_langcode] ?? reset($field_names[$group]);
-            }
-          }
-        };
-        $field_name = $get_field_name($revisions);
-        $field_label = isset($field_definitions[$field_name]) ? $field_definitions[$field_name]->getLabel() : $this->t('Unknown');
+
+        // @todo List all the fields that use the target entity.
+        $field_name = $records[0]['field_name'];
+        $field_label = isset($field_definitions[$field_name])
+          ? $field_definitions[$field_name]->getLabel()
+          : $this->t('Unknown');
+
         $type = $entity_types[$source_type]->getLabel();
         if ($source_bundle_key = $source_entity->getEntityType()->getKey('bundle')) {
           $bundle_field = $source_entity->{$source_bundle_key};
@@ -351,12 +370,12 @@ class ListUsageController extends ControllerBase {
           }
           $type .= ': ' . $bundle_label;
         }
+
         $rows[] = [
           $link,
           $type,
           $languages[$default_langcode]->getName(),
           $field_label,
-          $published,
           ['data' => $used_in],
         ];
       }
@@ -374,14 +393,15 @@ class ListUsageController extends ControllerBase {
   /**
    * Returns a render array indicating a revision "type" and languages.
    *
-   * For example it might return "Pending revision(s) / Draft(s): ES, NO.".
+   * For example it might return "Draft revisions (ES, NO)".
    *
    * @param string $default_langcode
    *   The default language code for the referencing entity.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup $revision_label
-   *   The translated revision type label eg 'Old revision(s)' or 'Default'.
-   * @param string[] $languages
-   *   An indexed array of language codes that reference the entity in the given
+   *   The translated revision-group label, eg 'Old revisions' or the host's
+   *   publish-status label.
+   * @param bool[] $languages
+   *   An array keyed by language codes that reference the entity in the given
    *   type.
    *
    * @return mixed[]
@@ -404,7 +424,7 @@ class ListUsageController extends ControllerBase {
       $languages = array_intersect_key($languages, $language_objects);
       return [
         '#type' => 'inline_template',
-        '#template' => '{{ label }}: {% for language in languages %}{{ language }}{{ loop.last ? "." : ", " }}{% endfor %}',
+        '#template' => '{{ label }} ({% for language in languages %}{{ language }}{{ loop.last ? "" : ", " }}{% endfor %})',
         '#context' => [
           'label' => $revision_label,
           'languages' => array_map(fn ($code) => [
@@ -465,21 +485,12 @@ class ListUsageController extends ControllerBase {
    * @param \Drupal\Core\Entity\EntityInterface $source_entity
    *   The source entity.
    *
-   * @return string|\Drupal\Core\StringTranslation\TranslatableMarkup
-   *   The entity's status.
+   * @return \Drupal\entity_usage\SourceEntityStatus
+   *   The source entity's status.
    */
-  protected function getSourceEntityStatus(EntityInterface $source_entity): string|TranslatableMarkup {
-    // Treat paragraph entities in a special manner. Paragraph entities
-    // should get their host (parent) entity's status.
-    if ($source_entity->getEntityTypeId() == 'paragraph') {
-      assert($source_entity instanceof ParagraphInterface);
-      $parent = $source_entity->getParentEntity();
-      if (!empty($parent)) {
-        return $this->getSourceEntityStatus($parent);
-      }
-    }
-    // Do the same for inline content blocks.
-    elseif ($source_entity instanceof BlockContentInterface && !$source_entity->isReusable()) {
+  protected function getSourceEntityStatus(EntityInterface $source_entity): SourceEntityStatus {
+    // Use the status from the host entity for inline content blocks.
+    if ($source_entity instanceof BlockContentInterface && !$source_entity->isReusable()) {
       $parent = $this->getContentBlockParentEntity($source_entity);
       if (!empty($parent)) {
         return $this->getSourceEntityStatus($parent);
@@ -487,13 +498,9 @@ class ListUsageController extends ControllerBase {
     }
 
     if ($source_entity instanceof EntityPublishedInterface) {
-      $published = $source_entity->isPublished() ? $this->t('Published') : $this->t('Unpublished');
+      return $source_entity->isPublished() ? SourceEntityStatus::Published : SourceEntityStatus::Unpublished;
     }
-    else {
-      $published = '';
-    }
-
-    return $published;
+    return SourceEntityStatus::Current;
   }
 
   /**
@@ -560,17 +567,6 @@ class ListUsageController extends ControllerBase {
         $options['query'] = ['in_trash' => TRUE];
       }
       return $source_entity->access('view') ? $source_entity->toLink($link_text, $rel, $options) : $link_text;
-    }
-
-    // Treat paragraph entities in a special manner. Normal paragraph entities
-    // only exist in the context of their host (parent) entity. For this reason
-    // we will use the link to the parent's entity label instead.
-    /** @var \Drupal\paragraphs\ParagraphInterface $source_entity */
-    if ($source_entity->getEntityTypeId() == 'paragraph') {
-      $parent = $source_entity->getParentEntity();
-      if ($parent) {
-        return $this->getSourceEntityLink($parent, $link_text);
-      }
     }
 
     // As a fallback just return a non-linked label.

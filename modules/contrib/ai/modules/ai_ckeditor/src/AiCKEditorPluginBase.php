@@ -211,7 +211,16 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
+    $editor_id = $settings['editor_id'] ?? NULL;
+    if (! $editor_id) {
+    	$editor_id = $this->requestStack->getCurrentRequest();
+	if ( $request ) {
+		$editor_id = $request->query->get('editor_id') ?? ( $request->request->get('editor_id') ?? $request->attributes->get('editor_id') );
+		if (!$editor_id && method_exists($request,'getPayLoad')) {
+			$editor_id = $request->getPayLoad()->get('editor_id') ;
+		}
+	}	
+    }
     $storage = $form_state->getStorage();
     if ($this->needsSelectedText()) {
       if (empty($storage['selected_text'])) {

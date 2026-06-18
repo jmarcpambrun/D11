@@ -90,7 +90,6 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $assert_session->pageTextContains('Type');
     $assert_session->pageTextContains('Language');
     $assert_session->pageTextContains('Field name');
-    $assert_session->pageTextContains('Status');
 
     // Make sure that all elements of the table are the expected ones.
     $first_row_title_link = $assert_session->elementExists('xpath', '//table/tbody/tr[1]/td[1]/a');
@@ -103,7 +102,7 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $first_row_field_label = $this->xpath('//table/tbody/tr[1]/td[4]')[0];
     $this->assertEquals('Text', $first_row_field_label->getText());
     $first_row_status = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
-    $this->assertEquals('Published', $first_row_status->getText());
+    $this->assertEquals('Published revision', $first_row_status->getText());
 
     $second_row_title_link = $assert_session->elementExists('xpath', '//table/tbody/tr[2]/td[1]/a');
     $this->assertEquals('Node 2', $second_row_title_link->getText());
@@ -115,14 +114,14 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $second_row_field_label = $this->xpath('//table/tbody/tr[2]/td[4]')[0];
     $this->assertEquals('Related nodes', $second_row_field_label->getText());
     $second_row_status = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
-    $this->assertEquals('Published', $second_row_status->getText());
+    $this->assertEquals('Published revision', $second_row_status->getText());
 
     // If we unpublish Node 2 its status is correctly reflected.
     /** @var \Drupal\node\NodeInterface $node2 */
     $node2->setUnpublished()->save();
     $this->drupalGet("/admin/content/entity-usage/node/{$node1->id()}");
     $second_row_status = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
-    $this->assertEquals('Unpublished', $second_row_status->getText());
+    $this->assertEquals('Draft revision', $second_row_status->getText());
 
     // Artificially create some garbage in the database and make sure it doesn't
     // show up on the usage page.
@@ -150,13 +149,6 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $assert_session->elementNotContains('css', 'table', '5678');
     $assert_session->elementNotContains('css', 'table', 'field_foo');
 
-    // When all usages are shown on their default revisions, we don't see the
-    // extra column.
-    $assert_session->pageTextNotContains('Used in');
-    $assert_session->pageTextNotContains('Old revision(s)');
-    $assert_session->pageTextNotContains('Pending revision(s) / Draft(s)');
-    $assert_session->pageTextNotContains('Default:');
-
     // If some sources reference our entity in a previous revision, an
     // additional column is shown.
     // @phpstan-ignore-next-line
@@ -165,10 +157,10 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $node2->save();
     $this->drupalGet("/admin/content/entity-usage/node/{$node1->id()}");
     $assert_session->pageTextContains('Used in');
-    $second_row_used_in = $this->xpath('//table/tbody/tr[1]/td[6]')[0];
-    $this->assertEquals('Default', $second_row_used_in->getText());
-    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[6]')[0];
-    $this->assertEquals('Old revision(s)', $second_row_used_in->getText());
+    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
+    $this->assertEquals('Published revision', $first_row_used_in->getText());
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
+    $this->assertEquals('1 old revision', $second_row_used_in->getText());
 
     // Make sure we only have 2 rows (so no previous revision shows up).
     $this->assertEquals(2, count($this->xpath('//table/tbody/tr')));
@@ -215,10 +207,10 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     // Usage now should be the same as before.
     $this->drupalGet("/admin/content/entity-usage/node/{$node1->id()}");
     $assert_session->pageTextContains('Used in');
-    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[6]')[0];
-    $this->assertEquals('Default', $first_row_used_in->getText());
-    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[6]')[0];
-    $this->assertEquals('Default: ES. Old revision(s)', $second_row_used_in->getText());
+    $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
+    $this->assertEquals('Published revision', $first_row_used_in->getText());
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
+    $this->assertEquals('Draft revision (ES) 1 old revision', $second_row_used_in->getText());
     $this->assertEquals(2, count($this->xpath('//table/tbody/tr')));
 
     // Verify that it's possible to control the number of items per page.

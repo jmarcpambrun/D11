@@ -186,17 +186,25 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
    *   Whether the entity can be tracked or not.
    */
   protected function allowSourceEntityTracking(EntityInterface $entity): bool {
-    $allow_tracking = FALSE;
     $entity_type = $entity->getEntityType();
     $enabled_source_entity_types = $this->config->get('track_enabled_source_entity_types');
-    if (!is_array($enabled_source_entity_types) && ($entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface'))) {
-      // When no settings are defined, track all content entities by default.
-      $allow_tracking = TRUE;
+    if (!is_array($enabled_source_entity_types)
+      && $entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface')
+      && !in_array($entity_type->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE)
+    ) {
+      // When no settings are defined, track all content entities by default,
+      // except for inline entities (e.g. paragraphs).
+      return TRUE;
     }
-    elseif (is_array($enabled_source_entity_types) && in_array($entity_type->id(), $enabled_source_entity_types, TRUE)) {
-      $allow_tracking = TRUE;
+    elseif (is_array($enabled_source_entity_types)
+      && in_array($entity_type->id(), $enabled_source_entity_types, TRUE)
+      && !in_array($entity_type->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE)
+    ) {
+      // When settings are defined, track listed content entities, except for
+      // inline entities (e.g. paragraphs).
+      return TRUE;
     }
-    return $allow_tracking;
+    return FALSE;
   }
 
   /**
@@ -210,8 +218,13 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
    */
   protected function allowTargetEntityTracking(EntityInterface $entity): bool {
     $enabled_target_entity_types = $this->config->get('track_enabled_target_entity_types');
-    // Every entity type is tracked if not set.
-    return !is_array($enabled_target_entity_types) || in_array($entity->getEntityTypeId(), $enabled_target_entity_types, TRUE);
+    if (!is_array($enabled_target_entity_types)) {
+      // When no settings are defined, track all entity types by default,
+      // except inline entities (e.g. paragraphs) which are handled by their
+      // respective inline entity usage tracking plugins.
+      return !in_array($entity->getEntityType()->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE);
+    }
+    return in_array($entity->getEntityTypeId(), $enabled_target_entity_types, TRUE) && !in_array($entity->getEntityType()->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE);
   }
 
   /**
@@ -221,16 +234,7 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
    *   The enabled plugin instances keyed by plugin ID.
    */
   protected function getEnabledPlugins(): array {
-    $all_plugin_ids = array_keys($this->trackManager->getDefinitions());
-    $enabled_plugins = $this->config->get('track_enabled_plugins');
-    $enabled_plugin_ids = is_array($enabled_plugins) ? $enabled_plugins : $all_plugin_ids;
-
-    $plugins = [];
-    foreach (array_intersect($all_plugin_ids, $enabled_plugin_ids) as $plugin_id) {
-      $plugins[$plugin_id] = $this->trackManager->createInstance($plugin_id);
-    }
-
-    return $plugins;
+    return $this->trackManager->getEnabledPlugins($this->config->get('track_enabled_plugins'));
   }
 
 }

@@ -5,8 +5,6 @@ namespace Drupal\entity_usage;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityMalformedException;
 use Drupal\Core\Entity\Exception\UndefinedLinkTemplateException;
-use Symfony\Component\Routing\Exception\MissingMandatoryParametersException;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 /**
  * Records URLS of entities before they are updated.
@@ -42,7 +40,7 @@ class PreSaveUrlRecorder {
     try {
       $this->urls[$this->key($entity)] = $entity->toUrl()->toString();
     }
-    catch (EntityMalformedException | UndefinedLinkTemplateException | MissingMandatoryParametersException | RouteNotFoundException) {
+    catch (EntityMalformedException | UndefinedLinkTemplateException) {
       // If we cannot create a URL then there is no URL to record.
     }
   }
