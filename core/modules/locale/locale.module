@@ -517,6 +517,7 @@ function locale_translation_update_file_history($source) {
  */
 function locale_translation_file_history_delete($projects = [], $langcodes = []): void {
   @trigger_error(__FUNCTION__ . '() is deprecated in drupal:11.4.0 and is removed from drupal:13.0.0. Use \Drupal::service(CurrentImportStorage::class)->delete(). See https://www.drupal.org/node/3037162', E_USER_DEPRECATED);
+  \Drupal::moduleHandler()->loadInclude('locale', 'inc', 'locale.translation');
   \Drupal::service(CurrentImportStorage::class)->delete($projects, $langcodes);
 }
 
@@ -530,6 +531,7 @@ function locale_translation_file_history_delete($projects = [], $langcodes = [])
  */
 function locale_translation_get_status($projects = NULL, $langcodes = NULL): array {
   @trigger_error(__FUNCTION__ . '() is deprecated in drupal:11.4.0 and is removed from drupal:13.0.0. Use \Drupal::service(LocaleSource::class)->loadSources(). See https://www.drupal.org/node/3591660', E_USER_DEPRECATED);
+  \Drupal::moduleHandler()->loadInclude('locale', 'inc', 'locale.translation');
   return \Drupal::service(LocaleSource::class)->loadSources($projects, $langcodes);
 }
 
@@ -1108,3 +1110,4 @@ function template_preprocess_locale_translation_last_check(array &$variables): v
   @trigger_error(__FUNCTION__ . '() is deprecated in drupal:11.3.0 and is removed from drupal:12.0.0. Initial template_preprocess functions are registered directly in hook_theme(). See https://www.drupal.org/node/3504125', E_USER_DEPRECATED);
   \Drupal::service(LocaleThemeHooks::class)->preprocessLocaleTranslationLastCheck($variables);
 }
+
