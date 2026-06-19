@@ -7,8 +7,3 @@ core_version_requirement: ^10.3 || ^11
 dependencies:
   - ai:ai
   - ai:ai_content_suggestions
-
-# Information added by Drupal.org packaging script on 2026-06-10
-version: '1.4.2'
-project: 'ai'
-datestamp: 1781100871

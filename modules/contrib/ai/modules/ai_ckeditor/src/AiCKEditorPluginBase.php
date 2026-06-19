@@ -212,14 +212,23 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $editor_id = $settings['editor_id'] ?? NULL;
-    if (! $editor_id) {
-    	$editor_id = $this->requestStack->getCurrentRequest();
-	if ( $request ) {
-		$editor_id = $request->query->get('editor_id') ?? ( $request->request->get('editor_id') ?? $request->attributes->get('editor_id') );
-		if (!$editor_id && method_exists($request,'getPayLoad')) {
-			$editor_id = $request->getPayLoad()->get('editor_id') ;
-		}
-	}	
+    if (!$editor_id) {
+      $request = $this->requestStack->getCurrentRequest();
+      if ($request) {
+        $editor_id = $request->query->get('editor_id') ?? ($request->request->get('editor_id') ?? $request->attributes->get('editor_id'));
+        if (!$editor_id && method_exists($request, 'getPayload')) {
+          $editor_id = $request->getPayload()->get('editor_id');
+        }
+      }
+    }
+    if (!$editor_id) {
+      $parent_request = $this->requestStack->getParentRequest();
+      if ($parent_request) {
+        $editor_id = $parent_request->query->get('editor_id') ?? ($parent_request->request->get('editor_id') ?? $parent_request->attributes->get('editor_id'));
+        if (!$editor_id && method_exists($parent_request, 'getPayload')) {
+          $editor_id = $parent_request->getPayload()->get('editor_id');
+        }
+      }
     }
     $storage = $form_state->getStorage();
     if ($this->needsSelectedText()) {
@@ -344,3 +353,4 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   }
 
 }
+

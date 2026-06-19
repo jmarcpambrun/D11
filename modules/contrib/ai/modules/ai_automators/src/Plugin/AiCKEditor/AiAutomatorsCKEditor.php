@@ -249,7 +249,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $form_state->disableCache();
     $storage = $form_state->getStorage();
-    $form = parent::buildCkEditorModalForm($form, $form_state ,$settings);
+    $form = parent::buildCkEditorModalForm($form, $form_state, $settings);
     unset($form['selected_text']);
     unset($form['#markup']);
 
@@ -525,3 +525,4 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
 }
+
