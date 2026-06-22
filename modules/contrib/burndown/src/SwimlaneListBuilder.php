@@ -4,6 +4,7 @@ namespace Drupal\burndown;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Link;
 
 /**
@@ -31,7 +32,7 @@ class SwimlaneListBuilder extends EntityListBuilder {
     $row['id'] = $entity->id();
     $row['name'] = Link::createFromRoute(
       $entity->label(),
-      'entity.burndown_swimlane.edit_form',
+      'entity.burndown_swimlane.canonical',
       ['burndown_swimlane' => $entity->id()]
     );
 
@@ -42,6 +43,24 @@ class SwimlaneListBuilder extends EntityListBuilder {
     $row['board'] = $board_name;
 
     return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEntityListQuery(): QueryInterface {
+    $query = $this->getStorage()->getQuery()
+      ->accessCheck(TRUE);
+
+    // Sort to keep the projects together and then by name within the project.
+    $query->sort('project', 'ASC');
+    $query->sort('name', 'ASC');
+
+    // Only add the pager if a limit is specified.
+    if ($this->limit) {
+      $query->pager($this->limit);
+    }
+    return $query;
   }
 
 }

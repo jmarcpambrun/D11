@@ -259,3 +259,35 @@ burndown.reorder_project_swimlanes:
   methods:  [POST]
   requirements:
     _permission: 'administer burndown'
+
+entity.burndown_project.collection:
+  path: '/burndown/project'
+  defaults:
+    _entity_list: 'burndown_project'
+    _title: 'Projects'
+  requirements:
+    _permission: 'administer project entities'
+
+entity.burndown_swimlane.collection:
+  path: '/burndown/swimlane'
+  defaults:
+    _entity_list: 'burndown_swimlane'
+    _title: 'Swimlanes'
+  requirements:
+    _permission: 'administer swimlane entities'
+
+entity.burndown_sprint.collection:
+  path: '/burndown/sprint'
+  defaults:
+    _entity_list: 'burndown_sprint'
+    _title: 'Sprints'
+  requirements:
+    _permission: 'administer sprint entities'
+
+entity.burndown_task.collection:
+  path: '/burndown/task'
+  defaults:
+    _entity_list: 'burndown_task'
+    _title: 'Tasks'
+  requirements:
+    _permission: 'administer task entities'

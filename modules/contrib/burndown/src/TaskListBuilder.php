@@ -18,7 +18,9 @@ class TaskListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['id'] = $this->t('Task ID');
-    $header['name'] = $this->t('Name');
+    $header['pid'] = $this->t('Project ID');
+    $header['name'] = $this->t('Task');
+    $header['status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
 
@@ -28,11 +30,13 @@ class TaskListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     /** @var \Drupal\burndown\Entity\Task $entity */
     $row['id'] = $entity->id();
-    $row['name'] = Link::createFromRoute(
+    $row['project_id'] = Link::createFromRoute(
       $entity->label(),
-      'entity.burndown_task.edit_form',
+      'entity.burndown_task.canonical',
       ['burndown_task' => $entity->id()]
     );
+    $row['name'] = $entity->getName();
+    $row['status'] = $entity->isCompleted() ? $this->t('Completed') : $entity->getSwimlane()->getName();
     return $row + parent::buildRow($entity);
   }
 

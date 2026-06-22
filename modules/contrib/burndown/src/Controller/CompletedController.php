@@ -176,6 +176,7 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
       $sprints = [];
       $sprint_tasks = [];
       $pre_sprint_tasks = [];
+      $rendered_sprints = [];
 
       // Get closed sprints.
       $completed_sprints = Sprint::getCompletedSprintsFor($code);
@@ -207,9 +208,11 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
           $lane_tasks = Task::getClosedPreSprintTasks($code, $lane->getName());
 
           // Check if tasks are actually completed.
-          foreach ($lane_tasks as $lane_task) {
-            if ($lane_task->isCompleted()) {
-              $pre_sprint_tasks[] = $lane_task;
+          if (!empty($lane_tasks)) {
+            foreach ($lane_tasks as $lane_task) {
+              if ($lane_task->isCompleted()) {
+                $pre_sprint_tasks[] = $lane_task;
+              }
             }
           }
         }
