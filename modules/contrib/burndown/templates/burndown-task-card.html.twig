@@ -28,16 +28,16 @@
     {% endif %}
 
     {% if user.hasPermission('send tasks to backlog') %}
-    {% if not data.sprint %}
-    <div class="action_link">
-      <a href="{{ url('<front>') }}burndown/api/board/send_to_backlog/{{ data.ticket_id }}"
-        title="Send task to backlog"
-        class="send_to_backlog"
-        data-ticket-id="{{ data.ticket_id }}">
-        Send Task to Backlog
-      </a>
-    </div>
-    {% endif %}
+      {% if not data.sprint %}
+      <div class="action_link">
+        <a href="{{ url('<front>') }}burndown/api/board/send_to_backlog/{{ data.ticket_id }}"
+          title="Send task to backlog"
+          class="send_to_backlog"
+          data-ticket-id="{{ data.ticket_id }}">
+          Send Task to Backlog
+        </a>
+      </div>
+      {% endif %}
     {% endif %}
 
   </div>
@@ -57,7 +57,7 @@
   <div class="card_footer">
 
       <div class="priority priority-{{ data.priority }}"></div>
-    
+
       {% if estimate is not empty %}
         <div class="estimate estimate-type-{{ data.estimate_type }} estimate-{{ data.estimate }} circle">{{ data.estimate }}</div>
       {% endif %}

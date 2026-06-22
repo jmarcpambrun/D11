@@ -38,7 +38,13 @@ class ProjectAccessControlHandler extends EntityAccessControlHandler {
           return AccessResult::allowed();
         }
 
-        return AccessResult::allowedIfHasPermission($account, 'view published project entities');
+        // Check for broad access or project specific access.
+        $allowed_perms = [
+          'view published project entities',
+          "{$entity->id()} view project",
+        ];
+
+        return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
 
       case 'update':
 

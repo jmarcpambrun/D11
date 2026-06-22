@@ -37,7 +37,7 @@ burndown.backlog:
     _title_callback: '\Drupal\burndown\Controller\BacklogController::getPageTitle'
     shortcode: ''
   requirements:
-    _permission: 'access burndown backlog'
+    _custom_access: '\Drupal\burndown\Controller\BacklogController::checkAccess'
   options:
     no_cache: 'TRUE'
 
@@ -90,7 +90,7 @@ burndown.board:
     _title_callback: '\Drupal\burndown\Controller\BoardController::getPageTitle'
     shortcode: ''
   requirements:
-    _permission: 'access burndown board'
+    _custom_access: '\Drupal\burndown\Controller\BoardController::checkAccess'
   options:
     no_cache: 'TRUE'
 
@@ -126,7 +126,7 @@ burndown.completed:
     _title_callback: '\Drupal\burndown\Controller\CompletedController::getPageTitle'
     shortcode: ''
   requirements:
-    _permission: 'access completed board'
+    _custom_access: '\Drupal\burndown\Controller\CompletedController::checkAccess'
   options:
     no_cache: 'TRUE'
 
@@ -222,7 +222,7 @@ burndown.task_remove_relationship:
   methods:  [GET]
   requirements:
     _permission: 'edit task entities'
-    
+
 burndown.task_add_multi_bundle:
   path: '/burndown/task_add_multi_bundle/{shortcode}'
   defaults:

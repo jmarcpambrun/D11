@@ -38,7 +38,15 @@ class TaskAccessControlHandler extends EntityAccessControlHandler {
           return AccessResult::allowed();
         }
 
-        return AccessResult::allowedIfHasPermission($account, 'view published task entities');
+        $project = $entity->getProject();
+        $project_id = (!empty($project)) ? $project->id() : 'no_project';
+        // Check for broad access or project specific access.
+        $allowed_perms = [
+          'view published task entities',
+          "{$project_id} view project",
+        ];
+
+        return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
 
       case 'update':
 

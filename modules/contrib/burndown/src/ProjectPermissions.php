@@ -45,6 +45,9 @@ class ProjectPermissions {
     $type_params = ['%type_name' => $type->label()];
 
     return [
+      "$type_id view project" => [
+        'title' => $this->t('View %type_name board, sprints, completed, backlog and tasks', $type_params),
+      ],
       "$type_id create entities" => [
         'title' => $this->t('Create new %type_name entities', $type_params),
       ],

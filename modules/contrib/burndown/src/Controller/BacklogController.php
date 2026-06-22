@@ -7,14 +7,17 @@ use Drupal\burndown\Entity\Sprint;
 use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Controller object for the Burndown Backlog.
@@ -28,13 +31,32 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
   protected $entityTypeManager;
 
   /**
-   * Constructs a BoardController object.
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * The user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
+   * Constructs a BacklogController object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entityTypeManager.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   A request stack.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
+    $this->requestStack = $request_stack;
+    $this->currentUser = $currentUser;
   }
 
   /**
@@ -42,7 +64,9 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('request_stack'),
+      $container->get('current_user')
     );
   }
 
@@ -62,6 +86,24 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
     }
 
     return $this->t('Backlog');
+  }
+
+  /**
+   * Allow access if have general backlog perm, or specific project view perm.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged-in user.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function checkAccess(AccountInterface $account): AccessResult {
+    $project_id = $this->getProjectId();
+    $allowed_perms = [
+      'access burndown backlog',
+      "{$project_id} view project",
+    ];
+    return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
   }
 
   /**
@@ -89,34 +131,42 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
     // Get return destination.
     $destination = '/burndown/backlog/' . $code;
 
-    // Determine what the link to add a new task should be (when there
-    // are multiple task bundles, we don't need to specify which one).
-    if (Task::numberOfTaskTypes() == 1) {
-      $add_link = '/burndown/task/add/task';
-      $add_link = Link::fromTextAndUrl(
-      $this->t('Add a Task'),
-      Url::fromUri('base:' . $add_link, [
-        'absolute' => TRUE,
-        'query' => [
-          'shortcode' => $code,
-          'destination' => $destination,
-        ],
-      ]));
+    $project_id = $this->getProjectId();
+    $add_task_perms = [
+      'add task entities',
+      "{$project_id} create entities"
+    ];
+    $access = AccessResult::allowedIfHasPermissions($this->currentUser, $add_task_perms, 'OR');
+    $add_link = [];
+    if ($access->isAllowed()) {
+      // Determine what the link to add a new task should be (when there
+      // are multiple task bundles, we don't need to specify which one).
+      if (Task::numberOfTaskTypes() == 1) {
+        $add_link = '/burndown/task/add/task';
+        $add_link = Link::fromTextAndUrl(
+        $this->t('Add a Task'),
+        Url::fromUri('base:' . $add_link, [
+          'absolute' => TRUE,
+          'query' => [
+            'shortcode' => $code,
+            'destination' => $destination,
+          ],
+        ]));
+      }
+      else {
+        $add_link = '/burndown/task_add_multi_bundle/' . $shortcode;
+        $add_link = Link::fromTextAndUrl(
+        $this->t('Add a Task'),
+        Url::fromUri('base:' . $add_link, [
+          'absolute' => TRUE,
+          'query' => [
+            'destination' => $destination,
+          ],
+        ]));
+      }
+      $add_link = $add_link->toRenderable();
+      $add_link['#attributes']['class'] = 'button button-action';
     }
-    else {
-      $add_link = '/burndown/task_add_multi_bundle/' . $shortcode;
-      $add_link = Link::fromTextAndUrl(
-      $this->t('Add a Task'),
-      Url::fromUri('base:' . $add_link, [
-        'absolute' => TRUE,
-        'query' => [
-          'destination' => $destination,
-        ],
-      ]));
-    }
-
-    $add_link = $add_link->toRenderable();
-    $add_link['#attributes']['class'] = 'button button-action';
 
     // Kanban boards.
     if ($board_type == 'kanban') {
@@ -451,6 +501,18 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
         'method' => 'POST',
       ]);
     }
+  }
+
+  /**
+   * Get the project ID for the current request.
+   *
+   * @return string
+   *  The project ID which is a string integer, or 'no_project' if not found.
+   */
+  public function getProjectId(): string {
+    $shortcode = $this->requestStack->getCurrentRequest()->attributes->get('shortcode');
+    $project = Project::loadFromShortcode($shortcode);
+    return (!empty($project)) ? $project->id() : 'no_project';
   }
 
 }

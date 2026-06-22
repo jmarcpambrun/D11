@@ -28,7 +28,15 @@ class SprintAccessControlHandler extends EntityAccessControlHandler {
           return AccessResult::allowedIfHasPermission($account, 'view unpublished sprint entities');
         }
 
-        return AccessResult::allowedIfHasPermission($account, 'view published sprint entities');
+        $project = $entity->getProject();
+        $project_id = (!empty($project)) ? $project->id() : 'no_project';
+        // Check for broad access or project specific access.
+        $allowed_perms = [
+          'view published sprint entities',
+          "{$project_id} view project",
+        ];
+
+        return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
 
       case 'update':
 

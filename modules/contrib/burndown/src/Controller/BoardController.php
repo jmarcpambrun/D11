@@ -7,9 +7,10 @@ use Drupal\burndown\Entity\Sprint;
 use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -50,7 +51,7 @@ class BoardController extends ControllerBase implements ContainerInjectionInterf
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   A request stack.
    * @param \Drupal\Core\Session\AccountInterface $currentUser
-   
+
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
@@ -67,6 +68,26 @@ class BoardController extends ControllerBase implements ContainerInjectionInterf
       $container->get('request_stack'),
       $container->get('current_user')
     );
+  }
+
+  /**
+   * Allow access if have general board perm, or specific project view perm.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged-in user.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function checkAccess(AccountInterface $account): AccessResult {
+    $shortcode = $this->requestStack->getCurrentRequest()->attributes->get('shortcode');
+    $project = Project::loadFromShortcode($shortcode);
+    $project_id = (!empty($project)) ? $project->id() : 'no_project';
+    $allowed_perms = [
+      'access burndown board',
+      "{$project_id} view project",
+    ];
+    return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
   }
 
   /**

@@ -1,5 +1,6 @@
 <div class="priority priority-{{ priority }}"></div>
 
+{# This should be wrapped in a permission checkbut there are several dynamic permissions that require the project id and that is not available. #}
 <div class="ticket_id">
   <a href="{{ url('<front>') }}burndown/task/{{ id }}/edit"
     class="use-ajax task_id{% if is_completed %} completed{% endif %}"
@@ -35,6 +36,7 @@
   <div class="estimate estimate-type-{{ estimate_type }} estimate-{{ estimate }} circle">{{ estimate }}</div>
 {% endif %}
 
+{% if user.hasPermission('edit task entities') %}
 <div class="action_link">
   <a href="{{ url('<front>') }}burndown/task/{{ id }}/edit?destination={{ url('<front>') }}burndown/{% if is_completed %}completed{% else %}backlog{% endif %}/{{ shortcode }}"
     title="Edit task"
@@ -44,28 +46,33 @@
     Edit task
   </a>
 </div>
+{% endif %}
 
 {% if backlog and not sprint %}
-<div class="action_link">
-  <a href="{{ url('<front>') }}burndown/api/backlog/send_to_board/{{ ticket_id }}"
-    title="Send task to the board"
-    class="send_to_board"
-    data-ticket-id="{{ ticket_id }}">
-      Send to Board
-  </a>
-</div>
+  {% if user.hasPermission('send tasks to board') %}
+  <div class="action_link">
+    <a href="{{ url('<front>') }}burndown/api/backlog/send_to_board/{{ ticket_id }}"
+      title="Send task to the board"
+      class="send_to_board"
+      data-ticket-id="{{ ticket_id }}">
+        Send to Board
+    </a>
+  </div>
+  {% endif %}
 {% endif %}
 
 {% if not is_completed %}
-  {% if backlog or board %}
-  <div class="action_link">
-    <a href="{{ url('<front>') }}burndown/close_task/{{ ticket_id }}/backlog"
-      title="Close the task (this will open a modal form)"
-      class="use-ajax close_task"
-      data-dialog-type="modal"
-      data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
-      Close Task
-    </a>
-  </div>
+  {% if user.hasPermission('burndown close task') %}
+    {% if backlog or board %}
+    <div class="action_link">
+      <a href="{{ url('<front>') }}burndown/close_task/{{ ticket_id }}/backlog"
+        title="Close the task (this will open a modal form)"
+        class="use-ajax close_task"
+        data-dialog-type="modal"
+        data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
+        Close Task
+      </a>
+    </div>
+    {% endif %}
   {% endif %}
 {% endif %}

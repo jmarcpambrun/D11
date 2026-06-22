@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c639739e136efe573438ff3a18147a10",
+    "content-hash": "d46ac5b823c1f91efb5a1f732464f1ff",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3341,17 +3341,17 @@
         },
         {
             "name": "drupal/burndown",
-            "version": "1.0.58",
+            "version": "1.0.59",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/burndown.git",
-                "reference": "1.0.58"
+                "reference": "1.0.59"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.58.zip",
-                "reference": "1.0.58",
-                "shasum": "f347d3baa6f39aeb815f59486deafedf8b4a420b"
+                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.59.zip",
+                "reference": "1.0.59",
+                "shasum": "5ba2def81319b3f56d0cb54945bb059e233f9043"
             },
             "require": {
                 "drupal/core": "^9 || ^10 || ^11"
@@ -3359,8 +3359,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.58",
-                    "datestamp": "1781610719",
+                    "version": "1.0.59",
+                    "datestamp": "1782009294",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3400,6 +3400,10 @@
                 {
                     "name": "shailja179",
                     "homepage": "https://www.drupal.org/user/3538612"
+                },
+                {
+                    "name": "swirt",
+                    "homepage": "https://www.drupal.org/user/138230"
                 }
             ],
             "description": "Burndown Project Management",

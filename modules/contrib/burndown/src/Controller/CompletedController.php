@@ -7,10 +7,13 @@ use Drupal\burndown\Entity\Sprint;
 use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Controller for the Burndown module's Completed task listing.
@@ -23,14 +26,33 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
    */
   protected $entityTypeManager;
 
+
   /**
-   * Constructs a BoardController object.
+   * The request stack.
    *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * The user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
+   * Constructs a CompletedController object.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entityTypeManager.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   A request stack.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
+    $this->requestStack = $request_stack;
+    $this->currentUser = $currentUser;
   }
 
   /**
@@ -38,7 +60,9 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('request_stack'),
+      $container->get('current_user')
     );
   }
 
@@ -58,6 +82,26 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
     }
 
     return $this->t('Completed Tasks');
+  }
+
+  /**
+   * Allow access if have general completed perm, or specific project view perm.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged-in user.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function checkAccess(AccountInterface $account): AccessResult {
+    $shortcode = $this->requestStack->getCurrentRequest()->attributes->get('shortcode');
+    $project = Project::loadFromShortcode($shortcode);
+    $project_id = (!empty($project)) ? $project->id() : 'no_project';
+    $allowed_perms = [
+      'access completed board',
+      "{$project_id} view project",
+    ];
+    return AccessResult::allowedIfHasPermissions($account, $allowed_perms, 'OR');
   }
 
   /**
