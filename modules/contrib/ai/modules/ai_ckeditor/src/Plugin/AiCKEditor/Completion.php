@@ -47,18 +47,8 @@ final class Completion extends AiCKEditorPluginBase {
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
     $prompt_complete = $prompts_config->get('prompts.complete');
     $form['prompt'] = [
-      '#type' => 'ai_prompt',
+      '#type' => 'textarea',
       '#title' => $this->t('Completion pre prompt'),
-      '#prompt_types' => ['ai_ckeditor_complete'],
-      '#parents' => [
-        'editor',
-        'settings',
-        'plugins',
-        'ai_ckeditor_ai',
-        'plugins',
-        'ai_ckeditor_completion',
-        'prompt',
-      ],
       '#default_value' => $prompt_complete ?? '',
       '#description' => $this->t('This prompt will be prepended before the user prompt. This field may be left empty too.'),
       // This property will land into core soon, see
@@ -80,11 +70,6 @@ final class Completion extends AiCKEditorPluginBase {
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $newPrompt = $form_state->getValue('prompt');
-    // @todo if no prompt is selected, this returns an array instead of an
-    // empty string. Figure out why.
-    if (is_array($newPrompt)) {
-      $newPrompt = '';
-    }
     $prompts_config = $this->getConfigFactory()->getEditable('ai_ckeditor.settings');
     $prompts_config->set('prompts.complete', $newPrompt)->save();
   }
@@ -100,7 +85,7 @@ final class Completion extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
-    $form = parent::buildCkEditorModalForm($form, $form_state, $settings);
+    $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['text_to_submit'] = [
       '#type' => 'textarea',
@@ -121,19 +106,16 @@ final class Completion extends AiCKEditorPluginBase {
     $response = new AjaxResponse();
     $values = $form_state->getValues();
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
-    $promptId = $prompts_config->get('prompts.complete');
-    if (!empty($promptId)) {
-      $promptText = $this->getConfigFactory()->get('ai.ai_prompt.' . $promptId)?->get('prompt') ?? '';
-      $promptText .= PHP_EOL . $values['plugin_config']['text_to_submit'];
+    $prompt_complete = $prompts_config->get('prompts.complete');
+    if (!empty($prompt_complete)) {
+      $prompt = $prompt_complete . PHP_EOL . $values['plugin_config']['text_to_submit'];
     }
     else {
-      $promptText = $values['plugin_config']['text_to_submit'];
+      $prompt = $values['plugin_config']['text_to_submit'];
     }
-    assert(is_array($this->pluginDefinition));
-    $response->addCommand(new AiRequestCommand($promptText, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+    $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
 
     return $response;
   }
 
 }
-

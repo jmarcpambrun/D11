@@ -386,9 +386,9 @@
             'dev_requirement' => false,
         ),
         'drupal/ai' => array(
-            'pretty_version' => '1.4.2',
-            'version' => '1.4.2.0',
-            'reference' => '1.4.2',
+            'pretty_version' => '1.4.3',
+            'version' => '1.4.3.0',
+            'reference' => '1.4.3',
             'type' => 'drupal-module',
             'install_path' => __DIR__ . '/../../modules/contrib/ai',
             'aliases' => array(),
