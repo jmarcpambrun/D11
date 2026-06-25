@@ -7,7 +7,6 @@ import {
   routeAllParallelEdges,
   PARALLEL_EDGE_FAN_STEP,
   BYPASS_EDGE_CLEARANCE,
-  CONDITION_CARD_OVERHANG,
 } from '../parallelEdgeRouter';
 import type { StoreEdge as Edge, StoreNode as Node } from '../../types/settings';
 
@@ -20,30 +19,6 @@ function makeEdge(id: string, source: string, target: string, controlOffset?: { 
     target,
     type: 'default',
     data: controlOffset ? { controlOffset } : {},
-  } as Edge;
-}
-
-/**
- * Build an edge that carries a condition. The router uses `getEdgeType`
- * which checks for `data.condition`, `data.conditionLabel`, or a non-empty
- * `data.conditionConfiguration`.
- */
-function makeConditionEdge(
-  id: string,
-  source: string,
-  target: string,
-  controlOffset?: { x: number; y: number },
-): Edge {
-  return {
-    id,
-    source,
-    target,
-    type: 'condition',
-    data: {
-      ...(controlOffset ? { controlOffset } : {}),
-      condition: 'eca_some_condition',
-      conditionLabel: 'My condition',
-    },
   } as Edge;
 }
 
@@ -302,113 +277,6 @@ describe('routeParallelEdge', () => {
     });
   });
 
-  describe('direct parallel — condition-aware shift', () => {
-    it('pushes a condition-bearing sibling further out than its plain peer', () => {
-      const nodes = [makeNode('A', 0, 0), makeNode('B', 0, 200)];
-      // Existing edge carries a condition card.
-      const existing = makeConditionEdge('e1', 'A', 'B');
-      // New edge has no condition.
-      const newEdge = makeEdge('e2', 'A', 'B');
-
-      const result = routeParallelEdge({
-        newEdge,
-        edges: [existing, newEdge],
-        nodes,
-      });
-
-      expect(result.routing).toBe('fan-out');
-      const e1Update = result.updates.find((u) => u.edgeId === 'e1');
-      const e2Update = result.updates.find((u) => u.edgeId === 'e2');
-      expect(e1Update).toBeDefined();
-      expect(e2Update).toBeDefined();
-      // The condition-bearing sibling sits at base −step/2 plus the overhang.
-      expect(e1Update!.controlOffset.x).toBe(
-        -PARALLEL_EDGE_FAN_STEP / 2 - CONDITION_CARD_OVERHANG,
-      );
-      // The plain sibling sits at the symmetric base position.
-      expect(e2Update!.controlOffset.x).toBe(PARALLEL_EDGE_FAN_STEP / 2);
-    });
-
-    it('pushes both siblings further when both carry conditions', () => {
-      const nodes = [makeNode('A', 0, 0), makeNode('B', 0, 200)];
-      const existing = makeConditionEdge('e1', 'A', 'B');
-      // The new edge is also a condition edge (rare but possible via API).
-      const newEdge = makeConditionEdge('e2', 'A', 'B');
-
-      const result = routeParallelEdge({
-        newEdge,
-        edges: [existing, newEdge],
-        nodes,
-      });
-
-      expect(result.routing).toBe('fan-out');
-      const e1Update = result.updates.find((u) => u.edgeId === 'e1');
-      const e2Update = result.updates.find((u) => u.edgeId === 'e2');
-      expect(e1Update!.controlOffset.x).toBe(
-        -PARALLEL_EDGE_FAN_STEP / 2 - CONDITION_CARD_OVERHANG,
-      );
-      expect(e2Update!.controlOffset.x).toBe(
-        PARALLEL_EDGE_FAN_STEP / 2 + CONDITION_CARD_OVERHANG,
-      );
-    });
-
-    it('does not push a plain sibling when only the other has a condition', () => {
-      const nodes = [makeNode('A', 0, 0), makeNode('B', 0, 200)];
-      // Existing plain edge.
-      const existing = makeEdge('e1', 'A', 'B');
-      // New condition edge.
-      const newEdge = makeConditionEdge('e2', 'A', 'B');
-
-      const result = routeParallelEdge({
-        newEdge,
-        edges: [existing, newEdge],
-        nodes,
-      });
-
-      expect(result.routing).toBe('fan-out');
-      const e1Update = result.updates.find((u) => u.edgeId === 'e1');
-      const e2Update = result.updates.find((u) => u.edgeId === 'e2');
-      // Plain sibling stays at the symmetric base position.
-      expect(e1Update!.controlOffset.x).toBe(-PARALLEL_EDGE_FAN_STEP / 2);
-      // Condition sibling pushed further on its (positive) side.
-      expect(e2Update!.controlOffset.x).toBe(
-        PARALLEL_EDGE_FAN_STEP / 2 + CONDITION_CARD_OVERHANG,
-      );
-    });
-
-    it('does not push the centered middle edge in an odd-count fan-out', () => {
-      // Three siblings: the middle one sits at offset 0 (no card collision
-      // with adjacent bezier curves on either side), so even if it carries
-      // a condition we leave it centered.
-      const nodes = [makeNode('A', 0, 0), makeNode('B', 0, 200)];
-      // Two existing plain edges fail the rebalance precondition, so use
-      // an empty starting state for this test.
-      const e1 = makeEdge('e1', 'A', 'B');
-      const e2 = makeConditionEdge('e2', 'A', 'B');
-      const newEdge = makeEdge('e3', 'A', 'B');
-
-      const result = routeParallelEdge({
-        newEdge,
-        edges: [e1, e2, newEdge],
-        nodes,
-      });
-
-      // All three start with zero offset, so canRebalance is true.
-      expect(result.routing).toBe('fan-out');
-      const updates = new Map(
-        result.updates.map((u) => [u.edgeId, u.controlOffset.x]),
-      );
-      // Three siblings at base [-step, 0, +step] = [-80, 0, +80].
-      // e1: plain, base -step → -80 (update emitted)
-      // e2: condition, base 0 → still 0; matches current zero, so the
-      //     router emits no update for it (idempotence rule).
-      // e3: plain, base +step → +80 (update emitted)
-      expect(updates.get('e1')).toBe(-PARALLEL_EDGE_FAN_STEP);
-      expect(updates.has('e2')).toBe(false);
-      expect(updates.get('e3')).toBe(PARALLEL_EDGE_FAN_STEP);
-    });
-  });
-
   describe('bypass parallel — chain routing', () => {
     it('curves to the right of a vertical chain by default', () => {
       // A → M → B, all in a single vertical column at x=0.
@@ -652,41 +520,6 @@ describe('routeAllParallelEdges', () => {
     const e2Offset = result.find(e => e.id === 'e2')!.data?.controlOffset;
     expect(e1Offset).toEqual({ x: -PARALLEL_EDGE_FAN_STEP / 2, y: 0 });
     expect(e2Offset).toEqual({ x: PARALLEL_EDGE_FAN_STEP / 2, y: 0 });
-  });
-
-  it('applies condition card overhang to condition-bearing edges', () => {
-    const edges = [
-      makeConditionEdge('e1', 'A', 'B'),
-      makeConditionEdge('e2', 'A', 'B'),
-    ];
-    const result = routeAllParallelEdges(edges);
-    const e1Offset = result.find(e => e.id === 'e1')!.data?.controlOffset;
-    const e2Offset = result.find(e => e.id === 'e2')!.data?.controlOffset;
-    expect(e1Offset).toEqual({
-      x: -PARALLEL_EDGE_FAN_STEP / 2 - CONDITION_CARD_OVERHANG,
-      y: 0,
-    });
-    expect(e2Offset).toEqual({
-      x: PARALLEL_EDGE_FAN_STEP / 2 + CONDITION_CARD_OVERHANG,
-      y: 0,
-    });
-  });
-
-  it('handles mixed condition and plain parallel edges', () => {
-    const edges = [
-      makeEdge('e1', 'A', 'B'),
-      makeConditionEdge('e2', 'A', 'B'),
-    ];
-    const result = routeAllParallelEdges(edges);
-    const e1Offset = result.find(e => e.id === 'e1')!.data?.controlOffset;
-    const e2Offset = result.find(e => e.id === 'e2')!.data?.controlOffset;
-    // Plain edge gets base offset only.
-    expect(e1Offset).toEqual({ x: -PARALLEL_EDGE_FAN_STEP / 2, y: 0 });
-    // Condition edge gets base offset + overhang.
-    expect(e2Offset).toEqual({
-      x: PARALLEL_EDGE_FAN_STEP / 2 + CONDITION_CARD_OVERHANG,
-      y: 0,
-    });
   });
 
   it('routes multiple independent parallel groups', () => {

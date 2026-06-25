@@ -61,6 +61,18 @@ export const EDGE_STYLING = {
   STROKE_WIDTH_TRANSITION: 6,
   CONTROL_OFFSET: 40, // Offset for smoother curves
   BORDER_RADIUS: 20, // Rounded corners for step edges
+  /**
+   * Width (px) of the transparent edge-interaction hit path (issue #3585553
+   * follow-on UX). React Flow's <BaseEdge> renders an invisible stroke of
+   * `interactionWidth` for click/hover detection; DefaultEdge hand-rolls its
+   * path, so it renders this hit path itself. 30px is a generous target that
+   * makes edges easy to select when clicking NEAR (not exactly on) the curve,
+   * while staying narrow enough not to overlap neighboring edges in dense
+   * graphs (node spacing is 250px x / 84px y; parallel edges are offset by
+   * CONTROL_OFFSET=40px, comfortably more than 30/2=15px of half-width either
+   * side). It is the default when no `interactionWidth` prop is supplied.
+   */
+  INTERACTION_WIDTH: 30,
   /** Vertical offset for quick-add buttons above/below a condition card.
    *  Derived from: half card height (28) + half button (11) + gap (6) = 45. */
   CONDITION_BUTTON_OFFSET: 45,
@@ -74,8 +86,7 @@ export const EDGE_STYLING = {
 export const LAYOUT = {
   GRID_SIZE: 20,
   NODE_SPACING_X: 250,
-  NODE_SPACING_Y: 84, // Compact gap between rows (no condition card)
-  CONDITION_EXTRA_SPACING: 90, // Extra vertical space added when a condition card is present on an edge
+  NODE_SPACING_Y: 84, // Compact gap between rows
   AUTO_LAYOUT_PADDING: 50,
   PASTE_OFFSET: 100, // Offset when pasting nodes
   DEFAULT_PASTE_OFFSET: 50,

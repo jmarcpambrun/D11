@@ -4,11 +4,16 @@
  */
 
 import { useCallback, useRef } from 'react';
+import type { OnConnectStartParams } from 'reactflow';
 import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
-import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
+import type { StoreNode as Node, StoreEdge as Edge, ModelConstraints } from '../types/settings';
 import { generateUniqueEdgeId } from '../utils/clipboardUtils';
 import { routeParallelEdge } from '../utils/parallelEdgeRouter';
+import { computeConditionReconnectEdges } from '../utils/conditionReconnect';
+import { isConditionNode } from '../utils/incrementalLayout';
+import { isValidConnection as isValidConnectionShared } from '../utils/connectionValidation';
+import { hitTestDropTarget, DESTINATION_HANDLE_ID } from './useEndpointDrag';
 import { t } from '../utils/translation';
 
 interface UseFlowEventHandlersProps {
@@ -27,6 +32,13 @@ interface UseFlowEventHandlersProps {
   announce?: (text: string) => void;
   /** Callback to save history before making changes */
   saveHistory?: () => void;
+  /**
+   * Successor-cardinality / wiring constraints. Used to validate a NEW edge
+   * created by dropping onto a node BODY (issue #3585553 follow-on UX), with
+   * the SAME shared rules as the canvas `isValidConnection` prop and the
+   * endpoint-reconnect commit path — so all three can never diverge.
+   */
+  modelConstraints?: ModelConstraints;
 }
 
 export function useFlowEventHandlers({
@@ -40,15 +52,16 @@ export function useFlowEventHandlers({
   currentReplayStep,
   autoSyncToReplay,
   announce,
-  saveHistory
+  saveHistory,
+  modelConstraints
 }: UseFlowEventHandlersProps) {
   
   // Store state
   const nodes = useGraphStore(state => state.nodes);
   const edges = useGraphStore(state => state.edges);
+  const setNodes = useGraphStore(state => state.setNodes);
   const setEdges = useGraphStore(state => state.setEdges);
   const removeNode = useGraphStore(state => state.removeNode);
-  const removeEdge = useGraphStore(state => state.removeEdge);
   const applyNodeChangesToStore = useGraphStore(state => state.applyNodeChanges);
   const applyEdgeChangesToStore = useGraphStore(state => state.applyEdgeChanges);
   const setSelectedNode = useSelectionStore(state => state.setSelectedNode);
@@ -67,6 +80,21 @@ export function useFlowEventHandlers({
   // whether the node actually moved.  ReactFlow fires onNodeDragStop even
   // on simple clicks (zero-movement "drags"), so we need this comparison.
   const dragStartPositions = useRef<Record<string, { x: number; y: number }>>({});
+
+  // New-edge "drop onto node body" support (issue #3585553 follow-on UX).
+  //
+  // React Flow fires `onConnect` ONLY when a new-edge drag is released over a
+  // valid HANDLE; it does nothing when released over a node's body (off-handle)
+  // or empty canvas. To match the reconnect drop-onto-node behavior, we:
+  //  - record the gesture's origin in `onConnectStart` (connectStartRef),
+  //  - mark `connectMadeRef` true inside `onConnect` (a handle WAS hit), and
+  //  - in `onConnectEnd` (which fires on ANY release), if `onConnect` did NOT
+  //    fire, hit-test the node under the pointer and create the edge to its
+  //    target/input handle — using the SAME validation as onConnect.
+  // The flags live in refs (not state) so they survive across the synchronous
+  // onConnectStart → [onConnect] → onConnectEnd sequence without re-rendering.
+  const connectStartRef = useRef<{ nodeId: string; handleId: string | null } | null>(null);
+  const connectMadeRef = useRef(false);
 
   // ReactFlow change handlers
   const onNodesChange = useCallback((changes: any[]) => {
@@ -143,51 +171,89 @@ export function useFlowEventHandlers({
     handleCanvasEdgeClick(edge);
   }, [handleCanvasEdgeClick]);
 
-  // Handle individual node deletion (from node component)
-  // Delegates to useGraphStore.removeNode which handles node removal
-  // and connected edge removal.  Selection cleanup happens automatically
-  // via useSelectionStore's subscription to graph-state changes.
+  // Handle individual node deletion (from node component).
+  //
+  // When the deleted node is a condition node (issue #3589093) with exactly
+  // one inbound and one outbound edge, we must reconnect its predecessor
+  // directly to its successor so the downstream branch is not orphaned —
+  // mirroring pluginApi.removeCondition.  For all other nodes we delegate to
+  // useGraphStore.removeNode (drops the node and its connected edges).
+  // Selection cleanup happens automatically via useSelectionStore's
+  // subscription to graph-state changes.
   const onDeleteNode = useCallback((nodeId: string) => {
-    removeNode(nodeId);
+    const reconnectEdges = computeConditionReconnectEdges(
+      nodes,
+      edges,
+      new Set([nodeId]),
+    );
+    if (reconnectEdges.length > 0) {
+      setNodes(prev => prev.filter(n => n.id !== nodeId));
+      setEdges(prev => [
+        ...prev.filter(e => e.source !== nodeId && e.target !== nodeId),
+        ...reconnectEdges,
+      ]);
+    } else {
+      removeNode(nodeId);
+    }
     setHasUnsavedChanges(true);
     if (announce) {
       announce(t('Element deleted.'));
     }
-  }, [removeNode, setHasUnsavedChanges, announce]);
+  }, [nodes, edges, setNodes, setEdges, removeNode, setHasUnsavedChanges, announce]);
 
-  // Handle delete selected elements
-  // Delegates to useGraphStore.removeNode/removeEdge for graph mutations.
-  // Selection cleanup happens automatically via useSelectionStore's
-  // subscription to graph-state changes.
+  // Handle individual edge deletion (from the edge's trash affordance).
+  //
+  // Deleting an edge is simply removing it — unlike onDeleteNode there is NO
+  // condition-reconnect logic (that is node-specific).  Mirrors the keyboard
+  // delete path's history/dirty/announce behavior so undo works identically.
+  const onDeleteEdge = useCallback((edgeId: string) => {
+    if (saveHistory) saveHistory();
+    setEdges(prev => prev.filter(e => e.id !== edgeId));
+    setHasUnsavedChanges(true);
+    if (announce) {
+      announce(t('Connection deleted.'));
+    }
+  }, [setEdges, setHasUnsavedChanges, announce, saveHistory]);
+
+  // Handle delete selected elements.
+  //
+  // Condition nodes (issue #3589093) being deleted are reconnected
+  // predecessor → successor so the graph stays connected — but only when
+  // both endpoints survive the deletion (computeConditionReconnectEdges
+  // skips reconnects whose predecessor or successor is also being deleted,
+  // avoiding dangling edges).  All removals are applied in a single
+  // setNodes/setEdges pass.  Selection cleanup happens automatically via
+  // useSelectionStore's subscription to graph-state changes.
   const handleDeleteSelected = useCallback(() => {
     const nodesToDelete = nodes.filter(node => node.selected);
     const edgesToDelete = edges.filter(edge => edge.selected);
-    
+
     if (nodesToDelete.length === 0 && edgesToDelete.length === 0) return;
 
     if (saveHistory) saveHistory();
 
-    // Collect edge IDs that will be removed as a side-effect of node removal
-    // so we can avoid double-removing them below.
     const nodeIdsToDelete = new Set(nodesToDelete.map(n => n.id));
-    const implicitEdgeIds = new Set(
-      edges
-        .filter(e => nodeIdsToDelete.has(e.source) || nodeIdsToDelete.has(e.target))
-        .map(e => e.id)
+    const edgeIdsToDelete = new Set(edgesToDelete.map(e => e.id));
+
+    // Reconnect predecessor → successor for any well-formed condition node
+    // being deleted (skips dangling cases internally).
+    const reconnectEdges = computeConditionReconnectEdges(
+      nodes,
+      edges,
+      nodeIdsToDelete,
     );
-    
-    // Remove nodes (each call also removes connected edges + cleans selection)
-    for (const node of nodesToDelete) {
-      removeNode(node.id);
-    }
-    
-    // Remove explicitly selected edges that weren't already removed by node deletion
-    for (const edge of edgesToDelete) {
-      if (!implicitEdgeIds.has(edge.id)) {
-        removeEdge(edge.id);
-      }
-    }
-    
+
+    setNodes(prev => prev.filter(n => !nodeIdsToDelete.has(n.id)));
+    setEdges(prev => [
+      ...prev.filter(
+        e =>
+          !edgeIdsToDelete.has(e.id) &&
+          !nodeIdsToDelete.has(e.source) &&
+          !nodeIdsToDelete.has(e.target),
+      ),
+      ...reconnectEdges,
+    ]);
+
     setHasUnsavedChanges(true);
 
     // Announce deletion count to screen readers
@@ -198,8 +264,8 @@ export function useFlowEventHandlers({
   }, [
     nodes,
     edges,
-    removeNode,
-    removeEdge,
+    setNodes,
+    setEdges,
     setHasUnsavedChanges,
     announce,
     saveHistory
@@ -214,14 +280,62 @@ export function useFlowEventHandlers({
   // sideways `controlOffset` for the new edge — and, when appropriate, to
   // rebalance offsets across the sibling group — so that all connections
   // remain visually distinguishable without moving any nodes.
-  const onConnect = useCallback((connection: { source: string | null; target: string | null; sourceHandle?: string | null; targetHandle?: string | null }) => {
-    if (!connection.source || !connection.target) return;
+  // Core edge-creation routine shared by BOTH the handle-drop path (onConnect)
+  // and the node-body-drop path (onConnectEnd → resolved node). Validates with
+  // the SAME shared rules, then creates the edge with parallel-edge routing.
+  // Returns true when an edge was created, false when the connection was
+  // rejected (invalid / duplicate-guarded).
+  const createNewEdge = useCallback((connection: {
+    source: string | null;
+    target: string | null;
+    sourceHandle?: string | null;
+    targetHandle?: string | null;
+  }): boolean => {
+    if (!connection.source || !connection.target) return false;
+
+    // Shared wiring validation (condition→condition block, condition 1-outbound,
+    // successor cardinality). The SAME function backs the canvas
+    // isValidConnection prop and the reconnect commit path, so a new edge
+    // dropped on a node body can never bypass a rule the handle path enforces.
+    if (!isValidConnectionShared({
+      connection: {
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle ?? null,
+        targetHandle: connection.targetHandle ?? null,
+      },
+      nodes,
+      edges,
+      modelConstraints,
+    })) {
+      return false;
+    }
+
+    // Defensive 1-outbound guard for condition nodes (issue #3589093).
+    // isValidConnectionShared already enforces this, but keep the explicit
+    // guard so the rule is obvious at the creation site.
+    const connectionSource = connection.source;
+    const sourceNode = nodes.find(n => n.id === connectionSource);
+    if (isConditionNode(sourceNode)) {
+      const sourceOutgoing = edges.filter(e => e.source === connectionSource).length;
+      if (sourceOutgoing >= 1) {
+        return false;
+      }
+    }
+
     if (saveHistory) saveHistory();
     const id = generateUniqueEdgeId();
     const newEdge: Edge = {
       id,
       source: connection.source,
       target: connection.target,
+      // Persist the canonical handles so a stored edge always carries them
+      // (each node exposes one source `output` and one target `input` handle).
+      // The handle-drop path passes them through React Flow; the node-body
+      // drop path infers them — either way the saved edge is consistent and
+      // round-trips identically to model-loaded edges.
+      sourceHandle: connection.sourceHandle ?? 'output',
+      targetHandle: connection.targetHandle ?? 'input',
       type: 'default',
       data: {},
     };
@@ -265,7 +379,72 @@ export function useFlowEventHandlers({
       return [...updated, newEdge];
     });
     setHasUnsavedChanges(true);
-  }, [edges, nodes, setEdges, setHasUnsavedChanges, saveHistory]);
+    return true;
+  }, [edges, nodes, modelConstraints, setEdges, setHasUnsavedChanges, saveHistory]);
+
+  const onConnect = useCallback((connection: { source: string | null; target: string | null; sourceHandle?: string | null; targetHandle?: string | null }) => {
+    // A valid HANDLE was hit — record it so onConnectEnd does NOT also try to
+    // create an edge from the node-body fallback (avoids a duplicate edge).
+    connectMadeRef.current = true;
+    createNewEdge(connection);
+  }, [createNewEdge]);
+
+  // New-edge gesture start: remember the originating node + handle so the
+  // node-body fallback in onConnectEnd knows the source of the prospective
+  // edge. Reset the "handle was hit" flag for this fresh gesture.
+  const onConnectStart = useCallback((
+    _event: React.MouseEvent | React.TouchEvent,
+    params: OnConnectStartParams,
+  ) => {
+    connectMadeRef.current = false;
+    connectStartRef.current = params.nodeId
+      ? { nodeId: params.nodeId, handleId: params.handleId ?? null }
+      : null;
+  }, []);
+
+  // New-edge gesture end: fires on ANY release. If onConnect already created
+  // the edge (a handle was hit), do nothing. Otherwise resolve the NODE under
+  // the pointer and create the edge to its target/input handle — matching the
+  // reconnect "drop onto node body" behavior (issue #3585553 follow-on UX).
+  // Snap-back (no edge) when released over empty canvas or on an invalid target.
+  const onConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
+    const start = connectStartRef.current;
+    connectStartRef.current = null;
+    // Handle was hit → onConnect already handled it; nothing to do here.
+    if (connectMadeRef.current) {
+      connectMadeRef.current = false;
+      return;
+    }
+    if (!start) return;
+
+    // Resolve the client coordinates of the release (mouse or touch).
+    const point = 'changedTouches' in event && event.changedTouches.length > 0
+      ? event.changedTouches[0]
+      : (event as MouseEvent);
+    const clientX = point.clientX;
+    const clientY = point.clientY;
+
+    // A new edge's destination is always the target end, so hit-test as the
+    // 'target' endpoint — reusing the SAME node-level DOM hit-test (and its
+    // grip-overlay hardening) as reconnect. Returns the node under the cursor
+    // with its canonical input handle inferred.
+    const drop = hitTestDropTarget(clientX, clientY, 'target');
+    // Released over empty canvas / no node → snap back (no edge).
+    if (!drop) return;
+    // No self-loops: dropping back on the source node creates nothing.
+    if (drop.nodeId === start.nodeId) return;
+
+    const created = createNewEdge({
+      source: start.nodeId,
+      sourceHandle: start.handleId ?? DESTINATION_HANDLE_ID.source,
+      target: drop.nodeId,
+      targetHandle: drop.handleId ?? DESTINATION_HANDLE_ID.target,
+    });
+
+    if (created && announce) {
+      announce(t('Connection created.'));
+    }
+  }, [createNewEdge, announce]);
 
   // Handle canvas pane clicks (deselect all)
   const onPaneClick = useCallback(() => {
@@ -299,8 +478,11 @@ export function useFlowEventHandlers({
     onNodeClick,
     onEdgeClick,
     onDeleteNode,
+    onDeleteEdge,
     handleDeleteSelected,
     onConnect,
+    onConnectStart,
+    onConnectEnd,
     onPaneClick,
     onNodeDragStart,
     onNodeDragStop,

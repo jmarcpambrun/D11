@@ -118,15 +118,12 @@
   --modeler-color-warning-darkest: #92400e; /* amber-800: annotation text */
   --modeler-color-warning-light: #fef3c7;   /* amber-100: annotation backgrounds */
   --modeler-color-warning-border: #fcd34d;  /* amber-300: favorite borders */
-  --modeler-color-warning-subtle: #fbbf24;  /* amber-400: subtle replace target highlight */
 
   /* --- Success / Green --- */
   --modeler-color-success: #10b981;         /* emerald-500: replay add-successor, status */
   --modeler-color-success-dark: #065f46;    /* emerald-800: status message text */
   --modeler-color-success-light: #d1fae5;   /* emerald-100: status message bg */
-  --modeler-color-success-drop: #22c55e;    /* green-500: edge drop target */
-  --modeler-color-success-drop-hover: #16a34a; /* green-600: hovered drop target */
-  --modeler-color-success-subtle: #86efac;  /* green-300: subtle drop target highlight */
+  --modeler-color-success-drop-hover: #16a34a; /* green-600: condition replay highlight */
   --modeler-color-success-text: #047857;    /* emerald-700: data string color */
 
   /* --- Component Type Colors (Material palette) --- */
@@ -313,15 +310,12 @@
   --modeler-color-warning-darkest: #fcd34d;  /* amber-300: readable on dark */
   --modeler-color-warning-light: #3b2f0a;    /* dark amber bg */
   --modeler-color-warning-border: #92400e;   /* amber-800: muted border */
-  --modeler-color-warning-subtle: #d97706;   /* amber-600 */
 
   /* --- Success / Green --- */
   --modeler-color-success: #34d399;          /* emerald-400 */
   --modeler-color-success-dark: #6ee7b7;     /* emerald-300: readable on dark */
   --modeler-color-success-light: #0a3b2a;    /* dark green bg */
-  --modeler-color-success-drop: #22c55e;     /* green-500: unchanged */
   --modeler-color-success-drop-hover: #16a34a;
-  --modeler-color-success-subtle: #166534;   /* green-800: subtle on dark */
   --modeler-color-success-text: #6ee7b7;     /* emerald-300 */
 
   /* --- Component Type Colors --- */
@@ -1267,6 +1261,23 @@ g.replay-transition-highlighted path {
   box-shadow: 0 0 0 1px var(--modeler-color-border-light);
 }
 
+/* Disabled source handle (issue #3589093).
+   ReactFlow's base CSS sets `.react-flow__handle { pointer-events: none }`
+   and only re-enables it for connectable handles via `.connectionindicator`.
+   A non-connectable handle therefore never receives hover events, so its
+   native `title` tooltip can never appear. Re-enable pointer events here so
+   the explanatory tooltip shows on hover while the handle stays blocked.
+   The selector is qualified with `.react-flow__handle` (specificity 0,2,0)
+   to reliably beat ReactFlow's `.react-flow__handle` rule (0,1,0) regardless
+   of stylesheet source order — modeler.css is imported BEFORE
+   reactflow/dist/style.css, so equal specificity would otherwise lose.
+   Connection initiation stays disabled via the React prop isConnectable={false},
+   which is independent of pointer-events. */
+.react-flow__handle.node-handle--disabled {
+  pointer-events: all;
+  cursor: not-allowed;
+}
+
 /* Node footer — annotation indicator (left) and trash (right) */
 .node-footer {
   display: flex;
@@ -1386,6 +1397,82 @@ g.replay-transition-highlighted path {
 .quick-add-condition-button svg {
   width: 14px;
   height: 14px;
+}
+
+/* Edge action cluster — horizontal group holding the trash (left) and the
+   quick-add plus (right) at the edge midpoint.  The parent
+   .edge-quick-add-wrapper already centers the cluster on the midpoint via its
+   translate transform, so the cluster only needs to lay its buttons out. */
+.edge-action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Edge delete (trash) button — same 22x22 circular pill geometry as the
+   quick-add plus, neutral/blue by default with a white icon.  Revealed only on
+   wrapper hover or edge selection; turns danger-red on hover/focus/active
+   (mirrors the node trash danger signal in .node-footer-delete:hover). */
+.edge-delete-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--modeler-radius-full);
+  background: var(--modeler-color-primary);
+  color: white;
+  border: 2px solid white;
+  cursor: pointer;
+  box-shadow: var(--modeler-shadow-md);
+  opacity: 0;
+  transition: opacity var(--modeler-duration-default), transform var(--modeler-duration-default), background var(--modeler-duration-default), color var(--modeler-duration-default);
+  z-index: 15;
+}
+
+/* Enlarge the interactive/focusable hit target to >= 24x24 CSS px
+   (WCAG 2.5.8) while keeping the visible pill at 22px. */
+.edge-delete-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.edge-delete-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Reveal the trash on wrapper hover or when the edge is selected. */
+.edge-quick-add-wrapper:hover .edge-delete-button,
+.edge-quick-add-wrapper.selected .edge-delete-button {
+  opacity: 1;
+}
+
+.edge-delete-button:hover {
+  background: var(--modeler-color-danger-delete);
+  color: white;
+  transform: scale(1.15);
+}
+
+.edge-delete-button:active {
+  background: var(--modeler-color-danger-delete);
+  color: white;
+}
+
+/* Visible focus ring (keyboard focus) using the shared interactive token. */
+.edge-delete-button:focus-visible {
+  opacity: 1;
+  background: var(--modeler-color-danger-delete);
+  color: white;
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: 2px;
 }
 
 /* Condition-specific popup styling */
@@ -1824,6 +1911,30 @@ g.replay-transition-highlighted path {
   -webkit-line-clamp: 1;
 }
 
+/* Condition Node — first-class condition card (issue #3589093).
+   Conditions are componentType 5 (Link) and share the green condition/link
+   color identity that the legacy condition edge card used.  Uses the compact
+   card layout (header actions + single-line body) just like the gateway node. */
+.condition-node {
+  border-color: var(--modeler-color-type-condition);
+  height: auto;
+}
+
+/* WCAG 2.2 SC 1.4.3 — header text uses the darker -header variant for ≥ 4.5:1 contrast */
+.condition-node .node-header {
+  background: var(--modeler-color-type-condition-light);
+  color: var(--modeler-color-type-condition-header);
+}
+
+/* Compact body: tighter padding and single-line label like the gateway card */
+.condition-node .node-body {
+  padding: 6px 10px;
+}
+
+.condition-node .node-label {
+  -webkit-line-clamp: 1;
+}
+
 /* Header actions — annotation indicator + trash pushed to the right,
    same pattern as condition-edge-header-actions. */
 .node-header-actions {
@@ -2038,6 +2149,19 @@ g.replay-transition-highlighted path {
 .react-flow__edge-path {
   stroke: var(--modeler-color-edge-default);
   stroke-width: 2;
+}
+
+/* Generous edge-selection hit area (issue #3585553 follow-on UX).
+   DefaultEdge renders a wide TRANSPARENT interaction path. React Flow's base
+   stylesheet sets `.react-flow__edge { pointer-events: visibleStroke }`, which
+   would ignore a transparent stroke — so the wide path would not be clickable.
+   Override to `pointer-events: stroke` on the interaction path specifically so
+   the transparent stroke DOES register clicks/hover, making the edge
+   selectable when clicking near (not exactly on) the visible curve. The
+   visible `.react-flow__edge-path` keeps the default behavior, so the wide hit
+   area does not change the edge's appearance. */
+.react-flow__edge-interaction {
+  pointer-events: stroke;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
@@ -2768,101 +2892,6 @@ g.replay-transition-highlighted path {
   background: var(--modeler-color-bg-surface);
 }
 
-/* Edge highlighting during condition drag */
-.react-flow__edge.workflow-edge-drop-target path {
-  stroke: var(--modeler-color-success-drop) !important;
-  stroke-width: 6px !important;
-  stroke-dasharray: 8,4 !important;
-  animation: workflow-edge-pulse 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes workflow-edge-pulse {
-  0% {
-    stroke: var(--modeler-color-success-drop);
-    stroke-width: 6px;
-  }
-  100% {
-    stroke: var(--modeler-color-success);
-    stroke-width: 8px;
-  }
-}
-
-.react-flow__edge.workflow-edge-drop-target .react-flow__edge-path {
-  stroke: var(--modeler-color-success-drop) !important;
-  stroke-width: 6px !important;
-  stroke-dasharray: 8,4 !important;
-}
-
-/* Special highlighting for the currently hovered drop target */
-.react-flow__edge.workflow-edge-hovered-target path {
-  stroke: var(--modeler-color-success-drop-hover) !important;
-  stroke-width: 10px !important;
-  stroke-dasharray: 15,5 !important;
-  animation: workflow-edge-hover-pulse 0.8s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.6));
-}
-
-.react-flow__edge.workflow-edge-hovered-target .react-flow__edge-path {
-  stroke: var(--modeler-color-success-drop-hover) !important;
-  stroke-width: 10px !important;
-  stroke-dasharray: 15,5 !important;
-}
-
-@keyframes workflow-edge-hover-pulse {
-  0% {
-    stroke: var(--modeler-color-success-drop-hover);
-    stroke-width: 10px;
-  }
-  100% {
-    stroke: #15803d;
-    stroke-width: 12px;
-  }
-}
-
-/* Canvas styling during condition drag */
-.workflow-modeler-canvas.condition-drag-active {
-  background: rgba(34, 197, 94, 0.05);
-  cursor: crosshair;
-}
-
-.workflow-modeler-canvas.condition-drag-active .react-flow__pane {
-  cursor: crosshair !important;
-}
-
-/* Visual overlay during condition drag */
-.condition-drag-overlay {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(34, 197, 94, 0.9);
-  color: white;
-  padding: 12px 24px;
-  border-radius: var(--modeler-radius-xl);
-  font-weight: 600;
-  font-size: var(--modeler-font-size-lg);
-  pointer-events: none;
-  z-index: 1000;
-  box-shadow: var(--modeler-shadow-md);
-  animation: workflow-overlay-pulse 2s ease-in-out infinite;
-}
-
-@keyframes workflow-overlay-pulse {
-  0%, 100% {
-    background: rgba(34, 197, 94, 0.9);
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    background: rgba(16, 185, 129, 0.95);
-    transform: translateX(-50%) scale(1.05);
-  }
-}
-
-.drag-instruction {
-  text-align: center;
-  white-space: nowrap;
-}
-
 /* Condition edge label selection is handled in the selection section below */
 
 .react-flow__edge.selected path {
@@ -2896,28 +2925,6 @@ g.replay-transition-highlighted path {
 
 /* Multi-selection handled by individual node selection styles above */
 
-
-/* Replacement target styles */
-.react-flow__node.replace-target {
-  box-shadow: 0 0 0 4px var(--modeler-color-warning), 0 0 0 8px rgba(245, 158, 11, 0.5) !important;
-  background-color: rgba(245, 158, 11, 0.1);
-  animation: replacePulse 1.5s infinite;
-}
-
-.workflow-edge-replace-target path {
-  stroke: var(--modeler-color-warning) !important;
-  stroke-width: 8 !important;
-  animation: replacePulse 1.5s infinite;
-}
-
-@keyframes replacePulse {
-  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-}
 
 /* Annotation styles — node annotations are now in the footer,
    so the floating label/arrow styles only apply to edges. */
@@ -3588,6 +3595,72 @@ g[style*="#ef4444"] path {
 
 .edge-control-point-wrapper .control-point-inner {
   fill: var(--modeler-color-interactive);
+}
+
+/* === Edge Endpoint Reconnection Grips (issue #3585553) === */
+/* Draggable grips rendered at the source/target endpoint of a selected edge
+   when that endpoint is eligible for reconnection. Visually distinct from the
+   bezier control point (smaller, accent-colored ring) so users can tell the
+   "move endpoint" affordance apart from the "bend the curve" affordance. */
+.edge-endpoint-grip {
+  position: absolute;
+  pointer-events: all;
+  z-index: 1000;
+  cursor: grab;
+}
+
+.edge-endpoint-grip:active,
+.edge-endpoint-grip.dragging {
+  cursor: grabbing;
+}
+
+/* While dragging, the grip follows the cursor. It must NOT intercept the
+   drop hit-test (elementFromPoint) — otherwise the grip itself, sitting on
+   top at the pointer, would be returned instead of the node beneath it, and
+   the reconnect would never resolve a drop target. Disable its pointer events
+   for the duration of the drag so the hit-test reaches the underlying node. */
+.edge-endpoint-grip.dragging {
+  pointer-events: none;
+}
+
+/* While ANY reconnect drag is active, make EVERY endpoint grip
+   non-interactive — not just the one being dragged (issue #3585553). A
+   non-dragged grip (e.g. on the destination node's own selected edge) would
+   otherwise sit on top at the drop point (z-index:1000, pointer-events:all)
+   and intercept the elementFromPoint hit-test, so the drop could never
+   resolve the node beneath it. The `reconnect-dragging` class is toggled on
+   the canvas wrapper by FlowCanvas while a grip drag is in progress. */
+.reactflow-wrapper.reconnect-dragging .edge-endpoint-grip {
+  pointer-events: none;
+}
+
+.edge-endpoint-grip svg {
+  overflow: visible;
+}
+
+.edge-endpoint-grip .endpoint-grip-outer {
+  fill: var(--modeler-color-bg-primary);
+  stroke: var(--modeler-color-interactive);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 1px 3px var(--modeler-color-shadow-strong));
+}
+
+.edge-endpoint-grip .endpoint-grip-inner {
+  fill: var(--modeler-color-interactive);
+}
+
+/* Reconnect preview line (issue #3585553) — drawn from the fixed endpoint to
+   the cursor while a grip is dragged, mirroring React Flow's new-connection
+   line. Dashed + accent-colored so it reads as a prospective ("where the edge
+   will go") path rather than a committed edge. Non-interactive so it never
+   intercepts the drag's pointer events. Uses --modeler-* vars only, so it
+   adapts to dark mode automatically via the redefined --modeler-color-*. */
+.edge-reconnect-preview {
+  stroke: var(--modeler-color-interactive);
+  stroke-width: 2;
+  stroke-dasharray: 6, 4;
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 /* Edge guide line (dashed line from center to control point) */

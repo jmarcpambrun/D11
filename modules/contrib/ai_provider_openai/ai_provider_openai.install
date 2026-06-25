@@ -58,6 +58,7 @@ function ai_provider_openai_update_10001() {
   }
   return $return_message;
 }
+
 /**
  * Implements hook_update_N().
  *

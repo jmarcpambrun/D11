@@ -60,6 +60,11 @@ import { resolveNodeType } from '../utils/componentUtils';
 import { generateNodeId, generateEdgeId } from '../utils/clipboardUtils';
 import { LAYOUT, NODE_DIMENSIONS } from '../constants/dimensions';
 import { findFreePosition } from '../utils/positionUtils';
+import {
+  buildConditionInsertion,
+  isConditionNode,
+  placeChainOnEdge,
+} from '../utils/incrementalLayout';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -696,52 +701,158 @@ export function createPluginApi(): ModelerPluginApi {
       return true;
     },
 
+    /**
+     * Insert a condition NODE on an existing edge.
+     *
+     * Conditions are first-class nodes (issue #3589093).  Rather than
+     * mutating the edge (the old model, which only became a node after a
+     * reload), this splits the target edge into source→condNode and
+     * condNode→target — mirroring `handleAddCondition` in
+     * `src/hooks/useNodeEdgeActions.ts`, the canonical implementation.
+     *
+     * The public signature and boolean contract are unchanged: `edgeId`
+     * still identifies the edge to attach the condition to.  Returns
+     * `false` when the edge is missing or the modeler is read-only.
+     */
     setCondition(edgeId: string, condition: SetConditionDescriptor): boolean {
       if (currentReadOnly) return false;
 
-      const { edges } = useGraphStore.getState();
+      const { nodes, edges } = useGraphStore.getState();
       const edge = edges.find((e) => e.id === edgeId);
       if (!edge) return false;
 
       beforeMutation();
 
-      const conditionLabel = condition.label || condition.plugin.split('.').pop() || condition.plugin;
+      const sourceNodeId = edge.source;
+      const targetNodeId = edge.target;
 
-      useGraphStore.getState().updateEdge(edgeId, {
+      const conditionLabel = condition.label || condition.plugin.split('.').pop() || condition.plugin;
+      const newNodeId = generateNodeId(conditionLabel, 'condition');
+
+      const newNode: Node = {
+        id: newNodeId,
         type: 'condition',
-        label: conditionLabel,
+        // Temporary position — placeChainOnEdge will replace it.
+        position: { x: 0, y: 0 },
         data: {
-          ...(edge.data || {}),
-          condition: condition.plugin,
-          conditionLabel,
-          conditionConfiguration: condition.configuration || {},
+          label: conditionLabel,
+          plugin: condition.plugin,
+          configuration: condition.configuration || {},
+          // New condition — export mints a UUID when conditionId is empty.
+          conditionId: '',
+          componentType: 5,
+          __isConditionNode: true,
         },
+      };
+
+      // Enforce the "no two adjacent conditions" invariant (issue #3589093):
+      // route through a gateway when either end of the edge is a condition
+      // node, mirroring handleAddCondition in useNodeEdgeActions.
+      const sourceNode = nodes.find((n) => n.id === sourceNodeId);
+      const targetNode = nodes.find((n) => n.id === targetNodeId);
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId,
+        targetNodeId,
+        conditionNode: newNode,
+        sourceIsCondition: isConditionNode(sourceNode),
+        targetIsCondition: isConditionNode(targetNode),
       });
+
+      const allEdges = [
+        ...edges.filter((e) => e.id !== edgeId),
+        ...edgesToAdd,
+      ];
+
+      const positionedNodes = placeChainOnEdge(
+        nodes,
+        allEdges,
+        nodesToAdd,
+        sourceNodeId,
+        targetNodeId,
+      );
+
+      const store = useGraphStore.getState();
+      store.setNodes(positionedNodes);
+      store.setEdges(allEdges);
 
       afterMutation();
       return true;
     },
 
+    /**
+     * Remove the condition associated with `edgeId`, collapsing the
+     * condition node back into a single plain edge (the inverse of
+     * `setCondition`).
+     *
+     * Conditions are nodes now, so the historic `edgeId` parameter is
+     * interpreted as follows (in order):
+     *   1. `edgeId` IS a condition node id → collapse that node.
+     *   2. `edgeId` is an edge pointing INTO or OUT OF a condition node →
+     *      collapse that adjacent condition node.
+     *
+     * Collapsing removes the condition node and its two split edges, then
+     * adds one plain `default` edge from the condition's predecessor to its
+     * successor.  Returns `false` when no condition can be resolved from
+     * `edgeId` or the modeler is read-only.
+     */
     removeCondition(edgeId: string): boolean {
       if (currentReadOnly) return false;
 
-      const { edges } = useGraphStore.getState();
-      const edge = edges.find((e) => e.id === edgeId);
-      if (!edge) return false;
+      const { nodes, edges } = useGraphStore.getState();
+
+      const isConditionNode = (id: string): boolean => {
+        const node = nodes.find((n) => n.id === id);
+        return !!node && (node.type === 'condition' || node.data?.__isConditionNode === true);
+      };
+
+      // Resolve the condition node id from the supplied identifier.
+      let condNodeId: string | null = null;
+      if (isConditionNode(edgeId)) {
+        condNodeId = edgeId;
+      } else {
+        const edge = edges.find((e) => e.id === edgeId);
+        if (edge) {
+          if (isConditionNode(edge.target)) {
+            condNodeId = edge.target;
+          } else if (isConditionNode(edge.source)) {
+            condNodeId = edge.source;
+          }
+        }
+      }
+
+      if (!condNodeId) return false;
+
+      // A condition node is created with exactly one inbound and one
+      // outbound edge.  Resolve them to reconnect predecessor → successor.
+      const inboundEdge = edges.find((e) => e.target === condNodeId);
+      const outboundEdge = edges.find((e) => e.source === condNodeId);
+      if (!inboundEdge || !outboundEdge) return false;
+
+      const predecessorId = inboundEdge.source;
+      const successorId = outboundEdge.target;
 
       beforeMutation();
 
-      useGraphStore.getState().updateEdge(edgeId, {
+      const reconnectEdge: Edge = {
+        id: generateEdgeId(predecessorId, successorId),
+        source: predecessorId,
+        target: successorId,
         type: 'default',
-        label: '',
-        data: {
-          ...(edge.data || {}),
-          condition: null,
-          conditionLabel: null,
-          conditionConfiguration: null,
-          annotation: null,
-        },
-      });
+        data: {},
+      };
+
+      const store = useGraphStore.getState();
+      store.setEdges((prev) => [
+        ...prev.filter((e) => e.source !== condNodeId && e.target !== condNodeId),
+        reconnectEdge,
+      ]);
+      store.setNodes((prev) => prev.filter((n) => n.id !== condNodeId));
+
+      // Clear selection if the collapsed condition node was selected.
+      const selection = useSelectionStore.getState();
+      if (selection.selectedNode?.id === condNodeId) {
+        selection.clearSelection();
+      }
 
       afterMutation();
       return true;

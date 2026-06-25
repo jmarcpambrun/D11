@@ -74,6 +74,7 @@ jest.mock('../../store/useSelectionStore', () => ({
 // Mock utility functions
 jest.mock('../../utils/clipboardUtils', () => ({
   generateUniqueEdgeId: jest.fn(() => 'edge-new-123'),
+  generateEdgeId: jest.fn((source: string, target: string) => `edge_${source}_to_${target}`),
 }));
 
 describe('useFlowEventHandlers', () => {
@@ -476,10 +477,37 @@ describe('useFlowEventHandlers', () => {
         });
       }).not.toThrow();
     });
+
+    it('reconnects predecessor -> successor when deleting a 1-in/1-out condition node', () => {
+      // Fix C4: single-node delete of a condition node must reconnect the graph.
+      mockNodes = [
+        { id: 'pred', data: {} },
+        { id: 'cond', type: 'condition', data: { __isConditionNode: true } },
+        { id: 'succ', data: {} },
+      ];
+      mockEdges = [
+        { id: 'in', source: 'pred', target: 'cond' },
+        { id: 'out', source: 'cond', target: 'succ' },
+      ];
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        result.current.onDeleteNode('cond');
+      });
+
+      // removeNode is bypassed in favor of an explicit setNodes/setEdges pass.
+      expect(mockRemoveNode).not.toHaveBeenCalled();
+      expect(mockNodes.find(n => n.id === 'cond')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'in')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'out')).toBeUndefined();
+      const reconnect = mockEdges.find(e => e.source === 'pred' && e.target === 'succ');
+      expect(reconnect).toBeDefined();
+      expect(reconnect.type).toBe('default');
+    });
   });
 
   describe('handleDeleteSelected', () => {
-    it('should delegate to removeNode for selected unlocked nodes', () => {
+    it('should remove selected unlocked nodes (single setNodes/setEdges pass)', () => {
       mockNodes = [
         { id: 'node-1', selected: true, data: {} },
         { id: 'node-2', selected: false, data: {} },
@@ -491,12 +519,12 @@ describe('useFlowEventHandlers', () => {
         result.current.handleDeleteSelected();
       });
 
-      expect(mockRemoveNode).toHaveBeenCalledWith('node-1');
-      expect(mockRemoveNode).not.toHaveBeenCalledWith('node-2');
+      expect(mockNodes.find(n => n.id === 'node-1')).toBeUndefined();
+      expect(mockNodes.find(n => n.id === 'node-2')).toBeDefined();
       expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
     });
 
-    it('should delegate to removeEdge for selected unlocked edges', () => {
+    it('should remove selected unlocked edges', () => {
       mockNodes = [];
       mockEdges = [
         { id: 'edge-1', source: 'a', target: 'b', selected: true },
@@ -508,11 +536,11 @@ describe('useFlowEventHandlers', () => {
         result.current.handleDeleteSelected();
       });
 
-      expect(mockRemoveEdge).toHaveBeenCalledWith('edge-1');
-      expect(mockRemoveEdge).not.toHaveBeenCalledWith('edge-2');
+      expect(mockEdges.find(e => e.id === 'edge-1')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'edge-2')).toBeDefined();
     });
 
-    it('should not double-remove edges already removed by node deletion', () => {
+    it('should remove edges connected to deleted nodes without leaving stragglers', () => {
       mockNodes = [
         { id: 'node-1', selected: true, data: {} },
         { id: 'node-2', selected: false, data: {} },
@@ -526,10 +554,97 @@ describe('useFlowEventHandlers', () => {
         result.current.handleDeleteSelected();
       });
 
-      // edge-1 is connected to node-1 so it's implicitly removed by removeNode;
-      // removeEdge should NOT be called for it again.
-      expect(mockRemoveNode).toHaveBeenCalledWith('node-1');
-      expect(mockRemoveEdge).not.toHaveBeenCalledWith('edge-1');
+      // node-1 and its connected edge are gone; node-2 survives.
+      expect(mockNodes.find(n => n.id === 'node-1')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'edge-1')).toBeUndefined();
+      expect(mockNodes.find(n => n.id === 'node-2')).toBeDefined();
+    });
+
+    it('reconnects predecessor -> successor when a selected condition node is deleted', () => {
+      // Fix C4: deleting a 1-in/1-out condition node must reconnect its
+      // predecessor directly to its successor with a plain default edge.
+      mockNodes = [
+        { id: 'pred', selected: false, data: {} },
+        { id: 'cond', type: 'condition', selected: true, data: { __isConditionNode: true } },
+        { id: 'succ', selected: false, data: {} },
+      ];
+      mockEdges = [
+        { id: 'in', source: 'pred', target: 'cond' },
+        { id: 'out', source: 'cond', target: 'succ' },
+      ];
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        result.current.handleDeleteSelected();
+      });
+
+      expect(mockNodes.find(n => n.id === 'cond')).toBeUndefined();
+      // The two split edges are gone, replaced by a single pred -> succ edge.
+      expect(mockEdges.find(e => e.id === 'in')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'out')).toBeUndefined();
+      const reconnect = mockEdges.find(e => e.source === 'pred' && e.target === 'succ');
+      expect(reconnect).toBeDefined();
+      expect(reconnect.type).toBe('default');
+    });
+
+    it('reconnects ALL N predecessors -> successor when a reused (fan-in) condition node is deleted', () => {
+      // Issue #3589093 (Task 4): a condition node may have N inbound edges
+      // (reuse).  Deleting it must reconnect EACH of the N predecessors to the
+      // single successor — N plain edges, not just the first.
+      mockNodes = [
+        { id: 'p1', selected: false, data: {} },
+        { id: 'p2', selected: false, data: {} },
+        { id: 'cond', type: 'condition', selected: true, data: { __isConditionNode: true } },
+        { id: 'succ', selected: false, data: {} },
+      ];
+      mockEdges = [
+        { id: 'in1', source: 'p1', target: 'cond' },
+        { id: 'in2', source: 'p2', target: 'cond' },
+        { id: 'out', source: 'cond', target: 'succ' },
+      ];
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        result.current.handleDeleteSelected();
+      });
+
+      expect(mockNodes.find(n => n.id === 'cond')).toBeUndefined();
+      // All split edges gone.
+      expect(mockEdges.find(e => e.id === 'in1')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'in2')).toBeUndefined();
+      expect(mockEdges.find(e => e.id === 'out')).toBeUndefined();
+      // BOTH predecessors reconnected to the single successor.
+      const r1 = mockEdges.find(e => e.source === 'p1' && e.target === 'succ');
+      const r2 = mockEdges.find(e => e.source === 'p2' && e.target === 'succ');
+      expect(r1).toBeDefined();
+      expect(r2).toBeDefined();
+      expect(r1.type).toBe('default');
+      expect(r2.type).toBe('default');
+    });
+
+    it('does NOT reconnect when the condition predecessor is also deleted', () => {
+      // Edge case: reconnecting to a node that is itself being removed would
+      // create a dangling edge — computeConditionReconnectEdges skips it.
+      mockNodes = [
+        { id: 'pred', selected: true, data: {} },
+        { id: 'cond', type: 'condition', selected: true, data: { __isConditionNode: true } },
+        { id: 'succ', selected: false, data: {} },
+      ];
+      mockEdges = [
+        { id: 'in', source: 'pred', target: 'cond' },
+        { id: 'out', source: 'cond', target: 'succ' },
+      ];
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        result.current.handleDeleteSelected();
+      });
+
+      expect(mockNodes.find(n => n.id === 'pred')).toBeUndefined();
+      expect(mockNodes.find(n => n.id === 'cond')).toBeUndefined();
+      // No dangling edge to/from the removed predecessor.
+      expect(mockEdges.find(e => e.source === 'pred')).toBeUndefined();
+      expect(mockEdges.find(e => e.target === 'succ' && e.source === 'pred')).toBeUndefined();
     });
 
     it('should do nothing when nothing is selected', () => {
@@ -665,18 +780,17 @@ describe('useFlowEventHandlers', () => {
         expect(newEdge.data?.controlOffset).toBeUndefined();
       });
 
-      it('shifts a condition-bearing existing edge further out than the new edge', () => {
-        // Existing edge between node-1 and node-2 carries a condition card.
+      it('fans out parallel edges symmetrically (issue #3589093)', () => {
+        // Conditions are first-class nodes now, so no rendered edge carries a
+        // condition card and parallel edges simply fan out symmetrically
+        // around zero — the condition-card overhang special case was removed.
         mockEdges = [
           {
             id: 'edge-1',
             source: 'node-1',
             target: 'node-2',
-            type: 'condition',
-            data: {
-              condition: 'eca_some_condition',
-              conditionLabel: 'Test condition',
-            },
+            type: 'default',
+            data: {},
           },
         ];
         const { result } = renderUseFlowEventHandlers();
@@ -696,9 +810,8 @@ describe('useFlowEventHandlers', () => {
         expect(existingX).not.toBe(0);
         expect(newX).not.toBe(0);
         expect(Math.sign(existingX) * Math.sign(newX)).toBeLessThan(0);
-        // The condition-bearing existing edge must have been shifted
-        // further out than the plain new edge.
-        expect(Math.abs(existingX)).toBeGreaterThan(Math.abs(newX));
+        // Symmetric fan-out: equal magnitude on both sides.
+        expect(Math.abs(existingX)).toBe(Math.abs(newX));
       });
 
       it('routes a bypass curve when a chain connects source to target', () => {
@@ -729,6 +842,158 @@ describe('useFlowEventHandlers', () => {
         expect(chainE1.data?.controlOffset).toBeUndefined();
         expect(chainE2.data?.controlOffset).toBeUndefined();
       });
+    });
+  });
+
+  // [C2] New-edge "drop onto node body" (issue #3585553 follow-on UX).
+  // onConnect fires only on a HANDLE drop; onConnectEnd fires on ANY release.
+  // When no handle was hit, onConnectEnd must resolve the node under the cursor
+  // and create the edge — matching reconnect drop-onto-node behavior.
+  describe('onConnectStart / onConnectEnd (drop on node body)', () => {
+    // Build a fake DOM element that `el.closest('.react-flow__node[data-id]')`
+    // resolves to the requested node id (and is NOT inside a grip), so
+    // hitTestDropTarget returns that node.
+    const fakeNodeElement = (nodeId: string): HTMLElement => {
+      const nodeEl = document.createElement('div');
+      nodeEl.className = 'react-flow__node';
+      nodeEl.setAttribute('data-id', nodeId);
+      const child = document.createElement('div');
+      nodeEl.appendChild(child);
+      return child; // elementFromPoint returns a child; .closest walks up.
+    };
+
+    const mouseUpAt = (clientX: number, clientY: number) =>
+      ({ clientX, clientY } as unknown as MouseEvent);
+
+    let originalElementFromPoint: typeof document.elementFromPoint;
+
+    beforeEach(() => {
+      mockEdges = [];
+      originalElementFromPoint = document.elementFromPoint;
+    });
+
+    afterEach(() => {
+      document.elementFromPoint = originalElementFromPoint;
+    });
+
+    it('creates an edge to the NODE under the cursor when no handle was hit', () => {
+      const { result } = renderUseFlowEventHandlers();
+      // elementFromPoint resolves to node-2's body.
+      document.elementFromPoint = jest.fn(() => fakeNodeElement('node-2'));
+
+      act(() => {
+        result.current.onConnectStart(
+          {} as React.MouseEvent,
+          { nodeId: 'node-1', handleId: 'output', handleType: 'source' },
+        );
+      });
+      act(() => {
+        // No onConnect fired (off-handle drop) → onConnectEnd does the work.
+        result.current.onConnectEnd(mouseUpAt(500, 200));
+      });
+
+      expect(mockSetEdges).toHaveBeenCalled();
+      const newEdge = mockEdges.find(e => e.source === 'node-1' && e.target === 'node-2');
+      expect(newEdge).toBeDefined();
+      expect(newEdge.targetHandle).toBe('input');
+      expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
+    });
+
+    it('does NOT create a duplicate edge when onConnect already fired (handle hit)', () => {
+      const { result } = renderUseFlowEventHandlers();
+      document.elementFromPoint = jest.fn(() => fakeNodeElement('node-2'));
+
+      act(() => {
+        result.current.onConnectStart(
+          {} as React.MouseEvent,
+          { nodeId: 'node-1', handleId: 'output', handleType: 'source' },
+        );
+      });
+      act(() => {
+        // Handle WAS hit → React Flow fires onConnect first.
+        result.current.onConnect({ source: 'node-1', target: 'node-2', targetHandle: 'input' });
+      });
+      const afterConnect = mockEdges.length;
+      act(() => {
+        result.current.onConnectEnd(mouseUpAt(500, 200));
+      });
+
+      // onConnectEnd must be a no-op since onConnect already created the edge.
+      expect(mockEdges.length).toBe(afterConnect);
+      expect(mockEdges.filter(e => e.source === 'node-1' && e.target === 'node-2').length).toBe(1);
+    });
+
+    it('creates nothing when released over empty canvas (no node)', () => {
+      const { result } = renderUseFlowEventHandlers();
+      document.elementFromPoint = jest.fn(() => null);
+
+      act(() => {
+        result.current.onConnectStart(
+          {} as React.MouseEvent,
+          { nodeId: 'node-1', handleId: 'output', handleType: 'source' },
+        );
+      });
+      act(() => {
+        result.current.onConnectEnd(mouseUpAt(9999, 9999));
+      });
+
+      expect(mockSetEdges).not.toHaveBeenCalled();
+    });
+
+    it('creates nothing when dropped back on the SOURCE node (no self-loop)', () => {
+      const { result } = renderUseFlowEventHandlers();
+      document.elementFromPoint = jest.fn(() => fakeNodeElement('node-1'));
+
+      act(() => {
+        result.current.onConnectStart(
+          {} as React.MouseEvent,
+          { nodeId: 'node-1', handleId: 'output', handleType: 'source' },
+        );
+      });
+      act(() => {
+        result.current.onConnectEnd(mouseUpAt(150, 150));
+      });
+
+      expect(mockSetEdges).not.toHaveBeenCalled();
+    });
+
+    it('respects successor cardinality — no edge when source is at max successors', () => {
+      // node-1 is type "limited" with max 1 successor and already has one edge.
+      mockNodes = [
+        { id: 'node-1', type: 'limited', position: { x: 0, y: 0 }, data: {}, selected: false },
+        { id: 'node-2', type: 'limited', position: { x: 300, y: 0 }, data: {}, selected: false },
+        { id: 'node-3', type: 'limited', position: { x: 600, y: 0 }, data: {}, selected: false },
+      ];
+      mockEdges = [{ id: 'edge-1', source: 'node-1', target: 'node-2', type: 'default', data: {} }];
+      const modelConstraints = { limited: { successors: { max: 1 } } } as any;
+      const { result } = renderUseFlowEventHandlers({ modelConstraints });
+      document.elementFromPoint = jest.fn(() => fakeNodeElement('node-3'));
+
+      act(() => {
+        result.current.onConnectStart(
+          {} as React.MouseEvent,
+          { nodeId: 'node-1', handleId: 'output', handleType: 'source' },
+        );
+      });
+      act(() => {
+        result.current.onConnectEnd(mouseUpAt(700, 0));
+      });
+
+      // node-1 already at its single allowed successor → no new edge.
+      const created = mockEdges.find(e => e.source === 'node-1' && e.target === 'node-3');
+      expect(created).toBeUndefined();
+    });
+
+    it('creates nothing when there was no connect start (defensive)', () => {
+      const { result } = renderUseFlowEventHandlers();
+      document.elementFromPoint = jest.fn(() => fakeNodeElement('node-2'));
+
+      act(() => {
+        // onConnectEnd without a preceding onConnectStart.
+        result.current.onConnectEnd(mouseUpAt(500, 200));
+      });
+
+      expect(mockSetEdges).not.toHaveBeenCalled();
     });
   });
 

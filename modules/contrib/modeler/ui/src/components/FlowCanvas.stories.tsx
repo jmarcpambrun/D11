@@ -32,10 +32,6 @@ const defaultEventHandlers = {
   onSelectionChange: fn(),
   onConnectStart: fn(),
   onConnectEnd: fn(),
-  onDrop: fn(),
-  onDragOver: fn(),
-  onDragEnter: fn(),
-  onDragLeave: fn(),
   onNodeClick: fn(),
   onEdgeClick: fn(),
   onPaneClick: fn(),
@@ -48,7 +44,6 @@ const defaultElementCallbacks = {
   onEdgeUpdate: fn(),
   onNodeUpdate: fn(),
   onDeleteNode: fn(),
-  onEdgeConfigurationChange: fn(),
 };
 
 const defaultModifierKeys = {

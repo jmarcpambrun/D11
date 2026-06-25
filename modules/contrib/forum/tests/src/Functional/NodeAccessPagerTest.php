@@ -2,6 +2,11 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\node\NodeAccessRebuild;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -9,6 +14,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group form
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class NodeAccessPagerTest extends BrowserTestBase {
 
   /**
@@ -36,7 +43,7 @@ class NodeAccessPagerTest extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    node_access_rebuild();
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(NodeAccessRebuild::class)->rebuild(), fn() => node_access_rebuild());
     $this->drupalCreateContentType(['type' => 'page', 'name' => 'Basic page']);
     $this->webUser = $this->drupalCreateUser([
       'access content',

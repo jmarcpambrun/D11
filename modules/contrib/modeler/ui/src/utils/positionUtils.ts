@@ -15,11 +15,14 @@ import { LAYOUT, NODE_DIMENSIONS } from '../constants/dimensions';
  * Calculate the required vertical gap between the bottom of one node and the
  * top of the next, using the same spacing values as auto-layout.
  *
- * @param hasCondition - Whether the connecting edge carries a condition card
+ * Conditions are first-class nodes now (issue #3589093), so no edge ever
+ * carries a condition card.  The gap is therefore always the plain row
+ * spacing — there is no longer any condition-specific spacing.
+ *
  * @returns Gap in pixels (top-left coordinate system)
  */
-export function requiredVerticalGap(hasCondition: boolean): number {
-  return LAYOUT.NODE_SPACING_Y + (hasCondition ? LAYOUT.CONDITION_EXTRA_SPACING : 0);
+export function requiredVerticalGap(): number {
+  return LAYOUT.NODE_SPACING_Y;
 }
 
 /**

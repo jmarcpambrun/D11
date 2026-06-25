@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional\Views;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\node\NodeInterface;
 use Drupal\Tests\views\Functional\ViewTestBase;
 use Drupal\views\Views;
@@ -11,6 +14,8 @@ use Drupal\views\Views;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumIntegrationTest extends ViewTestBase {
 
   /**

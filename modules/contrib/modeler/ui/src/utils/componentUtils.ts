@@ -3,7 +3,7 @@
  * PropertyPanel, and MultiSelectionPanel.
  */
 import React from 'react';
-import { FiActivity, FiBox, FiGitBranch, FiZap } from 'react-icons/fi';
+import { FiActivity, FiBox, FiFilter, FiGitBranch, FiZap } from 'react-icons/fi';
 import { t } from './translation';
 import type { StoreComponent as Component } from '../types/settings';
 import type { ComponentLabels, ComponentLabelsPlural } from '../types/settings';
@@ -120,6 +120,8 @@ export const getComponentIcon = (nodeType: string): React.ReactElement => {
       return React.createElement(FiGitBranch);
     case 'subprocess':
       return React.createElement(FiBox);
+    case 'condition':
+      return React.createElement(FiFilter);
     default:
       return React.createElement(FiActivity);
   }
@@ -138,6 +140,8 @@ export const getComponentTypeName = (nodeType: string): string => {
       return getComponentLabel('gateway');
     case 'subprocess':
       return getComponentLabel('subprocess');
+    case 'condition':
+      return getComponentLabel('link');
     default:
       return getComponentLabel('element');
   }

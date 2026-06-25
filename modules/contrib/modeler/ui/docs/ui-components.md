@@ -76,7 +76,6 @@ const nodeTypes = {
 // Custom edges in components/edges/
 const edgeTypes = {
   default: DefaultEdge,      // Basic connections
-  condition: ConditionEdge,   // Edges with conditions and/or annotations
 };
 ```
 
@@ -616,10 +615,10 @@ components/
 │   ├── StartNode.tsx        # Event/trigger nodes
 │   ├── GatewayNode.tsx      # Decision diamond nodes
 │   ├── SubprocessNode.tsx   # Subprocess nodes
-│   └── PlaceholderNode.tsx  # Temporary nodes for condition-first authoring
+│   ├── PlaceholderNode.tsx  # Temporary nodes for condition-first authoring
+│   └── ConditionNode.tsx    # Condition nodes (first-class nodes for conditions)
 └── edges/                   # Custom edge components
     ├── DefaultEdge.tsx      # Basic edges with control points and annotations
-    ├── ConditionEdge.tsx    # Edges with conditions and annotations
     └── EdgeOrderBadge.tsx   # Draggable edge order number badge
 ```
 

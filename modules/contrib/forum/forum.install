@@ -5,6 +5,7 @@
  * Install, update, and uninstall functions for the Forum module.
  */
 
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\taxonomy\Entity\Term;
@@ -52,7 +53,7 @@ function forum_uninstall() {
 
   // Purge field data now to allow taxonomy and options module to be uninstalled
   // if this is the only field remaining.
-  field_purge_batch(10);
+  DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service('Drupal\Core\Field\FieldPurger')->purgeBatch(10), fn() => field_purge_batch(10));
   // Allow to delete a forum's node type.
   $locked = \Drupal::state()->get('node.type.locked');
   unset($locked['forum']);

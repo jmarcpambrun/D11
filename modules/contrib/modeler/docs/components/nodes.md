@@ -49,8 +49,8 @@ existing workflows as building blocks.
 
 Placeholder nodes are **temporary** nodes created during condition-first
 authoring. When you select a condition from a node's quick-add popup (instead
-of an action), the modeler creates a placeholder node connected by the
-condition edge.
+of an action), the modeler creates a condition node and a placeholder node as
+the successor.
 
 - **Visual style**: Dashed amber border with a striped background and a
   pulsing "Select action..." button.
@@ -96,8 +96,8 @@ conditions:
 - **Actions and gateways**: Selecting one creates a new node and connects it
   to the source node.
 - **Conditions** (condition-first authoring): Selecting a condition creates a
-  placeholder node as the successor, with the condition pre-attached to the
-  connecting edge. The condition edge is automatically selected so you can
+  condition node on the canvas, followed by a placeholder node as the
+  successor. The condition node is automatically selected so you can
   configure it immediately. See [Placeholder nodes](#placeholder-nodes) above.
 
 ### Type filter
@@ -105,9 +105,9 @@ conditions:
 The popup includes a collapsible **Filter** panel that lets you narrow the
 component list by type:
 
-- **All** (default): Shows actions, conditions, and gateways.
+- **All** (default): Shows actions, condition nodes, and gateways.
 - **Actions**: Shows only action components.
-- **Conditions**: Shows only condition components.
+- **Conditions**: Shows only condition node components.
 - **Gateways**: Shows only gateway components.
 
 Click the "Filter" toggle to expand or collapse the panel. An active filter

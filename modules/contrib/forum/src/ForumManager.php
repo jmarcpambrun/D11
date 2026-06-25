@@ -2,6 +2,8 @@
 
 namespace Drupal\forum;
 
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\history\HistoryManager;
 use Drupal\comment\CommentManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -244,7 +246,8 @@ class ForumManager implements ForumManagerInterface {
         }
         else {
           $history = $this->lastVisit($topic->id(), $account);
-          $topic->new_replies = $this->commentManager->getCountNewComments($topic, 'comment_forum', $history);
+          // @phpstan-ignore-next-line
+          $topic->new_replies = DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.3.0', fn() => \Drupal::service(HistoryManager::class)->getCountNewComments($topic, 'comment_forum', $history), fn() => $this->commentManager->getCountNewComments($topic, 'comment_forum', $history));
           $topic->new = $topic->new_replies || ($topic->last_comment_timestamp > $history);
         }
       }

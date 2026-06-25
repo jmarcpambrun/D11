@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Unit;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Tests\UnitTestCase;
@@ -12,6 +16,9 @@ use Drupal\Tests\UnitTestCase;
  * @coversDefaultClass \Drupal\forum\ForumManager
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
+#[AllowMockObjectsWithoutExpectations]
 class ForumManagerTest extends UnitTestCase {
 
   /**

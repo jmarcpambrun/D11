@@ -109,13 +109,13 @@ class OpenAiConfigForm extends ConfigFormBase {
     $this->config(static::CONFIG_NAME)->set('api_key', $key)->save();
 
     try {
-    /** @var \Drupal\ai_provider_openai\Plugin\AiProvider\OpenAiProvider $provider */
-    $provider = $this->aiProviderManager->createInstance('openai');
+      /** @var \Drupal\ai_provider_openai\Plugin\AiProvider\OpenAiProvider $provider */
+      $provider = $this->aiProviderManager->createInstance('openai');
 
-    $host = $this->config(static::CONFIG_NAME)->get('host');
-    if (!empty($host)) {
-      $provider->setConfiguration(['host' => $host]);
-    }
+      $host = $this->config(static::CONFIG_NAME)->get('host');
+      if (!empty($host)) {
+        $provider->setConfiguration(['host' => $host]);
+      }
 
       // Test connectivity by attempting to get configured models.
       $provider->getConfiguredModels();
@@ -127,6 +127,7 @@ class OpenAiConfigForm extends ConfigFormBase {
       // Revert to the original API key after validation.
       $this->config(static::CONFIG_NAME)->set('api_key', $current_api_key_id)->save();
     }
+
   }
 
   /**

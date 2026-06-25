@@ -6,17 +6,28 @@ describe('useReplayIndicators', () => {
   let mockEdges: any[];
 
   beforeEach(() => {
+    // CHANGED (node model, issue #3589093): conditions are NODES now.  A
+    // condition between node-1 and node-2 is modeled as a condition NODE
+    // (cond-node) sitting between them, with plugin id 'condition-1'.  The
+    // indicator attaches to the condition node's position.
     mockNodes = [
       { id: 'node-1', position: { x: 100, y: 100 }, width: 200, height: 100 },
+      {
+        id: 'cond-node',
+        type: 'condition',
+        position: { x: 250, y: 100 },
+        width: 200,
+        height: 100,
+        data: { plugin: 'condition-1', conditionId: 'rt-1', __isConditionNode: true },
+      },
       { id: 'node-2', position: { x: 400, y: 100 }, width: 200, height: 100 },
     ];
+    // Edges no longer carry conditions; they are plain edges routing through
+    // the condition node.  Kept here because the hook still accepts an edges
+    // prop, but they are not used for condition lookup anymore.
     mockEdges = [
-      {
-        id: 'edge-1',
-        source: 'node-1',
-        target: 'node-2',
-        data: { condition: 'condition-1' },
-      },
+      { id: 'edge-in', source: 'node-1', target: 'cond-node', data: {} },
+      { id: 'edge-out', source: 'cond-node', target: 'node-2', data: {} },
     ];
   });
 
@@ -126,17 +137,11 @@ describe('useReplayIndicators', () => {
       expect(result.current.replayIndicators[0].color).toBe('var(--modeler-color-danger-soft)'); // Red for failed
     });
 
-    it('should find edge by condition label', () => {
-      mockEdges = [
-        {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
-          data: { conditionLabel: 'my-condition' },
-        },
-      ];
+    it('should find condition node by data.conditionId fallback', () => {
+      // CHANGED (node model): match against the node's backend round-trip
+      // conditionId when the plugin id does not match.
       const replayData = [
-        { type: 'add successor', id: 'node-1', conditionId: 'my-condition', successorId: 'node-2' },
+        { type: 'add successor', id: 'node-1', conditionId: 'rt-1', successorId: 'node-2' },
       ];
       const { result } = renderUseReplayIndicators({
         isReplayMode: true,
@@ -147,43 +152,10 @@ describe('useReplayIndicators', () => {
       expect(result.current.replayIndicators.length).toBe(1);
     });
 
-    it('should find edge by source/target fallback', () => {
-      mockEdges = [
-        {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
-          data: { condition: 'different-condition' },
-        },
-      ];
-      const replayData = [
-        { type: 'add successor', id: 'node-1', conditionId: 'non-matching', successorId: 'node-2' },
-      ];
-      const { result } = renderUseReplayIndicators({
-        isReplayMode: true,
-        currentReplayStep: 0,
-        replayData,
-      });
-
-      expect(result.current.replayIndicators.length).toBe(1);
-    });
-
-    it('should not create indicator if edge not found', () => {
-      mockEdges = [];
-      const replayData = [
-        { type: 'add successor', id: 'node-1', conditionId: 'condition-1', successorId: 'node-2' },
-      ];
-      const { result } = renderUseReplayIndicators({
-        isReplayMode: true,
-        currentReplayStep: 0,
-        replayData,
-      });
-
-      expect(result.current.replayIndicators).toEqual([]);
-    });
-
-    it('should not create indicator if source node not found', () => {
+    it('should not create indicator if condition node not found', () => {
+      // CHANGED (node model): no condition node present at all.
       mockNodes = [
+        { id: 'node-1', position: { x: 100, y: 100 } },
         { id: 'node-2', position: { x: 400, y: 100 } },
       ];
       const replayData = [
@@ -198,12 +170,11 @@ describe('useReplayIndicators', () => {
       expect(result.current.replayIndicators).toEqual([]);
     });
 
-    it('should not create indicator if target node not found', () => {
-      mockNodes = [
-        { id: 'node-1', position: { x: 100, y: 100 } },
-      ];
+    it('should not create indicator if conditionId matches no node', () => {
+      // CHANGED (node model): condition node exists but neither its plugin
+      // nor its conditionId matches the step.
       const replayData = [
-        { type: 'add successor', id: 'node-1', conditionId: 'condition-1', successorId: 'node-2' },
+        { type: 'add successor', id: 'node-1', conditionId: 'non-matching', successorId: 'node-2' },
       ];
       const { result } = renderUseReplayIndicators({
         isReplayMode: true,
@@ -216,7 +187,8 @@ describe('useReplayIndicators', () => {
   });
 
   describe('indicator positioning', () => {
-    it('should calculate indicator position based on edge center', () => {
+    it('should calculate indicator position above the condition node center', () => {
+      // CHANGED (node model): the indicator attaches to the condition NODE.
       const replayData = [
         { type: 'add successor', id: 'node-1', conditionId: 'condition-1', successorId: 'node-2' },
       ];
@@ -227,10 +199,9 @@ describe('useReplayIndicators', () => {
       });
 
       const indicator = result.current.replayIndicators[0];
-      // Node 1 center: (200, 150), Node 2 center: (500, 150)
-      // Edge center: (350, 150) - 20 for offset = (350, 130)
+      // cond-node: x=250, width=200 -> center X = 350; y=100 -> 100 - 20 = 80.
       expect(indicator.x).toBe(350);
-      expect(indicator.y).toBe(130);
+      expect(indicator.y).toBe(80);
     });
 
     it('should return flow coordinates (not screen coordinates)', () => {
@@ -246,21 +217,25 @@ describe('useReplayIndicators', () => {
       });
 
       const indicator = result.current.replayIndicators[0];
-      // Node 1 center: (200, 150), Node 2 center: (500, 150)
-      // Edge center: (350, 150) - 20 for offset = (350, 130)
-      // These are flow coordinates, NOT transformed by any viewport.
+      // cond-node center X = 350; y = 100 - 20 = 80. Flow coordinates.
       expect(indicator.x).toBe(350);
-      expect(indicator.y).toBe(130);
+      expect(indicator.y).toBe(80);
     });
 
-    it('should apply control offset from edge data', () => {
-      mockEdges = [
+    it('should derive position purely from the condition node coordinates', () => {
+      // CHANGED (node model): nodes carry no control offset; the indicator
+      // position derives from the condition node's own coordinates.
+      mockNodes = [
+        { id: 'node-1', position: { x: 100, y: 100 }, width: 200, height: 100 },
         {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
-          data: { condition: 'condition-1', controlOffset: { x: 20, y: 30 } },
+          id: 'cond-node',
+          type: 'condition',
+          position: { x: 300, y: 250 },
+          width: 100,
+          height: 60,
+          data: { plugin: 'condition-1', conditionId: 'rt-1', __isConditionNode: true },
         },
+        { id: 'node-2', position: { x: 400, y: 100 }, width: 200, height: 100 },
       ];
       const replayData = [
         { type: 'add successor', id: 'node-1', conditionId: 'condition-1', successorId: 'node-2' },
@@ -272,14 +247,21 @@ describe('useReplayIndicators', () => {
       });
 
       const indicator = result.current.replayIndicators[0];
-      // Edge center: (350, 150) + offset (20, 30) - 20 vertical = (370, 160)
-      expect(indicator.x).toBe(370);
-      expect(indicator.y).toBe(160);
+      // cond-node: x=300, width=100 -> center X = 350; y=250 -> 250 - 20 = 230.
+      expect(indicator.x).toBe(350);
+      expect(indicator.y).toBe(230);
     });
 
-    it('should handle nodes without explicit dimensions', () => {
+    it('should handle a condition node without explicit dimensions', () => {
+      // CHANGED (node model): condition node has no width -> default width used.
       mockNodes = [
         { id: 'node-1', position: { x: 100, y: 100 } },
+        {
+          id: 'cond-node',
+          type: 'condition',
+          position: { x: 250, y: 100 },
+          data: { plugin: 'condition-1', conditionId: 'rt-1', __isConditionNode: true },
+        },
         { id: 'node-2', position: { x: 400, y: 100 } },
       ];
       const replayData = [

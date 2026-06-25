@@ -8,6 +8,7 @@ beforestart
 boromino
 ciphertext
 codegen
+connectability
 connectableend
 connectablestart
 connectionindicator
@@ -43,6 +44,7 @@ nopan
 noselect
 nowheel
 onpropertychange
+outdegree
 pannable
 passwordless
 pilcrow

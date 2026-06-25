@@ -2,6 +2,7 @@
 
 namespace Drupal\forum\Breadcrumb;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 
@@ -13,7 +14,7 @@ class ForumListingBreadcrumbBuilder extends ForumBreadcrumbBuilderBase {
   /**
    * {@inheritdoc}
    */
-  public function applies(RouteMatchInterface $route_match) {
+  public function applies(RouteMatchInterface $route_match, ?CacheableMetadata $cacheable_metadata = NULL) {
     return $route_match->getRouteName() == 'forum.page' && $route_match->getParameter('taxonomy_term');
   }
 

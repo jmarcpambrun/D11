@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Tests\system\Functional\Module\GenericModuleTestBase;
 
 /**
@@ -9,6 +12,8 @@ use Drupal\Tests\system\Functional\Module\GenericModuleTestBase;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class GenericTest extends GenericModuleTestBase {
 
   /**

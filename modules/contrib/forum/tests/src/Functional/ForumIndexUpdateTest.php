@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Site\Settings;
 use Drupal\FunctionalTests\Update\UpdatePathTestBase;
 
@@ -12,6 +15,8 @@ use Drupal\FunctionalTests\Update\UpdatePathTestBase;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 final class ForumIndexUpdateTest extends UpdatePathTestBase {
 
   /**
@@ -22,7 +27,7 @@ final class ForumIndexUpdateTest extends UpdatePathTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setDatabaseDumpFiles() {
+  protected function setDatabaseDumpFiles(): void {
     $this->databaseDumpFiles = [
       dirname(__DIR__, 2) . '/fixtures/update/drupal-10.1.0.empty.testing.forum.gz',
     ];

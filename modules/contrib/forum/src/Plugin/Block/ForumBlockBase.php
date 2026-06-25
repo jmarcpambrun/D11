@@ -5,14 +5,83 @@ namespace Drupal\forum\Plugin\Block;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a base class for Forum blocks.
  */
-abstract class ForumBlockBase extends BlockBase {
+abstract class ForumBlockBase extends BlockBase implements ContainerFactoryPluginInterface {
+
+  final public function __construct(
+    array $configuration,
+    string $plugin_id,
+    array $plugin_definition,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+    protected readonly EntityRepositoryInterface $entityRepository,
+    protected readonly RendererInterface $renderer,
+  ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  final public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get(EntityTypeManagerInterface::class),
+      $container->get(EntityRepositoryInterface::class),
+      $container->get(RendererInterface::class),
+    );
+  }
+
+  /**
+   * Builds a node title list.
+   *
+   * @param \Drupal\Core\Database\StatementInterface $result
+   *   Query result.
+   * @param string|null $title
+   *   Optional title.
+   *
+   * @return array|bool
+   *   Title list.
+   */
+  protected function nodeTitleList(StatementInterface $result, $title = NULL): array|bool {
+    $items = [];
+    $num_rows = FALSE;
+    $nids = [];
+    foreach ($result as $row) {
+      // Do not use $node->label() or $node->toUrl() here, because we only have
+      // database rows, not actual nodes.
+      $nids[] = $row->nid;
+      $options = !empty($row->comment_count) ? [
+        'attributes' => [
+          'title' => $this->formatPlural($row->comment_count, '1 comment', '@count comments'),
+        ],
+      ] : [];
+      $items[] = Link::fromTextAndUrl($row->title, Url::fromRoute('entity.node.canonical', ['node' => $row->nid], $options))
+        ->toString();
+      $num_rows = TRUE;
+    }
+
+    return $num_rows ? [
+      '#theme' => 'item_list__node',
+      '#items' => $items,
+      '#title' => $title,
+      '#cache' => ['tags' => Cache::mergeTags(['node_list'], Cache::buildTags('node', $nids))],
+    ] : FALSE;
+  }
 
   /**
    * {@inheritdoc}
@@ -20,7 +89,7 @@ abstract class ForumBlockBase extends BlockBase {
   public function build() {
     $result = $this->buildForumQuery()->execute();
     $elements = [];
-    if ($node_title_list = node_title_list($result)) {
+    if ($node_title_list = $this->nodeTitleList($result)) {
       $elements['forum_list'] = $node_title_list;
       $elements['forum_more'] = [
         '#type' => 'more_link',

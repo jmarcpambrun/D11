@@ -124,3 +124,62 @@ export const ReplayHighlighted: Story = {
     },
   },
 };
+
+/**
+ * Selected edge with BOTH endpoint reconnection grips (issue #3585553).
+ *
+ * Grips render only when the edge is selected AND the endpoint is eligible
+ * (computed by FlowCanvas: this is the sole selected edge on that handle).
+ * Each end is evaluated independently, so both can show at once.
+ */
+export const WithReconnectGrips: Story = {
+  args: {
+    selected: true,
+    data: {
+      sourceGripEnabled: true,
+      targetGripEnabled: true,
+      onReconnectEdge: fn(),
+      validateReconnect: () => true,
+      onEdgeUpdate: fn(),
+      onReorderEdge: fn(),
+      onAddCondition: fn(),
+    },
+  },
+};
+
+/**
+ * Only the SOURCE endpoint is eligible for reconnection — e.g. another
+ * selected edge shares this edge's target handle, making the target ambiguous.
+ */
+export const WithSourceReconnectGripOnly: Story = {
+  args: {
+    selected: true,
+    data: {
+      sourceGripEnabled: true,
+      targetGripEnabled: false,
+      onReconnectEdge: fn(),
+      validateReconnect: () => true,
+      onEdgeUpdate: fn(),
+      onReorderEdge: fn(),
+      onAddCondition: fn(),
+    },
+  },
+};
+
+/**
+ * Only the TARGET endpoint is eligible for reconnection.
+ */
+export const WithTargetReconnectGripOnly: Story = {
+  args: {
+    selected: true,
+    data: {
+      sourceGripEnabled: false,
+      targetGripEnabled: true,
+      onReconnectEdge: fn(),
+      validateReconnect: () => true,
+      onEdgeUpdate: fn(),
+      onReorderEdge: fn(),
+      onAddCondition: fn(),
+    },
+  },
+};

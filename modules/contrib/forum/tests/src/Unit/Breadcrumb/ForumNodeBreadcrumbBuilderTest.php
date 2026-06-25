@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Unit\Breadcrumb;
 
+use Drupal\Core\Cache\CacheableMetadata;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
@@ -16,6 +22,9 @@ use Symfony\Component\DependencyInjection\Container;
  * @coversDefaultClass \Drupal\forum\Breadcrumb\ForumNodeBreadcrumbBuilder
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
+#[AllowMockObjectsWithoutExpectations]
 class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
 
   /**
@@ -46,6 +55,7 @@ class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
    * @dataProvider providerTestApplies
    * @covers ::applies
    */
+  #[DataProvider('providerTestApplies')]
   public function testApplies(
     bool $expected,
     ?string $route_name = NULL,
@@ -61,7 +71,7 @@ class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
     $config_factory = $this->getConfigFactoryStub([]);
 
     $forum_manager = $this->createMock('Drupal\forum\ForumManagerInterface');
-    $forum_manager->expects($this->any())
+    $forum_manager->expects($route_name === 'entity.node.canonical' && $inject_node_mock ? $this->once() : $this->never())
       ->method('checkNodeType')
       ->willReturn(TRUE);
 
@@ -74,11 +84,11 @@ class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
     $route_match->expects($this->once())
       ->method('getRouteName')
       ->willReturn($route_name);
-    $route_match->expects($this->any())
+    $route_match->expects($route_name === 'entity.node.canonical' ? $this->atLeastOnce() : $this->never())
       ->method('getParameter')
       ->willReturnMap($parameter_map);
 
-    $this->assertEquals($expected, $builder->applies($route_match));
+    $this->assertEquals($expected, $builder->applies($route_match, new CacheableMetadata()));
   }
 
   /**
@@ -160,14 +170,14 @@ class ForumNodeBreadcrumbBuilderTest extends UnitTestCase {
     $prophecy->getCacheContexts()->willReturn([]);
     $prophecy->getCacheMaxAge()->willReturn(Cache::PERMANENT);
     $vocab_storage = $this->createMock('Drupal\Core\Entity\EntityStorageInterface');
-    $vocab_storage->expects($this->any())
+    $vocab_storage->expects($this->atLeastOnce())
       ->method('load')
       ->willReturnMap([
         ['forums', $prophecy->reveal()],
       ]);
 
     $entity_type_manager = $this->createMock(EntityTypeManagerInterface::class);
-    $entity_type_manager->expects($this->any())
+    $entity_type_manager->expects($this->atLeastOnce())
       ->method('getStorage')
       ->willReturnMap([
         ['taxonomy_vocabulary', $vocab_storage],

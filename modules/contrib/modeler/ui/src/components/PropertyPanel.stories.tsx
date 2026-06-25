@@ -69,7 +69,6 @@ const meta: Meta<typeof PropertyPanel> = {
     selectedNodes: [],
     selectedEdges: [],
     onConfigurationChange: fn(),
-    onEdgeConfigurationChange: fn(),
     onNodeUpdate: fn(),
     onEdgeUpdate: fn(),
     isLocked: false,

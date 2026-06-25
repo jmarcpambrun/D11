@@ -94,6 +94,60 @@ describe('DefaultEdge', () => {
     });
   });
 
+  // [C3] Generous edge-selection hit area (issue #3585553 follow-on UX).
+  // DefaultEdge hand-rolls its path (no <BaseEdge>), so it must render the
+  // transparent wide interaction path itself. These tests prove the path is
+  // rendered, transparent, follows the edge `d`, and honors the interactionWidth
+  // prop (falling back to the shared 30px default when React Flow omits it).
+  describe('interaction hit area (C3)', () => {
+    it('renders a transparent wide interaction path following the edge', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} />
+        </svg>
+      );
+      const hit = document.querySelector('.react-flow__edge-interaction');
+      expect(hit).toBeInTheDocument();
+      expect(hit).toHaveAttribute('stroke', 'transparent');
+      expect(hit).toHaveAttribute('fill', 'none');
+      // It traces the same path geometry as the visible edge.
+      const visible = document.querySelector('.react-flow__edge-path');
+      expect(hit?.getAttribute('d')).toBe(visible?.getAttribute('d'));
+    });
+
+    it('uses the interactionWidth prop for the hit stroke width', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} interactionWidth={30} />
+        </svg>
+      );
+      const hit = document.querySelector('.react-flow__edge-interaction');
+      expect(hit).toHaveAttribute('stroke-width', '30');
+    });
+
+    it('falls back to the generous 30px default when no interactionWidth is given', () => {
+      // Pass the prop as undefined to exercise the `?? INTERACTION_WIDTH` path.
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} interactionWidth={undefined} />
+        </svg>
+      );
+      const hit = document.querySelector('.react-flow__edge-interaction');
+      expect(hit).toHaveAttribute('stroke-width', '30');
+    });
+
+    it('still renders the wide hit path during replay highlighting', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} data={{ replayHighlight: '#00ff00' }} />
+        </svg>
+      );
+      const hit = document.querySelector('.react-flow__edge-interaction');
+      expect(hit).toBeInTheDocument();
+      expect(hit).toHaveAttribute('stroke', 'transparent');
+    });
+  });
+
   describe('replay highlighting', () => {
     it('should apply replay highlight color when provided', () => {
       const data = { replayHighlight: '#00ff00' };
@@ -646,6 +700,200 @@ describe('DefaultEdge', () => {
       );
       fireEvent.click(screen.getByTestId('quick-add-action'));
       expect(onAddActionOnEdge).toHaveBeenCalledWith('edge1', { id: 'act1', type: 'element' });
+    });
+  });
+
+  describe('endpoint reconnection grips (issue #3585553)', () => {
+    it('should not render grips when the edge is not selected', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} selected={false} data={{ sourceGripEnabled: true, targetGripEnabled: true }} />
+        </svg>
+      );
+      expect(document.querySelector('.edge-endpoint-grip--source')).not.toBeInTheDocument();
+      expect(document.querySelector('.edge-endpoint-grip--target')).not.toBeInTheDocument();
+    });
+
+    it('should render the source grip when selected and sourceGripEnabled', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} selected={true} data={{ sourceGripEnabled: true }} />
+        </svg>
+      );
+      expect(document.querySelector('.edge-endpoint-grip--source')).toBeInTheDocument();
+      // Target grip is independent — not enabled here.
+      expect(document.querySelector('.edge-endpoint-grip--target')).not.toBeInTheDocument();
+    });
+
+    it('should render the target grip when selected and targetGripEnabled', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} selected={true} data={{ targetGripEnabled: true }} />
+        </svg>
+      );
+      expect(document.querySelector('.edge-endpoint-grip--target')).toBeInTheDocument();
+      expect(document.querySelector('.edge-endpoint-grip--source')).not.toBeInTheDocument();
+    });
+
+    it('should not render either grip when grip eligibility is false (ambiguous handle)', () => {
+      // Models rule 2: when 2+ selected edges share the handle, FlowCanvas sets
+      // gripEnabled false, so no grip renders even though the edge is selected.
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} selected={true} data={{ sourceGripEnabled: false, targetGripEnabled: false }} />
+        </svg>
+      );
+      expect(document.querySelector('.edge-endpoint-grip--source')).not.toBeInTheDocument();
+      expect(document.querySelector('.edge-endpoint-grip--target')).not.toBeInTheDocument();
+    });
+
+    it('should not render grips when the canvas is globally locked', () => {
+      render(
+        <svg>
+          <DefaultEdge
+            {...defaultProps}
+            selected={true}
+            data={{ sourceGripEnabled: true, targetGripEnabled: true, globalLocked: true }}
+          />
+        </svg>
+      );
+      expect(document.querySelector('.edge-endpoint-grip--source')).not.toBeInTheDocument();
+      expect(document.querySelector('.edge-endpoint-grip--target')).not.toBeInTheDocument();
+    });
+
+    it('should commit a target reconnection via onReconnectEdge on a valid drop', () => {
+      const onReconnectEdge = jest.fn();
+      const validateReconnect = jest.fn(() => true);
+      render(
+        <svg>
+          <DefaultEdge
+            {...defaultProps}
+            selected={true}
+            data={{ targetGripEnabled: true, onReconnectEdge, validateReconnect }}
+          />
+        </svg>
+      );
+      const grip = document.querySelector('.edge-endpoint-grip--target');
+      expect(grip).toBeInTheDocument();
+      fireEvent.mouseDown(grip!);
+
+      // Simulate dropping over a different node. jsdom does not implement
+      // elementFromPoint, so install a controllable stub.
+      const dropNode = document.createElement('div');
+      dropNode.className = 'react-flow__node';
+      dropNode.setAttribute('data-id', 'node-x');
+      document.body.appendChild(dropNode);
+      (document as unknown as { elementFromPoint: (x: number, y: number) => Element | null }).elementFromPoint =
+        jest.fn(() => dropNode);
+
+      fireEvent(document, new MouseEvent('mouseup', { clientX: 10, clientY: 10 }));
+
+      expect(validateReconnect).toHaveBeenCalled();
+      // The destination handle is inferred from the dragged TARGET endpoint
+      // ('input'), independent of any handle element under the cursor.
+      expect(onReconnectEdge).toHaveBeenCalledWith('edge1', { target: 'node-x', targetHandle: 'input' });
+
+      delete (document as unknown as { elementFromPoint?: unknown }).elementFromPoint;
+      document.body.removeChild(dropNode);
+    });
+
+    it('should not render a reconnect preview line when not dragging', () => {
+      render(
+        <svg>
+          <DefaultEdge {...defaultProps} selected={true} data={{ targetGripEnabled: true }} />
+        </svg>
+      );
+      expect(document.querySelector('.edge-reconnect-preview')).not.toBeInTheDocument();
+    });
+
+    it('should render a reconnect preview line from the FIXED source while dragging the target grip', () => {
+      // Install the renderer/viewport so clientToFlowPoint resolves a point.
+      const mockRenderer = document.createElement('div');
+      mockRenderer.className = 'react-flow__renderer';
+      mockRenderer.getBoundingClientRect = jest.fn(() => ({
+        left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0, toJSON: () => {},
+      })) as unknown as () => DOMRect;
+      const mockViewport = document.createElement('div');
+      mockViewport.className = 'react-flow__viewport';
+      mockViewport.style.transform = 'translate(0px, 0px) scale(1)';
+      document.body.appendChild(mockRenderer);
+      document.body.appendChild(mockViewport);
+
+      const onReconnectEdge = jest.fn();
+      render(
+        <svg>
+          <DefaultEdge
+            {...defaultProps}
+            sourceX={100}
+            sourceY={100}
+            selected={true}
+            data={{ targetGripEnabled: true, onReconnectEdge, validateReconnect: () => true }}
+          />
+        </svg>
+      );
+
+      // Begin dragging the target grip, then move the cursor.
+      const grip = document.querySelector('.edge-endpoint-grip--target');
+      fireEvent.mouseDown(grip!);
+      fireEvent(document, new MouseEvent('mousemove', { clientX: 300, clientY: 400 }));
+
+      const preview = document.querySelector('.edge-reconnect-preview');
+      expect(preview).toBeInTheDocument();
+      // Path starts at the FIXED source endpoint (100,100) and ends at the
+      // cursor in flow coords (identity transform → 300,400).
+      const d = preview!.getAttribute('d') || '';
+      expect(d.startsWith('M 100,100 ')).toBe(true);
+      expect(d.trim().endsWith('300,400')).toBe(true);
+
+      // Drop on empty canvas → preview disappears, edge unchanged.
+      (document as unknown as { elementFromPoint: (x: number, y: number) => Element | null }).elementFromPoint =
+        jest.fn(() => null);
+      fireEvent(document, new MouseEvent('mouseup', { clientX: 300, clientY: 400 }));
+      expect(document.querySelector('.edge-reconnect-preview')).not.toBeInTheDocument();
+
+      delete (document as unknown as { elementFromPoint?: unknown }).elementFromPoint;
+      document.body.removeChild(mockRenderer);
+      document.body.removeChild(mockViewport);
+    });
+
+    it('should render a reconnect preview line from the FIXED target while dragging the source grip', () => {
+      const mockRenderer = document.createElement('div');
+      mockRenderer.className = 'react-flow__renderer';
+      mockRenderer.getBoundingClientRect = jest.fn(() => ({
+        left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0, toJSON: () => {},
+      })) as unknown as () => DOMRect;
+      const mockViewport = document.createElement('div');
+      mockViewport.className = 'react-flow__viewport';
+      mockViewport.style.transform = 'translate(0px, 0px) scale(1)';
+      document.body.appendChild(mockRenderer);
+      document.body.appendChild(mockViewport);
+
+      render(
+        <svg>
+          <DefaultEdge
+            {...defaultProps}
+            targetX={250}
+            targetY={250}
+            selected={true}
+            data={{ sourceGripEnabled: true, onReconnectEdge: jest.fn(), validateReconnect: () => true }}
+          />
+        </svg>
+      );
+
+      const grip = document.querySelector('.edge-endpoint-grip--source');
+      fireEvent.mouseDown(grip!);
+      fireEvent(document, new MouseEvent('mousemove', { clientX: 30, clientY: 40 }));
+
+      const preview = document.querySelector('.edge-reconnect-preview');
+      expect(preview).toBeInTheDocument();
+      const d = preview!.getAttribute('d') || '';
+      // Fixed end is the TARGET (250,250); cursor (30,40).
+      expect(d.startsWith('M 250,250 ')).toBe(true);
+      expect(d.trim().endsWith('30,40')).toBe(true);
+
+      fireEvent(document, new MouseEvent('mouseup'));
+      document.body.removeChild(mockRenderer);
+      document.body.removeChild(mockViewport);
     });
   });
 

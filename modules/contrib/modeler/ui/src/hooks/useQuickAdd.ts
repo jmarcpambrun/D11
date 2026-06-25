@@ -17,6 +17,7 @@ import { shiftNodesDown } from '../utils/positionUtils';
 import {
   computeSuccessorPosition,
   applyFlowShifts,
+  isConditionNode,
 } from '../utils/incrementalLayout';
 import { t } from '../utils/translation';
 import type { ViewportActions } from './useViewportActions';
@@ -53,7 +54,6 @@ export function useQuickAdd({ setHasUnsavedChanges, saveHistory, viewportActions
       nodes,
       edges,
       sourceNodeId,
-      hasCondition: false,
     });
 
     // Determine node type from component
@@ -98,16 +98,22 @@ export function useQuickAdd({ setHasUnsavedChanges, saveHistory, viewportActions
   }, [nodes, edges, setNodes, setEdges, setHasUnsavedChanges, saveHistory, viewportActions]);
 
   /**
-   * Add a condition with a placeholder action node.
+   * Add a condition NODE with a downstream placeholder action node.
    *
-   * Creates a placeholder node (no plugin assigned) as a successor to the
-   * source node, with a connecting edge that already has the selected
-   * condition attached.  This supports the condition-first authoring flow
-   * where users want to define a condition before choosing an action.
+   * Conditions are first-class nodes now (issue #3589093), so condition-first
+   * authoring creates a real condition node followed by a placeholder action
+   * node: `source -> conditionNode -> placeholder`.  The condition node carries
+   * the same data shape minted by {@link handleAddCondition} and the plugin
+   * API's `setCondition` (type `condition`, `__isConditionNode: true`,
+   * `componentType: 5`).  This supports the flow where users want to define a
+   * condition before choosing an action, while keeping the condition as a
+   * draggable, selectable node — no code path creates a condition edge.
    *
-   * Position is computed by the shared {@link computeSuccessorPosition}
-   * primitive with `hasCondition: true`, which guarantees the same gap
-   * the auto-layout would have produced.
+   * Both new nodes are laid out as a normal 2-node successor chain via the
+   * shared {@link computeSuccessorPosition} primitive (one hop per node), so
+   * the spacing matches auto-layout.  The condition node is auto-selected so
+   * its configuration panel opens immediately (mirroring the prior intent
+   * where the condition was selected for configuration).
    */
   const addConditionWithPlaceholder = useCallback((component: Component, sourceNodeId: string) => {
     if (saveHistory) saveHistory();
@@ -118,11 +124,103 @@ export function useQuickAdd({ setHasUnsavedChanges, saveHistory, viewportActions
       return;
     }
 
-    const { position: newPosition, shiftNodeIds, shiftAmount } = computeSuccessorPosition({
-      nodes,
+    // ── 0. Enforce the "no two adjacent conditions" invariant ──────────
+    // (issue #3589093) If the source is itself a condition node, a gateway
+    // must separate it from the new condition node, producing
+    // source(condition) -> gateway -> conditionNode -> placeholder.  The
+    // placeholder target is always fresh and never a condition, so only the
+    // source side can ever be adjacent here.
+    const sourceIsCondition = isConditionNode(sourceNode);
+
+    // The "parent" the condition node hangs from: the gateway when one is
+    // inserted, otherwise the source directly.
+    let conditionParentId = sourceNodeId;
+    let workingNodes = nodes;
+    let gatewayNode: {
+      id: string;
+      type: 'gateway';
+      position: { x: number; y: number };
+      selected: boolean;
+      data: { componentType: number; plugin: string; label: string };
+    } | null = null;
+
+    if (sourceIsCondition) {
+      const {
+        position: gatewayPosition,
+        shiftNodeIds: gwShiftNodeIds,
+        shiftAmount: gwShiftAmount,
+      } = computeSuccessorPosition({
+        nodes: workingNodes,
+        edges,
+        sourceNodeId,
+      });
+
+      const gatewayNodeId = generateNodeId(t('Gateway'), 'gateway');
+      gatewayNode = {
+        id: gatewayNodeId,
+        type: 'gateway' as const,
+        position: gatewayPosition,
+        selected: false,
+        data: {
+          componentType: 6,
+          plugin: 'gateway',
+          label: t('Gateway'),
+        },
+      };
+
+      workingNodes = [
+        ...applyFlowShifts(workingNodes, gwShiftNodeIds, gwShiftAmount),
+        gatewayNode,
+      ];
+      conditionParentId = gatewayNodeId;
+    }
+
+    // ── 1. Place the condition node as its parent's successor ──────────
+    const {
+      position: conditionPosition,
+      shiftNodeIds,
+      shiftAmount,
+    } = computeSuccessorPosition({
+      nodes: workingNodes,
       edges,
-      sourceNodeId,
-      hasCondition: true,
+      sourceNodeId: conditionParentId,
+    });
+
+    const conditionLabel = component.label || component.plugin?.split('.').pop() || component.plugin;
+    const conditionNodeId = generateNodeId(conditionLabel, 'condition');
+
+    const conditionNode = {
+      id: conditionNodeId,
+      type: 'condition' as const,
+      position: conditionPosition,
+      selected: true,
+      data: {
+        label: conditionLabel,
+        plugin: component.plugin,
+        configuration: {},
+        // New condition — export mints a UUID when conditionId is empty.
+        conditionId: '',
+        componentType: 5,
+        __isConditionNode: true,
+      },
+    };
+
+    // Apply horizontal flow shifts for neighboring flows around the condition
+    // node, deselecting any previously selected nodes in the process.
+    const nodesWithCondition = [
+      ...applyFlowShifts(workingNodes, shiftNodeIds, shiftAmount),
+      conditionNode,
+    ];
+
+    // ── 2. Place the placeholder as the condition node's successor ─────
+    const {
+      position: placeholderPosition,
+      shiftNodeIds: phShiftNodeIds,
+      shiftAmount: phShiftAmount,
+    } = computeSuccessorPosition({
+      nodes: nodesWithCondition,
+      edges,
+      sourceNodeId: conditionNodeId,
     });
 
     const placeholderLabel = t('Select action...');
@@ -131,54 +229,93 @@ export function useQuickAdd({ setHasUnsavedChanges, saveHistory, viewportActions
     const placeholderNode = {
       id: placeholderNodeId,
       type: 'placeholder' as const,
-      position: newPosition,
+      position: placeholderPosition,
       selected: false,
       data: {
         label: placeholderLabel,
       },
     };
 
-    const conditionLabel = component.label || component.plugin?.split('.').pop() || component.plugin;
-    const newEdgeId = generateEdgeId(sourceNodeId, placeholderNodeId);
-    const newEdge = {
-      id: newEdgeId,
-      source: sourceNodeId,
-      target: placeholderNodeId,
-      type: 'condition' as const,
-      label: conditionLabel,
-      selected: true,
-      data: {
-        condition: component.plugin,
-        conditionLabel,
-      },
-    };
+    // Apply horizontal flow shifts for the placeholder hop.  Do not deselect
+    // here so the condition node stays selected for configuration.
+    let updatedNodes = applyFlowShifts(
+      nodesWithCondition,
+      phShiftNodeIds,
+      phShiftAmount,
+      { deselectAll: false },
+    );
 
-    // Apply horizontal flow shifts for neighboring flows.
-    let updatedNodes = applyFlowShifts(nodes, shiftNodeIds, shiftAmount);
-
-    // Then shift everything at or below the placeholder's Y downward so
-    // nothing overlaps the newly added placeholder + condition card.
-    const placeholderBottom = newPosition.y + NODE_DIMENSIONS.CARD_HEIGHT;
+    // Shift everything at or below the placeholder's Y downward so nothing
+    // overlaps the newly added condition + placeholder chain.  Exclude the
+    // source and the two new nodes themselves.
+    const placeholderBottom = placeholderPosition.y + NODE_DIMENSIONS.CARD_HEIGHT;
     const verticalShift = placeholderBottom + LAYOUT.NODE_SPACING_Y;
+    // Exclude the source, the new chain nodes (gateway if any, condition,
+    // placeholder) from the downstream shift.
+    const newChainIds = new Set<string>([sourceNodeId, conditionNodeId, placeholderNodeId]);
+    if (gatewayNode) newChainIds.add(gatewayNode.id);
     updatedNodes = shiftNodesDown(
       updatedNodes,
-      newPosition.y,
-      Math.max(0, verticalShift - newPosition.y),
-      new Set([sourceNodeId]),
+      placeholderPosition.y,
+      Math.max(0, verticalShift - placeholderPosition.y),
+      newChainIds,
     );
 
     const allNodes = [...updatedNodes, placeholderNode];
+
+    // ── 3. Wire the chain with plain edges, inserting a gateway hop when
+    // the source is a condition node so we never create a condition ->
+    // condition edge (issue #3589093):
+    //   * no gateway: source -> condition -> placeholder
+    //   * gateway:    source -> gateway -> condition -> placeholder
+    const edgeToPlaceholder = {
+      id: generateEdgeId(conditionNodeId, placeholderNodeId),
+      source: conditionNodeId,
+      target: placeholderNodeId,
+      type: 'default' as const,
+      data: {},
+    };
+
+    const chainEdges = gatewayNode
+      ? [
+          {
+            id: generateEdgeId(sourceNodeId, gatewayNode.id),
+            source: sourceNodeId,
+            target: gatewayNode.id,
+            type: 'default' as const,
+            data: {},
+          },
+          {
+            id: generateEdgeId(gatewayNode.id, conditionNodeId),
+            source: gatewayNode.id,
+            target: conditionNodeId,
+            type: 'default' as const,
+            data: {},
+          },
+          edgeToPlaceholder,
+        ]
+      : [
+          {
+            id: generateEdgeId(sourceNodeId, conditionNodeId),
+            source: sourceNodeId,
+            target: conditionNodeId,
+            type: 'default' as const,
+            data: {},
+          },
+          edgeToPlaceholder,
+        ];
+
     const allEdges = [
       ...edges.map(e => e.selected ? { ...e, selected: false } : e),
-      newEdge,
+      ...chainEdges,
     ];
 
     setNodes(allNodes);
     setEdges(allEdges);
     setHasUnsavedChanges(true);
 
-    // Pan to show both the source node and the new placeholder node so the
-    // condition edge connecting them is fully visible.
+    // Pan to show the source node together with the new condition +
+    // placeholder chain so the whole insertion is visible.
     viewportActions.fitToNodePair(sourceNodeId, placeholderNodeId);
   }, [nodes, edges, setNodes, setEdges, setHasUnsavedChanges, saveHistory, viewportActions]);
 

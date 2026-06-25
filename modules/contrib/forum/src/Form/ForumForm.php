@@ -156,7 +156,7 @@ class ForumForm extends TermForm {
     }
 
     $vid = $this->config('forum.settings')->get('vocabulary');
-    $children = $taxonomy_storage->loadTree($vid, $tid, NULL, TRUE);
+    $children = $taxonomy_storage->loadTree($vid, $tid ?? 0, NULL, TRUE);
 
     // A term can't be the child of itself, nor of its children.
     foreach ($children as $child) {

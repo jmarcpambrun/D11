@@ -85,61 +85,137 @@ describe('useNodeEdgeActions', () => {
   };
 
   describe('return values', () => {
-    it('should return handleAddCondition, handleAddEvent, handleAddActionOnEdge, handleInsertBeforeCondition, and handleInsertAfterCondition', () => {
+    it('should return handleAddCondition, handleAddEvent, and handleAddActionOnEdge', () => {
       const { result } = renderUseNodeEdgeActions();
       expect(typeof result.current.handleAddCondition).toBe('function');
       expect(typeof result.current.handleAddEvent).toBe('function');
       expect(typeof result.current.handleAddActionOnEdge).toBe('function');
-      expect(typeof result.current.handleInsertBeforeCondition).toBe('function');
-      expect(typeof result.current.handleInsertAfterCondition).toBe('function');
     });
   });
 
   describe('handleAddCondition', () => {
-    it('should update edge with condition data', () => {
-      mockEdges = [
-        { id: 'edge-1', source: 'a', target: 'b', data: {} },
-        { id: 'edge-2', source: 'b', target: 'c', data: {} },
+    // Issue #3589093: "add condition" now inserts a first-class condition
+    // NODE on the target edge (mirroring the load-time translation), instead
+    // of mutating the edge to carry a condition. The edge is split into two
+    // plain default edges with the condition node between them.
+    const setupNodesAndEdges = () => {
+      mockNodes = [
+        { id: 'node-1', position: { x: 100, y: 50 }, selected: false },
+        { id: 'node-2', position: { x: 100, y: 254 }, selected: false },
       ];
+      mockEdges = [
+        { id: 'e1', source: 'node-1', target: 'node-2', type: 'default', data: {}, selected: false },
+      ];
+    };
+
+    it('should insert a condition NODE on the target edge', () => {
+      setupNodesAndEdges();
       const { result } = renderUseNodeEdgeActions();
 
       act(() => {
-        result.current.handleAddCondition('edge-1', {
+        result.current.handleAddCondition('e1', {
           plugin: 'test.condition.check_value',
           label: 'Check Value',
         });
       });
 
-      expect(mockSetEdges).toHaveBeenCalled();
-      // setEdges is now called with the final array directly (not a callback)
-      const updatedEdges = mockSetEdges.mock.calls[0][0];
-      expect(updatedEdges[0].data.condition).toBe('test.condition.check_value');
-      expect(updatedEdges[0].data.conditionLabel).toBe('Check Value');
-      expect(updatedEdges[1].data).toEqual({});
+      expect(mockSetNodes).toHaveBeenCalled();
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
+      // Original two nodes plus the new condition node.
+      expect(updatedNodes).toHaveLength(3);
+
+      const conditionNode = updatedNodes.find(
+        (n: any) => n.id !== 'node-1' && n.id !== 'node-2',
+      );
+      expect(conditionNode).toBeDefined();
+      expect(conditionNode.type).toBe('condition');
+      expect(conditionNode.data.__isConditionNode).toBe(true);
+      expect(conditionNode.data.plugin).toBe('test.condition.check_value');
+      expect(conditionNode.data.label).toBe('Check Value');
+      expect(conditionNode.data.componentType).toBe(5);
+      // New condition — empty conditionId so export mints a UUID.
+      expect(conditionNode.data.conditionId).toBe('');
+      expect(conditionNode.data.configuration).toEqual({});
     });
 
-    it('should mark the edge as selected', () => {
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
+    it('should NOT mutate the edge to carry a condition', () => {
+      setupNodesAndEdges();
       const { result } = renderUseNodeEdgeActions();
 
       act(() => {
-        result.current.handleAddCondition('edge-1', {
+        result.current.handleAddCondition('e1', {
+          plugin: 'test.condition.check_value',
+          label: 'Check Value',
+        });
+      });
+
+      const updatedEdges = mockSetEdges.mock.calls[0][0];
+      // The original edge is removed; replaced by two plain default edges.
+      expect(updatedEdges.find((e: any) => e.id === 'e1')).toBeUndefined();
+      expect(updatedEdges).toHaveLength(2);
+      for (const edge of updatedEdges) {
+        expect(edge.type).toBe('default');
+        // No condition data lives on any edge anymore.
+        expect(edge.data?.condition).toBeUndefined();
+        expect(edge.data?.conditionLabel).toBeUndefined();
+      }
+    });
+
+    it('should create two plain edges: source -> condition -> target', () => {
+      setupNodesAndEdges();
+      const { result } = renderUseNodeEdgeActions();
+
+      act(() => {
+        result.current.handleAddCondition('e1', {
           plugin: 'test.condition.test',
           label: 'Test',
         });
       });
 
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
+      const conditionNode = updatedNodes.find(
+        (n: any) => n.id !== 'node-1' && n.id !== 'node-2',
+      );
       const updatedEdges = mockSetEdges.mock.calls[0][0];
-      expect(updatedEdges[0].selected).toBe(true);
-      expect(updatedEdges[0].id).toBe('edge-1');
+
+      const edgeToCondition = updatedEdges.find(
+        (e: any) => e.source === 'node-1' && e.target === conditionNode.id,
+      );
+      const edgeFromCondition = updatedEdges.find(
+        (e: any) => e.source === conditionNode.id && e.target === 'node-2',
+      );
+      expect(edgeToCondition).toBeDefined();
+      expect(edgeToCondition.type).toBe('default');
+      expect(edgeToCondition.data).toEqual({});
+      expect(edgeFromCondition).toBeDefined();
+      expect(edgeFromCondition.type).toBe('default');
+      expect(edgeFromCondition.data).toEqual({});
     });
 
-    it('should mark unsaved changes', () => {
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
+    it('should select the new condition node', () => {
+      setupNodesAndEdges();
       const { result } = renderUseNodeEdgeActions();
 
       act(() => {
-        result.current.handleAddCondition('edge-1', {
+        result.current.handleAddCondition('e1', {
+          plugin: 'test.condition.test',
+          label: 'Test',
+        });
+      });
+
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
+      const conditionNode = updatedNodes.find(
+        (n: any) => n.id !== 'node-1' && n.id !== 'node-2',
+      );
+      expect(conditionNode.selected).toBe(true);
+    });
+
+    it('should mark unsaved changes', () => {
+      setupNodesAndEdges();
+      const { result } = renderUseNodeEdgeActions();
+
+      act(() => {
+        result.current.handleAddCondition('e1', {
           plugin: 'test',
           label: 'Test',
         });
@@ -148,159 +224,141 @@ describe('useNodeEdgeActions', () => {
       expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
     });
 
-    it('should deselect other edges when adding condition', () => {
-      mockEdges = [
-        { id: 'edge-1', source: 'a', target: 'b', data: {}, selected: false },
-        { id: 'edge-2', source: 'b', target: 'c', data: {}, selected: true },
-      ];
-      const { result } = renderUseNodeEdgeActions();
-
-      act(() => {
-        result.current.handleAddCondition('edge-1', {
-          plugin: 'test.condition.test',
-          label: 'Test',
-        });
-      });
-
-      const updatedEdges = mockSetEdges.mock.calls[0][0];
-      // Target edge should be selected
-      expect(updatedEdges[0].selected).toBe(true);
-      expect(updatedEdges[0].id).toBe('edge-1');
-      // Previously selected edge should be deselected
-      expect(updatedEdges[1].selected).toBe(false);
-    });
-
-    it('should deselect all nodes when adding condition', () => {
-      mockNodes = [
-        { id: 'a', position: { x: 0, y: 0 }, selected: true, height: 120 },
-        { id: 'b', position: { x: 0, y: 204 }, selected: false, height: 120 },
-      ];
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
-      const { result } = renderUseNodeEdgeActions();
-
-      act(() => {
-        result.current.handleAddCondition('edge-1', {
-          plugin: 'test.condition.test',
-          label: 'Test',
-        });
-      });
-
-      // setNodes should have been called with deselected nodes
-      expect(mockSetNodes).toHaveBeenCalled();
-      const updatedNodes = mockSetNodes.mock.calls[0][0];
-      expect(updatedNodes[0].selected).toBe(false);
-    });
-
-    it('should shift target node down when gap is too small for condition card', () => {
-      // Source at y=0 (height 120), target at y=150 → gap = 30, needs 174
-      mockNodes = [
-        { id: 'a', position: { x: 100, y: 0 }, height: 120 },
-        { id: 'b', position: { x: 100, y: 150 }, height: 120 },
-      ];
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
-      const { result } = renderUseNodeEdgeActions();
-
-      act(() => {
-        result.current.handleAddCondition('edge-1', {
-          plugin: 'test.condition.test',
-          label: 'Test',
-        });
-      });
-
-      const updatedNodes = mockSetNodes.mock.calls[0][0];
-      const targetNode = updatedNodes.find((n: any) => n.id === 'b');
-      // Required gap = NODE_SPACING_Y (84) + CONDITION_EXTRA_SPACING (90) = 174
-      // Current gap = 150 - 120 = 30, shift = 174 - 30 = 144
-      expect(targetNode.position.y).toBe(150 + 144);
-    });
-
-    it('should not shift when gap already accommodates condition card', () => {
-      // Source at y=0 (height 120), target at y=400 → gap = 280, needs 174
-      mockNodes = [
-        { id: 'a', position: { x: 100, y: 0 }, height: 120 },
-        { id: 'b', position: { x: 100, y: 400 }, height: 120 },
-      ];
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
-      const { result } = renderUseNodeEdgeActions();
-
-      act(() => {
-        result.current.handleAddCondition('edge-1', {
-          plugin: 'test.condition.test',
-          label: 'Test',
-        });
-      });
-
-      const updatedNodes = mockSetNodes.mock.calls[0][0];
-      const targetNode = updatedNodes.find((n: any) => n.id === 'b');
-      // Gap is already large enough — no shift
-      expect(targetNode.position.y).toBe(400);
-    });
-
-    it('should set edge type to condition', () => {
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
-      const { result } = renderUseNodeEdgeActions();
-
-      act(() => {
-        result.current.handleAddCondition('edge-1', {
-          plugin: 'test.condition.test',
-          label: 'Test',
-        });
-      });
-
-      const updatedEdges = mockSetEdges.mock.calls[0][0];
-      expect(updatedEdges[0].type).toBe('condition');
-    });
-
     it('should use plugin name as fallback label', () => {
-      mockEdges = [{ id: 'edge-1', source: 'a', target: 'b', data: {} }];
+      setupNodesAndEdges();
       const { result } = renderUseNodeEdgeActions();
 
       act(() => {
-        result.current.handleAddCondition('edge-1', {
+        result.current.handleAddCondition('e1', {
           plugin: 'test.condition.check_value',
           label: '',
         });
       });
 
-      const updatedEdges = mockSetEdges.mock.calls[0][0];
-      expect(updatedEdges[0].data.conditionLabel).toBe('check_value');
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
+      const conditionNode = updatedNodes.find(
+        (n: any) => n.id !== 'node-1' && n.id !== 'node-2',
+      );
+      expect(conditionNode.data.label).toBe('check_value');
     });
 
-    it('should invoke parallel edge routing when adding condition to parallel edges (issue #3588937)', () => {
-      // Two parallel edges from n1 to n2, initially with no offsets
+    it('should pan to the new condition node if offscreen', () => {
+      setupNodesAndEdges();
+      const { result } = renderUseNodeEdgeActions();
+
+      act(() => {
+        result.current.handleAddCondition('e1', {
+          plugin: 'test.condition.test',
+          label: 'Test',
+        });
+      });
+
+      expect(mockViewportActions.panToNodeIfOffscreen).toHaveBeenCalled();
+    });
+
+    it('should handle missing edge gracefully', () => {
+      setupNodesAndEdges();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const { result } = renderUseNodeEdgeActions();
+
+      act(() => {
+        result.current.handleAddCondition('nonexistent-edge', {
+          plugin: 'test.condition.test',
+          label: 'Test',
+        });
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Edge not found:', 'nonexistent-edge');
+      expect(mockSetNodes).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    // ── No-two-adjacent-conditions invariant (issue #3589093) ───────────
+    // When the target edge's source or target is itself a condition node,
+    // handleAddCondition must route through a gateway so we never create a
+    // condition -> condition edge.
+
+    it('inserts a gateway when the target edge points INTO an existing condition (source->newCond->gateway->existingCond)', () => {
+      // event_1 -> existingCond.  Inserting on that edge means the target is
+      // a condition, so result must be event_1 -> newCond -> gateway -> existingCond.
       mockNodes = [
-        { id: 'n1', position: { x: 100, y: 0 }, height: 120, width: 200 },
-        { id: 'n2', position: { x: 100, y: 300 }, height: 120, width: 200 },
+        { id: 'event_1', position: { x: 100, y: 50 }, selected: false },
+        { id: 'existing_cond', type: 'condition', position: { x: 100, y: 254 }, selected: false, data: { __isConditionNode: true } },
       ];
       mockEdges = [
-        { id: 'e1', source: 'n1', target: 'n2', type: 'default', data: {} },
-        { id: 'e2', source: 'n1', target: 'n2', type: 'default', data: {} },
+        { id: 'e1', source: 'event_1', target: 'existing_cond', type: 'default', data: {}, selected: false },
       ];
       const { result } = renderUseNodeEdgeActions();
 
       act(() => {
-        result.current.handleAddCondition('e2', {
-          plugin: 'test.condition.test',
-          label: 'Test Condition',
+        result.current.handleAddCondition('e1', {
+          plugin: 'test.condition.check',
+          label: 'Check',
         });
       });
 
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
       const updatedEdges = mockSetEdges.mock.calls[0][0];
 
-      // Both edges should now have control offsets from the parallel router
-      expect(updatedEdges[0].data?.controlOffset).toBeDefined();
-      expect(updatedEdges[1].data?.controlOffset).toBeDefined();
+      // A gateway node was added (condition + gateway = 2 new nodes).
+      const gateway = updatedNodes.find((n: any) => n.type === 'gateway');
+      expect(gateway).toBeDefined();
+      const newCond = updatedNodes.find((n: any) => n.type === 'condition' && n.id !== 'existing_cond');
+      expect(newCond).toBeDefined();
 
-      // The second edge (with condition) should have extra spacing
-      // The router applies CONDITION_CARD_OVERHANG to condition edges
-      const e1Offset = updatedEdges[0].data.controlOffset.x;
-      const e2Offset = updatedEdges[1].data.controlOffset.x;
+      // Edge wiring: event_1 -> newCond -> gateway -> existing_cond.
+      expect(updatedEdges.find((e: any) => e.source === 'event_1' && e.target === newCond.id)).toBeDefined();
+      expect(updatedEdges.find((e: any) => e.source === newCond.id && e.target === gateway.id)).toBeDefined();
+      expect(updatedEdges.find((e: any) => e.source === gateway.id && e.target === 'existing_cond')).toBeDefined();
 
-      // They should be on opposite sides (symmetric)
-      expect(Math.sign(e1Offset)).not.toBe(Math.sign(e2Offset));
+      // No condition -> condition edge exists.
+      const condIds = new Set(['existing_cond', newCond.id]);
+      for (const e of updatedEdges) {
+        expect(condIds.has(e.source) && condIds.has(e.target)).toBe(false);
+      }
+    });
 
-      // The condition edge should be pushed further out
-      expect(Math.abs(e2Offset)).toBeGreaterThan(Math.abs(e1Offset));
+    it('inserts a gateway when the target edge comes OUT of an existing condition (existingCond->gateway->newCond->target)', () => {
+      // existingCond -> action.  Inserting on that edge means the source is
+      // a condition, so result must be existingCond -> gateway -> newCond -> action.
+      mockNodes = [
+        { id: 'existing_cond', type: 'condition', position: { x: 100, y: 50 }, selected: false, data: { __isConditionNode: true } },
+        { id: 'action_1', position: { x: 100, y: 254 }, selected: false },
+      ];
+      mockEdges = [
+        { id: 'e1', source: 'existing_cond', target: 'action_1', type: 'default', data: {}, selected: false },
+      ];
+      const { result } = renderUseNodeEdgeActions();
+
+      act(() => {
+        result.current.handleAddCondition('e1', {
+          plugin: 'test.condition.check',
+          label: 'Check',
+        });
+      });
+
+      const updatedNodes = mockSetNodes.mock.calls[0][0];
+      const updatedEdges = mockSetEdges.mock.calls[0][0];
+
+      const gateway = updatedNodes.find((n: any) => n.type === 'gateway');
+      expect(gateway).toBeDefined();
+      const newCond = updatedNodes.find((n: any) => n.type === 'condition' && n.id !== 'existing_cond');
+      expect(newCond).toBeDefined();
+
+      // Edge wiring: existing_cond -> gateway -> newCond -> action_1.
+      expect(updatedEdges.find((e: any) => e.source === 'existing_cond' && e.target === gateway.id)).toBeDefined();
+      expect(updatedEdges.find((e: any) => e.source === gateway.id && e.target === newCond.id)).toBeDefined();
+      expect(updatedEdges.find((e: any) => e.source === newCond.id && e.target === 'action_1')).toBeDefined();
+
+      const condIds = new Set(['existing_cond', newCond.id]);
+      for (const e of updatedEdges) {
+        expect(condIds.has(e.source) && condIds.has(e.target)).toBe(false);
+      }
+
+      // Issue #3589093 regression: positions must follow the FLOW order
+      // (gateway BEFORE the new condition), not the buildConditionInsertion
+      // array order.  The gateway must therefore sit ABOVE the new condition.
+      expect(gateway.position.y).toBeLessThan(newCond.position.y);
     });
   });
 
@@ -618,451 +676,6 @@ describe('useNodeEdgeActions', () => {
       const newNode = updatedNodes.find((n: any) => n.id !== 'node-1' && n.id !== 'node-2');
       expect(newNode).toBeDefined();
       expect(newNode.type).toBe('gateway');
-    });
-  });
-
-  describe('handleInsertBeforeCondition', () => {
-    const setupConditionEdge = () => {
-      mockNodes = [
-        { id: 'node-1', position: { x: 100, y: 50 }, selected: false },
-        { id: 'node-2', position: { x: 100, y: 254 }, selected: false },
-      ];
-      mockEdges = [
-        {
-          id: 'ce1',
-          source: 'node-1',
-          target: 'node-2',
-          type: 'condition',
-          label: 'Original Cond',
-          data: {
-            condition: 'orig.plugin',
-            conditionLabel: 'Original Cond',
-          },
-          selected: false,
-        },
-      ];
-    };
-
-    describe('when action selected', () => {
-      it('should insert node between source and target', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        expect(mockSetNodes).toHaveBeenCalled();
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        expect(updatedNodes).toHaveLength(3);
-
-        expect(mockSetEdges).toHaveBeenCalled();
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        expect(updatedEdges).toHaveLength(2);
-      });
-
-      it('should create first edge (source to new) as default type', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        // First new edge: source → new node (default, no condition)
-        const edgeToNew = updatedEdges.find((e: any) => e.source === 'node-1' && e.target !== 'node-2');
-        expect(edgeToNew).toBeDefined();
-        expect(edgeToNew.type).toBe('default');
-      });
-
-      it('should create second edge (new to target) with original condition data', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        // Second new edge: new node → target (keeps original condition)
-        const edgeFromNew = updatedEdges.find((e: any) => e.target === 'node-2' && e.source !== 'node-1');
-        expect(edgeFromNew).toBeDefined();
-        expect(edgeFromNew.type).toBe('condition');
-        expect(edgeFromNew.data.condition).toBe('orig.plugin');
-        expect(edgeFromNew.data.conditionLabel).toBe('Original Cond');
-      });
-
-      it('should mark unsaved changes and position new node with correct spacing', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
-
-        // The new node should be positioned below the source with proper spacing
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const newNode = updatedNodes.find((n: any) => n.id !== 'node-1' && n.id !== 'node-2');
-        expect(newNode).toBeDefined();
-        // source at y=50, height=120, sourceBottom=170
-        // "Before condition" → plain edge before → gap = NODE_SPACING_Y = 84
-        // newNode.y = 170 + 84 = 254
-        expect(newNode.position.y).toBe(254);
-      });
-    });
-
-    describe('when condition selected', () => {
-      it('should insert a gateway node', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const gatewayNode = updatedNodes.find((n: any) => n.type === 'gateway');
-        expect(gatewayNode).toBeDefined();
-        expect(gatewayNode.type).toBe('gateway');
-        expect(gatewayNode.data.plugin).toBe('gateway');
-        expect(gatewayNode.data.componentType).toBe(6);
-      });
-
-      it('should create first edge (source to gateway) with the NEW condition', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        const edgeToGateway = updatedEdges.find((e: any) => e.source === 'node-1');
-        expect(edgeToGateway).toBeDefined();
-        expect(edgeToGateway.type).toBe('condition');
-        expect(edgeToGateway.data.condition).toBe('new.condition.check');
-        expect(edgeToGateway.data.conditionLabel).toBe('New Check');
-      });
-
-      it('should create second edge (gateway to target) with the ORIGINAL condition', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        const edgeFromGateway = updatedEdges.find((e: any) => e.target === 'node-2');
-        expect(edgeFromGateway).toBeDefined();
-        expect(edgeFromGateway.type).toBe('condition');
-        expect(edgeFromGateway.data.condition).toBe('orig.plugin');
-        expect(edgeFromGateway.data.conditionLabel).toBe('Original Cond');
-      });
-
-      it('should not create a placeholder node', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const placeholderNode = updatedNodes.find((n: any) => n.type === 'placeholder');
-        expect(placeholderNode).toBeUndefined();
-      });
-
-      it('should mark unsaved changes and position gateway with correct spacing', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertBeforeCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
-
-        // The gateway should be positioned below the source with condition-aware spacing
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const gatewayNode = updatedNodes.find((n: any) => n.type === 'gateway');
-        expect(gatewayNode).toBeDefined();
-        // source at y=50, height=120, sourceBottom=170
-        // Condition edge before → gap = NODE_SPACING_Y + CONDITION_EXTRA_SPACING = 174
-        // gateway.y = 170 + 174 = 344
-        expect(gatewayNode.position.y).toBe(344);
-      });
-    });
-  });
-
-  describe('handleInsertAfterCondition', () => {
-    const setupConditionEdge = () => {
-      mockNodes = [
-        { id: 'node-1', position: { x: 100, y: 50 }, selected: false },
-        { id: 'node-2', position: { x: 100, y: 254 }, selected: false },
-      ];
-      mockEdges = [
-        {
-          id: 'ce1',
-          source: 'node-1',
-          target: 'node-2',
-          type: 'condition',
-          label: 'Original Cond',
-          data: {
-            condition: 'orig.plugin',
-            conditionLabel: 'Original Cond',
-          },
-          selected: false,
-        },
-      ];
-    };
-
-    describe('when action selected', () => {
-      it('should insert node between source and target', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        expect(mockSetNodes).toHaveBeenCalled();
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        expect(updatedNodes).toHaveLength(3);
-
-        expect(mockSetEdges).toHaveBeenCalled();
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        expect(updatedEdges).toHaveLength(2);
-      });
-
-      it('should create first edge (source to new) with original condition data', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        // First new edge: source → new node (keeps original condition)
-        const edgeToNew = updatedEdges.find((e: any) => e.source === 'node-1' && e.target !== 'node-2');
-        expect(edgeToNew).toBeDefined();
-        expect(edgeToNew.type).toBe('condition');
-        expect(edgeToNew.data.condition).toBe('orig.plugin');
-        expect(edgeToNew.data.conditionLabel).toBe('Original Cond');
-      });
-
-      it('should create second edge (new to target) as default type', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        // Second new edge: new node → target (default, no condition)
-        const edgeFromNew = updatedEdges.find((e: any) => e.target === 'node-2' && e.source !== 'node-1');
-        expect(edgeFromNew).toBeDefined();
-        expect(edgeFromNew.type).toBe('default');
-      });
-
-      it('should mark unsaved changes and position new node with correct spacing', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'test.action.save',
-            label: 'Save Entity',
-            type: 'element',
-            componentType: 4,
-          });
-        });
-
-        expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
-
-        // The new node should be positioned below source with condition-aware spacing
-        // (condition stays on the first edge, so the edge before the new node has a condition)
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const newNode = updatedNodes.find((n: any) => n.id !== 'node-1' && n.id !== 'node-2');
-        expect(newNode).toBeDefined();
-        // source at y=50, height=120, sourceBottom=170
-        // "After condition" → condition edge before → gap = NODE_SPACING_Y + CONDITION_EXTRA_SPACING = 174
-        // newNode.y = 170 + 174 = 344
-        expect(newNode.position.y).toBe(344);
-      });
-    });
-
-    describe('when condition selected', () => {
-      it('should insert a gateway node', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const gatewayNode = updatedNodes.find((n: any) => n.type === 'gateway');
-        expect(gatewayNode).toBeDefined();
-        expect(gatewayNode.type).toBe('gateway');
-        expect(gatewayNode.data.plugin).toBe('gateway');
-        expect(gatewayNode.data.componentType).toBe(6);
-      });
-
-      it('should create first edge (source to gateway) with the ORIGINAL condition', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        const edgeToGateway = updatedEdges.find((e: any) => e.source === 'node-1');
-        expect(edgeToGateway).toBeDefined();
-        expect(edgeToGateway.type).toBe('condition');
-        expect(edgeToGateway.data.condition).toBe('orig.plugin');
-        expect(edgeToGateway.data.conditionLabel).toBe('Original Cond');
-      });
-
-      it('should create second edge (gateway to target) with the NEW condition', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedEdges = mockSetEdges.mock.calls[0][0];
-        const edgeFromGateway = updatedEdges.find((e: any) => e.target === 'node-2');
-        expect(edgeFromGateway).toBeDefined();
-        expect(edgeFromGateway.type).toBe('condition');
-        expect(edgeFromGateway.data.condition).toBe('new.condition.check');
-        expect(edgeFromGateway.data.conditionLabel).toBe('New Check');
-      });
-
-      it('should not create a placeholder node', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const placeholderNode = updatedNodes.find((n: any) => n.type === 'placeholder');
-        expect(placeholderNode).toBeUndefined();
-      });
-
-      it('should mark unsaved changes and position gateway with correct spacing', () => {
-        setupConditionEdge();
-        const { result } = renderUseNodeEdgeActions();
-
-        act(() => {
-          result.current.handleInsertAfterCondition('ce1', {
-            plugin: 'new.condition.check',
-            label: 'New Check',
-            type: 'link',
-            componentType: 5,
-          });
-        });
-
-        expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
-
-        // The gateway should be positioned below source with condition-aware spacing
-        const updatedNodes = mockSetNodes.mock.calls[0][0];
-        const gatewayNode = updatedNodes.find((n: any) => n.type === 'gateway');
-        expect(gatewayNode).toBeDefined();
-        // source at y=50, height=120, sourceBottom=170
-        // Condition edge before → gap = NODE_SPACING_Y + CONDITION_EXTRA_SPACING = 174
-        // gateway.y = 170 + 174 = 344
-        expect(gatewayNode.position.y).toBe(344);
-      });
     });
   });
 });

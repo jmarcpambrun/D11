@@ -1,0 +1,15 @@
+{
+    "name": "drupal/forum",
+    "description": "Provides discussion forums.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/forum",
+    "support": {
+        "issues": "http://drupal.org/project/issues/forum",
+        "source": "https://git.drupalcode.org/project/forum"
+    },
+    "require": {
+        "drupal/history": "~1",
+        "drupal/core": "~11.3 || ~12"
+    }
+}

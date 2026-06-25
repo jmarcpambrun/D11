@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityInterface;
@@ -19,6 +22,8 @@ use Drupal\Tests\BrowserTestBase;
  * @group forum
  * @group #slow
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumTest extends BrowserTestBase {
 
   /**
@@ -85,6 +90,11 @@ class ForumTest extends BrowserTestBase {
    * An array of forum topic node IDs.
    */
   protected $nids;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $profile = 'minimal';
 
   /**
    * {@inheritdoc}

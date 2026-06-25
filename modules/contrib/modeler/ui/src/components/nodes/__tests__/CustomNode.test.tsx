@@ -3,10 +3,18 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import CustomNode from '../CustomNode';
 import { Position } from 'reactflow';
 
-// Mock reactflow Handle component
+// Mock reactflow Handle component. The Handle mock forwards `isConnectable`,
+// `title`, and `className` so tests can assert the disabled-source-handle UX
+// (issue #3589093), including the `node-handle--disabled` modifier class.
 jest.mock('reactflow', () => ({
-  Handle: ({ type, position, id }: any) => (
-    <div data-testid={`handle-${type}-${id}`} data-position={position}>
+  Handle: ({ type, position, id, isConnectable, title, className }: any) => (
+    <div
+      data-testid={`handle-${type}-${id}`}
+      data-position={position}
+      data-connectable={isConnectable === undefined ? 'true' : String(isConnectable)}
+      title={title}
+      className={className}
+    >
       Handle
     </div>
   ),
@@ -76,6 +84,25 @@ describe('CustomNode', () => {
     it('should render output handle', () => {
       render(<CustomNode {...defaultProps} />);
       expect(screen.getByTestId('handle-source-output')).toBeInTheDocument();
+    });
+  });
+
+  describe('source handle disabled state (issue #3589093)', () => {
+    it('should render the source handle as connectable when not disabled', () => {
+      render(<CustomNode {...defaultProps} />);
+      const handle = screen.getByTestId('handle-source-output');
+      expect(handle).toHaveAttribute('data-connectable', 'true');
+      expect(handle).not.toHaveClass('node-handle--disabled');
+    });
+
+    it('should add the node-handle--disabled modifier class and title when disabled', () => {
+      const data = { ...defaultNodeData, sourceHandleDisabled: true };
+      render(<CustomNode {...defaultProps} data={data} />);
+      const handle = screen.getByTestId('handle-source-output');
+      // Re-enables hover so the tooltip shows, while connection stays disabled.
+      expect(handle).toHaveClass('node-handle--disabled');
+      expect(handle).toHaveAttribute('data-connectable', 'false');
+      expect(handle).toHaveAttribute('title', 'Maximum number of connections reached.');
     });
   });
 

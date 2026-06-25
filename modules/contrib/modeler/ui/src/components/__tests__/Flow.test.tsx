@@ -149,15 +149,6 @@ jest.mock('../../hooks/useViewportActions', () => ({
   })),
 }));
 
-jest.mock('../../hooks/useDragAndDrop', () => ({
-  useDragAndDrop: jest.fn(() => ({
-    onDrop: jest.fn(),
-    onDragOver: jest.fn(),
-    isDraggingCondition: false,
-    hoveredDropEdge: null,
-  })),
-}));
-
 jest.mock('../../hooks/useFlowEventHandlers', () => ({
   useFlowEventHandlers: jest.fn(() => ({
     onNodesChange: jest.fn(),
@@ -168,6 +159,11 @@ jest.mock('../../hooks/useFlowEventHandlers', () => ({
     onDeleteNode: jest.fn(),
     handleDeleteSelected: jest.fn(),
     onConnect: jest.fn(),
+    // New-edge connection handlers now come from the hook (issue #3585553
+    // follow-on UX): onConnectStart records the gesture origin, onConnectEnd
+    // creates the edge when dropped on a node body.
+    onConnectStart: jest.fn(),
+    onConnectEnd: jest.fn(),
     onPaneClick: jest.fn(),
   })),
 }));
@@ -211,7 +207,6 @@ jest.mock('../../hooks/useModelDataLoader', () => ({
 jest.mock('../../hooks/useConfiguration', () => ({
   useConfiguration: jest.fn(() => ({
     onConfigurationChange: jest.fn(),
-    onEdgeConfigurationChange: jest.fn(),
     onNodeUpdate: jest.fn(),
     onEdgeUpdate: jest.fn(),
     handleAutoLayout: jest.fn(),
@@ -251,10 +246,6 @@ jest.mock('../../hooks/useQuickAdd', () => ({
   useQuickAdd: jest.fn(() => ({
     addSuccessorNode: jest.fn(),
   })),
-}));
-
-jest.mock('../../hooks/useEdgeStyling', () => ({
-  useEdgeStyling: jest.fn(({ edges }) => edges),
 }));
 
 jest.mock('../../hooks/useNodeEdgeActions', () => ({
@@ -744,19 +735,6 @@ describe('Flow', () => {
     });
   });
 
-  describe('condition drag styling', () => {
-    it('should add condition-drag-active class when dragging condition', () => {
-      const { useDragAndDrop } = require('../../hooks/useDragAndDrop');
-      useDragAndDrop.mockReturnValue({
-        onDrop: jest.fn(), onDragOver: jest.fn(),
-        isDraggingCondition: true, hoveredDropEdge: null,
-      });
-
-      const { container } = render(<Flow {...defaultProps} />);
-      expect(container.querySelector('.condition-drag-active')).toBeTruthy();
-    });
-  });
-
   describe('messages container visibility', () => {
     it('should apply visible class when messages are visible', () => {
       const { useMessagesContainer } = require('../../hooks/useMessagesContainer');
@@ -796,21 +774,18 @@ describe('Flow', () => {
     });
   });
 
-  describe('placeholder handlers', () => {
-    it('should pass no-op handlers for onConnectStart, onConnectEnd, etc.', () => {
+  describe('connection + init handlers', () => {
+    it('should pass onConnectStart, onConnectEnd, and onInit to the canvas', () => {
       render(<Flow {...defaultProps} />);
-      // These are useCallback(() => {}, []) - now grouped in eventHandlers
+      // onConnectStart/onConnectEnd now come from useFlowEventHandlers (issue
+      // #3585553 follow-on UX — drop a NEW edge onto a node body); onInit is
+      // still defined locally in Flow. Drag-to-create (onDrop/onDragOver/etc.)
+      // was removed entirely (issue #3589093), so those handlers do not exist.
       const eh = capturedFlowCanvasProps.eventHandlers;
       expect(typeof eh.onConnectStart).toBe('function');
       expect(typeof eh.onConnectEnd).toBe('function');
-      expect(typeof eh.onDragEnter).toBe('function');
-      expect(typeof eh.onDragLeave).toBe('function');
       expect(typeof eh.onInit).toBe('function');
-      // Calling them should not throw
-      eh.onConnectStart();
-      eh.onConnectEnd();
-      eh.onDragEnter();
-      eh.onDragLeave();
+      // Calling them should not throw.
       eh.onInit();
     });
   });

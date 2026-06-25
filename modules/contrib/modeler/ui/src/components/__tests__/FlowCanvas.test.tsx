@@ -1,13 +1,24 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import FlowCanvas from '../FlowCanvas';
 
+// Captures the `nodes` AND `edges` props handed to ReactFlow so tests can
+// assert the enhanced node/edge data computed by FlowCanvas (issues #3589093,
+// #3585553). The `mock` prefix lets the hoisted jest.mock factory reference
+// them safely.
+const mockCapturedReactFlowNodes: { current: any[] } = { current: [] };
+const mockCapturedReactFlowEdges: { current: any[] } = { current: [] };
+
 jest.mock('reactflow', () => {
-  const MockReactFlow = React.forwardRef((props: any, ref: any) => (
-    <div data-testid="react-flow" ref={ref} className={props.className || ''}>
-      {props.children}
-    </div>
-  ));
+  const MockReactFlow = React.forwardRef((props: any, ref: any) => {
+    mockCapturedReactFlowNodes.current = props.nodes || [];
+    mockCapturedReactFlowEdges.current = props.edges || [];
+    return (
+      <div data-testid="react-flow" ref={ref} className={props.className || ''}>
+        {props.children}
+      </div>
+    );
+  });
   MockReactFlow.displayName = 'MockReactFlow';
 
   return {
@@ -41,8 +52,8 @@ jest.mock('../nodes/CustomNode', () => () => <div data-testid="custom-node" />);
 jest.mock('../nodes/StartNode', () => () => <div data-testid="start-node" />);
 jest.mock('../nodes/GatewayNode', () => () => <div data-testid="gateway-node" />);
 jest.mock('../nodes/SubprocessNode', () => () => <div data-testid="subprocess-node" />);
+jest.mock('../nodes/ConditionNode', () => () => <div data-testid="condition-node" />);
 jest.mock('../edges/DefaultEdge', () => () => <div data-testid="default-edge" />);
-jest.mock('../edges/ConditionEdge', () => () => <div data-testid="condition-edge" />);
 
 jest.mock('../QuickAddEventButton', () => () => null);
 
@@ -54,10 +65,6 @@ describe('FlowCanvas', () => {
     onSelectionChange: jest.fn(),
     onConnectStart: jest.fn(),
     onConnectEnd: jest.fn(),
-    onDrop: jest.fn(),
-    onDragOver: jest.fn(),
-    onDragEnter: jest.fn(),
-    onDragLeave: jest.fn(),
     onNodeClick: jest.fn(),
     onEdgeClick: jest.fn(),
     onPaneClick: jest.fn(),
@@ -119,7 +126,17 @@ describe('FlowCanvas', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCapturedReactFlowNodes.current = [];
+    mockCapturedReactFlowEdges.current = [];
+    // Reset the global reconnect-drag flag so it never leaks between tests.
+    require('../../store/useUISettingsStore').useUISettingsStore.getState().setReconnectDragActive(false);
   });
+
+  const findEnhancedNode = (id: string) =>
+    mockCapturedReactFlowNodes.current.find(n => n.id === id);
+
+  const findEnhancedEdge = (id: string) =>
+    mockCapturedReactFlowEdges.current.find(e => e.id === id);
 
   describe('rendering', () => {
     it('should render the ReactFlow component', () => {
@@ -156,6 +173,28 @@ describe('FlowCanvas', () => {
     it('should apply drag-active class when dragging', () => {
       const { container } = render(<FlowCanvas {...defaultProps} uiState={{ ...defaultUIState, isDragActive: true }} />);
       expect(container.querySelector('.drag-active')).toBeTruthy();
+    });
+
+    it('should add reconnect-dragging class while a reconnect drag is active (issue #3585553)', () => {
+      const { useUISettingsStore } = require('../../store/useUISettingsStore');
+      // Inactive by default → no class.
+      const { container, rerender } = render(<FlowCanvas {...defaultProps} />);
+      expect(container.querySelector('.reactflow-wrapper.reconnect-dragging')).toBeFalsy();
+
+      // Activate the global flag → wrapper gains the class so CSS can disable
+      // all grips during the drag.
+      act(() => {
+        useUISettingsStore.getState().setReconnectDragActive(true);
+      });
+      rerender(<FlowCanvas {...defaultProps} />);
+      expect(container.querySelector('.reactflow-wrapper.reconnect-dragging')).toBeTruthy();
+
+      // Clear it → class removed again.
+      act(() => {
+        useUISettingsStore.getState().setReconnectDragActive(false);
+      });
+      rerender(<FlowCanvas {...defaultProps} />);
+      expect(container.querySelector('.reactflow-wrapper.reconnect-dragging')).toBeFalsy();
     });
 
     it('should always show minimap', () => {
@@ -313,6 +352,221 @@ describe('FlowCanvas', () => {
         />
       );
       expect(container).toBeTruthy();
+    });
+  });
+
+  describe('condition source-handle constraint (issue #3589093)', () => {
+    it('should enable a condition source handle when it has no outbound edge', () => {
+      const nodes = [
+        { id: 'cond-1', type: 'condition', position: { x: 0, y: 0 }, data: { __isConditionNode: true, label: 'Cond' } },
+      ];
+      render(<FlowCanvas {...defaultProps} nodes={nodes as any} edges={[]} />);
+      const enhanced = findEnhancedNode('cond-1');
+      expect(enhanced).toBeTruthy();
+      expect(enhanced.data.sourceHandleDisabled).toBe(false);
+      expect(enhanced.data.sourceHandleDisabledReason).toBeUndefined();
+    });
+
+    it('should disable a condition source handle once it has one outbound edge', () => {
+      const nodes = [
+        { id: 'cond-1', type: 'condition', position: { x: 0, y: 0 }, data: { __isConditionNode: true, label: 'Cond' } },
+        { id: 'node-2', type: 'element', position: { x: 0, y: 100 }, data: { label: 'Next' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'cond-1', target: 'node-2', data: {} },
+      ];
+      render(<FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />);
+      const enhanced = findEnhancedNode('cond-1');
+      expect(enhanced).toBeTruthy();
+      expect(enhanced.data.sourceHandleDisabled).toBe(true);
+      expect(enhanced.data.sourceHandleDisabledReason).toBe('condition-single-out');
+      // Quick-add is suppressed once the condition has its outbound edge.
+      expect(enhanced.data.onQuickAdd).toBeUndefined();
+    });
+
+    it('should recognize a condition flagged only by __isConditionNode (no type)', () => {
+      const nodes = [
+        { id: 'cond-1', type: 'element', position: { x: 0, y: 0 }, data: { __isConditionNode: true, label: 'Cond' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'cond-1', target: 'node-2', data: {} },
+      ];
+      render(<FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />);
+      const enhanced = findEnhancedNode('cond-1');
+      expect(enhanced.data.sourceHandleDisabled).toBe(true);
+      expect(enhanced.data.sourceHandleDisabledReason).toBe('condition-single-out');
+    });
+
+    it('should not disable a non-condition node with one outbound edge (no max constraint)', () => {
+      const nodes = [
+        { id: 'node-1', type: 'element', position: { x: 0, y: 0 }, data: { label: 'Action' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', data: {} },
+      ];
+      render(<FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />);
+      const enhanced = findEnhancedNode('node-1');
+      expect(enhanced.data.sourceHandleDisabled).toBe(false);
+      expect(enhanced.data.sourceHandleDisabledReason).toBeUndefined();
+    });
+  });
+
+  describe('endpoint reconnection: source-handle suppression (issue #3585553)', () => {
+    it('keeps a source handle connectable when no selected edge uses it', () => {
+      const nodes = [
+        { id: 'node-1', type: 'element', position: { x: 0, y: 0 }, data: { label: 'A' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', sourceHandle: 'output', selected: false, data: {} },
+      ];
+      render(<FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />);
+      const enhanced = findEnhancedNode('node-1');
+      expect(enhanced.data.sourceHandleDisabled).toBe(false);
+    });
+
+    it('suppresses new-edge connectability on a source handle reserved by a selected edge', () => {
+      const nodes = [
+        { id: 'node-1', type: 'element', position: { x: 0, y: 0 }, data: { label: 'A' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', sourceHandle: 'output', selected: true, data: {} },
+      ];
+      render(
+        <FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />,
+      );
+      const enhanced = findEnhancedNode('node-1');
+      expect(enhanced.data.sourceHandleDisabled).toBe(true);
+    });
+
+    it('suppresses the handle when 2+ selected edges share it (ambiguous)', () => {
+      const nodes = [
+        { id: 'node-1', type: 'element', position: { x: 0, y: 0 }, data: { label: 'A' } },
+      ];
+      const edges = [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', sourceHandle: 'output', selected: true, data: {} },
+        { id: 'edge-2', source: 'node-1', target: 'node-3', sourceHandle: 'output', selected: true, data: {} },
+      ];
+      render(
+        <FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />,
+      );
+      const enhanced = findEnhancedNode('node-1');
+      expect(enhanced.data.sourceHandleDisabled).toBe(true);
+    });
+  });
+
+  describe('endpoint reconnection: grip eligibility (issue #3585553)', () => {
+    // Two edges feeding the SAME target node/handle. The shared target handle
+    // is ambiguous when both are selected (rule 2 → no grip there); each
+    // edge's distinct SOURCE handle stays eligible.
+    const sharedTargetNodes = [
+      { id: 'n1', type: 'element', position: { x: 0, y: 0 }, data: {} },
+      { id: 'n2', type: 'element', position: { x: 200, y: 0 }, data: {} },
+      { id: 'shared', type: 'element', position: { x: 100, y: 200 }, data: {} },
+    ];
+    const sharedTargetEdges = (selectedIds: string[]) => [
+      {
+        id: 'e1', source: 'n1', target: 'shared', sourceHandle: 'output', targetHandle: 'input',
+        selected: selectedIds.includes('e1'), data: {},
+      },
+      {
+        id: 'e2', source: 'n2', target: 'shared', sourceHandle: 'output', targetHandle: 'input',
+        selected: selectedIds.includes('e2'), data: {},
+      },
+    ];
+
+    it('disables BOTH grips on a shared target handle when both edges are selected (rule 2)', () => {
+      // REGRESSION (#3585553 bug report): two edges into the same node handle,
+      // BOTH shift-selected → the shared TARGET grip must be off for both.
+      render(
+        <FlowCanvas
+          {...defaultProps}
+          nodes={sharedTargetNodes as any}
+          edges={sharedTargetEdges(['e1', 'e2']) as any}
+        />,
+      );
+      const e1 = findEnhancedEdge('e1');
+      const e2 = findEnhancedEdge('e2');
+      // Shared target handle → ambiguous → no target grip on either edge.
+      expect(e1.data.targetGripEnabled).toBe(false);
+      expect(e2.data.targetGripEnabled).toBe(false);
+      // Each edge's own distinct source handle is still the sole selected
+      // endpoint there, so the source grip stays eligible.
+      expect(e1.data.sourceGripEnabled).toBe(true);
+      expect(e2.data.sourceGripEnabled).toBe(true);
+    });
+
+    it('enables the target grip when only ONE of the shared-handle edges is selected', () => {
+      render(
+        <FlowCanvas
+          {...defaultProps}
+          nodes={sharedTargetNodes as any}
+          edges={sharedTargetEdges(['e1']) as any}
+        />,
+      );
+      const e1 = findEnhancedEdge('e1');
+      const e2 = findEnhancedEdge('e2');
+      // Only e1 is selected → it is the sole selected edge on the shared
+      // target handle → target grip enabled.
+      expect(e1.data.targetGripEnabled).toBe(true);
+      expect(e1.data.sourceGripEnabled).toBe(true);
+      // e2 is not selected → no grips at all.
+      expect(e2.data.targetGripEnabled).toBe(false);
+      expect(e2.data.sourceGripEnabled).toBe(false);
+    });
+
+    it('keeps grips independent for selected edges on DIFFERENT handles (rule 4)', () => {
+      const nodes = [
+        { id: 'a', type: 'element', position: { x: 0, y: 0 }, data: {} },
+        { id: 'b', type: 'element', position: { x: 0, y: 100 }, data: {} },
+        { id: 'c', type: 'element', position: { x: 0, y: 200 }, data: {} },
+      ];
+      const edges = [
+        { id: 'e1', source: 'a', target: 'b', sourceHandle: 'output', targetHandle: 'input', selected: true, data: {} },
+        { id: 'e2', source: 'b', target: 'c', sourceHandle: 'output', targetHandle: 'input', selected: true, data: {} },
+      ];
+      render(
+        <FlowCanvas {...defaultProps} nodes={nodes as any} edges={edges as any} />,
+      );
+      // No shared handle between e1 and e2 → all four endpoints are sole
+      // occupants → all grips eligible (no global selection-count gate).
+      const e1 = findEnhancedEdge('e1');
+      const e2 = findEnhancedEdge('e2');
+      expect(e1.data.sourceGripEnabled).toBe(true);
+      expect(e1.data.targetGripEnabled).toBe(true);
+      expect(e2.data.sourceGripEnabled).toBe(true);
+      expect(e2.data.targetGripEnabled).toBe(true);
+    });
+
+    it('derives grip eligibility from the per-edge selected flag (single source of truth)', () => {
+      // Robustness: grip math reads React Flow's per-edge `selected` flag —
+      // the SAME flag that drives grip visibility in DefaultEdge — so the
+      // count and the render can never diverge. Both edges carry
+      // selected=true and share the target handle → ambiguous → no grip.
+      render(
+        <FlowCanvas
+          {...defaultProps}
+          nodes={sharedTargetNodes as any}
+          edges={sharedTargetEdges(['e1', 'e2']) as any}
+        />,
+      );
+      const e1 = findEnhancedEdge('e1');
+      const e2 = findEnhancedEdge('e2');
+      expect(e1.data.targetGripEnabled).toBe(false);
+      expect(e2.data.targetGripEnabled).toBe(false);
+    });
+
+    it('disables grips entirely when the canvas is locked', () => {
+      render(
+        <FlowCanvas
+          {...defaultProps}
+          nodes={sharedTargetNodes as any}
+          edges={sharedTargetEdges(['e1']) as any}
+          uiState={{ ...defaultUIState, isLocked: true }}
+        />,
+      );
+      const e1 = findEnhancedEdge('e1');
+      expect(e1.data.sourceGripEnabled).toBe(false);
+      expect(e1.data.targetGripEnabled).toBe(false);
     });
   });
 

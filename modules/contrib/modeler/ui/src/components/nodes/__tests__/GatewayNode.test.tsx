@@ -2,10 +2,18 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import GatewayNode from '../GatewayNode';
 
-// Mock ReactFlow components
+// Mock ReactFlow components. The Handle mock forwards `isConnectable`,
+// `title`, and `className` so tests can assert the disabled-source-handle UX
+// (issue #3589093), including the `node-handle--disabled` modifier class.
 jest.mock('reactflow', () => ({
-  Handle: ({ type, position, id }: any) => (
-    <div data-testid={`handle-${type}-${id}`} data-position={position} />
+  Handle: ({ type, position, id, isConnectable, title, className }: any) => (
+    <div
+      data-testid={`handle-${type}-${id}`}
+      data-position={position}
+      data-connectable={isConnectable === undefined ? 'true' : String(isConnectable)}
+      title={title}
+      className={className}
+    />
   ),
   Position: {
     Top: 'top',
@@ -65,6 +73,27 @@ describe('GatewayNode', () => {
     it('should have gateway-node class', () => {
       const { container } = render(<GatewayNode {...defaultProps} />);
       expect(container.firstChild).toHaveClass('gateway-node');
+    });
+
+    it('should render the source handle as connectable when not disabled', () => {
+      render(<GatewayNode {...defaultProps} data={{ label: 'Test' }} />);
+      const handle = screen.getByTestId('handle-source-output');
+      expect(handle).toHaveAttribute('data-connectable', 'true');
+      expect(handle).not.toHaveClass('node-handle--disabled');
+    });
+
+    it('should add the node-handle--disabled modifier class and title when disabled (issue #3589093)', () => {
+      render(
+        <GatewayNode
+          {...defaultProps}
+          data={{ label: 'Test', sourceHandleDisabled: true }}
+        />
+      );
+      const handle = screen.getByTestId('handle-source-output');
+      // Re-enables hover so the tooltip shows, while connection stays disabled.
+      expect(handle).toHaveClass('node-handle--disabled');
+      expect(handle).toHaveAttribute('data-connectable', 'false');
+      expect(handle).toHaveAttribute('title', 'Maximum number of connections reached.');
     });
 
     it('should render with header and body (compact card layout, no footer)', () => {

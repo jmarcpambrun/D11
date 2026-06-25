@@ -110,6 +110,18 @@ export interface SuccessorCardinality extends CardinalityRange {
    * type; defaults to `false` / absent.
    */
   requireConditionWhenParallel?: boolean;
+  /**
+   * When `true`, condition edges that share the SAME non-empty `conditionId`
+   * and the same target are grouped on load into ONE shared (reused) condition
+   * node with multiple inbound edges and a single outbound edge (issue
+   * #3589093).  Owner-opt-in per source component type; defaults to `false` /
+   * absent (no grouping — one condition node per condition edge).
+   *
+   * NOTE: the PHP side that defines/sets this flag is a separate effort
+   * (modeler_api #3588502, eca #3590335).  Until it ships, this flag will be
+   * absent and the modeler reads it DEFENSIVELY (absent/false ⇒ no grouping).
+   */
+  allowConditionReuse?: boolean;
 }
 
 /**
@@ -407,6 +419,52 @@ export interface BaseEdgeData {
   edgeOrderInfo?: EdgeOrderInfo;
   onEdgeUpdate?: (id: string, updates: { controlOffset: { x: number; y: number } }) => void;
   onReorderEdge?: (sourceNodeId: string, fromOrder: number, toOrder: number) => void;
+  /** Callback to delete this edge (connection). Mirrors node `onDelete`. */
+  onDeleteEdge?: (edgeId: string) => void;
+
+  // ── Endpoint reconnection (issue #3585553) ───────────────────────────
+  // Per-handle, selection-gated edge-endpoint reconnection. An endpoint grip
+  // is rendered (and draggable) IFF its handle hosts EXACTLY ONE selected
+  // edge endpoint. The source and target ends are evaluated independently.
+  /**
+   * True when this edge's SOURCE endpoint may be reconnected: the edge is
+   * selected AND it is the only selected edge using this source node/handle.
+   * When true (and not {@link globalLocked}), DefaultEdge renders a draggable
+   * "move source" grip at the source endpoint. Computed by FlowCanvas from the
+   * current selection.
+   */
+  sourceGripEnabled?: boolean;
+  /**
+   * True when this edge's TARGET endpoint may be reconnected: the edge is
+   * selected AND it is the only selected edge using this target node/handle.
+   * When true (and not {@link globalLocked}), DefaultEdge renders a draggable
+   * "move target" grip at the target endpoint.
+   */
+  targetGripEnabled?: boolean;
+  /**
+   * Commit a reconnection of one of this edge's endpoints. Updates TOP-LEVEL
+   * edge fields (`source`/`target`/`sourceHandle`/`targetHandle`), NOT
+   * `data` — a pure reconnect does not change edge data or type. Saves history
+   * first so undo/redo and unsaved-changes tracking work. Injected by
+   * FlowCanvas; only the changed end's fields are provided.
+   */
+  onReconnectEdge?: (
+    edgeId: string,
+    updates: {
+      source?: string;
+      sourceHandle?: string | null;
+      target?: string;
+      targetHandle?: string | null;
+    },
+  ) => void;
+  /**
+   * Validate a proposed reconnection of this edge before committing. Receives
+   * the full proposed `{ source, target, sourceHandle, targetHandle }` (with
+   * the dragged end replaced by the drop target). Returns true when allowed.
+   * Wraps the shared connection-validation logic with this edge excluded from
+   * outbound counts. Injected by FlowCanvas.
+   */
+  validateReconnect?: (connection: import('reactflow').Connection) => boolean;
 }
 
 /**
@@ -423,6 +481,11 @@ export interface BaseNodeData {
    *  because the node has reached its maximum outgoing connections per model
    *  constraints. The handle must stay in the DOM for existing edges to render. */
   sourceHandleDisabled?: boolean;
+  /** Why the source handle is disabled, used to pick the explanatory tooltip
+   *  message. `'condition-single-out'` for the condition 1-outbound rule
+   *  (issue #3589093); `'max-successors'` for the generic max-successors
+   *  constraint. Only meaningful when {@link sourceHandleDisabled} is true. */
+  sourceHandleDisabledReason?: 'max-successors' | 'condition-single-out';
   onDelete?: () => void;
   onToggleAnnotation?: () => void;
   onQuickAdd?: (component: StoreComponent) => void;
@@ -445,6 +508,26 @@ export interface NodeData extends BaseNodeData {
   configuration?: Record<string, unknown>;
   /** Integer component-type constant (1=Start, 2=Subprocess, 4=Element, 5=Link, 6=Gateway). */
   componentType?: number | string;
+
+  // ── Internal condition-node properties (issue #3589093) ──────────────
+  // Conditions are stored as edge properties in the backend JSON, but are
+  // promoted to first-class condition *nodes* internally so they can be
+  // selected, configured, and laid out like any other component.  These
+  // fields are written by `parseModelData` when it synthesizes a condition
+  // node and consumed by `exportModelData` when it collapses the node back
+  // onto an edge.  They MUST NOT be serialized to the backend JSON.
+  /**
+   * Original condition ID from the backend, preserved on the condition node
+   * so that demote (export) can write it back unchanged for round-trip
+   * stability.  Empty/undefined for conditions newly created in the frontend.
+   */
+  conditionId?: string | null;
+  /**
+   * Internal marker flagging a synthesized condition node.  Used by
+   * `exportModelData` to identify nodes that must be collapsed back onto an
+   * edge and excluded from the exported `nodes[]`.  MUST NOT be exported.
+   */
+  __isConditionNode?: boolean;
   /** Human-readable description shown in property panel. */
   description?: string;
   /** URL to plugin documentation (null when unavailable). */
@@ -510,10 +593,8 @@ export interface EdgeData extends BaseEdgeData {
   isReplayMode?: boolean;
 
   // ── Callback properties injected by FlowCanvas ──────────────────────
-  /** Callback to add a condition to a default edge. */
+  /** Callback to insert a condition node on a plain edge. */
   onAddCondition?: (edgeId: string, component: StoreComponent) => void;
-  /** Callback to remove a condition from a condition edge. */
-  onDeleteCondition?: (id: string) => void;
   /** Callback to toggle annotation visibility. */
   onToggleAnnotation?: () => void;
 }

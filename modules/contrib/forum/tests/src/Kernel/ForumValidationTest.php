@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
@@ -11,6 +14,8 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumValidationTest extends EntityKernelTestBase {
 
   /**

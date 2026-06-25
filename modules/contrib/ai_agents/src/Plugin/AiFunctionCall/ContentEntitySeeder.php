@@ -170,6 +170,11 @@ class ContentEntitySeeder extends FunctionCallBase implements ExecutableFunction
     }
 
     foreach ($data as $field_name => $value) {
+      // Make sure that the user has access to edit this specific field.
+      if ($entity->hasField($field_name) && !$entity->get($field_name)->access('edit')) {
+        $this->fieldInformation = 'Access denied to field: ' . $field_name;
+        return;
+      }
       $entity->set($field_name, $value);
     }
     $entity->save();

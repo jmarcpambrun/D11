@@ -2,6 +2,10 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
+use Drupal\node\NodeAccessRebuild;
 use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\node\Entity\NodeType;
 use Drupal\node\NodeTypeInterface;
@@ -28,6 +32,8 @@ if (!trait_exists(NodeAccessTrait::class)) {
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumNodeAccessTest extends BrowserTestBase {
 
   use NodeAccessTrait;
@@ -56,7 +62,8 @@ class ForumNodeAccessTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    node_access_rebuild();
+    // @phpstan-ignore-next-line
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(NodeAccessRebuild::class)->rebuild(), fn() => node_access_rebuild());
     $this->addPrivateField(NodeType::load('forum'));
     \Drupal::state()->set('node_access_test.private', TRUE);
   }

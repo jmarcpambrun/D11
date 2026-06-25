@@ -8,7 +8,7 @@ import NodePropertiesPanel from './NodePropertiesPanel';
 import EdgePropertiesPanel from './EdgePropertiesPanel';
 import { usePanelStore } from '../store/usePanelStore';
 import { useComponentStore } from '../store/useComponentStore';
-import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
+import type { StoreNode as Node, StoreEdge as Edge, NodeData, EdgeData } from '../types/settings';
 import { PANEL_DIMENSIONS } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import { getComponentIcon, getComponentLabel, getComponentTypeName } from '../utils/componentUtils';
@@ -27,9 +27,8 @@ interface PropertyPanelProps {
   selectedNodes?: Node[];
   selectedEdges?: Edge[];
   onConfigurationChange?: (nodeId: string, configuration: Record<string, any>) => void;
-  onEdgeConfigurationChange?: (edgeId: string, configuration: Record<string, any> | null) => void;
-  onNodeUpdate?: (nodeId: string, data: any) => void;
-  onEdgeUpdate?: (edgeId: string, data: any) => void;
+  onNodeUpdate?: (nodeId: string, data: Partial<NodeData>) => void;
+  onEdgeUpdate?: (edgeId: string, data: Partial<EdgeData>) => void;
   onDeleteSelected?: () => void;
   isLocked?: boolean;
   settings?: Settings;
@@ -43,7 +42,6 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   selectedNodes = [],
   selectedEdges = [],
   onConfigurationChange,
-  onEdgeConfigurationChange,
   onNodeUpdate,
   onEdgeUpdate,
   onDeleteSelected,
@@ -70,7 +68,6 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   // Use extracted hooks for cleaner architecture
   const { configurationForm, loading } = useConfigurationLoader({
     node,
-    edge,
     settings,
     isReplayMode,
   });
@@ -128,25 +125,6 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
     disabled: isLocked,
   });
 
-  // Debounced field handlers for edge condition label
-  const edgeRef = React.useRef(edge);
-  edgeRef.current = edge;
-  
-  const handleEdgeLabelChange = useCallback((value: string) => {
-    const currentEdge = edgeRef.current;
-    if (currentEdge && onEdgeConfigurationChange && !isLocked) {
-      onEdgeConfigurationChange(currentEdge.id, {
-        _conditionLabel: value,
-      });
-    }
-  }, [onEdgeConfigurationChange, isLocked]);
-
-  const edgeLabelField = useDebouncedField({
-    initialValue: edge?.data?.conditionLabel || '',
-    onDebouncedChange: handleEdgeLabelChange,
-    disabled: isLocked,
-  });
-
   // Debounced field handlers for edge annotation
   const handleEdgeAnnotationChange = useCallback((value: string) => {
     if (edge && onEdgeUpdate && !isLocked) {
@@ -174,10 +152,8 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   }, [node?.id]);
 
   useEffect(() => {
-    edgeLabelField.flush();
     edgeAnnotationField.flush();
     if (edge) {
-      edgeLabelField.setValue(edge.data?.conditionLabel || '');
       edgeAnnotationField.setValue(edge.data?.annotation || '');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,7 +182,6 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
     if (edge) {
       return [
         { label: t('Connection Type'), value: t('Edge'), show: true },
-        { label: t('Condition Plugin'), value: edge.data?.condition || '', show: !!edge.data?.condition },
         { label: t('Edge ID'), value: edge.id, show: true },
         { label: t('Source'), value: edge.source, show: true },
         { label: t('Target'), value: edge.target, show: true },
@@ -325,11 +300,8 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       ) : edge ? (
         <EdgePropertiesPanel
           edge={edge}
-          configurationForm={configurationForm}
-          onEdgeConfigurationChange={onEdgeConfigurationChange}
           onEdgeUpdate={onEdgeUpdate}
           isLocked={isLocked}
-          edgeLabelField={edgeLabelField}
           edgeAnnotationField={edgeAnnotationField}
         />
       ) : null}

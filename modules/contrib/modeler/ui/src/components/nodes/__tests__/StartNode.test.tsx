@@ -2,10 +2,18 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StartNode from '../StartNode';
 
-// Mock ReactFlow components
+// Mock ReactFlow components. The Handle mock forwards `isConnectable`,
+// `title`, and `className` so tests can assert the disabled-source-handle UX
+// (issue #3589093), including the `node-handle--disabled` modifier class.
 jest.mock('reactflow', () => ({
-  Handle: ({ type, position, id }: any) => (
-    <div data-testid={`handle-${type}-${id}`} data-position={position} />
+  Handle: ({ type, position, id, isConnectable, title, className }: any) => (
+    <div
+      data-testid={`handle-${type}-${id}`}
+      data-position={position}
+      data-connectable={isConnectable === undefined ? 'true' : String(isConnectable)}
+      title={title}
+      className={className}
+    />
   ),
   Position: {
     Top: 'top',
@@ -130,6 +138,35 @@ describe('StartNode', () => {
       expect(() => {
         fireEvent.click(container.querySelector('.node-footer-delete')!);
       }).not.toThrow();
+    });
+  });
+
+  describe('source handle disabled state (issue #3589093)', () => {
+    it('should render the source handle as connectable when not disabled', () => {
+      render(<StartNode {...defaultProps} data={{ label: 'Test' }} />);
+      const handle = screen.getByTestId('handle-source-output');
+      expect(handle).toHaveAttribute('data-connectable', 'true');
+    });
+
+    it('should not add the node-handle--disabled modifier class when enabled', () => {
+      render(<StartNode {...defaultProps} data={{ label: 'Test' }} />);
+      const handle = screen.getByTestId('handle-source-output');
+      expect(handle).toHaveClass('node-handle');
+      expect(handle).not.toHaveClass('node-handle--disabled');
+    });
+
+    it('should add the node-handle--disabled modifier class and title when disabled', () => {
+      render(
+        <StartNode
+          {...defaultProps}
+          data={{ label: 'Test', sourceHandleDisabled: true }}
+        />
+      );
+      const handle = screen.getByTestId('handle-source-output');
+      // Re-enables hover so the tooltip shows, while connection stays disabled.
+      expect(handle).toHaveClass('node-handle--disabled');
+      expect(handle).toHaveAttribute('data-connectable', 'false');
+      expect(handle).toHaveAttribute('title', 'Maximum number of connections reached.');
     });
   });
 

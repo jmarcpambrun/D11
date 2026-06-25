@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional\Module;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Tests\system\Functional\Module\ModuleTestBase;
 
 /**
@@ -9,6 +12,8 @@ use Drupal\Tests\system\Functional\Module\ModuleTestBase;
  *
  * @group form
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class DependencyTest extends ModuleTestBase {
 
   /**

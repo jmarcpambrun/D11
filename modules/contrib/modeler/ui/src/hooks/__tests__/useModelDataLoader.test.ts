@@ -93,13 +93,15 @@ jest.mock('../../store/useLabelStore', () => ({
   }),
 }));
 
-// Mock parseModelData
+// Mock parseModelData (and isConditionReuseEnabled, which the loader calls to
+// decide whether to enable condition-reuse grouping — issue #3589093).
 jest.mock('../../utils/modelUtils', () => ({
   parseModelData: jest.fn((data) => ({
     modelData: data,
     nodes: data.nodes || [],
     edges: data.edges || [],
   })),
+  isConditionReuseEnabled: jest.fn(() => false),
 }));
 
 describe('useModelDataLoader', () => {

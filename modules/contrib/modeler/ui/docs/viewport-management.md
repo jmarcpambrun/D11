@@ -170,7 +170,6 @@ queued (deferred) viewport operation.
 | Zoom In / Zoom Out buttons | `reactFlow.zoomIn()` / `zoomOut()` | Changes zoom (step) |
 | Add event node | `panToNodeIfOffscreen(id)` | Preserves zoom |
 | Insert action on edge | `panToNodeIfOffscreen(id)` | Preserves zoom |
-| Insert before/after condition | `panToNodeIfOffscreen(id)` | Preserves zoom |
 | Quick-add successor | `panToNodeIfOffscreen(id)` | Preserves zoom |
 | Condition-first quick-add | `fitToNodePair(src, placeholder)` | Changes zoom (fit pair) |
 | Search result selected | `focusNode(id)` | Preserves zoom |
@@ -203,10 +202,10 @@ targeted positioning algorithm is used:
 
 ### What does NOT trigger repositioning
 
-- **Adding a condition to an edge**: Only edge metadata changes.  No
-  nodes are moved.  The condition card is rendered within the existing
-  edge space by the edge component.
-- **Removing a condition from an edge**: Edge metadata only.
+- **Adding a condition node on an edge**: A condition node is inserted
+  on the edge, and the standard node positioning system handles placement.
+  The inserted node uses the same `panToNodeIfOffscreen()` behavior as
+  other node insertions.
 - **The explicit Auto Layout button**: This intentionally runs the full
   `autoLayout()` algorithm from `modelUtils.ts`.
 
@@ -241,7 +240,6 @@ All viewport-related constants live in `src/constants/dimensions.ts`:
 | Constant | Value | Purpose |
 |----------|-------|---------|
 | `NODE_SPACING_Y` | 84 | Vertical gap between rows |
-| `CONDITION_EXTRA_SPACING` | 90 | Extra vertical space for condition edges |
 | `NODE_SPACING_X` | 250 | Horizontal spacing between flows |
 | `GRID_SIZE` | 20 | Snap-to-grid increment |
 

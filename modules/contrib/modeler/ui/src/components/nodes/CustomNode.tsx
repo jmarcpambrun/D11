@@ -1,12 +1,18 @@
 import React, { Profiler, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { FiActivity } from 'react-icons/fi';
+import classNames from 'classnames';
 import { getComponentLabel } from '../../utils/componentUtils';
+import { t } from '../../utils/translation';
 import NodeWrapper from './NodeWrapper';
 import { onRenderCallback } from '../../utils/profiling';
 import type { BaseNodeData } from '../../types/settings';
 
 const CustomNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
+  // Explanatory tooltip when the source handle is disabled (issue #3589093).
+  const sourceHandleTitle = data.sourceHandleDisabled
+    ? t('Maximum number of connections reached.')
+    : undefined;
   return (
     <Profiler id="CustomNode" onRender={onRenderCallback}>
     <NodeWrapper data={data} selected={selected} nodeClass="action-node">
@@ -29,9 +35,10 @@ const CustomNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="node-handle"
+        className={classNames('node-handle', { 'node-handle--disabled': data.sourceHandleDisabled })}
         id="output"
         isConnectable={!data.sourceHandleDisabled}
+        title={sourceHandleTitle}
       />
     </NodeWrapper>
     </Profiler>

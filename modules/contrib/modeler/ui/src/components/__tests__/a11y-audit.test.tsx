@@ -127,6 +127,7 @@ import CustomNode from '../nodes/CustomNode';
 import StartNode from '../nodes/StartNode';
 import GatewayNode from '../nodes/GatewayNode';
 import SubprocessNode from '../nodes/SubprocessNode';
+import ConditionNode from '../nodes/ConditionNode';
 
 const nodeProps = (data: any) => ({
   id: 'test_node',
@@ -163,6 +164,11 @@ describe('A11y Audit: Node Components', () => {
 
   test('SubprocessNode has no a11y violations', async () => {
     const results = await audit(<SubprocessNode {...nodeProps({ plugin: 'test:subprocess', subflowCount: 3 })} />);
+    expect(results).toHaveNoViolations();
+  });
+
+  test('ConditionNode has no a11y violations', async () => {
+    const results = await audit(<ConditionNode {...nodeProps({ plugin: 'test:condition' })} />);
     expect(results).toHaveNoViolations();
   });
 

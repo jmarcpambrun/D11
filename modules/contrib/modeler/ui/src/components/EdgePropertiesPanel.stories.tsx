@@ -6,30 +6,16 @@ const sampleEdge = {
   id: 'edge_1',
   source: 'node_1',
   target: 'node_2',
-  type: 'condition',
-  label: 'Is Admin',
+  type: 'default',
   data: {
-    condition: 'user_has_role',
-    conditionLabel: 'Is Admin',
     locked: false,
-    annotation: 'Checks administrator role.',
+    annotation: 'Routes to the approval step.',
     isAnnotationVisible: false,
   },
 };
 
-const sampleConfigForm = [
-  { key: 'role', type: 'select', title: 'Role', description: 'The role to check for', required: true, options: { administrator: 'Administrator', editor: 'Editor', authenticated: 'Authenticated' }, default_value: 'administrator' },
-  { key: 'negate', type: 'checkbox', title: 'Negate', description: 'Negate the condition result', default_value: false },
-];
-
-const mockDebouncedField = {
-  value: 'Is Admin',
-  onChange: fn(),
-  flush: fn(),
-};
-
 const mockAnnotationField = {
-  value: 'Checks administrator role.',
+  value: 'Routes to the approval step.',
   onChange: fn(),
   flush: fn(),
 };
@@ -49,17 +35,14 @@ const meta: Meta<typeof EdgePropertiesPanel> = {
   ],
   args: {
     edge: sampleEdge,
-    configurationForm: sampleConfigForm,
-    onEdgeConfigurationChange: fn(),
     onEdgeUpdate: fn(),
     isLocked: false,
-    edgeLabelField: mockDebouncedField as any,
     edgeAnnotationField: mockAnnotationField as any,
   },
   argTypes: {
     isLocked: {
       control: 'boolean',
-      description: 'Whether the panel fields are locked',
+      description: 'Whether the annotation field is locked',
     },
   },
 };
@@ -68,12 +51,14 @@ export default meta;
 type Story = StoryObj<typeof EdgePropertiesPanel>;
 
 /**
- * Default edge properties panel with condition configuration
+ * Plain connection with an annotation. Conditions are authored as condition
+ * nodes and edited through the generic node panel, so this panel only edits
+ * a connection's annotation.
  */
-export const Default: Story = {};
+export const Annotation: Story = {};
 
 /**
- * Locked panel (fields disabled)
+ * Locked panel (annotation field disabled)
  */
 export const Locked: Story = {
   args: {
@@ -82,18 +67,9 @@ export const Locked: Story = {
 };
 
 /**
- * Panel without configuration form
+ * Connection without an annotation yet (empty field)
  */
-export const NoConfigForm: Story = {
-  args: {
-    configurationForm: null,
-  },
-};
-
-/**
- * Default edge (no condition)
- */
-export const DefaultEdge: Story = {
+export const EmptyAnnotation: Story = {
   args: {
     edge: {
       id: 'edge_2',
@@ -102,12 +78,6 @@ export const DefaultEdge: Story = {
       type: 'default',
       data: { locked: false },
     },
-    configurationForm: null,
-    edgeLabelField: {
-      value: '',
-      onChange: fn(),
-      flush: fn(),
-    } as any,
     edgeAnnotationField: {
       value: '',
       onChange: fn(),

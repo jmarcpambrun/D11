@@ -334,13 +334,19 @@ export interface ModelerPluginApi {
    */
   removeEdge: (edgeId: string) => boolean;
   /**
-   * Attach a condition to an existing edge (converting it from `default`
-   * to `condition` type).  Returns `true` on success.
+   * Attach a condition to an existing edge.  Conditions are first-class
+   * nodes: this inserts a condition node on the identified edge, splitting
+   * it into `source → conditionNode → target`.  Returns `true` on success,
+   * `false` if the edge was not found or the modeler is read-only.
    */
   setCondition: (edgeId: string, condition: SetConditionDescriptor) => boolean;
   /**
-   * Remove the condition from an edge (converting it back to `default`
-   * type).  Returns `true` on success.
+   * Remove a condition, collapsing its condition node back into a single
+   * plain edge (the inverse of `setCondition`).  The `edgeId` argument is
+   * resolved to a condition node when it is either the condition node id
+   * itself or an edge adjacent to a condition node.  Returns `true` on
+   * success, `false` if no condition could be resolved or the modeler is
+   * read-only.
    */
   removeCondition: (edgeId: string) => boolean;
 

@@ -1,0 +1,5 @@
+services:
+  maestro_webform.twig_extension:
+    class: Drupal\maestro_webform\TwigExtension\MaestroWebformTwigExtension
+    tags:
+      - { name: twig.extension }

@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\comment\CommentInterface;
 use Drupal\comment\Entity\Comment;
 use Drupal\Component\Utility\DeprecationHelper;
@@ -17,6 +20,8 @@ use Drupal\Tests\BrowserTestBase;
  * @group forum
  * @group #slow
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumUninstallTest extends BrowserTestBase {
 
   /**
@@ -117,14 +122,12 @@ class ForumUninstallTest extends BrowserTestBase {
 
     // Check that a node type with a machine name of forum can be created after
     // uninstalling the forum module and the node type is not locked.
-    $edit = [
+    $type = NodeType::create([
       'name' => 'Forum',
-      'title_label' => 'title for forum',
       'type' => 'forum',
-    ];
-    $this->drupalGet('admin/structure/types/add');
-    $this->submitForm($edit, 'Save');
-    $this->assertTrue((bool) NodeType::load('forum'), 'Node type with machine forum created.');
+    ]);
+    self::assertCount(0, $type->getTypedData()->validate());
+    $type->save();
     $this->drupalGet('admin/structure/types/manage/forum');
     $this->clickLink('Delete');
     $this->submitForm([], 'Delete');

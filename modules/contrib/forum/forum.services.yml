@@ -28,3 +28,11 @@ services:
       - { name: module_install.uninstall_validator }
     arguments: ['@entity_type.manager', '@config.factory', '@string_translation']
     lazy: true
+
+  Drupal\forum\Hook\ForumHooks:
+    class: Drupal\forum\Hook\ForumHooks
+    autowire: true
+
+  Drupal\forum\Hook\ForumViewsHooks:
+    class: Drupal\forum\Hook\ForumViewsHooks
+    autowire: true

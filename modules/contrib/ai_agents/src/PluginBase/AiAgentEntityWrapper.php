@@ -9,9 +9,11 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Base\FunctionCallBase;
 use Drupal\ai\Dto\HostnameFilterDto;
 use Drupal\ai\Exception\AiFunctionCallingExecutionError;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -23,6 +25,8 @@ use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
+use Drupal\ai\Service\FunctionCalling\OverridableFunctionCallInterface;
+use Drupal\ai\Traits\PluginManager\AiDataTypeConverterPluginManagerTrait;
 use Drupal\ai_agents\AiAgentInterface;
 use Drupal\ai_agents\Event\AgentFinishedExecutionEvent;
 use Drupal\ai_agents\Event\AgentRequestEvent;
@@ -47,6 +51,8 @@ use Symfony\Component\Yaml\Yaml;
  * AI Agent Entity Wrapper.
  */
 class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAiAgentInterface {
+
+  use AiDataTypeConverterPluginManagerTrait;
 
   /**
    * The AI Provider.
@@ -228,6 +234,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The UUID service.
    * @param \Drupal\ai\Guardrail\AiGuardrailHelper $aiGuardrailHelper
    *   The AI guardrail helper.
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger channel interface.
    */
   public function __construct(
     protected AiAgentInterface $aiAgent,
@@ -241,6 +249,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     protected ArtifactHelper $artifactHelper,
     protected UuidInterface $uuid,
     protected AiGuardrailHelper $aiGuardrailHelper,
+    protected LoggerChannelInterface $logger,
   ) {
   }
 
@@ -1019,7 +1028,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         $tool = $this->functionCallPluginManager->createInstance($values['tool']);
         foreach ($values['parameters'] as $parameter_key => $parameter_value) {
           if (!empty($parameter_value) || $parameter_value === 0) {
-            $tool->setContextValue($parameter_key, $parameter_value);
+            $parameter_key_normalized = str_replace('__colon__', ':', $parameter_key);
+            $tool->setContextValue($parameter_key_normalized, $parameter_value);
           }
         }
         $this->executeTool($tool);
@@ -1173,16 +1183,32 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected function applyToolUsageLimitsToContext(FunctionCallInterface $function_call) {
     // Use overridden functions, if set.
     $tool_limits = $this->functionsOverride['tool_usage_limits'] ?? $this->aiAgent->get('tool_usage_limits');
+    if (!($function_call instanceof OverridableFunctionCallInterface)) {
+      if (!empty($tool_limits[$function_call->getPluginId()])) {
+        $this->logger->error(
+          'Function call plugin "@plugin" does not extend @base and cannot have tool usage limits applied. Limits will be ignored.',
+          [
+            '@plugin' => $function_call->getPluginId(),
+            '@base' => FunctionCallBase::class,
+          ]
+        );
+      }
+      return;
+    }
     $context_definitions = $function_call->getContextDefinitions();
 
     // Process each property with limits.
     foreach ($tool_limits[$function_call->getPluginId()] ?? [] as $property_name => $limit) {
+      $property_name = str_replace('__colon__', ':', $property_name);
       // Skip properties that are not valid context definitions.
       if (!array_key_exists($property_name, $context_definitions)) {
         continue;
       }
 
-      $context_definition = $function_call->getContextDefinition($property_name);
+      // Clone the shared ContextDefinition so we never mutate the plugin
+      // manager's cached definition, which is shared across all agent
+      // instances using the same function call plugin.
+      $context_definition = clone $function_call->getContextDefinition($property_name);
 
       // Apply token in values if an action is set.
       if ($limit['action']) {
@@ -1199,7 +1225,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
           // Set constant value (forced value).
           case 'force_value':
             if (isset($values[0])) {
-              $context_value = $context_definition->getDataType() === 'list' ? $values : $values[0];
+              $context_value = $this->getForcedValue($context_definition, $values, !empty($limit['hide_property']));
               $context_definition->addConstraint('FixedValue', $context_value);
               $context_definition->setDefaultValue($context_value);
             }
@@ -1211,7 +1237,46 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
             break;
         }
       }
+      // Store the cloned, constrained definition on the function call instance
+      // so that both normalize() and validateContexts() use it automatically.
+      $function_call->setContextDefinitionOverride($property_name, $context_definition);
     }
+  }
+
+  /**
+   * Resolves the forced value for a force_value restriction.
+   *
+   * When the property is hidden from the LLM, the value is converted to its
+   * proper PHP type before being returned.
+   *
+   * @param \Drupal\Core\Plugin\Context\ContextDefinitionInterface $context_definition
+   *   The context definition the value will be assigned to.
+   * @param array $values
+   *   Token-resolved forced values from the agent config.
+   * @param bool $hide_property
+   *   Whether the property is hidden from the LLM.
+   *
+   * @return mixed
+   *   The value to assign to the context definition.
+   */
+  protected function getForcedValue($context_definition, array $values, bool $hide_property): mixed {
+    $value = $context_definition->getDataType() === 'list' ? $values : $values[0];
+    if (!$hide_property) {
+      return $value;
+    }
+    // Hidden properties are never supplied by the LLM, so
+    // FunctionCallBase::setContextValue() (and its data-type conversion) is
+    // never invoked. Convert here so non-scalar types (entity:*, list, JSON,
+    // YAML, ...) reach the tool as proper PHP values rather than raw scalars.
+    $converter = $this->getAiDataTypeConverterPluginManager();
+    if ($context_definition->isMultiple()) {
+      $value = $converter->convert('list', $value);
+      foreach ($value as $delta => $item) {
+        $value[$delta] = $converter->convert($context_definition->getDataType(), $item);
+      }
+      return $value;
+    }
+    return $converter->convert($context_definition->getDataType(), $value);
   }
 
   /**
@@ -1597,7 +1662,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
           if (isset($tool['function']['arguments'])) {
             $arguments = Json::decode($tool['function']['arguments']);
             foreach ($arguments as $key => $value) {
-              $function->setContextValue($key, $value);
+              $key_normalized = str_replace('__colon__', ':', $key);
+              $function->setContextValue($key_normalized, $value);
             }
           }
           $result = FALSE;

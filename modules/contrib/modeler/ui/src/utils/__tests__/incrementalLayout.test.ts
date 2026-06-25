@@ -1,10 +1,11 @@
 import {
   computeSuccessorPosition,
   computeNewEventPosition,
-  ensureGapForCondition,
   placeNodeOnEdge,
   simulateIncrementalBuild,
-  edgeHasCondition,
+  buildConditionInsertion,
+  isConditionNode,
+  placeChainOnEdge,
 } from '../incrementalLayout';
 import type { StoreNode as Node, StoreEdge as Edge } from '../../types/settings';
 import { LAYOUT, NODE_DIMENSIONS } from '../../constants/dimensions';
@@ -35,37 +36,15 @@ function makeEdge(id: string, source: string, target: string, overrides: Partial
   };
 }
 
+/**
+ * Build a condition node with a chosen id, used by the placeChainOnEdge
+ * flow-order tests so they can feed buildConditionInsertion a predictable id.
+ */
+function condNodeWith(id: string): Node {
+  return makeNode(id, { type: 'condition', data: { __isConditionNode: true } });
+}
+
 describe('incrementalLayout', () => {
-  describe('edgeHasCondition', () => {
-    it('returns false for plain edges', () => {
-      expect(edgeHasCondition(makeEdge('e1', 'a', 'b'))).toBe(false);
-    });
-
-    it('returns true when condition plugin is set', () => {
-      expect(edgeHasCondition(makeEdge('e1', 'a', 'b', {
-        data: { condition: 'some_condition' },
-      }))).toBe(true);
-    });
-
-    it('returns true when conditionLabel is set', () => {
-      expect(edgeHasCondition(makeEdge('e1', 'a', 'b', {
-        data: { conditionLabel: 'X' },
-      }))).toBe(true);
-    });
-
-    it('returns true when conditionConfiguration has keys', () => {
-      expect(edgeHasCondition(makeEdge('e1', 'a', 'b', {
-        data: { conditionConfiguration: { foo: 'bar' } },
-      }))).toBe(true);
-    });
-
-    it('returns false for empty conditionConfiguration', () => {
-      expect(edgeHasCondition(makeEdge('e1', 'a', 'b', {
-        data: { conditionConfiguration: {} },
-      }))).toBe(false);
-    });
-  });
-
   describe('computeSuccessorPosition', () => {
     it('places a successor in the parent column for a non-gateway parent', () => {
       const parent = makeNode('p', { position: { x: 100, y: 100 } });
@@ -123,22 +102,11 @@ describe('incrementalLayout', () => {
       expect(positions[2]).toBe(parent.position.x + step);
     });
 
-    it('adds CONDITION_EXTRA_SPACING for condition edges', () => {
-      const parent = makeNode('p', { position: { x: 100, y: 100 } });
-      const plain = computeSuccessorPosition({
-        nodes: [parent],
-        edges: [],
-        sourceNodeId: 'p',
-        hasCondition: false,
-      });
-      const conditional = computeSuccessorPosition({
-        nodes: [parent],
-        edges: [],
-        sourceNodeId: 'p',
-        hasCondition: true,
-      });
-      expect(conditional.position.y - plain.position.y).toBe(LAYOUT.CONDITION_EXTRA_SPACING);
-    });
+    // Removed: the former "adds CONDITION_EXTRA_SPACING for condition edges"
+    // test.  Conditions are first-class nodes now (issue #3589093), so no
+    // edge ever carries a condition card and computeSuccessorPosition no
+    // longer accepts a `hasCondition` option — the vertical gap is always
+    // the plain row spacing.
 
     it('returns DEFAULT_POSITION when source node is missing', () => {
       const result = computeSuccessorPosition({
@@ -180,44 +148,14 @@ describe('incrementalLayout', () => {
     });
   });
 
-  describe('ensureGapForCondition', () => {
-    it('shifts target downward when gap is too small for a condition card', () => {
-      const source = makeNode('s', { position: { x: 0, y: 0 } });
-      const target = makeNode('t', { position: { x: 0, y: NODE_DIMENSIONS.CARD_HEIGHT + 10 } });
-      const result = ensureGapForCondition([source, target], 's', 't');
-      const newTarget = result.find(n => n.id === 't')!;
-      expect(newTarget.position.y).toBeGreaterThan(target.position.y);
-      // New gap meets the condition-aware requirement.
-      const newGap = newTarget.position.y - (source.position.y + NODE_DIMENSIONS.CARD_HEIGHT);
-      expect(newGap).toBeGreaterThanOrEqual(
-        LAYOUT.NODE_SPACING_Y + LAYOUT.CONDITION_EXTRA_SPACING,
-      );
-    });
-
-    it('leaves nodes alone when gap already accommodates a condition', () => {
-      const source = makeNode('s', { position: { x: 0, y: 0 } });
-      const targetY = NODE_DIMENSIONS.CARD_HEIGHT + LAYOUT.NODE_SPACING_Y + LAYOUT.CONDITION_EXTRA_SPACING + 50;
-      const target = makeNode('t', { position: { x: 0, y: targetY } });
-      const result = ensureGapForCondition([source, target], 's', 't');
-      const newTarget = result.find(n => n.id === 't')!;
-      expect(newTarget.position.y).toBe(targetY);
-    });
-
-    it('returns the input unchanged when source or target is missing', () => {
-      const source = makeNode('s', { position: { x: 0, y: 0 } });
-      const result = ensureGapForCondition([source], 's', 'missing');
-      expect(result).toEqual([source]);
-    });
-  });
-
   describe('placeNodeOnEdge', () => {
-    it('places the new node between source and target with condition-aware gaps', () => {
+    it('places the new node between source and target with plain row gaps', () => {
       const source = makeNode('s', { position: { x: 0, y: 0 } });
       const target = makeNode('t', { position: { x: 0, y: 1000 } });
       const newNode = makeNode('n', { position: { x: 0, y: 0 } });
       const edges: Edge[] = [makeEdge('s-n', 's', 'n'), makeEdge('n-t', 'n', 't')];
 
-      const result = placeNodeOnEdge([source, target], edges, newNode, 's', 't', false, false);
+      const result = placeNodeOnEdge([source, target], edges, newNode, 's', 't');
       const placed = result.find(n => n.id === 'n')!;
       // The new node sits between source.bottom and target.top.
       expect(placed.position.y).toBeGreaterThan(source.position.y + NODE_DIMENSIONS.CARD_HEIGHT);
@@ -235,7 +173,7 @@ describe('incrementalLayout', () => {
         makeEdge('t-d', 't', 'd'),
       ];
 
-      const result = placeNodeOnEdge([source, target, downstream], edges, newNode, 's', 't', false, false);
+      const result = placeNodeOnEdge([source, target, downstream], edges, newNode, 's', 't');
       const newTarget = result.find(n => n.id === 't')!;
       const newDownstream = result.find(n => n.id === 'd')!;
       expect(newTarget.position.y).toBeGreaterThan(target.position.y);
@@ -332,28 +270,6 @@ describe('incrementalLayout', () => {
       // Distinct X positions, both at the same row.
       expect(e1.position.x).not.toBe(e2.position.x);
       expect(Math.abs(e1.position.y - e2.position.y)).toBeLessThanOrEqual(0);
-    });
-
-    it('adds extra vertical gap for condition edges', () => {
-      const nodes: Node[] = [
-        makeNode('a', { type: 'start' }),
-        makeNode('b'),
-      ];
-      const plainEdges: Edge[] = [makeEdge('a-b', 'a', 'b')];
-      const conditionEdges: Edge[] = [makeEdge('a-b', 'a', 'b', {
-        data: { condition: 'foo' },
-      })];
-
-      const plainResult = simulateIncrementalBuild(nodes, plainEdges)!;
-      const conditionResult = simulateIncrementalBuild(nodes, conditionEdges)!;
-
-      const plainGap =
-        plainResult.find(n => n.id === 'b')!.position.y -
-        plainResult.find(n => n.id === 'a')!.position.y;
-      const conditionGap =
-        conditionResult.find(n => n.id === 'b')!.position.y -
-        conditionResult.find(n => n.id === 'a')!.position.y;
-      expect(conditionGap - plainGap).toBe(LAYOUT.CONDITION_EXTRA_SPACING);
     });
 
     it('terminates and produces finite positions for a cycle', () => {
@@ -459,6 +375,283 @@ describe('incrementalLayout', () => {
         parents.length;
       const mergeCenter = merge.position.x + (merge.width || NODE_DIMENSIONS.CARD_WIDTH) / 2;
       expect(mergeCenter).toBeCloseTo(centroidX, 0);
+    });
+  });
+
+  // ── Condition-adjacency invariant (issue #3589093) ────────────────────
+  // buildConditionInsertion must never produce a condition -> condition
+  // edge: it inserts gateway node(s) whenever an end of the target edge is
+  // itself a condition node.
+  describe('isConditionNode', () => {
+    it('recognizes condition nodes by type', () => {
+      expect(isConditionNode(makeNode('c', { type: 'condition' }))).toBe(true);
+    });
+    it('recognizes condition nodes by __isConditionNode data flag', () => {
+      expect(isConditionNode(makeNode('c', { data: { __isConditionNode: true } }))).toBe(true);
+    });
+    it('returns false for non-condition nodes and undefined', () => {
+      expect(isConditionNode(makeNode('e', { type: 'element' }))).toBe(false);
+      expect(isConditionNode(undefined)).toBe(false);
+    });
+  });
+
+  describe('buildConditionInsertion', () => {
+    /** A fresh condition node to insert. */
+    const condNode = (): Node =>
+      makeNode('newCond', { type: 'condition', data: { __isConditionNode: true } });
+
+    /** Assert no edge in the set connects a condition id directly to another. */
+    const assertNoConditionToCondition = (
+      edges: Edge[],
+      conditionIds: Set<string>,
+    ): void => {
+      for (const e of edges) {
+        const both = conditionIds.has(e.source) && conditionIds.has(e.target);
+        expect(both).toBe(false);
+      }
+    };
+
+    it('case 1 — neither end is a condition: source -> cond -> target (no gateway)', () => {
+      const cond = condNode();
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'src',
+        targetNodeId: 'tgt',
+        conditionNode: cond,
+        sourceIsCondition: false,
+        targetIsCondition: false,
+      });
+      // Only the condition node is added — no gateway.
+      expect(nodesToAdd).toHaveLength(1);
+      expect(nodesToAdd[0].id).toBe('newCond');
+      expect(nodesToAdd.some(n => n.type === 'gateway')).toBe(false);
+      // Edges: src -> newCond -> tgt.
+      expect(edgesToAdd).toHaveLength(2);
+      expect(edgesToAdd[0]).toMatchObject({ source: 'src', target: 'newCond', type: 'default' });
+      expect(edgesToAdd[1]).toMatchObject({ source: 'newCond', target: 'tgt', type: 'default' });
+    });
+
+    it('case 2 — target IS a condition: source -> cond -> gateway -> condB', () => {
+      const cond = condNode();
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'src',
+        targetNodeId: 'condB',
+        conditionNode: cond,
+        sourceIsCondition: false,
+        targetIsCondition: true,
+      });
+      // Condition node + exactly one gateway.
+      expect(nodesToAdd).toHaveLength(2);
+      const gateway = nodesToAdd.find(n => n.type === 'gateway')!;
+      expect(gateway).toBeDefined();
+      expect(gateway.data?.componentType).toBe(6);
+      expect(gateway.data?.plugin).toBe('gateway');
+      // Edges preserve order: src -> newCond -> gateway -> condB.
+      expect(edgesToAdd).toHaveLength(3);
+      expect(edgesToAdd[0]).toMatchObject({ source: 'src', target: 'newCond' });
+      expect(edgesToAdd[1]).toMatchObject({ source: 'newCond', target: gateway.id });
+      expect(edgesToAdd[2]).toMatchObject({ source: gateway.id, target: 'condB' });
+      // No condition -> condition edge (newCond and condB are conditions).
+      assertNoConditionToCondition(edgesToAdd, new Set(['newCond', 'condB']));
+    });
+
+    it('case 3 — source IS a condition: condA -> gateway -> cond -> target', () => {
+      const cond = condNode();
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'condA',
+        targetNodeId: 'tgt',
+        conditionNode: cond,
+        sourceIsCondition: true,
+        targetIsCondition: false,
+      });
+      expect(nodesToAdd).toHaveLength(2);
+      const gateway = nodesToAdd.find(n => n.type === 'gateway')!;
+      expect(gateway).toBeDefined();
+      // Edges preserve order: condA -> gateway -> newCond -> tgt.
+      expect(edgesToAdd).toHaveLength(3);
+      expect(edgesToAdd[0]).toMatchObject({ source: 'condA', target: gateway.id });
+      expect(edgesToAdd[1]).toMatchObject({ source: gateway.id, target: 'newCond' });
+      expect(edgesToAdd[2]).toMatchObject({ source: 'newCond', target: 'tgt' });
+      assertNoConditionToCondition(edgesToAdd, new Set(['condA', 'newCond']));
+    });
+
+    it('case 4 — BOTH ends conditions: condA -> gw1 -> cond -> gw2 -> condB (two gateways)', () => {
+      const cond = condNode();
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'condA',
+        targetNodeId: 'condB',
+        conditionNode: cond,
+        sourceIsCondition: true,
+        targetIsCondition: true,
+      });
+      // Condition node + two gateways so neither pair is adjacent.
+      expect(nodesToAdd).toHaveLength(3);
+      const gateways = nodesToAdd.filter(n => n.type === 'gateway');
+      expect(gateways).toHaveLength(2);
+      const [gw1, gw2] = gateways;
+      // Edges: condA -> gw1 -> newCond -> gw2 -> condB.
+      expect(edgesToAdd).toHaveLength(4);
+      expect(edgesToAdd[0]).toMatchObject({ source: 'condA', target: gw1.id });
+      expect(edgesToAdd[1]).toMatchObject({ source: gw1.id, target: 'newCond' });
+      expect(edgesToAdd[2]).toMatchObject({ source: 'newCond', target: gw2.id });
+      expect(edgesToAdd[3]).toMatchObject({ source: gw2.id, target: 'condB' });
+      // No condition -> condition edge among the three condition ids.
+      assertNoConditionToCondition(edgesToAdd, new Set(['condA', 'newCond', 'condB']));
+    });
+  });
+
+  describe('placeChainOnEdge', () => {
+    it('stacks a two-node chain below the source and shifts the target down', () => {
+      // Flow here is src -> cond -> gw -> tgt, so flow order == array order
+      // ([cond, gw]); the gateway must end up below the condition.  This
+      // mirrors buildConditionInsertion Case 2 with a non-condition source.
+      const source = makeNode('src', { position: { x: 100, y: 0 } });
+      const target = makeNode('tgt', { position: { x: 100, y: 200 } });
+      const chain = [
+        makeNode('cond', { type: 'condition', position: { x: 0, y: 0 } }),
+        makeNode('gw', { type: 'gateway', position: { x: 0, y: 0 }, height: NODE_DIMENSIONS.GATEWAY_HEIGHT }),
+      ];
+      const edges = [
+        makeEdge('e1', 'src', 'cond'),
+        makeEdge('e2', 'cond', 'gw'),
+        makeEdge('e3', 'gw', 'tgt'),
+      ];
+      const result = placeChainOnEdge([source, target], edges, chain, 'src', 'tgt');
+      const placedCond = result.find(n => n.id === 'cond')!;
+      const placedGw = result.find(n => n.id === 'gw')!;
+      const placedTarget = result.find(n => n.id === 'tgt')!;
+      // Both chain nodes are below the source, column-aligned, and stacked
+      // (gateway below the condition).
+      expect(placedCond.position.y).toBeGreaterThan(source.position.y);
+      expect(placedGw.position.y).toBeGreaterThan(placedCond.position.y);
+      expect(placedCond.position.x).toBe(source.position.x);
+      expect(placedGw.position.x).toBe(source.position.x);
+      // Target shifted down to clear the whole chain.
+      expect(placedTarget.position.y).toBeGreaterThanOrEqual(placedGw.position.y);
+    });
+
+    // ── Flow-order placement (issue #3589093 regression) ────────────────
+    // placeChainOnEdge must position chain nodes in the order they appear
+    // along the edges (sourceNodeId -> ... -> targetNodeId), NOT in the
+    // order they happen to occupy the `chain` array.
+
+    it('Case 3 regression — orders gateway ABOVE the new condition (flow: condA -> gateway -> cond -> target)', () => {
+      // buildConditionInsertion Case 3 (source IS a condition) returns
+      // nodesToAdd = [cond, gateway] but wires condA -> gateway -> cond -> target.
+      // The previous array-order placement put the condition above the
+      // gateway (the reported bug); flow-order placement must put the
+      // GATEWAY above the CONDITION.
+      const cond = condNodeWith('newCond');
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'condA',
+        targetNodeId: 'tgt',
+        conditionNode: cond,
+        sourceIsCondition: true,
+        targetIsCondition: false,
+      });
+      const gateway = nodesToAdd.find(n => n.type === 'gateway')!;
+
+      const source = makeNode('condA', { type: 'condition', position: { x: 100, y: 0 }, data: { __isConditionNode: true } });
+      const target = makeNode('tgt', { position: { x: 100, y: 200 } });
+      // Callers pass the full rewired edge set (allEdges).
+      const allEdges: Edge[] = [...edgesToAdd];
+
+      const result = placeChainOnEdge([source, target], allEdges, nodesToAdd, 'condA', 'tgt');
+      const placedGw = result.find(n => n.id === gateway.id)!;
+      const placedCond = result.find(n => n.id === 'newCond')!;
+      const placedTarget = result.find(n => n.id === 'tgt')!;
+
+      // THE REGRESSION ASSERTION: gateway (flow-first) sits ABOVE the new condition.
+      expect(placedGw.position.y).toBeLessThan(placedCond.position.y);
+      // Both chain nodes sit below the source...
+      expect(placedGw.position.y).toBeGreaterThan(source.position.y);
+      // ...and above the (downward-shifted) target.
+      expect(placedCond.position.y).toBeLessThan(placedTarget.position.y);
+      // Column-aligned under the source.
+      expect(placedGw.position.x).toBe(source.position.x);
+      expect(placedCond.position.x).toBe(source.position.x);
+    });
+
+    it('Case 2 ordering — places the new condition ABOVE the gateway (flow: source -> cond -> gateway -> condB)', () => {
+      // Non-condition source, condition target.  nodesToAdd = [cond, gateway]
+      // and the flow is source -> cond -> gateway -> condB, so here flow order
+      // matches array order: cond must be above gateway.
+      const cond = condNodeWith('newCond');
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'src',
+        targetNodeId: 'condB',
+        conditionNode: cond,
+        sourceIsCondition: false,
+        targetIsCondition: true,
+      });
+      const gateway = nodesToAdd.find(n => n.type === 'gateway')!;
+
+      const source = makeNode('src', { position: { x: 100, y: 0 } });
+      const target = makeNode('condB', { type: 'condition', position: { x: 100, y: 200 }, data: { __isConditionNode: true } });
+      const allEdges: Edge[] = [...edgesToAdd];
+
+      const result = placeChainOnEdge([source, target], allEdges, nodesToAdd, 'src', 'condB');
+      const placedCond = result.find(n => n.id === 'newCond')!;
+      const placedGw = result.find(n => n.id === gateway.id)!;
+
+      // Condition (flow-first) sits ABOVE the gateway.
+      expect(placedCond.position.y).toBeLessThan(placedGw.position.y);
+    });
+
+    it('Case 4 ordering — stacks gateway1 < cond < gateway2 (flow: condA -> gw1 -> cond -> gw2 -> condB)', () => {
+      // Both ends are conditions.  nodesToAdd = [cond, gw1, gw2] but the flow
+      // is condA -> gw1 -> cond -> gw2 -> condB, so the vertical order must be
+      // gw1, then cond, then gw2 — independent of the array order.
+      const cond = condNodeWith('newCond');
+      const { nodesToAdd, edgesToAdd } = buildConditionInsertion({
+        sourceNodeId: 'condA',
+        targetNodeId: 'condB',
+        conditionNode: cond,
+        sourceIsCondition: true,
+        targetIsCondition: true,
+      });
+      const [gw1, gw2] = nodesToAdd.filter(n => n.type === 'gateway');
+
+      const source = makeNode('condA', { type: 'condition', position: { x: 100, y: 0 }, data: { __isConditionNode: true } });
+      const target = makeNode('condB', { type: 'condition', position: { x: 100, y: 400 }, data: { __isConditionNode: true } });
+      const allEdges: Edge[] = [...edgesToAdd];
+
+      const result = placeChainOnEdge([source, target], allEdges, nodesToAdd, 'condA', 'condB');
+      const placedGw1 = result.find(n => n.id === gw1.id)!;
+      const placedCond = result.find(n => n.id === 'newCond')!;
+      const placedGw2 = result.find(n => n.id === gw2.id)!;
+
+      // Flow order top-to-bottom: gateway1, condition, gateway2.
+      expect(placedGw1.position.y).toBeLessThan(placedCond.position.y);
+      expect(placedCond.position.y).toBeLessThan(placedGw2.position.y);
+    });
+
+    it('falls back to array order when the edges do not wire the chain end-to-end', () => {
+      // Defensive: no edges connect the chain to the source, so the flow
+      // walk cannot order it.  placeChainOnEdge must not crash or drop
+      // nodes — it falls back to the chain array order.
+      const source = makeNode('src', { position: { x: 100, y: 0 } });
+      const target = makeNode('tgt', { position: { x: 100, y: 200 } });
+      const chain = [
+        makeNode('a', { type: 'condition', position: { x: 0, y: 0 } }),
+        makeNode('b', { type: 'gateway', position: { x: 0, y: 0 }, height: NODE_DIMENSIONS.GATEWAY_HEIGHT }),
+      ];
+      // Only the outer edges exist; the chain is not reachable from src.
+      const edges = [makeEdge('e1', 'src', 'tgt')];
+      const result = placeChainOnEdge([source, target], edges, chain, 'src', 'tgt');
+      const placedA = result.find(n => n.id === 'a')!;
+      const placedB = result.find(n => n.id === 'b')!;
+      // Both nodes still placed (none dropped), in array order: a above b.
+      expect(placedA.position.y).toBeLessThan(placedB.position.y);
+      expect(result.some(n => n.id === 'a')).toBe(true);
+      expect(result.some(n => n.id === 'b')).toBe(true);
+    });
+
+    it('returns nodes unchanged plus chain when source or target is missing', () => {
+      const source = makeNode('src');
+      const chain = [makeNode('cond', { type: 'condition' })];
+      const result = placeChainOnEdge([source], [], chain, 'src', 'missing');
+      expect(result).toHaveLength(2);
+      expect(result.some(n => n.id === 'cond')).toBe(true);
     });
   });
 });

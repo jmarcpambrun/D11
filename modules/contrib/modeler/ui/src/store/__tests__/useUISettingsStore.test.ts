@@ -71,4 +71,19 @@ describe('useUISettingsStore', () => {
       expect(useUISettingsStore.getState().darkMode).toBe(false);
     });
   });
+
+  describe('reconnectDragActive (issue #3585553)', () => {
+    it('should default to false', () => {
+      const useUISettingsStore = getStore();
+      expect(useUISettingsStore.getState().reconnectDragActive).toBe(false);
+    });
+
+    it('should set the flag true then false via setReconnectDragActive', () => {
+      const useUISettingsStore = getStore();
+      useUISettingsStore.getState().setReconnectDragActive(true);
+      expect(useUISettingsStore.getState().reconnectDragActive).toBe(true);
+      useUISettingsStore.getState().setReconnectDragActive(false);
+      expect(useUISettingsStore.getState().reconnectDragActive).toBe(false);
+    });
+  });
 });

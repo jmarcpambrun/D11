@@ -2916,18 +2916,18 @@
         },
         {
             "name": "drupal/ai_agents",
-            "version": "1.3.0",
-            "version_normalized": "1.3.0.0",
+            "version": "1.3.1",
+            "version_normalized": "1.3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_agents.git",
-                "reference": "1.3.0"
+                "reference": "1.3.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_agents-1.3.0.zip",
-                "reference": "1.3.0",
-                "shasum": "676787dc830587fde80bde4658d1428ed5616333"
+                "url": "https://ftp.drupal.org/files/projects/ai_agents-1.3.1.zip",
+                "reference": "1.3.1",
+                "shasum": "8414040f9510470c228b77c93683d8b86f8a9630"
             },
             "require": {
                 "drupal/ai": "^1.4.0",
@@ -2945,8 +2945,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.3.0",
-                    "datestamp": "1779962575",
+                    "version": "1.3.1",
+                    "datestamp": "1782326004",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3052,18 +3052,18 @@
         },
         {
             "name": "drupal/ai_provider_openai",
-            "version": "1.2.1",
-            "version_normalized": "1.2.1.0",
+            "version": "1.2.2",
+            "version_normalized": "1.2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_provider_openai.git",
-                "reference": "1.2.1"
+                "reference": "1.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_provider_openai-1.2.1.zip",
-                "reference": "1.2.1",
-                "shasum": "9f1d467d7e8f78cb4e29b53741eda96df9de8e59"
+                "url": "https://ftp.drupal.org/files/projects/ai_provider_openai-1.2.2.zip",
+                "reference": "1.2.2",
+                "shasum": "0f6b7d7631fddff38b128edb53f3fed4860719a4"
             },
             "require": {
                 "drupal/ai": "^1.2.0",
@@ -3073,8 +3073,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.2.1",
-                    "datestamp": "1772029063",
+                    "version": "1.2.2",
+                    "datestamp": "1782325859",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3648,18 +3648,18 @@
         },
         {
             "name": "drupal/charts",
-            "version": "5.2.1",
-            "version_normalized": "5.2.1.0",
+            "version": "5.2.2",
+            "version_normalized": "5.2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/charts.git",
-                "reference": "5.2.1"
+                "reference": "5.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/charts-5.2.1.zip",
-                "reference": "5.2.1",
-                "shasum": "b9dcd21ff9102dc12d9fdb81a43b2529fd869557"
+                "url": "https://ftp.drupal.org/files/projects/charts-5.2.2.zip",
+                "reference": "5.2.2",
+                "shasum": "4d7c01438feca12bdff8b0b8f56988ebcee8d7ed"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11 || ^12"
@@ -3674,8 +3674,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "5.2.1",
-                    "datestamp": "1782128047",
+                    "version": "5.2.2",
+                    "datestamp": "1782213252",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -6389,28 +6389,28 @@
         },
         {
             "name": "drupal/forum",
-            "version": "1.0.6",
-            "version_normalized": "1.0.6.0",
+            "version": "1.1.1",
+            "version_normalized": "1.1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/forum.git",
-                "reference": "1.0.6"
+                "reference": "1.1.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/forum-1.0.6.zip",
-                "reference": "1.0.6",
-                "shasum": "2a90c003d0966b9833c4ab0370008f3d0c5cf6fd"
+                "url": "https://ftp.drupal.org/files/projects/forum-1.1.1.zip",
+                "reference": "1.1.1",
+                "shasum": "cfa302642856d69a9d86c6660cef0c1f26e1a510"
             },
             "require": {
-                "drupal/core": "^10 || ^11",
-                "drupal/history": "*"
+                "drupal/core": "~11.3 || ~12",
+                "drupal/history": "~1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.6",
-                    "datestamp": "1773954131",
+                    "version": "1.1.1",
+                    "datestamp": "1782376615",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -6439,7 +6439,8 @@
             "description": "Provides discussion forums.",
             "homepage": "https://www.drupal.org/project/forum",
             "support": {
-                "source": "https://git.drupalcode.org/project/forum"
+                "source": "https://git.drupalcode.org/project/forum",
+                "issues": "http://drupal.org/project/issues/forum"
             },
             "install-path": "../../modules/contrib/forum"
         },
@@ -7666,18 +7667,18 @@
         },
         {
             "name": "drupal/maestro",
-            "version": "4.4.0",
-            "version_normalized": "4.4.0.0",
+            "version": "4.4.1",
+            "version_normalized": "4.4.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/maestro.git",
-                "reference": "4.4.0"
+                "reference": "4.4.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/maestro-4.4.0.zip",
-                "reference": "4.4.0",
-                "shasum": "c6a045f90e3bbe71f79d74628b1a54c4a955dba9"
+                "url": "https://ftp.drupal.org/files/projects/maestro-4.4.1.zip",
+                "reference": "4.4.1",
+                "shasum": "d8244364682d03a77fe69384afa1c2f6fc442ea6"
             },
             "require": {
                 "drupal/core": "^10 || ^11"
@@ -7695,8 +7696,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.4.0",
-                    "datestamp": "1770141279",
+                    "version": "4.4.1",
+                    "datestamp": "1782139795",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -8185,18 +8186,18 @@
         },
         {
             "name": "drupal/modeler",
-            "version": "1.0.4-alpha3",
-            "version_normalized": "1.0.4.0-alpha3",
+            "version": "1.0.4-alpha4",
+            "version_normalized": "1.0.4.0-alpha4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler.git",
-                "reference": "1.0.4-alpha3"
+                "reference": "1.0.4-alpha4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.4-alpha3.zip",
-                "reference": "1.0.4-alpha3",
-                "shasum": "8add1df5edbcb9d32111a25ad0c7fb9a6385342f"
+                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.4-alpha4.zip",
+                "reference": "1.0.4-alpha4",
+                "shasum": "05307a95a2917e3f17760d4c2181d14c1ed8365f"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -8206,8 +8207,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.4-alpha3",
-                    "datestamp": "1781436456",
+                    "version": "1.0.4-alpha4",
+                    "datestamp": "1782201104",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."
@@ -8503,18 +8504,18 @@
         },
         {
             "name": "drupal/paragraphs",
-            "version": "1.20.0",
-            "version_normalized": "1.20.0.0",
+            "version": "1.21.0",
+            "version_normalized": "1.21.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/paragraphs.git",
-                "reference": "8.x-1.20"
+                "reference": "8.x-1.21"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/paragraphs-8.x-1.20.zip",
-                "reference": "8.x-1.20",
-                "shasum": "68051cc8c025aa3f62fd44a219d158361928a4ad"
+                "url": "https://ftp.drupal.org/files/projects/paragraphs-8.x-1.21.zip",
+                "reference": "8.x-1.21",
+                "shasum": "5638fab65f5c9cf954ef369411b2ee64d41e21f9"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
@@ -8527,7 +8528,7 @@
                 "drupal/entity_usage": "2.x-dev",
                 "drupal/feeds": "^3",
                 "drupal/field_group": "3.x-dev",
-                "drupal/inline_entity_form": "3.x-dev",
+                "drupal/inline_entity_form": "^3",
                 "drupal/paragraphs-paragraphs_library": "*",
                 "drupal/replicate": "1.x-dev",
                 "drupal/search_api": "^1",
@@ -8539,8 +8540,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.20",
-                    "datestamp": "1767269542",
+                    "version": "8.x-1.21",
+                    "datestamp": "1782326108",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"

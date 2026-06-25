@@ -18,9 +18,9 @@
  * built this model node-by-node with quick-add".
  *
  * Coordinates are top-left throughout (matching ReactFlow's coordinate
- * system).  All gap math goes through {@link requiredVerticalGap} and
- * {@link shiftNodesDown} from positionUtils.ts so there is no duplicated
- * spacing logic anywhere else in the codebase.
+ * system).  All gap math goes through {@link requiredVerticalGap} from
+ * positionUtils.ts so there is no duplicated spacing logic anywhere else
+ * in the codebase.
  */
 
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
@@ -28,9 +28,10 @@ import { LAYOUT, NODE_DIMENSIONS } from '../constants/dimensions';
 import {
   findFlowAwarePosition,
   findFreePosition,
-  shiftNodesDown,
   requiredVerticalGap,
 } from './positionUtils';
+import { generateNodeId, generateEdgeId } from './clipboardUtils';
+import { t } from './translation';
 
 // ============ Types ============
 
@@ -50,8 +51,6 @@ export interface PlaceSuccessorOptions {
   edges: Edge[];
   /** ID of the parent node the new successor connects from. */
   sourceNodeId: string;
-  /** Whether the connecting edge carries a condition card. */
-  hasCondition?: boolean;
   /**
    * For multi-child fan-out (gateway successors only): the index of this
    * successor in the parent's child list and the total number of siblings.
@@ -78,19 +77,6 @@ export interface PlaceNewEventOptions {
 }
 
 // ============ Helpers ============
-
-/**
- * Decide whether an edge carries a condition (and therefore needs the
- * extra vertical gap for the condition card).
- */
-export function edgeHasCondition(edge: Edge): boolean {
-  return !!(
-    edge.data?.condition ||
-    edge.data?.conditionLabel ||
-    (edge.data?.conditionConfiguration &&
-      Object.keys(edge.data.conditionConfiguration as Record<string, unknown>).length > 0)
-  );
-}
 
 /**
  * Center X of a candidate child node directly under its parent so that the
@@ -148,7 +134,6 @@ export function computeSuccessorPosition(options: PlaceSuccessorOptions): {
     nodes,
     edges,
     sourceNodeId,
-    hasCondition = false,
     siblingIndex = 0,
     totalSiblings = 1,
     isGatewayChild = false,
@@ -167,9 +152,8 @@ export function computeSuccessorPosition(options: PlaceSuccessorOptions): {
   const childHeight = NODE_DIMENSIONS.CARD_HEIGHT;
   const sourceHeight = sourceNode.height || nodeHeightFallback(sourceNode);
 
-  // Vertical: directly below the parent, with a gap that accounts for
-  // condition cards on the connecting edge.
-  const candidateY = sourceNode.position.y + sourceHeight + requiredVerticalGap(hasCondition);
+  // Vertical: directly below the parent, using the standard row gap.
+  const candidateY = sourceNode.position.y + sourceHeight + requiredVerticalGap();
 
   // Horizontal: gateway children fan out, plain successors stay in column.
   const candidateX = isGatewayChild && totalSiblings > 1
@@ -259,8 +243,6 @@ export function placeNodeOnEdge(
   newNode: Node,
   sourceNodeId: string,
   targetNodeId: string,
-  hasConditionBefore: boolean,
-  hasConditionAfter: boolean,
 ): Node[] {
   const sourceNode = nodes.find(n => n.id === sourceNodeId);
   const targetNode = nodes.find(n => n.id === targetNodeId);
@@ -274,8 +256,8 @@ export function placeNodeOnEdge(
 
   // X aligns under the source.
   const newNodeX = columnAlignedX(sourceNode, NODE_DIMENSIONS.CARD_WIDTH);
-  // Y sits one condition-aware gap below the source.
-  const newNodeY = sourceBottom + requiredVerticalGap(hasConditionBefore);
+  // Y sits one row gap below the source.
+  const newNodeY = sourceBottom + requiredVerticalGap();
 
   const positionedNewNode: Node = {
     ...newNode,
@@ -284,7 +266,7 @@ export function placeNodeOnEdge(
 
   // Shift target (and descendants) downward if there is not enough room.
   const newNodeBottom = newNodeY + NODE_DIMENSIONS.CARD_HEIGHT;
-  const desiredTargetY = newNodeBottom + requiredVerticalGap(hasConditionAfter);
+  const desiredTargetY = newNodeBottom + requiredVerticalGap();
   const shift = Math.max(0, desiredTargetY - targetNode.position.y);
 
   const descendants = collectDescendants(targetNodeId, edges);
@@ -298,6 +280,307 @@ export function placeNodeOnEdge(
   });
 
   return [...updated, positionedNewNode];
+}
+
+// ============ Condition-adjacency invariant ============
+
+/**
+ * Build a synthetic gateway node matching the data shape minted at load
+ * time by useModelDataLoader's createGatewayComponent (type 'gateway',
+ * componentType 6, plugin 'gateway').  Position is temporary — callers
+ * position the gateway via the placement primitives.
+ */
+function buildGatewayNode(): Node {
+  return {
+    id: generateNodeId(t('Gateway'), 'gateway'),
+    type: 'gateway',
+    // Temporary position — the caller positions this node.
+    position: { x: 0, y: 0 },
+    data: {
+      // Node-level `type: 'gateway'` identifies the gateway; node data
+      // mirrors the persistent shape of other gateway nodes (componentType
+      // 6, plugin 'gateway') — NodeData has no `type` field.
+      componentType: 6,
+      plugin: 'gateway',
+      label: t('Gateway'),
+    },
+  };
+}
+
+/** Build a plain default edge between two node ids. */
+function buildDefaultEdge(source: string, target: string): Edge {
+  return {
+    id: generateEdgeId(source, target),
+    source,
+    target,
+    type: 'default' as const,
+    data: {},
+  };
+}
+
+/** Options describing the intended insertion of a new condition node. */
+export interface BuildConditionInsertionOptions {
+  /** Source node id of the edge the condition is being inserted on. */
+  sourceNodeId: string;
+  /** Target node id of the edge the condition is being inserted on. */
+  targetNodeId: string;
+  /** The fully-formed condition node to insert (position is set by caller). */
+  conditionNode: Node;
+  /** Whether the edge's source node is itself a condition node. */
+  sourceIsCondition: boolean;
+  /** Whether the edge's target node is itself a condition node. */
+  targetIsCondition: boolean;
+}
+
+/**
+ * Result of {@link buildConditionInsertion}: the nodes and edges to add to
+ * realize the insertion while preserving the "no two adjacent conditions"
+ * invariant.  Callers position every node in `nodesToAdd`.
+ */
+export interface ConditionInsertionResult {
+  /**
+   * Nodes to add, in execution order: the condition node first, followed by
+   * any gateway node(s) that must separate adjacent conditions.
+   */
+  nodesToAdd: Node[];
+  /** Edges to add wiring source -> ... -> target through the new nodes. */
+  edgesToAdd: Edge[];
+}
+
+/**
+ * Build the set of nodes and edges required to insert a NEW condition node
+ * on the edge `sourceNodeId -> targetNodeId`, guaranteeing that no two
+ * condition nodes end up directly adjacent (issue #3589093).
+ *
+ * Conditions are first-class nodes; chaining two conditions directly is
+ * semantically meaningless, so a gateway node is inserted between any pair
+ * that would otherwise become adjacent.  Execution order
+ * (source -> ... -> target) is always preserved.
+ *
+ * Four cases (the condition node is referred to as `cond`):
+ *
+ *   1. Neither end is a condition:
+ *        source -> cond -> target
+ *        nodesToAdd = [cond]
+ *   2. Target IS a condition (inserting on source -> condB):
+ *        source -> cond -> gateway -> condB
+ *        nodesToAdd = [cond, gateway]
+ *   3. Source IS a condition (inserting on condA -> target):
+ *        condA -> gateway -> cond -> target
+ *        nodesToAdd = [cond, gateway]
+ *   4. BOTH ends are conditions (defensive — should not occur post-invariant):
+ *        condA -> gateway1 -> cond -> gateway2 -> condB
+ *        nodesToAdd = [cond, gateway1, gateway2]
+ *
+ * This function is pure: it does NOT position nodes.  Callers position the
+ * condition node and any gateway(s) via placeNodeOnEdge /
+ * computeSuccessorPosition exactly as they position single insertions today.
+ */
+export function buildConditionInsertion(
+  opts: BuildConditionInsertionOptions,
+): ConditionInsertionResult {
+  const { sourceNodeId, targetNodeId, conditionNode, sourceIsCondition, targetIsCondition } = opts;
+  const condId = conditionNode.id;
+
+  // Case 1: neither end is a condition — current behavior.
+  if (!sourceIsCondition && !targetIsCondition) {
+    return {
+      nodesToAdd: [conditionNode],
+      edgesToAdd: [
+        buildDefaultEdge(sourceNodeId, condId),
+        buildDefaultEdge(condId, targetNodeId),
+      ],
+    };
+  }
+
+  // Case 4: both ends are conditions — two gateways so neither pair touches.
+  if (sourceIsCondition && targetIsCondition) {
+    const gateway1 = buildGatewayNode();
+    const gateway2 = buildGatewayNode();
+    return {
+      nodesToAdd: [conditionNode, gateway1, gateway2],
+      edgesToAdd: [
+        buildDefaultEdge(sourceNodeId, gateway1.id),
+        buildDefaultEdge(gateway1.id, condId),
+        buildDefaultEdge(condId, gateway2.id),
+        buildDefaultEdge(gateway2.id, targetNodeId),
+      ],
+    };
+  }
+
+  // Case 3: source is a condition — condA -> gateway -> cond -> target.
+  if (sourceIsCondition) {
+    const gateway = buildGatewayNode();
+    return {
+      nodesToAdd: [conditionNode, gateway],
+      edgesToAdd: [
+        buildDefaultEdge(sourceNodeId, gateway.id),
+        buildDefaultEdge(gateway.id, condId),
+        buildDefaultEdge(condId, targetNodeId),
+      ],
+    };
+  }
+
+  // Case 2: target is a condition — source -> cond -> gateway -> condB.
+  const gateway = buildGatewayNode();
+  return {
+    nodesToAdd: [conditionNode, gateway],
+    edgesToAdd: [
+      buildDefaultEdge(sourceNodeId, condId),
+      buildDefaultEdge(condId, gateway.id),
+      buildDefaultEdge(gateway.id, targetNodeId),
+    ],
+  };
+}
+
+/**
+ * Determine whether a node is a condition node (issue #3589093).
+ * A node is a condition if its type is `condition` or its data carries the
+ * `__isConditionNode` flag.
+ */
+export function isConditionNode(node: Node | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'condition' || node.data?.__isConditionNode === true;
+}
+
+/**
+ * Position a chain of newly-inserted nodes on an existing edge.
+ *
+ * This generalizes {@link placeNodeOnEdge} to a *sequence* of nodes
+ * (e.g. condition + gateway) inserted between `sourceNodeId` and
+ * `targetNodeId`.  Each node is stacked one row-gap below the previous,
+ * and the target node (plus its descendants) is shifted down to make room
+ * for the whole chain.  Nodes are placed column-aligned under the source,
+ * matching the single-node insertion look.
+ *
+ * The vertical stacking order follows the **flow order** of the chain along
+ * the edges (`sourceNodeId -> ... -> targetNodeId`), NOT the order the nodes
+ * happen to appear in the `chain` array.  The `chain` array order is an
+ * implementation detail of {@link buildConditionInsertion} (which always
+ * returns the condition first) and does not necessarily match the execution
+ * order — e.g. Case 3 wires `condA -> gateway -> cond -> target` but returns
+ * `chain = [cond, gateway]`.  Stacking by array order would put the
+ * condition above the gateway even though the gateway comes first in the
+ * flow (issue #3589093).  We therefore walk the edges to recover the true
+ * flow order before assigning Y positions.
+ *
+ * @param nodes      Current nodes on the canvas (the new nodes are NOT yet present).
+ * @param edges      The edge set AFTER rewiring (drives both the flow-order
+ *                   walk and the descendant collection for the target shift).
+ * @param chain      The new nodes to place (array order is irrelevant — flow order wins).
+ * @param sourceNodeId Source node id (chain hangs below this).
+ * @param targetNodeId Target node id (shifted down to clear the chain).
+ */
+export function placeChainOnEdge(
+  nodes: Node[],
+  edges: Edge[],
+  chain: Node[],
+  sourceNodeId: string,
+  targetNodeId: string,
+): Node[] {
+  if (chain.length === 0) return nodes;
+
+  const sourceNode = nodes.find(n => n.id === sourceNodeId);
+  const targetNode = nodes.find(n => n.id === targetNodeId);
+
+  if (!sourceNode || !targetNode) {
+    return [...nodes, ...chain];
+  }
+
+  // Order the chain by flow (source -> ... -> target) so the node that
+  // executes first sits highest, regardless of the chain array's order.
+  const orderedChain = orderChainByFlow(chain, edges, sourceNodeId, targetNodeId);
+
+  const gap = requiredVerticalGap();
+  const newNodeX = columnAlignedX(sourceNode, NODE_DIMENSIONS.CARD_WIDTH);
+  let cursorY = sourceNode.position.y +
+    (sourceNode.height || NODE_DIMENSIONS.CARD_HEIGHT);
+
+  const positionedChain: Node[] = orderedChain.map(node => {
+    cursorY += gap;
+    const nodeHeight = isGatewayNode(node) ? NODE_DIMENSIONS.GATEWAY_HEIGHT : NODE_DIMENSIONS.CARD_HEIGHT;
+    const positioned: Node = {
+      ...node,
+      position: { x: newNodeX, y: cursorY },
+    };
+    cursorY += nodeHeight;
+    return positioned;
+  });
+
+  // Shift target (and descendants) downward if there is not enough room
+  // below the last node in the chain.
+  const desiredTargetY = cursorY + gap;
+  const shift = Math.max(0, desiredTargetY - targetNode.position.y);
+
+  const descendants = collectDescendants(targetNodeId, edges);
+  descendants.add(targetNodeId);
+
+  const updated = nodes.map(n => {
+    if (shift > 0 && descendants.has(n.id)) {
+      return { ...n, position: { x: n.position.x, y: n.position.y + shift } };
+    }
+    return n;
+  });
+
+  return [...updated, ...positionedChain];
+}
+
+/**
+ * Order the chain nodes by their position along the flow from
+ * `sourceNodeId` to `targetNodeId`, using the (already-rewired) `edges`.
+ *
+ * The walk starts at `sourceNodeId` and repeatedly follows the single
+ * outgoing edge whose target is one of the not-yet-visited chain nodes,
+ * appending that chain node and continuing from it.  It stops when it
+ * reaches `targetNodeId`, when no further chain node is reachable, or once
+ * every chain node has been ordered.  For the four insertion cases this
+ * yields:
+ *
+ *   - Case 1 (`source -> cond -> target`):                 [cond]
+ *   - Case 2 (`source -> cond -> gateway -> condB`):       [cond, gateway]
+ *   - Case 3 (`condA -> gateway -> cond -> target`):       [gateway, cond]
+ *   - Case 4 (`condA -> gw1 -> cond -> gw2 -> condB`):     [gw1, cond, gw2]
+ *
+ * Defensive fallback: if the walk cannot order every chain node (e.g. the
+ * edges do not wire the chain end-to-end, or a chain node is unreachable
+ * from the source), the original `chain` array order is returned unchanged
+ * so callers never crash or drop nodes.
+ */
+function orderChainByFlow(
+  chain: Node[],
+  edges: Edge[],
+  sourceNodeId: string,
+  targetNodeId: string,
+): Node[] {
+  const chainById = new Map<string, Node>();
+  for (const node of chain) chainById.set(node.id, node);
+
+  const ordered: Node[] = [];
+  const visited = new Set<string>();
+  let current = sourceNodeId;
+
+  // Walk forward at most `chain.length` hops; each hop must land on a
+  // distinct, not-yet-visited chain node.
+  while (ordered.length < chain.length) {
+    const nextEdge = edges.find(
+      e =>
+        e.source === current &&
+        chainById.has(e.target) &&
+        !visited.has(e.target),
+    );
+    if (!nextEdge) break;
+
+    const nextNode = chainById.get(nextEdge.target)!;
+    ordered.push(nextNode);
+    visited.add(nextNode.id);
+    current = nextNode.id;
+
+    if (current === targetNodeId) break;
+  }
+
+  // If the walk ordered every chain node, use the flow order; otherwise
+  // fall back to the caller-provided array order (defensive).
+  return ordered.length === chain.length ? ordered : chain;
 }
 
 /**
@@ -317,39 +600,6 @@ function collectDescendants(startId: string, edges: Edge[]): Set<string> {
     }
   }
   return descendants;
-}
-
-// ============ Condition-card spacing on existing edges ============
-
-/**
- * Apply the vertical shift required when a condition card is added to an
- * existing edge: the target node (and everything below it) moves down so
- * the condition card has room between source and target.  Returns the
- * (possibly updated) nodes array.
- */
-export function ensureGapForCondition(
-  nodes: Node[],
-  sourceNodeId: string,
-  targetNodeId: string,
-): Node[] {
-  const sourceNode = nodes.find(n => n.id === sourceNodeId);
-  const targetNode = nodes.find(n => n.id === targetNodeId);
-  if (!sourceNode || !targetNode) return nodes;
-
-  const sourceBottom = sourceNode.position.y +
-    (sourceNode.height || NODE_DIMENSIONS.CARD_HEIGHT);
-  const currentGap = targetNode.position.y - sourceBottom;
-  const neededGap = requiredVerticalGap(true);
-  const shift = Math.max(0, neededGap - currentGap);
-
-  if (shift <= 0) return nodes;
-
-  return shiftNodesDown(
-    nodes,
-    targetNode.position.y,
-    shift,
-    new Set([sourceNode.id]),
-  );
 }
 
 // ============ Auto-layout: simulate incremental build ============
@@ -479,13 +729,6 @@ export function simulateIncrementalBuild(nodes: Node[], edges: Edge[]): Node[] |
     }
   }
 
-  // Build a fast edge lookup (source,target) -> Edge so we can ask
-  // whether a given edge carries a condition.
-  const edgeLookup = new Map<string, Edge>();
-  for (const edge of safeEdges) {
-    edgeLookup.set(`${edge.source}\u0000${edge.target}`, edge);
-  }
-
   // Working node array.  We seed it with each start node's anchor as we
   // process them, so flow-aware placement can see existing flows.
   let working: Node[] = [];
@@ -521,19 +764,16 @@ export function simulateIncrementalBuild(nodes: Node[], edges: Edge[]): Node[] |
 
       let centerXSum = 0;
       let maxBottom = -Infinity;
-      let anyHasCondition = false;
       for (const parent of parentObjects) {
         const pw = parent.width || NODE_DIMENSIONS.CARD_WIDTH;
         const ph = parent.height || nodeHeightFallback(parent);
         centerXSum += parent.position.x + pw / 2;
         const bottom = parent.position.y + ph;
         if (bottom > maxBottom) maxBottom = bottom;
-        const edge = edgeLookup.get(`${parent.id}\u0000${childId}`);
-        if (edge && edgeHasCondition(edge)) anyHasCondition = true;
       }
       const centroidX = centerXSum / parentObjects.length;
       const candidateX = centroidX - childWidth / 2;
-      const candidateY = maxBottom + requiredVerticalGap(anyHasCondition);
+      const candidateY = maxBottom + requiredVerticalGap();
 
       // Use flow-aware positioning anchored on the first placed parent so
       // collision avoidance and neighbor-flow shifts still work.  We feed
@@ -555,14 +795,11 @@ export function simulateIncrementalBuild(nodes: Node[], edges: Edge[]): Node[] |
       // Single-parent placement — same code path as quick-add.
       const parentOriginal = nodeById.get(parentId);
       const isGateway = isGatewayNode(parentOriginal);
-      const edge = edgeLookup.get(`${parentId}\u0000${childId}`);
-      const hasCondition = edge ? edgeHasCondition(edge) : false;
 
       const result = computeSuccessorPosition({
         nodes: working,
         edges: safeEdges,
         sourceNodeId: parentId,
-        hasCondition,
         siblingIndex,
         totalSiblings,
         isGatewayChild: isGateway,

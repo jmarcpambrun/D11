@@ -7,9 +7,8 @@ import { useCallback } from 'react';
 import { useGraphStore } from '../store/useGraphStore';
 import { useSelectionStore } from '../store/useSelectionStore';
 import { autoLayout } from '../utils/modelUtils';
-import { getEdgeType, getEdgeTypeWithCondition } from '../utils/edgeTypeUtils';
-import { routeParallelEdge, applyParallelEdgeRouting } from '../utils/parallelEdgeRouter';
-import type { StoreEdge as Edge, NodeData, EdgeData } from '../types/settings';
+import { getEdgeType } from '../utils/edgeTypeUtils';
+import type { NodeData, EdgeData } from '../types/settings';
 
 interface UseConfigurationProps {
   setHasUnsavedChanges: (value: boolean) => void;
@@ -24,8 +23,6 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
   const setEdges = useGraphStore(state => state.setEdges);
   const selectedNode = useSelectionStore(state => state.selectedNode);
   const setSelectedNode = useSelectionStore(state => state.setSelectedNode);
-  const selectedEdge = useSelectionStore(state => state.selectedEdge);
-  const setSelectedEdge = useSelectionStore(state => state.setSelectedEdge);
 
   // Configuration change handler - updates node configuration (primary callback)
   const onConfigurationChange = useCallback((nodeId: string, configuration: Record<string, unknown>) => {
@@ -58,96 +55,6 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
     setHasUnsavedChanges(true);
   }, [setNodes, selectedNode, setSelectedNode, setHasUnsavedChanges, nodes, saveHistory]);
 
-  // Edge configuration change handler
-  const onEdgeConfigurationChange = useCallback((edgeId: string, configurationOrCallback: Record<string, unknown> | null | ((edge: Edge) => Record<string, unknown> | null)) => {
-    if (saveHistory) saveHistory();
-
-    // Check if the condition is being removed so we can re-layout.
-    const targetEdge = edges.find(e => e.id === edgeId);
-    const resolvedConfig = targetEdge && typeof configurationOrCallback === 'function'
-      ? configurationOrCallback(targetEdge)
-      : configurationOrCallback;
-    const hadCondition = targetEdge && !!(
-      targetEdge.data?.condition ||
-      targetEdge.data?.conditionLabel
-    );
-    const isRemoving = resolvedConfig === null;
-
-    // Helper to compute the updated edge.
-    const computeUpdatedEdge = (edge: Edge): Edge => {
-      const configuration = typeof configurationOrCallback === 'function'
-        ? configurationOrCallback(edge)
-        : configurationOrCallback;
-
-      const rawConditionLabel = configuration?._conditionLabel ?? configuration?.conditionLabel;
-      const newConditionLabel = rawConditionLabel != null ? String(rawConditionLabel) : undefined;
-      const { _conditionLabel: _, conditionLabel: __, ...restConfiguration } = configuration || {};
-
-      const newData = configuration
-        ? {
-            ...edge.data,
-            conditionConfiguration: { ...edge.data?.conditionConfiguration, ...restConfiguration },
-            ...(newConditionLabel !== undefined ? { conditionLabel: newConditionLabel } : {}),
-          }
-        : {
-            ...edge.data,
-            condition: null,
-            conditionLabel: null,
-            conditionConfiguration: null,
-            annotation: null,
-            isAnnotationVisible: false,
-          };
-
-      return {
-        ...edge,
-        ...(configuration
-          ? (newConditionLabel !== undefined ? { label: newConditionLabel } : {})
-          : { label: '' }),
-        type: getEdgeTypeWithCondition(configuration ? 'has-config' : null, newData),
-        data: newData
-      };
-    };
-
-    let updatedEdges = edges.map(edge =>
-      edge.id === edgeId ? computeUpdatedEdge(edge) : edge,
-    );
-
-    // Re-route parallel edges when condition status changes (issue #3588937).
-    // This redistributes offsets to account for condition card width.
-    const updatedEdge = updatedEdges.find(e => e.id === edgeId);
-    if (updatedEdge && targetEdge) {
-      const routeResult = routeParallelEdge({
-        newEdge: updatedEdge,
-        edges: updatedEdges,
-        nodes,
-      });
-      updatedEdges = applyParallelEdgeRouting(updatedEdges, routeResult.updates);
-    }
-
-    // When a condition is removed, re-run auto-layout with the updated edges
-    // so the spacing algorithm reclaims the extra space cleanly.
-    if (hadCondition && isRemoving && targetEdge) {
-      const layoutedNodes = autoLayout(nodes, updatedEdges);
-      if (layoutedNodes) {
-        setNodes(layoutedNodes);
-      }
-    }
-
-    setEdges(updatedEdges);
-
-    // Also update selectedEdge if it's the one being changed
-    if (selectedEdge?.id === edgeId && setSelectedEdge) {
-      setTimeout(() => {
-        const updatedEdge = edges.find(e => e.id === edgeId);
-        if (updatedEdge) {
-          setSelectedEdge(updatedEdge);
-        }
-      }, 10);
-    }
-    
-    setHasUnsavedChanges(true);
-  }, [nodes, setNodes, setEdges, selectedEdge, setSelectedEdge, edges, setHasUnsavedChanges, saveHistory]);
-
   // Node update handler (for broader updates than just config)
   const onNodeUpdate = useCallback((nodeId: string, newData: Partial<NodeData>) => {
     if (saveHistory) saveHistory();
@@ -175,6 +82,43 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
     setHasUnsavedChanges(true);
   }, [setEdges, setHasUnsavedChanges, saveHistory]);
 
+  // Endpoint reconnection handler (issue #3585553).
+  //
+  // Unlike onEdgeUpdate (which merges into edge `.data`), reconnection changes
+  // TOP-LEVEL edge fields — `source`, `target`, `sourceHandle`, `targetHandle`.
+  // A pure reconnect does NOT change edge data, so the edge `type` is left
+  // untouched (no getEdgeType recompute). saveHistory() runs first so undo/redo
+  // and unsaved-changes tracking work exactly like other mutations. Only the
+  // fields present in `updates` are applied; the unchanged end is preserved.
+  const onReconnectEdge = useCallback(
+    (
+      edgeId: string,
+      updates: {
+        source?: string;
+        sourceHandle?: string | null;
+        target?: string;
+        targetHandle?: string | null;
+      },
+    ) => {
+      if (saveHistory) saveHistory();
+      setEdges(prev =>
+        prev.map(edge =>
+          edge.id === edgeId
+            ? {
+                ...edge,
+                ...(updates.source !== undefined ? { source: updates.source } : {}),
+                ...(updates.target !== undefined ? { target: updates.target } : {}),
+                ...(updates.sourceHandle !== undefined ? { sourceHandle: updates.sourceHandle } : {}),
+                ...(updates.targetHandle !== undefined ? { targetHandle: updates.targetHandle } : {}),
+              }
+            : edge,
+        ),
+      );
+      setHasUnsavedChanges(true);
+    },
+    [setEdges, setHasUnsavedChanges, saveHistory],
+  );
+
   // Auto-layout handler
   const handleAutoLayout = useCallback(() => {
     if (saveHistory) saveHistory();
@@ -187,9 +131,9 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
 
   return {
     onConfigurationChange,
-    onEdgeConfigurationChange,
     onNodeUpdate,
     onEdgeUpdate,
+    onReconnectEdge,
     handleAutoLayout
   };
 }

@@ -13,7 +13,6 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useClipboard } from '../hooks/useClipboard';
 import { useReplayCoordination } from '../hooks/useReplayCoordination';
 import { useViewportActions } from '../hooks/useViewportActions';
-import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useFlowEventHandlers } from '../hooks/useFlowEventHandlers';
 import { useReplayIndicators } from '../hooks/useReplayIndicators';
 import { useModalState } from '../hooks/useModalState';
@@ -23,7 +22,6 @@ import { useConfiguration } from '../hooks/useConfiguration';
 import { useCloseHandler } from '../hooks/useCloseHandler';
 import { useMessagesContainer } from '../hooks/useMessagesContainer';
 import { useQuickAdd } from '../hooks/useQuickAdd';
-import { useEdgeStyling } from '../hooks/useEdgeStyling';
 import { useNodeEdgeActions } from '../hooks/useNodeEdgeActions';
 import { useSelectionSync } from '../hooks/useSelectionSync';
 import { useStatusAnnouncer } from '../hooks/useStatusAnnouncer';
@@ -35,7 +33,7 @@ import { useViewMode } from '../hooks/useViewMode';
 import { useHistory } from '../hooks/useHistory';
 import { exportModelData } from '../utils/modelUtils';
 import { t } from '../utils/translation';
-import { validateModelConstraints } from '../utils/constraintValidation';
+import { validateModelConstraints, validateNoAdjacentConditions, validateConditionOutdegree } from '../utils/constraintValidation';
 import { expandReplayStep } from '../utils/replayExpansion';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
 import type { Settings, DrupalAjax, ModelConstraints } from '../types/settings';
@@ -124,13 +122,26 @@ function FlowInner({ settings, drupal }: FlowProps) {
         { '@count': String(count) },
       );
     }
-    // Validate model-level cardinality constraints.
+    // Structural-invariant safety net: two condition nodes may never be
+    // directly connected (issue #3589093).  This is a hard invariant, NOT an
+    // owner-configurable constraint, so it must run UNCONDITIONALLY — even
+    // when the owner provides no model_constraints.  validateModelConstraints
+    // no longer runs this check internally, so it is the single source here.
+    const errors = validateNoAdjacentConditions(currentNodes, currentEdges);
+
+    // Structural-invariant safety net: a condition node may have at most one
+    // outgoing connection (issue #3589093).  Also a hard invariant, run
+    // UNCONDITIONALLY alongside the no-adjacent-conditions check.
+    errors.push(...validateConditionOutdegree(currentNodes, currentEdges));
+
+    // Validate model-level cardinality constraints when the owner provides them.
     const constraints = modelConstraintsRef.current;
     if (constraints) {
-      const errors = validateModelConstraints(currentNodes, currentEdges, constraints);
-      if (errors.length > 0) {
-        return t('Cannot save: ') + errors.join(' ');
-      }
+      errors.push(...validateModelConstraints(currentNodes, currentEdges, constraints));
+    }
+
+    if (errors.length > 0) {
+      return t('Cannot save: ') + errors.join(' ');
     }
     return null;
   }, []);
@@ -243,18 +254,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
     onSearchFocus,
     clearSearch,
   } = useSearch({ viewportActions });
-  
-  // Drag and drop functionality
-  const {
-    onDrop,
-    onDragOver,
-    isDraggingCondition,
-    hoveredDropEdge,
-  } = useDragAndDrop({
-    isLocked,
-    setHasUnsavedChanges,
-    saveHistory
-  });
 
   // Modal state management
   const {
@@ -366,9 +365,9 @@ function FlowInner({ settings, drupal }: FlowProps) {
   // Configuration management
   const {
     onConfigurationChange,
-    onEdgeConfigurationChange,
     onNodeUpdate,
     onEdgeUpdate,
+    onReconnectEdge,
     handleAutoLayout
   } = useConfiguration({ setHasUnsavedChanges, saveHistory });
 
@@ -394,8 +393,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
     handleAddCondition,
     handleAddEvent,
     handleAddActionOnEdge,
-    handleInsertBeforeCondition,
-    handleInsertAfterCondition,
   } = useNodeEdgeActions({ setHasUnsavedChanges, saveHistory, viewportActions });
 
   // Combined quick-add handler: routes condition selections to the
@@ -551,9 +548,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
     }));
   }, [edges, visibleNodeIds]);
 
-  // Edge styling for condition drag-and-drop
-  const styledEdges = useEdgeStyling({ edges: filteredEdges, isDraggingCondition, hoveredDropEdge });
-
   // Replay indicators
   const { replayIndicators } = useReplayIndicators({
     isReplayMode,
@@ -660,8 +654,11 @@ function FlowInner({ settings, drupal }: FlowProps) {
     onNodeClick,
     onEdgeClick,
     onDeleteNode,
+    onDeleteEdge,
     handleDeleteSelected,
     onConnect,
+    onConnectStart,
+    onConnectEnd,
     onPaneClick,
     onNodeDragStart,
     onNodeDragStop,
@@ -676,7 +673,8 @@ function FlowInner({ settings, drupal }: FlowProps) {
     currentReplayStep,
     autoSyncToReplay,
     announce,
-    saveHistory
+    saveHistory,
+    modelConstraints
   });
 
   // Handle delete with confirmation for multi-selection panel
@@ -892,11 +890,9 @@ function FlowInner({ settings, drupal }: FlowProps) {
     }
   }, [replayData, isTestRunning, isTestInitiating, showTestButton, setReplayPanelCollapsed, collapsePanels]);
 
-  // Placeholder handlers for other features
-  const onConnectStart = useCallback(() => {}, []);
-  const onConnectEnd = useCallback(() => {}, []);
-  const onDragEnter = useCallback(() => {}, []);
-  const onDragLeave = useCallback(() => {}, []);
+  // New-edge connection handlers (onConnectStart/onConnectEnd) now come from
+  // useFlowEventHandlers above — they implement "drop a new edge onto a node
+  // body" (issue #3585553 follow-on UX).
   const onInit = useCallback(() => {
     viewportActions.setReady();
   }, [viewportActions]);
@@ -1001,7 +997,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
         )}
 
         {/* Main Canvas */}
-        <div className={`workflow-modeler-canvas ${isDraggingCondition ? 'condition-drag-active' : ''}`}>
+        <div className="workflow-modeler-canvas">
           <CanvasToolbar
             isLocked={isLocked}
             isReadOnly={isReadOnly}
@@ -1022,7 +1018,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
           <PanelErrorBoundary panelName={t('Canvas')} className="canvas-error">
             <FlowCanvas
               nodes={filteredNodes}
-              edges={styledEdges}
+              edges={filteredEdges}
               eventHandlers={{
                 onNodesChange,
                 onEdgesChange,
@@ -1030,10 +1026,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
                 onSelectionChange,
                 onConnectStart,
                 onConnectEnd,
-                onDrop,
-                onDragOver,
-                onDragEnter,
-                onDragLeave,
                 onNodeClick,
                 onEdgeClick,
                 onPaneClick,
@@ -1045,7 +1037,8 @@ function FlowInner({ settings, drupal }: FlowProps) {
                 onEdgeUpdate,
                 onNodeUpdate,
                 onDeleteNode,
-                onEdgeConfigurationChange,
+                onDeleteEdge,
+                onReconnectEdge,
               }}
               viewport={getViewport()}
               modifierKeys={{
@@ -1075,8 +1068,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
                 onQuickAdd: handleQuickAdd,
                 onAddCondition: handleAddCondition,
                 onAddActionOnEdge: handleAddActionOnEdge,
-                onInsertBeforeCondition: handleInsertBeforeCondition,
-                onInsertAfterCondition: handleInsertAfterCondition,
                 onReplacePlaceholder: handleReplacePlaceholder,
               }}
               modelConstraints={modelConstraints}
@@ -1131,7 +1122,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
             selectedNodes={selectedNodes.map(id => nodes.find(n => n.id === id)).filter((n): n is Node => n !== undefined)}
             selectedEdges={selectedEdges.map(id => edges.find(e => e.id === id)).filter((e): e is Edge => e !== undefined)}
             onConfigurationChange={onConfigurationChange}
-            onEdgeConfigurationChange={onEdgeConfigurationChange}
             onNodeUpdate={onNodeUpdate}
             onEdgeUpdate={onEdgeUpdate}
             onDeleteSelected={handleDeleteSelectedWithConfirm}

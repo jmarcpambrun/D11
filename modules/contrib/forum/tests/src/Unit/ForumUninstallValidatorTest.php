@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Unit;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Url;
 use Drupal\Tests\UnitTestCase;
 
@@ -11,6 +15,9 @@ use Drupal\Tests\UnitTestCase;
  * @coversDefaultClass \Drupal\forum\ForumUninstallValidator
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
+#[AllowMockObjectsWithoutExpectations]
 class ForumUninstallValidatorTest extends UnitTestCase {
 
   /**

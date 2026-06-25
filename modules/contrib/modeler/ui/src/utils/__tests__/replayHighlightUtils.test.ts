@@ -212,11 +212,47 @@ describe('replayHighlightUtils', () => {
       expect(result[0].data.highlighted).toBe(true);
     });
 
-    it('should only clear highlights for successor step with conditionId', () => {
+    // CHANGED (node model, issue #3589093): conditions are NODES now, so a
+    // condition step highlights the matched condition NODE rather than an edge.
+    it('should highlight the condition node for a condition step (match by plugin)', () => {
+      // The step's conditionId historically matched edge.data.condition, which
+      // carried the condition *plugin* id — so it matches the node's data.plugin.
+      const conditionNodes: Node[] = [
+        createNode('n1'),
+        createNode('cond-node', {
+          type: 'condition',
+          data: { label: 'Check', plugin: 'cond1', conditionId: 'rt-1', __isConditionNode: true },
+        }),
+        createNode('n2'),
+      ];
+      const step: ReplayStep = { type: 'add successor', id: 'n1', conditionId: 'cond1' };
+      const result = highlightNodesForStep(conditionNodes, step);
+
+      const condResult = result.find(n => n.id === 'cond-node')!;
+      expect(condResult.data.highlighted).toBe(true);
+      expect(condResult.selected).toBe(true);
+      expect(result.find(n => n.id === 'n1')!.data.highlighted).toBe(false);
+      expect(result.find(n => n.id === 'n2')!.data.highlighted).toBe(false);
+    });
+
+    it('should fall back to data.conditionId when plugin does not match', () => {
+      const conditionNodes: Node[] = [
+        createNode('cond-node', {
+          type: 'condition',
+          data: { label: 'Check', plugin: 'other_plugin', conditionId: 'rt-1', __isConditionNode: true },
+        }),
+      ];
+      const step: ReplayStep = { type: 'add successor', id: 'n1', conditionId: 'rt-1' };
+      const result = highlightNodesForStep(conditionNodes, step);
+
+      expect(result.find(n => n.id === 'cond-node')!.data.highlighted).toBe(true);
+    });
+
+    it('should clear highlights for a condition step with no matching condition node', () => {
       const step: ReplayStep = { type: 'add successor', id: 'n1', conditionId: 'cond1' };
       const result = highlightNodesForStep(nodes, step);
-      
-      // Should not highlight any node (edge highlighting will handle this)
+
+      // No condition node present — nothing highlighted.
       expect(result[0].data.highlighted).toBe(false);
       expect(result[1].data.highlighted).toBe(false);
     });
@@ -229,37 +265,39 @@ describe('replayHighlightUtils', () => {
     });
   });
 
+  // CHANGED (node model, issue #3589093): conditions are NODES now, so
+  // highlightEdgesForStep no longer highlights a condition edge — condition
+  // highlighting moved to highlightNodesForStep.  This function now only
+  // clears edge highlights for every step type (no edge ever carries a
+  // condition at runtime).
   describe('highlightEdgesForStep', () => {
     const edges = [
-      createEdge('e1', 'n1', 'n2', { data: { condition: 'cond1' } }),
+      createEdge('e1', 'n1', 'n2', { data: { highlighted: true, replayHighlight: 'green', fromReplay: true } }),
       createEdge('e2', 'n2', 'n3', { data: {} }),
     ];
 
-    it('should highlight edge for condition step (add successor)', () => {
+    it('should clear edge highlights for a condition step (add successor)', () => {
       const step: ReplayStep = { type: 'add successor', id: 'n1', conditionId: 'cond1' };
       const result = highlightEdgesForStep(edges, step);
-      
-      expect(result[0].data.highlighted).toBe(true);
-      expect(result[0].data.replayType).toBe('add');
-      expect(result[1].data.highlighted).toBe(false);
+
+      expect(result.every(e => !e.data.highlighted)).toBe(true);
     });
 
-    it('should highlight edge for condition step (ignore successor)', () => {
+    it('should clear edge highlights for a condition step (ignore successor)', () => {
       const step: ReplayStep = { type: 'ignore successor', id: 'n1', conditionId: 'cond1' };
       const result = highlightEdgesForStep(edges, step);
-      
-      expect(result[0].data.highlighted).toBe(true);
-      expect(result[0].data.replayType).toBe('ignore');
+
+      expect(result.every(e => !e.data.highlighted)).toBe(true);
     });
 
-    it('should only clear for non-condition steps', () => {
+    it('should clear for non-condition steps', () => {
       const step: ReplayStep = { type: 'execute', id: 'n1' };
       const result = highlightEdgesForStep(edges, step);
       
       expect(result.every(e => !e.data.highlighted)).toBe(true);
     });
 
-    it('should only clear for successor steps without conditionId', () => {
+    it('should clear for successor steps without conditionId', () => {
       const step: ReplayStep = { type: 'add successor', id: 'n1', successorId: 'n2' };
       const result = highlightEdgesForStep(edges, step);
       

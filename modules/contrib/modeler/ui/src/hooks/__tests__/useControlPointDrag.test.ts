@@ -7,9 +7,6 @@ describe('useControlPointDrag', () => {
     edgeCenterX: 250,
     edgeCenterY: 200,
     isLocked: false,
-    hasCondition: false,
-    label: undefined as string | undefined,
-    controlOffset: { x: 0, y: 0 },
     onEdgeUpdate: jest.fn(),
   };
 

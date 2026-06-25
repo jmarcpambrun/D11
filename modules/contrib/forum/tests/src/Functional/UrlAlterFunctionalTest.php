@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Database\Database;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Tests\BrowserTestBase;
@@ -11,6 +14,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group form
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class UrlAlterFunctionalTest extends BrowserTestBase {
 
   /**

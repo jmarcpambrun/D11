@@ -1,6 +1,7 @@
 import React, { Profiler, memo, useCallback } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { FiGitBranch, FiTrash2, FiFileText } from 'react-icons/fi';
+import classNames from 'classnames';
 import { getComponentLabel } from '../../utils/componentUtils';
 import { t } from '../../utils/translation';
 import NodeWrapper from './NodeWrapper';
@@ -22,6 +23,11 @@ const GatewayNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
 
   const isLocked = !!data.isLocked;
   const hasAnnotation = !!data.annotation;
+
+  // Explanatory tooltip when the source handle is disabled (issue #3589093).
+  const sourceHandleTitle = data.sourceHandleDisabled
+    ? t('Maximum number of connections reached.')
+    : undefined;
 
   return (
     <Profiler id="GatewayNode" onRender={onRenderCallback}>
@@ -67,9 +73,10 @@ const GatewayNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="node-handle"
+        className={classNames('node-handle', { 'node-handle--disabled': data.sourceHandleDisabled })}
         id="output"
         isConnectable={!data.sourceHandleDisabled}
+        title={sourceHandleTitle}
       />
     </NodeWrapper>
     </Profiler>

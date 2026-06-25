@@ -1,22 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import EdgePropertiesPanel from '../EdgePropertiesPanel';
 
-// Mock ConfigurationForm - capture onChange for testing
-let capturedConfigFormOnChange: ((config: Record<string, unknown>) => void) | null = null;
-jest.mock('../ConfigurationForm', () => {
-  return function MockConfigurationForm(props: any) {
-    capturedConfigFormOnChange = props.onChange;
-    return <div data-testid="configuration-form" data-disabled={props.disabled} />;
-  };
-});
-
-// Mock react-icons
-jest.mock('react-icons/fi', () => ({
-  FiTrash2: () => <span data-testid="fi-trash" />,
-}));
-
-// Mock the Zustand store
+// Mock the Zustand store backing useTokenDragPrevention
 let mockIsTokenDragging = false;
 jest.mock('../../store/useFilterStore', () => ({
   useFilterStore: jest.fn((selector: any) => {
@@ -29,7 +15,6 @@ jest.mock('../../store/useFilterStore', () => ({
 }));
 
 describe('EdgePropertiesPanel', () => {
-  const mockOnEdgeConfigurationChange = jest.fn();
   const mockOnEdgeUpdate = jest.fn();
 
   const createMockField = (value: string = '') => ({
@@ -40,32 +25,19 @@ describe('EdgePropertiesPanel', () => {
     flush: jest.fn(),
   });
 
-  const conditionEdge = {
+  const plainEdge = {
     id: 'edge-1',
     source: 'node-1',
     target: 'node-2',
     data: {
-      condition: 'test.condition.test',
-      conditionLabel: 'Check Value',
-      conditionConfiguration: { field: 'value' },
       annotation: 'A note about this edge',
     },
   };
 
-  const plainEdge = {
-    id: 'edge-2',
-    source: 'node-1',
-    target: 'node-2',
-    data: {},
-  };
-
   const defaultProps = {
-    edge: conditionEdge as any,
-    configurationForm: null,
-    onEdgeConfigurationChange: mockOnEdgeConfigurationChange,
+    edge: plainEdge as any,
     onEdgeUpdate: mockOnEdgeUpdate,
     isLocked: false,
-    edgeLabelField: createMockField('Check Value'),
     edgeAnnotationField: createMockField('A note about this edge'),
   };
 
@@ -74,88 +46,8 @@ describe('EdgePropertiesPanel', () => {
     mockIsTokenDragging = false;
   });
 
-  describe('condition edge', () => {
-    it('should render condition label input', () => {
-      render(<EdgePropertiesPanel {...defaultProps} />);
-      const input = screen.getByLabelText('Condition Label');
-      expect(input).toBeTruthy();
-      expect((input as HTMLInputElement).value).toBe('Check Value');
-    });
-
-    it('should show delete condition button when not locked', () => {
-      render(<EdgePropertiesPanel {...defaultProps} />);
-      const deleteBtn = screen.getByTitle('Remove condition');
-      expect(deleteBtn).toBeTruthy();
-    });
-
-    it('should not show delete button when globally locked', () => {
-      render(<EdgePropertiesPanel {...defaultProps} isLocked={true} />);
-      expect(screen.queryByTitle('Remove condition')).toBeNull();
-    });
-
-    it('should call onEdgeConfigurationChange with null when deleting condition', () => {
-      render(<EdgePropertiesPanel {...defaultProps} />);
-      const deleteBtn = screen.getByTitle('Remove condition');
-      fireEvent.click(deleteBtn);
-      expect(mockOnEdgeConfigurationChange).toHaveBeenCalledWith('edge-1', null);
-    });
-
-    it('should disable label input when locked', () => {
-      render(<EdgePropertiesPanel {...defaultProps} isLocked={true} />);
-      const input = screen.getByLabelText('Condition Label');
-      expect(input).toBeDisabled();
-    });
-  });
-
-  describe('plain edge (no condition)', () => {
-    it('should show message about no conditions', () => {
-      render(
-        <EdgePropertiesPanel
-          {...defaultProps}
-          edge={plainEdge as any}
-          edgeLabelField={createMockField('')}
-          edgeAnnotationField={createMockField('')}
-        />
-      );
-      expect(screen.getByText('This connection has no conditions configured')).toBeTruthy();
-    });
-  });
-
-  describe('configuration form', () => {
-    it('should render configuration form when provided', () => {
-      render(<EdgePropertiesPanel {...defaultProps} configurationForm={{ fields: [] }} />);
-      expect(screen.getByTestId('configuration-form')).toBeTruthy();
-    });
-
-    it('should call onEdgeConfigurationChange when form config changes', () => {
-      capturedConfigFormOnChange = null;
-      render(
-        <EdgePropertiesPanel {...defaultProps} configurationForm={{ fields: [] }} />
-      );
-
-      capturedConfigFormOnChange!({ newField: 'newValue' });
-
-      expect(mockOnEdgeConfigurationChange).toHaveBeenCalledWith('edge-1', {
-        _conditionLabel: 'Check Value',
-        newField: 'newValue',
-      });
-    });
-
-    it('should not call onEdgeConfigurationChange when locked', () => {
-      capturedConfigFormOnChange = null;
-      render(
-        <EdgePropertiesPanel {...defaultProps} configurationForm={{ fields: [] }} isLocked={true} />
-      );
-
-      capturedConfigFormOnChange!({ newField: 'newValue' });
-
-      expect(mockOnEdgeConfigurationChange).not.toHaveBeenCalled();
-    });
-
-  });
-
-  describe('annotation field', () => {
-    it('should render annotation textarea directly (not in metadata)', () => {
+  describe('annotation-only editor', () => {
+    it('should render annotation textarea directly', () => {
       render(<EdgePropertiesPanel {...defaultProps} />);
       const annotation = screen.getByLabelText('Annotation');
       expect(annotation).toBeTruthy();
@@ -173,30 +65,35 @@ describe('EdgePropertiesPanel', () => {
       const annotation = screen.getByLabelText('Annotation');
       expect(annotation).toBeDisabled();
     });
+
+    it('should not render any condition label input', () => {
+      render(<EdgePropertiesPanel {...defaultProps} />);
+      expect(screen.queryByLabelText('Condition Label')).toBeNull();
+    });
+
+    it('should not render a remove-condition button', () => {
+      render(<EdgePropertiesPanel {...defaultProps} />);
+      expect(screen.queryByTitle('Remove condition')).toBeNull();
+    });
+
+    it('should not render a configuration form', () => {
+      render(<EdgePropertiesPanel {...defaultProps} />);
+      expect(screen.queryByTestId('configuration-form')).toBeNull();
+    });
   });
 
   describe('token drag state', () => {
-    it('should add token-drop-disabled class to native fields when token is being dragged', () => {
+    it('should add token-drop-disabled class to the annotation field when token is being dragged', () => {
       mockIsTokenDragging = true;
       const { container } = render(<EdgePropertiesPanel {...defaultProps} />);
       const nativeFields = container.querySelectorAll('.modeler-native-field.token-drop-disabled');
-      expect(nativeFields.length).toBe(2); // label + annotation
+      expect(nativeFields.length).toBe(1); // annotation only
     });
 
     it('should not add token-drop-disabled class when no token is being dragged', () => {
       mockIsTokenDragging = false;
       const { container } = render(<EdgePropertiesPanel {...defaultProps} />);
       expect(container.querySelector('.modeler-native-field.token-drop-disabled')).toBeNull();
-    });
-
-    it('should prevent drop on condition label input during token drag', () => {
-      mockIsTokenDragging = true;
-      render(<EdgePropertiesPanel {...defaultProps} />);
-      const labelInput = screen.getByLabelText('Condition Label');
-
-      const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-      const prevented = !labelInput.dispatchEvent(dropEvent);
-      expect(prevented).toBe(true);
     });
 
     it('should prevent drop on annotation textarea during token drag', () => {

@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\comment\Entity\Comment;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Datetime\DrupalDateTime;
@@ -12,6 +15,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumBlockTest extends BrowserTestBase {
 
   /**

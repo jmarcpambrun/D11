@@ -67,13 +67,20 @@ describe('useConfigurationLoader', () => {
     },
   };
 
-  const mockEdge = {
-    id: 'edge-1',
-    source: 'node-1',
-    target: 'node-2',
+  // After the P5 refactor, conditions are authored as condition NODES
+  // (type 'condition', componentType 5, plugin = the condition plugin). They
+  // flow through the SAME node loading path that previously served edge
+  // conditions, sending an identical request payload to the backend.
+  const mockConditionNode = {
+    id: 'condition-1',
+    type: 'condition',
+    position: { x: 0, y: 0 },
     data: {
-      condition: 'test_condition',
-      conditionConfiguration: { condKey: 'condValue' },
+      label: 'Test Condition',
+      plugin: 'test_condition',
+      componentType: '5', // Api::COMPONENT_TYPE_LINK (condition)
+      configuration: { condKey: 'condValue' },
+      __isConditionNode: true,
     },
   };
 
@@ -96,7 +103,6 @@ describe('useConfigurationLoader', () => {
     it('should initialize with null configurationForm and false loading', () => {
       const { result } = renderHook(() => useConfigurationLoader({
         node: null,
-        edge: null,
         settings: defaultSettings,
       }));
       
@@ -107,7 +113,6 @@ describe('useConfigurationLoader', () => {
     it('should return loadConfiguration function', () => {
       const { result } = renderHook(() => useConfigurationLoader({
         node: null,
-        edge: null,
         settings: defaultSettings,
       }));
       
@@ -127,7 +132,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -146,7 +150,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -183,7 +186,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: settingsWithModel,
       }));
 
@@ -205,7 +207,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: gatewayNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -226,7 +227,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: nodeWithoutPlugin,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -238,8 +238,12 @@ describe('useConfigurationLoader', () => {
     });
   });
 
-  describe('loading edge configuration', () => {
-    it('should load configuration for an edge with condition', async () => {
+  // Conditions are now authored as condition NODES and load their config form
+  // through the node path. These tests assert the SAME request payload that the
+  // old edge-condition path produced (component_type 5, the condition plugin)
+  // now arrives via the condition node.
+  describe('loading condition node configuration', () => {
+    it('should load configuration for a condition node', async () => {
       mockFetch
         .mockResolvedValueOnce(mockTokenResponse())
         .mockResolvedValueOnce({ 
@@ -248,8 +252,7 @@ describe('useConfigurationLoader', () => {
         });
 
       const { result } = renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: mockEdge,
+        node: mockConditionNode,
         settings: defaultSettings,
       }));
 
@@ -258,7 +261,7 @@ describe('useConfigurationLoader', () => {
       });
     });
 
-    it('should send correct payload for edge configuration', async () => {
+    it('should send a condition payload (component_type 5, condition plugin) via the node path', async () => {
       mockFetch
         .mockResolvedValueOnce(mockTokenResponse())
         .mockResolvedValueOnce({ 
@@ -267,8 +270,7 @@ describe('useConfigurationLoader', () => {
         });
 
       renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: mockEdge,
+        node: mockConditionNode,
         settings: defaultSettings,
       }));
 
@@ -279,22 +281,21 @@ describe('useConfigurationLoader', () => {
       const configCall = mockFetch.mock.calls[1];
       const body = JSON.parse(configCall[1].body);
       expect(body.component_type).toBe('5'); // COMPONENT_TYPE_LINK for conditions
-      expect(body.component_id).toBe('edge-1');
+      expect(body.component_id).toBe('condition-1');
       expect(body.model_id).toBe('');
       expect(body.is_new).toBe(false);
       expect(body.plugin_id).toBe('test_condition');
       expect(body.configuration).toEqual({ condKey: 'condValue' });
     });
 
-    it('should clear configuration for edge without condition', async () => {
-      const edgeWithoutCondition = {
-        ...mockEdge,
-        data: { condition: null },
+    it('should skip loading for a condition node without a plugin', async () => {
+      const conditionNodeWithoutPlugin = {
+        ...mockConditionNode,
+        data: { ...mockConditionNode.data, plugin: undefined },
       };
 
       const { result } = renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: edgeWithoutCondition,
+        node: conditionNodeWithoutPlugin,
         settings: defaultSettings,
       }));
 
@@ -302,6 +303,7 @@ describe('useConfigurationLoader', () => {
         await new Promise(resolve => setTimeout(resolve, 100));
       });
 
+      expect(mockFetch).not.toHaveBeenCalled();
       expect(result.current.configurationForm).toBeNull();
     });
   });
@@ -317,7 +319,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -341,7 +342,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: { modeler_api: { token_url: '/api/token' } },
       }));
 
@@ -360,7 +360,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: { modeler_api: { config_url: '/api/config' } },
       }));
 
@@ -379,7 +378,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -398,7 +396,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -429,7 +426,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -446,7 +442,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -471,7 +466,6 @@ describe('useConfigurationLoader', () => {
       const { result, rerender } = renderHook(
         ({ node }) => useConfigurationLoader({
           node,
-          edge: null,
           settings: defaultSettings,
         }),
         { initialProps: { node: mockNode } }
@@ -510,7 +504,6 @@ describe('useConfigurationLoader', () => {
       const { result, rerender } = renderHook(
         ({ node }) => useConfigurationLoader({
           node,
-          edge: null,
           settings: defaultSettings,
         }),
         { initialProps: { node: mockNode } }
@@ -534,36 +527,6 @@ describe('useConfigurationLoader', () => {
   });
 
   describe('selection changes', () => {
-    it('should clear configuration when both node and edge are set', async () => {
-      mockFetch
-        .mockResolvedValueOnce(mockTokenResponse())
-        .mockResolvedValueOnce({ 
-          ok: true, 
-          json: () => Promise.resolve(mockConfigFormResponse) 
-        });
-
-      type Props = { node: typeof mockNode | null; edge: typeof mockEdge | null };
-      const { result, rerender } = renderHook(
-        ({ node, edge }: Props) => useConfigurationLoader({
-          node,
-          edge,
-          settings: defaultSettings,
-        }),
-        { initialProps: { node: mockNode, edge: null } as Props }
-      );
-
-      await waitFor(() => {
-        expect(result.current.configurationForm).toBeTruthy();
-      });
-
-      // Set both node and edge (invalid state)
-      rerender({ node: mockNode, edge: mockEdge });
-
-      await waitFor(() => {
-        expect(result.current.configurationForm).toBeNull();
-      });
-    });
-
     it('should clear loading state when no target', async () => {
       mockFetch
         .mockResolvedValueOnce(mockTokenResponse())
@@ -576,7 +539,6 @@ describe('useConfigurationLoader', () => {
       const { result, rerender } = renderHook(
         ({ node }: Props) => useConfigurationLoader({
           node,
-          edge: null,
           settings: defaultSettings,
         }),
         { initialProps: { node: mockNode } as Props }
@@ -608,7 +570,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -628,7 +589,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -654,13 +614,16 @@ describe('useConfigurationLoader', () => {
       },
     };
 
-    const newEdge = {
-      id: 'new-edge-1',
-      source: 'node-1',
-      target: 'node-2',
+    const newConditionNode = {
+      id: 'new-condition-1',
+      type: 'condition',
+      position: { x: 0, y: 0 },
       data: {
-        condition: 'test_condition',
-        conditionConfiguration: {}, // Empty = new condition
+        label: 'New Condition',
+        plugin: 'test_condition',
+        componentType: '5', // Condition node
+        configuration: {}, // Empty = new condition
+        __isConditionNode: true,
       },
     };
 
@@ -676,7 +639,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: newNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -702,7 +664,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: newNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -728,7 +689,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: mockNode, // Has existing configuration { key: 'value' }
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -757,7 +717,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: newNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -774,7 +733,7 @@ describe('useConfigurationLoader', () => {
       expect(mockSetNodes).not.toHaveBeenCalled();
     });
 
-    it('should merge contextConfig into configuration for new edge conditions', async () => {
+    it('should merge contextConfig into configuration for new condition nodes', async () => {
       mockContextConfig = { event: 'entity:insert', type: 'node' };
 
       mockFetch
@@ -785,8 +744,7 @@ describe('useConfigurationLoader', () => {
         });
 
       renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: newEdge,
+        node: newConditionNode,
         settings: defaultSettings,
       }));
 
@@ -799,7 +757,7 @@ describe('useConfigurationLoader', () => {
       expect(body.configuration).toEqual({ event: 'entity:insert', type: 'node' });
     });
 
-    it('should persist contextConfig values into edge data', async () => {
+    it('should persist contextConfig values into condition node data', async () => {
       mockContextConfig = { field1: 'val1' };
 
       mockFetch
@@ -810,22 +768,21 @@ describe('useConfigurationLoader', () => {
         });
 
       renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: newEdge,
+        node: newConditionNode,
         settings: defaultSettings,
       }));
 
       await waitFor(() => {
-        expect(mockSetEdges).toHaveBeenCalled();
+        expect(mockSetNodes).toHaveBeenCalled();
       });
 
-      // The setEdges function should be called with a mapper that updates the edge
-      const setEdgesFn = mockSetEdges.mock.calls[0][0];
-      const updatedEdges = setEdgesFn([newEdge]);
-      expect(updatedEdges[0].data.conditionConfiguration).toEqual({ field1: 'val1' });
+      // The setNodes function should be called with a mapper that updates the node
+      const setNodesFn = mockSetNodes.mock.calls[0][0];
+      const updatedNodes = setNodesFn([newConditionNode]);
+      expect(updatedNodes[0].data.configuration).toEqual({ field1: 'val1' });
     });
 
-    it('should not merge contextConfig for edges with existing condition configuration', async () => {
+    it('should not merge contextConfig for condition nodes with existing configuration', async () => {
       mockContextConfig = { event: 'entity:insert' };
 
       mockFetch
@@ -836,8 +793,7 @@ describe('useConfigurationLoader', () => {
         });
 
       renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: mockEdge, // Has existing conditionConfiguration { condKey: 'condValue' }
+        node: mockConditionNode, // Has existing configuration { condKey: 'condValue' }
         settings: defaultSettings,
       }));
 
@@ -850,8 +806,8 @@ describe('useConfigurationLoader', () => {
       const body = JSON.parse(configCall[1].body);
       expect(body.configuration).toEqual({ condKey: 'condValue' });
 
-      // setEdges should NOT have been called for contextConfig merging
-      expect(mockSetEdges).not.toHaveBeenCalled();
+      // setNodes should NOT have been called for contextConfig merging
+      expect(mockSetNodes).not.toHaveBeenCalled();
     });
 
     it('should merge multiple contextConfig keys into new node configuration', async () => {
@@ -866,7 +822,6 @@ describe('useConfigurationLoader', () => {
 
       renderHook(() => useConfigurationLoader({
         node: newNode,
-        edge: null,
         settings: defaultSettings,
       }));
 
@@ -904,7 +859,6 @@ describe('useConfigurationLoader', () => {
     it('returns pre-baked form for a node plugin without fetching', async () => {
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: standaloneSettings,
       }));
 
@@ -917,10 +871,9 @@ describe('useConfigurationLoader', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('returns pre-baked form for an edge condition without fetching', async () => {
+    it('returns pre-baked form for a condition node plugin without fetching', async () => {
       const { result } = renderHook(() => useConfigurationLoader({
-        node: null,
-        edge: mockEdge,
+        node: mockConditionNode,
         settings: standaloneSettings,
       }));
 
@@ -940,7 +893,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: unknownNode,
-        edge: null,
         settings: standaloneSettings,
       }));
 
@@ -960,7 +912,6 @@ describe('useConfigurationLoader', () => {
 
       const { result } = renderHook(() => useConfigurationLoader({
         node: mockNode,
-        edge: null,
         settings: noFormsSettings,
       }));
 

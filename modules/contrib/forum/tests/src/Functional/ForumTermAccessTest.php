@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\forum\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Tests\BrowserTestBase;
 
@@ -10,6 +13,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 class ForumTermAccessTest extends BrowserTestBase {
 
   /**

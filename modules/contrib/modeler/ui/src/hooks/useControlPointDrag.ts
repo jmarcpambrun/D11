@@ -10,9 +10,6 @@ interface UseControlPointDragProps {
   edgeCenterX: number;
   edgeCenterY: number;
   isLocked: boolean;
-  hasCondition: boolean;
-  label: string | undefined | React.ReactNode;
-  controlOffset: { x: number; y: number };
   onEdgeUpdate?: (id: string, updates: { controlOffset: { x: number; y: number } }) => void;
 }
 
@@ -21,9 +18,6 @@ export function useControlPointDrag({
   edgeCenterX,
   edgeCenterY,
   isLocked,
-  hasCondition,
-  label,
-  controlOffset,
   onEdgeUpdate,
 }: UseControlPointDragProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -52,9 +46,6 @@ export function useControlPointDrag({
       scale = parseFloat(transformMatch[3]);
     }
 
-    // Account for initial offset if condition label exists
-    const initialYOffset = hasCondition && label && (controlOffset.x === 0 && controlOffset.y === 0) ? -25 : 0;
-
     const handleMouseMove = (e: MouseEvent) => {
       // Get mouse position relative to the ReactFlow wrapper
       const rect = reactFlowWrapper.getBoundingClientRect();
@@ -68,7 +59,7 @@ export function useControlPointDrag({
       // Calculate offset from edge center
       const newOffset = {
         x: flowX - edgeCenterX,
-        y: flowY - edgeCenterY - initialYOffset
+        y: flowY - edgeCenterY
       };
 
       onEdgeUpdate(id, { controlOffset: newOffset });
@@ -82,7 +73,7 @@ export function useControlPointDrag({
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [id, edgeCenterX, edgeCenterY, isLocked, onEdgeUpdate, hasCondition, label, controlOffset]);
+  }, [id, edgeCenterX, edgeCenterY, isLocked, onEdgeUpdate]);
 
   return {
     isDragging,

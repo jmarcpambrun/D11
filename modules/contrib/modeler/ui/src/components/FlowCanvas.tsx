@@ -1,4 +1,4 @@
-import React, { Profiler, useMemo } from 'react';
+import React, { Profiler, useCallback, useMemo } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -18,6 +18,9 @@ import ReactFlow, {
 import type { ReplayStep } from '../hooks/useSimpleReplaySync';
 import type { StoreComponent, EdgeData, NodeData, ModelConstraints } from '../types/settings';
 import { useEdgeOrdering } from '../hooks/useEdgeOrdering';
+import { isConditionNode } from '../utils/incrementalLayout';
+import { isValidConnection as isValidConnectionShared } from '../utils/connectionValidation';
+import { useUISettingsStore } from '../store/useUISettingsStore';
 
 // Node Components
 import CustomNode from './nodes/CustomNode';
@@ -25,10 +28,11 @@ import StartNode from './nodes/StartNode';
 import GatewayNode from './nodes/GatewayNode';
 import SubprocessNode from './nodes/SubprocessNode';
 import PlaceholderNode from './nodes/PlaceholderNode';
+import ConditionNode from './nodes/ConditionNode';
 
 // Edge Components
 import DefaultEdge from './edges/DefaultEdge';
-import ConditionEdge from './edges/ConditionEdge';
+import ConnectionLine from './edges/ConnectionLine';
 
 import { onRenderCallback } from '../utils/profiling';
 import { VIEWPORT } from '../constants/dimensions';
@@ -41,10 +45,6 @@ interface FlowCanvasEventHandlers {
   onSelectionChange: (params: OnSelectionChangeParams) => void;
   onConnectStart: (event: React.MouseEvent | React.TouchEvent, params: OnConnectStartParams) => void;
   onConnectEnd: (event: MouseEvent | TouchEvent) => void;
-  onDrop: (event: React.DragEvent) => void;
-  onDragOver: (event: React.DragEvent) => void;
-  onDragEnter: (event: React.DragEvent) => void;
-  onDragLeave: (event: React.DragEvent) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onEdgeClick: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: (event: React.MouseEvent) => void;
@@ -58,7 +58,24 @@ interface FlowCanvasElementCallbacks {
   onEdgeUpdate?: (edgeId: string, updates: Partial<EdgeData>) => void;
   onNodeUpdate?: (nodeId: string, newData: Partial<NodeData>) => void;
   onDeleteNode?: (nodeId: string) => void;
-  onEdgeConfigurationChange?: (edgeId: string, configuration: Record<string, unknown> | null) => void;
+  // onDeleteEdge lives in elementCallbacks (next to onDeleteNode) because it
+  // is an element-deletion callback — the semantic peer of onDeleteNode —
+  // not a quick-add affordance. It is threaded into each edge's data below.
+  onDeleteEdge?: (edgeId: string) => void;
+  /**
+   * Commit an endpoint reconnection (issue #3585553). Updates top-level edge
+   * fields (`source`/`target`/`sourceHandle`/`targetHandle`). Threaded into
+   * each edge's data so the rendered grips can commit a move.
+   */
+  onReconnectEdge?: (
+    edgeId: string,
+    updates: {
+      source?: string;
+      sourceHandle?: string | null;
+      target?: string;
+      targetHandle?: string | null;
+    },
+  ) => void;
 }
 
 /** Keyboard modifier key state. */
@@ -100,8 +117,6 @@ interface FlowCanvasQuickAddProps {
   onQuickAdd?: (component: StoreComponent, sourceNodeId: string) => void;
   onAddCondition?: (edgeId: string, component: StoreComponent) => void;
   onAddActionOnEdge?: (edgeId: string, component: StoreComponent) => void;
-  onInsertBeforeCondition?: (edgeId: string, component: StoreComponent) => void;
-  onInsertAfterCondition?: (edgeId: string, component: StoreComponent) => void;
   onReplacePlaceholder?: (nodeId: string, component: StoreComponent) => void;
 }
 
@@ -150,12 +165,12 @@ const nodeTypes = {
   gateway: GatewayNode,
   subprocess: SubprocessNode,
   placeholder: PlaceholderNode,
+  condition: ConditionNode,  // conditions are first-class nodes (issue #3589093)
 };
 
 // Edge types configuration
 const edgeTypes = {
   default: DefaultEdge,
-  condition: ConditionEdge,
 };
 
 const FlowCanvas: React.FC<FlowCanvasProps> = ({
@@ -176,15 +191,15 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   // Destructure grouped props for use in the component body
   const {
     onNodesChange, onEdgesChange, onConnect, onSelectionChange,
-    onConnectStart, onConnectEnd, onDrop, onDragOver, onDragEnter,
-    onDragLeave, onNodeClick, onEdgeClick, onPaneClick, onNodeDragStart, onNodeDragStop, onInit,
+    onConnectStart, onConnectEnd, onNodeClick, onEdgeClick, onPaneClick,
+    onNodeDragStart, onNodeDragStop, onInit,
   } = eventHandlers;
-  const { onEdgeUpdate, onNodeUpdate, onDeleteNode, onEdgeConfigurationChange } = elementCallbacks;
+  const { onEdgeUpdate, onNodeUpdate, onDeleteNode, onDeleteEdge, onReconnectEdge } = elementCallbacks;
   const { isShiftPressed: _isShiftPressed, isCtrlPressed: _isCtrlPressed, isAltPressed: _isAltPressed } = modifierKeys;
   const { isDragActive, isLocked, showEdgeOrderNumbers, showAllAnnotations } = uiState;
   const { searchTerm, highlightedSearchResult } = search;
   const { replayData, currentReplayStep, isReplayMode, replayIndicators } = replay;
-  const { onQuickAdd, onAddCondition, onAddActionOnEdge, onInsertBeforeCondition, onInsertAfterCondition, onReplacePlaceholder } = quickAdd;
+  const { onQuickAdd, onAddCondition, onAddActionOnEdge, onReplacePlaceholder } = quickAdd;
   // Edge ordering hook - handles drag/drop reordering and order info calculation
   const {
     handleDragStart,
@@ -197,17 +212,82 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   // Selection mode: always partial so partially-overlapped nodes are included
   const selectionMode = SelectionMode.Partial;
 
+  // True while an endpoint reconnect drag is in progress (issue #3585553).
+  // Drives the `reconnect-dragging` wrapper class so CSS makes ALL grips
+  // non-interactive during the drag, letting the drop hit-test reach the
+  // node/handle beneath any non-dragged grip overlay.
+  const reconnectDragActive = useUISettingsStore((s) => s.reconnectDragActive);
+
   // No modifier-based cursor classes needed with the Figma-like gesture scheme.
   // ReactFlow handles cursors internally (default for selection, grab for Space+drag).
+
+  // Per-handle counts of SELECTED edge endpoints (issue #3585553).
+  //
+  // Endpoint reconnection is per-handle and selection-gated: an endpoint is a
+  // draggable grip IFF its handle hosts EXACTLY ONE selected edge endpoint.
+  // We tally, across the selected edges only, how many use each source handle
+  // and each target handle. A handle key combines the node id with the handle
+  // id (null handle → 'null') so distinct handles on the same node are
+  // counted separately. Both ends of every selected edge are tallied
+  // independently.
+  //
+  // CRITICAL (bug fix for sequential shift-select): selection truth here is
+  // React Flow's own per-edge `selected` flag on the `edges` array — the SAME
+  // flag that drives `isEdgeSelected` (and therefore grip visibility) inside
+  // DefaultEdge. Using the store `selectedEdges` array instead would let the
+  // count and the visibility diverge (the store array can lag the `selected`
+  // flag during multiselect), causing a shared handle to wrongly keep its grip
+  // when 2+ selected edges use it. Tallying over `edge.selected` keeps the
+  // count and the grip render perfectly consistent regardless of selection
+  // order or which selection path fired.
+  const selectedHandleCounts = useMemo(() => {
+    const sourceCounts: Record<string, number> = {};
+    const targetCounts: Record<string, number> = {};
+    const key = (nodeId: string, handleId?: string | null) => `${nodeId}|${handleId ?? 'null'}`;
+    for (const edge of edges) {
+      if (!edge.selected) continue;
+      const sKey = key(edge.source, edge.sourceHandle);
+      const tKey = key(edge.target, edge.targetHandle);
+      sourceCounts[sKey] = (sourceCounts[sKey] ?? 0) + 1;
+      targetCounts[tKey] = (targetCounts[tKey] ?? 0) + 1;
+    }
+    return { sourceCounts, targetCounts, key };
+  }, [edges]);
+
+  // Validate a reconnection drop using the SAME logic as the new-edge
+  // isValidConnection prop, excluding the edge being moved from outbound
+  // counts (so moving a target off a node does not count the edge against its
+  // own source's limits).
+  const makeValidateReconnect = useCallback(
+    (edgeId: string) => (connection: Connection) =>
+      isValidConnectionShared({ connection, nodes, edges, modelConstraints, excludeEdgeId: edgeId }),
+    [nodes, edges, modelConstraints],
+  );
 
   // Enhanced edges with order numbers and drag handlers
   const enhancedEdges = useMemo(() => {
     return edges.map((edge, _index) => {
       const edgeOrderInfo = getEdgeOrderInfo(edge, edges);
-      const hasCondition = edge.data?.condition;
-      
-      // Note: Condition result indicators are now handled via separate indicator objects
-      
+
+      // Endpoint reconnection grip eligibility (issue #3585553). A grip is
+      // shown only when this edge is selected AND it is the SOLE selected edge
+      // using that handle (count === 1). When 2+ selected edges share a handle
+      // the count is >= 2 and the handle is ambiguous → no grip there.
+      // `isSelected` uses React Flow's per-edge `selected` flag (the same truth
+      // as the tally and as DefaultEdge's `isEdgeSelected`) so eligibility and
+      // visibility can never diverge.
+      const isSelected = !!edge.selected;
+      const sourceKey = selectedHandleCounts.key(edge.source, edge.sourceHandle);
+      const targetKey = selectedHandleCounts.key(edge.target, edge.targetHandle);
+      const sourceGripEnabled =
+        !isLocked && isSelected && selectedHandleCounts.sourceCounts[sourceKey] === 1;
+      const targetGripEnabled =
+        !isLocked && isSelected && selectedHandleCounts.targetCounts[targetKey] === 1;
+
+      // Conditions are first-class nodes now (issue #3589093), so no rendered
+      // edge ever carries a condition.  Every edge is plain and can always
+      // offer the "add condition" / "add action" quick-add affordances.
+
       return {
         ...edge,
         data: {
@@ -238,16 +318,20 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
           onDrop: handleEdgeOrderDrop,
           onReorderEdge: handleReorderEdge,
           onEdgeUpdate: onEdgeUpdate,
-          // Only show quick add button on edges without conditions
-          onAddCondition: !hasCondition && onAddCondition && !isLocked ? onAddCondition : undefined,
-          onAddActionOnEdge: !hasCondition && onAddActionOnEdge && !isLocked ? onAddActionOnEdge : undefined,
-          // Quick-add buttons on condition edges (before and after the condition card)
-          onInsertBeforeCondition: hasCondition && onInsertBeforeCondition && !isLocked ? onInsertBeforeCondition : undefined,
-          onInsertAfterCondition: hasCondition && onInsertAfterCondition && !isLocked ? onInsertAfterCondition : undefined,
-          // Wire up condition deletion from the canvas trash icon
-          onDeleteCondition: hasCondition && onEdgeConfigurationChange && !isLocked ? (edgeId: string) => {
-            onEdgeConfigurationChange(edgeId, null);
-          } : undefined,
+          // Every edge is plain, so quick-add (condition node / action node)
+          // is always available unless the canvas is locked.
+          onAddCondition: onAddCondition && !isLocked ? onAddCondition : undefined,
+          onAddActionOnEdge: onAddActionOnEdge && !isLocked ? onAddActionOnEdge : undefined,
+          // Edge delete (trash affordance) — gated by !isLocked exactly like
+          // onAddCondition so locked/read-only canvases cannot delete edges.
+          onDeleteEdge: onDeleteEdge && !isLocked ? onDeleteEdge : undefined,
+          // Endpoint reconnection (issue #3585553): per-handle grip eligibility
+          // plus the commit + validation callbacks. Gated by !isLocked so a
+          // locked/read-only/standalone canvas cannot reconnect.
+          sourceGripEnabled,
+          targetGripEnabled,
+          onReconnectEdge: onReconnectEdge && !isLocked ? onReconnectEdge : undefined,
+          validateReconnect: !isLocked ? makeValidateReconnect(edge.id) : undefined,
           searchTerm,
           isHighlighted: highlightedSearchResult?.id === edge.id,
           // Replay state
@@ -267,11 +351,12 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
     handleEdgeOrderDrop,
     handleReorderEdge,
     onEdgeUpdate,
-    onEdgeConfigurationChange,
     onAddCondition,
     onAddActionOnEdge,
-    onInsertBeforeCondition,
-    onInsertAfterCondition,
+    onDeleteEdge,
+    onReconnectEdge,
+    makeValidateReconnect,
+    selectedHandleCounts,
     isLocked,
     searchTerm,
     highlightedSearchResult,
@@ -298,6 +383,33 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
       const outgoing = outgoingEdgeCounts[node.id] ?? 0;
       const atMaxSuccessors = maxSuccessors !== undefined && outgoing >= maxSuccessors;
 
+      // Condition 1-outbound rule (issue #3589093): a condition node may have
+      // AT MOST ONE outgoing edge. Once it has one, disable its source handle so
+      // the drag cannot even start (better UX than rejecting the wire afterward).
+      const conditionAtMaxOut = isConditionNode(node) && outgoing >= 1;
+
+      // Reconnect reservation (issue #3585553): when one or more SELECTED edges
+      // use this node's source handle, the handle must not start a NEW edge.
+      // - exactly one selected edge → that handle hosts a "move source" grip,
+      //   so a new-edge drag from the same handle would conflict with the grip.
+      // - two or more selected edges → the handle is ambiguous (gesture
+      //   conflict), so it is inert for new edges too.
+      // Either way we suppress new-edge connectability. (We count across ALL of
+      // the node's source-handle keys, since a node may expose only one source
+      // handle today but the check is handle-agnostic at the node level.)
+      const sourceReconnectReserved = Object.entries(selectedHandleCounts.sourceCounts).some(
+        ([k, count]) => count >= 1 && k.startsWith(`${node.id}|`),
+      );
+
+      // Any rule disables the source handle for NEW edges; all stay in effect.
+      const sourceHandleDisabled = atMaxSuccessors || conditionAtMaxOut || sourceReconnectReserved;
+      // The condition rule takes precedence in the tooltip message.
+      const sourceHandleDisabledReason = conditionAtMaxOut
+        ? 'condition-single-out'
+        : atMaxSuccessors
+          ? 'max-successors'
+          : undefined;
+
       return {
         ...node,
         data: {
@@ -323,21 +435,22 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
           isReplayMode,
           // Node operations
           onDelete: onDeleteNode ? () => onDeleteNode(node.id) : undefined,
-          onQuickAdd: onQuickAdd && !isLocked && !atMaxSuccessors
+          onQuickAdd: onQuickAdd && !isLocked && !atMaxSuccessors && !conditionAtMaxOut
             ? (component: StoreComponent) => onQuickAdd(component, node.id)
             : undefined,
           onReplacePlaceholder: node.type === 'placeholder' && onReplacePlaceholder && !isLocked
             ? (component: StoreComponent) => onReplacePlaceholder(node.id, component)
             : undefined,
-          sourceHandleDisabled: atMaxSuccessors,
+          sourceHandleDisabled,
+          sourceHandleDisabledReason,
           isLocked,
         },
       };
     });
   }, [
     nodes,
-    edges,
     outgoingEdgeCounts,
+    selectedHandleCounts,
     modelConstraints,
     showAllAnnotations, 
     onNodeUpdate,
@@ -355,7 +468,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   return (
     <Profiler id="FlowCanvas" onRender={onRenderCallback}>
     <div 
-      className={`reactflow-wrapper ${isDragActive ? 'drag-active' : ''}`}
+      className={`reactflow-wrapper ${isDragActive ? 'drag-active' : ''}${reconnectDragActive ? ' reconnect-dragging' : ''}`}
     >
       <ReactFlow
         nodes={enhancedNodes}
@@ -366,10 +479,6 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         onSelectionChange={onSelectionChange}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onDragEnter={onDragEnter}
-        onDragLeave={onDragLeave}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
@@ -378,7 +487,15 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         onInit={onInit}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        connectionLineType={ConnectionLineType.SmoothStep}
+        // New-edge live preview (issue #3585553 follow-on UX): use a custom
+        // connection-line component so the new-edge preview is the SAME dashed
+        // cubic-bezier as the endpoint-reconnect preview (see ConnectionLine).
+        // `connectionLineType` stays as a Bezier fallback only — the component
+        // takes precedence whenever it is provided. (Previously this was
+        // ConnectionLineType.SmoothStep, which rendered the disliked cornered
+        // line.)
+        connectionLineComponent={ConnectionLine}
+        connectionLineType={ConnectionLineType.Bezier}
         selectionMode={selectionMode}
         defaultMarkerColor="var(--modeler-color-edge-default)"
         defaultEdgeOptions={{
@@ -389,16 +506,12 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
             color: 'var(--modeler-color-edge-default)',
           },
         }}
-        isValidConnection={(connection) => {
-          if (!connection.source) return true;
-          // Block new edges from nodes that have reached max successors.
-          const sourceNode = nodes.find(n => n.id === connection.source);
-          if (!sourceNode?.type || !modelConstraints) return true;
-          const sConstraint = modelConstraints[sourceNode.type as keyof ModelConstraints]?.successors;
-          if (sConstraint?.max === undefined) return true;
-          const outgoing = outgoingEdgeCounts[connection.source] ?? 0;
-          return outgoing < sConstraint.max;
-        }}
+        isValidConnection={(connection) =>
+          // Shared with the reconnect commit path (issue #3585553) so new-edge
+          // and reconnect validation can never diverge. No edge is excluded
+          // here because this validates a brand-new edge being dragged.
+          isValidConnectionShared({ connection, nodes, edges, modelConstraints })
+        }
         nodesDraggable={!isLocked}
         nodesConnectable={!isLocked}
         elementsSelectable={true}  // Allow selection even when locked for viewing properties

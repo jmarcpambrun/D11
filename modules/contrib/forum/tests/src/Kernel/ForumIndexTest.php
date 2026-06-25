@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\KernelTests\KernelTestBase;
 
 /**
@@ -11,6 +14,8 @@ use Drupal\KernelTests\KernelTestBase;
  *
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
 final class ForumIndexTest extends KernelTestBase {
 
   /**

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\forum\Unit\Breadcrumb;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Group;
+
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
@@ -16,6 +20,9 @@ use Symfony\Component\DependencyInjection\Container;
  * @coversDefaultClass \Drupal\forum\Breadcrumb\ForumBreadcrumbBuilderBase
  * @group forum
  */
+#[Group('forum')]
+#[RunTestsInSeparateProcesses]
+#[AllowMockObjectsWithoutExpectations]
 class ForumBreadcrumbBuilderBaseTest extends UnitTestCase {
 
   /**
@@ -52,19 +59,19 @@ class ForumBreadcrumbBuilderBaseTest extends UnitTestCase {
     $prophecy->getCacheMaxAge()->willReturn(Cache::PERMANENT);
 
     $vocab_storage = $this->createMock('Drupal\Core\Entity\EntityStorageInterface');
-    $vocab_storage->expects($this->any())
+    $vocab_storage->expects($this->atLeastOnce())
       ->method('load')
       ->willReturnMap([
         ['forums', $prophecy->reveal()],
       ]);
 
     $term_storage = $this->createMock(TermStorageInterface::class);
-    $term_storage->expects($this->any())
+    $term_storage->expects($this->atLeastOnce())
       ->method('loadAllParents')
       ->willReturn([]);
 
     $entity_type_manager = $this->createMock(EntityTypeManagerInterface::class);
-    $entity_type_manager->expects($this->any())
+    $entity_type_manager->expects($this->atLeastOnce())
       ->method('getStorage')
       ->willReturnMap([
         ['taxonomy_vocabulary', $vocab_storage],

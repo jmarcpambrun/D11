@@ -217,8 +217,8 @@ runtime cost** in production.
 | Tier | Component | ID |
 |------|-----------|-----|
 | 1 — Canvas | FlowCanvas | `FlowCanvas` |
-| 1 — Nodes | CustomNode, StartNode, GatewayNode, SubprocessNode | `CustomNode`, `StartNode`, `GatewayNode`, `SubprocessNode` |
-| 1 — Edges | DefaultEdge, ConditionEdge | `DefaultEdge`, `ConditionEdge` |
+| 1 — Nodes | CustomNode, StartNode, GatewayNode, SubprocessNode, ConditionNode | `CustomNode`, `StartNode`, `GatewayNode`, `SubprocessNode`, `ConditionNode` |
+| 1 — Edges | DefaultEdge | `DefaultEdge` |
 | 2 — Panels | ReplayPanel, PropertyPanel | `ReplayPanel`, `PropertyPanel` |
 | 2 — Overlays | SearchBar, QuickAddPopup | `SearchBar`, `QuickAddPopup` |
 | 3 — Chrome | Toolbar, Flow (orchestrator) | `Toolbar`, `Flow` |

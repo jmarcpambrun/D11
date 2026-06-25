@@ -403,6 +403,10 @@ describe('useQuickAdd', () => {
       expect(typeof result.current.addConditionWithPlaceholder).toBe('function');
     });
 
+    // Conditions are first-class nodes now (issue #3589093).  Condition-first
+    // authoring creates a chain: source -> conditionNode -> placeholder, wired
+    // with two plain 'default' edges.  No edge of type 'condition' is created.
+
     it('should create a placeholder node with type placeholder and label Select action...', () => {
       const { result } = renderUseQuickAdd();
       
@@ -415,12 +419,13 @@ describe('useQuickAdd', () => {
         result.current.addConditionWithPlaceholder(component, 'event_1');
       });
       
+      // The placeholder is the last node added (condition node precedes it).
       const placeholderNode = mockNodes[mockNodes.length - 1];
       expect(placeholderNode.type).toBe('placeholder');
       expect(placeholderNode.data.label).toBe('Select action...');
     });
 
-    it('should create a condition edge with type condition and condition data attached', () => {
+    it('should create a condition NODE (not edge) with first-class condition data', () => {
       const { result } = renderUseQuickAdd();
       
       const component = {
@@ -432,15 +437,18 @@ describe('useQuickAdd', () => {
         result.current.addConditionWithPlaceholder(component, 'event_1');
       });
       
-      const newEdge = mockEdges[mockEdges.length - 1];
-      expect(newEdge.type).toBe('condition');
-      expect(newEdge.data.condition).toBe('condition:entity_is_new');
-      expect(newEdge.data.conditionLabel).toBe('Entity is new');
-      expect(newEdge.label).toBe('Entity is new');
-      expect(newEdge.source).toBe('event_1');
+      // A real condition node is created with the canonical first-class shape.
+      const conditionNode = mockNodes.find(n => n.type === 'condition');
+      expect(conditionNode).toBeDefined();
+      expect(conditionNode!.data.__isConditionNode).toBe(true);
+      expect(conditionNode!.data.componentType).toBe(5);
+      expect(conditionNode!.data.plugin).toBe('condition:entity_is_new');
+      expect(conditionNode!.data.label).toBe('Entity is new');
+      expect(conditionNode!.data.conditionId).toBe('');
+      expect(conditionNode!.data.configuration).toEqual({});
     });
 
-    it('should have the condition edge selected for Property Panel', () => {
+    it('should wire source -> condition -> placeholder with two plain default edges and NO condition edge', () => {
       const { result } = renderUseQuickAdd();
       
       const component = {
@@ -452,8 +460,40 @@ describe('useQuickAdd', () => {
         result.current.addConditionWithPlaceholder(component, 'event_1');
       });
       
-      const newEdge = mockEdges[mockEdges.length - 1];
-      expect(newEdge.selected).toBe(true);
+      const conditionNode = mockNodes.find(n => n.type === 'condition')!;
+      const placeholderNode = mockNodes.find(n => n.type === 'placeholder')!;
+
+      // Exactly two new edges, both plain 'default' type — never 'condition'.
+      expect(mockEdges.every(e => e.type !== 'condition')).toBe(true);
+
+      const edgeToCondition = mockEdges.find(
+        e => e.source === 'event_1' && e.target === conditionNode.id,
+      );
+      const edgeToPlaceholder = mockEdges.find(
+        e => e.source === conditionNode.id && e.target === placeholderNode.id,
+      );
+      expect(edgeToCondition).toBeDefined();
+      expect(edgeToCondition!.type).toBe('default');
+      expect(edgeToPlaceholder).toBeDefined();
+      expect(edgeToPlaceholder!.type).toBe('default');
+    });
+
+    it('should select the condition node (so its config panel opens) and not the placeholder', () => {
+      const { result } = renderUseQuickAdd();
+      
+      const component = {
+        plugin: 'condition:entity_is_new',
+        label: 'Entity is new',
+      };
+      
+      act(() => {
+        result.current.addConditionWithPlaceholder(component, 'event_1');
+      });
+      
+      const conditionNode = mockNodes.find(n => n.type === 'condition')!;
+      const placeholderNode = mockNodes.find(n => n.type === 'placeholder')!;
+      expect(conditionNode.selected).toBe(true);
+      expect(placeholderNode.selected).toBe(false);
     });
 
     it('should have the placeholder node with selected false', () => {
@@ -570,7 +610,7 @@ describe('useQuickAdd', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should use condition label from component, falling back to plugin name', () => {
+    it('should use condition label from component on the condition node, falling back to plugin name', () => {
       const { result } = renderUseQuickAdd();
       
       const componentWithLabel = {
@@ -582,9 +622,9 @@ describe('useQuickAdd', () => {
         result.current.addConditionWithPlaceholder(componentWithLabel, 'event_1');
       });
       
-      const edgeWithLabel = mockEdges[mockEdges.length - 1];
-      expect(edgeWithLabel.data.conditionLabel).toBe('My Custom Condition');
-      expect(edgeWithLabel.label).toBe('My Custom Condition');
+      // The label now lives on the first-class condition node, not an edge.
+      const conditionNodeWithLabel = mockNodes.find(n => n.type === 'condition')!;
+      expect(conditionNodeWithLabel.data.label).toBe('My Custom Condition');
       
       // Reset for the fallback test
       mockNodes = [
@@ -610,9 +650,77 @@ describe('useQuickAdd', () => {
         result2.current.addConditionWithPlaceholder(componentNoLabel, 'event_1');
       });
       
-      const edgeNoLabel = mockEdges[mockEdges.length - 1];
-      expect(edgeNoLabel.data.conditionLabel).toBe('some_condition');
-      expect(edgeNoLabel.label).toBe('some_condition');
+      // Empty label falls back to the last segment of the plugin id.
+      const conditionNodeNoLabel = mockNodes.find(n => n.type === 'condition')!;
+      expect(conditionNodeNoLabel.data.label).toBe('some_condition');
+    });
+
+    // ── No-two-adjacent-conditions invariant (issue #3589093) ───────────
+    // The placeholder target is always fresh (never a condition), so only
+    // the SOURCE side can be adjacent.  When the source is a condition node,
+    // a gateway must separate it from the new condition:
+    //   source(condition) -> gateway -> conditionNode -> placeholder.
+    it('inserts a gateway when the source is a condition node (source->gateway->condition->placeholder)', () => {
+      mockNodes = [
+        {
+          id: 'cond_source',
+          type: 'condition',
+          position: { x: 100, y: 100 },
+          width: 200,
+          height: 80,
+          data: { label: 'Existing Condition', __isConditionNode: true },
+        },
+      ];
+      mockEdges = [];
+      const { result } = renderUseQuickAdd();
+
+      const component = {
+        plugin: 'condition:entity_is_new',
+        label: 'Entity is new',
+      };
+
+      act(() => {
+        result.current.addConditionWithPlaceholder(component, 'cond_source');
+      });
+
+      const gatewayNode = mockNodes.find(n => n.type === 'gateway');
+      const newConditionNode = mockNodes.find(
+        n => n.type === 'condition' && n.id !== 'cond_source',
+      );
+      const placeholderNode = mockNodes.find(n => n.type === 'placeholder');
+      expect(gatewayNode).toBeDefined();
+      expect(gatewayNode!.data.componentType).toBe(6);
+      expect(gatewayNode!.data.plugin).toBe('gateway');
+      expect(newConditionNode).toBeDefined();
+      expect(placeholderNode).toBeDefined();
+
+      // Edge wiring: cond_source -> gateway -> newCondition -> placeholder.
+      expect(mockEdges.find(e => e.source === 'cond_source' && e.target === gatewayNode!.id)).toBeDefined();
+      expect(mockEdges.find(e => e.source === gatewayNode!.id && e.target === newConditionNode!.id)).toBeDefined();
+      expect(mockEdges.find(e => e.source === newConditionNode!.id && e.target === placeholderNode!.id)).toBeDefined();
+
+      // No condition -> condition edge exists.
+      const condIds = new Set(['cond_source', newConditionNode!.id]);
+      for (const e of mockEdges) {
+        expect(condIds.has(e.source) && condIds.has(e.target)).toBe(false);
+      }
+    });
+
+    it('does NOT insert a gateway when the source is a normal (non-condition) node', () => {
+      // Baseline: with a non-condition source, the original two-node chain is
+      // produced with no gateway (source -> condition -> placeholder).
+      const { result } = renderUseQuickAdd();
+
+      const component = {
+        plugin: 'condition:entity_is_new',
+        label: 'Entity is new',
+      };
+
+      act(() => {
+        result.current.addConditionWithPlaceholder(component, 'event_1');
+      });
+
+      expect(mockNodes.find(n => n.type === 'gateway')).toBeUndefined();
     });
   });
 });

@@ -106,28 +106,29 @@ export function findElementForReplayStep(
   if (stepIndex < 0 || stepIndex >= replayData.length) return null;
   
   const step = replayData[stepIndex];
-  
-  // For successor steps, handle edge finding with condition logic
+
+  // Conditions are first-class NODES now (issue #3589093).  A condition step
+  // therefore resolves to the condition NODE rather than a (nonexistent)
+  // condition edge.  The step's conditionId historically matched the legacy
+  // edge.data.condition value, which carried the condition *plugin* id (see
+  // P2 modelUtils, where node.data.plugin is set from edge.condition), so we
+  // match plugin id first, then the backend round-trip conditionId.
+  const isConditionNode = (n: Node): boolean =>
+    n.type === 'condition' || n.data?.__isConditionNode === true;
+
+  // For successor steps, handle condition node finding.
   if (isSuccessorStep(step)) {
-    // Priority 1: If step has conditionId, find the edge with that condition
+    // Priority 1: If step has conditionId, find the condition node.
     if (step.conditionId) {
-      const edge = edges.find(e => e.data?.condition === step.conditionId);
-      if (edge) {
-        return { type: 'edge', id: edge.id };
-      }
-      
-      // Fallback: find by source/target relationship and verify it has a condition
-      if (step.successorId) {
-        const fallbackEdge = edges.find(e => 
-          e.source === step.id && e.target === step.successorId && e.data?.condition
-        );
-        if (fallbackEdge) {
-          return { type: 'edge', id: fallbackEdge.id };
-        }
+      const condNode =
+        nodes.find(n => isConditionNode(n) && n.data?.plugin === step.conditionId) ??
+        nodes.find(n => isConditionNode(n) && n.data?.conditionId === step.conditionId);
+      if (condNode) {
+        return { type: 'node', id: condNode.id };
       }
     }
-    
-    // Priority 2: If step has successorId, find the edge by source/target
+
+    // Priority 2: If step has successorId, find the edge by source/target.
     if (step.successorId) {
       const edge = edges.find(e => e.source === step.id && e.target === step.successorId);
       if (edge) {
@@ -135,16 +136,18 @@ export function findElementForReplayStep(
       }
     }
   }
-  
-  // Priority 3: For other steps with conditionId, find the edge with that condition
+
+  // Priority 3: For other steps with conditionId, find the condition node.
   if (step.conditionId) {
-    const edge = edges.find(e => e.data?.condition === step.conditionId);
-    if (edge) {
-      return { type: 'edge', id: edge.id };
+    const condNode =
+      nodes.find(n => isConditionNode(n) && n.data?.plugin === step.conditionId) ??
+      nodes.find(n => isConditionNode(n) && n.data?.conditionId === step.conditionId);
+    if (condNode) {
+      return { type: 'node', id: condNode.id };
     }
   }
-  
-  // Priority 4: Find the node by ID
+
+  // Priority 4: Find the node by ID.
   if (step.id) {
     const node = nodes.find(n => n.id === step.id);
     if (node) {

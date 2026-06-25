@@ -10,7 +10,7 @@ import { useContextStore } from '../store/useContextStore';
 import { useModelStore } from '../store/useModelStore';
 import { useFilterStore } from '../store/useFilterStore';
 import { useLabelStore } from '../store/useLabelStore';
-import { parseModelData } from '../utils/modelUtils';
+import { parseModelData, isConditionReuseEnabled } from '../utils/modelUtils';
 import { validateModelDataShape } from '../utils/validation';
 import { t } from '../utils/translation';
 import { getComponentLabel, setActiveComponentLabels, setActiveComponentLabelsPlural, DEFAULT_TYPE_MAP } from '../utils/componentUtils';
@@ -130,7 +130,12 @@ function parseAndMergeModelData(
       console.warn(`Model data validation warnings (${source}):`, warnings);
     }
 
-    const parsedData = parseModelData(data);
+    // Condition reuse (grouping on load) is owner-opt-in via model_constraints
+    // (issue #3589093).  Read it DEFENSIVELY: absent/false ⇒ no grouping.
+    const allowConditionReuse = isConditionReuseEnabled(
+      settings?.modeler_api?.model_constraints,
+    );
+    const parsedData = parseModelData(data, { allowConditionReuse });
 
     // Merge model data with modelId from settings and metadata from API
     const mergedModelData = {

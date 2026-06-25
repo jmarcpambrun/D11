@@ -26,7 +26,6 @@
  */
 import type { StoreEdge as Edge, StoreNode as Node } from '../types/settings';
 import { NODE_DIMENSIONS } from '../constants/dimensions';
-import { getEdgeType } from './edgeTypeUtils';
 
 // ── Adjustable components ───────────────────────────────────────────────────
 
@@ -35,16 +34,6 @@ import { getEdgeType } from './edgeTypeUtils';
  * per edge in the symmetric distribution is a multiple of this value.
  */
 export const PARALLEL_EDGE_FAN_STEP = 80;
-
-/**
- * Extra displacement applied to a sibling edge that carries a condition
- * card, in addition to the symmetric fan-out offset. The condition card is
- * roughly 220 px wide (see `.condition-edge-label` in modeler.css), so we
- * push the whole edge further out by half the card width plus a small
- * margin. That keeps the card's near edge clear of the next sibling's
- * bezier curve, which would otherwise pass underneath the card.
- */
-export const CONDITION_CARD_OVERHANG = 120;
 
 /**
  * Extra clearance added to the bypass offset on top of the chain's bounding
@@ -216,27 +205,6 @@ function siblingsHaveDefaultOffset(siblings: Edge[]): boolean {
 }
 
 /**
- * Returns true when an edge carries a condition. Delegates to the canonical
- * detector in edgeTypeUtils so the router stays in sync with the rest of
- * the codebase.
- */
-function edgeCarriesCondition(edge: Edge): boolean {
-  return getEdgeType(edge.data) === 'condition';
-}
-
-/**
- * Add the condition-card overhang to a base fan-out offset, on whichever
- * side the edge already lies. Edges sitting at exactly zero (an odd-count
- * middle entry) are not pushed — they have no condition card collision to
- * worry about because their card sits centered on the natural midline.
- */
-function applyConditionOverhang(baseOffset: number): number {
-  if (baseOffset > 0) return baseOffset + CONDITION_CARD_OVERHANG;
-  if (baseOffset < 0) return baseOffset - CONDITION_CARD_OVERHANG;
-  return baseOffset;
-}
-
-/**
  * Compute the horizontal extent (min-left to max-right edge) of a node set.
  * Returns null when the set is empty.
  */
@@ -304,14 +272,9 @@ export function routeParallelEdge({
       const fan = computeFanOutOffsets(groupInOrder.length);
       const updates: EdgeRouteUpdate[] = [];
       groupInOrder.forEach((edge, index) => {
-        // Edges that carry a condition card need extra room on their side
-        // so the card (≈220 px wide) doesn't overlap the bezier of an
-        // adjacent sibling at the symmetric fan position.
-        const baseX = fan[index];
-        const finalX = edgeCarriesCondition(edge)
-          ? applyConditionOverhang(baseX)
-          : baseX;
-        const newOffset: ControlOffset = { x: finalX, y: 0 };
+        // Every edge is plain now (conditions are first-class nodes, issue
+        // #3589093), so siblings simply fan out symmetrically.
+        const newOffset: ControlOffset = { x: fan[index], y: 0 };
         const existingOffset =
           edge.data?.controlOffset ?? { x: 0, y: 0 };
         if (!offsetsMatch(existingOffset, newOffset)) {
@@ -337,12 +300,7 @@ export function routeParallelEdge({
       existingXOffsets.reduce((sum, x) => sum + x, 0) /
       existingXOffsets.length;
     const sign = avg <= 0 ? 1 : -1;
-    let newX = sign * (maxAbs + PARALLEL_EDGE_FAN_STEP);
-    // If the new edge itself carries a condition card, push it further so
-    // its card doesn't overlap the existing siblings' bezier curves.
-    if (edgeCarriesCondition(newEdge)) {
-      newX = applyConditionOverhang(newX);
-    }
+    const newX = sign * (maxAbs + PARALLEL_EDGE_FAN_STEP);
     return {
       routing: 'fan-out',
       updates: [
@@ -446,9 +404,8 @@ export function applyParallelEdgeRouting(
  *
  * During auto-layout (model load without raw positional data), edges are
  * created with a default `controlOffset` of `{ x: 0, y: 0 }`.  When
- * multiple edges share the same `(source, target)` pair — each possibly
- * carrying a condition card — they overlap visually because nothing sets
- * their offsets apart.
+ * multiple edges share the same `(source, target)` pair they overlap
+ * visually because nothing sets their offsets apart.
  *
  * This function groups edges by their `(source, target)` key and applies
  * the same symmetric fan-out logic as the interactive
@@ -479,13 +436,9 @@ export function routeAllParallelEdges(edges: Edge[]): Edge[] {
 
     const fan = computeFanOutOffsets(group.length);
     group.forEach((edge, index) => {
-      const baseX = fan[index];
-      const finalX = edgeCarriesCondition(edge)
-        ? applyConditionOverhang(baseX)
-        : baseX;
       allUpdates.push({
         edgeId: edge.id,
-        controlOffset: { x: finalX, y: 0 },
+        controlOffset: { x: fan[index], y: 0 },
       });
     });
   }

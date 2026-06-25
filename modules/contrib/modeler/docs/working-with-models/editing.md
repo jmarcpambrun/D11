@@ -13,7 +13,7 @@ The fastest way to build a workflow is using **quick-add buttons**:
   (see below).
 
 - **Condition quick-add**: Hover over any edge to reveal a **+** button. Click
-  it to add a condition to that edge.
+  it to insert a condition node on that edge.
 
 - **Event quick-add**: Click the **+ Event** button in the toolbar to add a new
   event (start) node.
@@ -38,12 +38,12 @@ filter is active.
 If you want to define a condition **before** choosing the successor action,
 select a condition from the node quick-add popup. This creates:
 
-1. A **placeholder node** (with a dashed amber border and a pulsing
-   "Select action..." button).
-2. A **condition edge** from the source to the placeholder, with the
-   condition pre-attached.
+1. A **condition node** on the canvas (which you can move and configure like
+   any other node).
+2. A **placeholder node** (with a dashed amber border and a pulsing
+   "Select action..." button) as the successor.
 
-The condition edge is automatically selected so you can configure it
+The condition node is automatically selected so you can configure it
 immediately in the Property Panel.
 
 !!! warning "Placeholder nodes must be resolved"

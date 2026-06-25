@@ -290,36 +290,13 @@ describe('PropertyPanel', () => {
       expect(onNodeUpdate).not.toHaveBeenCalled();
     });
 
-    it('should call onEdgeConfigurationChange when edge label changes', () => {
-      const onEdgeConfigurationChange = jest.fn();
-      const edge = { id: 'edge-1', source: 'a', target: 'b', data: { conditionLabel: 'Old' } };
-      render(<PropertyPanel edge={edge as any} onEdgeConfigurationChange={onEdgeConfigurationChange} />);
-
-      // Third callback is for edge label
-      const edgeLabelCallback = debouncedFieldCallbacks[2];
-      edgeLabelCallback.onDebouncedChange('New Condition');
-
-      expect(onEdgeConfigurationChange).toHaveBeenCalledWith('edge-1', { _conditionLabel: 'New Condition' });
-    });
-
-    it('should not call onEdgeConfigurationChange for edge label when locked', () => {
-      const onEdgeConfigurationChange = jest.fn();
-      const edge = { id: 'edge-1', source: 'a', target: 'b', data: { conditionLabel: 'Old' } };
-      render(<PropertyPanel edge={edge as any} onEdgeConfigurationChange={onEdgeConfigurationChange} isLocked={true} />);
-
-      const edgeLabelCallback = debouncedFieldCallbacks[2];
-      edgeLabelCallback.onDebouncedChange('New Condition');
-
-      expect(onEdgeConfigurationChange).not.toHaveBeenCalled();
-    });
-
     it('should call onEdgeUpdate when edge annotation changes', () => {
       const onEdgeUpdate = jest.fn();
       const edge = { id: 'edge-1', source: 'a', target: 'b', data: { annotation: '' } };
       render(<PropertyPanel edge={edge as any} onEdgeUpdate={onEdgeUpdate} />);
 
-      // Fourth callback is for edge annotation
-      const edgeAnnotationCallback = debouncedFieldCallbacks[3];
+      // Third callback is for edge annotation (edge condition-label field removed in P5)
+      const edgeAnnotationCallback = debouncedFieldCallbacks[2];
       edgeAnnotationCallback.onDebouncedChange('Edge note');
 
       expect(onEdgeUpdate).toHaveBeenCalledWith('edge-1', expect.objectContaining({ annotation: 'Edge note' }));
@@ -330,7 +307,7 @@ describe('PropertyPanel', () => {
       const edge = { id: 'edge-1', source: 'a', target: 'b', data: { annotation: '' } };
       render(<PropertyPanel edge={edge as any} onEdgeUpdate={onEdgeUpdate} isLocked={true} />);
 
-      const edgeAnnotationCallback = debouncedFieldCallbacks[3];
+      const edgeAnnotationCallback = debouncedFieldCallbacks[2];
       edgeAnnotationCallback.onDebouncedChange('Edge note');
 
       expect(onEdgeUpdate).not.toHaveBeenCalled();

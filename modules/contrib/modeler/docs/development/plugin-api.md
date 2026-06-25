@@ -335,14 +335,14 @@ api.removeNode(nodeId);
 | `addEdge(sourceNodeId, targetNodeId)` | `string \| null` | Connect two nodes. Returns the generated edge ID, or `null` in read-only mode or if either node does not exist. |
 | `updateEdge(edgeId, updates)` | `boolean` | Update an edge's data. Returns `true` on success. |
 | `removeEdge(edgeId)` | `boolean` | Remove an edge. Returns `true` on success. |
-| `setCondition(edgeId, condition)` | `boolean` | Attach a condition to an edge (converts it to a condition edge). Returns `true` on success. |
-| `removeCondition(edgeId)` | `boolean` | Remove the condition from an edge (converts it back to a default edge). Returns `true` on success. |
+| `setCondition(edgeId, condition)` | `boolean` | Insert a condition node on an edge (splitting the edge into two segments with a condition node in between). Returns `true` on success. |
+| `removeCondition(edgeId)` | `boolean` | Remove the condition node from an edge (reconnecting the source and target directly). Returns `true` on success. |
 
 #### UpdateEdgeDescriptor
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `annotation` | `string` | Annotation text (only meaningful for condition edges). |
+| `annotation` | `string` | Annotation text for the connection. |
 
 #### SetConditionDescriptor
 
@@ -356,7 +356,7 @@ api.removeNode(nodeId);
 // Connect two nodes
 const edgeId = api.addEdge('event_1', 'action_1');
 
-// Attach a condition
+// Insert a condition node on that edge
 if (edgeId) {
   api.setCondition(edgeId, {
     plugin: 'eca_base:eca_scalar_comparison',
@@ -365,7 +365,7 @@ if (edgeId) {
   });
 }
 
-// Remove the condition (edge remains)
+// Remove the condition node (edge reconnects directly)
 api.removeCondition(edgeId);
 
 // Remove the edge entirely

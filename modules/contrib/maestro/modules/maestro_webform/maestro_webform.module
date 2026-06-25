@@ -11,6 +11,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Url;
+use Drupal\Core\Render\BubbleableMetadata;
 
 /**
  * Implements hook_help().
@@ -252,6 +253,181 @@ function maestro_webform_menu_local_tasks_alter(&$data, $route_name) {
     $oldRouteParms = $oldurl->getRouteParameters();
     $url = Url::fromRoute('entity.webform_submission.canonical', $oldRouteParameters, ['query' => ['maestro' => 1, 'queueid' => $queueID]]);
     $data['tabs'][0]['entity.webform_submission.canonical']['#link']['url'] = $url;
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ *
+ * Declares the 'maestro-webform' token type — a global type with no 'needs-data'
+ * requirement so it appears in the Webform element editor token browser.
+ *
+ * Tokens resolve entity identifier field values by reading the Maestro sitewide
+ * token from the current request URL, so no $data context is needed at render time.
+ *
+ * Token format: [maestro-webform:entity-field:unique_id:field_name]
+ *   entity-field — fixed token name (literal, always present)
+ *   unique_id    — the Entity Identifier machine name configured on the Maestro task
+ *   field_name   — the node field machine name or webform submission element key
+ */
+function maestro_webform_token_info() {
+  $type = [
+    'name' => t('Maestro (Webform task)'),
+    'description' => t('Tokens resolved from Maestro entity identifiers when a webform is rendered via a Maestro task URL. These tokens read the sitewide Maestro token from the URL query string — no extra context required. Use format: [maestro-webform:entity-field:unique_id:field_name].'),
+    // No 'needs-data' — context is derived from the request URL at runtime.
+  ];
+
+  $tokens['entity-field'] = [
+    'name' => t('Entity Identifier field value'),
+    'description' => t('Returns a field value from the entity tracked by a Maestro entity identifier. Format: [maestro-webform:entity-field:unique_id:field_name] — replace unique_id with the identifier machine name configured on the Maestro task, and field_name with the node field or webform element key (e.g. title, field_first_name). Example: [maestro-webform:entity-field:new_article:title].'),
+    'dynamic' => TRUE,
+  ];
+
+  return [
+    'types' => ['maestro-webform' => $type],
+    'tokens' => ['maestro-webform' => $tokens],
+  ];
+}
+
+/**
+ * Implements hook_tokens().
+ *
+ * Resolves 'maestro-webform' tokens and, as a fallback, the legacy
+ * 'maestro:entity-identifier:unique_id:field_name' format (which still works in
+ * notification context via core maestro.module but is also handled here for the
+ * webform task URL context when $data['maestro'] is absent).
+ *
+ * In both cases the queue/process context is derived from the Maestro sitewide
+ * token query parameter on the current request URL.
+ */
+function maestro_webform_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
+  $replacements = [];
+
+  $handles_maestro_webform = ($type === 'maestro-webform');
+  // Also handle the 'maestro' type when core maestro.module has no context set.
+  $handles_maestro_fallback = ($type === 'maestro' && empty($data['maestro']));
+
+  if (!$handles_maestro_webform && !$handles_maestro_fallback) {
+    return $replacements;
+  }
+
+  $config = \Drupal::config('maestro.settings');
+  $sitewideToken = $config->get('maestro_sitewide_token');
+  if (empty($sitewideToken)) {
+    return $replacements;
+  }
+
+  $tokenValue = \Drupal::request()->query->get($sitewideToken, '');
+  if (empty($tokenValue)) {
+    return $replacements;
+  }
+
+  // Vary cache per unique maestro task URL so each task's entity values are
+  // rendered and cached independently.
+  $bubbleable_metadata->addCacheContexts(['url.query_args:' . $sitewideToken]);
+
+  $queueID = MaestroEngine::getQueueIdFromToken($tokenValue);
+  if (!$queueID) {
+    return $replacements;
+  }
+
+  $processID = MaestroEngine::getProcessIdFromQueueId($queueID);
+  if (!$processID) {
+    return $replacements;
+  }
+
+  foreach ($tokens as $name => $original) {
+    $parts = explode(':', $name);
+
+    if ($handles_maestro_webform) {
+      // Primary format shown in the token browser:
+      //   [maestro-webform:entity-field:unique_id:field_name]
+      //   parts[0]=entity-field  parts[1]=unique_id  parts[2]=field_name
+      if (count($parts) === 3 && $parts[0] === 'entity-field') {
+        $value = _maestro_webform_resolve_entity_field($processID, $parts[1], $parts[2]);
+        if ($value !== NULL) {
+          $replacements[$original] = $value;
+        }
+      }
+      // Short-hand (typed directly, not via browser):
+      //   [maestro-webform:unique_id:field_name]
+      elseif (count($parts) === 2 && $parts[0] !== 'entity-field') {
+        $value = _maestro_webform_resolve_entity_field($processID, $parts[0], $parts[1]);
+        if ($value !== NULL) {
+          $replacements[$original] = $value;
+        }
+      }
+    }
+    elseif ($handles_maestro_fallback) {
+      // Legacy fallback: [maestro:entity-identifier:unique_id:field_name]
+      if (count($parts) === 3 && $parts[0] === 'entity-identifier') {
+        $value = _maestro_webform_resolve_entity_field($processID, $parts[1], $parts[2]);
+        if ($value !== NULL) {
+          $replacements[$original] = $value;
+        }
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+/**
+ * Resolves an entity identifier field value for the given process.
+ *
+ * Supports node fields and webform submission elements. Other entity types
+ * can be handled via hook_maestro_webform_tokens_entity_field_value().
+ *
+ * @param int $processID
+ *   The Maestro process ID.
+ * @param string $uniqueIdentifier
+ *   The entity identifier unique_id configured on the Maestro task.
+ * @param string $fieldName
+ *   The field machine name (node) or element key (webform submission).
+ *
+ * @return string|null
+ *   The resolved value, or NULL if the entity or field could not be found.
+ */
+function _maestro_webform_resolve_entity_field(int $processID, string $uniqueIdentifier, string $fieldName): ?string {
+  $identifierData = MaestroEngine::getEntityIdentiferFieldsByUniqueID($processID, $uniqueIdentifier);
+  $entity_type = $identifierData[$uniqueIdentifier]['entity_type'] ?? NULL;
+  $entity_id = $identifierData[$uniqueIdentifier]['entity_id'] ?? NULL;
+
+  if (!$entity_type || !$entity_id) {
+    return NULL;
+  }
+
+  $entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($entity_id);
+  if (!$entity) {
+    return NULL;
+  }
+
+  switch ($entity->getEntityTypeId()) {
+    case 'webform_submission':
+      $submission = WebformSubmission::load($entity->id());
+      if (!$submission) {
+        return NULL;
+      }
+      $value = $submission->getElementData($fieldName);
+      return is_array($value) ? implode(', ', array_filter((array) $value, 'is_scalar')) : (string) $value;
+
+    case 'node':
+      if (!$entity->hasField($fieldName)) {
+        return NULL;
+      }
+      $fieldValue = $entity->get($fieldName)->getValue();
+      return isset($fieldValue[0]['value']) ? (string) $fieldValue[0]['value'] : NULL;
+
+    default:
+      // Allow other modules to handle custom entity types.
+      $results = \Drupal::moduleHandler()->invokeAll(
+        'maestro_webform_tokens_entity_field_value',
+        [$entity, $fieldName]
+      );
+      if (!empty($results)) {
+        return (string) reset($results);
+      }
+      return NULL;
   }
 }
 
