@@ -22,6 +22,9 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageInput;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageInterface;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageOutput;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationOutput;
 use Drupal\ai\OperationType\Moderation\ModerationResponse;
@@ -32,6 +35,7 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
+use Drupal\ai\Traits\OperationType\ImageToImageTrait;
 use Drupal\ai_provider_openai\OpenAiChatMessageIterator;
 use Drupal\ai_provider_openai\OpenAiHelper;
 use OpenAI\Client;
@@ -44,9 +48,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   id: 'openai',
   label: new TranslatableMarkup('OpenAI'),
 )]
-class OpenAiProvider extends OpenAiBasedProviderClientBase {
+class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToImageInterface {
 
   use ChatTrait;
+  use ImageToImageTrait;
 
   /**
    * The image mime types the image endpoints may return, with file extension.
@@ -107,6 +112,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
       'embeddings',
       'moderation',
       'text_to_image',
+      'image_to_image',
       'text_to_speech',
       'speech_to_text',
     ];
@@ -532,6 +538,139 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
   /**
    * {@inheritdoc}
    */
+  public function imageToImage(string|array|ImageToImageInput $input, string $model_id, array $tags = []): ImageToImageOutput {
+    $this->loadClient();
+    // This operation needs the source image (and optionally a mask and a
+    // prompt), so only the structured input object is supported.
+    if (!$input instanceof ImageToImageInput) {
+      throw new AiResponseErrorException('The OpenAI image to image operation requires an ImageToImageInput object.');
+    }
+    $prompt = $input->getPrompt();
+    // The OpenAI edits endpoint always requires a prompt.
+    if (empty($prompt)) {
+      throw new AiResponseErrorException('The OpenAI image to image operation requires a prompt.');
+    }
+    // Moderation.
+    $this->moderationEndpoints($prompt);
+
+    // The SDK uploads the files as multipart form data, so the binaries need
+    // to be written to disk and passed along as file resources.
+    $temporary_files = [];
+    $open_resources = [];
+    try {
+      $image_path = $this->fileSystem->saveData($input->getImageFile()->getBinary(), 'temporary://openai_image_to_image_' . $input->getImageFile()->getFilename(), FileExists::Replace);
+      $temporary_files[] = $image_path;
+      $image_resource = fopen($image_path, 'r');
+      $open_resources[] = $image_resource;
+
+      // Handle parameter naming differences between models.
+      $payload = [
+        'model' => $model_id,
+        'image' => $image_resource,
+        'prompt' => $prompt,
+      ] + $this->configuration;
+
+      // Add the optional mask, if one was provided.
+      $mask = $input->getMask();
+      if ($mask instanceof ImageFile) {
+        $mask_path = $this->fileSystem->saveData($mask->getBinary(), 'temporary://openai_image_to_image_mask_' . $mask->getFilename(), FileExists::Replace);
+        $temporary_files[] = $mask_path;
+        $mask_resource = fopen($mask_path, 'r');
+        $open_resources[] = $mask_resource;
+        $payload['mask'] = $mask_resource;
+      }
+
+      try {
+        $response = $this->client->images()->edit($payload)->toArray();
+      }
+      catch (\Exception $e) {
+        // Try to figure out rate limit issues.
+        if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+          throw new AiRateLimitException($e->getMessage());
+        }
+        if (strpos($e->getMessage(), 'Too Many Requests') !== FALSE) {
+          throw new AiRateLimitException($e->getMessage());
+        }
+        // Try to figure out quota issues.
+        if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+          throw new AiQuotaException($e->getMessage());
+        }
+        else {
+          throw $e;
+        }
+      }
+    }
+    finally {
+      // Always close the opened file handles and remove the temp files.
+      foreach ($open_resources as $resource) {
+        if (is_resource($resource)) {
+          fclose($resource);
+        }
+      }
+      foreach ($temporary_files as $temporary_file) {
+        $this->fileSystem->delete($temporary_file);
+      }
+    }
+
+    if (empty($response['data'][0])) {
+      throw new AiResponseErrorException('No image data found in the response.');
+    }
+
+    // Determine the output format/mime of the edited images. gpt-image-1
+    // allows the format to be configured, everything else returns PNG.
+    $mime_type = 'image/png';
+    $file_ext = 'png';
+    if (isset($payload['output_format'])) {
+      switch ($payload['output_format']) {
+        case 'jpeg':
+          $mime_type = 'image/jpeg';
+          $file_ext = 'jpeg';
+          break;
+
+        case 'webp':
+          $mime_type = 'image/webp';
+          $file_ext = 'webp';
+          break;
+      }
+    }
+
+    $images = [];
+    // Process the image response.
+    foreach ($response['data'] as $data) {
+      if (isset($data['b64_json'])) {
+        $images[] = new ImageFile(base64_decode($data['b64_json']), $mime_type, 'openai_image_to_image.' . $file_ext);
+      }
+      else {
+        $this->logger->error('No valid image data found in response');
+      }
+    }
+
+    // If no images were successfully created, throw an error.
+    if (empty($images)) {
+      throw new AiResponseErrorException('Failed to process any valid images from the API response.');
+    }
+    return new ImageToImageOutput($images, $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function requiresImageToImagePrompt(string $model_id): bool {
+    // The OpenAI image edits endpoint always requires a prompt.
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function hasImageToImageMask(string $model_id): bool {
+    // OpenAI supports an optional mask to control which areas are edited.
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechOutput {
     $this->loadClient();
     // Normalize the input if needed.
@@ -666,6 +805,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
         'chat_with_tools' => 'gpt-5.2',
         'chat_with_structured_response' => 'gpt-5.2',
         'text_to_image' => 'gpt-image-1',
+        'image_to_image' => 'gpt-image-1',
         'embeddings' => 'text-embedding-3-small',
         'moderation' => 'omni-moderation-latest',
         'text_to_speech' => 'tts-1-hd',
@@ -787,6 +927,14 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase {
 
         case 'text_to_image':
           if (!preg_match('/^(clip|gpt-image)/i', $model['id'])) {
+            continue 2;
+          }
+          break;
+
+        case 'image_to_image':
+          // Only dall-e-2 and gpt-image models support the edits endpoint.
+          // dall-e-3 can only generate images from text, not edit them.
+          if (!preg_match('/^(dall-e-2|gpt-image)/i', $model['id'])) {
             continue 2;
           }
           break;

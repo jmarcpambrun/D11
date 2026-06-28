@@ -122,7 +122,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
 
         // Get user name.
         $user = $this->entityTypeManager->getStorage('user')->load($log_item['uid']);
-        $log_item['user'] = $user->getDisplayName();
+        $log_item['user'] = $user ? $user->getDisplayName() : $this->t('Anonymous');
+
+        // Normalize log comment to a single string.
+        $log_item['comment'] = $this->normalizeLogComment(isset($log_item['comment']) ? $log_item['comment'] : '');
 
         // Date format.
         $created_date = date('r', intval($log_item['created']));
@@ -138,6 +141,31 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     ];
 
     return new Response($this->renderer->render($build));
+  }
+
+  /**
+   * Normalize burndown log comment payloads to a plain string.
+   *
+   * @param mixed $comment
+   *   The comment payload from the burndown_log field.
+   *
+   * @return string
+   *   The normalized comment value.
+   */
+  protected function normalizeLogComment($comment) {
+    if (is_array($comment)) {
+      if (isset($comment['value']) && is_scalar($comment['value'])) {
+        return (string) $comment['value'];
+      }
+
+      return '';
+    }
+
+    if (is_scalar($comment)) {
+      return (string) $comment;
+    }
+
+    return '';
   }
 
   /**

@@ -557,14 +557,34 @@ class BurndownDrushCommands extends DrushCommands {
    *
    * @command burndown:add_task
    * @aliases burndown-add-task bdat
-   * @usage burndown:add_task
+   * @option shortcode The shortcode for the project.
+   * @option task_name The name or short description of the task.
+   * @option assignee The username of the person to assign the task to.
+   * @option reported_by The username of the person reporting the task.
+   * @option priority The priority of the task (Trivial, Low, Medium, High, Critical, Blocker).
+   * @option estimate The estimate for the size of the task (depends on the Project's chosen scale).
+   * @option description A detailed description of the task.
+   * @usage burndown:add_task --shortcode=PROJ --task_name="New Task" --assignee=john --reported_by=admin --priority=Medium --estimate=3 --description="This is a detailed description of the task."
    */
-  public function add_task() {
+  public function add_task($options = [
+    'shortcode' => self::REQ,
+    'task_name' => self::REQ,
+    'assignee' => self::REQ,
+    'reported_by' => self::REQ,
+    'priority' => self::REQ,
+    'estimate' => self::REQ,
+    'description' => self::REQ,
+  ]) {
     // Title of the command.
     $this->io()->title('Add a Burndown Task');
 
-    // Get shortcode from user.
-    $shortcode = $this->io()->ask('What is the shortcode (i.e. 4 or 5 letter code) for the project?');
+    if (!empty($options['shortcode'])) {
+      $shortcode = $options['shortcode'];
+    }
+    else {
+      // Get shortcode from user.
+      $shortcode = $this->io()->ask('What is the shortcode (i.e. 4 or 5 letter code) for the project?');
+    }
 
     // Check for blank shortcode.
     if ($shortcode == '') {
@@ -585,16 +605,26 @@ class BurndownDrushCommands extends DrushCommands {
     // Default backlog swimlane.
     $backlog = Swimlane::getBacklogFor($shortcode);
 
-    // Get short description (i.e. name) from user.
-    $name = $this->io()->ask('What is the name or short description (max 50 chars) of the task?');
+    if (!empty($options['task_name'])) {
+      $name = $options['task_name'];
+    }
+    else {
+      // Get short title (i.e. name) of the task from user.
+      $name = $this->io()->ask('What is the name or short description (max 50 chars) of the task?');
+    }
     if ($name == '') {
       $this->io()->caution('Please specify the name or short description of the task.');
       return;
     }
     $name = substr($name, 0, 50);
 
-    // Get reported by user name from the user.
-    $reported_by = $this->io()->ask('What is the "reported by" username?', 'admin');
+    if (!empty($options['reported_by'])) {
+      $reported_by = $options['reported_by'];
+    }
+    else {
+      // Get reported by user name from the user.
+      $reported_by = $this->io()->ask('What is the "reported by" username?', 'admin');
+    }
     $reported_by_user = user_load_by_name($reported_by);
     if ($reported_by_user === FALSE) {
       $this->io()->caution('User account does not exist.');
@@ -603,7 +633,13 @@ class BurndownDrushCommands extends DrushCommands {
 
     // Get assigned to (optional) name from the user.
     $assigned_to_id = NULL;
-    $assigned_to = $this->io()->ask('What is the "assigned to" username (optional)?');
+    if (!empty($options['assignee'])) {
+      $assigned_to = $options['assignee'];
+    }
+    else {
+      $assigned_to = $this->io()->ask('What is the "assigned to" username (optional)?');
+    }
+
     if (!empty($assigned_to)) {
       $assigned_to_user = user_load_by_name($assigned_to);
       if ($assigned_to_user === FALSE) {
@@ -622,17 +658,37 @@ class BurndownDrushCommands extends DrushCommands {
       'Critical',
       'Blocker',
     ];
-    $priority = $this->io()->choice('What is the priority of the task?', $priorities, $priorities[0]);
+    if (!empty($options['priority'])) {
+      $priority = $options['priority'];
+      // Check if priority is valid.
+      if (!in_array($priority, $priorities)) {
+        $this->io()->caution('Invalid priority specified. Please use one of the following: ' . implode(', ', $priorities));
+        return;
+      }
+    }
+    else {
+      $priority = $this->io()->choice('What is the priority of the task?', $priorities, $priorities[0]);
+    }
 
     // Get estimate from user.
     $estimate_type = $project->getEstimateType();
-    $options = $project->getEstimateSizes();
+    $size_options = $project->getEstimateSizes();
     $estimate_options = ['None'];
-    foreach ($options as $option) {
+    foreach ($size_options as $option) {
       $estimate_option = $option . ' (' . $estimate_type . ')';
       array_push($estimate_options, $estimate_option);
     }
-    $estimate = $this->io()->choice('What is the estimate (' . $estimate_type . ') for the size of the task?', $estimate_options, $estimate_options[0]);
+    if (!empty($options['estimate'])) {
+      $estimate = $options['estimate'];
+      // Check if estimate is valid.
+      if (!in_array($estimate, $size_options)) {
+        $this->io()->caution('Invalid estimate specified. Please use one of the following: ' . implode(', ', $estimate_options));
+        return;
+      }
+    }
+    else {
+      $estimate = $this->io()->choice('What is the estimate (' . $estimate_type . ') for the size of the task?', $estimate_options, $estimate_options[0]);
+    }
     $estimate = $estimate_options[$estimate];
     if ($estimate == 'None') {
       $estimate = '_none';
@@ -645,13 +701,18 @@ class BurndownDrushCommands extends DrushCommands {
       }
     }
 
-    // Check if user wants to add detailed description.
-    $add_desc = $this->io()->confirm('Do you want to add a detailed description of the task?', FALSE);
-    if ($add_desc) {
-      $description = $this->io()->ask('Description');
+    if (!empty($options['description'])) {
+      $description = $options['description'];
     }
     else {
-      $description = '';
+      // Check if user wants to add detailed description.
+      $add_desc = $this->io()->confirm('Do you want to add a detailed description of the task?', FALSE);
+      if ($add_desc) {
+        $description = $this->io()->ask('Description');
+      }
+      else {
+        $description = '';
+      }
     }
 
     // Try to add the task.
@@ -1122,14 +1183,30 @@ class BurndownDrushCommands extends DrushCommands {
    *
    * @command burndown:add_project
    * @aliases burndown-add-project bdap
-   * @usage burndown:add_project
+   * @option name The name of the project.
+   * @option shortcode The shortcode for the project.
+   * @option username The username of the project owner.
+   * @option board_type The type of board for the project (kanban or sprint).
+   * @option estimate_type The type of estimation for the project (geometric, tshirt, dot).
+   * @usage burndown:add_project --name="Project Name" --shortcode="PRJ" --username="admin" --board_type="kanban" --estimate_type="geometric"
    */
-  public function add_project() {
+    public function add_project(array $options = [
+      'name' => self::REQ,
+      'shortcode' => self::REQ,
+      'username' => self::REQ,
+      'board_type' => self::REQ,
+      'estimate_type' => self::REQ,
+      ]) {
     // Title of the command.
     $this->io()->title('Add a Burndown Project');
 
-    // Get project name from user.
+    if (!empty($options['name'])) {
+      $name = $options['name'];
+    }
+    else {
+      // Get project name from user.
     $name = $this->io()->ask('What is the name of the project (max 50 chars)?');
+    }
 
     // Check for blank name.
     if ($name == '') {
@@ -1140,8 +1217,13 @@ class BurndownDrushCommands extends DrushCommands {
       $name = substr($name, 0, 50);
     }
 
-    // Get shortcode from user.
-    $shortcode = $this->io()->ask('What is the shortcode (i.e. 4 or 5 letter code) for the project?');
+    if (!empty($options['shortcode'])) {
+      $shortcode = $options['shortcode'];
+    }
+    else {
+      // Get shortcode from user.
+      $shortcode = $this->io()->ask('What is the shortcode (i.e. 4 or 5 letter code) for the project?');
+    }
 
     // Check for blank shortcode.
     if ($shortcode == '') {
@@ -1166,8 +1248,14 @@ class BurndownDrushCommands extends DrushCommands {
       }
     }
 
+    if (!empty($options['username'])) {
+      $username = $options['username'];
+    }
+    else {
     // Get project owner from user.
     $username = $this->io()->ask('What is the username of the project owner?', 'admin');
+    }
+
     $user = user_load_by_name($username);
     if ($user === FALSE) {
       $this->io()->caution('User account does not exist.');
@@ -1179,15 +1267,34 @@ class BurndownDrushCommands extends DrushCommands {
       'kanban' => 'Kanban',
       'sprint' => 'Sprint',
     ];
-    $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, $board_types[0]);
-
+    if (!empty($options['board_type'])) {
+      $board_type = $options['board_type'];
+      $board_type = strtolower($board_type);
+      if (!in_array($board_type, array_keys($board_types))) {
+        $this->io()->caution('Invalid board type specified. Must be either "kanban" or "sprint".');
+        return;
+      }
+    }
+    else {
+      $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, $board_types[0]);
+    }
     // Estimate type.
     $estimate_types = [
       'geometric' => 'Geometric',
       'tshirt' => 'T-Shirt Sizing',
       'dot' => 'Dot Sizing',
     ];
-    $estimate_type = $this->io()->choice('What type of estimation do you want to use for this project?', $estimate_types, $estimate_types[0]);
+    if (!empty($options['estimate_type'])) {
+      $estimate_type = $options['estimate_type'];
+      $estimate_type = strtolower($estimate_type);
+      if (!in_array($estimate_type, array_keys($estimate_types))) {
+        $this->io()->caution('Invalid estimate type specified. Must be either "geometric", "tshirt", or "dot".');
+        return;
+      }
+    }
+    else {
+      $estimate_type = $this->io()->choice('What type of estimation do you want to use for this project?', $estimate_types, $estimate_types[0]);
+    }
 
     // Try to add the project.
     $project = Project::create([
@@ -1260,6 +1367,8 @@ class BurndownDrushCommands extends DrushCommands {
       'kanban' => 'Kanban',
       'sprint' => 'Sprint',
     ];
+
+
     $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, $project->getBoardType());
 
     // Estimate type.

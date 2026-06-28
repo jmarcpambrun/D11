@@ -1,0 +1,58 @@
+services:
+  php:
+    # Specify the version of Drupal you wish to use for Tugboat below.
+    image: tugboatqa/drupal:11
+    default: true
+    http: false
+    depends: mysql
+    commands:
+      update: |
+        set -eux
+        # This is an environment variable we added in the Dockerfile that
+        # provides the path to Drupal composer root (not the web root).
+        cd $DRUPAL_COMPOSER_ROOT
+        # We need to change the minimum stability to dev to use the path
+        composer config minimum-stability dev
+        # Make composer know what to do with Packagist packages.
+        composer config -g repo.packagist composer https://packagist.org
+        # We configure the Drupal project to use the checkout of the module as a
+        # Composer package repository.
+        composer config repositories.tugboat path $TUGBOAT_ROOT
+        # Now we can require this module
+        composer require drupal/burndown
+        # Install Drupal on the site.
+        vendor/bin/drush \
+          --yes \
+          --db-url=mysql://tugboat:tugboat@mysql:3306/tugboat \
+          --site-name="Live preview for ${TUGBOAT_PREVIEW_NAME}" \
+          --account-pass=admin \
+          site:install standard
+        # Add tugboat URLs to the Drupal trusted host patterns.
+        echo "\$settings['trusted_host_patterns'] = ['\.tugboatqa\.com\$'];" >> $DOCROOT/sites/default/settings.php
+        # Set up the files directory permissions.
+        mkdir -p $DRUPAL_DOCROOT/sites/default/files
+        chgrp -R www-data $DRUPAL_DOCROOT/sites/default/files
+        chmod 2775 $DRUPAL_DOCROOT/sites/default/files
+        chmod -R g+w $DRUPAL_DOCROOT/sites/default/files
+        # Enable the module.
+        vendor/bin/drush --yes pm:enable burndown
+        # Create a sample kanban project and tasks.
+        vendor/bin/drush burndown:add_project --name="Sample Kanban Project" --shortcode="SKAN" --username="admin" --board_type="kanban" --estimate_type="geometric"
+        vendor/bin/drush burndown:add_task --shortcode=SKAN --task_name="New Task on Kanban" --assignee=admin --reported_by=admin --priority=Medium --estimate=3 --description="This is a description of the task."
+        vendor/bin/drush burndown:add_task --shortcode=SKAN --task_name="An easy Kanban task" --assignee=admin --reported_by=admin --priority=High --estimate=1 --description="A more urgent task."
+
+        # Create a sample sprint project and tasks.
+        vendor/bin/drush burndown:add_project --name="Sample Sprint Project" --shortcode="SSPR" --username="admin" --board_type="sprint" --estimate_type="tshirt"
+        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="New Task on Sprint" --assignee=admin --reported_by=admin --priority=Medium --estimate=3 --description="This is a description of the task."
+        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="An easy Sprint task" --assignee=admin --reported_by=admin --priority=High --estimate=1 --description="A more urgent task."
+
+      build: |
+        set -eux
+        cd $DRUPAL_COMPOSER_ROOT
+        composer install --optimize-autoloader
+        # Update this module, including all dependencies.
+        composer update drupal/burndown --with-all-dependencies
+        vendor/bin/drush --yes updb
+        vendor/bin/drush cache:rebuild
+  mysql:
+    image: tugboatqa/mariadb

@@ -95,6 +95,40 @@ text_to_image:
           - '1536x1024'
           - '1024x1792'
           - '1792x1024'
+image_to_image:
+  input:
+    description: 'The image to edit together with an editing prompt.'
+    type: 'string'
+    default: ''
+    required: true
+  authentication:
+    description: 'OpenAI API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    n:
+      label: 'Number of Images'
+      description: 'The number of images to generate.'
+      type: 'integer'
+      default: 1
+      required: false
+      constraints:
+        min: 1
+        max: 10
+    size:
+      label: 'Size'
+      description: 'The size of the images that will be generated.'
+      type: 'string'
+      default: '1024x1024'
+      required: false
+      constraints:
+        options:
+          - '1024x1024'
+          - '1024x1536'
+          - '1536x1024'
+          - '1024x1792'
+          - '1792x1024'
 text_to_speech:
   input:
     description: 'Textual representation of the speech.'

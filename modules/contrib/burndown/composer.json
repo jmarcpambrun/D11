@@ -1,5 +1,5 @@
 {
-    "name": "burndown",
+    "name": "drupal/burndown",
     "type": "drupal-module",
     "description": "Burndown Project Management",
     "keywords": [
