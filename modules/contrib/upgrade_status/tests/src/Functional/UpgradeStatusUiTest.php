@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\upgrade_status\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 
 /**
@@ -9,7 +11,8 @@ use Drupal\Core\Url;
  *
  * @group upgrade_status
  */
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[RunTestsInSeparateProcesses]
+#[Group('upgrade_status')]
 class UpgradeStatusUiTest extends UpgradeStatusTestBase {
 
   /**

@@ -4,7 +4,8 @@
  * @file
  * Install, update, and uninstall functions for the Upgrade Status module.
  */
-
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\Core\Extension\Requirement\RequirementSeverity;
 use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
 
 /**
@@ -19,7 +20,7 @@ function upgrade_status_requirements($phase) {
       return [
         'upgrade_status' => [
           'description' => t('External dependencies for Upgrade Status are not available. Composer must be used to download the module with dependencies. See <a href="@url">the Upgrade Status project page</a> for instructions.', ['@url' => 'https://drupal.org/project/upgrade_status']),
-          'severity' => REQUIREMENT_ERROR,
+          'severity' => DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.2.0', fn() => RequirementSeverity::Error, fn() => REQUIREMENT_ERROR),
         ],
       ];
     }

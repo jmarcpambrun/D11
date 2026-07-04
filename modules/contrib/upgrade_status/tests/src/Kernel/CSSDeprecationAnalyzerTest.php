@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\upgrade_status\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\upgrade_status\CSSDeprecationAnalyzer;
 
@@ -11,7 +13,8 @@ use Drupal\upgrade_status\CSSDeprecationAnalyzer;
  * @group upgrade_status
  * @coversDefaultClass \Drupal\upgrade_status\CSSDeprecationAnalyzer
  */
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[RunTestsInSeparateProcesses]
+#[Group('upgrade_status')]
 class CSSDeprecationAnalyzerTest extends KernelTestBase {
 
   /**

@@ -19,3 +19,4 @@ subcomponent
 subextension
 sublist
 updatev
+pathAliasWhitelistRebuild

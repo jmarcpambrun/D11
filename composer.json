@@ -129,7 +129,7 @@
         "drupal/typed_data": "1.0-beta2|^2.1",
         "drupal/unlimited_number": "2.0.4",
         "drupal/update_config_entity": "1.0",
-        "drupal/upgrade_status": "^5.0-alpha2",
+        "drupal/upgrade_status": "^5.0-alpha",
         "drupal/views_bulk_operations": "^4.4.5",
         "drupal/views_data_export": "^1.9",
         "drupal/views_rss": "2.4",

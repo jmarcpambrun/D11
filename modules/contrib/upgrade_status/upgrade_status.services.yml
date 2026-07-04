@@ -51,3 +51,7 @@ services:
   logger.channel.upgrade_status:
     parent: logger.channel_base
     arguments: ['upgrade_status']
+
+  Drupal\upgrade_status\Hook\UpgradeStatusHooks:
+    class: Drupal\upgrade_status\Hook\UpgradeStatusHooks
+    autowire: true

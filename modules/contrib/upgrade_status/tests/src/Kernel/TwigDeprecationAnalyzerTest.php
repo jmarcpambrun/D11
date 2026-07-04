@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\upgrade_status\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\upgrade_status\DeprecationMessage;
 
@@ -10,7 +12,8 @@ use Drupal\upgrade_status\DeprecationMessage;
  *
  * @group upgrade_status
  */
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[RunTestsInSeparateProcesses]
+#[Group('upgrade_status')]
 final class TwigDeprecationAnalyzerTest extends KernelTestBase {
 
   /**

@@ -2,12 +2,16 @@
 
 namespace Drupal\Tests\upgrade_status\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+
 /**
  * Tests analysing sample projects.
  *
  * @group upgrade_status
  */
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[RunTestsInSeparateProcesses]
+#[Group('upgrade_status')]
 class UpgradeStatusAnalyzeTest extends UpgradeStatusTestBase {
 
   /**
@@ -204,13 +208,15 @@ class UpgradeStatusAnalyzeTest extends UpgradeStatusTestBase {
 
     $report = $key_value->get('upgrade_status_test_library');
     $this->assertNotEmpty($report);
-    $this->assertEquals(5, $report['data']['totals']['file_errors']);
+    $this->assertEquals(6, $report['data']['totals']['file_errors']);
     $this->assertCount(3, $report['data']['files']);
     $file = reset($report['data']['files']);
     $this->assertEquals("The 'library' library is depending on a deprecated library. The \"upgrade_status_test_library/deprecated_library\" asset library is deprecated for testing.", $file['messages'][0]['message']);
     $this->assertEquals(0, $file['messages'][0]['line']);
     $this->assertEquals("The 'library' library is depending on a deprecated library. The \"upgrade_status_test_twig/deprecated_library\" asset library is deprecated for testing.", $file['messages'][1]['message']);
     $this->assertEquals(0, $file['messages'][1]['line']);
+    $this->assertEquals("The invalid_library_without_extension library does not have an extension name and is therefore not valid.", $file['messages'][2]['message']);
+    $this->assertEquals(0, $file['messages'][2]['line']);
     $file = $report['data']['files'][array_keys($report['data']['files'])[1]];
     $this->assertEquals('The referenced library is deprecated. The "upgrade_status_test_library/deprecated_library" asset library is deprecated for testing.', $file['messages'][0]['message']);
     $this->assertEquals(13, $file['messages'][0]['line']);

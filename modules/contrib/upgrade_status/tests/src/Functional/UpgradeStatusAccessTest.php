@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\upgrade_status\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
@@ -10,7 +12,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group upgrade_status
  */
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[RunTestsInSeparateProcesses]
+#[Group('upgrade_status')]
 class UpgradeStatusAccessTest extends BrowserTestBase {
 
   /**
