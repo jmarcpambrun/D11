@@ -11,7 +11,7 @@ dependencies:
   - drupal:user
   - drupal:views
 
-# Information added by Drupal.org packaging script on 2026-03-13
-version: '3.0.5'
+# Information added by Drupal.org packaging script on 2026-07-03
+version: '3.0.6'
 project: 'bpmn_io'
-datestamp: 1773411176
+datestamp: 1783080705

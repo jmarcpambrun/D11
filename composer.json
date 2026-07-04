@@ -34,7 +34,7 @@
         "drupal/backward_compatibility": "1.0.2",
         "drupal/bartik": "1.1.0",
         "drupal/book": "^3.0.7",
-        "drupal/bpmn_io": "^3.0.5",
+        "drupal/bpmn_io": "^3.0",
         "drupal/burndown": "^1.0.61",
         "drupal/captcha": "2.0.10",
         "drupal/charts": "^5.2",

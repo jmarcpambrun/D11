@@ -1,5 +1,5 @@
 include:
-  - remote: 'https://gitlab.lakedrops.com/gitlab-ci-cd/drupal/-/raw/main/mr-proposed-changes.yml'
+#  - remote: 'https://gitlab.lakedrops.com/gitlab-ci-cd/drupal/-/raw/main/mr-proposed-changes.yml'
   - project: $_GITLAB_TEMPLATES_REPO
     ref: $_GITLAB_TEMPLATES_REF
     file:
@@ -7,12 +7,12 @@ include:
       - '/includes/include.drupalci.variables.yml'
       - '/includes/include.drupalci.workflows.yml'
 
-BuildApp:
-  extends: '.mr-proposed-changes'
-  script:
-    - cd build
-    - npm update --save
-    - npm run all
+#BuildApp:
+#  extends: '.mr-proposed-changes'
+#  script:
+#    - cd build
+#    - npm update --save
+#    - npm run all
 
 variables:
   _CSPELL_IGNORE_PATHS: '"build/", "data/empty.bpmn", "css/", "js/", "webpack/", "**/eca.eca.*.yml", "**/eca.model.*.yml", "**/ConverterTest.php", "tests/**/*.js"'

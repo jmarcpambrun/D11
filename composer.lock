@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "461054de31bb54fc3e734c0961d0b81d",
+    "content-hash": "e744138619b3b38d0dc16b0d34e2a78c",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3285,20 +3285,20 @@
         },
         {
             "name": "drupal/bpmn_io",
-            "version": "3.0.5",
+            "version": "3.0.6",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/bpmn_io.git",
-                "reference": "3.0.5"
+                "reference": "3.0.6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.5.zip",
-                "reference": "3.0.5",
-                "shasum": "0f55b30f77d0dc365b8caf883ad4b9b9e01c49c8"
+                "url": "https://ftp.drupal.org/files/projects/bpmn_io-3.0.6.zip",
+                "reference": "3.0.6",
+                "shasum": "dd80e7d7129796f8f23f383236e17326e919f7c3"
             },
             "require": {
-                "drupal/core": "^11.2",
+                "drupal/core": "^11.2 || ^12",
                 "drupal/modeler_api": "^1.0",
                 "ext-dom": "*",
                 "mtownsend/xml-to-array": "^2.0",
@@ -3310,8 +3310,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.5",
-                    "datestamp": "1773411172",
+                    "version": "3.0.6",
+                    "datestamp": "1783080701",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
