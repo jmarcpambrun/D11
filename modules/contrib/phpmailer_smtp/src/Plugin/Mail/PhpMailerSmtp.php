@@ -290,6 +290,8 @@ class PhpMailerSmtp extends PHPMailer implements MailInterface, ContainerFactory
     $this->CharSet     = 'utf-8';
     $this->ContentType = 'text/plain';
     $this->Encoding    = '8bit';
+    $this->Body        = '';
+    $this->AltBody     = '';
 
     // Set default From name.
     $from_name = $this->config->get('smtp_fromname');

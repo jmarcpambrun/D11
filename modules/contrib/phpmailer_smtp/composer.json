@@ -5,7 +5,7 @@
   "homepage": "https://drupal.org/project/phpmailer_smtp",
   "license": "GPL-2.0+",
   "require": {
-    "phpmailer/phpmailer": "^7.0.0"
+    "phpmailer/phpmailer": "^7.1.1"
   },
   "authors": [
     {

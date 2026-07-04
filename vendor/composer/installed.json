@@ -8637,28 +8637,28 @@
         },
         {
             "name": "drupal/phpmailer_smtp",
-            "version": "2.4.0",
-            "version_normalized": "2.4.0.0",
+            "version": "2.4.1",
+            "version_normalized": "2.4.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/phpmailer_smtp.git",
-                "reference": "2.4.0"
+                "reference": "2.4.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/phpmailer_smtp-2.4.0.zip",
-                "reference": "2.4.0",
-                "shasum": "86055572b0f9b4302be6306dbdfa8adb7c917f8e"
+                "url": "https://ftp.drupal.org/files/projects/phpmailer_smtp-2.4.1.zip",
+                "reference": "2.4.1",
+                "shasum": "46b031d9ad43aa080f2caab972d349f03dd4ff02"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11",
-                "phpmailer/phpmailer": "^7.0.0"
+                "phpmailer/phpmailer": "^7.1.1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.4.0",
-                    "datestamp": "1760563798",
+                    "version": "2.4.1",
+                    "datestamp": "1783029957",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"

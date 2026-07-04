@@ -26,7 +26,7 @@ function phpmailer_smtp_requirements($phase) {
     ];
   }
   else {
-    $required_version = '7.0.0';
+    $required_version = '7.1.1';
     $installed_version = $mail::VERSION;
     $requirements['phpmailer_smtp'] = [
       'title' => (string) t('PHPMailer library'),
