@@ -22,7 +22,8 @@
     "drupal/entity_browser_block": "^2.0",
     "drupal/inline_entity_form": "^3.0@RC",
     "drupal/redirect": "^1.11",
-    "drupal/trash": "^3.0.22"
+    "drupal/trash": "^3.0.22",
+    "drush/drush": "^13.0 || ^14.0"
   },
   "extra": {
     "drush": {

@@ -65,7 +65,7 @@
         "drupal/entity_print": "2.18",
         "drupal/entity_reference_revisions": "1.14",
         "drupal/entity_update": "3.0.1",
-        "drupal/entity_usage": "^5.0-alpha1",
+        "drupal/entity_usage": "^5.0-beta",
         "drupal/eu_cookie_compliance": "1.30-RC2",
         "drupal/feeds": "3.2.0",
         "drupal/feeds_ex": "1.0-beta5",

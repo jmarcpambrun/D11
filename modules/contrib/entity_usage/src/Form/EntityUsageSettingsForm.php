@@ -12,6 +12,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\RedundantEditableConfigNamesTrait;
 use Drupal\entity_usage\Controller\ListUsageController;
 use Drupal\entity_usage\EntityUsageTrackManager;
+use Drupal\entity_usage\SiteDomains;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -60,16 +61,18 @@ class EntityUsageSettingsForm extends ConfigFormBase {
     $tabs_options = [];
     $source_options = [];
     foreach ($all_entity_types as $entity_type) {
-      if (($entity_type instanceof ContentEntityTypeInterface)) {
-        $content_entity_types[$entity_type->id()] = $entity_type->getLabel();
-      }
-      $entity_type_options[$entity_type->id()] = $entity_type->getLabel();
-      if ($entity_type->hasLinkTemplate('canonical') || $entity_type->hasLinkTemplate('edit-form')) {
-        $tabs_options[$entity_type->id()] = $entity_type->getLabel();
-      }
+      if ($entity_type->hasKey('id')) {
+        if (($entity_type instanceof ContentEntityTypeInterface)) {
+          $content_entity_types[$entity_type->id()] = $entity_type->getLabel();
+        }
+        $entity_type_options[$entity_type->id()] = $entity_type->getLabel();
+        if ($entity_type->hasLinkTemplate('canonical') || $entity_type->hasLinkTemplate('edit-form')) {
+          $tabs_options[$entity_type->id()] = $entity_type->getLabel();
+        }
 
-      if ($this->usageTrackManager->isEntityTypeSource($entity_type)) {
-        $source_options[$entity_type->id()] = $entity_type->getLabel();
+        if ($this->usageTrackManager->isEntityTypeSource($entity_type)) {
+          $source_options[$entity_type->id()] = $entity_type->getLabel();
+        }
       }
     }
 
@@ -259,12 +262,12 @@ class EntityUsageSettingsForm extends ConfigFormBase {
     $form['generic_settings']['site_domains'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Domains for this website'),
-      '#description' => $this->t("A comma or new-line separated list of domain names for this website. Absolute URL's in content will be checked against these domains to allow usage tracking."),
+      '#description' => $this->t("A list of domain names for this website. Absolute URLs in content are matched against these domains to identify internal links and track their usage. If Drupal is installed in a subdirectory, include the path: <em>example.com/subdir</em>. Enter one value per line, e.g. <em>example.com</em> or <em>example.com/blog</em>."),
       '#config_target' => new ConfigTarget(
         'entity_usage.settings',
         'site_domains',
-        fn($value) => implode("\r\n", $value ?: []),
-        fn($value) => array_values(array_filter(explode(',', preg_replace('/[\s, ]/', ',', $value))))
+        self::domainsConfigToForm(...),
+        self::domainsFormToConfig(...),
       ),
     ];
     $form['generic_settings']['usage_controller_items_per_page'] = [
@@ -281,6 +284,34 @@ class EntityUsageSettingsForm extends ConfigFormBase {
     ];
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * Callback to convert config to form for the site domains config target.
+   *
+   * @param array|null $domains
+   *   The site domains config.
+   *
+   * @return string
+   *   The site domains config as a string.
+   */
+  private static function domainsConfigToForm(?array $domains): string {
+    $domains = array_map(fn ($domain) => rtrim(idn_to_utf8($domain['host'], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) . $domain['path'], '/'), $domains ?? []);
+    return implode("\r\n", $domains);
+  }
+
+  /**
+   * Callback to convert form to config for the site domains config target.
+   *
+   * @param string $domains
+   *   The site domains form data.
+   *
+   * @return list<array{host:string, path:string}>
+   *   The site domains config as an array.
+   */
+  private static function domainsFormToConfig(string $domains): array {
+    $domains = array_values(array_filter(explode(',', preg_replace('/[\s, ]/', ',', $domains))));
+    return SiteDomains::stringsToConfig($domains);
   }
 
 }

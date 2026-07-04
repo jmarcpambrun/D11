@@ -187,24 +187,7 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
    */
   protected function allowSourceEntityTracking(EntityInterface $entity): bool {
     $entity_type = $entity->getEntityType();
-    $enabled_source_entity_types = $this->config->get('track_enabled_source_entity_types');
-    if (!is_array($enabled_source_entity_types)
-      && $entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface')
-      && !in_array($entity_type->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE)
-    ) {
-      // When no settings are defined, track all content entities by default,
-      // except for inline entities (e.g. paragraphs).
-      return TRUE;
-    }
-    elseif (is_array($enabled_source_entity_types)
-      && in_array($entity_type->id(), $enabled_source_entity_types, TRUE)
-      && !in_array($entity_type->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE)
-    ) {
-      // When settings are defined, track listed content entities, except for
-      // inline entities (e.g. paragraphs).
-      return TRUE;
-    }
-    return FALSE;
+    return in_array($entity_type->id(), $this->trackManager->getSourceEntityTypeIds(), TRUE);
   }
 
   /**
@@ -219,10 +202,11 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
   protected function allowTargetEntityTracking(EntityInterface $entity): bool {
     $enabled_target_entity_types = $this->config->get('track_enabled_target_entity_types');
     if (!is_array($enabled_target_entity_types)) {
+      $entity_type = $entity->getEntityType();
       // When no settings are defined, track all entity types by default,
       // except inline entities (e.g. paragraphs) which are handled by their
       // respective inline entity usage tracking plugins.
-      return !in_array($entity->getEntityType()->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE);
+      return $entity_type->hasKey('id') && !in_array($entity_type->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE);
     }
     return in_array($entity->getEntityTypeId(), $enabled_target_entity_types, TRUE) && !in_array($entity->getEntityType()->id(), $this->trackManager->getInlineEntityTypeIds(), TRUE);
   }

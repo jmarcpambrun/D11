@@ -3,11 +3,9 @@
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Batch\BatchBuilder;
-use Drupal\Core\Config\Config;
-use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Statement\FetchAs;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
@@ -76,9 +74,8 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    * Creates a EntityUsageBatchManager object.
    */
   final public function __construct(
-    private EntityTypeManagerInterface $entityTypeManager,
     TranslationInterface $stringTranslation,
-    private ConfigFactoryInterface $configFactory,
+    private EntityUsageTrackManager $trackManager,
     private ?EntityUsageInterface $entityUsage = NULL,
   ) {
     $this->setStringTranslation($stringTranslation);
@@ -134,7 +131,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       $batch->addOperation('\Drupal\entity_usage\EntityUsageBatchManager::createBulkTable');
     }
 
-    foreach (self::getEntityTypesToTrack($this->configFactory->get('entity_usage.settings'), $this->entityTypeManager) as $entity_type_id) {
+    foreach ($this->trackManager->getSourceEntityTypeIds() as $entity_type_id) {
       $batch->addOperation(
         '\Drupal\entity_usage\EntityUsageBatchManager::updateSourcesBatchWorker',
         [$entity_type_id, $keep_existing_records],
@@ -246,16 +243,18 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         $context['sandbox']['progress'] = 0;
         $context['sandbox']['total'] = $database->select(static::BULK_TABLE_NAME)->countQuery()->execute()->fetchField();
       }
-      // Should we trust that the database will return in a consistent order?
       $results = $database
         ->select(static::BULK_TABLE_NAME)
         ->fields(static::BULK_TABLE_NAME)
         ->range($context['sandbox']['progress'], 200)
+        ->orderBy('usage_id')
         ->execute()
-        ->fetchAll(\PDO::FETCH_ASSOC);
+        ->fetchAll(FetchAs::Associative);
       foreach ($results as $insert) {
         $context['sandbox']['progress']++;
-        $event = new EntityUsageEvent($insert['target_id'], $insert['target_type'], $insert['source_id'], $insert['source_type'], $insert['source_langcode'], $insert['source_vid'], $insert['method'], $insert['field_name'], $insert['count']);
+        $target_id_column = (int) $insert['target_id'] > 0 ? 'target_id' : 'target_id_string';
+        $source_id_column = (int) $insert['source_id'] > 0 ? 'source_id' : 'source_id_string';
+        $event = new EntityUsageEvent($insert[$target_id_column], $insert['target_type'], $insert[$source_id_column], $insert['source_type'], $insert['source_langcode'], $insert['source_vid'], $insert['method'], $insert['field_name'], $insert['count']);
         $dispatcher->dispatch($event, Events::USAGE_REGISTER);
       }
 
@@ -454,11 +453,6 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       if (($id_definition instanceof FieldStorageDefinitionInterface) && $id_definition->getType() === 'integer') {
         $context['sandbox']['current_id'] = -1;
       }
-      $context['sandbox']['entity_ids'] = $entity_storage->getQuery()
-        ->accessCheck(FALSE)
-        ->range(0, static::BULK_ID_LOAD)
-        ->sort($entity_type_key)
-        ->execute();
       $context['sandbox']['total'] = $entity_storage->getQuery()
         ->accessCheck(FALSE)
         ->count()
@@ -492,21 +486,6 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
     if ($context['sandbox']['progress'] === $context['sandbox']['total']) {
       // Recalculate the total so that any new entities created while bulk
       // processing are included.
-      $context['sandbox']['entity_ids'] = $entity_storage->getQuery()
-        ->condition($entity_type_key, $context['sandbox']['current_id'], '>')
-        ->range(0, static::BULK_BATCH_SIZE)
-        ->accessCheck(FALSE)
-        ->sort($entity_type_key)
-        ->execute();
-      $context['sandbox']['total'] = $context['sandbox']['total'] + count($context['sandbox']['entity_ids']);
-    }
-    elseif (empty($context['sandbox']['entity_ids'])) {
-      $context['sandbox']['entity_ids'] = $entity_storage->getQuery()
-        ->condition($entity_type_key, $context['sandbox']['current_id'], '>')
-        ->accessCheck(FALSE)
-        ->range(0, static::BULK_ID_LOAD)
-        ->sort($entity_type_key)
-        ->execute();
       $context['sandbox']['total'] = $entity_storage->getQuery()
         ->accessCheck(FALSE)
         ->count()
@@ -623,36 +602,6 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   }
 
   /**
-   * Gets the list of entity type IDs to track.
-   *
-   * @param \Drupal\Core\Config\Config $entity_usage_config
-   *   The entity usage config.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   *
-   * @return string[]
-   *   The list of entity type IDs to track.
-   */
-  private static function getEntityTypesToTrack(Config $entity_usage_config, EntityTypeManagerInterface $entity_type_manager): array {
-    $entity_types = [];
-    $to_track = $entity_usage_config->get('track_enabled_source_entity_types');
-    foreach (\Drupal::entityTypeManager()->getDefinitions() as $entity_type_id => $entity_type) {
-      // Only look for entities enabled for tracking on the settings form.
-      if (!is_array($to_track) && ($entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface'))) {
-        // When no settings are defined, track all content entities by default,
-        // except for Files and Users.
-        if (!in_array($entity_type_id, ['file', 'user'])) {
-          $entity_types[] = $entity_type_id;
-        }
-      }
-      elseif (is_array($to_track) && in_array($entity_type_id, $to_track, TRUE)) {
-        $entity_types[] = $entity_type_id;
-      }
-    }
-    return $entity_types;
-  }
-
-  /**
    * Finish callback for our batch processing.
    *
    * @param bool $success
@@ -674,7 +623,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         t('An error occurred while processing @operation with arguments : @args',
           [
             '@operation' => $error_operation[0],
-            '@args' => print_r($error_operation[0], TRUE),
+            '@args' => print_r($error_operation[1], TRUE),
           ]
         )
       );

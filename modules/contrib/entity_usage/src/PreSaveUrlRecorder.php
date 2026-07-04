@@ -12,9 +12,9 @@ use Drupal\Core\Entity\Exception\UndefinedLinkTemplateException;
  * Some relationships rely on the target entity's URL (such as an HTML link).
  * However, when this URL changes (for example due to a path alias changing),
  * the relationship chain is no longer valid, and we need to refresh usage info.
- * Since we can't use $entity->original to figure out the difference between the
- * original entity's URL and the new one after save, we use this service to
- * temporarily store the URLs before being saved.
+ * Since we can't use $entity->getOriginal() to figure out the difference
+ * between the original entity's URL and the new one after save, we use this
+ * service to temporarily store the URLs before being saved.
  *
  * @see \Drupal\entity_usage\EntityUpdateManager::trackUpdateOnEdition()
  * @see \Drupal\entity_usage\EntityUsageTrackUrlUpdateInterface

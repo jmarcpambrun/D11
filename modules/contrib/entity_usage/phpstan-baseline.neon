@@ -67,12 +67,6 @@ parameters:
 			path: src/Plugin/EntityUsage/Track/TextFieldEmbedBase.php
 
 		-
-			rawMessage: 'Function entity_usage_test_entity_usage_block_tracking() has no return type specified.'
-			identifier: missingType.return
-			count: 1
-			path: tests/modules/entity_usage_test/entity_usage_test.module
-
-		-
 			rawMessage: 'PHPDoc tag @var with type array<Drupal\entity_usage\Events\EntityUsageEvent> is not subtype of native type 0|0.0|''''|''0''|array{}|Countable|EmptyIterator|false|null.'
 			identifier: varTag.nativeType
 			count: 1

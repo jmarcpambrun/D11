@@ -8,6 +8,8 @@ use Drupal\entity_test\Entity\EntityTest;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\node\Entity\Node;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests tracking of revisions and translations.
@@ -16,6 +18,8 @@ use Drupal\user\Entity\Role;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
 
   use EntityUsageLastEntityQueryTrait;
@@ -41,16 +45,10 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
     $role = Role::load('authenticated');
     $this->grantPermissions($role, ['view test entity', 'access entity usage statistics']);
 
-    // Allow absolute links to be picked up by entity usage and the node tab to
-    // be reached.
-    $current_request = \Drupal::request();
-    $config = \Drupal::configFactory()->getEditable('entity_usage.settings');
-    $config
-      ->set('site_domains', [$current_request->getHttpHost() . $current_request->getBasePath()])
+    \Drupal::configFactory()->getEditable('entity_usage.settings')
       ->set('local_task_enabled_entity_types', ['node'])
       ->save();
-    // Changing site domains requires services to be reconstructed.
-    $this->rebuildAll();
+    \Drupal::service('router.builder')->rebuild();
   }
 
   /**

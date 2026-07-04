@@ -60,10 +60,10 @@ class LocalTaskUsageController extends ListUsageController {
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The route match.
    *
-   * @return \Drupal\Core\Entity\EntityInterface|null
+   * @return \Drupal\Core\Entity\EntityInterface
    *   The entity object as determined from the passed-in route match.
    */
-  protected function getEntityFromRouteMatch(RouteMatchInterface $route_match): ?EntityInterface {
+  protected function getEntityFromRouteMatch(RouteMatchInterface $route_match): EntityInterface {
     $parameter_name = $route_match->getRouteObject()->getOption('_entity_usage_entity_type_id');
     return $route_match->getParameter($parameter_name);
   }

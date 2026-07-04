@@ -256,13 +256,12 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
    * {@inheritdoc}
    */
   public function trackOnEntityUpdate(EntityInterface $source_entity): void {
-    // We depend on $source_entity->original to do anything useful here.
-    if (empty($source_entity->original) || !($source_entity instanceof FieldableEntityInterface)) {
+    if (!($source_entity instanceof FieldableEntityInterface)) {
       return;
     }
 
     // New revisions should be tracked the same way as new entities.
-    if ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId() != $source_entity->original->getRevisionId()) {
+    if ($source_entity instanceof RevisionableInterface && $source_entity->isNewRevision()) {
       $this->trackOnEntityCreation($source_entity);
       return;
     }

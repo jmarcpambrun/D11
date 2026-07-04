@@ -8,6 +8,8 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Basic functional tests for the usage tracking of embedded content.
@@ -22,6 +24,8 @@ use Drupal\node\Entity\Node;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
 
   use EntityUsageLastEntityQueryTrait;
@@ -358,13 +362,6 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
 
     // Create node 5 referencing node 4 using an absolute URL.
     $embedded_text = '<p>foo <a href="' . $node4->toUrl()->setAbsolute(TRUE)->toString() . '">linked text</a> bar</p>';
-    // Configure the local hostname so we can test absolute URLs.
-    $current_request = \Drupal::request();
-    $config = \Drupal::configFactory()->getEditable('entity_usage.settings');
-    $config->set('site_domains', [$current_request->getHttpHost() . $current_request->getBasePath()]);
-    $config->save();
-    // Changing site domains requires services to be reconstructed.
-    $this->rebuildAll();
     $node5 = Node::create([
       'type' => 'eu_test_ct',
       'title' => 'Node 5',

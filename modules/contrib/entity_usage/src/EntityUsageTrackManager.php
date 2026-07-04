@@ -3,7 +3,9 @@
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\entity_usage\Attribute\EntityUsageTrack as AttributeEntityUsageTrack;
@@ -42,6 +44,13 @@ class EntityUsageTrackManager extends DefaultPluginManager {
   protected ?array $inlineEntityTypeIds = NULL;
 
   /**
+   * A list of all the source tracked entity type IDs.
+   *
+   * @var string[]|null
+   */
+  protected ?array $sourceTrackedEntityTypeIds = NULL;
+
+  /**
    * Constructs a new EntityUsageTrackManager.
    *
    * @param \Traversable $namespaces
@@ -51,8 +60,12 @@ class EntityUsageTrackManager extends DefaultPluginManager {
    *   Cache backend instance to use.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
+  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, protected EntityTypeManagerInterface $entityTypeManager, protected ConfigFactoryInterface $configFactory) {
     parent::__construct(
       'Plugin/EntityUsage/Track',
       $namespaces,
@@ -86,6 +99,39 @@ class EntityUsageTrackManager extends DefaultPluginManager {
       }
     }
     return FALSE;
+  }
+
+  /**
+   * Returns entity type IDs to track as sources for a batch recreate.
+   *
+   * Excludes inline entity type IDs. When no source entity types are
+   * configured, all content entity types are included except 'file' and
+   * 'user'.
+   *
+   * @return string[]
+   *   Entity type IDs to track as sources.
+   */
+  public function getSourceEntityTypeIds(): array {
+    if (!isset($this->sourceTrackedEntityTypeIds)) {
+      $this->sourceTrackedEntityTypeIds = [];
+      $to_track = $this->configFactory->get('entity_usage.settings')->get('track_enabled_source_entity_types');
+      $entity_types = $this->entityTypeManager->getDefinitions();
+      if (!is_array($to_track)) {
+        $to_skip = array_merge($this->getInlineEntityTypeIds(), ['file', 'user']);
+        foreach ($entity_types as $entity_type_id => $entity_type) {
+          if (in_array($entity_type_id, $to_skip, TRUE)) {
+            continue;
+          }
+          if ($entity_type->hasKey('id') && $entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface')) {
+            $this->sourceTrackedEntityTypeIds[] = $entity_type_id;
+          }
+        }
+      }
+      else {
+        $this->sourceTrackedEntityTypeIds = array_intersect($to_track, array_keys($entity_types));
+      }
+    }
+    return $this->sourceTrackedEntityTypeIds;
   }
 
   /**
@@ -166,6 +212,7 @@ class EntityUsageTrackManager extends DefaultPluginManager {
     $this->instantiatedPlugins = [];
     $this->inlinePluginIds = NULL;
     $this->inlineEntityTypeIds = NULL;
+    $this->sourceTrackedEntityTypeIds = NULL;
   }
 
   /**

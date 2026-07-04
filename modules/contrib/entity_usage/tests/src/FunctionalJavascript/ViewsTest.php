@@ -3,6 +3,8 @@
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Basic tests for the views integration.
@@ -11,6 +13,8 @@ use Drupal\node\Entity\Node;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class ViewsTest extends EntityUsageJavascriptTestBase {
 
   /**

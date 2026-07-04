@@ -10,6 +10,8 @@ use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
 use Drupal\layout_builder\Plugin\SectionStorage\OverridesSectionStorage;
 use Drupal\layout_builder\Section;
 use Drupal\layout_builder\SectionComponent;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests layout builder usage plugin records usage.
@@ -18,6 +20,9 @@ use Drupal\layout_builder\SectionComponent;
  * @group layout_builder
  * @coversDefaultClass \Drupal\entity_usage\Plugin\EntityUsage\Track\LayoutBuilder
  */
+#[Group('entity_usage')]
+#[Group('layout_builder')]
+#[RunTestsInSeparateProcesses]
 class EntityUsageLayoutBuilderTest extends KernelTestBase {
 
   /**

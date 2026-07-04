@@ -6,6 +6,8 @@ use Drupal\Tests\entity_usage\Traits\EntityUsageLastEntityQueryTrait;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\node\Entity\Node;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the page listing the usage of a given entity.
@@ -14,6 +16,8 @@ use Drupal\user\Entity\Role;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class ListControllerTest extends EntityUsageJavascriptTestBase {
 
   use EntityUsageLastEntityQueryTrait;
@@ -221,6 +225,8 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     // Set items per page to 1.
     $page->find('css', 'input[name="usage_controller_items_per_page"]')
       ->setValue('1');
+    $page->find('css', 'details#edit-track-enabled-source-entity-types summary')->click();
+    $page->checkField('track_enabled_source_entity_types[entity_types][user]');
     $page->pressButton('Save configuration');
     $session->wait(500);
     $this->saveHtmlOutput();
@@ -237,6 +243,7 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     $this->assertEquals('Node 2', $first_row_title_link->getText());
     $assert_session->elementNotExists('xpath', '//table/tbody/tr[2]');
 
+    $this->rebuildAll();
     // Set reference on bundleless user entity referencing node 1.
     $this->loggedInUser->set('field_eu_test_related_nodes', [
       'target_id' => $node1->id(),

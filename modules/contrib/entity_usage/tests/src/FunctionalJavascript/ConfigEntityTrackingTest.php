@@ -8,6 +8,8 @@ use Drupal\block_content\Entity\BlockContentType;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests tracking of config entities.
@@ -16,6 +18,8 @@ use Drupal\user\Entity\Role;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
 
   use EntityUsageLastEntityQueryTrait;

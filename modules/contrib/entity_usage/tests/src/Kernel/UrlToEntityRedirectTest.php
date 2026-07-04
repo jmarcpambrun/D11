@@ -6,6 +6,8 @@ use Drupal\entity_usage\UrlToEntityInterface;
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\language\Plugin\LanguageNegotiation\LanguageNegotiationUrl;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests \Drupal\entity_usage\UrlToEntityIntegrations\RedirectIntegration.
@@ -17,6 +19,8 @@ use Drupal\language\Plugin\LanguageNegotiation\LanguageNegotiationUrl;
  *
  * @see \Drupal\entity_usage\UrlToEntityIntegrations\RedirectIntegration
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class UrlToEntityRedirectTest extends EntityKernelTestBase {
 
   /**

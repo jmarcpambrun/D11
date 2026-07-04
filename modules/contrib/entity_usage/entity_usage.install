@@ -5,6 +5,7 @@
  * Install, update and uninstall functions for entity_usage module.
  */
 
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -224,4 +225,29 @@ function entity_usage_update_8300(): TranslatableMarkup {
   $schema->createTable('entity_usage', $entity_usage_schema);
 
   return t('Entity usage must be recreated. Use the drush command entity-usage:recreate or visit the entity usage batch update page.');
+}
+
+/**
+ * Convert site_domains config to new format.
+ */
+function entity_usage_update_8301(): void {
+  $config = \Drupal::configFactory()->getEditable('entity_usage.settings');
+  if (empty($config->get('site_domains'))) {
+    return;
+  }
+
+  $site_domains = [];
+  foreach ($config->get('site_domains') as $domain) {
+    $domain = mb_strtolower($domain);
+    if (!preg_match('#^https?://#', $domain)) {
+      $domain = 'http://' . $domain;
+    }
+    $url = parse_url($domain);
+    $site_domains[] = [
+      'host' => idn_to_ascii($url['host'], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46),
+      'path' => $url['path'] ?? '',
+    ];
+  }
+  $config->set('site_domains', $site_domains);
+  DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => $config->save(), fn() => $config->save(TRUE));
 }

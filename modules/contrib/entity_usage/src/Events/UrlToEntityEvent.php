@@ -34,8 +34,10 @@ class UrlToEntityEvent extends Event {
    *   The inbound path processed URL.
    * @param string[]|null $enabledTargetEntityTypes
    *   The enabled entity types for tracking.
+   * @param string $unprocessedUrl
+   *   The unprocessed URL.
    */
-  public function __construct(private readonly Request $request, public readonly string $pathProcessedUrl, private readonly ?array $enabledTargetEntityTypes) {
+  public function __construct(private readonly Request $request, public readonly string $pathProcessedUrl, private readonly ?array $enabledTargetEntityTypes, public readonly string $unprocessedUrl) {
   }
 
   /**

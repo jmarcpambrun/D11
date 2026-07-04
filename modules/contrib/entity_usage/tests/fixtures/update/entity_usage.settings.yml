@@ -7,5 +7,9 @@ track_enabled_source_entity_types:
   - paragraph
 track_enabled_plugins:
   - ckeditor_image
-  - entity_reference_revision_field
   - link
+site_domains:
+  - example.com
+  - http://example.org
+  - example.net/subdirectory
+  - http.cat

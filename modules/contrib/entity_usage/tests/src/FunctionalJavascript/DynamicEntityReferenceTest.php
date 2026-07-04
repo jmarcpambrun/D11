@@ -6,6 +6,8 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Tests\entity_usage\Traits\EntityUsageLastEntityQueryTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the integration with the Dynamic Entity Reference module.
@@ -14,6 +16,8 @@ use Drupal\field\Entity\FieldStorageConfig;
  *
  * @group entity_usage
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 class DynamicEntityReferenceTest extends EntityUsageJavascriptTestBase {
 
   use EntityUsageLastEntityQueryTrait;

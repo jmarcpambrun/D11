@@ -4,12 +4,16 @@ namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\JSWebAssert;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Base class for Entity Usage Javascript functional tests.
  *
  * @package Drupal\Tests\entity_usage\FunctionalJavascript
  */
+#[Group('entity_usage')]
+#[RunTestsInSeparateProcesses]
 abstract class EntityUsageJavascriptTestBase extends WebDriverTestBase {
 
   /**

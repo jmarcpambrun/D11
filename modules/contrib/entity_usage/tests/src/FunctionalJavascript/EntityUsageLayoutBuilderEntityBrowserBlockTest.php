@@ -8,6 +8,8 @@ use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests usage tracking in Layout Builder through Entity Browser Blocks.
@@ -16,6 +18,9 @@ use Drupal\user\Entity\Role;
  * @group layout_builder
  * @coversDefaultClass \Drupal\entity_usage\Plugin\EntityUsage\Track\LayoutBuilder
  */
+#[Group('entity_usage')]
+#[Group('layout_builder')]
+#[RunTestsInSeparateProcesses]
 class EntityUsageLayoutBuilderEntityBrowserBlockTest extends EntityUsageJavascriptTestBase {
 
   use ContextualLinkClickTrait;
