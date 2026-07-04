@@ -5,7 +5,7 @@ namespace Drupal\burndown\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 
 /**
- * Provides an interface for defining Default Swimlane entities.
+ * Provides an interface for defining Default Column (swimlane) entities.
  */
 interface DefaultSwimlaneInterface extends ConfigEntityInterface {
 

@@ -4,7 +4,7 @@
  * @file
  * Contains burndown_swimlane.page.inc.
  *
- * Page callback for Swimlane entities.
+ * Page callback for Column (swimlane) entities.
  */
 
 use Drupal\Core\Render\Element;

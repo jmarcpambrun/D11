@@ -184,7 +184,7 @@ class SprintCloseForm extends FormBase {
       $shortcode = $project->getShortcode();
       $result = '/burndown/backlog/' . $shortcode;
 
-      // Get completed swimlane.
+      // Get completed column.
       $completed_lane = Swimlane::getCompletedSwimlanes($shortcode);
       if ($completed_lane !== FALSE) {
         $completed_lane = reset($completed_lane);
@@ -192,7 +192,7 @@ class SprintCloseForm extends FormBase {
       else {
         // This is an error condition, but an admin will need to
         // fix it!
-        $this->messenger()->addMessage($this->t('There is no completed swimlane for this project. Please contact your system administrator to fix this problem. The task cannot be closed.'));
+        $this->messenger()->addMessage($this->t('There is no completed column for this project. Please contact your system administrator to fix this problem. The task cannot be closed.'));
         $response->addCommand(new RedirectCommand($result));
         $form_state->setResponse($response);
         return $response;

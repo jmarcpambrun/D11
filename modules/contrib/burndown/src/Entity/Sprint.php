@@ -276,7 +276,7 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
       ->set('start_date', $start)
       ->save();
 
-    // Move all tasks to To Do swimlane.
+    // Move all tasks to To Do column.
     $todo = Swimlane::getTodoSwimlane($shortcode);
     $tasks = Task::getTasksForBacklogSprint($shortcode, $this->id());
     foreach ($tasks as $task) {
@@ -569,7 +569,7 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
 
     $fields['project'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Project'))
-      ->setDescription(t('The project that this swimlane is part of.'))
+      ->setDescription(t('The project that this column is part of.'))
       ->setSetting('target_type', 'burndown_project')
       ->setSetting('handler', 'default')
       ->setDisplayOptions('view', [

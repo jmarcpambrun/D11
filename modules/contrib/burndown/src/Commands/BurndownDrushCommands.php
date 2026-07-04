@@ -98,7 +98,7 @@ class BurndownDrushCommands extends DrushCommands {
     }
 
     // Output header.
-    $text = 'Ticket ID   Description           Swimlane       Assigned To';
+    $text = 'Ticket ID   Description           Column       Assigned To';
     $this->output()->writeln($text);
     $text = '============================================================';
     $this->output()->writeln($text);
@@ -123,7 +123,7 @@ class BurndownDrushCommands extends DrushCommands {
     }
 
     if ($options['board']) {
-      // Get board swimlanes.
+      // Get board columns.
       $swimlanes = Swimlane::getBoardSwimlanes($shortcode);
       foreach ($swimlanes as $swimlane) {
         $tasks = Task::getTasksForSwimlane($shortcode, $swimlane->getName());
@@ -183,13 +183,13 @@ class BurndownDrushCommands extends DrushCommands {
   }
 
   /**
-   * Drush command that lists swimlanes for a Burndown project.
+   * Drush command that lists columns for a Burndown project.
    *
    * @param string $shortcode
    *   Burndown project shortcode.
    *
    * @command burndown:swimlane_list
-   * @aliases burndown-swimlane-list bdsl
+   * @aliases burndown-swimlane-list bdsl burndown-column-list bdcl
    * @usage burndown:swimlane_list {shortcode}
    */
   public function swimlane_list($shortcode) {
@@ -207,7 +207,7 @@ class BurndownDrushCommands extends DrushCommands {
       return;
     }
 
-    // Get swimlanes.
+    // Get Columns (swimlanes).
     $swimlanes = Swimlane::loadForProject($shortcode);
 
     // Output header.
@@ -238,7 +238,7 @@ class BurndownDrushCommands extends DrushCommands {
       $this->output()->writeln($text);
     }
 
-    $this->io()->success('Swimlanes: ' . count($swimlanes));
+    $this->io()->success('Columns: ' . count($swimlanes));
   }
 
   /**
@@ -447,13 +447,13 @@ class BurndownDrushCommands extends DrushCommands {
       if ($new_sprint->getStatus() === 'started') {
         $swimlane = Swimlane::getTodoSwimlane($shortcode);
       }
-      // Otherwise task should be in Backlog swimlane.
+      // Otherwise task should be in Backlog Column.
       else {
         $swimlane = Swimlane::getBacklogFor($shortcode);
       }
 
       if ($swimlane === FALSE) {
-        $text = 'There is a problem with the swimlanes for this project. Please contact your system administrator.';
+        $text = 'There is a problem with the columns for this project. Please contact your system administrator.';
         $this->io()->caution($text);
         return;
       }
@@ -879,7 +879,7 @@ class BurndownDrushCommands extends DrushCommands {
     else {
       // This is an error condition, but an admin will need to
       // fix it!
-      $this->io()->error('There is no completed swimlane for ' . $shortcode . '. Please contact your system administrator to fix this problem. The task cannot be closed.');
+      $this->io()->error('There is no completed Column for ' . $shortcode . '. Please contact your system administrator to fix this problem. The task cannot be closed.');
       return;
     }
 
@@ -951,7 +951,7 @@ class BurndownDrushCommands extends DrushCommands {
   }
 
   /**
-   * Drush command to move a Task between Swimlanes.
+   * Drush command to move a Task between Columns.
    *
    * @param string $ticket_id
    *   Burndown ticket id for the task.
@@ -977,7 +977,7 @@ class BurndownDrushCommands extends DrushCommands {
 
     // Check that task is on the board.
     if ($task->inBacklog()) {
-      $text = "Task is in the backlog. Please move it to the board before setting the swimlane.";
+      $text = "Task is in the backlog. Please move it to the board before setting the column.";
       $this->io()->caution($text);
       return;
     }
@@ -997,7 +997,7 @@ class BurndownDrushCommands extends DrushCommands {
     }
 
     // Get swimlane from user.
-    $swimlane = $this->io()->choice('Which swimlane do you want to move the task to?', $options, $current_swimlane);
+    $swimlane = $this->io()->choice('Which column do you want to move the task to?', $options, $current_swimlane);
     $swimlane = $options[$swimlane];
     $swimlane = Swimlane::getSwimlane($shortcode, $swimlane);
 
@@ -1114,7 +1114,7 @@ class BurndownDrushCommands extends DrushCommands {
       return;
     }
 
-    // Move task to To Do swimlane on the board.
+    // Move task to To Do column on the board.
     $todo = Swimlane::getTodoSwimlane($shortcode);
     if ($todo !== FALSE) {
       $task
@@ -1432,7 +1432,7 @@ class BurndownDrushCommands extends DrushCommands {
     $tasks = Task::search($search, $shortcode);
 
     // Output header.
-    $text = 'Ticket ID   Description           Swimlane       Assigned To';
+    $text = 'Ticket ID   Description           Column       Assigned To';
     $this->output()->writeln($text);
     $text = '============================================================';
     $this->output()->writeln($text);

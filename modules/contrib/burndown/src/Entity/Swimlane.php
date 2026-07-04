@@ -11,13 +11,13 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\user\UserInterface;
 
 /**
- * Defines the Swimlane entity.
+ * Defines the Column (swimlane) entity.
  *
  * @ingroup burndown
  *
  * @ContentEntityType(
  *   id = "burndown_swimlane",
- *   label = @Translation("Swimlane"),
+ *   label = @Translation("Column"),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\burndown\SwimlaneListBuilder",
@@ -85,7 +85,7 @@ class Swimlane extends ContentEntityBase implements SwimlaneInterface {
   }
 
   /**
-   * Get specific swimlane for a project by name.
+   * Get specific column (swimlane) for a project by name.
    */
   public static function getSwimlane($shortcode, $name) {
     $project = Project::loadFromShortcode($shortcode);
@@ -154,7 +154,7 @@ class Swimlane extends ContentEntityBase implements SwimlaneInterface {
   }
 
   /**
-   * Get the final "done" swimlane on the project board.
+   * Get the final "done" column on the project board.
    */
   public static function getDoneSwimlane($shortcode) {
     $lanes = Swimlane::getBoardSwimlanes($shortcode);
@@ -355,7 +355,7 @@ class Swimlane extends ContentEntityBase implements SwimlaneInterface {
   }
 
   /**
-   * Is this Swimlane the backlog for a project?
+   * Is this Column the backlog for a project?
    */
   public function isBacklog() {
     return $this->getShowBacklog();
@@ -539,7 +539,7 @@ class Swimlane extends ContentEntityBase implements SwimlaneInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['status']->setDescription(t('A boolean indicating whether the Swimlane is published.'))
+    $fields['status']->setDescription(t('A boolean indicating whether the Column is published.'))
       ->setDisplayOptions('form', [
         'region' => 'hidden',
         'weight' => 15,

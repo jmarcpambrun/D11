@@ -91,7 +91,7 @@
           });
         });
 
-      // POSTs a swimlane change back to Drupal to be saved (not debounced).
+      // POST a Column (swimlane) change back to Drupal to save (not debounced).
       // @see src/Controllers/BoardController.php::changeSwimlane.
       function postSwimlaneChange(taskId, fromSwimlane, toSwimlane) {
         $.ajax({

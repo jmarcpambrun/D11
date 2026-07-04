@@ -245,7 +245,7 @@ burndown.project_swimlanes:
   path: '/burndown/reorder_swimlanes/{shortcode}'
   defaults:
     _controller: '\Drupal\burndown\Controller\SwimlaneController::getSwimlanes'
-    _title: 'Reorder Swimlanes'
+    _title: 'Reorder Columns'
     shortcode: ''
   requirements:
     _permission: 'administer burndown'
@@ -272,7 +272,7 @@ entity.burndown_swimlane.collection:
   path: '/burndown/swimlane'
   defaults:
     _entity_list: 'burndown_swimlane'
-    _title: 'Swimlanes'
+    _title: 'Columns'
   requirements:
     _permission: 'administer swimlane entities'
 

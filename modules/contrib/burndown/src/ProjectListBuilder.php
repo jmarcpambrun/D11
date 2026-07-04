@@ -21,7 +21,7 @@ class ProjectListBuilder extends EntityListBuilder {
     $header['backlog'] = $this->t('Backlog');
     $header['board'] = $this->t('Board');
     $header['completed'] = $this->t('Completed');
-    $header['swimlanes'] = $this->t('Manage Swimlanes');
+    $header['swimlanes'] = $this->t('Manage Columns');
     return $header + parent::buildHeader();
   }
 
@@ -47,7 +47,7 @@ class ProjectListBuilder extends EntityListBuilder {
       ['shortcode' => $entity->getShortcode()]
     );
     $row['swimlanes'] = Link::createFromRoute(
-      $this->t('Swimlanes'),
+      $this->t('Columns'),
       'burndown.project_swimlanes',
       ['shortcode' => $entity->getShortcode()]
     );

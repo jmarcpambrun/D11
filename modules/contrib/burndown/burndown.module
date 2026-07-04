@@ -250,10 +250,10 @@ function burndown_entity_type_alter(array &$entity_types) {
 /**
  * Implements hook_ENTITY_TYPE_insert().
  *
- * After creating a Project, set up the default Swimlane entities for it.
+ * After creating a Project, set up the default Column (swimlane) entities.
  */
 function burndown_burndown_project_insert(EntityInterface $entity) {
-  // Get Default Swimlane config entities.
+  // Get Default Column (swimlane) config entities.
   $storage = \Drupal::entityTypeManager()
     ->getStorage('default_swimlane');
   $default_swimlanes = $storage->loadMultiple();

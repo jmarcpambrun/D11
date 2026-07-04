@@ -20,7 +20,7 @@ entity.burndown_task_type.add_form:
     - entity.burndown_task_type.collection
 entity.burndown_swimlane.add_form:
   route_name: entity.burndown_swimlane.add_form
-  title: 'Add Swimlane'
+  title: 'Add Column'
   appears_on:
     - entity.burndown_swimlane.collection
 entity.burndown_sprint.add_form:
@@ -30,6 +30,6 @@ entity.burndown_sprint.add_form:
     - entity.burndown_sprint.collection
 entity.default_swimlane.add_form:
   route_name: entity.default_swimlane.add_form
-  title: 'Add Default Swimlane'
+  title: 'Add Default Column'
   appears_on:
     - entity.default_swimlane.collection

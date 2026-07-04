@@ -8,7 +8,7 @@ use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Link;
 
 /**
- * Defines a class to build a listing of Swimlane entities.
+ * Defines a class to build a listing of Column (swimlane) entities.
  *
  * @ingroup burndown
  */
@@ -18,7 +18,7 @@ class SwimlaneListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['id'] = $this->t('Swimlane ID');
+    $header['id'] = $this->t('Column ID');
     $header['name'] = $this->t('Name');
     $header['board'] = $this->t('Board');
     return $header + parent::buildHeader();

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e744138619b3b38d0dc16b0d34e2a78c",
+    "content-hash": "f0e56d544544967e3c8c38bccee1d317",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -3341,17 +3341,17 @@
         },
         {
             "name": "drupal/burndown",
-            "version": "1.0.61",
+            "version": "1.0.62",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/burndown.git",
-                "reference": "1.0.61"
+                "reference": "1.0.62"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.61.zip",
-                "reference": "1.0.61",
-                "shasum": "6078fe015eaa326de22a1bdd2c006621cf1781df"
+                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.62.zip",
+                "reference": "1.0.62",
+                "shasum": "9d28d751b5f2862615411939232284d3669777b8"
             },
             "require": {
                 "drupal/core": "^9 || ^10 || ^11"
@@ -3359,8 +3359,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.61",
-                    "datestamp": "1782477898",
+                    "version": "1.0.62",
+                    "datestamp": "1782692550",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"

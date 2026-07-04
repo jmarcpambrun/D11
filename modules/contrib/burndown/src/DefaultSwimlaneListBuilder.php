@@ -6,7 +6,7 @@ use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 
 /**
- * Provides a listing of Default Swimlane entities.
+ * Provides a listing of Default Column (swimlane) entities.
  */
 class DefaultSwimlaneListBuilder extends ConfigEntityListBuilder {
 
@@ -14,7 +14,7 @@ class DefaultSwimlaneListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('Default Swimlane');
+    $header['label'] = $this->t('Default Column');
     $header['id'] = $this->t('Machine name');
     $header['boards'] = $this->t('Boards');
     $header['sort_order'] = $this->t('Sort Order');

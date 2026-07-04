@@ -1,6 +1,6 @@
 burndown.default_swimlane.*:
   type: config_entity
-  label: 'Default Swimlane config'
+  label: 'Default Column config'
   mapping:
     id:
       type: string

@@ -6,7 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Provices a settings form for managing Swimlane entity types.
+ * Provices a settings form for managing Column (swimlane) entity types.
  *
  * @ingroup burndown
  */
@@ -46,7 +46,7 @@ class SwimlaneSettingsForm extends FormBase {
    *   Form definition array.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['swimlane_settings']['#markup'] = 'Settings form for Swimlane entities. Manage field settings here.';
+    $form['swimlane_settings']['#markup'] = 'Settings form for Column entities. Manage field settings here.';
     return $form;
   }
 

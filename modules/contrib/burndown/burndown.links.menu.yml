@@ -17,7 +17,7 @@ burndown.dashboard:
   description: 'Burndown Project Dashboard'
   route_name: burndown.dashboard
   parent: system.admin
-  
+
 burndown.structure:
   title: 'Burndown'
   description: 'Configure Burndown Project Management entities'
@@ -52,17 +52,17 @@ entity.burndown_task_type.collection:
   description: 'Administer Task types'
   parent: burndown.structure
 
-# Swimlane menu items definition
+# Column (swimlane) menu items definition
 #entity.burndown_swimlane.collection:
-#  title: 'Swimlane list'
+#  title: 'Column list'
 #  route_name: entity.burndown_swimlane.collection
-#  description: 'List Swimlane entities'
+#  description: 'List Column entities'
 #  parent: burndown.dashboard
 #  weight: 100
 
 burndown_swimlane.admin.structure.settings:
-  title: 'Swimlane settings'
-  description: 'Configure Swimlane entities'
+  title: 'Column settings'
+  description: 'Configure Column entities'
   route_name: burndown_swimlane.settings
   parent: burndown.structure
 
@@ -82,8 +82,8 @@ burndown_sprint.admin.structure.settings:
 
 # Default Swimlane menu items definition
 entity.default_swimlane.collection:
-  title: 'Default Swimlanes'
+  title: 'Default Columns'
   route_name: entity.default_swimlane.collection
-  description: 'List Default Swimlanes'
+  description: 'List Default Columns'
   parent: burndown.admin_config_burndown
   weight: 99

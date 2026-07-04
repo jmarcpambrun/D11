@@ -42,7 +42,7 @@ entity.burndown_task.delete_form:
   base_route:  entity.burndown_task.canonical
   title: Delete
   weight: 10
-# Swimlane routing definition
+# Column (swimlane) routing definition
 burndown_swimlane.settings_tab:
   route_name: burndown_swimlane.settings
   title: 'Settings'

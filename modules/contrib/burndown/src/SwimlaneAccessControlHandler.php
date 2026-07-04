@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Access controller for the Swimlane entity.
+ * Access controller for the Column (swimlane) entity.
  *
  * @see \Drupal\burndown\Entity\Swimlane.
  */

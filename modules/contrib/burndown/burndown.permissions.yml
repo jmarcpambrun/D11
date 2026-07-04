@@ -101,24 +101,24 @@ delete all task revisions:
   description: 'Role requires permission to <em>view Task revisions</em> and <em>delete rights</em> for task entities in question or <em>administer task entities</em>.'
 
 add swimlane entities:
-  title: 'Create new Swimlane entities'
+  title: 'Create new Column entities'
 
 administer swimlane entities:
-  title: 'Administer Swimlane entities'
-  description: 'Allow to access the administration form to configure Swimlane entities.'
+  title: 'Administer Column entities'
+  description: 'Allow to access the administration form to configure Column entities.'
   restrict access: true
 
 delete swimlane entities:
-  title: 'Delete Swimlane entities'
+  title: 'Delete Column entities'
 
 edit swimlane entities:
-  title: 'Edit Swimlane entities'
+  title: 'Edit Column entities'
 
 view published swimlane entities:
-  title: 'View published Swimlane entities'
+  title: 'View published Column entities'
 
 view unpublished swimlane entities:
-  title: 'View unpublished Swimlane entities'
+  title: 'View unpublished Column entities'
 
 add sprint entities:
   title: 'Create new Sprint entities'

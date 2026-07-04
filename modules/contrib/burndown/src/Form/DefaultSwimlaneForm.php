@@ -22,7 +22,7 @@ class DefaultSwimlaneForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $default_swimlane->label(),
-      '#description' => $this->t("Label for the Default Swimlane."),
+      '#description' => $this->t("Label for the Default Column."),
       '#required' => TRUE,
     ];
 
@@ -31,7 +31,7 @@ class DefaultSwimlaneForm extends EntityForm {
       '#title' => $this->t('Sort Order'),
       '#default_value' => $default_swimlane->getSortOrder(),
       '#min' => 0,
-      '#description' => $this->t("Sort order that this swimlane will show (by default) on the board."),
+      '#description' => $this->t("Sort order that this Column will show (by default) on the board."),
       '#required' => TRUE,
     ];
 
@@ -39,21 +39,21 @@ class DefaultSwimlaneForm extends EntityForm {
       '#type' => 'checkbox',
       '#title' => $this->t('Show in Backlog?'),
       '#default_value' => $default_swimlane->getShowBacklog(),
-      '#description' => $this->t("Should this swimlane show in the Backlog?"),
+      '#description' => $this->t("Should this column show in the Backlog?"),
     ];
 
     $form['show_project_board'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show on Project Board?'),
       '#default_value' => $default_swimlane->getShowProjectBoard(),
-      '#description' => $this->t("Should this swimlane show on the Project Board?"),
+      '#description' => $this->t("Should this Column show on the Project Board?"),
     ];
 
     $form['show_completed'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show on Completed Board?'),
       '#default_value' => $default_swimlane->getShowCompleted(),
-      '#description' => $this->t("Should this swimlane show on the Completed Tasks Board?"),
+      '#description' => $this->t("Should this Column show on the Completed Tasks Board?"),
     ];
 
     $form['id'] = [
@@ -81,7 +81,7 @@ class DefaultSwimlaneForm extends EntityForm {
 
     switch ($status) {
       case SAVED_NEW:
-        $this->messenger()->addMessage($this->t('Created the %label Default Swimlane.', [
+        $this->messenger()->addMessage($this->t('Created the %label Default Column.', [
           '%label' => $default_swimlane->label(),
         ]));
         break;

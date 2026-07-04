@@ -172,7 +172,7 @@ class TaskCloseForm extends FormBase {
       else {
         // This is an error condition, but an admin will need to
         // fix it!
-        $this->messenger()->addMessage($this->t('There is no completed swimlane for this project. Please contact your system administrator to fix this problem. The task cannot be closed.'));
+        $this->messenger()->addMessage($this->t('There is no completed column for this project. Please contact your system administrator to fix this problem. The task cannot be closed.'));
         $response->addCommand(new RedirectCommand($result));
         $form_state->setResponse($response);
         return $response;

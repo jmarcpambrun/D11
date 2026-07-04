@@ -380,7 +380,7 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
       // Set the sprint.
       $task->setSprint($to_sprint);
 
-      // If the sprint is open, we also need to set swimlane.
+      // If the sprint is open, we also need to set column.
       if ($to_sprint->getStatus() == 'started') {
         $shortcode = $task_project->getShortcode();
         $todo = Swimlane::getTodoSwimlane($shortcode);

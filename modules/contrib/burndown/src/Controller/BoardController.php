@@ -151,7 +151,7 @@ class BoardController extends ControllerBase implements ContainerInjectionInterf
     // Unique users on the board.
     $users = [];
 
-    // Get tasks for each swimlane.
+    // Get tasks for each column (swimlane).
     foreach ($swimlanes as $swimlane) {
       $swimlane_name = $swimlane->getName();
       $swimlane_id = $swimlane->id();
@@ -270,12 +270,12 @@ class BoardController extends ControllerBase implements ContainerInjectionInterf
     if ($task->getSwimlane()->id() !== $from_swimlane->id()) {
       return new JsonResponse([
         'success' => 0,
-        'message' => 'Task was not in the "from" swimlane.',
+        'message' => 'Task was not in the "from" column.',
         'method' => 'POST',
       ]);
     }
 
-    // Update swimlane.
+    // Update column (swimlane).
     $task
       ->setSwimlane($to_swimlane)
       ->save();

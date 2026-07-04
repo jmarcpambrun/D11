@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
- * Provides an interface for defining Swimlane entities.
+ * Provides an interface for defining Column (swimlane) entities.
  *
  * @ingroup burndown
  */

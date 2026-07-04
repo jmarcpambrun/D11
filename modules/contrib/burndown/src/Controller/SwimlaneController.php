@@ -58,7 +58,7 @@ class SwimlaneController extends ControllerBase {
     // Sanitize input.
     $code = Html::escape($shortcode);
 
-    // Get swimlanes.
+    // Get columns(swimlanes).
     $swimlanes = Swimlane::getBoardSwimlanes($code);
 
     // Get tasks for each swimlane.

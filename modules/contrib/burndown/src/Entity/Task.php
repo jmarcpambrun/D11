@@ -106,7 +106,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   }
 
   /**
-   * Get tasks for a swimlane (optionally filtered on a sprint).
+   * Get tasks for a column (optionally filtered on a sprint).
    */
   public static function getTasksForSwimlane($shortcode, $swimlane_name, $sprint_id = NULL, $assigned_to = NULL) {
     $project = Project::loadFromShortcode($shortcode);
@@ -1424,8 +1424,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     // Swimlane.
     $fields['swimlane'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Swimlane'))
-      ->setDescription(t('The swimlane that the task is currently in.'))
+      ->setLabel(t('Column'))
+      ->setDescription(t('The Column that the task is currently in.'))
       ->setSetting('target_type', 'burndown_swimlane')
       ->setSetting('handler', 'default')
       ->setDisplayOptions('view', [

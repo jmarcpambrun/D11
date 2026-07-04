@@ -5,11 +5,11 @@ namespace Drupal\burndown\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 
 /**
- * Defines the Default Swimlane entity.
+ * Defines the Default Column (swimlane) entity.
  *
  * @ConfigEntityType(
  *   id = "default_swimlane",
- *   label = @Translation("Default Swimlane"),
+ *   label = @Translation("Default Column"),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\burndown\DefaultSwimlaneListBuilder",

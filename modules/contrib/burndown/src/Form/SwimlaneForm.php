@@ -7,7 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Form controller for Swimlane edit forms.
+ * Form controller for column (swimlane) edit forms.
  *
  * @ingroup burndown
  */
@@ -59,7 +59,7 @@ class SwimlaneForm extends ContentEntityForm {
 
     switch ($status) {
       case SAVED_NEW:
-        $this->messenger()->addMessage($this->t('Created the %label Swimlane.', [
+        $this->messenger()->addMessage($this->t('Created the %label Column.', [
           '%label' => $entity->label(),
         ]));
         break;
