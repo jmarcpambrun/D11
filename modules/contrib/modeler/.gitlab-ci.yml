@@ -6,7 +6,7 @@ include:
       - '/includes/include.drupalci.variables.yml'
       - '/includes/include.drupalci.workflows.yml'
 variables:
-  _CSPELL_IGNORE_PATHS: "dist/*"
+  _CSPELL_IGNORE_PATHS: "dist/*, ui/dist/*, ui/tests/e2e/fixtures/mocks.ts, ui/tests/screenshots/*, ui/tests/storybook-static/*, ui/tests/playwright-report/*"
   _MKDOCS_STRICT: '0'
   SKIP_STYLELINT: '1'
   SKIP_ESLINT: '1'

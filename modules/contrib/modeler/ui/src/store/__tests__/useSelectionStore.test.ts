@@ -16,7 +16,6 @@ const makeEdge = (id: string, source = 'a', target = 'b'): StoreEdge =>
 describe('useSelectionStore', () => {
   beforeEach(() => {
     useSelectionStore.setState({
-      lastSelectionSource: 'none',
       selectedNode: null,
       selectedEdge: null,
       selectedNodes: [],
@@ -32,7 +31,6 @@ describe('useSelectionStore', () => {
       expect(s.selectedEdge).toBeNull();
       expect(s.selectedNodes).toEqual([]);
       expect(s.selectedEdges).toEqual([]);
-      expect(s.lastSelectionSource).toBe('none');
     });
   });
 
@@ -62,30 +60,6 @@ describe('useSelectionStore', () => {
       useSelectionStore.getState().setSelectedEdges(['e1']);
       expect(useSelectionStore.getState().selectedNodes).toEqual(['n1', 'n2']);
       expect(useSelectionStore.getState().selectedEdges).toEqual(['e1']);
-    });
-
-    it('should add to selectedNodes', () => {
-      useSelectionStore.getState().setSelectedNodes(['n1']);
-      useSelectionStore.getState().addToSelectedNodes('n2');
-      expect(useSelectionStore.getState().selectedNodes).toEqual(['n1', 'n2']);
-    });
-
-    it('should remove from selectedNodes', () => {
-      useSelectionStore.getState().setSelectedNodes(['n1', 'n2', 'n3']);
-      useSelectionStore.getState().removeFromSelectedNodes('n2');
-      expect(useSelectionStore.getState().selectedNodes).toEqual(['n1', 'n3']);
-    });
-
-    it('should add to selectedEdges', () => {
-      useSelectionStore.getState().setSelectedEdges(['e1']);
-      useSelectionStore.getState().addToSelectedEdges('e2');
-      expect(useSelectionStore.getState().selectedEdges).toEqual(['e1', 'e2']);
-    });
-
-    it('should remove from selectedEdges', () => {
-      useSelectionStore.getState().setSelectedEdges(['e1', 'e2']);
-      useSelectionStore.getState().removeFromSelectedEdges('e1');
-      expect(useSelectionStore.getState().selectedEdges).toEqual(['e2']);
     });
   });
 
@@ -143,16 +117,6 @@ describe('useSelectionStore', () => {
       expect(s.selectedEdge).toBeNull();
       expect(s.selectedNodes).toEqual([]);
       expect(s.selectedEdges).toEqual([]);
-    });
-  });
-
-  describe('lastSelectionSource', () => {
-    it('should track the source of the last selection', () => {
-      useSelectionStore.getState().setLastSelectionSource('canvas');
-      expect(useSelectionStore.getState().lastSelectionSource).toBe('canvas');
-
-      useSelectionStore.getState().setLastSelectionSource('replay');
-      expect(useSelectionStore.getState().lastSelectionSource).toBe('replay');
     });
   });
 

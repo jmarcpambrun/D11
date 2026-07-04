@@ -44,10 +44,6 @@ const meta: Meta<typeof ContentEditableField> = {
       control: 'boolean',
       description: 'Whether this field accepts token drops',
     },
-    isTokenDragging: {
-      control: 'boolean',
-      description: 'Whether a token is currently being dragged (visual indicators)',
-    },
   },
 };
 
@@ -109,34 +105,11 @@ export const LongContent: Story = {
 };
 
 /**
- * Field showing token drop target indicator (green border) when a token is being dragged
- */
-export const TokenDropTarget: Story = {
-  args: {
-    value: 'Hello [current-user:name]',
-    acceptsTokens: true,
-    isTokenDragging: true,
-  },
-};
-
-/**
- * Field rejecting token drops (visual rejection indicator) when tokens are not accepted
- */
-export const TokenDropRejected: Story = {
-  args: {
-    value: 'This field does not accept tokens',
-    acceptsTokens: false,
-    isTokenDragging: true,
-  },
-};
-
-/**
  * Field with token acceptance disabled (no token pill rendering)
  */
 export const NoTokensAccepted: Story = {
   args: {
     value: 'Plain text [not:a:token]',
     acceptsTokens: false,
-    isTokenDragging: false,
   },
 };

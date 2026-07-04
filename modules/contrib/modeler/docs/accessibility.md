@@ -138,7 +138,7 @@ The edge order badges ("Flow 1", "Flow 2", etc.) are fully accessible:
 
 ## Scrollable regions
 
-Scrollable content areas (like the Step Data section in the Replay Panel) are
+Scrollable content areas (like the Step Data section in Review flow mode) are
 keyboard-accessible with:
 
 - `tabIndex="0"` for keyboard focus.

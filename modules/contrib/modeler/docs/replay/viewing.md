@@ -7,15 +7,16 @@ behaved and for debugging issues.
 ## Loading replay data
 
 1. **Select an event node** on the canvas (click on it).
-2. Click the **reload button** in the event's Property Panel.
-3. The modeler fetches the execution history from the backend.
-4. The **Replay Panel** expands to show the loaded data.
+2. Click the **Review flow** button in the panel header. (If the model has
+   unsaved changes, the modeler first offers to **Save and review flow**.)
+3. Review opens for that event: the modeler starts the live listener and
+   fetches the execution history from the backend automatically.
 
 ![Loading replay data for an event node](../assets/screenshots/replay-load.jpg){ .screenshot }
 
 ## Multiple executions
 
-If the event has been triggered multiple times, the Replay Panel shows an
+If the event has been triggered multiple times, Review flow mode shows an
 **entry selector dropdown** at the top. Each entry includes:
 
 - **Timestamp**: When the execution occurred.
@@ -27,7 +28,7 @@ there are two or more entries.
 
 ## Navigating steps
 
-The Replay Panel shows a list of execution steps. Each step represents one
+Review flow mode shows a list of execution steps. Each step represents one
 action in the workflow execution:
 
 | Step type | Icon | Meaning |
@@ -67,28 +68,23 @@ while preserving your zoom level.
 
 The replay system syncs in both directions:
 
-- **Click a step** in the Replay Panel --> the canvas highlights the
+- **Click a step** in Review flow mode --> the canvas highlights the
   corresponding element.
-- **Click a node** on the canvas --> the Replay Panel jumps to the first
+- **Click a node** on the canvas --> Review flow mode jumps to the first
   matching step.
 
-## Step metadata
-
-Click the **i** button in a step's area to view detailed metadata:
-
-- Step type
-- Component ID
-- Successor ID (for edge-related steps)
-- Condition ID (for condition evaluations)
-- Error information (if applicable)
+!!! note "Live session"
+    Entering **Review flow** on a saved model with replay/test capability
+    starts listening for execution data and loads any available history
+    automatically -- no extra clicks needed.
 
 ## Resizing sections
 
-The Replay Panel's internal sections (execution controls, step data, global
-tokens, template tokens) are vertically resizable. Drag the horizontal
-separator between sections to adjust their height. Your preferred proportions
-are saved to local storage and restored on the next visit. See
-[Replay Panel > Resizable sections](../interface/replay-panel.md#resizable-sections)
+The Review flow sections (execution controls, step data, global tokens,
+template tokens) are vertically resizable. Drag the horizontal separator
+between sections to adjust their height. Your preferred proportions are saved
+to local storage and restored on the next visit. See
+[Review flow > Resizable sections](../interface/replay-panel.md#resizable-sections)
 for details.
 
 ## Empty state

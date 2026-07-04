@@ -8,19 +8,19 @@ import ConfigurationForm from './ConfigurationForm';
 import type { StoreNode as Node } from '../types/settings';
 import { t } from '../utils/translation';
 import { useDebouncedField } from '../hooks/useDebouncedField';
-import { useTokenDragPrevention } from '../hooks/useTokenDragPrevention';
 
 interface NodePropertiesPanelProps {
   node: Node;
   configurationForm: any;
   onConfigurationChange?: (nodeId: string, configuration: Record<string, any>) => void;
+  /** @deprecated no longer consumed; retained for caller compatibility */
   onNodeUpdate?: (nodeId: string, data: any) => void;
   isLocked: boolean;
   nodeLabelField: ReturnType<typeof useDebouncedField>;
   nodeAnnotationField: ReturnType<typeof useDebouncedField>;
 }
 
-const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
+const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = React.memo(({
   node,
   configurationForm,
   onConfigurationChange,
@@ -29,8 +29,6 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
   nodeLabelField,
   nodeAnnotationField,
 }) => {
-  const { isTokenDragging, handleNativeFieldDragOver, handleNativeFieldDrop } = useTokenDragPrevention();
-
   const handleConfigurationChange = useCallback((newConfiguration: Record<string, any>) => {
     if (node && onConfigurationChange) {
       onConfigurationChange(node.id, newConfiguration);
@@ -39,7 +37,7 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
   return (
     <div className="panel-content">
-      <div className={`property-item modeler-native-field ${isTokenDragging ? 'token-drop-disabled' : ''}`}>
+      <div className="property-item modeler-native-field">
         <label htmlFor="modeler-component-label">{t('Label')}</label>
         <div className="property-value editable">
           <input
@@ -50,13 +48,11 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
             disabled={isLocked}
             onChange={nodeLabelField.onChange}
             onBlur={nodeLabelField.onBlur}
-            onDragOver={handleNativeFieldDragOver}
-            onDrop={handleNativeFieldDrop}
           />
         </div>
       </div>
 
-      <div className={`property-item modeler-native-field ${isTokenDragging ? 'token-drop-disabled' : ''}`}>
+      <div className="property-item modeler-native-field">
         <label htmlFor="modeler-node-annotation">{t('Annotation')}</label>
         <div className="property-value editable">
           <textarea
@@ -68,8 +64,6 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
             rows={3}
             onChange={nodeAnnotationField.onChange}
             onBlur={nodeAnnotationField.onBlur}
-            onDragOver={handleNativeFieldDragOver}
-            onDrop={handleNativeFieldDrop}
           />
         </div>
       </div>
@@ -93,6 +87,8 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
       )}
     </div>
   );
-};
+});
+
+NodePropertiesPanel.displayName = 'NodePropertiesPanel';
 
 export default NodePropertiesPanel;

@@ -2,11 +2,7 @@ import { create } from 'zustand';
 import type { StoreNode, StoreEdge } from '../types/settings';
 import { useGraphStore } from './useGraphStore';
 
-type SelectionSource = 'canvas' | 'replay' | 'none';
-
 interface SelectionState {
-  lastSelectionSource: SelectionSource;
-  setLastSelectionSource: (source: SelectionSource) => void;
   selectedNode: StoreNode | null;
   setSelectedNode: (node: StoreNode | null) => void;
   selectedEdge: StoreEdge | null;
@@ -15,19 +11,12 @@ interface SelectionState {
   selectedEdges: string[];
   setSelectedNodes: (nodes: string[]) => void;
   setSelectedEdges: (edges: string[]) => void;
-  addToSelectedNodes: (nodeId: string) => void;
-  removeFromSelectedNodes: (nodeId: string) => void;
-  addToSelectedEdges: (edgeId: string) => void;
-  removeFromSelectedEdges: (edgeId: string) => void;
   clearSelection: () => void;
   selectNode: (node: StoreNode) => void;
   selectEdge: (edge: StoreEdge) => void;
 }
 
 export const useSelectionStore = create<SelectionState>((set) => ({
-  lastSelectionSource: 'none' as SelectionSource,
-  setLastSelectionSource: (source) => set({ lastSelectionSource: source }),
-
   selectedNode: null,
   setSelectedNode: (node) => set({ selectedNode: node }),
 
@@ -38,22 +27,6 @@ export const useSelectionStore = create<SelectionState>((set) => ({
   selectedEdges: [],
   setSelectedNodes: (nodes) => set({ selectedNodes: nodes }),
   setSelectedEdges: (edges) => set({ selectedEdges: edges }),
-  addToSelectedNodes: (nodeId) =>
-    set((state) => ({
-      selectedNodes: [...state.selectedNodes, nodeId],
-    })),
-  removeFromSelectedNodes: (nodeId) =>
-    set((state) => ({
-      selectedNodes: state.selectedNodes.filter((id) => id !== nodeId),
-    })),
-  addToSelectedEdges: (edgeId) =>
-    set((state) => ({
-      selectedEdges: [...state.selectedEdges, edgeId],
-    })),
-  removeFromSelectedEdges: (edgeId) =>
-    set((state) => ({
-      selectedEdges: state.selectedEdges.filter((id) => id !== edgeId),
-    })),
   clearSelection: () =>
     set({
       selectedNodes: [],

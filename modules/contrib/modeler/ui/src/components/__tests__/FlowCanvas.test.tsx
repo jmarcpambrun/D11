@@ -8,11 +8,15 @@ import FlowCanvas from '../FlowCanvas';
 // them safely.
 const mockCapturedReactFlowNodes: { current: any[] } = { current: [] };
 const mockCapturedReactFlowEdges: { current: any[] } = { current: [] };
+// Captures the full props object handed to ReactFlow so tests can assert
+// integration-level props such as onSelectionEnd (issue #3589101).
+const mockCapturedReactFlowProps: { current: any } = { current: {} };
 
 jest.mock('reactflow', () => {
   const MockReactFlow = React.forwardRef((props: any, ref: any) => {
     mockCapturedReactFlowNodes.current = props.nodes || [];
     mockCapturedReactFlowEdges.current = props.edges || [];
+    mockCapturedReactFlowProps.current = props;
     return (
       <div data-testid="react-flow" ref={ref} className={props.className || ''}>
         {props.children}
@@ -24,6 +28,12 @@ jest.mock('reactflow', () => {
   return {
     __esModule: true,
     default: MockReactFlow,
+    // useSuppressNodesSelectionBox (issue #3589101) consumes the React Flow
+    // store API; provide a controllable stub so FlowCanvas can mount.
+    useStoreApi: () => ({
+      setState: jest.fn(),
+      getState: jest.fn(() => ({ nodesSelectionActive: false })),
+    }),
     MiniMap: () => <div data-testid="minimap" />,
     Background: () => <div data-testid="background" />,
     Controls: () => <div data-testid="controls" />,
@@ -68,6 +78,7 @@ describe('FlowCanvas', () => {
     onNodeClick: jest.fn(),
     onEdgeClick: jest.fn(),
     onPaneClick: jest.fn(),
+    onSelectionStart: jest.fn(),
     onNodeDragStart: jest.fn(),
     onNodeDragStop: jest.fn(),
     onInit: jest.fn(),
@@ -128,6 +139,7 @@ describe('FlowCanvas', () => {
     jest.clearAllMocks();
     mockCapturedReactFlowNodes.current = [];
     mockCapturedReactFlowEdges.current = [];
+    mockCapturedReactFlowProps.current = {};
     // Reset the global reconnect-drag flag so it never leaks between tests.
     require('../../store/useUISettingsStore').useUISettingsStore.getState().setReconnectDragActive(false);
   });
@@ -200,6 +212,22 @@ describe('FlowCanvas', () => {
     it('should always show minimap', () => {
       render(<FlowCanvas {...defaultProps} />);
       expect(screen.getByTestId('minimap')).toBeTruthy();
+    });
+
+    // Issue #3589101: rubber-band multi-select must match Shift+click. The
+    // NodesSelection bounding box is suppressed via an onSelectionEnd handler
+    // wired to ReactFlow.
+    it('wires an onSelectionEnd handler to ReactFlow to suppress the selection box', () => {
+      render(<FlowCanvas {...defaultProps} />);
+      expect(typeof mockCapturedReactFlowProps.current.onSelectionEnd).toBe('function');
+    });
+
+    it('keeps selectionOnDrag enabled when unlocked and disabled when locked', () => {
+      const { rerender } = render(<FlowCanvas {...defaultProps} />);
+      expect(mockCapturedReactFlowProps.current.selectionOnDrag).toBe(true);
+
+      rerender(<FlowCanvas {...defaultProps} uiState={{ ...defaultUIState, isLocked: true }} />);
+      expect(mockCapturedReactFlowProps.current.selectionOnDrag).toBe(false);
     });
   });
 

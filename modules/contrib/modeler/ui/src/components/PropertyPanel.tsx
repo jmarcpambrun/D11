@@ -1,5 +1,5 @@
-import React, { Profiler, useCallback, useEffect, useMemo, useState } from 'react';
-import { FiChevronRight, FiChevronLeft, FiGitBranch, FiInfo, FiRefreshCw } from 'react-icons/fi';
+import React, { Profiler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FiChevronRight, FiChevronLeft, FiGitBranch, FiInfo, FiActivity, FiSliders } from 'react-icons/fi';
 import DocumentationButton from './DocumentationButton';
 import InfoPopup from './InfoPopup';
 import type { InfoItem } from './InfoPopup';
@@ -13,15 +13,94 @@ import { PANEL_DIMENSIONS } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import { getComponentIcon, getComponentLabel, getComponentTypeName } from '../utils/componentUtils';
 import { useConfigurationLoader } from '../hooks/useConfigurationLoader';
-import { useReplayLoader } from '../hooks/useReplayLoader';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
+import { LISTEN_ITEM_INDEX } from '../hooks/useReplayLoader';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { useDebouncedField } from '../hooks/useDebouncedField';
-import type { Settings } from '../types/settings';
+import type { Settings, GlobalToken } from '../types/settings';
 import { hasPermission } from '../utils/permissions';
 import { onRenderCallback } from '../utils/profiling';
+import ReplayPanelContent from './ReplayPanelContent';
+import type { StepInfo } from './ReplayPanelContent';
+import type { ReplayStep } from '../utils/replayStepUtils';
+import { TokenSourceContext } from './TokenSourceContext';
+import type { TokenSourceValue } from './TokenSourceContext';
 
-interface PropertyPanelProps {
+/**
+ * Props that thread the lifted replay/test state from `Flow.tsx` down to the
+ * embedded {@link ReplayPanelContent} when the panel is in "Review flow" mode.
+ * All of this state stays lifted in `Flow.tsx`; PropertyPanel is a pass-through.
+ */
+interface ReviewModeProps {
+  /** Replay steps for the currently selected execution entry. */
+  replayData?: ReplayStep[] | null;
+  /** Current replay step index (-1 = none selected). */
+  currentReplayStep?: number;
+  /** Select a replay step. */
+  onSelectReplayStep?: (step: number) => void;
+  /** Toggle replay (playback) mode. */
+  onToggleReplay?: () => void;
+  /** Expanded token data for the current step. */
+  stepData?: Record<string, any> | null;
+  /** Metadata about the current step (type, ids, exception, ...). */
+  stepInfo?: StepInfo | null;
+  /** All nodes (for step labeling / filtering). */
+  reviewNodes?: Node[];
+  /** All edges (for step labeling / filtering). */
+  reviewEdges?: Edge[];
+  /** Loaded replay entries from the backend (multiple executions). */
+  replayEntries?: ReplayEntry[];
+  /** Index of the currently selected replay entry. */
+  selectedReplayEntryIndex?: number;
+  /** Select a different replay entry. */
+  onSelectReplayEntry?: (index: number) => void;
+  /** Select the persistent "listen" item (re-arms the live listener). */
+  onSelectListenItem?: () => void;
+  /** Per-event backend empty/warning message for the empty review body (A47). */
+  backendMessage?: string | null;
+  /** ID of the currently selected (or auto-detected) event node. */
+  selectedStartNodeId?: string | null;
+  /** Whether a test_url endpoint is available. */
+  hasTestUrl?: boolean;
+  /** Whether a test is currently running (polling for results). */
+  isTestRunning?: boolean;
+  /** Whether the initial test request is in flight. */
+  isTestInitiating?: boolean;
+  /** Error message if the test failed. */
+  testError?: string | null;
+  /** Start a test for the given event component ID. */
+  onStartTest?: (componentId: string) => void;
+  /** Cancel the running test. */
+  onCancelTest?: () => void;
+  /** Global tokens. */
+  globalTokens?: Record<string, GlobalToken>;
+  /** Template tokens. */
+  templateTokens?: Record<string, GlobalToken>;
+  /** Whether the current model is a template. */
+  isTemplate?: boolean;
+  /**
+   * Feature J: whether the owning event's history load is in flight (drives the
+   * @-picker's "Polling for data" state). Lifted from Flow's useReplayLoader.
+   */
+  isReplayLoading?: boolean;
+  /**
+   * Feature J: enter/refresh the owning event's review session to load step
+   * data on demand for the @-picker (routes through Flow.enterReviewForNode —
+   * starts the SINGLE listener + loads history). The picker never loads itself.
+   */
+  onLoadStepData?: (eventId: string) => void;
+  /**
+   * Feature J (caveat fix): the event that owns the selected node resolved
+   * STRUCTURALLY by Flow (session-agnostic, via findOwningEventId), so the
+   * Step-data category shows BEFORE any session exists. Distinct from
+   * `reviewableEventId` (session-gated, drives the Review-flow button). null
+   * when no event flow reaches the node. Falls back to the legacy local
+   * derivation in isolated contexts (tests/stories) that supply no prop.
+   */
+  pickerOwningEventId?: string | null;
+}
+
+interface PropertyPanelProps extends ReviewModeProps {
   node?: Node | null;
   edge?: Edge | null;
   selectedNodes?: Node[];
@@ -33,7 +112,49 @@ interface PropertyPanelProps {
   isLocked?: boolean;
   settings?: Settings;
   isReplayMode?: boolean;
+  /**
+   * @deprecated no longer consumed here; retained for caller compatibility.
+   * Flow.tsx owns replay loading on review entry.
+   */
   onReplayEntriesLoaded?: (entries: ReplayEntry[]) => void;
+  /**
+   * Whether the model has any replay capability (replay_url, test_url, or
+   * embedded replay data). When false, the "Review flow" toggle is shown but
+   * disabled. Computed in `Flow.tsx` as `hasAnyReplayCapability`.
+   */
+  hasAnyReplayCapability?: boolean;
+  /**
+   * Request to START a replay session. Provided by Flow.tsx — it gates the
+   * switch behind the unsaved-changes guard (Phase 2) because only the model
+   * owner knows how to save, and it starts the live listener + loads history.
+   * When omitted (e.g. isolated tests/stories), it falls back to a direct,
+   * unguarded view switch.
+   */
+  onRequestReviewMode?: () => void;
+  /**
+   * Whether a replay session is currently active (started for an event node,
+   * with loaded data or a running listener). When true, the user can switch
+   * freely between Properties and Replay views without losing session state,
+   * and the "Review flow" (go-to-replay) control is offered from ANY node.
+   */
+  replaySessionActive?: boolean;
+  /**
+   * TRUE when the currently-active review session was armed by the [-token
+   * PICKER (Flow.loadStepDataForPicker) rather than an explicit Review action.
+   * While true the panel keeps showing Properties (the step data flows into the
+   * picker only) and never switches to the Replay view. Defaults to false for
+   * isolated contexts (tests/stories).
+   */
+  pickerInitiatedSession?: boolean;
+  /**
+   * For a NON-event selected node: the id of the reviewed event whose flow OWNS
+   * the selected node (i.e. reaches it), among events that currently have a
+   * session — or null when the node belongs to no session-flow. Resolved by
+   * Flow.tsx via findOwningReviewedEventId. Used to gate the "Review flow"
+   * button for non-event nodes: show ONLY when an owning session-event exists,
+   * so the button does not appear for nodes outside any reviewed flow.
+   */
+  reviewableEventId?: string | null;
 }
 
 const PropertyPanel: React.FC<PropertyPanelProps> = ({
@@ -48,7 +169,40 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   isLocked = false,
   settings = {},
   isReplayMode = false,
-  onReplayEntriesLoaded
+  // onReplayEntriesLoaded is retained on the interface for backward compat but
+  // is no longer consumed here — Flow.tsx owns replay loading on review entry.
+  hasAnyReplayCapability = false,
+  onRequestReviewMode,
+  replaySessionActive = false,
+  pickerInitiatedSession = false,
+  reviewableEventId = null,
+  // Review-mode (replay) props — threaded down to ReplayPanelContent.
+  replayData,
+  currentReplayStep = -1,
+  onSelectReplayStep,
+  onToggleReplay,
+  stepData,
+  stepInfo,
+  reviewNodes = [],
+  reviewEdges = [],
+  replayEntries = [],
+  selectedReplayEntryIndex = -1,
+  onSelectReplayEntry,
+  onSelectListenItem,
+  backendMessage = null,
+  selectedStartNodeId,
+  hasTestUrl = false,
+  isTestRunning = false,
+  isTestInitiating = false,
+  testError,
+  onStartTest,
+  onCancelTest,
+  globalTokens,
+  templateTokens,
+  isTemplate = false,
+  isReplayLoading = false,
+  onLoadStepData,
+  pickerOwningEventId: pickerOwningEventIdProp,
 }) => {
   const panelWidth = usePanelStore(state => state.panelWidth);
   const panelIsResizing = usePanelStore(state => state.panelIsResizing);
@@ -56,6 +210,8 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   const setPanelResizing = usePanelStore(state => state.setPanelResizing);
   const propertyPanelCollapsed = usePanelStore(state => state.propertyPanelCollapsed);
   const togglePropertyPanelCollapse = usePanelStore(state => state.togglePropertyPanelCollapse);
+  const panelMode = usePanelStore(state => state.panelMode);
+  const setPanelMode = usePanelStore(state => state.setPanelMode);
   const components = useComponentStore(state => state.components);
 
   // Look up the documentation URL from the component definition
@@ -65,28 +221,214 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
     return component?.documentationUrl || node.data?.documentationUrl || null;
   }, [node?.data?.plugin, node?.data?.documentationUrl, components]);
   
+  // ── Picker-open freeze: state declared early so it can also gate the config
+  // loader input below (a picker-armed session must not reload/unmount the
+  // field while the [-token picker is open). ──────────────────────────────────
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const handlePickerOpenChange = useCallback((open: boolean) => setPickerOpen(open), []);
+
+  // Freeze the loader's `isReplayMode` input while the picker is open. The
+  // config loader "always reloads in replay mode" (→ setLoading(true) → the
+  // body swaps to the spinner → ContentEditableField UNMOUNTS → the picker's
+  // freeze is released). Feeding it the open-time `isReplayMode` (false on a
+  // fresh field) keeps the loader's input STABLE so it never triggers that
+  // reload while the picker is open. Reconciles to live on close. Explicit
+  // Review (picker closed) drives the loader live, as before.
+  const frozenIsReplayModeRef = useRef<boolean | null>(null);
+  if (pickerOpen) {
+    if (frozenIsReplayModeRef.current === null) {
+      frozenIsReplayModeRef.current = isReplayMode;
+    }
+  } else if (frozenIsReplayModeRef.current !== null) {
+    frozenIsReplayModeRef.current = null;
+  }
+  const passedIsReplayMode =
+    pickerOpen && frozenIsReplayModeRef.current !== null ? frozenIsReplayModeRef.current : isReplayMode;
+
   // Use extracted hooks for cleaner architecture
   const { configurationForm, loading } = useConfigurationLoader({
     node,
     settings,
-    isReplayMode,
+    isReplayMode: passedIsReplayMode,
   });
 
-  // Replay loader for event nodes — callback fires inside the hook, no useEffect bridge needed
-  const { loading: replayLoading, error: replayError, loadReplayData } = useReplayLoader({
-    settings,
-    onEntriesLoaded: onReplayEntriesLoaded,
-  });
   const isStartNode = node?.type === 'start';
   const isNewModel = !!settings.modeler_api?.isNew;
   const canReplay = hasPermission(settings, 'replay');
   const hasReplayUrl = !isNewModel && !!settings.modeler_api?.replay_url && canReplay;
 
-  const handleLoadReplay = useCallback(() => {
-    if (node && isStartNode && hasReplayUrl) {
-      loadReplayData(node.id);
+  // Review is available when the model has replay/test capability and is saved.
+  // (Live listening requires a saved model — see Flow.requestReviewMode.)
+  const reviewAvailable = hasAnyReplayCapability && !isNewModel;
+
+  // ── Picker-open freeze ────────────────────────────────────────────────────
+  // While the [-token picker (a modal) is open, the panel BEHIND it must not
+  // repaint from session-derived state that a picker-armed session changes
+  // (Review-button enabled state, event⇄review view). We capture the chrome
+  // derivations at the moment the picker opens and render the frozen snapshot
+  // until it closes, then reconcile to live values. The picker keeps receiving
+  // LIVE token-source data (see `tokenSources`) so data still flows into it.
+  // (`pickerOpen` + `handlePickerOpenChange` are declared earlier so they can
+  // also gate the config-loader input above.)
+
+  // `panelMode` is an INTERNAL view flag only (no persistent toggle UI).
+  // Properties and Replay are two coexisting views: the Replay view stays bound
+  // to the active session's event, while the Properties view reflects the
+  // currently-selected node. We only stay in Replay when a session is active —
+  // otherwise (no session) the panel always shows Properties.
+  // A picker-initiated session (the [-token picker armed the session purely to
+  // feed itself via loadStepDataForPicker) must NOT switch to the Replay view:
+  // the user stays in the field they are editing while step data loads into the
+  // picker. Only an EXPLICIT Review action (which clears `pickerInitiatedSession`
+  // in Flow) shows the Replay view.
+  const liveEffectiveMode: 'event' | 'review' =
+    replaySessionActive && !pickerInitiatedSession ? panelMode : 'event';
+
+  // The "Review flow" (go-to-replay) button is ALWAYS rendered; this boolean
+  // controls whether it is ENABLED (clickable) vs disabled. Enabled when the
+  // selected node has an event-flow to review:
+  //   • EVENT/start node with review available → start/resume its own session.
+  //   • NON-event node whose OWNING event has a session (`reviewableEventId`).
+  //   • Isolated contexts (tests/stories) with no handler keep the legacy
+  //     `replaySessionActive` fallback so the control is operable.
+  // Disabled otherwise (new/unsaved model, node outside any reviewable flow, no
+  // replay capability).
+  const liveReviewButtonEnabled =
+    (!!node && isStartNode && reviewAvailable) ||
+    (!!node && !isStartNode && !!reviewableEventId) ||
+    (replaySessionActive && !onRequestReviewMode);
+
+  // Snapshot the chrome derivations while the picker is open; resume live when
+  // it closes. The ref write happens during render ONLY on the open→render
+  // transition (no setState), so it cannot cause a render loop.
+  //
+  // No-gap invariant: in the SAME render where `pickerOpen` is first seen true,
+  // we populate `frozenChromeRef` BEFORE selecting `effectiveMode` below — so
+  // whenever `pickerOpen` is true the ref is guaranteed non-null. We therefore
+  // select on `pickerOpen` ALONE (not `pickerOpen && ref`), which means there is
+  // no render where `pickerOpen===true` yet live values leak through.
+  const frozenChromeRef = useRef<{ effectiveMode: 'event' | 'review'; reviewButtonEnabled: boolean } | null>(null);
+  if (pickerOpen) {
+    if (frozenChromeRef.current === null) {
+      frozenChromeRef.current = {
+        effectiveMode: liveEffectiveMode,
+        reviewButtonEnabled: liveReviewButtonEnabled,
+      };
     }
-  }, [node, isStartNode, hasReplayUrl, loadReplayData]);
+  } else if (frozenChromeRef.current !== null) {
+    frozenChromeRef.current = null;
+  }
+
+  // While open, frozenChromeRef.current is guaranteed populated (set just above
+  // in this same render). Fall back to live ONLY when not open.
+  const frozenChrome = frozenChromeRef.current;
+  const effectiveMode: 'event' | 'review' =
+    pickerOpen && frozenChrome ? frozenChrome.effectiveMode : liveEffectiveMode;
+  const isReviewMode = effectiveMode === 'review';
+  const reviewButtonEnabled =
+    pickerOpen && frozenChrome ? frozenChrome.reviewButtonEnabled : liveReviewButtonEnabled;
+
+  // Belt-and-braces: while the picker is open, NEVER swap the body to the
+  // loading spinner — that would unmount the field hosting the open picker.
+  // (Freezing the loader input above should already prevent a reload, but an
+  // in-flight load must not unmount the field mid-picker either.)
+  const showingLoading = !pickerOpen && !!node && loading;
+
+  // Go to the Replay view. Always delegate to Flow's onRequestReviewMode, which
+  // resolves the per-event action: RESUME the selected event's existing session,
+  // START a new session for it (guarded), or RETURN to the currently-active
+  // session when a non-event node is selected. Falls back to a direct switch in
+  // isolated contexts (tests/stories) where no handler is supplied.
+  const goToReplay = useCallback(() => {
+    if (onRequestReviewMode) {
+      onRequestReviewMode();
+    } else {
+      setPanelMode('review');
+    }
+  }, [onRequestReviewMode, setPanelMode]);
+
+  // Go to the Properties view (of the currently-selected node). Direct and
+  // unguarded — the replay session stays active and resumes on return.
+  const goToProperties = useCallback(() => {
+    setPanelMode('event');
+  }, [setPanelMode]);
+
+  // Token sources shared with the in-field "[" token picker (Phase 3). Provided
+  // here because PropertyPanel already receives the lifted replay state from
+  // Flow.tsx. The "@" picker reuses the SAME shapes as the Review-mode tree.
+  const hasStepData = !!stepData && Object.keys(stepData).length > 0;
+  // Review is event-scoped: the @-picker's "Review the flow" hint offers entry
+  // only when the SELECTED node has an event-flow to review — an event node
+  // with review available, OR a non-event node whose owning event has a session
+  // (`reviewableEventId`). Isolated contexts (no handler) keep the legacy
+  // `replaySessionActive` fallback. Otherwise the hint's button is omitted
+  // (no-op) rather than entering a context-less review.
+  const canReviewFromHint =
+    (reviewAvailable && !!selectedStartNodeId) ||
+    !!reviewableEventId ||
+    (replaySessionActive && !onRequestReviewMode);
+
+  // Feature J: the event whose flow OWNS the selected node, used to gate and
+  // drive the @-picker's Step-data category. Prefer Flow's session-agnostic
+  // structural resolution (`pickerOwningEventIdProp` via findOwningEventId) so
+  // the category shows BEFORE any session exists. Fall back to the legacy local
+  // derivation for isolated contexts (tests/stories) that supply no prop:
+  // the session-resolved owning event, else the selected event when review is
+  // available. null → no Step-data category (never a context-less load).
+  const pickerOwningEventId: string | null =
+    pickerOwningEventIdProp ??
+    reviewableEventId ??
+    (reviewAvailable && selectedStartNodeId ? selectedStartNodeId : null);
+
+  // Feature J: the picker is a THIN VIEW over Flow's per-event sessions. The
+  // dataset dropdown / listen item route through the SAME handlers the Review
+  // panel uses (onSelectReplayEntry / onSelectListenItem), and on-demand loads
+  // go through onLoadStepData (Flow.enterReviewForNode). The picker NEVER calls
+  // useTestRunner/startTest/loadReplayData — guaranteeing ONE listener total.
+  const tokenSources = useMemo<TokenSourceValue>(() => ({
+    globalTokens,
+    templateTokens,
+    isTemplate,
+    stepData,
+    hasStepData,
+    onReviewModel: canReviewFromHint ? goToReplay : undefined,
+    reviewAvailable: canReviewFromHint,
+    // Feature J fields/callbacks.
+    owningEventId: pickerOwningEventId,
+    replayEntries,
+    selectedEntryIndex: selectedReplayEntryIndex,
+    isLoadingStepData: isReplayLoading,
+    isListening: selectedReplayEntryIndex === LISTEN_ITEM_INDEX || isTestRunning || isTestInitiating,
+    onLoadStepData,
+    onSelectDataset: onSelectReplayEntry,
+    onStartListen: onSelectListenItem,
+    // Stop listening on Back: reuse the SAME cancel mechanism the Review panel's
+    // cancel-on-select uses (Flow.handleCancelReview), so the single listener is
+    // stopped and selection moves off the listen item.
+    onStopListen: onCancelTest,
+    // Freeze signal: lets PropertyPanel hold its review chrome while the picker
+    // is open. Does NOT affect the LIVE data fields above.
+    onPickerOpenChange: handlePickerOpenChange,
+  }), [
+    globalTokens,
+    templateTokens,
+    isTemplate,
+    stepData,
+    hasStepData,
+    canReviewFromHint,
+    goToReplay,
+    pickerOwningEventId,
+    replayEntries,
+    selectedReplayEntryIndex,
+    isReplayLoading,
+    isTestRunning,
+    isTestInitiating,
+    onLoadStepData,
+    onSelectReplayEntry,
+    onSelectListenItem,
+    onCancelTest,
+    handlePickerOpenChange,
+  ]);
 
   const { startResize } = usePanelResize({
     panelWidth,
@@ -197,6 +539,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
   return (
     <Profiler id="PropertyPanel" onRender={onRenderCallback}>
+    <TokenSourceContext.Provider value={tokenSources}>
     <div
       className={`workflow-property-panel ${panelIsResizing ? 'resizing' : ''} ${propertyPanelCollapsed ? 'collapsed' : ''}`}
       style={{ width: propertyPanelCollapsed ? `${PANEL_DIMENSIONS.PROPERTY_PANEL.COLLAPSED_WIDTH}px` : `${panelWidth}px` }}
@@ -225,30 +568,81 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       )}
       <div className="panel-content">
 
+      {/* Fixed 3-zone header grid: [ LABEL | SWITCH | ICONS ].
+          Every state renders all three zones (label flexes via 1fr; switch and
+          icons are auto-width and right-anchored), so elements never jump
+          horizontally between states. The switch always lives in the middle
+          zone in BOTH views; the icons stay pinned right whether or not the
+          switch is shown. The "Loading..." throbber is NOT in the header — it
+          renders in the body below (see .panel-loading). */}
       <div className="panel-header">
-        {hasMultipleSelection ? (
-          <h3>{t('Multiple Selection')}</h3>
-        ) : node || edge ? (
-          <div className="component-header">
-            <div className="component-info">
+        {/* Zone 1 — label (left-anchored) */}
+        <div className="panel-header-label">
+          {isReviewMode ? (
+            <span className="component-info">
+              <FiActivity aria-hidden="true" />
+              <span className="component-type">{t('Review flow')}</span>
+            </span>
+          ) : hasMultipleSelection ? (
+            <h3>{t('Multiple Selection')}</h3>
+          ) : node || edge ? (
+            <span className="component-info">
               {node ? getComponentIcon(node.type || 'element') : <FiGitBranch />}
               <span className="component-type">
                 {node ? getComponentTypeName(node.type || 'element') : getComponentLabel('link')}
               </span>
-            </div>
-            <div className="header-actions">
-              {(loading || replayLoading) && <div className="loading-indicator">{t('Loading...')}</div>}
-              {node && isStartNode && hasReplayUrl && (
-                <button
-                  className={`header-replay-btn ${replayLoading ? 'loading' : ''}`}
-                  aria-label={t('Load replay data')}
-                  onClick={handleLoadReplay}
-                  disabled={replayLoading}
-                  title={replayError || t('Load replay data')}
-                >
-                  <FiRefreshCw className={replayLoading ? 'spinning' : ''} />
-                </button>
-              )}
+            </span>
+          ) : null}
+        </div>
+
+        {/* Zone 2 — view-switch button (fixed middle slot, both modes).
+            The cell is ALWAYS rendered so the icons zone never shifts; the
+            button is placed inside it only when applicable. */}
+        <div className="panel-header-switch">
+          {isReviewMode ? (
+            <button
+              type="button"
+              className="header-review-btn"
+              onClick={goToProperties}
+              aria-label={t('Show properties')}
+              title={t('Show properties')}
+            >
+              <FiSliders aria-hidden="true" />
+              <span>{t('Properties')}</span>
+            </button>
+          ) : reviewAvailable ? (
+            /* "Review flow" (go-to-replay) button — rendered ONLY when the model
+               has replay/test capability (a saved model with replay/test URL or
+               embedded data). Within the capable case it is ALWAYS rendered so
+               its footprint is stable (no layout shift): ENABLED when the
+               selected node has an event-flow to review; DISABLED otherwise,
+               with an explanatory tooltip. When NO capability exists (e.g.
+               permission denied), no Review affordance is rendered at all — the
+               empty middle cell below keeps the header layout stable. */
+            <button
+              type="button"
+              className="header-review-btn"
+              onClick={goToReplay}
+              disabled={!reviewButtonEnabled}
+              aria-disabled={!reviewButtonEnabled}
+              aria-label={t('Review flow')}
+              title={
+                reviewButtonEnabled
+                  ? t('Review flow')
+                  : t('Review is available once this step belongs to an executable event flow.')
+              }
+            >
+              <FiActivity aria-hidden="true" />
+              <span>{t('Review flow')}</span>
+            </button>
+          ) : null}
+        </div>
+
+        {/* Zone 3 — icons (right-anchored). Properties view only; stays an
+            empty reserved cell in Review / multi / empty states. */}
+        <div className="panel-header-icons">
+          {!isReviewMode && !hasMultipleSelection && (node || edge) && (
+            <>
               {node && documentationUrl && (
                 <DocumentationButton
                   url={documentationUrl}
@@ -265,18 +659,44 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
               >
                 <FiInfo />
               </button>
-            </div>
-          </div>
-        ) : (
-          <div className="empty-header"></div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
-      {showInfoPopup && infoItems.length > 0 && (
+      {!isReviewMode && showInfoPopup && infoItems.length > 0 && (
         <InfoPopup items={infoItems} onClose={() => setShowInfoPopup(false)} />
       )}
 
-      {hasMultipleSelection ? (
+      {isReviewMode ? (
+        <ReplayPanelContent
+          replayData={replayData}
+          isReplayMode={isReplayMode}
+          onToggleReplay={onToggleReplay ?? (() => {})}
+          onSelectStep={onSelectReplayStep ?? (() => {})}
+          currentStep={currentReplayStep}
+          stepData={stepData}
+          stepInfo={stepInfo}
+          edges={reviewEdges}
+          nodes={reviewNodes}
+          replayEntries={replayEntries}
+          selectedEntryIndex={selectedReplayEntryIndex}
+          onSelectReplayEntry={onSelectReplayEntry}
+          onSelectListenItem={onSelectListenItem}
+          backendMessage={backendMessage}
+          selectedStartNodeId={selectedStartNodeId}
+          hasReplayUrl={hasReplayUrl}
+          hasTestUrl={hasTestUrl}
+          isTestRunning={isTestRunning}
+          isTestInitiating={isTestInitiating}
+          testError={testError}
+          onStartTest={onStartTest}
+          onCancelTest={onCancelTest}
+          globalTokens={globalTokens}
+          templateTokens={templateTokens}
+          isTemplate={isTemplate}
+        />
+      ) : hasMultipleSelection ? (
         <MultiSelectionPanel
           selectedNodes={selectedNodes}
           selectedEdges={selectedEdges}
@@ -286,6 +706,16 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       ) : !node && !edge ? (
         <div className="panel-content empty">
           <p>{t('Select a component or connection to view its properties')}</p>
+        </div>
+      ) : showingLoading ? (
+        /* Loading the node's configuration form: show a centered spinner in the
+           panel BODY (the form area is empty anyway). The throbber deliberately
+           lives here, not in the header, so no header element is displaced.
+           Suppressed while the [-token picker is open (see `showingLoading`) so
+           the field hosting the picker is never unmounted by a loading swap. */
+        <div className="panel-loading" role="status" aria-live="polite">
+          <span className="panel-loading-spinner" aria-hidden="true" />
+          <span>{t('Loading...')}</span>
         </div>
       ) : node ? (
         <NodePropertiesPanel
@@ -307,6 +737,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       ) : null}
       </div>
     </div>
+    </TokenSourceContext.Provider>
     </Profiler>
   );
 };

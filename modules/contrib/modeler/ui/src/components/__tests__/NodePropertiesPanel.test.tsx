@@ -14,18 +14,6 @@ jest.mock('../ConfigurationForm', () => {
 // Mock react-icons (none currently used, but keep mock to prevent import errors)
 jest.mock('react-icons/fi', () => ({}));
 
-// Mock the Zustand store
-let mockIsTokenDragging = false;
-jest.mock('../../store/useFilterStore', () => ({
-  useFilterStore: jest.fn((selector: any) => {
-    const state = {
-      isTokenDragging: mockIsTokenDragging,
-    };
-    if (typeof selector === 'function') return selector(state);
-    return state;
-  }),
-}));
-
 describe('NodePropertiesPanel', () => {
   const mockOnConfigurationChange = jest.fn();
   const mockOnNodeUpdate = jest.fn();
@@ -63,7 +51,6 @@ describe('NodePropertiesPanel', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIsTokenDragging = false;
   });
 
   describe('label input', () => {
@@ -154,38 +141,5 @@ describe('NodePropertiesPanel', () => {
     });
   });
 
-  describe('token drag state', () => {
-    it('should add token-drop-disabled class to native fields when token is being dragged', () => {
-      mockIsTokenDragging = true;
-      const { container } = render(<NodePropertiesPanel {...defaultProps} />);
-      const nativeFields = container.querySelectorAll('.modeler-native-field.token-drop-disabled');
-      expect(nativeFields.length).toBe(2); // label + annotation
-    });
 
-    it('should not add token-drop-disabled class when no token is being dragged', () => {
-      mockIsTokenDragging = false;
-      const { container } = render(<NodePropertiesPanel {...defaultProps} />);
-      expect(container.querySelector('.modeler-native-field.token-drop-disabled')).toBeNull();
-    });
-
-    it('should prevent drop on label input during token drag', () => {
-      mockIsTokenDragging = true;
-      render(<NodePropertiesPanel {...defaultProps} />);
-      const labelInput = screen.getByLabelText('Label');
-
-      const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-      const prevented = !labelInput.dispatchEvent(dropEvent);
-      expect(prevented).toBe(true);
-    });
-
-    it('should prevent drop on annotation textarea during token drag', () => {
-      mockIsTokenDragging = true;
-      render(<NodePropertiesPanel {...defaultProps} />);
-      const annotation = screen.getByLabelText('Annotation');
-
-      const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-      const prevented = !annotation.dispatchEvent(dropEvent);
-      expect(prevented).toBe(true);
-    });
-  });
 });

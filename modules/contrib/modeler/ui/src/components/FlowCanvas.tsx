@@ -18,6 +18,7 @@ import ReactFlow, {
 import type { ReplayStep } from '../hooks/useSimpleReplaySync';
 import type { StoreComponent, EdgeData, NodeData, ModelConstraints } from '../types/settings';
 import { useEdgeOrdering } from '../hooks/useEdgeOrdering';
+import { useSuppressNodesSelectionBox } from '../hooks/useSuppressNodesSelectionBox';
 import { isConditionNode } from '../utils/incrementalLayout';
 import { isValidConnection as isValidConnectionShared } from '../utils/connectionValidation';
 import { useUISettingsStore } from '../store/useUISettingsStore';
@@ -48,6 +49,7 @@ interface FlowCanvasEventHandlers {
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onEdgeClick: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: (event: React.MouseEvent) => void;
+  onSelectionStart: (event: React.MouseEvent) => void;
   onNodeDragStart: (event: React.MouseEvent, node: Node) => void;
   onNodeDragStop: (event: React.MouseEvent, node: Node) => void;
   onInit: (instance: Record<string, unknown>) => void;
@@ -192,7 +194,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   const {
     onNodesChange, onEdgesChange, onConnect, onSelectionChange,
     onConnectStart, onConnectEnd, onNodeClick, onEdgeClick, onPaneClick,
-    onNodeDragStart, onNodeDragStop, onInit,
+    onSelectionStart, onNodeDragStart, onNodeDragStop, onInit,
   } = eventHandlers;
   const { onEdgeUpdate, onNodeUpdate, onDeleteNode, onDeleteEdge, onReconnectEdge } = elementCallbacks;
   const { isShiftPressed: _isShiftPressed, isCtrlPressed: _isCtrlPressed, isAltPressed: _isAltPressed } = modifierKeys;
@@ -211,6 +213,13 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
 
   // Selection mode: always partial so partially-overlapped nodes are included
   const selectionMode = SelectionMode.Partial;
+
+  // Make rubber-band (mouse-drag) multi-select behave identically to
+  // Shift+click multi-select (issue #3589101): React Flow activates the
+  // NodesSelection bounding box on a drag-select mouse-up, but not on
+  // Shift+click. This handler clears that flag when the drag-select ends so
+  // no bounding box appears and both gestures land in the same state.
+  const { onSelectionEnd } = useSuppressNodesSelectionBox();
 
   // True while an endpoint reconnect drag is in progress (issue #3585553).
   // Drives the `reconnect-dragging` wrapper class so CSS makes ALL grips
@@ -477,6 +486,13 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
+        // Clear the post-pane-click stale-selection guard when a new
+        // rubber-band selection begins, so a drag-select that follows a pane
+        // click is not wrongly swallowed (issue #3589101 follow-up).
+        onSelectionStart={onSelectionStart}
+        // Suppress the NodesSelection bounding box on rubber-band multi-select
+        // so drag-select matches Shift+click exactly (issue #3589101).
+        onSelectionEnd={onSelectionEnd}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         onNodeClick={onNodeClick}

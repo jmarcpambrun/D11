@@ -1,24 +1,38 @@
-# Replay Panel
+# Review flow mode
 
-The **Replay Panel** sits between the canvas and the Property Panel. It lets you
-visualize past workflow executions and run live tests directly from the modeler.
+**Review flow** is one of the two coexisting views of the unified
+[Property Panel](property-panel.md). Start it from a selected **event node** by
+clicking the **Review flow** button in the panel header to visualize past
+workflow executions and run live tests directly from the modeler -- all in the
+same right-hand panel (there is no separate replay column). The Review header
+uses the same layout as the Properties header: a **Review flow** context label
+on the left and a **Properties** button on the right that switches back to the
+selected component's properties (the replay session stays active).
 
-![Replay Panel showing execution steps with playback controls](../assets/screenshots/replay-panel.jpg){ .screenshot }
+![The unified panel in Review flow mode showing execution steps with playback controls](../assets/screenshots/replay-panel.jpg){ .screenshot }
 
-## Visibility
+![The unified right-hand panel in Review flow mode, entered via the Review flow button](../assets/screenshots/review-model.jpg){ .screenshot }
 
-The Replay Panel is visible whenever the model has replay or test capabilities
-configured. It auto-collapses when no replay data is loaded and auto-expands
-when data becomes available.
+## Availability
 
-For new models that have not been saved yet, the panel is hidden since there is
-no execution history to display and testing requires a saved model.
+To **start** a session, the **Review flow** button appears for a selected
+**event node** only when the model is **saved** and has replay or test
+capabilities configured. For new (unsaved) models it is not shown, since there
+is no execution history to display and testing requires a saved model --
+clicking it with unsaved changes first prompts you to save (see
+[Property Panel > Unsaved changes](property-panel.md#properties-and-review-flow-two-coexisting-views)).
+Once a session is active, the **Review flow** button is available from **any**
+selected component so you can return to the running replay.
 
-## Loading replay data
+## Starting a session
 
 1. Select an **event node** on the canvas.
-2. Click the **reload** button in the event's Property Panel.
-3. The Replay Panel expands and shows the execution history.
+2. Click the **Review flow** button in the panel header.
+3. The session opens for that event: the live listener starts and historical
+   execution data loads automatically.
+
+The session is **linked to that event** for its whole lifetime. Switching to the
+Properties view and back never restarts the listener or reloads history.
 
 If multiple executions exist, an **entry selector** dropdown lets you switch
 between them. Each entry shows a timestamp and metadata about the execution.
@@ -55,44 +69,36 @@ When a step is selected, the panel shows the **Step Data** section with token
 values available at that point in the execution. Token data is displayed in a
 collapsible tree structure.
 
-!!! tip "Drag tokens into forms"
-    You can drag individual tokens from the Step Data section directly into
-    configuration form fields that support tokens. See
+!!! tip "Insert tokens into forms"
+    Type **`[`** in a token-supporting configuration field to browse and insert
+    tokens from the Step Data, Global, and Template sources. See
     [Tokens & Data](../replay/tokens.md) for details.
-
-## Info popup
-
-Click the **i** button in a step's header to view execution metadata:
-
-- Step type
-- Component ID
-- Successor ID (for edge steps)
-- Condition ID (for condition evaluations)
-- Error information (if applicable)
 
 ## Global tokens
 
 If the site provides global tokens (like `[site:name]` or
 `[current-date:long]`), they appear in a **Global Tokens** section at the
-bottom of the Replay Panel. These are always visible, regardless of whether
+bottom of Review flow mode. These are always visible, regardless of whether
 replay data is loaded.
 
-Global tokens are also draggable into configuration form fields.
+Global tokens can be inserted into configuration form fields with the `[`
+picker.
 
 ## Template tokens
 
 When the model is marked as a **template**, a **Template Tokens** section
 appears alongside the global tokens. These tokens are specific to the
 template's context and are provided by the backend. They behave the same as
-global tokens -- always visible and draggable into configuration form fields.
+global tokens -- always visible and insertable into configuration form fields
+with the `[` picker.
 
 See [Tokens & Data](../replay/tokens.md) for details on using tokens.
 
 ## Resizable sections
 
-The Replay Panel's internal sections (execution controls, step data, global
-tokens, template tokens) are **vertically resizable**. Drag the horizontal
-separator between any two sections to give more space to the section you need.
+The Review flow sections (execution controls, step data, global tokens,
+template tokens) are **vertically resizable**. Drag the horizontal separator
+between any two sections to give more space to the section you need.
 
 - **Minimum height**: Each section has a minimum height of 60 pixels.
 - **Persistence**: Section proportions are saved to local storage and
@@ -100,13 +106,10 @@ separator between any two sections to give more space to the section you need.
 - **Dynamic sections**: The number of sections adapts to context -- for
   example, template tokens only appear when the model is a template.
 
-## Empty state messages
+## Empty state message
 
-When no replay data is loaded, the panel shows context-specific guidance:
-
-| Situation | Message |
-|-----------|---------|
-| Replay available | Select an event and use the reload button to load past execution data. |
-| Replay + Test available | Shows both replay and test instructions. |
-| Test available, event selected | Click Test to execute the workflow. |
-| Test available, no event selected | Select an event and click Test. |
+When no execution data has been captured yet, Review flow mode shows a short
+prompt — *"No execution data yet"* with the guidance *"Trigger the event on your
+site and its execution will appear here automatically."* The live listener
+starts when you enter Review, so once the event runs its execution appears here
+without any further action. There is no separate reload or Test button.

@@ -3,7 +3,7 @@
  * Manages mouse events to allow users to reposition the bezier curve
  * control point by converting screen coordinates to flow coordinates.
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface UseControlPointDragProps {
   id: string;
@@ -21,6 +21,11 @@ export function useControlPointDrag({
   onEdgeUpdate,
 }: UseControlPointDragProps) {
   const [isDragging, setIsDragging] = useState(false);
+
+  // Track the active document listeners so they can be removed if the component
+  // unmounts mid-drag (handleMouseUp would otherwise never fire).
+  const mouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
+  const mouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
 
   const handleControlPointDrag = useCallback((event: React.MouseEvent) => {
     if (isLocked || !onEdgeUpdate) return;
@@ -69,11 +74,30 @@ export function useControlPointDrag({
       setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      mouseMoveRef.current = null;
+      mouseUpRef.current = null;
     };
 
+    mouseMoveRef.current = handleMouseMove;
+    mouseUpRef.current = handleMouseUp;
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, [id, edgeCenterX, edgeCenterY, isLocked, onEdgeUpdate]);
+
+  // Remove any still-attached document listeners on unmount (e.g. if the
+  // component unmounts while a drag is in progress).
+  useEffect(() => {
+    return () => {
+      if (mouseMoveRef.current) {
+        document.removeEventListener('mousemove', mouseMoveRef.current);
+        mouseMoveRef.current = null;
+      }
+      if (mouseUpRef.current) {
+        document.removeEventListener('mouseup', mouseUpRef.current);
+        mouseUpRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     isDragging,

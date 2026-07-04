@@ -23,7 +23,7 @@ If any exist, the save is blocked and an error message is displayed:
 
 This validation also applies when you attempt to:
 
-- **Test** the workflow (the Test button is blocked).
+- **Review** the model (starting a review session is blocked).
 - **Close** the modeler via "Save and Close" (the save step is blocked).
 - **Export** with unsaved changes (the "Save first" step is blocked).
 

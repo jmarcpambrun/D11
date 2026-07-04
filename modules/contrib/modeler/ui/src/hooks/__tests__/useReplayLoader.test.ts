@@ -4,6 +4,13 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useReplayLoader } from '../useReplayLoader';
+import { showDrupalMessage } from '../../utils/drupalMessage';
+
+// Mock the Drupal toast so we can assert which messages are (not) raised.
+jest.mock('../../utils/drupalMessage', () => ({
+  showDrupalMessage: jest.fn(),
+}));
+const mockShowDrupalMessage = showDrupalMessage as jest.MockedFunction<typeof showDrupalMessage>;
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -490,6 +497,84 @@ describe('useReplayLoader', () => {
       expect(result.current.replayEntries[0].timestamp).toBe(3000);
       expect(result.current.replayEntries[1].timestamp).toBe(2000);
       expect(result.current.replayEntries[2].timestamp).toBe(1000);
+    });
+  });
+
+  describe('emptyMessage (Rework H / A49)', () => {
+    it('should initialize emptyMessage as null', () => {
+      const { result } = renderHook(() => useReplayLoader({ settings: defaultSettings }));
+      expect(result.current.emptyMessage).toBeNull();
+    });
+
+    it('should set a generic emptyMessage when the result is empty WITHOUT raising a Drupal toast (Rework I)', async () => {
+      mockFetch
+        .mockResolvedValueOnce(mockTokenResponse())
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+
+      const onEmptyMessage = jest.fn();
+      const { result } = renderHook(() => useReplayLoader({ settings: defaultSettings, onEmptyMessage }));
+
+      await act(async () => {
+        await result.current.loadReplayData('event-1');
+      });
+
+      // The generic text still flows into emptyMessage / onEmptyMessage (A47/A49)…
+      expect(result.current.emptyMessage).toBe('No replay data available for this event.');
+      expect(onEmptyMessage).toHaveBeenLastCalledWith('No replay data available for this event.');
+      // …but the redundant generic toast is NOT shown (Rework I).
+      expect(mockShowDrupalMessage).not.toHaveBeenCalledWith('No replay data available for this event.', 'warning');
+    });
+
+    it('should surface the backend warning as emptyMessage AND still raise the warning toast', async () => {
+      mockFetch
+        .mockResolvedValueOnce(mockTokenResponse())
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ warning: 'Listener stopped before any event fired.' }) });
+
+      const onEmptyMessage = jest.fn();
+      const { result } = renderHook(() => useReplayLoader({ settings: defaultSettings, onEmptyMessage }));
+
+      await act(async () => {
+        await result.current.loadReplayData('event-1');
+      });
+
+      expect(result.current.emptyMessage).toBe('Listener stopped before any event fired.');
+      expect(onEmptyMessage).toHaveBeenLastCalledWith('Listener stopped before any event fired.');
+      // The explicit backend-warning toast is unchanged (still shown).
+      expect(mockShowDrupalMessage).toHaveBeenCalledWith('Listener stopped before any event fired.', 'warning');
+    });
+
+    it('should clear emptyMessage (null) when the result is populated', async () => {
+      mockFetch
+        .mockResolvedValueOnce(mockTokenResponse())
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockReplayEntries) });
+
+      const onEmptyMessage = jest.fn();
+      const { result } = renderHook(() => useReplayLoader({ settings: defaultSettings, onEmptyMessage }));
+
+      await act(async () => {
+        await result.current.loadReplayData('event-1');
+      });
+
+      expect(result.current.emptyMessage).toBeNull();
+      expect(onEmptyMessage).toHaveBeenLastCalledWith(null);
+    });
+
+    it('should clear emptyMessage on clearReplayEntries', async () => {
+      mockFetch
+        .mockResolvedValueOnce(mockTokenResponse())
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+
+      const { result } = renderHook(() => useReplayLoader({ settings: defaultSettings }));
+
+      await act(async () => {
+        await result.current.loadReplayData('event-1');
+      });
+      expect(result.current.emptyMessage).toBe('No replay data available for this event.');
+
+      act(() => {
+        result.current.clearReplayEntries();
+      });
+      expect(result.current.emptyMessage).toBeNull();
     });
   });
 });

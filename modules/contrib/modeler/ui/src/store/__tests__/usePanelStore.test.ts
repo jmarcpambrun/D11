@@ -229,4 +229,23 @@ describe('usePanelStore', () => {
       expect(usePanelStore.getState().propertyPanelCollapsed).toBe(true);
     });
   });
+
+  // panelMode is replay-session VIEW state and must NOT persist across reloads:
+  // it always starts 'event' and setPanelMode never writes to localStorage.
+  describe('panelMode (in-memory only, never persisted)', () => {
+    it("defaults to 'event' even when localStorage holds 'review'", () => {
+      // Simulate a prior (now-defunct) persisted review mode.
+      localStorage.setItem('modelerPanelMode', 'review');
+      const usePanelStore = getStore();
+      expect(usePanelStore.getState().panelMode).toBe('event');
+    });
+
+    it('setPanelMode updates state but does NOT write panelMode to localStorage', () => {
+      const usePanelStore = getStore();
+      usePanelStore.getState().setPanelMode('review');
+      expect(usePanelStore.getState().panelMode).toBe('review');
+      // No persistence: the legacy key is never written.
+      expect(localStorage.getItem('modelerPanelMode')).toBeNull();
+    });
+  });
 });

@@ -33,15 +33,10 @@ describe('useTestRunner', () => {
     },
   };
 
-  const mockShowConfirmationDialog = jest.fn();
-  const mockSaveButtonRef = { current: { click: jest.fn() } as unknown as HTMLButtonElement };
   const mockOnReplayDataReceived = jest.fn();
 
   const defaultProps = {
     settings: defaultSettings,
-    hasUnsavedChanges: false,
-    showConfirmationDialog: mockShowConfirmationDialog,
-    saveButtonRef: mockSaveButtonRef,
     onReplayDataReceived: mockOnReplayDataReceived,
   };
 
@@ -256,53 +251,11 @@ describe('useTestRunner', () => {
     });
   });
 
-  describe('startTest with unsaved changes', () => {
-    it('should show confirmation dialog when there are unsaved changes', () => {
-      const { result } = renderHook(() => useTestRunner({
-        ...defaultProps,
-        hasUnsavedChanges: true,
-      }));
-
-      act(() => {
-        result.current.startTest('event-1');
-      });
-
-      expect(mockShowConfirmationDialog).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(String),
-        'warning',
-        expect.any(Function),
-        undefined,
-        expect.objectContaining({
-          primaryLabel: expect.stringContaining('Save and test'),
-          secondaryLabel: false,
-          cancelLabel: expect.stringContaining('Cancel'),
-          primaryVariant: 'primary',
-        })
-      );
-    });
-
-    it('should click save button when user confirms save-and-test', () => {
-      const { result } = renderHook(() => useTestRunner({
-        ...defaultProps,
-        hasUnsavedChanges: true,
-      }));
-
-      act(() => {
-        result.current.startTest('event-1');
-      });
-
-      // Extract the primary callback from the dialog call
-      const primaryCallback = mockShowConfirmationDialog.mock.calls[0][3];
-
-      act(() => {
-        primaryCallback();
-      });
-
-      expect(mockSaveButtonRef.current.click).toHaveBeenCalled();
-    });
-
-    it('should proceed with test after notifySaveComplete is called', async () => {
+  // The unsaved-changes "save before testing" guard was removed at the source:
+  // listening now proceeds directly even with unsaved changes (only structural
+  // validation gates entry). notifySaveComplete is retained as a no-op.
+  describe('startTest proceeds directly (no unsaved-changes guard)', () => {
+    it('should initiate the test directly without any confirmation dialog', async () => {
       mockFetch
         .mockResolvedValueOnce(mockTokenResponse())
         .mockResolvedValueOnce({
@@ -310,44 +263,28 @@ describe('useTestRunner', () => {
           json: () => Promise.resolve({ jobId: 'job-456' }),
         });
 
-      const { result } = renderHook(() => useTestRunner({
-        ...defaultProps,
-        hasUnsavedChanges: true,
-      }));
+      const { result } = renderHook(() => useTestRunner(defaultProps));
 
-      // Start the test (triggers dialog)
-      act(() => {
+      await act(async () => {
         result.current.startTest('event-1');
       });
 
-      // Simulate save button click callback
-      const primaryCallback = mockShowConfirmationDialog.mock.calls[0][3];
-      act(() => {
-        primaryCallback();
-      });
-
-      // Simulate save completion
-      await act(async () => {
-        result.current.notifySaveComplete();
-      });
-
-      // Should have started the test
+      // No dialog was needed — the test request was sent straight away.
       expect(mockFetch).toHaveBeenCalledWith('/api/test', expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ modelId: 'model-1', componentId: 'event-1' }),
       }));
-
       expect(result.current.isTestRunning).toBe(true);
     });
 
-    it('should not proceed if notifySaveComplete called without pending test', async () => {
+    it('notifySaveComplete is a harmless no-op (no pending test to resume)', async () => {
       const { result } = renderHook(() => useTestRunner(defaultProps));
 
       await act(async () => {
         result.current.notifySaveComplete();
       });
 
-      // No fetch should have been made
+      // Nothing pending → no request made.
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });

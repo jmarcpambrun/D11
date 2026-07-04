@@ -1,5 +1,5 @@
 /**
- * Tests for useFilterStore — token dragging flag and visible start node IDs.
+ * Tests for useFilterStore — visible start node IDs.
  */
 
 import { useFilterStore } from '../useFilterStore';
@@ -7,26 +7,14 @@ import { useFilterStore } from '../useFilterStore';
 describe('useFilterStore', () => {
   beforeEach(() => {
     useFilterStore.setState({
-      isTokenDragging: false,
       visibleStartNodeIds: null,
     });
   });
 
   describe('initial state', () => {
-    it('should not be token dragging and have null visible IDs', () => {
+    it('should have null visible IDs', () => {
       const s = useFilterStore.getState();
-      expect(s.isTokenDragging).toBe(false);
       expect(s.visibleStartNodeIds).toBeNull();
-    });
-  });
-
-  describe('setTokenDragging', () => {
-    it('should set the dragging flag', () => {
-      useFilterStore.getState().setTokenDragging(true);
-      expect(useFilterStore.getState().isTokenDragging).toBe(true);
-
-      useFilterStore.getState().setTokenDragging(false);
-      expect(useFilterStore.getState().isTokenDragging).toBe(false);
     });
   });
 

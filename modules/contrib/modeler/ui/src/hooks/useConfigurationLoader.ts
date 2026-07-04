@@ -234,6 +234,18 @@ export function useConfigurationLoader({
     };
   }, [node?.id]);
 
+  // Abort any in-flight load on unmount so a pending fetch does not attempt to
+  // update state after the component is gone (covers the final unmount
+  // regardless of the last node id the selection-change effect tracked).
+  useEffect(() => {
+    return () => {
+      if (loadAbortController.current) {
+        loadAbortController.current.abort();
+        loadAbortController.current = null;
+      }
+    };
+  }, []);
+
   return {
     configurationForm,
     loading,

@@ -16,18 +16,6 @@ jest.mock('../../utils/sanitize', () => ({
   escapeHtml: (text: string) => text,
 }));
 
-// Mock the Zustand store
-let mockIsTokenDragging = false;
-jest.mock('../../store/useFilterStore', () => ({
-  useFilterStore: jest.fn((selector: any) => {
-    const state = {
-      isTokenDragging: mockIsTokenDragging,
-    };
-    if (typeof selector === 'function') return selector(state);
-    return state;
-  }),
-}));
-
 describe('ConfigurationForm', () => {
   const defaultProps = {
     form: null,
@@ -39,7 +27,6 @@ describe('ConfigurationForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    mockIsTokenDragging = false;
   });
 
   afterEach(() => {
@@ -266,12 +253,6 @@ describe('ConfigurationForm', () => {
       expect(screen.getByRole('spinbutton')).toHaveValue(42);
     });
 
-    it('should apply token-drop-enabled class to number field with token_support when dragging', () => {
-      mockIsTokenDragging = true;
-      const form = [{ key: 'value', type: 'number', title: 'Value', token_support: true }];
-      const { container } = render(<ConfigurationForm {...defaultProps} form={form} />);
-      expect(container.querySelector('.form-field.token-drop-enabled')).toBeInTheDocument();
-    });
   });
 
   describe('onChange behavior', () => {
@@ -410,11 +391,12 @@ describe('ConfigurationForm', () => {
   });
 
   describe('select default option', () => {
-    it('should include select placeholder option', () => {
+    it('should include the server-supplied placeholder option', () => {
       const form = [{
         key: 'choice',
         type: 'select',
         title: 'Choice',
+        empty_option: { value: '', label: '- Select -' },
         options: { a: 'A' },
       }];
       render(<ConfigurationForm {...defaultProps} form={form} />);
@@ -452,92 +434,6 @@ describe('ConfigurationForm', () => {
     });
   });
 
-  describe('token drop zone indicators', () => {
-    it('should apply token-drop-enabled class to fields with token_support when dragging', () => {
-      mockIsTokenDragging = true;
-      const form = [
-        { key: 'value', type: 'textfield', title: 'Value', token_support: true },
-      ];
-      const { container } = render(<ConfigurationForm {...defaultProps} form={form} />);
-      expect(container.querySelector('.form-field.token-drop-enabled')).toBeInTheDocument();
-    });
-
-    it('should apply token-drop-disabled class to fields without token_support when dragging', () => {
-      mockIsTokenDragging = true;
-      const form = [
-        { key: 'name', type: 'textfield', title: 'Name' },
-      ];
-      const { container } = render(<ConfigurationForm {...defaultProps} form={form} />);
-      expect(container.querySelector('.form-field.token-drop-disabled')).toBeInTheDocument();
-    });
-
-    it('should not apply token classes when not dragging', () => {
-      mockIsTokenDragging = false;
-      const form = [
-        { key: 'value', type: 'textfield', title: 'Value', token_support: true },
-        { key: 'name', type: 'textfield', title: 'Name' },
-      ];
-      const { container } = render(<ConfigurationForm {...defaultProps} form={form} />);
-      expect(container.querySelector('.token-drop-enabled')).toBeNull();
-      expect(container.querySelector('.token-drop-disabled')).toBeNull();
-    });
-
-    it('should enable all fields when replace_tokens checkbox is checked', () => {
-      mockIsTokenDragging = true;
-      const form = [
-        { key: 'replace_tokens', type: 'checkbox', title: 'Replace tokens' },
-        { key: 'name', type: 'textfield', title: 'Name' },
-        { key: 'value', type: 'textfield', title: 'Value' },
-      ];
-      const configuration = { replace_tokens: true };
-      const { container } = render(
-        <ConfigurationForm {...defaultProps} form={form} configuration={configuration} />
-      );
-      const enabledFields = container.querySelectorAll('.form-field.token-drop-enabled');
-      // All 3 fields should be enabled (including the checkbox itself)
-      expect(enabledFields.length).toBe(3);
-      expect(container.querySelector('.form-field.token-drop-disabled')).toBeNull();
-    });
-
-    it('should not enable all fields when replace_tokens is unchecked', () => {
-      mockIsTokenDragging = true;
-      const form = [
-        { key: 'replace_tokens', type: 'checkbox', title: 'Replace tokens' },
-        { key: 'name', type: 'textfield', title: 'Name' },
-        { key: 'value', type: 'textfield', title: 'Value', token_support: true },
-      ];
-      const configuration = { replace_tokens: false };
-      const { container } = render(
-        <ConfigurationForm {...defaultProps} form={form} configuration={configuration} />
-      );
-      // Only the field with token_support should be enabled
-      expect(container.querySelectorAll('.form-field.token-drop-enabled').length).toBe(1);
-      expect(container.querySelectorAll('.form-field.token-drop-disabled').length).toBe(2);
-    });
-
-    it('should toggle all fields when replace_tokens checkbox is toggled', () => {
-      mockIsTokenDragging = true;
-      const onChange = jest.fn();
-      const form = [
-        { key: 'replace_tokens', type: 'checkbox', title: 'Replace tokens' },
-        { key: 'name', type: 'textfield', title: 'Name' },
-      ];
-      const { container } = render(
-        <ConfigurationForm {...defaultProps} form={form} onChange={onChange} />
-      );
-
-      // Initially, name field should be disabled (no token_support, replace_tokens unchecked)
-      expect(container.querySelectorAll('.form-field.token-drop-disabled').length).toBe(2);
-
-      // Check the replace_tokens checkbox
-      const checkbox = screen.getByRole('checkbox');
-      fireEvent.click(checkbox);
-
-      // Now all fields should be enabled
-      expect(container.querySelectorAll('.form-field.token-drop-enabled').length).toBe(2);
-      expect(container.querySelector('.form-field.token-drop-disabled')).toBeNull();
-    });
-  });
 
   describe('use_yaml / validate_yaml integration', () => {
     const yamlForm = [
@@ -643,6 +539,176 @@ describe('ConfigurationForm', () => {
         />
       );
       expect(container.querySelector('.yaml-editor-error')).toBeNull();
+    });
+  });
+
+  describe('select empty option (server-driven)', () => {
+    it('should render the server-supplied empty_option as the first option', () => {
+      const form = [{
+        key: 'choice',
+        type: 'select',
+        title: 'Choice',
+        empty_option: { value: '', label: '- Select -' },
+        options: { a: 'Option A', b: 'Option B' },
+      }];
+      render(<ConfigurationForm {...defaultProps} form={form} />);
+      // The empty option is present and is the first option in the list.
+      expect(screen.getByRole('option', { name: '- Select -' })).toBeInTheDocument();
+      const options = screen.getAllByRole('option');
+      expect(options[0]).toHaveTextContent('- Select -');
+      expect((options[0] as HTMLOptionElement).value).toBe('');
+      // Exactly one option with an empty value.
+      const emptyOptions = options.filter((opt) => (opt as HTMLOptionElement).value === '');
+      expect(emptyOptions).toHaveLength(1);
+    });
+
+    it('should render NO empty option when empty_option is absent', () => {
+      const form = [{
+        key: 'choice',
+        type: 'select',
+        title: 'Choice',
+        options: { a: 'Option A', b: 'Option B' },
+      }];
+      render(<ConfigurationForm {...defaultProps} form={form} />);
+      // No option carries an empty value beyond the real choices.
+      const emptyOptions = screen
+        .getAllByRole('option')
+        .filter((opt) => (opt as HTMLOptionElement).value === '');
+      expect(emptyOptions).toHaveLength(0);
+      expect(screen.getByRole('option', { name: 'Option A' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Option B' })).toBeInTheDocument();
+    });
+
+    it('should render the server-supplied "- None -" label verbatim', () => {
+      const form = [{
+        key: 'choice',
+        type: 'select',
+        title: 'Choice',
+        empty_option: { value: '', label: '- None -' },
+        options: { a: 'Option A' },
+      }];
+      render(<ConfigurationForm {...defaultProps} form={form} />);
+      expect(screen.getByRole('option', { name: '- None -' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: '- Select -' })).toBeNull();
+    });
+  });
+
+  describe('form #states support', () => {
+    it('should hide a visible-state field until the controlling checkbox is checked', () => {
+      const form = [
+        { key: 'toggle', type: 'checkbox', title: 'Toggle' },
+        {
+          key: 'dependent',
+          type: 'textfield',
+          title: 'Dependent',
+          states: { visible: [{ field: 'toggle', checked: true }] },
+        },
+      ];
+
+      // Initially hidden (toggle unchecked).
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ toggle: false }} />
+      );
+      expect(container.querySelectorAll('.form-field')[1]).toHaveStyle('display: none');
+
+      // After toggling the controlling checkbox value, the dependent shows.
+      fireEvent.click(screen.getByRole('checkbox'));
+      expect(container.querySelectorAll('.form-field')[1]).not.toHaveStyle('display: none');
+    });
+
+    it('should hide an invisible-state field when its conditions hold', () => {
+      const form = [
+        {
+          key: 'advanced',
+          type: 'textfield',
+          title: 'Advanced',
+          states: { invisible: [{ field: 'mode', value: 'simple' }] },
+        },
+      ];
+
+      // mode === 'simple' => advanced is hidden.
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'simple' }} />
+      );
+      expect(container.querySelectorAll('.form-field')[0]).toHaveStyle('display: none');
+
+      // mode !== 'simple' => advanced is shown.
+      const { container: container2 } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'expert' }} />
+      );
+      expect(container2.querySelectorAll('.form-field')[0]).not.toHaveStyle('display: none');
+    });
+
+    it('should toggle the required marker based on a required-state condition', () => {
+      const form = [
+        { key: 'enabled', type: 'checkbox', title: 'Enabled' },
+        {
+          key: 'name',
+          type: 'textfield',
+          title: 'Name',
+          states: { required: [{ field: 'enabled', checked: true }] },
+        },
+      ];
+
+      // enabled unchecked => not required (no marker).
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ enabled: false }} />
+      );
+      expect(container.querySelector('.required')).toBeNull();
+
+      // Checking the controlling checkbox makes the dependent required.
+      fireEvent.click(screen.getByRole('checkbox'));
+      expect(container.querySelector('.required')).toBeInTheDocument();
+    });
+  });
+
+  describe('field groups / nested fields', () => {
+    const groupForm = [
+      {
+        key: 'settings',
+        type: 'group',
+        title: 'Settings',
+        children: [
+          { key: 'first', type: 'textfield', title: 'First Field' },
+          { key: 'second', type: 'number', title: 'Second Field' },
+        ],
+      },
+    ];
+
+    it('should render a group title and both child inputs', () => {
+      render(<ConfigurationForm {...defaultProps} form={groupForm} />);
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('First Field')).toBeInTheDocument();
+      expect(screen.getByText('Second Field')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton')).toBeInTheDocument();
+    });
+
+    it('should render a details group as a collapsible disclosure', () => {
+      const detailsForm = [
+        {
+          key: 'advanced',
+          type: 'group',
+          title: 'Advanced',
+          open: false,
+          children: [{ key: 'opt', type: 'textfield', title: 'Option' }],
+        },
+      ];
+      const { container } = render(<ConfigurationForm {...defaultProps} form={detailsForm} />);
+      const details = container.querySelector('details.form-group-details');
+      expect(details).toBeInTheDocument();
+      // open=false => the details element is collapsed.
+      expect(details).not.toHaveAttribute('open');
+      expect(container.querySelector('summary.form-group-title')).toHaveTextContent('Advanced');
+    });
+
+    it('should call onChange with the flat key when a nested child changes', () => {
+      const onChange = jest.fn();
+      render(<ConfigurationForm {...defaultProps} form={groupForm} onChange={onChange} />);
+
+      fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '7' } });
+
+      // Nested child values flow through the SAME flat values object.
+      expect(onChange).toHaveBeenCalledWith({ second: '7' });
     });
   });
 });

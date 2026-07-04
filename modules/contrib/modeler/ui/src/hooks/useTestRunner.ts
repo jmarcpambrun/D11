@@ -3,7 +3,8 @@
  *
  * Initiates a test by POSTing to the test_url endpoint, then polls for results.
  * When replay data is returned, it passes it to the parent for display in the
- * ReplayPanel. Coordinates with the save mechanism when there are unsaved changes.
+ * ReplayPanel. Listening proceeds even with unsaved changes (no save guard);
+ * only structural validation (placeholder nodes) blocks entry.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -17,21 +18,6 @@ const POLL_INTERVAL = 1500;
 
 interface UseTestRunnerProps {
   settings?: Settings;
-  hasUnsavedChanges: boolean;
-  showConfirmationDialog: (
-    title: string,
-    message: string,
-    type: 'danger' | 'warning' | 'info',
-    onSaveAndCloseCallback?: () => void,
-    onCloseWithoutSaveCallback?: () => void,
-    options?: {
-      primaryLabel?: string;
-      secondaryLabel?: string | false;
-      cancelLabel?: string;
-      primaryVariant?: 'primary' | 'danger';
-    }
-  ) => void;
-  saveButtonRef: React.RefObject<HTMLButtonElement | null>;
   /** Called when polling returns replay data (array of replay steps) */
   onReplayDataReceived: (data: any[]) => void;
   /**
@@ -52,15 +38,15 @@ interface UseTestRunnerReturn {
   startTest: (componentId: string) => void;
   /** Cancel the running test */
   cancelTest: () => void;
-  /** Notify the hook that save completed — triggers pending test if any */
+  /**
+   * Retained for caller compatibility (Flow's save-complete handler). Listening
+   * no longer defers to save, so this is a no-op.
+   */
   notifySaveComplete: () => void;
 }
 
 export function useTestRunner({
   settings = {},
-  hasUnsavedChanges,
-  showConfirmationDialog,
-  saveButtonRef,
   onReplayDataReceived,
   validateBeforeSave,
 }: UseTestRunnerProps): UseTestRunnerReturn {
@@ -70,7 +56,6 @@ export function useTestRunner({
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pendingTestComponentIdRef = useRef<string | null>(null);
   const activeJobIdRef = useRef<string | null>(null);
 
   // Keep stable refs for callbacks
@@ -98,7 +83,6 @@ export function useTestRunner({
     setIsTestRunning(false);
     setIsTestInitiating(false);
     setTestError(null);
-    pendingTestComponentIdRef.current = null;
     activeJobIdRef.current = null;
 
     // Notify the backend that polling has been cancelled so it can clean up
@@ -317,9 +301,15 @@ export function useTestRunner({
     }
   }, [settings.modeler_api?.test_url, settings.modeler_api?.token_url, settings.modeler?.modelId, cleanup]);
 
-  /** Start a test — shows confirmation dialog if there are unsaved changes */
+  /**
+   * Start a test (arm the live listener) for the given event component.
+   *
+   * Structural validation still gates entry (placeholder nodes block), and the
+   * isNewModel gate is enforced by the caller (Flow). There is intentionally NO
+   * unsaved-changes guard: listening proceeds even with unsaved changes.
+   */
   const startTest = useCallback((componentId: string) => {
-    // Block testing when placeholder nodes exist
+    // Block testing when placeholder nodes exist (structural validation only).
     if (validateBeforeSave) {
       const validationError = validateBeforeSave();
       if (validationError) {
@@ -327,42 +317,16 @@ export function useTestRunner({
         return;
       }
     }
+    // No unsaved-changes guard: listening proceeds even with unsaved changes.
+    proceedWithTest(componentId);
+  }, [proceedWithTest, validateBeforeSave]);
 
-    if (hasUnsavedChanges) {
-      // Store the componentId for after save completes
-      pendingTestComponentIdRef.current = componentId;
-      showConfirmationDialog(
-        t('Unsaved Changes'),
-        t('The model has unsaved changes. Save before testing?'),
-        'warning',
-        () => {
-          // "Save and test" — trigger the save, test will proceed on notifySaveComplete
-          if (saveButtonRef.current) {
-            saveButtonRef.current.click();
-          }
-        },
-        undefined,
-        {
-          primaryLabel: t('Save and test'),
-          secondaryLabel: false,
-          cancelLabel: t('Cancel'),
-          primaryVariant: 'primary',
-        }
-      );
-    } else {
-      pendingTestComponentIdRef.current = null;
-      proceedWithTest(componentId);
-    }
-  }, [hasUnsavedChanges, showConfirmationDialog, saveButtonRef, proceedWithTest, validateBeforeSave]);
-
-  /** Called by Flow.tsx after save completes — starts the pending test if any */
-  const notifySaveComplete = useCallback(() => {
-    const componentId = pendingTestComponentIdRef.current;
-    if (componentId) {
-      pendingTestComponentIdRef.current = null;
-      proceedWithTest(componentId);
-    }
-  }, [proceedWithTest]);
+  /**
+   * Retained for caller compatibility (Flow's save-complete handler). Tests no
+   * longer defer to save, so there is nothing pending to resume — this is a
+   * no-op.
+   */
+  const notifySaveComplete = useCallback(() => {}, []);
 
   // Cleanup on unmount
   useEffect(() => {

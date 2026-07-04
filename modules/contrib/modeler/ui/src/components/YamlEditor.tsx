@@ -20,7 +20,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import yaml from 'js-yaml';
-import { FiPlus, FiTrash2, FiChevronDown, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiChevronDown, FiChevronRight, FiAlertTriangle, FiAlignLeft } from 'react-icons/fi';
 import { t } from '../utils/translation';
 
 // ---------------------------------------------------------------------------
@@ -123,6 +123,16 @@ export interface YamlEditorProps {
    * is provided (schema mode always validates).
    */
   validate?: boolean;
+  /**
+   * Content format for the schema-less editor.  Defaults to `'yaml'` (the
+   * existing behavior: js-yaml parsing and the `Invalid YAML syntax` message).
+   * When set to `'json'`, the schema-less editor validates with `JSON.parse`,
+   * shows an `Invalid JSON:` error with the raw parser message, and exposes a
+   * one-click "Format" action that pretty-prints valid JSON.  The value still
+   * round-trips as the raw string the user typed.  Has no effect in schema
+   * mode (schema mode is always YAML).
+   */
+  format?: 'yaml' | 'json';
 }
 
 // ---------------------------------------------------------------------------
@@ -1083,10 +1093,10 @@ const FieldEditor: React.FC<FieldEditorProps> = (props) => {
 // Main component
 // ---------------------------------------------------------------------------
 
-const YamlEditor: React.FC<YamlEditorProps> = ({ value, onChange, schema, disabled = false, validate = false }) => {
+const YamlEditor: React.FC<YamlEditorProps> = React.memo(({ value, onChange, schema, disabled = false, validate = false, format = 'yaml' }) => {
   // -----------------------------------------------------------------------
-  // Schema-less mode: plain YAML textarea with optional syntax validation.
-  // No structured editor, no schema validation — just raw YAML.
+  // Schema-less mode: plain YAML (or JSON) textarea with optional syntax
+  // validation.  No structured editor, no schema validation — just raw text.
   // -----------------------------------------------------------------------
   if (!schema) {
     return (
@@ -1095,6 +1105,7 @@ const YamlEditor: React.FC<YamlEditorProps> = ({ value, onChange, schema, disabl
         onChange={onChange}
         disabled={disabled}
         validate={validate}
+        format={format}
       />
     );
   }
@@ -1110,26 +1121,89 @@ const YamlEditor: React.FC<YamlEditorProps> = ({ value, onChange, schema, disabl
       disabled={disabled}
     />
   );
-};
+});
+
+YamlEditor.displayName = 'YamlEditor';
 
 /**
- * Schema-less YAML editor: a raw YAML textarea with optional parse validation.
- * Used when `use_yaml` is checked but no Drupal config schema exists.
+ * Validate a JSON string. Returns the raw parser message on failure, or `null`
+ * when the value is empty or valid. The raw message is rendered as a plain
+ * React text node (never passed through t()'s @-placeholder, which HTML-escapes
+ * quotes and would surface as literal &#39;/&quot; entities).
+ */
+function validateJson(value: string): string | null {
+  if (!value || !value.trim()) {
+    return null;
+  }
+  try {
+    JSON.parse(value);
+    return null;
+  } catch (e) {
+    return (e as Error).message;
+  }
+}
+
+/**
+ * Schema-less editor: a raw YAML (or JSON) textarea with optional parse
+ * validation. Used when `use_yaml` is checked but no Drupal config schema
+ * exists, or for `format === 'json'` fields (e.g. an `ai_json_schema` element).
+ *
+ * - `format === 'yaml'` (default): validates with js-yaml and shows the
+ *   `Invalid YAML syntax` message. No Format button.
+ * - `format === 'json'`: validates with `JSON.parse`, shows `Invalid JSON:`
+ *   followed by the raw parser message, and exposes a one-click "Format"
+ *   action that pretty-prints valid JSON. The value round-trips as the raw
+ *   string the user typed.
  */
 const SchemalessYamlEditor: React.FC<{
   value: string;
   onChange: (yamlString: string) => void;
   disabled: boolean;
   validate: boolean;
+  format?: 'yaml' | 'json';
+}> = ({ value, onChange, disabled, validate, format = 'yaml' }) => {
+  const isJson = format === 'json';
+
+  if (isJson) {
+    return (
+      <JsonSchemalessEditor
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        validate={validate}
+      />
+    );
+  }
+
+  return (
+    <YamlSchemalessEditor
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      validate={validate}
+    />
+  );
+};
+
+/**
+ * Default schema-less editor: a single raw YAML textarea with optional
+ * js-yaml parse validation.  This preserves the original `format === 'yaml'`
+ * behavior unchanged.
+ */
+const YamlSchemalessEditor: React.FC<{
+  value: string;
+  onChange: (yamlString: string) => void;
+  disabled: boolean;
+  validate: boolean;
 }> = ({ value, onChange, disabled, validate }) => {
-  const [parseError, setParseError] = useState<string | null>(() => {
-    // Validate on mount when validate is true.
-    if (validate && value && value.trim()) {
-      const parsed = parseYaml(value);
-      return parsed === undefined ? t('Invalid YAML syntax') : null;
+  const computeError = useCallback((raw: string): string | null => {
+    if (!validate || !raw || !raw.trim()) {
+      return null;
     }
-    return null;
-  });
+    return parseYaml(raw) === undefined ? t('Invalid YAML syntax') : null;
+  }, [validate]);
+
+  const [parseError, setParseError] = useState<string | null>(() => computeError(value));
 
   // Re-validate when the validate flag or value changes externally.
   const prevValidateRef = useRef(validate);
@@ -1145,26 +1219,16 @@ const SchemalessYamlEditor: React.FC<{
       return;
     }
     if (flagChanged || valueChanged) {
-      if (value && value.trim()) {
-        const parsed = parseYaml(value);
-        setParseError(parsed === undefined ? t('Invalid YAML syntax') : null);
-      } else {
-        setParseError(null);
-      }
+      setParseError(computeError(value));
     }
-  }, [validate, value]);
+  }, [validate, value, computeError]);
 
   const updateValue = useCallback((raw: string) => {
     onChange(raw);
     if (validate) {
-      if (!raw.trim()) {
-        setParseError(null);
-      } else {
-        const parsed = parseYaml(raw);
-        setParseError(parsed === undefined ? t('Invalid YAML syntax') : null);
-      }
+      setParseError(computeError(raw));
     }
-  }, [onChange, validate]);
+  }, [onChange, validate, computeError]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateValue(e.target.value);
@@ -1191,6 +1255,244 @@ const SchemalessYamlEditor: React.FC<{
         rows={8}
         spellCheck={false}
       />
+    </div>
+  );
+};
+
+/**
+ * JSON schema-less editor.
+ *
+ * The canonical stored value (the `value` prop and everything emitted through
+ * `onChange`) is ALWAYS a JSON string — the field's `Json` config-schema
+ * constraint requires it.  This component NEVER emits YAML.
+ *
+ * It offers two tabs:
+ *   - **JSON** (default): edit the JSON string directly.  Validated with
+ *     `JSON.parse`; the raw parser message is shown after `Invalid JSON:`.
+ *   - **YAML**: a convenience view that shows the same data as YAML.  Edits
+ *     are validated with `parseYaml`; when valid they are converted back to
+ *     JSON and emitted via `onChange(JSON.stringify(parsed, null, 2))`.  When
+ *     invalid, nothing is emitted so the last valid JSON is preserved.
+ *
+ * Switching tabs is blocked while the current tab's content is invalid so the
+ * user never loses their in-progress text.
+ */
+const JsonSchemalessEditor: React.FC<{
+  value: string;
+  onChange: (jsonString: string) => void;
+  disabled: boolean;
+  validate: boolean;
+}> = ({ value, onChange, disabled, validate }) => {
+  const [activeTab, setActiveTab] = useState<'json' | 'yaml'>('json');
+
+  // Local YAML draft for the YAML tab.  The JSON tab always renders `value`
+  // directly (the canonical JSON string).
+  const [yamlText, setYamlText] = useState<string>('');
+
+  // Inline parse errors per tab.  JSON errors carry the raw parser message;
+  // YAML errors carry the fixed translated message.
+  const [jsonError, setJsonError] = useState<string | null>(() =>
+    validate ? validateJson(value) : null,
+  );
+  const [yamlError, setYamlError] = useState<string | null>(null);
+
+  // Derive a YAML string from a canonical JSON string.  Returns '' for empty
+  // or unparsable JSON (invalid JSON is flagged separately on the JSON tab).
+  const jsonToYaml = useCallback((json: string): string => {
+    if (!json || !json.trim()) {
+      return '';
+    }
+    try {
+      return toYaml(JSON.parse(json));
+    } catch {
+      return '';
+    }
+  }, []);
+
+  // Re-derive displayed text for the active tab when the external `value`
+  // changes (e.g. undo/redo or selecting another node).
+  const prevValueRef = useRef(value);
+  useEffect(() => {
+    if (value === prevValueRef.current) {
+      return;
+    }
+    prevValueRef.current = value;
+    setJsonError(validate ? validateJson(value) : null);
+    if (activeTab === 'yaml') {
+      setYamlText(jsonToYaml(value));
+      setYamlError(null);
+    }
+  }, [value, validate, activeTab, jsonToYaml]);
+
+  // ---- JSON tab editing ------------------------------------------------
+  const updateJson = useCallback((raw: string) => {
+    prevValueRef.current = raw;
+    onChange(raw);
+    if (validate) {
+      setJsonError(validateJson(raw));
+    }
+  }, [onChange, validate]);
+
+  const handleJsonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateJson(e.target.value);
+  }, [updateJson]);
+
+  const handleJsonKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    handleYamlKeyDown(e, updateJson);
+  }, [updateJson]);
+
+  // ---- YAML tab editing ------------------------------------------------
+  const updateYaml = useCallback((raw: string) => {
+    setYamlText(raw);
+    if (!raw || !raw.trim()) {
+      // Empty YAML maps to empty JSON.
+      setYamlError(null);
+      prevValueRef.current = '';
+      onChange('');
+      return;
+    }
+    const parsed = parseYaml(raw);
+    if (parsed === undefined) {
+      // Invalid YAML: keep the draft, flag it, and do NOT emit so the last
+      // valid JSON value is preserved.
+      setYamlError(t('Invalid YAML syntax'));
+      return;
+    }
+    setYamlError(null);
+    const json = JSON.stringify(parsed, null, 2);
+    prevValueRef.current = json;
+    onChange(json);
+  }, [onChange]);
+
+  const handleYamlChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateYaml(e.target.value);
+  }, [updateYaml]);
+
+  const handleYamlKey = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    handleYamlKeyDown(e, updateYaml);
+  }, [updateYaml]);
+
+  // ---- Tab switching (block on invalid content) ------------------------
+  const switchToJson = useCallback(() => {
+    if (activeTab === 'json') {
+      return;
+    }
+    // Block the switch while the YAML draft is invalid.
+    if (yamlError) {
+      return;
+    }
+    setActiveTab('json');
+  }, [activeTab, yamlError]);
+
+  const switchToYaml = useCallback(() => {
+    if (activeTab === 'yaml') {
+      return;
+    }
+    // Block the switch while the current JSON is invalid.
+    const err = validateJson(value);
+    if (err) {
+      setJsonError(err);
+      return;
+    }
+    setYamlText(jsonToYaml(value));
+    setYamlError(null);
+    setActiveTab('yaml');
+  }, [activeTab, value, jsonToYaml]);
+
+  // ---- Format action (acts on the active tab) --------------------------
+  const handleFormat = useCallback(() => {
+    if (activeTab === 'json') {
+      if (!value || !value.trim()) {
+        return;
+      }
+      try {
+        updateJson(JSON.stringify(JSON.parse(value), null, 2));
+      } catch {
+        // Invalid JSON — leave untouched; the inline error already flags it.
+      }
+      return;
+    }
+    // YAML tab: re-dump to normalize indentation, leaving invalid YAML alone.
+    if (!yamlText || !yamlText.trim()) {
+      return;
+    }
+    const parsed = parseYaml(yamlText);
+    if (parsed === undefined) {
+      return;
+    }
+    updateYaml(toYaml(parsed));
+  }, [activeTab, value, yamlText, updateJson, updateYaml]);
+
+  const isYamlTab = activeTab === 'yaml';
+
+  return (
+    <div className="yaml-editor yaml-editor-schemaless">
+      <div className="yaml-editor-toolbar">
+        <button
+          type="button"
+          className={`yaml-editor-mode-btn ${!isYamlTab ? 'yaml-editor-mode-btn-active' : ''}`}
+          onClick={switchToJson}
+          disabled={disabled}
+          aria-pressed={!isYamlTab}
+        >
+          {t('JSON')}
+        </button>
+        <button
+          type="button"
+          className={`yaml-editor-mode-btn ${isYamlTab ? 'yaml-editor-mode-btn-active' : ''}`}
+          onClick={switchToYaml}
+          disabled={disabled}
+          aria-pressed={isYamlTab}
+        >
+          {t('YAML')}
+        </button>
+        <button
+          type="button"
+          className="yaml-editor-mode-btn yaml-editor-format-btn"
+          onClick={handleFormat}
+          disabled={disabled}
+          title={isYamlTab ? t('Format the YAML with indentation') : t('Format the JSON with indentation')}
+        >
+          <FiAlignLeft />
+          <span>{t('Format')}</span>
+        </button>
+      </div>
+
+      {!isYamlTab && jsonError && (
+        <div className="yaml-editor-error" role="alert">
+          <FiAlertTriangle />
+          <span>{t('Invalid JSON:')} {jsonError}</span>
+        </div>
+      )}
+
+      {isYamlTab && yamlError && (
+        <div className="yaml-editor-error" role="alert">
+          <FiAlertTriangle />
+          <span>{yamlError}</span>
+        </div>
+      )}
+
+      {isYamlTab ? (
+        <textarea
+          className="form-control yaml-editor-raw"
+          value={yamlText}
+          onChange={handleYamlChange}
+          onKeyDown={handleYamlKey}
+          disabled={disabled}
+          rows={8}
+          spellCheck={false}
+        />
+      ) : (
+        <textarea
+          className="form-control yaml-editor-raw"
+          value={value || ''}
+          onChange={handleJsonChange}
+          onKeyDown={handleJsonKeyDown}
+          disabled={disabled}
+          rows={8}
+          spellCheck={false}
+        />
+      )}
     </div>
   );
 };

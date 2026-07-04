@@ -12,8 +12,8 @@ enforced in the modeler UI.
 | **Switch context** | Change the active workflow context to filter available components. | The context selector is hidden. |
 | **Edit template** | Edit a model that is already marked as a template. | The modeler opens in **full read-only mode** -- no editing of any kind is possible. |
 | **Create template** | Mark a model as a template (via the metadata modal). | The "Template" checkbox is hidden in the metadata modal. |
-| **Test** | Trigger test executions from the modeler. | The Test button is hidden. |
-| **Replay** | View past execution replay data. | The Replay Panel is hidden and the load-replay button is removed. |
+| **Test** | Trigger live test executions from the modeler. | Review flow does not start a live listener (only past replay data, if any, is shown). |
+| **Replay** | View past execution replay data. | The **Review flow** button is not shown for event nodes. |
 
 ## Default behavior
 

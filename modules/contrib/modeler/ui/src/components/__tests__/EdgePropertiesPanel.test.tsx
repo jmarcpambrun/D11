@@ -2,18 +2,6 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import EdgePropertiesPanel from '../EdgePropertiesPanel';
 
-// Mock the Zustand store backing useTokenDragPrevention
-let mockIsTokenDragging = false;
-jest.mock('../../store/useFilterStore', () => ({
-  useFilterStore: jest.fn((selector: any) => {
-    const state = {
-      isTokenDragging: mockIsTokenDragging,
-    };
-    if (typeof selector === 'function') return selector(state);
-    return state;
-  }),
-}));
-
 describe('EdgePropertiesPanel', () => {
   const mockOnEdgeUpdate = jest.fn();
 
@@ -43,7 +31,6 @@ describe('EdgePropertiesPanel', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIsTokenDragging = false;
   });
 
   describe('annotation-only editor', () => {
@@ -82,28 +69,4 @@ describe('EdgePropertiesPanel', () => {
     });
   });
 
-  describe('token drag state', () => {
-    it('should add token-drop-disabled class to the annotation field when token is being dragged', () => {
-      mockIsTokenDragging = true;
-      const { container } = render(<EdgePropertiesPanel {...defaultProps} />);
-      const nativeFields = container.querySelectorAll('.modeler-native-field.token-drop-disabled');
-      expect(nativeFields.length).toBe(1); // annotation only
-    });
-
-    it('should not add token-drop-disabled class when no token is being dragged', () => {
-      mockIsTokenDragging = false;
-      const { container } = render(<EdgePropertiesPanel {...defaultProps} />);
-      expect(container.querySelector('.modeler-native-field.token-drop-disabled')).toBeNull();
-    });
-
-    it('should prevent drop on annotation textarea during token drag', () => {
-      mockIsTokenDragging = true;
-      render(<EdgePropertiesPanel {...defaultProps} />);
-      const annotation = screen.getByLabelText('Annotation');
-
-      const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-      const prevented = !annotation.dispatchEvent(dropEvent);
-      expect(prevented).toBe(true);
-    });
-  });
 });

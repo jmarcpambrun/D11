@@ -75,9 +75,9 @@ field types include text fields, select lists, checkboxes, numbers, and text
 areas.
 
 !!! tip "Token fields"
-    Some fields accept **tokens** (dynamic values). During a token drag from
-    the Replay Panel, eligible fields glow to indicate they accept drops, while
-    non-eligible fields dim. See [Tokens & Data](../replay/tokens.md).
+    Some fields accept **tokens** (dynamic values). Type **`[`** in such a field
+    to open the token picker and insert a token. See
+    [Tokens & Data](../replay/tokens.md).
 
 ## Moving and arranging
 

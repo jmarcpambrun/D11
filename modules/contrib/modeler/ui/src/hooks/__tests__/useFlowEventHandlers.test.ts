@@ -135,6 +135,7 @@ describe('useFlowEventHandlers', () => {
       expect(typeof result.current.handleDeleteSelected).toBe('function');
       expect(typeof result.current.onConnect).toBe('function');
       expect(typeof result.current.onPaneClick).toBe('function');
+      expect(typeof result.current.onSelectionStart).toBe('function');
       expect(typeof result.current.onNodeDragStart).toBe('function');
       expect(typeof result.current.onNodeDragStop).toBe('function');
     });
@@ -1068,6 +1069,185 @@ describe('useFlowEventHandlers', () => {
       });
 
       expect(mockSetSelectedNode).toHaveBeenCalledWith(selectedNode);
+    });
+  });
+
+  // Issue #3589101 (follow-up): a drag-select that begins after a pane-click
+  // deselect must NOT be swallowed by the post-pane-click stale-selection
+  // guard. React Flow calls onSelectionStart when a rubber-band drag begins
+  // (before the selection event), which clears the guard.
+  describe('onSelectionStart (pane-click guard reset)', () => {
+    const dragSelected = (ids: string[]) =>
+      ids.map(id => ({ id, position: { x: 0, y: 0 }, data: {} }));
+
+    it('clears the pane-click guard so a following drag-select is honored', () => {
+      const { result } = renderUseFlowEventHandlers();
+
+      // 1) Pane click to deselect — arms the stale-selection guard.
+      act(() => {
+        result.current.onPaneClick();
+      });
+
+      mockSetSelectedNode.mockClear();
+      mockSetSelectedEdge.mockClear();
+      mockSetSelectedNodes.mockClear();
+      mockSetSelectedEdges.mockClear();
+
+      // 2) A NEW rubber-band drag begins → onSelectionStart fires FIRST and
+      //    clears the guard. (No confirming empty event fired in between,
+      //    which is exactly the broken real-world sequence.)
+      act(() => {
+        result.current.onSelectionStart();
+      });
+
+      // 3) The drag-select's real, non-empty selection event must now be
+      //    honored — the store receives the multi-selection.
+      act(() => {
+        result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+
+      expect(mockSetSelectedNodes).toHaveBeenCalledWith(['node-1', 'node-2']);
+      expect(mockSetSelectedEdges).toHaveBeenCalledWith([]);
+      expect(mockSetSelectedNode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'node-1' }),
+      );
+    });
+
+    it('reproduces the full maintainer sequence: drag → pane-click → drag again', () => {
+      const { result } = renderUseFlowEventHandlers();
+
+      // First drag-select works (no prior pane click).
+      act(() => {
+        result.current.onSelectionStart();
+      });
+      act(() => {
+        result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+      expect(mockSetSelectedNodes).toHaveBeenLastCalledWith(['node-1', 'node-2']);
+
+      // Pane click clears everything (guard armed, then confirming empty event
+      // disarms it and clears the store).
+      act(() => {
+        result.current.onPaneClick();
+      });
+      act(() => {
+        result.current.onSelectionChange({ nodes: [], edges: [] });
+      });
+      expect(mockSetSelectedNodes).toHaveBeenLastCalledWith([]);
+
+      mockSetSelectedNodes.mockClear();
+      mockSetSelectedEdges.mockClear();
+
+      // SECOND drag-select after the pane-click deselect — previously BROKEN.
+      // onSelectionStart fires, then the selection event must reach the store.
+      act(() => {
+        result.current.onSelectionStart();
+      });
+      act(() => {
+        result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+
+      expect(mockSetSelectedNodes).toHaveBeenCalledWith(['node-1', 'node-2']);
+      expect(mockSetSelectedEdges).toHaveBeenCalledWith([]);
+    });
+
+    it('still suppresses a stale non-empty echo after a plain pane click (no drag start)', () => {
+      // Regression guard: a plain pane CLICK (no rubber-band drag) does NOT
+      // fire onSelectionStart, so the stale non-empty echo it produces must
+      // still be ignored — preserving the original reason the guard exists.
+      const { result } = renderUseFlowEventHandlers();
+      const staleNode = { id: 'node-1', position: { x: 0, y: 0 }, data: {} };
+
+      act(() => {
+        result.current.onPaneClick();
+      });
+
+      mockSetSelectedNode.mockClear();
+      mockSetSelectedEdge.mockClear();
+      mockSetSelectedNodes.mockClear();
+      mockSetSelectedEdges.mockClear();
+
+      // No onSelectionStart here — this is a stale echo, not a new gesture.
+      act(() => {
+        result.current.onSelectionChange({ nodes: [staleNode], edges: [] });
+      });
+
+      expect(mockSetSelectedNode).not.toHaveBeenCalled();
+      expect(mockSetSelectedEdge).not.toHaveBeenCalled();
+      expect(mockSetSelectedNodes).not.toHaveBeenCalled();
+      expect(mockSetSelectedEdges).not.toHaveBeenCalled();
+    });
+  });
+
+  // Issue #3589101: rubber-band (mouse-drag) multi-select must drive the
+  // selection store IDENTICALLY to Shift+click multi-select, so the property
+  // panel switches to multi-selection mode and the Copy button enables.
+  //
+  // React Flow fires the SAME onSelectionChange for both gestures (the
+  // SelectionListener derives its payload from each element's `selected`
+  // flag, which both the rubber-band and the click path set). These tests
+  // lock that equivalence in at the store-write boundary so a future change
+  // cannot make drag-select diverge from Shift+click again.
+  describe('drag-select parity with Shift+click (issue #3589101)', () => {
+    const dragSelected = (ids: string[]) =>
+      ids.map(id => ({ id, position: { x: 0, y: 0 }, data: {} }));
+
+    it('writes the full multi-node selection to the store on a drag-select', () => {
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        // A rubber-band that captured three nodes fires onSelectionChange
+        // with all three — exactly as three sequential Shift+clicks would.
+        result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+
+      // Multi-selection arrays drive PropertyPanel.hasMultipleSelection and
+      // useClipboard.canCopy — both must reflect the drag-selected nodes.
+      expect(mockSetSelectedNodes).toHaveBeenCalledWith(['node-1', 'node-2']);
+      expect(mockSetSelectedEdges).toHaveBeenCalledWith([]);
+      // Primary selection (first element) is set for the single-element views.
+      expect(mockSetSelectedNode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'node-1' }),
+      );
+    });
+
+    it('produces the SAME store writes for a drag-select and an equivalent Shift+click set', () => {
+      // Drag-select path.
+      const drag = renderUseFlowEventHandlers();
+      act(() => {
+        drag.result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+      const lastCall = (calls: any[][]) => calls[calls.length - 1];
+      const dragNodesArg = lastCall(mockSetSelectedNodes.mock.calls)?.[0];
+      const dragEdgesArg = lastCall(mockSetSelectedEdges.mock.calls)?.[0];
+
+      jest.clearAllMocks();
+
+      // Shift+click building the same two-node selection (the final
+      // onSelectionChange carries both selected nodes).
+      const click = renderUseFlowEventHandlers();
+      act(() => {
+        click.result.current.onSelectionChange({ nodes: dragSelected(['node-1', 'node-2']), edges: [] });
+      });
+      const clickNodesArg = lastCall(mockSetSelectedNodes.mock.calls)?.[0];
+      const clickEdgesArg = lastCall(mockSetSelectedEdges.mock.calls)?.[0];
+
+      expect(dragNodesArg).toEqual(clickNodesArg);
+      expect(dragEdgesArg).toEqual(clickEdgesArg);
+    });
+
+    it('includes edges connected within the drag-selected region', () => {
+      const { result } = renderUseFlowEventHandlers();
+
+      act(() => {
+        result.current.onSelectionChange({
+          nodes: dragSelected(['node-1', 'node-2']),
+          edges: [{ id: 'edge-1', source: 'node-1', target: 'node-2' }],
+        });
+      });
+
+      expect(mockSetSelectedNodes).toHaveBeenCalledWith(['node-1', 'node-2']);
+      expect(mockSetSelectedEdges).toHaveBeenCalledWith(['edge-1']);
     });
   });
 

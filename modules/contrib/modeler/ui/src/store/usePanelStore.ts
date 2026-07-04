@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { PANEL_DIMENSIONS, STORAGE_KEYS } from '../constants/dimensions';
 
+/**
+ * Mode of the single right-hand panel.
+ * - `event`: shows the selected component's properties (default).
+ * - `review`: shows the execution replay / "Review flow" content.
+ */
+export type PanelMode = 'event' | 'review';
+
 interface PanelState {
   panelWidth: number;
   panelIsResizing: boolean;
@@ -8,6 +15,7 @@ interface PanelState {
   replayPanelIsResizing: boolean;
   replayPanelCollapsed: boolean;
   propertyPanelCollapsed: boolean;
+  panelMode: PanelMode;
   setPanelWidth: (width: number) => void;
   setPanelResizing: (isResizing: boolean) => void;
   setReplayPanelWidth: (width: number) => void;
@@ -16,6 +24,7 @@ interface PanelState {
   setReplayPanelCollapsed: (collapsed: boolean) => void;
   togglePropertyPanelCollapse: () => void;
   setPropertyPanelCollapsed: (collapsed: boolean) => void;
+  setPanelMode: (mode: PanelMode) => void;
 }
 
 const loadPanelWidth = (key: string, min: number, max: number, defaultWidth: number): number => {
@@ -68,6 +77,11 @@ export const usePanelStore = create<PanelState>((set, get) => ({
   replayPanelCollapsed: loadBoolean(STORAGE_KEYS.REPLAY_PANEL_COLLAPSED, false),
   propertyPanelCollapsed: loadBoolean(STORAGE_KEYS.PROPERTY_PANEL_COLLAPSED, false),
 
+  // Replay-session VIEW state: intentionally NOT persisted. The Properties vs
+  // Review view is per-canvas-session only and must reset to 'event' on every
+  // model (re)load — replay sessions have no persistence whatsoever.
+  panelMode: 'event',
+
   setPanelWidth: (width) => {
     const clampedWidth = Math.max(
       PANEL_DIMENSIONS.PROPERTY_PANEL.MIN_WIDTH,
@@ -109,5 +123,11 @@ export const usePanelStore = create<PanelState>((set, get) => ({
 
   setPropertyPanelCollapsed: (collapsed: boolean) => {
     set({ propertyPanelCollapsed: collapsed });
+    localStorage.setItem(STORAGE_KEYS.PROPERTY_PANEL_COLLAPSED, JSON.stringify(collapsed));
+  },
+
+  setPanelMode: (mode: PanelMode) => {
+    // In-memory only — see the panelMode initializer above (no persistence).
+    set({ panelMode: mode });
   },
 }));

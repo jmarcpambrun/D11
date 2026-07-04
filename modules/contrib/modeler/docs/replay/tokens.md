@@ -9,8 +9,9 @@ tokens and use them in configuration forms.
 
 ### Step data
 
-When you select a replay step in the Replay Panel, the **Step Data** section
-expands to show the token values available at that point in the execution.
+When you select a replay step in **Review flow** mode, the **Step Data**
+section expands to show the token values available at that point in the
+execution.
 
 Token data is displayed as a **collapsible tree**:
 
@@ -23,7 +24,7 @@ Token data is displayed as a **collapsible tree**:
 
 ### Global tokens
 
-The **Global Tokens** section appears at the bottom of the Replay Panel and
+The **Global Tokens** section appears at the bottom of Review flow mode and
 shows site-wide tokens that are always available, regardless of the workflow
 execution context. Examples include:
 
@@ -31,7 +32,8 @@ execution context. Examples include:
 - `[current-date:long]` -- the current date.
 - `[current-user:name]` -- the logged-in user's name.
 
-Global tokens are always visible, even when no replay data is loaded.
+Global tokens are always visible in Review flow mode, even when no replay data
+is loaded.
 
 ### Template tokens
 
@@ -40,36 +42,35 @@ When the model is marked as a **template**, an additional set of
 specific to the template's context and are provided by the backend.
 
 Template tokens work exactly like global tokens -- they are always visible in
-the Replay Panel, can be expanded to view nested properties, and can be
-dragged into configuration form fields.
+Review flow mode, can be expanded to view nested properties, and can be
+inserted into configuration form fields.
 
-## Dragging tokens into forms
+## Inserting tokens with the `[` picker
 
-You can drag tokens directly from the Replay Panel into configuration form
-fields. This is the recommended way to insert token references.
+The quickest way to insert a token is to **type `[`** directly inside a
+token-supporting configuration field. A categorized picker opens at the cursor:
 
-### How to drag a token
+1. Place the cursor in a token-supporting field and type **`[`**.
+2. Choose a category -- **Step data tokens**, **Global tokens**, or
+   **Template tokens** (categories with a count are shown when available).
+3. Drill into a category to browse its (possibly nested) tokens.
+4. Click **Use →** on a token (or press **Enter**) to insert it as a token
+   pill at the `[` position.
 
-1. **Load replay data** or **run a test** so tokens are visible in the Step
-   Data section.
-2. Look for the **grip icon** (vertical dots) next to a token label -- this
-   indicates the token is draggable.
-3. **Click and drag** the token from the Replay Panel to a configuration form
-   field in the Property Panel.
-4. **Drop** the token into the field. It appears as a styled **token pill**
-   (e.g., `[node:title]`).
+To narrow the list, type in the **Search tokens** box at the top of the picker;
+it filters the tokens by label or token string across every category. Press
+**Escape** to close the picker -- focus and the cursor return to the field where
+you left off.
 
-A help text hint ("Drag tokens into configuration fields to insert them.")
-appears above the token data to guide you.
+![The token picker open inside a configuration field, showing token categories](../assets/screenshots/token-picker.jpg){ .screenshot }
 
-### Visual feedback during drag
+!!! tip "Review the flow for richer tokens"
+    When no step data is cached yet, the picker still offers Global and Template
+    tokens and nudges you to **Review the flow** -- entering Review flow mode
+    captures step-data tokens specific to your workflow's execution.
 
-While dragging a token:
-
-- **Eligible fields** glow with a border highlight, indicating they accept
-  the token.
-- **Non-eligible fields** dim, indicating they do not accept tokens.
-- **Label and Annotation fields** are always disabled for token drops.
+The picker is fully keyboard navigable (arrow keys to move, Enter to use,
+Escape to close) and the active option is announced to assistive technology.
 
 ### Which fields accept tokens
 
@@ -78,7 +79,7 @@ Whether a field accepts tokens depends on two things:
 1. **Per-field setting**: The component's developer marks specific fields as
    token-enabled.
 2. **Replace tokens checkbox**: If the form includes a "Replace tokens"
-   checkbox and it is enabled, **all** fields accept token drops.
+   checkbox and it is enabled, **all** fields accept tokens.
 
 ## Editing tokens in fields
 

@@ -6,8 +6,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { FiChevronDown, FiChevronRight, FiMoreVertical } from 'react-icons/fi';
-import { useFilterStore } from '../store/useFilterStore';
+import { FiChevronDown, FiChevronRight } from 'react-icons/fi';
 import { t } from '../utils/translation';
 
 const MAX_DEPTH = Infinity;
@@ -27,7 +26,6 @@ export const ReplayDataRenderer: React.FC<ReplayDataRendererProps> = ({
   data,
   basePath = '',
 }) => {
-  const setTokenDragging = useFilterStore(s => s.setTokenDragging);
   const [expandedSections, setExpandedSections] = useState(new Set<string>());
 
   const toggleSection = useCallback((sectionId: string) => {
@@ -146,18 +144,6 @@ export const ReplayDataRenderer: React.FC<ReplayDataRendererProps> = ({
     );
   };
 
-  // Handle drag start for tokens
-  const handleTokenDragStart = (e: React.DragEvent, tokenData: { label: string; token: string }) => {
-    e.dataTransfer.setData('text/plain', tokenData.token);
-    e.dataTransfer.setData('application/token', JSON.stringify(tokenData));
-    setTokenDragging(true);
-  };
-
-  // Handle drag end for tokens
-  const handleTokenDragEnd = useCallback(() => {
-    setTokenDragging(false);
-  }, [setTokenDragging]);
-
   // Render token data (normalized structure with label/token/value/data)
   const renderTokenData = (tokenData: any, path = '', depth = 0): React.ReactNode => {
     if (depth >= MAX_DEPTH) {
@@ -205,22 +191,8 @@ export const ReplayDataRenderer: React.FC<ReplayDataRendererProps> = ({
                   </button>
                 ) : (
                   <>
-                    {tokenData.token ? (
-                      <span className="token-drag-icon" aria-hidden="true"><FiMoreVertical /></span>
-                    ) : (
-                      <span className="token-label-spacer"></span>
-                    )}
-                    <span
-                      className={`token-label ${tokenData.token ? 'draggable' : ''}`}
-                      draggable={!!tokenData.token}
-                      onDragStart={(e) => {
-                        if (tokenData.token) {
-                          handleTokenDragStart(e, { label: tokenData.label, token: tokenData.token });
-                        }
-                      }}
-                      onDragEnd={handleTokenDragEnd}
-                      title={tokenData.token ? t('Drag to insert token: @token', { '@token': tokenData.token }) : ''}
-                    >
+                    <span className="token-label-spacer"></span>
+                    <span className="token-label">
                       {tokenData.label}
                     </span>
                     {tokenData.token && (
@@ -261,22 +233,8 @@ export const ReplayDataRenderer: React.FC<ReplayDataRendererProps> = ({
         <div className="token-item">
           <div className="token-header">
             <div className="token-label-group">
-              {tokenData.token ? (
-                <span className="token-drag-icon" aria-hidden="true"><FiMoreVertical /></span>
-              ) : (
-                <span className="token-label-spacer"></span>
-              )}
-              <span
-                className={`token-label ${tokenData.token ? 'draggable' : ''}`}
-                draggable={!!tokenData.token}
-                onDragStart={(e) => {
-                  if (tokenData.token) {
-                    handleTokenDragStart(e, { label: tokenData.label, token: tokenData.token });
-                  }
-                }}
-                onDragEnd={handleTokenDragEnd}
-                title={tokenData.token ? t('Drag to insert token: @token', { '@token': tokenData.token }) : ''}
-              >
+              <span className="token-label-spacer"></span>
+              <span className="token-label">
                 {tokenData.label}
               </span>
               {tokenData.token && (
@@ -327,10 +285,9 @@ export const StepDataContainer: React.FC<StepDataContainerProps> = ({ stepData }
  * Drupal sends: { name, description, dynamic, "raw token", token, value, children? }
  * Renderer expects: { label, token, value, data? }
  */
-function transformGlobalToken(entry: Record<string, any>): Record<string, any> {
+export function transformGlobalToken(entry: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {
     label: entry.name || entry.token || '',
-    // eslint-disable-next-line i18n/no-untranslated-strings -- property key, not user-facing
     token: entry['raw token'] || '',
   };
   if ('value' in entry) {

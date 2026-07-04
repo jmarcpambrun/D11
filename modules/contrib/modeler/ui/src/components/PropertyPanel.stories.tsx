@@ -1,7 +1,41 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import PropertyPanel from './PropertyPanel';
 import { withStore } from '../../.storybook/decorators';
+import { usePanelStore } from '../store/usePanelStore';
+
+/** Sample tokens for the Review-mode token tree / @-picker (Drupal shape). */
+const sampleGlobalTokens = {
+  '[site:name]': { name: 'Site name', 'raw token': '[site:name]', token: 'name', value: 'My Site' },
+  '[current-user]': {
+    name: 'Current user',
+    'raw token': '[current-user]',
+    token: 'current-user',
+    children: {
+      'display-name': { name: 'User name', 'raw token': '[current-user:display-name]', token: 'display-name' },
+    },
+  },
+} as Record<string, any>;
+
+/** Settings for a SAVED model that has replay + test capability. */
+const reviewCapableSettings = {
+  modeler_api: {
+    isNew: false,
+    replay_url: '/api/modeler/replay',
+    test_url: '/api/modeler/test',
+    config_url: '/api/modeler/config',
+    token_url: '/api/modeler/token',
+    permissions: ['replay', 'test'],
+  },
+  modeler: { modelId: 'model_abc123' },
+} as Record<string, any>;
+
+/** Force the persisted panel mode for a story (real store is used in SB). */
+const withPanelMode = (mode: 'event' | 'review') => (Story: React.ComponentType) => {
+  usePanelStore.getState().setPanelMode(mode);
+  return <Story />;
+};
 
 const sampleNode = {
   id: 'node_1',
@@ -234,5 +268,97 @@ export const ActionNodeWithReplayUrl: Story = {
         modelId: 'model_abc123',
       },
     },
+  },
+};
+
+// ─── Review flow entry + coexisting views (header view-switch) ─────────────
+
+/**
+ * Event node selected, no session yet: the "Review flow" button appears in the
+ * Properties header. Clicking it STARTS a session through the unsaved-changes
+ * guard in Flow (onRequestReviewMode).
+ */
+export const EventNodeReviewButton: Story = {
+  decorators: [withPanelMode('event')],
+  args: {
+    node: sampleEventNode,
+    edge: null,
+    settings: reviewCapableSettings,
+    hasAnyReplayCapability: true,
+    globalTokens: sampleGlobalTokens,
+    onRequestReviewMode: fn(),
+  },
+};
+
+/**
+ * Replay view — same header structure as Properties: a "Review flow" context
+ * label on the left and a "Properties" switch button on the right (no back-bar).
+ * Clicking "Properties" returns to the selected node's properties while the
+ * replay session stays active. Requires an active session.
+ */
+export const ReviewModelView: Story = {
+  tags: ['!test'],
+  decorators: [withPanelMode('review')],
+  args: {
+    node: sampleEventNode,
+    edge: null,
+    settings: reviewCapableSettings,
+    hasAnyReplayCapability: true,
+    replaySessionActive: true,
+    hasTestUrl: true,
+    selectedStartNodeId: 'event_1',
+    globalTokens: sampleGlobalTokens,
+    onStartTest: fn(),
+    onSelectReplayStep: fn(),
+    onToggleReplay: fn(),
+    onRequestReviewMode: fn(),
+  },
+};
+
+/**
+ * Active session, NON-event node selected in Properties view: the "Review flow"
+ * button still appears so the user can return to the running replay from any
+ * node (coexisting views).
+ */
+export const ActiveSessionReturnFromAnyNode: Story = {
+  tags: ['!test'],
+  decorators: [withPanelMode('event')],
+  args: {
+    node: sampleNode,
+    edge: null,
+    settings: reviewCapableSettings,
+    hasAnyReplayCapability: true,
+    replaySessionActive: true,
+    globalTokens: sampleGlobalTokens,
+    onRequestReviewMode: fn(),
+  },
+};
+
+/**
+ * New (unsaved) model: there is no "Review flow" button — starting a session
+ * requires a saved model with replay/test capability.
+ */
+export const ReviewButtonHiddenWhenUnsaved: Story = {
+  decorators: [withPanelMode('event')],
+  args: {
+    node: sampleEventNode,
+    edge: null,
+    settings: { modeler_api: { isNew: true } },
+    hasAnyReplayCapability: false,
+  },
+};
+
+/**
+ * Non-event node selected with NO active session: the "Review flow" button is
+ * NOT shown (a session can only be started from an event node).
+ */
+export const ReviewButtonHiddenForNonEvent: Story = {
+  tags: ['!test'],
+  decorators: [withPanelMode('event')],
+  args: {
+    node: sampleNode,
+    edge: null,
+    settings: reviewCapableSettings,
+    hasAnyReplayCapability: true,
   },
 };

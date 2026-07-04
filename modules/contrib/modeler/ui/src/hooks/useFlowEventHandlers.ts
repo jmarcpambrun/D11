@@ -453,6 +453,29 @@ export function useFlowEventHandlers({
     setSelectedEdge(null);
   }, [setSelectedNode, setSelectedEdge]);
 
+  // Handle the start of a rubber-band (mouse-drag) selection gesture.
+  //
+  // Bug fix (issue #3589101 follow-up): the paneClickedRef guard in
+  // onSelectionChange swallows the stale NON-empty selection echo React Flow
+  // fires right after a pane *click* (a click with no drag). That guard is
+  // cleared only by the subsequent confirming EMPTY onSelectionChange — but
+  // when the user pane-clicks and then immediately starts a NEW drag-select,
+  // React Flow's pane mousedown calls resetSelectedElements() while the
+  // selection is already empty, so NO empty onSelectionChange fires to clear
+  // the flag. The guard then wrongly discards the drag-select's legitimate
+  // non-empty event, leaving the store (and thus Copy / the multi-selection
+  // panel) untouched.
+  //
+  // React Flow fires onSelectionStart from the pane mousedown that BEGINS a
+  // rubber-band drag (Pane.onMouseDown), strictly BEFORE onMouseMove produces
+  // the selection. Clearing the guard here means any real drag-select cancels
+  // a pending post-pane-click guard, so its real selection event is honored —
+  // while a stale echo after a plain pane click (which has no onSelectionStart)
+  // is still suppressed.
+  const onSelectionStart = useCallback(() => {
+    paneClickedRef.current = false;
+  }, []);
+
   // Handle node drag start — snapshot the position so we can detect actual movement
   // Save history here (before the drag changes any positions) so that undo
   // restores the pre-drag state.  The snapshot is only committed when
@@ -484,6 +507,7 @@ export function useFlowEventHandlers({
     onConnectStart,
     onConnectEnd,
     onPaneClick,
+    onSelectionStart,
     onNodeDragStart,
     onNodeDragStop,
   };

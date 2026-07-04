@@ -10,7 +10,6 @@ import React from 'react';
 import type { StoreEdge as Edge, EdgeData } from '../types/settings';
 import { t } from '../utils/translation';
 import { useDebouncedField } from '../hooks/useDebouncedField';
-import { useTokenDragPrevention } from '../hooks/useTokenDragPrevention';
 
 interface EdgePropertiesPanelProps {
   edge: Edge;
@@ -25,11 +24,9 @@ const EdgePropertiesPanel: React.FC<EdgePropertiesPanelProps> = ({
   isLocked,
   edgeAnnotationField,
 }) => {
-  const { isTokenDragging, handleNativeFieldDragOver, handleNativeFieldDrop } = useTokenDragPrevention();
-
   return (
     <div className="panel-content">
-      <div className={`property-item modeler-native-field ${isTokenDragging ? 'token-drop-disabled' : ''}`}>
+      <div className="property-item modeler-native-field">
         <label htmlFor="modeler-edge-annotation">{t('Annotation')}</label>
         <div className="property-value editable">
           <textarea
@@ -41,8 +38,6 @@ const EdgePropertiesPanel: React.FC<EdgePropertiesPanelProps> = ({
             rows={3}
             onChange={edgeAnnotationField.onChange}
             onBlur={edgeAnnotationField.onBlur}
-            onDragOver={handleNativeFieldDragOver}
-            onDrop={handleNativeFieldDrop}
           />
         </div>
       </div>

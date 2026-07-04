@@ -2339,50 +2339,188 @@ g.replay-transition-highlighted path {
   font-size: var(--modeler-font-size-base);
 }
 
-/* Property Panel Header — fixed height matches the replay panel header. */
-.workflow-property-panel .panel-header {
+/* Field Groups (details / fieldset / container) */
+.form-field-group {
+  margin-bottom: 16px;
+}
+
+.form-group {
+  border: 1px solid var(--modeler-color-border-light);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-bg-surface);
+  padding: 12px;
+}
+
+.form-group-title {
+  display: block;
+  font-size: var(--modeler-font-size-base);
+  font-weight: 600;
+  color: var(--modeler-color-text-primary);
+  margin-bottom: 8px;
+}
+
+/* Collapsible details group: the title becomes the clickable summary. */
+.form-group-details > .form-group-title {
+  cursor: pointer;
+  list-style: none;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  height: 45px;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+/* Hide the native disclosure marker; we render our own chevron. */
+.form-group-details > .form-group-title::-webkit-details-marker {
+  display: none;
+}
+
+/* Custom chevron reflecting the open/closed state. */
+.form-group-details > .form-group-title::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent var(--modeler-color-text-tertiary);
+  transition: transform 0.15s ease;
+}
+
+.form-group-details[open] > .form-group-title::before {
+  transform: rotate(90deg);
+}
+
+.form-group-details[open] > .form-group-body {
+  margin-top: 8px;
+}
+
+/* Reset spacing on the last child field inside a group. */
+.form-group-body > .form-field:last-child,
+.form-group-body > .form-field-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Property Panel Header — fixed height matches the replay panel header. */
+/* Fixed 3-zone header grid: [ LABEL (1fr) | SWITCH (auto) | ICONS (auto) ].
+   The 1fr label column absorbs all slack, so the switch sits in a fixed middle
+   slot and the icons stay pinned to the right edge — regardless of whether the
+   switch button is shown or which view is active. Zones never reflow. */
+.workflow-property-panel .panel-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 45px;
   padding: 0 16px;
   position: relative;
   flex-shrink: 0;
 }
 
-.component-header {
+/* Zone 1 — context label, left-anchored. Truncates rather than pushing the
+   switch/icons when long. */
+.panel-header-label {
+  min-width: 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
+  overflow: hidden;
 }
 
+.panel-header-label h3 {
+  margin: 0;
+  font-size: var(--modeler-font-size-xl);
+  font-weight: 600;
+  color: var(--modeler-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Zone 2 — view-switch slot. Always present (auto-width; collapses to 0 when
+   empty), keeping the icons zone from shifting when the switch toggles. */
+.panel-header-switch {
+  display: flex;
+  align-items: center;
+}
+
+/* Zone 3 — icons, right-anchored. Reserved (may be empty) in every state. */
+.panel-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+/* Header view-switch button. Used by BOTH the "Review flow" (go-to-replay)
+   button in the Properties header and the "Properties" (go-to-properties)
+   button in the Replay header — both views share the same header structure. */
+.header-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--modeler-color-primary);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-primary-light);
+  color: var(--modeler-color-primary-text);
+  font-size: var(--modeler-font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--modeler-transition-default);
+}
+
+.header-review-btn:hover {
+  background: var(--modeler-color-primary);
+  color: var(--modeler-color-text-on-dark);
+}
+
+.header-review-btn:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: 1px;
+}
+
+/* Disabled: the button is always present (stable footprint) but not actionable
+   until the selected node belongs to a reviewable event flow. Muted, not-allowed
+   cursor; no hover affordance. Themed via --modeler-* (light + dark). */
+.header-review-btn:disabled,
+.header-review-btn[aria-disabled='true'] {
+  border-color: var(--modeler-color-border-light);
+  background: var(--modeler-color-bg-muted);
+  color: var(--modeler-color-text-tertiary);
+  cursor: not-allowed;
+}
+
+.header-review-btn:disabled:hover,
+.header-review-btn[aria-disabled='true']:hover {
+  background: var(--modeler-color-bg-muted);
+  color: var(--modeler-color-text-tertiary);
+}
+
+.header-review-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Context label content (icon + type name) within zone 1. */
 .component-info {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .component-info svg {
   font-size: var(--modeler-font-size-2xl);
   color: var(--modeler-color-text-primary);
+  flex-shrink: 0;
 }
 
 .component-type {
   font-size: var(--modeler-font-size-xl);
   font-weight: 600;
   color: var(--modeler-color-text-primary);
-}
-
-.empty-header {
-  width: 100%;
-}
-
-/* Header actions area */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Info button in header */
@@ -2517,51 +2655,33 @@ g.replay-transition-highlighted path {
   white-space: normal;
 }
 
-/* Replay load button in property panel header */
-.header-replay-btn {
-  padding: 6px;
-  background: var(--modeler-color-bg-primary);
-  border: 1px solid var(--modeler-color-border-default);
-  border-radius: var(--modeler-radius-md);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--modeler-transition-default);
-  width: 28px;
-  height: 28px;
-  color: var(--modeler-color-text-secondary);
-}
-
-.header-replay-btn:hover:not(:disabled) {
-  background: var(--modeler-color-primary-lighter);
-  border-color: var(--modeler-color-primary);
-  color: var(--modeler-color-primary);
-}
-
-.header-replay-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.header-replay-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.header-replay-btn .spinning {
-  animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.loading-indicator {
-  font-size: var(--modeler-font-size-md);
+/* Body loading state — centered in the panel content area while the node's
+   configuration form is being fetched. Replaces the old inline header throbber
+   so no header element is displaced. */
+.panel-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
   color: var(--modeler-color-text-secondary);
-  font-style: italic;
+  font-size: var(--modeler-font-size-md);
+}
+
+.panel-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--modeler-color-border-default);
+  border-top-color: var(--modeler-color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 /* Component Description */
@@ -2906,21 +3026,21 @@ g.replay-transition-highlighted path {
   pointer-events: none;
 }
 
-/* Ensure selection container doesn't interfere after selection */
-.react-flow__nodesselection {
+/* Suppress React Flow's NodesSelection bounding box entirely (issue #3589101).
+   Rubber-band (mouse-drag) multi-select must behave identically to Shift+click,
+   which never shows this box. The primary fix clears React Flow's
+   `nodesSelectionActive` flag in `onSelectionEnd` (see
+   useSuppressNodesSelectionBox) so the box does not render; this rule is a
+   defense-in-depth safety net in case the flag is ever active.
+
+   NOTE: `.react-flow__nodesselection` is a SIBLING of `.react-flow__pane`
+   (React Flow renders it after the Pane inside FlowRenderer), so a
+   `.react-flow__pane ... ` descendant selector never matches it — target the
+   element directly. */
+.react-flow__nodesselection,
+.react-flow__nodesselection-rect {
+  display: none !important;
   pointer-events: none !important;
-}
-
-/* Hide empty selection containers */
-.react-flow__nodesselection:empty {
-  display: none !important;
-}
-
-/* Force hide selection containers when they shouldn't be visible */
-.react-flow__pane:not(.selection) .react-flow__nodesselection {
-  visibility: hidden !important;
-  opacity: 0 !important;
-  display: none !important;
 }
 
 /* Multi-selection handled by individual node selection styles above */
@@ -4223,32 +4343,6 @@ g[style*="#ef4444"] path {
   position: relative;
 }
 
-.replay-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 45px;
-  padding: 0 16px;
-  background: var(--modeler-color-bg-surface);
-  border-bottom: 1px solid var(--modeler-color-border-light);
-  flex-shrink: 0;
-}
-
-.replay-panel-header h3 {
-  margin: 0;
-  font-size: var(--modeler-font-size-lg);
-  font-weight: 600;
-  color: var(--modeler-color-text-emphasis);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.replay-panel-header h3 svg {
-  width: 16px;
-  height: 16px;
-}
-
 /* Replay entry selector dropdown */
 .replay-entry-selector {
   position: relative;
@@ -4431,47 +4525,6 @@ g[style*="#ef4444"] path {
   font-style: italic;
 }
 
-/* Header actions container */
-.replay-panel-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* Test button in replay panel header */
-.header-test-btn {
-  padding: 4px 10px;
-  background: var(--modeler-color-primary);
-  color: white;
-  border: 1px solid var(--modeler-color-primary);
-  border-radius: var(--modeler-radius-md);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--modeler-font-size-md);
-  font-weight: 500;
-  transition: var(--modeler-transition-default);
-  height: 28px;
-  white-space: nowrap;
-}
-
-.header-test-btn:hover {
-  background: var(--modeler-color-primary-hover);
-  border-color: var(--modeler-color-primary-hover);
-}
-
-.header-test-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.header-test-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
 /* Test waiting state */
 .replay-test-waiting {
   display: flex;
@@ -4517,12 +4570,6 @@ g[style*="#ef4444"] path {
 .replay-test-waiting .test-cancel-btn svg {
   width: 14px;
   height: 14px;
-}
-
-.replay-count {
-  font-size: var(--modeler-font-size-md);
-  color: var(--modeler-color-text-secondary);
-  font-weight: normal;
 }
 
 .replay-control-section {
@@ -5804,24 +5851,524 @@ g[style*="#ef4444"] path {
   color: var(--modeler-color-text-primary);
 }
 
-/* Draggable Token Labels */
-.token-label.draggable {
-  cursor: grab;
-  transition: var(--modeler-transition-default);
-  border-radius: var(--modeler-radius-sm);
-  padding: 1px 3px;
-  margin: -1px -3px;
+/* ============ "@" Token Picker popup ============ */
+/* Transparent modal backdrop: blocks interaction with everything behind the
+   picker while it is open; a mousedown on it counts as a click-outside.
+   Portaled into the `.modeler` root (theme-var + dark-mode scope), so it must
+   sit ABOVE the app root `.workflow-modeler` (z-index 9999) and the
+   popup/dialog overlays (10000/10001). */
+.token-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  background: transparent;
 }
 
-.token-label.draggable:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--modeler-color-primary);
+.token-picker {
+  position: fixed;
+  z-index: 10003;
+  width: 280px;
+  max-width: 92vw;
+  /* `max-height` is a DEFAULT/fallback — the component sets a dynamic, viewport-
+     aware max-height inline (capped to the available space above/below the
+     caret) which overrides this. The body scrolls internally for the rest. */
+  max-height: 320px;
+  /* The container itself does NOT scroll: it clips and lets its children manage
+     layout. Chrome rows (header/filter/heading/breadcrumb/dataset-selector) are
+     static, non-shrinking flex children; only `.token-picker-list` scrolls
+     vertically (flex:1; min-height:0; overflow-y:auto). This keeps the chrome
+     fixed and shows a scrollbar only when the item list overflows. */
+  overflow: hidden;
+  background: var(--modeler-color-bg-primary);
+  border: 1px solid var(--modeler-color-border-default);
+  border-radius: var(--modeler-radius-lg);
+  box-shadow: var(--modeler-shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Small gap between the popup and the caret, on the side it is anchored. */
+.token-picker--below {
+  margin-top: 2px;
+}
+
+.token-picker--above {
+  margin-bottom: 2px;
+}
+
+/* Modal header row: title on the left, close (×) on the right. */
+.token-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--modeler-color-border-light);
+  background: var(--modeler-color-bg-surface);
+  /* Static chrome: never scrolls, holds its height. */
+  flex-shrink: 0;
+}
+
+.token-picker-title {
+  font-size: var(--modeler-font-size-sm);
   font-weight: 600;
+  color: var(--modeler-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.token-label.draggable:active {
-  cursor: grabbing;
-  transform: scale(0.95);
+.token-picker-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--modeler-radius-sm);
+  background: transparent;
+  color: var(--modeler-color-text-secondary);
+  cursor: pointer;
+}
+
+.token-picker-close:hover {
+  background: var(--modeler-color-bg-muted);
+  color: var(--modeler-color-text-primary);
+}
+
+.token-picker-close:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: 1px;
+}
+
+/* In-picker search box (DECISION A): owns its own filter state. Sits directly
+   below the header, above the category list / breadcrumb. */
+.token-picker-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--modeler-color-border-light);
+  background: var(--modeler-color-bg-surface);
+  /* Static chrome: never scrolls, holds its height. */
+  flex-shrink: 0;
+}
+
+.token-picker-search-icon {
+  position: absolute;
+  left: 22px;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--modeler-color-text-tertiary);
+  pointer-events: none;
+}
+
+.token-picker-search-input {
+  flex: 1;
+  padding: 6px 8px 6px 28px;
+  border: 1px solid var(--modeler-color-border-light);
+  border-radius: var(--modeler-radius-sm);
+  outline: none;
+  font-family: inherit;
+  font-size: var(--modeler-font-size-md);
+  color: var(--modeler-color-text-primary);
+  background: var(--modeler-color-bg-primary);
+}
+
+.token-picker-search-input::placeholder {
+  color: var(--modeler-color-text-secondary);
+}
+
+.token-picker-search-input:focus-visible,
+.token-picker-search:focus-within .token-picker-search-input {
+  border-color: var(--modeler-color-interactive);
+  box-shadow: 0 0 0 2px var(--modeler-color-interactive-ring);
+}
+
+.token-picker-heading,
+.token-picker-breadcrumb {
+  padding: 8px 12px;
+  font-size: var(--modeler-font-size-sm);
+  font-weight: 600;
+  color: var(--modeler-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--modeler-color-border-light);
+  background: var(--modeler-color-bg-surface);
+  /* Static chrome: never scrolls, holds its height. */
+  flex-shrink: 0;
+}
+
+.token-picker-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
+.token-picker-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  /* Accessible "text on light bg" primary variant (blue-800 light / blue-300
+     dark) — the bare --modeler-color-primary (#2563eb) is borderline on the
+     white picker background and fails WCAG AA. Mirrors .header-review-btn. */
+  color: var(--modeler-color-primary-text);
+  cursor: pointer;
+  font-size: var(--modeler-font-size-md);
+  padding: 2px 4px;
+  border-radius: var(--modeler-radius-md);
+  /* Never squeezed by a long breadcrumb. */
+  flex-shrink: 0;
+}
+
+.token-picker-back:hover {
+  background: var(--modeler-color-bg-muted);
+}
+
+/* Breadcrumb with MIDDLE/LEFT truncation: the leading region (category + middle
+   crumbs) shrinks and ellipsizes, while the trailing region (the rightmost,
+   most-important crumb) never shrinks and stays fully visible. The full path is
+   available via the `title` tooltip on `.token-picker-crumb-label`. */
+.token-picker-crumb-label {
+  display: flex;
+  align-items: center;
+  color: var(--modeler-color-text-secondary);
+  min-width: 0;
+}
+
+.token-picker-crumb-lead {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+
+.token-picker-crumb-sep {
+  flex: 0 0 auto;
+  white-space: pre;
+}
+
+.token-picker-crumb-tail {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.token-picker-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  /* The ONLY scroll area: takes the remaining height after the static chrome
+     and scrolls vertically when its content exceeds it. `min-height: 0` is
+     critical so this flex item can shrink below its content height (instead of
+     pushing the container) and actually scroll. `overflow-x: hidden` clips any
+     long mono token/value so a horizontal scrollbar never appears; with
+     `overflow-y: auto` explicitly set and `min-height: 0` in place, this is a
+     proper flex scroll area, so the implicit-axis quirk that previously
+     collapsed the list no longer applies.
+
+     The "~5 rows always visible" minimum is driven by the COMPONENT (it raises
+     the popup's min height to reserve room for the chrome + ~5 rows via
+     `pickerMinHeight`), NOT by a CSS `min-height` here. A hard CSS min-height
+     could exceed the container in a tight viewport and, since the container is
+     `overflow: hidden`, CLIP rows out of reach. Keeping `min-height: 0` lets the
+     list shrink and scroll when the popup is clamped smaller, so rows are never
+     unreachable. */
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* The scroll area is keyboard-focusable (tabIndex={0}) so a scrollable token
+   list is reachable by keyboard (axe `scrollable-region-focusable`). Give it a
+   visible focus ring when focused directly. */
+.token-picker-list:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: -2px;
+}
+
+.token-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  /* Allow the flex item to shrink below its intrinsic content width so long
+     labels/values ellipsize instead of forcing horizontal overflow. */
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--modeler-radius-md);
+  background: transparent;
+  color: var(--modeler-color-text-primary);
+  font-size: var(--modeler-font-size-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.token-picker-option:hover,
+.token-picker-option.active {
+  background: var(--modeler-color-primary-light);
+  color: var(--modeler-color-primary-text);
+}
+
+.token-picker-option > svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--modeler-color-text-tertiary);
+}
+
+.token-picker-category-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.token-picker-count {
+  color: var(--modeler-color-text-tertiary);
+  font-size: var(--modeler-font-size-sm);
+}
+
+.token-picker-leaf-label {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.token-picker-leaf-value {
+  /* The resolved runtime value shown under the leaf label. Not a token, so it
+     uses the regular (non-mono) font; truncated to a single line with the full
+     value available via the row's title tooltip. Themed text-tertiary works in
+     both light and dark modes. */
+  font-size: var(--modeler-font-size-sm);
+  color: var(--modeler-color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-picker-use-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--modeler-color-primary);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-primary);
+  color: var(--modeler-color-text-on-dark);
+  font-size: var(--modeler-font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--modeler-transition-default);
+}
+
+.token-picker-use-btn:hover {
+  background: var(--modeler-color-primary-hover);
+  border-color: var(--modeler-color-primary-hover);
+}
+
+.token-picker-use-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.token-picker-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--modeler-color-text-tertiary);
+  font-size: var(--modeler-font-size-md);
+  /* Short status state — stays visible, never collapses under flex pressure. */
+  flex-shrink: 0;
+}
+
+.token-picker-empty p {
+  margin: 0;
+}
+
+.token-picker-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--modeler-color-border-light);
+  background: var(--modeler-color-bg-surface);
+  /* Short status state — stays visible, never collapses under flex pressure. */
+  flex-shrink: 0;
+}
+
+.token-picker-hint-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--modeler-color-text-tertiary);
+}
+
+.token-picker-hint p {
+  margin: 0;
+  font-size: var(--modeler-font-size-sm);
+  color: var(--modeler-color-text-secondary);
+}
+
+.token-picker-review-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--modeler-color-primary);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-primary-light);
+  color: var(--modeler-color-primary-text);
+  font-size: var(--modeler-font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--modeler-transition-default);
+}
+
+.token-picker-review-btn:hover {
+  background: var(--modeler-color-primary);
+  color: var(--modeler-color-text-on-dark);
+}
+
+/* Feature J: on-demand step-data dataset dropdown inside the [-token picker. */
+.token-picker-dataset-selector {
+  position: relative;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--modeler-color-border-light);
+  /* Static chrome: stays above the scrolling item list. */
+  flex-shrink: 0;
+}
+
+.token-picker-dataset-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--modeler-color-border-light);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-bg-surface);
+  color: var(--modeler-color-text-primary);
+  font-size: var(--modeler-font-size-sm);
+  cursor: pointer;
+  transition: var(--modeler-transition-default);
+}
+
+.token-picker-dataset-toggle:hover {
+  background: var(--modeler-color-bg-hover);
+}
+
+.token-picker-dataset-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.token-picker-dataset-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--modeler-color-text-tertiary);
+}
+
+.token-picker-dataset-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform var(--modeler-transition-default);
+}
+
+.token-picker-dataset-chevron.open {
+  transform: rotate(180deg);
+}
+
+.token-picker-dataset-list {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 1;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 2px;
+  border: 1px solid var(--modeler-color-border-light);
+  border-radius: var(--modeler-radius-md);
+  background: var(--modeler-color-bg-surface);
+  box-shadow: var(--modeler-shadow-md);
+}
+
+.token-picker-dataset-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: var(--modeler-font-size-sm);
+  color: var(--modeler-color-text-primary);
+  cursor: pointer;
+}
+
+.token-picker-dataset-item:hover,
+.token-picker-dataset-item.selected {
+  background: var(--modeler-color-bg-hover);
+}
+
+.token-picker-dataset-item:focus-visible {
+  outline: 2px solid var(--modeler-color-primary);
+  outline-offset: -2px;
+}
+
+.token-picker-dataset-item-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.token-picker-listen-item {
+  border-bottom: 1px solid var(--modeler-color-border-light);
+  /* Accessible "text on light bg" primary variant (blue-800 light / blue-300
+     dark). The bare --modeler-color-primary (#2563eb) on the white picker
+     background is borderline and fails WCAG AA for this label text. Mirrors
+     the .token-picker-back fix and .header-review-btn. */
+  color: var(--modeler-color-primary-text);
+}
+
+.token-picker-listening {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--modeler-color-text-secondary);
+  font-size: var(--modeler-font-size-sm);
+  /* Short status state — stays visible, never collapses under flex pressure. */
+  flex-shrink: 0;
+}
+
+.token-picker-listening-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--modeler-color-primary);
+  animation: spin 1s linear infinite;
+}
+
+.token-picker-listening p {
+  margin: 0;
 }
 
 /* Token expand/collapse button (used in ReplayDataRenderer) */
@@ -5870,71 +6417,6 @@ g[style*="#ef4444"] path {
   box-shadow: 0 0 1px rgba(59, 130, 246, 0.5);
 }
 
-/* Grip icon for draggable token labels */
-.token-drag-icon {
-  display: inline-flex;
-  align-items: center;
-  color: var(--modeler-color-text-muted);
-  font-size: 12px;
-  margin-right: 2px;
-  opacity: 0.5;
-  transition: opacity var(--modeler-duration-default);
-  flex-shrink: 0;
-}
-
-.token-label-group:hover .token-drag-icon {
-  opacity: 1;
-  color: var(--modeler-color-primary);
-}
-
-/* Help text hint in Step Data section */
-.token-drag-hint {
-  margin: 0 0 8px 0;
-  padding: 6px 10px;
-  font-size: var(--modeler-font-size-sm);
-  color: var(--modeler-color-text-secondary);
-  background-color: var(--modeler-color-bg-secondary);
-  border-radius: var(--modeler-radius-sm);
-  border-left: 3px solid var(--modeler-color-interactive);
-  line-height: 1.4;
-}
-
-/* Token-eligible field highlight during active token drag */
-.contenteditable-field.token-drop-target {
-  border-color: var(--modeler-color-interactive);
-  box-shadow: 0 0 0 2px var(--modeler-color-interactive-ring);
-  transition: border-color var(--modeler-duration-default), box-shadow var(--modeler-duration-default);
-}
-
-/* Non-eligible field dimming during active token drag */
-.contenteditable-field.token-drop-rejected {
-  cursor: not-allowed;
-  border-color: var(--modeler-color-border-light);
-  background-color: var(--modeler-color-bg-muted);
-  color: var(--modeler-color-text-secondary);
-}
-
-/* Form field wrapper states during token drag */
-.form-field.token-drop-enabled {
-  /* Subtle positive indicator for the whole field group */
-}
-
-.form-field.token-drop-disabled {
-  opacity: 0.6;
-  transition: opacity var(--modeler-duration-default);
-}
-
-/* Native fields (label, annotation) disabled during token drag */
-.modeler-native-field.token-drop-disabled {
-  opacity: 0.6;
-  transition: opacity var(--modeler-duration-default);
-}
-
-.modeler-native-field.token-drop-disabled input,
-.modeler-native-field.token-drop-disabled textarea {
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
 /* ================================================================
    YAML Editor Widget
@@ -6055,6 +6537,23 @@ g[style*="#ef4444"] path {
 .yaml-editor-raw:focus {
   box-shadow: none;
   border-color: transparent;
+}
+
+/* JSON mode toolbar: JSON / YAML tabs on the left, Format action on the
+   right. The Format button reuses the mode-button styles but is visually
+   separated as a distinct action (right-aligned, with its icon + label). */
+.yaml-editor-schemaless .yaml-editor-format-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.yaml-editor-mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Editor body (structured view) */

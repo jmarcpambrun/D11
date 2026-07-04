@@ -10,6 +10,39 @@
 import { t } from './translation';
 
 // ---------------------------------------------------------------------------
+// Safe JSON parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a JSON string while defending against prototype-pollution attacks.
+ *
+ * Untrusted JSON (e.g. clipboard payloads, drag-and-drop data, backend model
+ * strings) can contain keys such as `__proto__`, `constructor`, or `prototype`
+ * that, when assigned during parsing, can poison the prototype chain of the
+ * resulting object. This helper uses a `JSON.parse` reviver that drops those
+ * dangerous keys at every level of the object graph, so the parsed value can
+ * never inject properties onto `Object.prototype`.
+ *
+ * The reviver returning `undefined` for a key causes `JSON.parse` to omit that
+ * property entirely, which neutralizes the pollution vector without otherwise
+ * altering the data.
+ *
+ * @typeParam T - The expected shape of the parsed value. Defaults to `unknown`
+ *   so callers must narrow the result explicitly; callers that already validate
+ *   the shape elsewhere may pass a concrete type via the generic.
+ * @param text - The JSON string to parse.
+ * @returns The parsed value, stripped of dangerous prototype-polluting keys.
+ * @throws {SyntaxError} If `text` is not valid JSON (same as `JSON.parse`).
+ */
+export function safeJsonParse<T = unknown>(text: string): T {
+  return JSON.parse(text, (key, value) =>
+    key === '__proto__' || key === 'constructor' || key === 'prototype'
+      ? undefined
+      : value,
+  ) as T;
+}
+
+// ---------------------------------------------------------------------------
 // CSRF Token
 // ---------------------------------------------------------------------------
 

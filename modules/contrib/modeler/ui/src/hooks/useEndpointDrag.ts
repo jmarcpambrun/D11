@@ -21,7 +21,7 @@
  * invalid drop nothing is mutated, so the endpoint visually snaps back to its
  * original node/handle automatically.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection } from 'reactflow';
 import { useUISettingsStore } from '../store/useUISettingsStore';
 
@@ -251,6 +251,11 @@ export function useEndpointDrag({
   // intercepts the elementFromPoint hit-test, blocking the drop.
   const setReconnectDragActive = useUISettingsStore((s) => s.setReconnectDragActive);
 
+  // Track the active document listeners so they can be removed if the component
+  // unmounts mid-drag (handleMouseUp would otherwise never fire).
+  const mouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
+  const mouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
+
   const handleEndpointDrag = useCallback(
     (event: React.MouseEvent) => {
       if (isLocked || !onReconnectEdge) return;
@@ -280,6 +285,8 @@ export function useEndpointDrag({
         setReconnectDragActive(false);
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        mouseMoveRef.current = null;
+        mouseUpRef.current = null;
 
         const drop = hitTestDropTarget(e.clientX, e.clientY, endpoint);
         // Empty canvas / no node under cursor → snap back (no mutation).
@@ -317,11 +324,28 @@ export function useEndpointDrag({
         }
       };
 
+      mouseMoveRef.current = handleMouseMove;
+      mouseUpRef.current = handleMouseUp;
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
     [edgeId, endpoint, source, target, sourceHandle, targetHandle, isLocked, validateConnection, onReconnectEdge, setReconnectDragActive],
   );
+
+  // Remove any still-attached document listeners on unmount (e.g. if the
+  // component unmounts while a reconnect drag is in progress).
+  useEffect(() => {
+    return () => {
+      if (mouseMoveRef.current) {
+        document.removeEventListener('mousemove', mouseMoveRef.current);
+        mouseMoveRef.current = null;
+      }
+      if (mouseUpRef.current) {
+        document.removeEventListener('mouseup', mouseUpRef.current);
+        mouseUpRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     isDragging,

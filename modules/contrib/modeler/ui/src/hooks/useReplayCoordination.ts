@@ -1,4 +1,4 @@
-import { useCallback, useRef, useMemo } from 'react';
+import { useCallback, useRef, useMemo, useEffect } from 'react';
 import { Node, Edge } from 'reactflow';
 import { ReplayStep, findMatchingReplayStepForSelection } from '../utils/replayStepUtils';
 import { TIMING } from '../constants/dimensions';
@@ -30,7 +30,7 @@ export const useReplayCoordination = ({
   isSyncing,
   handleReplayStepSelect,
 }: UseReplayCoordinationProps) => {
-  const syncTimeoutRef = useRef<number | null>(null);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Find matching replay step for canvas selection (delegates to shared utility)
   const findMatchingReplayStep = useCallback((node: Node | null, edge: Edge | null): number => {
@@ -48,8 +48,18 @@ export const useReplayCoordination = ({
       if (stepIndex !== -1) {
         setCurrentReplayStep(stepIndex);
       }
-    }, TIMING.REPLAY_SYNC_DELAY) as unknown as number;
+    }, TIMING.REPLAY_SYNC_DELAY);
   }, [findMatchingReplayStep, setCurrentReplayStep]);
+
+  // Clear any pending debounced sync timeout on unmount.
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Toggle replay mode
   const toggleReplayMode = useCallback(() => {

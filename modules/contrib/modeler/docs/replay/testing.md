@@ -14,17 +14,23 @@ and see the results immediately, without leaving the editing interface.
 ## Starting a test
 
 1. **Select an event node** on the canvas.
-2. Click the **Test** button (play icon) in the Replay Panel header.
+2. Click the **Review flow** button in the panel header. Entering Review
+   automatically starts the live listener for that event (and loads any
+   history), so the waiting state appears directly — there is no separate Test
+   button to click.
+3. **Trigger the event** on your site; its captured execution appears in the
+   Review view automatically.
 
 ### Unsaved changes
 
-If you have unsaved changes when clicking Test, a confirmation dialog appears:
+If you click **Review flow** while the model has unsaved changes, a
+confirmation dialog appears:
 
-- **Save and test**: Saves the model first, then starts the test.
-- **Cancel**: Returns to editing without testing.
+- **Save and review flow**: Saves the model first, then starts the session.
+- **Cancel**: Returns to editing.
 
-The save happens automatically before the test begins, ensuring the backend
-tests the latest version of your model.
+The save happens automatically before the session begins, ensuring the backend
+listens against the latest version of your model.
 
 !!! note
     If the model contains placeholder nodes, saving is blocked and the test
@@ -36,7 +42,7 @@ tests the latest version of your model.
 
 ## Waiting state
 
-While the test is in progress, the Replay Panel shows:
+While the test is in progress, Review flow mode shows:
 
 - A **spinning icon** indicating the test is running.
 - A **phase-aware message**:
@@ -56,8 +62,8 @@ While the test is in progress, the Replay Panel shows:
 
 ## Viewing results
 
-When the test completes successfully, the results are loaded into the Replay
-Panel as execution steps. You can then:
+When the test completes successfully, the results are loaded into Review flow
+mode as execution steps. You can then:
 
 - **Step through** the execution to see what happened.
 - **Inspect token values** at each step.
@@ -78,4 +84,4 @@ Common errors include:
 ## Canceling a test
 
 Click the **Cancel** button in the waiting state to abort a running test. This
-stops the polling and returns the Replay Panel to its normal state.
+stops the polling and returns Review flow mode to its normal state.

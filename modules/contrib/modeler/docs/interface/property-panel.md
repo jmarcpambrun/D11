@@ -1,10 +1,51 @@
 # Property Panel
 
-The **Property Panel** appears on the right side of the modeler when you select
-a node or edge. It provides all the tools needed to configure the selected
-element.
+The **Property Panel** is the single panel on the right side of the modeler. It
+provides all the tools needed to configure the selected element, and it can also
+switch into **Review flow** mode to inspect past executions and run live tests.
 
 ![Property Panel showing configuration form for a selected action node](../assets/screenshots/property-panel.jpg){ .screenshot }
+
+## Properties and Review flow: two coexisting views
+
+The panel has two views that share the same header layout — a context label on
+the left and a single button on the right that jumps to the *other* view:
+
+- **Properties view** shows the configuration of the **currently-selected**
+  canvas component (any node or edge). Its header button is **Review flow**.
+- **Review flow view** shows execution replay, live testing, and token data
+  for the event the session is linked to. Its header button is **Properties**.
+
+You can switch back and forth freely **without losing the replay session** — the
+current step, selected execution entry, and the running listener are all kept.
+
+### Starting a review session
+
+When you select an **event** node (and the model is saved with replay or test
+capability), the Properties header shows a **Review flow** button. Clicking it
+starts a review session for that event: the modeler **starts listening** for its
+executions **and loads its history** at the same time (a live session). See
+[Review flow mode](replay-panel.md).
+
+### Switching while a session is active
+
+Once a session is active, the **Review flow** button is available from **any**
+selected component — so you can inspect a different node's properties and jump
+back to the running replay at any time. From the Review view, the **Properties**
+button returns to the currently-selected component's properties while the
+session keeps running.
+
+!!! note "Walking replay steps"
+    Stepping through a replay (auto-play or manual) selects each step's
+    component on the canvas. The Properties view updates in the background to
+    match, but the panel **stays in the Review view** — step navigation never
+    kicks you out of the replay.
+
+!!! note "Unsaved changes"
+    If you click **Review flow** to start a session while the model has unsaved
+    changes, a confirmation dialog appears: *"This model has unsaved changes.
+    Save before reviewing the flow."* Choose **Save and review flow** to save
+    first and then start the session, or **Cancel** to keep editing.
 
 ## Single element selection
 
@@ -27,8 +68,9 @@ plugin. Form fields vary depending on the component type and may include:
 
 !!! tip "Token support"
     Some configuration fields accept **tokens** -- dynamic values from the
-    workflow execution context. Fields that support tokens show a visual
-    indicator during token drag operations. See
+    workflow execution context. In a token-supporting field you can **type
+    `[`** to open a categorized token picker and insert a token from the Step
+    Data, Global, and Template sources. See
     [Replay & Testing > Tokens](../replay/tokens.md) for details.
 
 ### Annotation

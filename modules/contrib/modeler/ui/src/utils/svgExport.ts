@@ -36,13 +36,19 @@ export function resolveVar(varName: string): string {
   return getComputedStyle(el).getPropertyValue(varName).trim();
 }
 
-/** Escape special XML characters in text content. */
+/**
+ * Escape special XML characters for both text content and attribute values.
+ *
+ * Escaping the single quote (`'`) as well makes values safe when placed inside
+ * single-quoted XML attributes; it is harmless in text content.
+ */
 export function escapeXml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 /** Split text into lines that fit within maxWidth (approximate). */

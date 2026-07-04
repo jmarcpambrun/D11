@@ -5,7 +5,7 @@
  * and calculating new widths based on drag delta.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface UsePanelResizeProps {
   panelWidth: number;
@@ -29,6 +29,11 @@ export function usePanelResize({
   minWidth = 200,
   maxWidth = 800,
 }: UsePanelResizeProps): UsePanelResizeReturn {
+  // Track the active document listeners so they can be removed if the component
+  // unmounts mid-resize (handleMouseUp would otherwise never fire).
+  const mouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
+  const mouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
+
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setPanelResizing(true);
@@ -53,11 +58,30 @@ export function usePanelResize({
       setPanelResizing(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      mouseMoveRef.current = null;
+      mouseUpRef.current = null;
     };
 
+    mouseMoveRef.current = handleMouseMove;
+    mouseUpRef.current = handleMouseUp;
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, [panelWidth, setPanelWidth, setPanelResizing, direction, minWidth, maxWidth]);
+
+  // Remove any still-attached document listeners on unmount (e.g. if the
+  // component unmounts while a resize is in progress).
+  useEffect(() => {
+    return () => {
+      if (mouseMoveRef.current) {
+        document.removeEventListener('mousemove', mouseMoveRef.current);
+        mouseMoveRef.current = null;
+      }
+      if (mouseUpRef.current) {
+        document.removeEventListener('mouseup', mouseUpRef.current);
+        mouseUpRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     startResize,

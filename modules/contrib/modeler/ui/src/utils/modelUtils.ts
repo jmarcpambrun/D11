@@ -7,6 +7,7 @@ import { getEdgeType } from './edgeTypeUtils';
 import { simulateIncrementalBuild } from './incrementalLayout';
 import { routeAllParallelEdges } from './parallelEdgeRouter';
 import { reportError } from './errorReporting';
+import { safeJsonParse } from './validation';
 
 // Type definitions for React Flow
 interface Viewport {
@@ -174,7 +175,7 @@ export function parseModelData(
     return { nodes: [], edges: [], modelData: null };
   }
 
-  const data = typeof modelData === 'string' ? JSON.parse(modelData) : modelData;
+  const data = typeof modelData === 'string' ? safeJsonParse<ModelData>(modelData) : modelData;
   
   const nodes = (data.nodes || []).map((node: any) => {
     // Resolve the ReactFlow node type: prefer an explicit `type` string,
@@ -237,7 +238,7 @@ export function parseModelData(
         animated: false,
         label: edge.conditionLabel || edge.condition || '',
         markerEnd: {
-          type: 'arrow',
+          type: MarkerType.Arrow,
           width: EDGE_STYLING.ARROW_WIDTH,
           height: EDGE_STYLING.ARROW_HEIGHT,
           color: 'var(--modeler-color-edge-stroke)',

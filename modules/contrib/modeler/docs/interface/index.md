@@ -1,12 +1,21 @@
 # Interface Overview
 
-The Modeler uses a **three-panel layout** designed for efficient workflow editing.
+The Modeler uses a **two-panel layout** designed for efficient workflow editing:
+a **Canvas** on the left and a single, unified **Property Panel** on the right.
 Each panel has a specific role and they work together to provide a seamless
 experience.
 
+!!! note "Unified right-hand panel"
+    The right-hand panel hosts two coexisting views — **Properties** (the
+    selected component's configuration) and **Review flow** (past executions,
+    live testing, and token data). Both share one header layout: a context
+    label plus a button that jumps to the other view (**Review flow** from
+    Properties, **Properties** from Review). Switching between them keeps the
+    replay session running. There is no longer a separate replay column.
+
 ## Layout
 
-![Three-panel layout: Toolbar across the top, Canvas on the left, Replay Panel in the center-right, and Property Panel on the right](../assets/diagrams/interface-layout.svg)
+![Two-panel layout: Toolbar across the top, Canvas on the left, and the unified Property Panel on the right with a Review flow button](../assets/diagrams/interface-layout.svg)
 
 ![Full modeler interface with panels visible](../assets/screenshots/interface-overview.jpg){ .screenshot }
 
@@ -25,29 +34,33 @@ It is powered by React Flow and provides:
 
 [Learn more about the Canvas](canvas.md)
 
-### Replay Panel (center-right)
-
-The **Replay Panel** lets you visualize past workflow executions directly on the
-canvas. It appears between the canvas and the property panel.
-
-- **Load execution data**: Select an event node and load its execution history.
-- **Step through**: Navigate execution steps one by one to see which path was taken.
-- **Token inspection**: View the data (tokens) available at each step.
-- **Live testing**: Trigger a test execution and see results immediately.
-
-[Learn more about the Replay Panel](replay-panel.md)
-
 ### Property Panel (right)
 
-The **Property Panel** appears automatically when you select a node or edge. It
-provides:
+The unified **Property Panel** appears on the right. By default it shows the
+**properties** of the selected node or edge; selecting an **event** node adds a
+**Review flow** button that switches into Review flow mode.
+
+**Properties** — configure the selected node or edge:
 
 - **Label editing**: Change the display name of any element.
 - **Configuration form**: Dynamic form fields specific to the selected component.
 - **Annotation**: Add a documentation note to any element.
 - **Component info**: View metadata like plugin ID, provider, and documentation links.
+- **`[` token picker**: Type `[` in a token-supporting field to insert tokens.
 
-[Learn more about the Property Panel](property-panel.md)
+**Review flow mode** — inspect and test execution (replaces the old replay
+column):
+
+- **Start from an event node**: Click **Review flow**; the live listener starts
+  and history loads automatically.
+- **Step through**: Navigate execution steps one by one to see which path was taken.
+- **Token inspection**: View the data (tokens) available at each step.
+- **Live testing**: Observe a triggered execution and see results immediately.
+- **Switch views**: The **Properties** button returns to the selected
+  component's properties while the replay session keeps running.
+
+[Learn more about the Property Panel](property-panel.md) ·
+[Review flow mode](replay-panel.md)
 
 ### Toolbars
 

@@ -60,6 +60,7 @@ jest.mock('../../store/useModelStore', () => ({
   }),
 }));
 
+const mockSetPanelMode = jest.fn();
 jest.mock('../../store/usePanelStore', () => ({
   usePanelStore: jest.fn((selector) => {
     const state = {
@@ -67,6 +68,8 @@ jest.mock('../../store/usePanelStore', () => ({
       toggleReplayPanelCollapse: jest.fn(),
       setReplayPanelCollapsed: jest.fn(),
       setPropertyPanelCollapsed: jest.fn(),
+      panelMode: 'event',
+      setPanelMode: mockSetPanelMode,
     };
     if (typeof selector === 'function') return selector(state);
     return state;
@@ -165,6 +168,9 @@ jest.mock('../../hooks/useFlowEventHandlers', () => ({
     onConnectStart: jest.fn(),
     onConnectEnd: jest.fn(),
     onPaneClick: jest.fn(),
+    // onSelectionStart clears the post-pane-click stale-selection guard so a
+    // drag-select after a pane click is honored (issue #3589101 follow-up).
+    onSelectionStart: jest.fn(),
   })),
 }));
 
@@ -221,14 +227,35 @@ jest.mock('../../hooks/useCloseHandler', () => ({
   })),
 }));
 
+const mockStartTest = jest.fn();
+// Capture the onReplayDataReceived callback passed to useTestRunner so tests
+// can simulate a live test result arriving (A40-A43).
+let capturedOnReplayDataReceived: ((data: unknown[]) => void) | undefined;
 jest.mock('../../hooks/useTestRunner', () => ({
-  useTestRunner: jest.fn(() => ({
-    isTestRunning: false,
-    isTestInitiating: false,
-    testError: null,
-    startTest: jest.fn(),
-    cancelTest: jest.fn(),
-    notifySaveComplete: jest.fn(),
+  useTestRunner: jest.fn((props?: { onReplayDataReceived?: (data: unknown[]) => void }) => {
+    if (props?.onReplayDataReceived) capturedOnReplayDataReceived = props.onReplayDataReceived;
+    return {
+      isTestRunning: false,
+      isTestInitiating: false,
+      testError: null,
+      startTest: mockStartTest,
+      cancelTest: jest.fn(),
+      notifySaveComplete: jest.fn(),
+    };
+  }),
+}));
+
+const mockLoadReplayData = jest.fn();
+jest.mock('../../hooks/useReplayLoader', () => ({
+  // Preserve the real sentinel constant so Flow's listen-item logic works.
+  LISTEN_ITEM_INDEX: -2,
+  useReplayLoader: jest.fn(() => ({
+    replayEntries: [],
+    loading: false,
+    error: null,
+    emptyMessage: null,
+    loadReplayData: mockLoadReplayData,
+    clearReplayEntries: jest.fn(),
   })),
 }));
 
@@ -329,13 +356,11 @@ jest.mock('../../plugins/pluginRegistry', () => ({
 let capturedToolbarProps: any = {};
 let capturedModalsProps: any = {};
 let capturedFlowCanvasProps: any = {};
-let capturedReplayPanelProps: any = {};
 let capturedPropertyPanelProps: any = {};
 let capturedCanvasToolbarProps: any = {};
 
 jest.mock('../FlowCanvas', () => (props: any) => { capturedFlowCanvasProps = props; return <div data-testid="flow-canvas" />; });
 jest.mock('../PropertyPanel', () => (props: any) => { capturedPropertyPanelProps = props; return <div data-testid="property-panel" />; });
-jest.mock('../ReplayPanel', () => (props: any) => { capturedReplayPanelProps = props; return <div data-testid="replay-panel" />; });
 jest.mock('../Modals', () => (props: any) => { capturedModalsProps = props; return <div data-testid="modals" />; });
 jest.mock('../Toolbar', () => (props: any) => { capturedToolbarProps = props; return <div data-testid="toolbar" data-model-name={props.modelName} />; });
 jest.mock('../CanvasToolbar', () => (props: any) => { capturedCanvasToolbarProps = props; return <div data-testid="canvas-toolbar" />; });
@@ -358,9 +383,13 @@ describe('Flow', () => {
     capturedToolbarProps = {};
     capturedModalsProps = {};
     capturedFlowCanvasProps = {};
-    capturedReplayPanelProps = {};
     capturedPropertyPanelProps = {};
     capturedCanvasToolbarProps = {};
+    // clearAllMocks() does NOT reset implementations set via mockReturnValue, so
+    // a replayData payload from a prior test would leak and (now) trip the
+    // auto-enter-review-on-open effect. Restore the empty default each test.
+    const { useModelDataLoader } = require('../../hooks/useModelDataLoader');
+    useModelDataLoader.mockReturnValue({ replayData: [] });
   });
 
   describe('rendering', () => {
@@ -531,11 +560,12 @@ describe('Flow', () => {
       useModelDataLoader.mockReturnValue({ replayData: [{ type: 'action', id: 'n1' }] });
 
       render(<Flow {...defaultProps} />);
-      
-      // The ReplayPanel receives onSelectStep which wraps handleReplayStepSelect
-      act(() => { capturedReplayPanelProps.onSelectStep(0); });
+
+      // Replay content now lives inside the unified PropertyPanel. The panel
+      // receives onSelectReplayStep which wraps handleReplayStepSelect.
+      act(() => { capturedPropertyPanelProps.onSelectReplayStep(0); });
       // Should have set replay mode to true
-      expect(capturedReplayPanelProps.isReplayMode).toBe(true);
+      expect(capturedPropertyPanelProps.isReplayMode).toBe(true);
     });
   });
 
@@ -601,7 +631,11 @@ describe('Flow', () => {
   });
 
   describe('replay panel rendering', () => {
-    it('should render replay panel when replay data exists', () => {
+    // Replay content was merged into the unified PropertyPanel (single panel).
+    // There is no longer a standalone replay column; instead the replay state
+    // is threaded into PropertyPanel and the "Review flow" capability flag
+    // controls whether the review toggle is enabled.
+    it('should render exactly one right-hand panel (no separate replay column)', () => {
       const { useReplayCoordination } = require('../../hooks/useReplayCoordination');
       useReplayCoordination.mockReturnValue({
         autoSyncToReplay: jest.fn(),
@@ -612,10 +646,15 @@ describe('Flow', () => {
       useModelDataLoader.mockReturnValue({ replayData: [{ type: 'action', id: 'n1' }] });
 
       render(<Flow {...defaultProps} />);
-      expect(screen.getByTestId('replay-panel')).toBeTruthy();
+      // The single unified panel is present...
+      expect(screen.getByTestId('property-panel')).toBeTruthy();
+      // ...and the old standalone replay column is gone.
+      expect(screen.queryByTestId('replay-panel')).toBeNull();
+      // Replay data is threaded into the unified panel.
+      expect(capturedPropertyPanelProps.replayData).toEqual([{ type: 'action', id: 'n1' }]);
     });
 
-    it('should not render replay panel when no replay data', () => {
+    it('should always render the single PropertyPanel even when no replay data', () => {
       const { useReplayCoordination } = require('../../hooks/useReplayCoordination');
       useReplayCoordination.mockReturnValue({
         autoSyncToReplay: jest.fn(),
@@ -625,6 +664,7 @@ describe('Flow', () => {
       const { useModelDataLoader } = require('../../hooks/useModelDataLoader');
       useModelDataLoader.mockReturnValue({ replayData: [] });
       render(<Flow {...defaultProps} />);
+      expect(screen.getByTestId('property-panel')).toBeTruthy();
       expect(screen.queryByTestId('replay-panel')).toBeNull();
     });
 
@@ -659,11 +699,11 @@ describe('Flow', () => {
       render(<Flow {...defaultProps} />);
 
       // Select step 0
-      act(() => { capturedReplayPanelProps.onSelectStep(0); });
+      act(() => { capturedPropertyPanelProps.onSelectReplayStep(0); });
 
-      // Now step data and info should be passed
-      expect(capturedReplayPanelProps.stepData).toEqual({ key: 'val' });
-      expect(capturedReplayPanelProps.stepInfo).toEqual(expect.objectContaining({ type: 'action', id: 'n1' }));
+      // Now step data and info should be passed to the unified PropertyPanel
+      expect(capturedPropertyPanelProps.stepData).toEqual({ key: 'val' });
+      expect(capturedPropertyPanelProps.stepInfo).toEqual(expect.objectContaining({ type: 'action', id: 'n1' }));
     });
 
     it('should pass null step data when no step selected', () => {
@@ -678,8 +718,8 @@ describe('Flow', () => {
 
       render(<Flow {...defaultProps} />);
       // currentReplayStep defaults to -1
-      expect(capturedReplayPanelProps.stepData).toBeNull();
-      expect(capturedReplayPanelProps.stepInfo).toBeNull();
+      expect(capturedPropertyPanelProps.stepData).toBeNull();
+      expect(capturedPropertyPanelProps.stepInfo).toBeNull();
     });
   });
 
@@ -965,6 +1005,1265 @@ describe('Flow', () => {
         />
       );
       expect(capturedCanvasToolbarProps.contexts).toEqual([]);
+    });
+  });
+
+  // ── requestReviewMode: enters review directly (NO unsaved-changes guard) ────
+  // The unsaved-changes guard on review entry was removed (too much friction);
+  // review/listening now proceed even with unsaved changes. Structural
+  // validation and the brand-new-model gate still apply.
+  describe('requestReviewMode (no unsaved-changes guard)', () => {
+    // Settings for a SAVED, review-capable model.
+    const reviewProps = {
+      settings: {
+        modeler: { modelId: 'rev-1' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    function setupModalSpy() {
+      const showConfirmationDialog = jest.fn();
+      const { useModalState } = require('../../hooks/useModalState');
+      useModalState.mockReturnValue({
+        showMetadataModal: false,
+        showConfirmDialog: false,
+        confirmDialogTitle: '',
+        confirmDialogMessage: '',
+        confirmDialogType: 'info',
+        confirmDialogLoading: false,
+        onMetadataSubmit: jest.fn(),
+        showConfirmationDialog,
+        handleConfirmDialog: jest.fn(),
+        handleCancelDialog: jest.fn(),
+        handleCloseWithoutSave: jest.fn(),
+        openMetadataModal: jest.fn(),
+        closeMetadataModal: jest.fn(),
+      });
+      return showConfirmationDialog;
+    }
+
+    // `selectEventNode` (defined later in this describe) selects a start/event
+    // node so requestReviewMode resolves to "start a new session for it".
+
+    it('should enter review immediately when there are NO unsaved changes', () => {
+      setupModalSpy();
+      selectEventNode();
+      render(<Flow {...reviewProps} />);
+
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+    });
+
+    it('should enter review DIRECTLY (no confirmation dialog) even with unsaved changes', () => {
+      const showConfirmationDialog = setupModalSpy();
+      selectEventNode();
+      render(<Flow {...reviewProps} />);
+
+      // Mark the model dirty via the canvas callback Flow passes down.
+      act(() => { capturedFlowCanvasProps.setHasUnsavedChanges(true); });
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // No unsaved-changes guard modal — review proceeds straight away.
+      expect(showConfirmationDialog).not.toHaveBeenCalled();
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+    });
+
+    it('should abort (no modal, no switch) when validation fails', () => {
+      const showConfirmationDialog = setupModalSpy();
+      // A placeholder node makes validateBeforeSave return an error.
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = {
+          nodes: [{ id: 'ph1', type: 'placeholder', data: {}, position: { x: 0, y: 0 } }],
+          edges: [], setNodes: jest.fn(), setEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      render(<Flow {...reviewProps} />);
+
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      expect(showConfirmationDialog).not.toHaveBeenCalled();
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('review');
+    });
+
+    // Select a start/event node so review is scoped to it.
+    function selectEventNode(id = 'event_1') {
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = {
+          nodes: [{ id, type: 'start', data: {}, position: { x: 0, y: 0 } }],
+          edges: [], setNodes: jest.fn(), setEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useSelectionStore } = require('../../store/useSelectionStore');
+      useSelectionStore.mockImplementation((selector: any) => {
+        const state = {
+          selectedNode: { id, type: 'start', data: {}, position: { x: 0, y: 0 } },
+          setSelectedNode: jest.fn(),
+          selectedEdge: null, setSelectedEdge: jest.fn(),
+          selectedNodes: [], selectedEdges: [],
+          setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    it('should auto-start the listener AND load history (in parallel) on review entry, scoped to the selected event', () => {
+      setupModalSpy();
+      selectEventNode('event_1');
+      render(<Flow {...reviewProps} />);
+
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Entered review…
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      // …and BOTH the live listener and the history load fired for the event id.
+      expect(mockStartTest).toHaveBeenCalledWith('event_1');
+      expect(mockLoadReplayData).toHaveBeenCalledWith('event_1');
+    });
+  });
+
+  // ── Auto-enter Review when a model OPENS with saved replayData ──────────────
+  describe('auto-enter Review on open with saved replayData', () => {
+    const savedProps = {
+      settings: {
+        modeler: { modelId: 'auto-1' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    // A single-event flow: start → action. The replay step references the action
+    // node so the owning-event resolver lands on event_1.
+    function mockSingleFlow() {
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = {
+          nodes: [
+            { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+            { id: 'action_1', type: 'action', data: {}, position: { x: 0, y: 0 } },
+          ],
+          edges: [{ id: 'e1', source: 'event_1', target: 'action_1' }],
+          setNodes: jest.fn(),
+          setEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    function withReplayData(replayData: any[]) {
+      const { useModelDataLoader } = require('../../hooks/useModelDataLoader');
+      useModelDataLoader.mockReturnValue({ replayData });
+    }
+
+    it('switches the panel to review mode when settings carry replayData', () => {
+      mockSingleFlow();
+      withReplayData([{ type: 'action', id: 'action_1', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+    });
+
+    it('activates the review session so PropertyPanel shows the Replay view', () => {
+      mockSingleFlow();
+      withReplayData([{ type: 'action', id: 'action_1', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      // replaySessionActive requires an active reviewed event + data present.
+      expect(capturedPropertyPanelProps.replaySessionActive).toBe(true);
+    });
+
+    it('surfaces the embedded data as a SELECTED entry so the steps render', () => {
+      mockSingleFlow();
+      const steps = [{ type: 'action', id: 'action_1', data: {} }];
+      withReplayData(steps);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      // The Replay body only shows steps when a data entry is selected. The
+      // embedded data must therefore be wrapped in a selected entry (index 0),
+      // not merely passed as replayData.
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+      expect(capturedPropertyPanelProps.replayEntries).toHaveLength(1);
+      expect(capturedPropertyPanelProps.replayEntries[0].history).toEqual(steps);
+      expect(capturedPropertyPanelProps.replayData).toEqual(steps);
+    });
+
+    it('still auto-enters review when the graph loads AFTER mount (async store population)', () => {
+      // Mirror the live app: settings carry replayData immediately, but the graph
+      // store starts empty and is populated on a later render.
+      const steps = [{ type: 'action', id: 'action_1', data: {} }];
+      withReplayData(steps);
+      const { useGraphStore } = require('../../store/useGraphStore');
+      const emptyState = { nodes: [], edges: [], setNodes: jest.fn(), setEdges: jest.fn() };
+      useGraphStore.mockImplementation((selector: any) =>
+        typeof selector === 'function' ? selector(emptyState) : emptyState,
+      );
+
+      const { rerender } = render(<Flow {...savedProps} />);
+      // No graph yet → must NOT have entered review.
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('review');
+
+      // Graph arrives on a later render.
+      mockSingleFlow();
+      act(() => { rerender(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    it('shows the embedded data only — does NOT start the live listener or reload history', () => {
+      mockSingleFlow();
+      withReplayData([{ type: 'action', id: 'action_1', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockStartTest).not.toHaveBeenCalled();
+      expect(mockLoadReplayData).not.toHaveBeenCalled();
+    });
+
+    // A multi-event model: two independent flows. selectedStartNodeId is null
+    // (more than one start node, none selected), so resolution must come from the
+    // replay step itself or the first-start-node fallback.
+    function mockMultiFlow() {
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = {
+          nodes: [
+            { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+            { id: 'action_1', type: 'action', data: {}, position: { x: 0, y: 0 } },
+            { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+            { id: 'action_2', type: 'action', data: {}, position: { x: 0, y: 0 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'event_1', target: 'action_1' },
+            { id: 'e2', source: 'event_2', target: 'action_2' },
+          ],
+          setNodes: jest.fn(),
+          setEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    it('enters review for a MULTI-event model using the owning event of the first step', () => {
+      mockMultiFlow();
+      // First step references action_2 → owned by event_2.
+      withReplayData([{ type: 'action', id: 'action_2', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    it('enters review for a MULTI-event model when the first step is the event "started" step', () => {
+      mockMultiFlow();
+      // A typical "started" step whose id IS the event id.
+      withReplayData([{ type: 'started', id: 'event_2', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    it('falls back to the FIRST start node for a multi-event model when nothing else resolves', () => {
+      mockMultiFlow();
+      // A step that matches neither a node nor an event id.
+      withReplayData([{ type: 'action', id: 'ghost', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    it('falls back to the single start node when the first step does not resolve to a node', () => {
+      mockSingleFlow();
+      // A step whose id matches no node — owning-event resolution fails, so the
+      // single start node is used as the fallback target.
+      withReplayData([{ type: 'action', id: 'ghost', data: {} }]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+    });
+
+    it('does NOT auto-enter review when there is no saved replayData', () => {
+      mockSingleFlow();
+      withReplayData([]);
+
+      act(() => { render(<Flow {...savedProps} />); });
+
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('review');
+    });
+  });
+
+  // ── Auto-exit Review on out-of-flow selection (Change 2) ────────────────────
+  describe('Review auto-exit on out-of-flow selection', () => {
+    const reviewProps = {
+      settings: {
+        modeler: { modelId: 'rev-2' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    // Flow graph: event_1 → action_1 (in-flow). action_2 + event_2 are NOT
+    // reachable from event_1 (out-of-flow).
+    const flowNodes = [
+      { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_1', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+    ];
+    const flowEdges = [{ id: 'e1', source: 'event_1', target: 'action_1' }];
+
+    function mockPanelReview() {
+      const { usePanelStore } = require('../../store/usePanelStore');
+      usePanelStore.mockImplementation((selector: any) => {
+        const state = {
+          replayPanelCollapsed: false,
+          toggleReplayPanelCollapse: jest.fn(),
+          setReplayPanelCollapsed: jest.fn(),
+          setPropertyPanelCollapsed: jest.fn(),
+          panelMode: 'review',
+          setPanelMode: mockSetPanelMode,
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    function mockGraph() {
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = { nodes: flowNodes, edges: flowEdges, setNodes: jest.fn(), setEdges: jest.fn() };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    function mockSelection(selectedNode: any) {
+      const { useSelectionStore } = require('../../store/useSelectionStore');
+      useSelectionStore.mockImplementation((selector: any) => {
+        const state = {
+          selectedNode,
+          setSelectedNode: jest.fn(),
+          selectedEdge: null, setSelectedEdge: jest.fn(),
+          selectedNodes: [], selectedEdges: [],
+          setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+    }
+
+    // Active session for event_1: a running listener makes replaySessionActive
+    // true once enterReviewForNode sets reviewedComponentId='event_1'.
+    function mockActiveSession() {
+      const { useTestRunner } = require('../../hooks/useTestRunner');
+      useTestRunner.mockReturnValue({
+        isTestRunning: true,
+        isTestInitiating: false,
+        testError: null,
+        startTest: mockStartTest,
+        cancelTest: jest.fn(),
+        notifySaveComplete: jest.fn(),
+      });
+    }
+
+    function mockReplaySync(isReplaySyncing = false) {
+      const { useSimpleReplaySync } = require('../../hooks/useSimpleReplaySync');
+      useSimpleReplaySync.mockReturnValue({
+        isSyncing: false,
+        isReplaySyncingRef: { current: isReplaySyncing },
+        handleCanvasNodeClick: jest.fn(),
+        handleCanvasEdgeClick: jest.fn(),
+        handleReplayStepSelect: jest.fn(),
+      });
+    }
+
+    /**
+     * Start a session reviewing event_1, then re-render with `target` selected.
+     * Returns after clearing setPanelMode calls made during session start, so
+     * assertions reflect only the selection-driven auto-exit effect.
+     */
+    function reviewThenSelect(target: any, isReplaySyncing = false) {
+      mockPanelReview();
+      mockGraph();
+      mockActiveSession();
+      mockReplaySync(isReplaySyncing);
+      // Start with the event selected so the session is scoped to event_1.
+      mockSelection({ id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      mockSetPanelMode.mockClear();
+      // Now select the target node and re-render.
+      mockSelection(target);
+      rerender(<Flow {...reviewProps} />);
+      return { rerender };
+    }
+
+    it('should EXIT to Properties when an OUT-OF-FLOW node is selected', () => {
+      reviewThenSelect({ id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } });
+      expect(mockSetPanelMode).toHaveBeenCalledWith('event');
+    });
+
+    it('should EXIT to Properties when a DIFFERENT event (separate flow) is selected', () => {
+      reviewThenSelect({ id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } });
+      expect(mockSetPanelMode).toHaveBeenCalledWith('event');
+    });
+
+    it('should STAY in Review when an IN-FLOW (reachable) node is selected', () => {
+      reviewThenSelect({ id: 'action_1', type: 'element', data: {}, position: { x: 0, y: 0 } });
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+
+    it('should STAY in Review when the reviewed event itself stays selected', () => {
+      reviewThenSelect({ id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } });
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+
+    it('should NOT exit when selection is replay-step-driven (isReplaySyncingRef)', () => {
+      // Even an out-of-flow id is ignored while replay sync is in progress
+      // (step-walking selects in-flow nodes anyway; the guard avoids churn).
+      reviewThenSelect({ id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } }, true);
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+
+    it('should NOT exit when selection is cleared (background click)', () => {
+      reviewThenSelect(null);
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+  });
+
+  // ── Per-event review sessions (the event1→event2 bug) ───────────────────────
+  describe('Per-event review sessions', () => {
+    const reviewProps = {
+      settings: {
+        modeler: { modelId: 'rev-3' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    // Two independent flows: event_1 → action_1, event_2 → action_2.
+    const nodes = [
+      { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_1', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } },
+    ];
+    const edges = [
+      { id: 'e1', source: 'event_1', target: 'action_1' },
+      { id: 'e2', source: 'event_2', target: 'action_2' },
+    ];
+
+    const mockCancelTest = jest.fn();
+
+    function setup(panelMode: 'event' | 'review', selectedNode: any, opts: { running?: boolean } = {}) {
+      const { usePanelStore } = require('../../store/usePanelStore');
+      usePanelStore.mockImplementation((selector: any) => {
+        const state = {
+          replayPanelCollapsed: false,
+          toggleReplayPanelCollapse: jest.fn(),
+          setReplayPanelCollapsed: jest.fn(),
+          setPropertyPanelCollapsed: jest.fn(),
+          panelMode,
+          setPanelMode: mockSetPanelMode,
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = { nodes, edges, setNodes: jest.fn(), setEdges: jest.fn() };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useSelectionStore } = require('../../store/useSelectionStore');
+      useSelectionStore.mockImplementation((selector: any) => {
+        const state = {
+          selectedNode,
+          setSelectedNode: jest.fn(),
+          selectedEdge: null, setSelectedEdge: jest.fn(),
+          selectedNodes: [], selectedEdges: [],
+          setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useTestRunner } = require('../../hooks/useTestRunner');
+      useTestRunner.mockReturnValue({
+        isTestRunning: !!opts.running,
+        isTestInitiating: false,
+        testError: null,
+        startTest: mockStartTest,
+        cancelTest: mockCancelTest,
+        notifySaveComplete: jest.fn(),
+      });
+      const { useSimpleReplaySync } = require('../../hooks/useSimpleReplaySync');
+      useSimpleReplaySync.mockReturnValue({
+        isSyncing: false,
+        isReplaySyncingRef: { current: false },
+        handleCanvasNodeClick: jest.fn(),
+        handleCanvasEdgeClick: jest.fn(),
+        handleReplayStepSelect: jest.fn(),
+      });
+    }
+
+    const eventNode = (id: string) => ({ id, type: 'start', data: {}, position: { x: 0, y: 0 } });
+
+    it('FIX: reviewing event_2 after event_1 enters event_2 session (no bounce, not event_1 data)', () => {
+      // Review event_1 first.
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // event_1 session started.
+      expect(mockStartTest).toHaveBeenCalledWith('event_1');
+      expect(mockLoadReplayData).toHaveBeenCalledWith('event_1');
+
+      // Switch to Properties, select event_2.
+      mockStartTest.mockClear();
+      mockLoadReplayData.mockClear();
+      mockSetPanelMode.mockClear();
+      setup('event', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+
+      // Click "Review flow" on event_2 — event_2 has NO session → start it.
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Enters event_2's session (review mode), targeting event_2 — NOT event_1.
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(mockStartTest).toHaveBeenCalledWith('event_2');
+      expect(mockLoadReplayData).toHaveBeenCalledWith('event_2');
+      expect(mockStartTest).not.toHaveBeenCalledWith('event_1');
+
+      // Now reviewing event_2 with event_2 selected (in-flow) → must NOT bounce
+      // back to Properties.
+      mockSetPanelMode.mockClear();
+      setup('review', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+
+    it('should RESUME an existing event session without re-listening', () => {
+      // Start event_1, then start event_2 (event_1 now has a saved session).
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      setup('event', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Return to event_1 (it now HAS a session) and click Review flow → resume.
+      mockStartTest.mockClear();
+      mockLoadReplayData.mockClear();
+      mockSetPanelMode.mockClear();
+      setup('event', eventNode('event_1'), { running: false });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Resumed: switched to review, but did NOT re-start the listener or reload.
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(mockStartTest).not.toHaveBeenCalled();
+      expect(mockLoadReplayData).not.toHaveBeenCalled();
+    });
+
+    it('should STOP event_1 listener when starting event_2 (one listener at a time)', () => {
+      // Start event_1 (listener bound to event_1).
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      mockCancelTest.mockClear();
+
+      // Start event_2 — must cancel event_1's listener first.
+      setup('event', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      expect(mockCancelTest).toHaveBeenCalled();
+      expect(mockStartTest).toHaveBeenCalledWith('event_2');
+    });
+  });
+
+  // ── Rework G: owning-event resolution for NON-event selections ──────────────
+  // BUG 1: reviewing event_2, selecting an action UNDER event_1 then clicking
+  //        "Review flow" must resume event_1's session (not no-op/bounce).
+  // BUG 2: the "Review flow" button must HIDE for an action whose owning event
+  //        has NO session (reviewableEventId === null).
+  describe('Owning-event review resolution (Rework G)', () => {
+    const reviewProps = {
+      settings: {
+        modeler: { modelId: 'rev-g' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    // Three independent flows so there is NEVER a single auto-detected start
+    // node (selectedStartNodeId is null for any non-event selection):
+    //   event_1 → action_1 ; event_2 → action_2 ; event_3 → action_3
+    const nodes = [
+      { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_1', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'event_3', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_3', type: 'element', data: {}, position: { x: 0, y: 0 } },
+    ];
+    const edges = [
+      { id: 'e1', source: 'event_1', target: 'action_1' },
+      { id: 'e2', source: 'event_2', target: 'action_2' },
+      { id: 'e3', source: 'event_3', target: 'action_3' },
+    ];
+
+    const mockCancelTest = jest.fn();
+
+    function setup(panelMode: 'event' | 'review', selectedNode: any, opts: { running?: boolean } = {}) {
+      const { usePanelStore } = require('../../store/usePanelStore');
+      usePanelStore.mockImplementation((selector: any) => {
+        const state = {
+          replayPanelCollapsed: false,
+          toggleReplayPanelCollapse: jest.fn(),
+          setReplayPanelCollapsed: jest.fn(),
+          setPropertyPanelCollapsed: jest.fn(),
+          panelMode,
+          setPanelMode: mockSetPanelMode,
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = { nodes, edges, setNodes: jest.fn(), setEdges: jest.fn() };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useSelectionStore } = require('../../store/useSelectionStore');
+      useSelectionStore.mockImplementation((selector: any) => {
+        const state = {
+          selectedNode,
+          setSelectedNode: jest.fn(),
+          selectedEdge: null, setSelectedEdge: jest.fn(),
+          selectedNodes: [], selectedEdges: [],
+          setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useTestRunner } = require('../../hooks/useTestRunner');
+      useTestRunner.mockReturnValue({
+        isTestRunning: !!opts.running,
+        isTestInitiating: false,
+        testError: null,
+        startTest: mockStartTest,
+        cancelTest: mockCancelTest,
+        notifySaveComplete: jest.fn(),
+      });
+      const { useSimpleReplaySync } = require('../../hooks/useSimpleReplaySync');
+      useSimpleReplaySync.mockReturnValue({
+        isSyncing: false,
+        isReplaySyncingRef: { current: false },
+        handleCanvasNodeClick: jest.fn(),
+        handleCanvasEdgeClick: jest.fn(),
+        handleReplayStepSelect: jest.fn(),
+      });
+    }
+
+    const eventNode = (id: string) => ({ id, type: 'start', data: {}, position: { x: 0, y: 0 } });
+    const actionNode = (id: string) => ({ id, type: 'element', data: {}, position: { x: 0, y: 0 } });
+
+    it('BUG1: reviewing event_2, select event_1\'s action, Review flow → resumes event_1 (no bounce)', () => {
+      // Establish sessions for BOTH event_1 and event_2 (so event_1 has a saved
+      // session that owns action_1). Start event_1, then event_2.
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      setup('event', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // event_2 is now the ACTIVE reviewed event.
+
+      // Select action_1 (which lives UNDER event_1, NOT event_2's flow).
+      mockStartTest.mockClear();
+      mockLoadReplayData.mockClear();
+      mockSetPanelMode.mockClear();
+      setup('event', actionNode('action_1'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+
+      // The owning event of action_1 is event_1 (it has a session).
+      expect(capturedPropertyPanelProps.reviewableEventId).toBe('event_1');
+
+      // Click "Review flow": must resume event_1's session (switch active to
+      // event_1, enter review) WITHOUT starting a new listener/reload.
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(mockStartTest).not.toHaveBeenCalled();
+      expect(mockLoadReplayData).not.toHaveBeenCalled();
+
+      // Now reviewing event_1 with action_1 (in event_1's flow) selected → the
+      // auto-exit effect must NOT bounce back to Properties.
+      mockSetPanelMode.mockClear();
+      setup('review', actionNode('action_1'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
+    });
+
+    it('BUG2: action whose owning event has NO session → reviewableEventId null (button hidden)', () => {
+      // Only event_1 gets a session. Select action_3 (belongs to event_3, which
+      // has no session) while reviewing event_1.
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      setup('event', actionNode('action_3'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+
+      // action_3 is in no session-flow → no owning event → button hides.
+      expect(capturedPropertyPanelProps.reviewableEventId).toBeNull();
+
+      // And clicking Review flow on it is a no-op (no resume, no start).
+      mockStartTest.mockClear();
+      mockSetPanelMode.mockClear();
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      expect(mockStartTest).not.toHaveBeenCalled();
+    });
+
+    it('SHARED: a node reachable from the ACTIVE event keeps the active event (active-preferred)', () => {
+      // Build a graph where `shared` is reachable from BOTH event_1 and event_2.
+      const sharedNodes = [
+        { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+        { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+        { id: 'shared', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      ];
+      const sharedEdges = [
+        { id: 's1', source: 'event_1', target: 'shared' },
+        { id: 's2', source: 'event_2', target: 'shared' },
+      ];
+      function setupShared(panelMode: 'event' | 'review', selectedNode: any) {
+        const { usePanelStore } = require('../../store/usePanelStore');
+        usePanelStore.mockImplementation((selector: any) => {
+          const state = {
+            replayPanelCollapsed: false,
+            toggleReplayPanelCollapse: jest.fn(),
+            setReplayPanelCollapsed: jest.fn(),
+            setPropertyPanelCollapsed: jest.fn(),
+            panelMode,
+            setPanelMode: mockSetPanelMode,
+          };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+        const { useGraphStore } = require('../../store/useGraphStore');
+        useGraphStore.mockImplementation((selector: any) => {
+          const state = { nodes: sharedNodes, edges: sharedEdges, setNodes: jest.fn(), setEdges: jest.fn() };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+        const { useSelectionStore } = require('../../store/useSelectionStore');
+        useSelectionStore.mockImplementation((selector: any) => {
+          const state = {
+            selectedNode,
+            setSelectedNode: jest.fn(),
+            selectedEdge: null, setSelectedEdge: jest.fn(),
+            selectedNodes: [], selectedEdges: [],
+            setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+          };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+        const { useTestRunner } = require('../../hooks/useTestRunner');
+        useTestRunner.mockReturnValue({
+          isTestRunning: true,
+          isTestInitiating: false,
+          testError: null,
+          startTest: mockStartTest,
+          cancelTest: mockCancelTest,
+          notifySaveComplete: jest.fn(),
+        });
+        const { useSimpleReplaySync } = require('../../hooks/useSimpleReplaySync');
+        useSimpleReplaySync.mockReturnValue({
+          isSyncing: false,
+          isReplaySyncingRef: { current: false },
+          handleCanvasNodeClick: jest.fn(),
+          handleCanvasEdgeClick: jest.fn(),
+          handleReplayStepSelect: jest.fn(),
+        });
+      }
+
+      // Establish sessions for event_1 then event_2 (event_2 becomes active).
+      setupShared('review', eventNode('event_1'));
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      setupShared('event', eventNode('event_2'));
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Select the shared node — both events own it, active (event_2) preferred.
+      setupShared('event', actionNode('shared'));
+      rerender(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.reviewableEventId).toBe('event_2');
+    });
+
+    // ── Feature J caveat fix: structural (session-agnostic) picker owning event ─
+    it('resolves pickerOwningEventId for an action node with NO session (multi-event model)', () => {
+      // Fresh model, no session at all. action_1 lives under event_1; in this
+      // multi-event model selectedStartNodeId is null, but the picker must still
+      // resolve the owning event structurally.
+      setup('event', actionNode('action_1'));
+      render(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBe('event_1');
+      // The Review-flow BUTTON gating is unchanged: still session-gated → null.
+      expect(capturedPropertyPanelProps.reviewableEventId).toBeNull();
+    });
+
+    it('resolves pickerOwningEventId for the OTHER flow\'s action node (no session)', () => {
+      setup('event', actionNode('action_2'));
+      render(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBe('event_2');
+    });
+
+    it('pickerOwningEventId is null for a node outside every flow (no session)', () => {
+      const orphan = { id: 'orphan', type: 'element', data: {}, position: { x: 0, y: 0 } };
+      setup('event', orphan);
+      render(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBeNull();
+    });
+
+    it('pickerOwningEventId resolves an EVENT node to itself (no session)', () => {
+      setup('event', eventNode('event_3'));
+      render(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBe('event_3');
+    });
+  });
+
+  // ── Rework H: the persistent "listen" item state machine (A37-A48) ──────────
+  describe('Listen item state machine (Rework H)', () => {
+    const LISTEN = -2;
+    const reviewProps = {
+      settings: {
+        modeler: { modelId: 'rev-h' },
+        modeler_api: {
+          isNew: false,
+          replay_url: '/api/replay',
+          test_url: '/api/test',
+          permissions: { replay: true, test: true },
+        },
+      },
+      drupal: { ajax: jest.fn() },
+    };
+
+    const nodes = [
+      { id: 'event_1', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_1', type: 'element', data: {}, position: { x: 0, y: 0 } },
+      { id: 'event_2', type: 'start', data: {}, position: { x: 0, y: 0 } },
+      { id: 'action_2', type: 'element', data: {}, position: { x: 0, y: 0 } },
+    ];
+    const edges = [
+      { id: 'e1', source: 'event_1', target: 'action_1' },
+      { id: 'e2', source: 'event_2', target: 'action_2' },
+    ];
+    const eventNode = (id: string) => ({ id, type: 'start', data: {}, position: { x: 0, y: 0 } });
+    const mockCancelTest = jest.fn();
+
+    function setup(
+      panelMode: 'event' | 'review',
+      selectedNode: any,
+      opts: { running?: boolean; loading?: boolean } = {},
+    ) {
+      const { usePanelStore } = require('../../store/usePanelStore');
+      usePanelStore.mockImplementation((selector: any) => {
+        const state = {
+          replayPanelCollapsed: false,
+          toggleReplayPanelCollapse: jest.fn(),
+          setReplayPanelCollapsed: jest.fn(),
+          setPropertyPanelCollapsed: jest.fn(),
+          panelMode,
+          setPanelMode: mockSetPanelMode,
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useGraphStore } = require('../../store/useGraphStore');
+      useGraphStore.mockImplementation((selector: any) => {
+        const state = { nodes, edges, setNodes: jest.fn(), setEdges: jest.fn() };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useSelectionStore } = require('../../store/useSelectionStore');
+      useSelectionStore.mockImplementation((selector: any) => {
+        const state = {
+          selectedNode,
+          setSelectedNode: jest.fn(),
+          selectedEdge: null, setSelectedEdge: jest.fn(),
+          selectedNodes: [], selectedEdges: [],
+          setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      });
+      const { useTestRunner } = require('../../hooks/useTestRunner');
+      useTestRunner.mockImplementation((props?: { onReplayDataReceived?: (d: unknown[]) => void }) => {
+        if (props?.onReplayDataReceived) capturedOnReplayDataReceived = props.onReplayDataReceived;
+        return {
+          isTestRunning: !!opts.running,
+          isTestInitiating: false,
+          testError: null,
+          startTest: mockStartTest,
+          cancelTest: mockCancelTest,
+          notifySaveComplete: jest.fn(),
+        };
+      });
+      const { useReplayLoader } = require('../../hooks/useReplayLoader');
+      useReplayLoader.mockImplementation(() => ({
+        replayEntries: [],
+        loading: !!opts.loading,
+        error: null,
+        emptyMessage: null,
+        loadReplayData: mockLoadReplayData,
+        clearReplayEntries: jest.fn(),
+      }));
+      const { useSimpleReplaySync } = require('../../hooks/useSimpleReplaySync');
+      useSimpleReplaySync.mockReturnValue({
+        isSyncing: false,
+        isReplaySyncingRef: { current: false },
+        handleCanvasNodeClick: jest.fn(),
+        handleCanvasEdgeClick: jest.fn(),
+        handleReplayStepSelect: jest.fn(),
+      });
+    }
+
+    const dataEntry = (id: string, steps = 1) => ({
+      model_id: 'rev-h',
+      component_id: id,
+      history: Array.from({ length: steps }, (_, i) => ({ type: 'action', id: `${id}_s${i}` })),
+      timestamp: new Date().toISOString(),
+      user: 'test',
+      ip: '',
+      url: '',
+    });
+
+    afterEach(() => {
+      const { useReplayLoader } = require('../../hooks/useReplayLoader');
+      // Restore the default (non-loading) loader mock for other suites.
+      useReplayLoader.mockImplementation(() => ({
+        replayEntries: [], loading: false, error: null, emptyMessage: null,
+        loadReplayData: mockLoadReplayData, clearReplayEntries: jest.fn(),
+      }));
+    });
+
+    it('A37: first review entry selects the LISTEN item and auto-starts the listener', () => {
+      setup('review', eventNode('event_1'), { running: true });
+      render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      expect(mockStartTest).toHaveBeenCalledWith('event_1');
+      expect(mockLoadReplayData).toHaveBeenCalledWith('event_1');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+    });
+
+    it('A39: parallel history arrival keeps the LISTEN item selected while listening', () => {
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // History arrives while still listening.
+      act(() => { capturedPropertyPanelProps.onReplayEntriesLoaded([dataEntry('event_1'), dataEntry('event_1')]); });
+      rerender(<Flow {...reviewProps} />);
+      // Selection stays on the listen item (does NOT jump to index 0).
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+      expect(capturedPropertyPanelProps.replayEntries).toHaveLength(2);
+    });
+
+    it('A40-A43: a live test result selects the new entry; listen item remains in the dropdown', () => {
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // The live listener finishes and delivers a result.
+      act(() => { capturedOnReplayDataReceived?.([{ type: 'action', id: 'live_1' }]); });
+      rerender(<Flow {...reviewProps} />);
+      // The new entry is now selected (index 0), not the listen item.
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+      expect(capturedPropertyPanelProps.replayEntries.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('A44: selecting the LISTEN item again re-arms the listener and shows waiting', () => {
+      // Start a session, let a result arrive (now on a data entry).
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      act(() => { capturedOnReplayDataReceived?.([{ type: 'action', id: 'live_1' }]); });
+      rerender(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+
+      // Now explicitly re-select the listen item.
+      mockStartTest.mockClear();
+      act(() => { capturedPropertyPanelProps.onSelectListenItem(); });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockStartTest).toHaveBeenCalledWith('event_1');
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+      // Existing entries are kept.
+      expect(capturedPropertyPanelProps.replayEntries.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('A45: resuming an event whose stored selection is the listen item does NOT re-arm', () => {
+      // Start event_1 (listen item selected), then switch to event_2 (snapshot
+      // event_1 with listen selected), then resume event_1.
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      setup('event', eventNode('event_2'), { running: true });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      // Resume event_1 (it already has a session whose selection is the listen item).
+      mockStartTest.mockClear();
+      mockLoadReplayData.mockClear();
+      setup('event', eventNode('event_1'), { running: false });
+      rerender(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // Resume must NOT auto-start the listener.
+      expect(mockStartTest).not.toHaveBeenCalled();
+      expect(mockLoadReplayData).not.toHaveBeenCalled();
+    });
+
+    it('A46: cancel with data selects the newest entry', () => {
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // History present, listener still running, listen item selected.
+      act(() => { capturedPropertyPanelProps.onReplayEntriesLoaded([dataEntry('event_1'), dataEntry('event_1')]); });
+      rerender(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+
+      // Cancel (loading false) → select newest data entry (index 0).
+      act(() => { capturedPropertyPanelProps.onCancelTest(); });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockCancelTest).toHaveBeenCalled();
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    it('A47: cancel with NO data shows the backend message (no entry selected)', () => {
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      // A backend empty message arrives (no data) while listening.
+      act(() => { capturedPropertyPanelProps.onReplayEntriesLoaded([]); });
+      // Simulate the loader's empty message being stored on the active event.
+      // (Flow stores it via onEmptyMessage; here we assert the cancel path.)
+      act(() => { capturedPropertyPanelProps.onCancelTest(); });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockCancelTest).toHaveBeenCalled();
+      // No data → no entry selected (-1), not the listen item.
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(-1);
+    });
+
+    it('A48: cancel while history in-flight defers; newest selected once it resolves', () => {
+      // loading=true so cancel defers the resolution.
+      setup('review', eventNode('event_1'), { running: true, loading: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+
+      // Cancel while still loading → stays on listen item (deferred).
+      act(() => { capturedPropertyPanelProps.onCancelTest(); });
+      rerender(<Flow {...reviewProps} />);
+      expect(mockCancelTest).toHaveBeenCalled();
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+
+      // History resolves with data → apply A46 (select newest).
+      act(() => { capturedPropertyPanelProps.onReplayEntriesLoaded([dataEntry('event_1')]); });
+      rerender(<Flow {...reviewProps} />);
+      expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(0);
+    });
+
+    // ── Feature J: on-demand step-data in the [-token picker ─────────────────
+    describe('Feature J: @-picker step-data routing', () => {
+      it('threads onLoadStepData and isReplayLoading into PropertyPanel', () => {
+        setup('event', eventNode('event_1'), { loading: true });
+        render(<Flow {...reviewProps} />);
+        expect(typeof capturedPropertyPanelProps.onLoadStepData).toBe('function');
+        expect(capturedPropertyPanelProps.isReplayLoading).toBe(true);
+      });
+
+      it('onLoadStepData routes through Flow (starts the SINGLE listener + loads history) without the picker calling the test runner', () => {
+        // Selected node is an action; its owning event is event_1 — but here we
+        // drive the load handler directly with the owning event id, mirroring
+        // how the picker calls the Flow-provided callback.
+        setup('event', eventNode('event_1'), {});
+        render(<Flow {...reviewProps} />);
+        mockStartTest.mockClear();
+        mockLoadReplayData.mockClear();
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_1'); });
+        // Routed through Flow: exactly ONE listener started for the owning event,
+        // plus the history load. The picker never imported/called startTest.
+        expect(mockStartTest).toHaveBeenCalledTimes(1);
+        expect(mockStartTest).toHaveBeenCalledWith('event_1');
+        expect(mockLoadReplayData).toHaveBeenCalledWith('event_1');
+      });
+
+      it('does NOT start a second listener when loadStepData targets the already-active event', () => {
+        setup('review', eventNode('event_1'), { running: true });
+        render(<Flow {...reviewProps} />);
+        // Enter review for event_1 (one listener armed).
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        expect(mockStartTest).toHaveBeenCalledTimes(1);
+        // The picker requests step data for the SAME active event → no-op.
+        mockStartTest.mockClear();
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_1'); });
+        expect(mockStartTest).not.toHaveBeenCalled();
+      });
+
+      it('switches the single listener to the owning event (cancels the previous) when loading a different event', () => {
+        setup('review', eventNode('event_1'), { running: true });
+        render(<Flow {...reviewProps} />);
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        mockStartTest.mockClear();
+        mockCancelTest.mockClear();
+        // Load step data for a DIFFERENT event via the picker callback.
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_2'); });
+        // Previous listener cancelled, exactly one new listener started.
+        expect(mockCancelTest).toHaveBeenCalled();
+        expect(mockStartTest).toHaveBeenCalledTimes(1);
+        expect(mockStartTest).toHaveBeenCalledWith('event_2');
+      });
+
+      // Bug #3576269: a picker-initiated session must keep the panel on
+      // Properties (pickerInitiatedSession=true, no setPanelMode('review')); an
+      // explicit Review action takes ownership (flag cleared, panel → review).
+      it('loadStepDataForPicker marks the session picker-initiated and does NOT switch to review mode', () => {
+        setup('event', eventNode('event_1'), {});
+        const { rerender } = render(<Flow {...reviewProps} />);
+        mockSetPanelMode.mockClear();
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_1'); });
+        rerender(<Flow {...reviewProps} />);
+        // Panel stays on Properties: flagged picker-initiated, no review switch.
+        expect(capturedPropertyPanelProps.pickerInitiatedSession).toBe(true);
+        expect(mockSetPanelMode).not.toHaveBeenCalledWith('review');
+      });
+
+      it('an explicit Review action (enter) clears the picker-initiated flag and switches to review mode', () => {
+        // Start a picker-initiated session for event_1.
+        setup('event', eventNode('event_1'), {});
+        const { rerender } = render(<Flow {...reviewProps} />);
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_1'); });
+        rerender(<Flow {...reviewProps} />);
+        expect(capturedPropertyPanelProps.pickerInitiatedSession).toBe(true);
+
+        // The user now selects a DIFFERENT event with no session and clicks
+        // "Review flow" → enterReviewForNode claims a fresh session.
+        mockSetPanelMode.mockClear();
+        setup('event', eventNode('event_2'), {});
+        rerender(<Flow {...reviewProps} />);
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        rerender(<Flow {...reviewProps} />);
+        expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+        expect(capturedPropertyPanelProps.pickerInitiatedSession).toBe(false);
+      });
+
+      it('an explicit Review action (resume) on a picker-initiated event clears the flag and switches to review mode', () => {
+        // Picker arms a session for event_1 (panel stays on Properties).
+        setup('event', eventNode('event_1'), { running: true });
+        const { rerender } = render(<Flow {...reviewProps} />);
+        act(() => { capturedPropertyPanelProps.onLoadStepData('event_1'); });
+        rerender(<Flow {...reviewProps} />);
+        expect(capturedPropertyPanelProps.pickerInitiatedSession).toBe(true);
+
+        // The user clicks "Review flow" on the SAME event → resumeReviewForNode.
+        mockSetPanelMode.mockClear();
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        rerender(<Flow {...reviewProps} />);
+        expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+        expect(capturedPropertyPanelProps.pickerInitiatedSession).toBe(false);
+      });
+
+      // ── Caveat 1: selecting a dataset while listening cancels the listener ──
+      it('selecting a REAL dataset while listening CANCELS the listener and the chosen index sticks', () => {
+        setup('review', eventNode('event_1'), { running: true });
+        const { rerender } = render(<Flow {...reviewProps} />);
+        // Enter review → listener armed for event_1, listen item selected.
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+
+        // Three datasets arrive while listening (A39 keeps the listen item).
+        act(() => {
+          capturedPropertyPanelProps.onReplayEntriesLoaded([
+            dataEntry('event_1'), dataEntry('event_1'), dataEntry('event_1'),
+          ]);
+        });
+        rerender(<Flow {...reviewProps} />);
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+
+        // User picks dataset #2 (from picker or Review dropdown — same handler).
+        mockCancelTest.mockClear();
+        act(() => { capturedPropertyPanelProps.onSelectReplayEntry(2); });
+        rerender(<Flow {...reviewProps} />);
+
+        // Listener cancelled, and the chosen index STICKS (no jump to 0).
+        expect(mockCancelTest).toHaveBeenCalled();
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(2);
+
+        // Even if a late history load resolves now, the user's pick is kept
+        // (pendingCancelResolveRef was cleared by the explicit selection).
+        act(() => {
+          capturedPropertyPanelProps.onReplayEntriesLoaded([
+            dataEntry('event_1'), dataEntry('event_1'), dataEntry('event_1'),
+          ]);
+        });
+        rerender(<Flow {...reviewProps} />);
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(2);
+      });
+
+      it('selecting the LISTEN item does NOT cancel via the entry-select path (it re-arms)', () => {
+        setup('review', eventNode('event_1'), { running: true });
+        const { rerender } = render(<Flow {...reviewProps} />);
+        act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+        act(() => {
+          capturedPropertyPanelProps.onReplayEntriesLoaded([dataEntry('event_1')]);
+        });
+        rerender(<Flow {...reviewProps} />);
+
+        mockCancelTest.mockClear();
+        // Selecting the listen item routes to handleSelectListenItem, NOT a
+        // cancel via handleSelectReplayEntry.
+        act(() => { capturedPropertyPanelProps.onSelectReplayEntry(LISTEN); });
+        rerender(<Flow {...reviewProps} />);
+        expect(mockCancelTest).not.toHaveBeenCalled();
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(LISTEN);
+      });
+
+      it('selecting a dataset when NOT listening still works (no cancel)', () => {
+        setup('review', eventNode('event_1'), {});
+        const { rerender } = render(<Flow {...reviewProps} />);
+        // Load data WITHOUT arming a listener (resume-style).
+        act(() => {
+          capturedPropertyPanelProps.onReplayEntriesLoaded([dataEntry('event_1'), dataEntry('event_1')]);
+        });
+        rerender(<Flow {...reviewProps} />);
+
+        mockCancelTest.mockClear();
+        act(() => { capturedPropertyPanelProps.onSelectReplayEntry(1); });
+        rerender(<Flow {...reviewProps} />);
+        expect(mockCancelTest).not.toHaveBeenCalled();
+        expect(capturedPropertyPanelProps.selectedReplayEntryIndex).toBe(1);
+      });
     });
   });
 });

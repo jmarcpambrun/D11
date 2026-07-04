@@ -10,6 +10,7 @@ ciphertext
 codegen
 connectability
 connectableend
+contenteditable
 connectablestart
 connectionindicator
 connectionline
@@ -19,12 +20,16 @@ desync
 ecatemplatedummy
 edgelabel
 edgeupdater
+ellipsize
+ellipsized
+ellipsizes
 fontawesome
 greaterthan
 handleid
 handlepos
 inkscape
 inlinehilite
+insertable
 interactable
 jurgenhaas
 layouted
@@ -71,3 +76,4 @@ unsub
 unvalidated
 uuidv
 zoomable
+zwsp

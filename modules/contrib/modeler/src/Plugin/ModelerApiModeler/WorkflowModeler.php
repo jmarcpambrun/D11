@@ -47,11 +47,17 @@ class WorkflowModeler extends ModelerBase {
 
   /**
    * Get the form-to-JSON converter service.
+   *
+   * The parent ModelerBase declares both its constructor and create() method
+   * as final to force modeler plugins into lazy/getter dependency injection
+   * (to avoid circular dependencies, see modeler_api issue #3517655). Proper
+   * constructor injection is therefore not available; we use the base class's
+   * getContainer() getter-injection helper rather than a static service
+   * locator.
    */
   protected function getFormToJsonConverter(): FormToJsonConverter {
     if ($this->formToJsonConverter === NULL) {
-      // @phpstan-ignore-next-line
-      $this->formToJsonConverter = \Drupal::service('modeler.form_to_json_converter');
+      $this->formToJsonConverter = $this->getContainer()->get(FormToJsonConverter::class);
     }
     return $this->formToJsonConverter;
   }
@@ -178,7 +184,6 @@ class WorkflowModeler extends ModelerBase {
           }
 
           // Add annotation if one exists for this edge.
-          $edgeId = $edge['id'];
           if (isset($annotations[$edgeId])) {
             $edge['annotation'] = $annotations[$edgeId];
           }
@@ -190,7 +195,7 @@ class WorkflowModeler extends ModelerBase {
       $modelData = json_encode([
         'nodes' => $nodes,
         'edges' => $edges,
-      ]);
+      ], JSON_THROW_ON_ERROR);
     }
     return $this->edit($owner, $id, $modelData, $model->isNew(), $readOnly);
   }
@@ -228,7 +233,11 @@ class WorkflowModeler extends ModelerBase {
       $settings['selectContextId'] = $this->request->query->get('context');
     }
     if (!$readOnly && $this->request->query->has('contextConfig')) {
-      $settings['setContextConfig'] = json_decode($this->request->query->get('contextConfig'), TRUE);
+      $decoded = json_decode($this->request->query->get('contextConfig'), TRUE);
+      // Only accept a decoded array; avoid passing null/scalar downstream.
+      if (is_array($decoded)) {
+        $settings['setContextConfig'] = $decoded;
+      }
     }
     if ($this->request->query->has('hash')) {
       $settings['replayData'] = $owner->getReplayData($this->request->query->get('hash'));
@@ -529,7 +538,7 @@ class WorkflowModeler extends ModelerBase {
       'edges' => [],
     ];
 
-    return json_encode($emptyModel, JSON_PRETTY_PRINT);
+    return json_encode($emptyModel, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
   }
 
   /**
@@ -639,7 +648,7 @@ class WorkflowModeler extends ModelerBase {
     $decoded['id'] = $this->metadata['id'] ?? '';
     $decoded['metadata'] = $this->metadata;
     unset($decoded['metadata']['id']);
-    $this->rawData = json_encode($decoded, JSON_PRETTY_PRINT);
+    $this->rawData = json_encode($decoded, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
   }
 
 }

@@ -11,8 +11,8 @@ All user-provided content is sanitized before rendering:
   `sanitizeTokenHtml()` (powered by DOMPurify).
 - **Safe DOM methods**: `textContent` is used instead of `innerHTML` wherever
   possible.
-- **Token sanitization**: Token values from drag-and-drop operations are
-  validated and sanitized before insertion.
+- **Token sanitization**: Token values from internal token reordering (dragging
+  a token pill within a field) are validated and sanitized before insertion.
 
 ### Rules
 
@@ -52,6 +52,6 @@ when pasting between browser sessions.
 - [ ] CSRF tokens included in all API calls.
 - [ ] External data validated through `utils/validation.ts`.
 - [ ] No `eval()`, `Function()`, or dynamic script loading.
-- [ ] Token drag-and-drop values properly validated.
+- [ ] Internal token reordering values properly validated.
 - [ ] Error messages do not leak sensitive information.
 - [ ] Form values are properly escaped before sending to backend.

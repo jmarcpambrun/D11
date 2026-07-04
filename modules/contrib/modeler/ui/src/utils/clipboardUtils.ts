@@ -2,6 +2,7 @@
 
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
 import { LAYOUT } from '../constants/dimensions';
+import { safeJsonParse } from './validation';
 
 const STORAGE_KEY = 'workflow-modeler-clipboard';
 const KEY_STORAGE_KEY = 'workflow-modeler-crypto-key';
@@ -167,12 +168,12 @@ const getFromClipboard = async (): Promise<ClipboardData | null> => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
 
-    const storage = JSON.parse(stored);
+    const storage = safeJsonParse<Partial<EncryptedStorage & ClipboardData>>(stored);
 
     // Handle encrypted data (version 1+)
     if (storage.version === 1 && storage.encrypted) {
       const decrypted = await decryptData(storage.encrypted);
-      const data = JSON.parse(decrypted) as ClipboardData;
+      const data = safeJsonParse<ClipboardData>(decrypted);
 
       if (data.type !== 'workflow-elements') return null;
 
@@ -188,12 +189,13 @@ const getFromClipboard = async (): Promise<ClipboardData | null> => {
 
     // Handle legacy unencrypted data (migrate on next copy)
     if (storage.type === 'workflow-elements') {
-      const age = Date.now() - storage.timestamp;
+      const legacy = storage as ClipboardData;
+      const age = Date.now() - legacy.timestamp;
       if (age > 24 * 60 * 60 * 1000) {
         localStorage.removeItem(STORAGE_KEY);
         return null;
       }
-      return storage as ClipboardData;
+      return legacy;
     }
 
     return null;

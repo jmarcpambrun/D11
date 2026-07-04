@@ -10,19 +10,6 @@ import { ReplayDataRenderer, StepDataContainer, GlobalTokensContainer, TemplateT
 jest.mock('react-icons/fi', () => ({
   FiChevronDown: () => <span data-testid="fi-chevron-down" />,
   FiChevronRight: () => <span data-testid="fi-chevron-right" />,
-  FiMoreVertical: () => <span data-testid="fi-more-vertical" />,
-}));
-
-// Mock the Zustand store
-const mockSetTokenDragging = jest.fn();
-jest.mock('../../store/useFilterStore', () => ({
-  useFilterStore: jest.fn((selector: any) => {
-    const state = {
-      setTokenDragging: mockSetTokenDragging,
-    };
-    if (typeof selector === 'function') return selector(state);
-    return state;
-  }),
 }));
 
 describe('ReplayDataRenderer', () => {
@@ -82,60 +69,6 @@ describe('ReplayDataRenderer', () => {
       expect(screen.getByText('test value')).toBeInTheDocument();
     });
 
-    it('should make draggable tokens when token property exists', () => {
-      const tokenData = { label: 'Draggable', token: '[token:value]' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      const label = screen.getByText('Draggable');
-      expect(label).toHaveClass('draggable');
-      expect(label).toHaveAttribute('draggable', 'true');
-    });
-
-    it('should not make non-token items draggable', () => {
-      const tokenData = { label: 'Not Draggable' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      const label = screen.getByText('Not Draggable');
-      expect(label).not.toHaveClass('draggable');
-    });
-
-    it('should render grip icon for draggable tokens', () => {
-      const tokenData = { label: 'Draggable', token: '[token:value]' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      expect(screen.getByTestId('fi-more-vertical')).toBeInTheDocument();
-    });
-
-    it('should not render grip icon for non-draggable items', () => {
-      const tokenData = { label: 'Not Draggable' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      expect(screen.queryByTestId('fi-more-vertical')).toBeNull();
-    });
-
-    it('should call setTokenDragging(true) on drag start', () => {
-      const tokenData = { label: 'Token', token: '[token:val]' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      const label = screen.getByText('Token');
-
-      fireEvent.dragStart(label, {
-        dataTransfer: { setData: jest.fn() },
-      });
-
-      expect(mockSetTokenDragging).toHaveBeenCalledWith(true);
-    });
-
-    it('should call setTokenDragging(false) on drag end', () => {
-      const tokenData = { label: 'Token', token: '[token:val]' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      const label = screen.getByText('Token');
-
-      fireEvent.dragEnd(label);
-
-      expect(mockSetTokenDragging).toHaveBeenCalledWith(false);
-    });
-
-    it('should render grip icon for draggable tokens with value', () => {
-      const tokenData = { label: 'Token With Value', token: '[token:val]', value: 'some value' };
-      render(<ReplayDataRenderer data={tokenData} />);
-      expect(screen.getByTestId('fi-more-vertical')).toBeInTheDocument();
-    });
   });
 
   describe('collapsible sections', () => {
@@ -316,7 +249,7 @@ describe('GlobalTokensContainer', () => {
     expect(screen.getByText('Custom format')).toBeInTheDocument();
   });
 
-  it('should make global tokens draggable with raw token value', () => {
+  it('should render global tokens with their label (no drag affordance)', () => {
     const globalTokens = {
       '[site:name]': {
         name: 'Site name',
@@ -327,8 +260,9 @@ describe('GlobalTokensContainer', () => {
     };
     render(<GlobalTokensContainer globalTokens={globalTokens} />);
     const label = screen.getByText('Site name');
-    expect(label).toHaveClass('draggable');
-    expect(label).toHaveAttribute('draggable', 'true');
+    expect(label).toHaveClass('token-label');
+    expect(label).not.toHaveClass('draggable');
+    expect(label).not.toHaveAttribute('draggable');
   });
 
   it('should render token value', () => {
@@ -430,37 +364,6 @@ describe('GlobalTokensContainer', () => {
     expect(screen.getByText('URL')).toBeInTheDocument();
   });
 
-  it('should render grip icon for draggable global tokens', () => {
-    const globalTokens = {
-      '[site:name]': {
-        name: 'Site name',
-        'raw token': '[site:name]',
-        token: 'name',
-        value: 'My Site',
-      },
-    };
-    render(<GlobalTokensContainer globalTokens={globalTokens} />);
-    expect(screen.getByTestId('fi-more-vertical')).toBeInTheDocument();
-  });
-
-  it('should set token dragging state on drag start', () => {
-    const globalTokens = {
-      '[site:name]': {
-        name: 'Site name',
-        'raw token': '[site:name]',
-        token: 'name',
-        value: 'My Site',
-      },
-    };
-    render(<GlobalTokensContainer globalTokens={globalTokens} />);
-
-    fireEvent.dragStart(screen.getByText('Site name'), {
-      dataTransfer: { setData: jest.fn() },
-    });
-
-    expect(mockSetTokenDragging).toHaveBeenCalledWith(true);
-  });
-
   it('should render token without value (value is optional)', () => {
     const globalTokens = {
       '[site:name]': {
@@ -471,7 +374,7 @@ describe('GlobalTokensContainer', () => {
     };
     render(<GlobalTokensContainer globalTokens={globalTokens} />);
     expect(screen.getByText('Site name')).toBeInTheDocument();
-    expect(screen.getByText('Site name')).toHaveClass('draggable');
+    expect(screen.getByText('Site name')).toHaveClass('token-label');
     // No value should be rendered
     expect(document.querySelector('.token-value')).toBeNull();
   });
@@ -522,7 +425,7 @@ describe('TemplateTokensContainer', () => {
     expect(screen.getByText('Author')).toBeInTheDocument();
   });
 
-  it('should make template tokens draggable with raw token value', () => {
+  it('should render template tokens with their label (no drag affordance)', () => {
     const templateTokens = {
       '[template:version]': {
         name: 'Version',
@@ -533,8 +436,9 @@ describe('TemplateTokensContainer', () => {
     };
     render(<TemplateTokensContainer templateTokens={templateTokens} />);
     const label = screen.getByText('Version');
-    expect(label).toHaveClass('draggable');
-    expect(label).toHaveAttribute('draggable', 'true');
+    expect(label).toHaveClass('token-label');
+    expect(label).not.toHaveClass('draggable');
+    expect(label).not.toHaveAttribute('draggable');
   });
 
   it('should render token value', () => {
@@ -602,21 +506,5 @@ describe('TemplateTokensContainer', () => {
     expect(screen.getByText('Version')).toBeInTheDocument();
   });
 
-  it('should set token dragging state on drag start', () => {
-    const templateTokens = {
-      '[template:author]': {
-        name: 'Author',
-        'raw token': '[template:author]',
-        token: 'author',
-        value: 'Jane Doe',
-      },
-    };
-    render(<TemplateTokensContainer templateTokens={templateTokens} />);
 
-    fireEvent.dragStart(screen.getByText('Author'), {
-      dataTransfer: { setData: jest.fn() },
-    });
-
-    expect(mockSetTokenDragging).toHaveBeenCalledWith(true);
-  });
 });

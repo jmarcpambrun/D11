@@ -51,7 +51,6 @@ The store manages:
 - **Context state**: `contexts`, `selectedContextId`, `contextConfig`, and `dependencies` for component filtering.
 - **Flow filtering**: `visibleStartNodeIds` for showing/hiding individual event flows.
 - **Component labels**: `componentLabels` for model-owner-specific terminology.
-- **Token state**: `isTokenDragging` to coordinate token drag feedback across panels.
 - **Error log**: `errorLog` for tracking runtime errors.
 
 ## Modal state

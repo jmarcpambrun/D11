@@ -6,6 +6,8 @@
  */
 
 import { t } from './translation';
+import { sanitizeTokenHtml } from './sanitize';
+import { safeJsonParse } from './validation';
 
 /**
  * Convert token strings like "[node:author:name]" to HTML with token elements
@@ -44,9 +46,11 @@ export function convertTokensToHTML(text: string | null): string {
 export function convertHTMLToTokens(html: string | null): string {
   if (!html || typeof html !== 'string') return html || '';
 
-  // Create a temporary div to parse the HTML
+  // Create a temporary div to parse the HTML. Sanitize first to strip any
+  // scripts or unsafe markup; sanitizeTokenHtml preserves the .config-token
+  // spans and their data-token attribute that the loop below reads.
   const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
+  tempDiv.innerHTML = sanitizeTokenHtml(html);
 
   // Find all token elements and replace them with their token strings
   const tokenElements = tempDiv.querySelectorAll('.config-token');
@@ -57,7 +61,12 @@ export function convertHTMLToTokens(html: string | null): string {
     }
   });
 
-  return tempDiv.textContent || tempDiv.innerText || '';
+  // Strip any zero-width space (U+200B). These are inserted into the DOM ONLY as
+  // a caret landing spot after a trailing token (see ensureTrailingCaretSpace in
+  // ContentEditableField); they must never appear in the saved value, so the
+  // serialized output stays exactly the user's text + `[token]` strings.
+  const serialized = tempDiv.textContent || tempDiv.innerText || '';
+  return serialized.replace(/\u200B/g, '');
 }
 
 /**
@@ -103,7 +112,7 @@ export function parseTokenFromDragEvent(
   if (!tokenData) return null;
 
   try {
-    const parsed = JSON.parse(tokenData);
+    const parsed = safeJsonParse<{ label?: unknown; token?: unknown }>(tokenData);
 
     // Validate token data structure
     const label = typeof parsed.label === 'string' ? parsed.label : '';

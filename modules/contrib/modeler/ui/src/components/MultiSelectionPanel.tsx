@@ -16,7 +16,7 @@ interface MultiSelectionPanelProps {
   isLocked: boolean;
 }
 
-const MultiSelectionPanel: React.FC<MultiSelectionPanelProps> = ({
+const MultiSelectionPanel: React.FC<MultiSelectionPanelProps> = React.memo(({
   selectedNodes,
   selectedEdges,
   onDeleteSelected,
@@ -81,6 +81,8 @@ const MultiSelectionPanel: React.FC<MultiSelectionPanelProps> = ({
       </div>
     </div>
   );
-};
+});
+
+MultiSelectionPanel.displayName = 'MultiSelectionPanel';
 
 export default MultiSelectionPanel;

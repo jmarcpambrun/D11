@@ -9,7 +9,7 @@
  * announcements on subsequent reads.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface UseStatusAnnouncerReturn {
   /** The current announcement message (empty string = nothing to announce) */
@@ -44,6 +44,16 @@ export function useStatusAnnouncer(): UseStatusAnnouncerReturn {
         }, CLEAR_DELAY);
       }
     });
+  }, []);
+
+  // Clear any pending auto-clear timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (clearTimerRef.current) {
+        clearTimeout(clearTimerRef.current);
+        clearTimerRef.current = null;
+      }
+    };
   }, []);
 
   return { message, announce };

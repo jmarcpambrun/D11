@@ -12,6 +12,15 @@ import { fetchValidatedCsrfToken, validateReplayEntries } from '../utils/validat
 import type { Settings, ReplayDataEntry } from '../types/settings';
 import { showDrupalMessage } from '../utils/drupalMessage';
 
+/**
+ * Sentinel value for `selectedEntryIndex` meaning the persistent "listen item"
+ * (the top dropdown entry) is selected — distinct from -1 ("no entry") and from
+ * the 0..n-1 data-entry indices. While selected, the review body shows the
+ * live-listener waiting state. Part of the per-event ReviewSession snapshot so
+ * it survives event switches (without re-arming the listener — see Flow.tsx).
+ */
+export const LISTEN_ITEM_INDEX = -2;
+
 export interface ReplayEntry {
   /** Model ID */
   model_id: string;
@@ -33,6 +42,12 @@ interface UseReplayLoaderProps {
   settings?: Settings;
   /** Called once when new entries are successfully loaded */
   onEntriesLoaded?: (entries: ReplayEntry[]) => void;
+  /**
+   * Called whenever a load resolves with the backend's empty/warning message
+   * (or null when the result is populated and no warning applies). Lets the
+   * caller store the message per-event so each event surfaces its own.
+   */
+  onEmptyMessage?: (message: string | null) => void;
 }
 
 interface UseReplayLoaderReturn {
@@ -42,6 +57,13 @@ interface UseReplayLoaderReturn {
   loading: boolean;
   /** Error message if the fetch failed */
   error: string | null;
+  /**
+   * The backend's empty/warning message from the most recent load (the
+   * `warning` field, or a generic "no data" notice when the result is empty),
+   * or null when the result was populated. Surfaced as returnable state so the
+   * review body can show it after the user cancels listening.
+   */
+  emptyMessage: string | null;
   /** Fetch replay data for a given component ID */
   loadReplayData: (componentId: string) => Promise<void>;
   /** Clear loaded replay entries */
@@ -51,17 +73,23 @@ interface UseReplayLoaderReturn {
 export function useReplayLoader({
   settings = {},
   onEntriesLoaded,
+  onEmptyMessage,
 }: UseReplayLoaderProps): UseReplayLoaderReturn {
   const [replayEntries, setReplayEntries] = useState<ReplayEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Keep a stable ref to the callback so loadReplayData never re-creates
+  // Keep stable refs to the callbacks so loadReplayData never re-creates
   const onEntriesLoadedRef = useRef(onEntriesLoaded);
   useEffect(() => {
     onEntriesLoadedRef.current = onEntriesLoaded;
   }, [onEntriesLoaded]);
+  const onEmptyMessageRef = useRef(onEmptyMessage);
+  useEffect(() => {
+    onEmptyMessageRef.current = onEmptyMessage;
+  }, [onEmptyMessage]);
 
   const loadReplayData = useCallback(async (componentId: string) => {
     // Cancel any previous request
@@ -122,12 +150,25 @@ export function useReplayLoader({
           // Show error message to user
           showDrupalMessage(errorMessage, 'error');
         } else {
-          // Show warning if present (non-blocking — continue processing)
-          if (result && typeof result === 'object' && !Array.isArray(result) && result.warning) {
-            showDrupalMessage(result.warning, 'warning');
+          // Capture any backend warning (non-blocking — continue processing).
+          const backendWarning =
+            result && typeof result === 'object' && !Array.isArray(result) && typeof result.warning === 'string'
+              ? result.warning
+              : null;
+          if (backendWarning) {
+            showDrupalMessage(backendWarning, 'warning');
           }
+          // The entries to validate: a bare array, an `entries` array on a
+          // warning-bearing object, or (warning-only object) an empty list — so
+          // a warning response surfaces as "empty with message" rather than an
+          // "unexpected response format" error.
+          const entriesPayload = Array.isArray(result)
+            ? result
+            : (result && typeof result === 'object' && Array.isArray(result.entries)
+                ? result.entries
+                : (backendWarning ? [] : result));
           // Validate that the response is an array with valid entries
-          const validEntries = validateReplayEntries(result) as ReplayEntry[];
+          const validEntries = validateReplayEntries(entriesPayload) as ReplayEntry[];
           // Sort entries by timestamp descending (newest first)
           validEntries.sort((a, b) => {
             const dateA = typeof a.timestamp === 'number' ? a.timestamp * 1000 : new Date(a.timestamp).getTime();
@@ -136,12 +177,19 @@ export function useReplayLoader({
           });
           setReplayEntries(validEntries);
           setError(null);
-          // Show warning if replay data is empty
-          if (validEntries.length === 0) {
-            showDrupalMessage(t('No replay data available for this event.'), 'warning');
-          }
-          // Notify parent immediately with the validated entries
+          // Determine the empty/warning message to surface (per-event). Prefer
+          // the explicit backend warning; otherwise a generic notice when there
+          // is no data; null when entries are present.
+          const genericEmpty = t('No replay data available for this event.');
+          const message = validEntries.length === 0 ? (backendWarning || genericEmpty) : backendWarning;
+          // NOTE: we intentionally do NOT raise a Drupal toast for the generic
+          // empty case — the review empty body + per-event backendMessage already
+          // convey it (the toast was redundant). The generic text still flows
+          // into emptyMessage/onEmptyMessage for the empty-body-after-cancel UX.
+          setEmptyMessage(message);
+          // Notify parent immediately with the validated entries + message.
           onEntriesLoadedRef.current?.(validEntries);
+          onEmptyMessageRef.current?.(message);
         }
       } else {
         setError(t('Failed to load replay data: @status', { '@status': response.statusText }));
@@ -162,12 +210,25 @@ export function useReplayLoader({
   const clearReplayEntries = useCallback(() => {
     setReplayEntries([]);
     setError(null);
+    setEmptyMessage(null);
+  }, []);
+
+  // Abort any in-flight request on unmount so a pending fetch does not attempt
+  // to update state after the component is gone.
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, []);
 
   return {
     replayEntries,
     loading,
     error,
+    emptyMessage,
     loadReplayData,
     clearReplayEntries,
   };

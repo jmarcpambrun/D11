@@ -35,6 +35,7 @@ const defaultEventHandlers = {
   onNodeClick: fn(),
   onEdgeClick: fn(),
   onPaneClick: fn(),
+  onSelectionStart: fn(),
   onNodeDragStart: fn(),
   onNodeDragStop: fn(),
   onInit: fn(),
