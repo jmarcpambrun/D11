@@ -1,5 +1,5 @@
-id: ga
-label: 'Google Analytics (legacy)'
+id: ga_consent_mode
+label: 'Google Analytics'
 description: 'Tracks online visits of the website as a service.'
 langcode: en
 status: false
@@ -16,10 +16,8 @@ only_once: false
 weight: 1
 info_url: 'https://marketingplatform.google.com/intl/de/about/analytics/'
 privacy_policy_url: 'https://policies.google.com/privacy'
-javascripts:
-  - analytics.js
-attachments:
-  - ga4_google_analytics
+javascripts: { }
+attachments: { }
 on_init: ''
-on_accept: ''
-on_decline: ''
+on_accept: "gtag('consent', 'update', {\r\n  'analytics_storage': 'granted'\r\n});"
+on_decline: "gtag('consent', 'update', {\r\n  'analytics_storage': 'denied'\r\n});"
