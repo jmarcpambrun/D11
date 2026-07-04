@@ -188,31 +188,31 @@ class LocaleHooks {
    */
   #[Hook('js_alter')]
   public function jsAlter(&$javascript, AttachedAssetsInterface $assets, LanguageInterface $language): void {
-    $placeholder_file = 'core/modules/locale/locale.translation.js';
     $files = [];
     foreach ($javascript as $item) {
       if (isset($item['type']) && $item['type'] == 'file') {
         // Ignore the JS translation placeholder file.
-         if ($item['data'] === $placeholder_file) {
+        if ($item['data'] === 'core/modules/locale/locale.translation.js') {
           continue;
         }
         $files[] = $item['data'];
       }
     }
-    // Always run through the files through JavaScript translation so that any
-    // strings will be available to the translation file for the language.
-    $translation_file = locale_js_translate($files, $language);
-    // If the locale placeholder is loaded by this request, add the translation
-    // file. This only needs to happen once per page because all JavaScript
-    // translations for a language are contained in a single file.
-    if (isset($files[$placeholder_file]) && $translation_file) {
-      $js_translation_asset =& $javascript[$placeholder_file];
-      $js_translation_asset['data'] = $translation_file;
-      // @todo Remove this when https://www.drupal.org/node/1945262 lands.
-      // Decrease the weight so that the translation file is loaded first.
-      $js_translation_asset['weight'] = $javascript['core/misc/drupal.js']['weight'] - 0.001;
+    // Replace the placeholder file with the actual JS translation file.
+    $placeholder_file = 'core/modules/locale/locale.translation.js';
+    if (isset($javascript[$placeholder_file])) {
+      if ($translation_file = locale_js_translate($files, $language)) {
+        $js_translation_asset =& $javascript[$placeholder_file];
+        $js_translation_asset['data'] = $translation_file;
+        // @todo Remove this when https://www.drupal.org/node/1945262 lands.
+        // Decrease the weight so that the translation file is loaded first.
+        $js_translation_asset['weight'] = $javascript['core/misc/drupal.js']['weight'] - 0.001;
+      }
+      else {
+        // If no translation file exists, then remove the placeholder JS asset.
+        unset($javascript[$placeholder_file]);
+      }
     }
-    unset($javascript[$placeholder_file]);
   }
 
   /**

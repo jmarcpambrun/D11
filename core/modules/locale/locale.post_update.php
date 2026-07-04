@@ -4,6 +4,7 @@
  * @file
  * Post-update functions for Locale module.
  */
+
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -45,4 +46,3 @@ function locale_post_update_clear_translation_path_config(): ?TranslatableMarkup
 function locale_post_update_clear_sources(): void {
   \Drupal::service(LocaleSource::class)->clearSources();
 }
-

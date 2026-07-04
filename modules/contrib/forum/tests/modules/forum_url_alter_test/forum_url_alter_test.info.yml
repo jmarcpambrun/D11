@@ -4,7 +4,7 @@ description: 'A support module to test altering the inbound and outbound path.'
 package: Testing
 # version: VERSION
 
-# Information added by Drupal.org packaging script on 2026-06-25
-version: '1.1.1'
+# Information added by Drupal.org packaging script on 2026-06-29
+version: '1.1.2'
 project: 'forum'
-datestamp: 1782376626
+datestamp: 1782766348

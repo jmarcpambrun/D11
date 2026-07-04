@@ -1,7 +1,7 @@
 name: Forum
 type: module
 description: 'Provides discussion forums.'
-core_version_requirement: ^10 || ^11 || ^12
+core_version_requirement: ^11 || ^12
 dependencies:
   - drupal:node
   - drupal:history
@@ -11,7 +11,7 @@ dependencies:
 package: Forum
 configure: forum.overview
 
-# Information added by Drupal.org packaging script on 2026-06-25
-version: '1.1.1'
+# Information added by Drupal.org packaging script on 2026-06-29
+version: '1.1.2'
 project: 'forum'
-datestamp: 1782376626
+datestamp: 1782766348
