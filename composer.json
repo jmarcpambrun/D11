@@ -55,7 +55,7 @@
         "drupal/devel_entity_updates": "^5.0",
         "drupal/drd": "4.1.7",
         "drupal/drd_agent": "^4.1",
-        "drupal/eca": "^3.1-beta",
+        "drupal/eca": "^3.1",
         "drupal/eca_site_building": "2.0",
         "drupal/eca_ui": "3.1.0",
         "drupal/eca_webform": "2.0.2",

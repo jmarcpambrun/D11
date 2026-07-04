@@ -1,5 +1,5 @@
 /* Floating ECA icon bottom-right */
-#eca-ui-debug-applied-events {
+#eca-inspector-applied-events {
   position: fixed;
   z-index: 9998;
   right: 16px;
@@ -20,7 +20,7 @@
 }
 
 /* Title: hidden, shown via .item-list::before instead */
-#eca-ui-debug-applied-events > h2 {
+#eca-inspector-applied-events > h2 {
   position: absolute;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
@@ -32,7 +32,7 @@
 }
 
 /* Popup */
-#eca-ui-debug-applied-events .item-list {
+#eca-inspector-applied-events .item-list {
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
@@ -56,8 +56,8 @@
 }
 
 /* Show popup on hover / focus */
-#eca-ui-debug-applied-events:hover .item-list,
-#eca-ui-debug-applied-events:focus-within .item-list {
+#eca-inspector-applied-events:hover .item-list,
+#eca-inspector-applied-events:focus-within .item-list {
   visibility: visible;
   transition:
     opacity 0.15s ease,
@@ -68,7 +68,7 @@
 }
 
 /* Title shown as header inside the popup */
-#eca-ui-debug-applied-events .item-list::after {
+#eca-inspector-applied-events .item-list::after {
   display: block;
   order: -1;
   margin: -14px -14px 10px;
@@ -81,24 +81,24 @@
 }
 
 /* Remove bullets and left gap completely */
-#eca-ui-debug-applied-events .item-list ul {
+#eca-inspector-applied-events .item-list ul {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-#eca-ui-debug-applied-events .item-list li {
+#eca-inspector-applied-events .item-list li {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-#eca-ui-debug-applied-events .item-list li + li {
+#eca-inspector-applied-events .item-list li + li {
   margin-top: 6px;
 }
 
 /* Links */
-#eca-ui-debug-applied-events .item-list a {
+#eca-inspector-applied-events .item-list a {
   display: block;
   overflow: hidden;
   padding: 8px 10px;
@@ -111,15 +111,15 @@
   background: rgb(4, 129, 129, 0.06);
 }
 
-#eca-ui-debug-applied-events .item-list a:hover,
-#eca-ui-debug-applied-events .item-list a:focus-visible {
+#eca-inspector-applied-events .item-list a:hover,
+#eca-inspector-applied-events .item-list a:focus-visible {
   border-color: rgb(4, 129, 129, 0.35);
   outline: none;
   background: rgb(4, 129, 129, 0.12);
 }
 
 /* Arrow */
-#eca-ui-debug-applied-events .item-list::before {
+#eca-inspector-applied-events .item-list::before {
   position: absolute;
   right: 16px;
   bottom: -7px;
