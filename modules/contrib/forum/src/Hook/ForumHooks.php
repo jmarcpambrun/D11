@@ -185,7 +185,6 @@ final class ForumHooks {
           'title_link' => NULL,
           'submitted' => NULL,
         ],
-        'initial preprocess' => 'template_preprocess_forum_topic',
       ],
     ];
   }
