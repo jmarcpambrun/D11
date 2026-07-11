@@ -69,6 +69,13 @@ abstract class EvaTestBase extends BrowserTestBase {
     ]);
     $this->nids['just_eva'] = $node->id();
 
+    // Single node for disabled-by-default EVA test.
+    $node = $this->createNode([
+      'title' => 'Disabled Eva',
+      'type' => 'disabled_eva',
+    ]);
+    $this->nids['disabled_eva'] = $node->id();
+
     // Pages for lists-in-lists.
     $this->nids['pages'] = [];
     for ($i = 0; $i < $this->pageCount; $i++) {

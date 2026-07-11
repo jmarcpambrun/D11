@@ -8,7 +8,7 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
- * EVA utiltity service.
+ * EVA utility service.
  */
 class ViewDisplays {
 
@@ -93,7 +93,7 @@ class ViewDisplays {
       $views = Views::getApplicableViews('uses_hook_entity_view');
 
       foreach ($views as $data) {
-        list($view_name, $display_id) = $data;
+        [$view_name, $display_id] = $data;
         $view = Views::getView($view_name);
 
         // Initialize handlers, to determine if the view uses exposed filters.
@@ -109,6 +109,7 @@ class ViewDisplays {
           'display' => $display_id,
           'bundles' => $display->getOption('bundles'),
           'uses exposed' => $display->usesExposed(),
+          'disable_by_default' => $display->getOption('disable_by_default'),
         ];
         $view->destroy();
       }
@@ -117,7 +118,7 @@ class ViewDisplays {
     }
 
     if (!is_null($type)) {
-      return isset($used_views[$type]) ? $used_views[$type] : [];
+      return $used_views[$type] ?? [];
     }
     return $used_views;
   }
@@ -160,7 +161,7 @@ class ViewDisplays {
         foreach ($eva_info as $eva) {
           $eva_field_name = $eva['name'] . '_' . $eva['display'];
           // Eva should be considered for removal if one of these is true:
-          // - all evas should be removed (i.e., when module is uninstalled),
+          // - all EVAs should be removed (i.e., when module is uninstalled),
           // - the current eva has at least on bundle specified
           // (if no bundles are specified, an eva is attached to all bundles),
           // - the current eva is specifically targeted for removal
@@ -169,8 +170,8 @@ class ViewDisplays {
             // Does the eva exist in this display config?
             if (array_key_exists($eva_field_name, $config_data['content'])) {
               // Remove the eva if one of these is true:
-              // - all evas should be removed,
-              // - the eva does not list the entity's bundle (any more),
+              // - all EVAs should be removed,
+              // - the eva does not list the entity's bundle (anymore),
               // - the eva is specifically targeted for removal.
               if ($remove_all || !in_array($config_data['bundle'], $eva['bundles']) || ($eva_field_name == $remove_one)) {
                 unset($config_data['content'][$eva_field_name]);

@@ -10,6 +10,3 @@ services:
       - ../../.:/app/web/modules/custom/eva:ro
       - ../eva_test:/app/web/modules/custom/eva_test:ro
       - web:/app/web
-
-# volumes:
-  # web:

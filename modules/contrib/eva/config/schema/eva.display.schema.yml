@@ -23,3 +23,6 @@ views.display.entity_view:
     eva_hide_empty:
       type: boolean
       label: 'Hide output if the view is empty'
+    disable_by_default:
+      type: boolean
+      label: 'Disable by default'

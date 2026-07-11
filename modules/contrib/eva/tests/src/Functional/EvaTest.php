@@ -26,6 +26,22 @@ class EvaTest extends EvaTestBase {
   }
 
   /**
+   * Assert that a disabled-by-default Eva does not appear.
+   */
+  public function testDisabledEva() {
+    $assert = $this->assertSession();
+
+    $this->drupalGet('/node/' . $this->nids['disabled_eva']);
+    $assert->statusCodeEquals(200);
+
+    $this->assertEquals(
+      0,
+      \count($this->xpath('//div[contains(@class, "view-eva")]//div[contains(@class, "views-row")]')),
+      sprintf('Confirmed disabled Eva is not present.')
+    );
+  }
+
+  /**
    * Test issue described in https://www.drupal.org/node/2873385.
    */
   public function test2873385() {

@@ -9,7 +9,7 @@ dependencies:
   - drupal:user
   - drupal:text
 
-# Information added by Drupal.org packaging script on 2024-11-22
-version: '3.1.1'
+# Information added by Drupal.org packaging script on 2026-07-08
+version: '3.1.2'
 project: 'eva'
-datestamp: 1732295602
+datestamp: 1783542974

@@ -29,7 +29,11 @@ variables:
 #   _CURL_TEMPLATES_REF: 'main'
 
     ################ CUSTOMIZATION DIFFERING FROM THE TEMPLATE BY DA ################
-
+    OPT_IN_TEST_NEXT_MINOR: '1'
+    OPT_IN_TEST_NEXT_MAJOR: '1'
+    OPT_IN_TEST_PREVIOUS_MINOR: '1'
+    OPT_IN_TEST_PREVIOUS_MAJOR: '1'
+    OPT_IN_TEST_MAX_PHP: '1'
     _CSPELL_WORDS:
-      value: 'ahebrank, Hebrank, Crell, jjeff, Kadin, mkadin, newcity, Rutz'
+      value: 'ahebrank, Hebrank, Crell, jjeff, Kadin, mkadin, newcity, Rutz, displayid, evas, longname, phplint, viewname, ezezna, ngss, qgyi, qjycmr'
       description: 'Personal names and other irregular words to not mark as incorrect.'

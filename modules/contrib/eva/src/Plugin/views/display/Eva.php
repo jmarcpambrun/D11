@@ -5,6 +5,7 @@ namespace Drupal\eva\Plugin\views\display;
 use Drupal\Core\Entity\ContentEntityType;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Path\CurrentPathStack;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -51,11 +52,18 @@ class Eva extends DisplayPluginBase {
   protected $currentPathStack;
 
   /**
-   * EVA utiilities.
+   * EVA utilities.
    *
    * @var \Drupal\eva\ViewDisplays
    */
   protected $evaViewDisplays;
+
+  /**
+   * Module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
 
   /**
    * Whether the display allows attachments.
@@ -68,12 +76,13 @@ class Eva extends DisplayPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, EntityTypeBundleInfoInterface $bundleInfo, CurrentPathStack $currentPathStack, ViewDisplays $evaViewDisplays) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, EntityTypeBundleInfoInterface $bundleInfo, CurrentPathStack $currentPathStack, ViewDisplays $evaViewDisplays, ModuleHandlerInterface $moduleHandler) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entityTypeManager;
     $this->bundleInfo = $bundleInfo;
     $this->currentPathStack = $currentPathStack;
     $this->evaViewDisplays = $evaViewDisplays;
+    $this->moduleHandler = $moduleHandler;
   }
 
   /**
@@ -87,7 +96,8 @@ class Eva extends DisplayPluginBase {
       $container->get('entity_type.manager'),
       $container->get('entity_type.bundle.info'),
       $container->get('path.current'),
-      $container->get('eva.view_displays')
+      $container->get('eva.view_displays'),
+      $container->get('module_handler'),
     );
   }
 
@@ -101,6 +111,7 @@ class Eva extends DisplayPluginBase {
     $options['bundles']['default'] = [];
     $options['argument_mode']['default'] = 'id';
     $options['default_argument']['default'] = '';
+    $options['disable_by_default']['default'] = FALSE;
 
     $options['title']['default'] = '';
     $options['defaults']['default']['title'] = FALSE;
@@ -131,7 +142,7 @@ class Eva extends DisplayPluginBase {
       $bundle_names = [];
       $bundle_info = $this->bundleInfo->getBundleInfo($entity_type);
       foreach ($this->getOption('bundles') as $bundle) {
-        $bundle_names[] = $bundle_info[$bundle]['label'];
+        $bundle_names[] = $bundle_info[$bundle]['label'] ?? $this->t('Unknown bundle');
       }
     }
 
@@ -164,6 +175,12 @@ class Eva extends DisplayPluginBase {
       'category' => 'entity_view',
       'title' => $this->t('Hide output if the view is empty'),
       'value' => $this->getOption('eva_hide_empty') ? $this->t('Yes') : $this->t('No'),
+    ];
+
+    $options['disable_by_default'] = [
+      'category' => 'entity_view',
+      'title' => $this->t('Disable by default'),
+      'value' => $this->getOption('disable_by_default') ? $this->t('Yes') : $this->t('No'),
     ];
   }
 
@@ -245,8 +262,9 @@ class Eva extends DisplayPluginBase {
         ];
 
         // Add a token browser.
-        if (\Drupal::service('module_handler')->moduleExists('token')) {
+        if ($this->moduleHandler->moduleExists('token')) {
           $token_types = [$entity_type => $entity_type];
+          // @phpstan-ignore-next-line
           $token_mapper = \Drupal::service('token.entity_mapper');
           $token_types = array_map(function ($type) use ($token_mapper) {
             return $token_mapper->getTokenTypeForEntityType($type);
@@ -277,6 +295,16 @@ class Eva extends DisplayPluginBase {
           '#type' => 'checkbox',
           '#description' => $this->t('Hide the output if there is no result and no empty text and no header/footer which is shown on empty result'),
           '#default_value' => $this->getOption('eva_hide_empty'),
+        ];
+        break;
+
+      case 'disable_by_default':
+        $form['#title'] .= $this->t('Disable on displays by default');
+        $form['disable_by_default'] = [
+          '#type' => 'checkbox',
+          '#title' => $this->t('Set new EVA fields as disabled on entity displays.'),
+          '#description' => $this->t('If enabled, EVA fields will be added to the "disabled" region on entity displays. Otherwise, EVA fields will be added to the main content region of all attached entity displays.'),
+          '#default_value' => $this->getOption('disable_by_default'),
         ];
         break;
     }
@@ -351,7 +379,8 @@ class Eva extends DisplayPluginBase {
         break;
 
       case 'show_title':
-        $this->setOption('show_title', $form_state->getValue('show_title'));
+      case 'disable_by_default':
+        $this->setOption($form_state->get('section'), $form_state->getValue($form_state->get('section')));
         break;
 
       case 'eva_hide_empty':
@@ -399,4 +428,5 @@ class Eva extends DisplayPluginBase {
       return $element;
     }
   }
+
 }

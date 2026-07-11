@@ -5,6 +5,7 @@
  * Module implementing EVA extra field and views display.
  */
 
+use Drupal\Core\Render\Markup;
 use Drupal\views\ViewEntityInterface;
 use Drupal\views\Views;
 use Drupal\views\Element\View;
@@ -44,6 +45,7 @@ function eva_entity_extra_field_info() {
           'label' => (empty($view['title'])) ? $view['name'] : $view['title'],
           'description' => $view['title'],
           'weight' => 10,
+          'visible' => !$view['disable_by_default'],
         ];
         // Provide a separate extra field for the exposed form if there is any.
         if ($view['uses exposed']) {
@@ -51,6 +53,7 @@ function eva_entity_extra_field_info() {
             'label' => ((empty($view['title'])) ? $view['name'] : $view['title']) . ' (' . t('Exposed form') . ')',
             'description' => t('The exposed filter form of the view.'),
             'weight' => 9,
+            'visible' => !$view['disable_by_default'],
           ];
         }
       }
@@ -204,7 +207,7 @@ function eva_views_invalidate_cache() {
 function template_preprocess_eva_display_entity_view(&$variables) {
   $view = $variables['view'];
   $display = $view->display_handler;
-  $variables['title'] = $display->getOption('show_title') ? Xss::filterAdmin($view->getTitle()) : '';
+  $variables['title'] = Markup::create($display->getOption('show_title') ? Xss::filterAdmin($view->getTitle()) : '');
   $variables['exposed_form_as_field'] = $display->getOption('exposed_form_as_field');
 
   $id = $view->storage->id();
@@ -223,5 +226,26 @@ function template_preprocess_eva_display_entity_view(&$variables) {
   $variables['view_array']['#view_id'] = $view->storage->id();
   $variables['view_array']['#view_display_show_admin_links'] = $view->getShowAdminLinks();
   $variables['view_array']['#view_display_plugin_id'] = $display->getPluginId();
-  views_add_contextual_links($variables['view_array'], 'view', $display->getLinkDisplay());
+  if ($link_display = $display->getLinkDisplay()) {
+    views_add_contextual_links($variables['view_array'], 'view', $display->getLinkDisplay());
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function eva_theme_suggestions_eva_display_entity_view_alter(array &$suggestions, array $variables) {
+  /** @var \Drupal\views\ViewExecutable $view */
+  $view = $variables['view'];
+
+  $suggestions[] = implode('__', [
+    $variables['theme_hook_original'],
+    $view->id(),
+  ]);
+
+  $suggestions[] = implode('__', [
+    $variables['theme_hook_original'],
+    $view->id(),
+    $view->current_display,
+  ]);
 }
