@@ -16,9 +16,9 @@ use Drupal\Core\Url;
 use Drupal\quiz\Entity\Quiz;
 use Drupal\quiz\Entity\QuizQuestionRelationship;
 use Drupal\quiz\Util\QuizUtil;
+use Drupal\quiz\Services\QuizHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use function count;
-use function quiz_get_question_types;
 
 /**
  * Form to manage questions in a quiz.
@@ -27,26 +27,13 @@ class QuizQuestionsForm extends FormBase {
 
   use MessengerTrait;
 
-  /**
-   * QuizQuestionAnsweringForm constructor.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   * @param \Drupal\Core\Routing\RedirectDestinationInterface $destination
-   *   The redirect destination helper.
-   * @param \Drupal\Core\Database\Connection $connection
-   *   The current active database's master connection.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer to use.
-   */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected TimeInterface $time,
     protected RedirectDestinationInterface $destination,
     protected Connection $connection,
     protected RendererInterface $renderer,
+    protected QuizHelper $quizHelper,
   ) {
   }
 
@@ -60,6 +47,7 @@ class QuizQuestionsForm extends FormBase {
       $container->get('redirect.destination'),
       $container->get('database'),
       $container->get('renderer'),
+      $container->get('quiz.helper'),
     );
   }
 
@@ -131,7 +119,7 @@ class QuizQuestionsForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
 
-    $types = quiz_get_question_types();
+    $types = $this->quizHelper->getQuestionTypes();
     $quiz = $form_state->getBuildInfo()['args'][0];
     $this->quizAddFieldsCreatingQuestions($form, $types, $quiz);
 

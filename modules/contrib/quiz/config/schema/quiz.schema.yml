@@ -63,8 +63,6 @@ quiz.feedback.type.*:
     description:
       type: text
       label: 'Description'
-    component:
-      type: rules_component
 
 field.field.*.*.*.third_party.quiz:
   type: mapping
@@ -154,9 +152,6 @@ quiz.settings:
     override_admin_feedback:
       type: boolean
       label: 'Override administrator review options'
-    \Drupal\quiz\Util\QuizUtil::getQuizName():
-      type: string
-      label: 'Display name'
 
 quiz.defaults:
   type: config_object

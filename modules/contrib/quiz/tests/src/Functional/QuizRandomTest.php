@@ -3,15 +3,17 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests for random questions.
  *
  * Since this is random by nature, there is a chance that these will fail. We
  * use 5 layout builds to try and mitigate that chance.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizRandomTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -28,7 +30,7 @@ class QuizRandomTest extends QuizTestBase {
    *
    * @todo add test for weighted questions
    */
-  public function testRandomQuestions() {
+  public function testRandomQuestions(): void {
     $this->drupalLogin($this->admin);
 
     $quiz = $this->createQuiz([

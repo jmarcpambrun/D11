@@ -1,0 +1,8 @@
+quiz.feedback.type.*:
+  type: config_entity
+  label: 'Quiz feedback type (rule)'
+  constraints:
+    FullyValidatable: ~
+  mapping:
+    component:
+      type: rules_component

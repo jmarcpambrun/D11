@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * @file
+ * Update hooks for quiz feedback rules module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function quiz_feedback_rules_install(): void {
+  $config = \Drupal::configFactory()->getEditable('quiz.feedback.end');
+  if (!$config->isNew()) {
+    $config->set('component', [
+      'expression' => [
+        'id' => 'rules_and',
+        'weight' => 0,
+        'conditions' => [
+          [
+            'id' => 'rules_condition',
+            'weight' => 0,
+            'context_values' => [],
+            'context_mapping' => [
+              'data' => 'quiz_result.time_end',
+            ],
+            'context_processors' => [],
+            'provides_mapping' => [],
+            'condition_id' => 'rules_data_is_empty',
+            'negate' => FALSE,
+          ],
+        ],
+      ],
+      'context_definitions' => [
+        'quiz_result' => [
+          'type' => 'entity:quiz_result',
+          'label' => 'Quiz result',
+          'description' => 'Quiz result to evaluate feedback',
+        ],
+      ],
+      'provided_context_definitions' => [],
+    ]);
+    $config->save();
+
+    $config = \Drupal::configFactory()->getEditable('quiz.feedback.question');
+    if (!$config->isNew()) {
+      $config->set('component', [
+        'expression' => [
+          'id' => 'rules_and',
+          'weight' => 0,
+          'conditions' => [
+            [
+              'id' => 'rules_condition',
+              'weight' => 0,
+              'context_values' => [],
+              'context_mapping' => [
+                'data' => 'quiz_result.time_end',
+              ],
+              'context_processors' => [],
+              'provides_mapping' => [],
+              'condition_id' => 'rules_data_is_empty',
+              'negate' => FALSE,
+            ],
+          ],
+        ],
+        'context_definitions' => [
+          'quiz_result' => [
+            'type' => 'entity:quiz_result',
+            'label' => 'Quiz result',
+            'description' => 'Quiz result to evaluate feedback',
+          ],
+        ],
+        'provided_context_definitions' => [],
+      ]);
+
+      $config->save();
+    }
+  }
+
+}

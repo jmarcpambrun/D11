@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\quiz\Form;
+namespace Drupal\quiz_feedback_rules\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;

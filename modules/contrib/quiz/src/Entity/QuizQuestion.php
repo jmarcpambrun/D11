@@ -8,67 +8,67 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\quiz\QuizQuestionInterface;
 use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the Quiz question entity class.
- *
- * @ContentEntityType(
- *   id = "quiz_question",
- *   label = @Translation("Quiz question"),
- *   label_collection = @Translation("Quiz question"),
- *   label_singular = @Translation("quiz question"),
- *   label_plural = @Translation("quiz questions"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz questions",
- *     plural = "@count quiz questions",
- *   ),
- *   bundle_label = @Translation("Quiz question type"),
- *   bundle_entity_type = "quiz_question_type",
- *   admin_permission = "administer quiz_question",
- *   permission_granularity = "bundle",
- *   base_table = "quiz_question",
- *   fieldable = TRUE,
- *   field_ui_base_route = "entity.quiz_question_type.edit_form",
- *   show_revision_ui = TRUE,
- *   revision_table = "quiz_question_revision",
- *   revision_data_table = "quiz_question_field_revision",
- *   entity_keys = {
- *     "id" = "qqid",
- *     "revision" = "vid",
- *     "bundle" = "type",
- *     "label" = "title",
- *     "published" = "status",
- *     "uuid" = "uuid",
- *     "owner" = "uid",
- *   },
- *   revision_metadata_keys = {
- *     "revision_user" = "revision_uid",
- *     "revision_created" = "revision_timestamp",
- *     "revision_log_message" = "revision_log"
- *   },
- *   handlers = {
- *     "list_builder" = "Drupal\quiz\Config\Entity\QuizQuestionListBuilder",
- *     "access" = "Drupal\entity\UncacheableEntityAccessControlHandler",
- *     "permission_provider" = "Drupal\entity\UncacheableEntityPermissionProvider",
- *     "route_provider" = {
- *       "html" = "Drupal\entity\Routing\AdminHtmlRouteProvider",
- *     },
- *    "form" = {
- *       "default" = "Drupal\quiz\Form\QuizQuestionEntityForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *     },
- *     "views_data" = "Drupal\entity\EntityViewsData",
- *   },
- *   links = {
- *     "canonical" = "/quiz-question/{quiz_question}",
- *     "add-page" = "/quiz-question/add",
- *     "add-form" = "/quiz-question/add/{quiz_question_type}",
- *     "edit-form" = "/quiz-question/{quiz_question}/edit",
- *     "delete-form" = "/quiz-question/{quiz_question}/delete",
- *     "collection" = "/admin/quiz/questions",
- *   }
- * )
  */
+#[ContentEntityType(
+  id: "quiz_question",
+  label: new TranslatableMarkup("Quiz question"),
+  label_collection: new TranslatableMarkup("Quiz question"),
+  label_singular: new TranslatableMarkup("quiz question"),
+  label_plural: new TranslatableMarkup("quiz questions"),
+  entity_keys: [
+    "id" => "qqid",
+    "revision" => "vid",
+    "bundle" => "type",
+    "label" => "title",
+    "published" => "status",
+    "uuid" => "uuid",
+    "owner" => "uid",
+  ],
+  handlers: [
+    "list_builder" => "Drupal\\quiz\\Config\\Entity\\QuizQuestionListBuilder",
+    "access" => "Drupal\\entity\\UncacheableEntityAccessControlHandler",
+    "permission_provider" => "Drupal\\entity\\UncacheableEntityPermissionProvider",
+    "route_provider" => [
+      "html" => "Drupal\\entity\\Routing\\AdminHtmlRouteProvider",
+    ],
+    "form" => [
+      "default" => "Drupal\\quiz\\Form\\QuizQuestionEntityForm",
+      "delete" => "Drupal\\Core\\Entity\\ContentEntityDeleteForm",
+    ],
+    "views_data" => "Drupal\\entity\\EntityViewsData",
+  ],
+  links: [
+    "canonical" => "/quiz-question/{quiz_question}",
+    "add-page" => "/quiz-question/add",
+    "add-form" => "/quiz-question/add/{quiz_question_type}",
+    "edit-form" => "/quiz-question/{quiz_question}/edit",
+    "delete-form" => "/quiz-question/{quiz_question}/delete",
+    "collection" => "/admin/quiz/questions",
+  ],
+  admin_permission: "administer quiz_question",
+  permission_granularity: "bundle",
+  bundle_entity_type: "quiz_question_type",
+  bundle_label: new TranslatableMarkup("Quiz question type"),
+  base_table: "quiz_question",
+  revision_table: "quiz_question_revision",
+  revision_data_table: "quiz_question_field_revision",
+  show_revision_ui: TRUE,
+  label_count: [
+    'singular' => '@count quiz question',
+    'plural' => '@count quiz questions',
+  ],
+  field_ui_base_route: "entity.quiz_question_type.edit_form",
+  revision_metadata_keys: [
+    "revision_user" => "revision_uid",
+    "revision_created" => "revision_timestamp",
+    "revision_log_message" => "revision_log",
+  ],
+)]
 class QuizQuestion extends EditorialContentEntityBase implements QuizQuestionInterface, EntityOwnerInterface {
 
   /**

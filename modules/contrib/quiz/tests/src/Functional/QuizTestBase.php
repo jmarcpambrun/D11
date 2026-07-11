@@ -8,7 +8,6 @@ use Drupal\Tests\BrowserTestBase;
 use Drupal\quiz\Entity\Quiz;
 use Drupal\quiz\Entity\QuizQuestion;
 use Drupal\user\UserInterface;
-use function quiz_get_feedback_options;
 
 /**
  * Base test class for Quiz questions.
@@ -73,10 +72,6 @@ abstract class QuizTestBase extends BrowserTestBase {
       'format' => 'basic_html',
       'editor' => 'ckeditor5',
     ])->save();
-    Editor::create([
-      'format' => 'restricted_html',
-      'editor' => 'ckeditor5',
-    ])->save();
     FilterFormat::create([
       'format' => 'full_html',
       'name' => 'Full HTML',
@@ -94,11 +89,9 @@ abstract class QuizTestBase extends BrowserTestBase {
     // Unevaluated results view is tied to this.
     $admin_permissions[] = 'update any quiz_result';
     $admin_permissions[] = 'use text format basic_html';
-    $admin_permissions[] = 'use text format restricted_html';
     $admin_permissions[] = 'use text format full_html';
 
     $user_permissions[] = 'use text format basic_html';
-    $user_permissions[] = 'use text format restricted_html';
     $user_permissions[] = 'access quiz';
     $user_permissions[] = 'view any quiz';
     $user_permissions[] = 'view own quiz_result';
@@ -149,7 +142,7 @@ abstract class QuizTestBase extends BrowserTestBase {
       'body' => 'Quiz description',
       'type' => 'quiz',
       'result_type' => 'quiz_result',
-      'review_options' => ['end' => array_combine(array_keys(quiz_get_feedback_options()), array_keys(quiz_get_feedback_options()))],
+      'review_options' => ['end' => array_combine(array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()), array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()))],
     ];
     $quiz = Quiz::create($settings);
     $quiz->save();

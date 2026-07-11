@@ -9,8 +9,8 @@ use Drupal\views\Attribute\ViewsField;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\Plugin\views\field\PrerenderList;
 use Drupal\views\ViewExecutable;
+use Drupal\quiz\Services\QuizHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use function quiz_get_question_types;
 
 /**
  * QuizResultAnswerField handler.
@@ -23,19 +23,7 @@ use function quiz_get_question_types;
 #[ViewsField("quiz_result_answer")]
 class QuizResultAnswerField extends PrerenderList {
 
-  /**
-   * Constructs a \Drupal\user\Plugin\views\field\Roles object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected EntityTypeManagerInterface $entityTypeManager, protected QuizHelper $quizHelper) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
 
@@ -48,6 +36,7 @@ class QuizResultAnswerField extends PrerenderList {
       $plugin_id,
       $plugin_definition,
       $container->get('entity_type.manager'),
+      $container->get('quiz.helper'),
     );
   }
 
@@ -110,7 +99,7 @@ class QuizResultAnswerField extends PrerenderList {
 
     $qqid = $this->options['qqid'];
     $question = QuizQuestion::load($qqid);
-    $info = quiz_get_question_types();
+    $info = $this->quizHelper->getQuestionTypes();
     $className = $info[$question->bundle()]['handlers']['response'];
 
     if ($result_ids) {

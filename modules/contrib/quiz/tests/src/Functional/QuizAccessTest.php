@@ -4,6 +4,8 @@ namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz_short_answer\Plugin\quiz\QuizQuestion\ShortAnswerQuestion;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * @file
@@ -12,9 +14,9 @@ use Drupal\quiz_short_answer\Plugin\quiz\QuizQuestion\ShortAnswerQuestion;
 
 /**
  * Test aspects of quiz access and permissions.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizAccessTest extends QuizTestBase {
 
   use StringTranslationTrait;

@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test question navigation.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizNavigationTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -25,7 +27,7 @@ class QuizNavigationTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ResponseTextException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuestionNavigationBasic() {
+  public function testQuestionNavigationBasic(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz();
 
@@ -75,7 +77,7 @@ class QuizNavigationTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuestionNavigationJumping() {
+  public function testQuestionNavigationJumping(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz();
 
@@ -155,7 +157,7 @@ class QuizNavigationTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuestionNavigationSkipping() {
+  public function testQuestionNavigationSkipping(): void {
     $this->drupalLogin($this->admin);
     // Default behavior, anyway.
     $quiz_node = $this->createQuiz(['allow_skipping' => 1]);
@@ -203,7 +205,7 @@ class QuizNavigationTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuestionNavigationBackwards() {
+  public function testQuestionNavigationBackwards(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz([
       'backwards_navigation' => 0,

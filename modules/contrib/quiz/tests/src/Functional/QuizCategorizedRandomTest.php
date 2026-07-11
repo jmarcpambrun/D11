@@ -7,15 +7,17 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests for random questions.
  *
  * Since this is random by nature, there is a chance that these will fail. We
  * use 5 layout builds to try and mitigate that chance.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizCategorizedRandomTest extends QuizTestBase {
 
   /**
@@ -31,7 +33,7 @@ class QuizCategorizedRandomTest extends QuizTestBase {
    *
    * @todo add test for weighted questions
    */
-  public function testCategorizedRandomQuestions() {
+  public function testCategorizedRandomQuestions(): void {
     // Vocabs.
     $v1 = Vocabulary::create(['name' => 'Vocab 1', 'vid' => 'vocab1']);
     $v1->save();

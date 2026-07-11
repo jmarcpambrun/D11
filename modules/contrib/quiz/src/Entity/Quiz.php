@@ -14,76 +14,76 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
 use function count;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the Quiz entity class.
- *
- * @ContentEntityType(
- *   id = "quiz",
- *   label = @Translation("Quiz"),
- *   label_collection = @Translation("Quiz"),
- *   label_singular = @Translation("quiz"),
- *   label_plural = @Translation("quizzes"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz",
- *     plural = "@count quizzes",
- *   ),
- *   bundle_label = @Translation("Quiz type"),
- *   bundle_entity_type = "quiz_type",
- *   admin_permission = "administer quiz",
- *   permission_granularity = "bundle",
- *   base_table = "quiz",
- *   fieldable = TRUE,
- *   field_ui_base_route = "entity.quiz_type.edit_form",
- *   show_revision_ui = TRUE,
- *   revision_table = "quiz_revision",
- *   revision_data_table = "quiz_field_revision",
- *   entity_keys = {
- *     "id" = "qid",
- *     "revision" = "vid",
- *     "bundle" = "type",
- *     "label" = "title",
- *     "published" = "status",
- *     "owner" = "uid",
- *     "uuid" = "uuid",
- *   },
- *   revision_metadata_keys = {
- *     "revision_user" = "revision_user",
- *     "revision_created" = "revision_created",
- *     "revision_log_message" = "revision_log_message",
- *   },
- *   handlers = {
- *     "view_builder" = "Drupal\quiz\View\QuizViewBuilder",
- *     "list_builder" = "Drupal\quiz\Config\Entity\QuizListBuilder",
- *     "access" = "Drupal\quiz\Access\QuizAccessControlHandler",
- *     "permission_provider" = "Drupal\entity\UncacheableEntityPermissionProvider",
- *     "route_provider" = {
- *       "html" = "Drupal\entity\Routing\AdminHtmlRouteProvider",
- *       "revision" = "\Drupal\entity\Routing\RevisionRouteProvider",
- *     },
- *    "form" = {
- *       "default" = "Drupal\quiz\Form\QuizEntityForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *     },
- *     "views_data" = "Drupal\quiz\Entity\QuizViewsData",
- *     "local_task_provider" = {
- *       "default" = "\Drupal\entity\Menu\DefaultEntityLocalTaskProvider",
- *     },
- *     "storage" = "Drupal\quiz\Storage\QuizStorage"
- *   },
- *   links = {
- *     "canonical" = "/quiz/{quiz}",
- *     "add-page" = "/quiz/add",
- *     "add-form" = "/quiz/add/{quiz_type}",
- *     "edit-form" = "/quiz/{quiz}/edit",
- *     "delete-form" = "/quiz/{quiz}/delete",
- *     "collection" = "/admin/quiz/quizzes",
- *     "take" = "/quiz/{quiz}/take",
- *     "version-history" = "/quiz/{quiz}/revisions",
- *     "revision" = "/quiz/{quiz}/revisions/{quiz_revision}/view",
- *   }
- * )
  */
+#[ContentEntityType(
+  id: "quiz",
+  label: new TranslatableMarkup("Quiz"),
+  label_collection: new TranslatableMarkup("Quiz"),
+  label_singular: new TranslatableMarkup("quiz"),
+  label_plural: new TranslatableMarkup("quizzes"),
+  entity_keys: [
+    "id" => "qid",
+    "revision" => "vid",
+    "bundle" => "type",
+    "label" => "title",
+    "published" => "status",
+    "owner" => "uid",
+    "uuid" => "uuid",
+  ],
+  handlers: [
+    "view_builder" => "Drupal\\quiz\\View\\QuizViewBuilder",
+    "list_builder" => "Drupal\\quiz\\Config\\Entity\\QuizListBuilder",
+    "access" => "Drupal\\quiz\\Access\\QuizAccessControlHandler",
+    "permission_provider" => "Drupal\\entity\\UncacheableEntityPermissionProvider",
+    "route_provider" => [
+      "html" => "Drupal\\entity\\Routing\\AdminHtmlRouteProvider",
+      "revision" => "Drupal\\entity\\Routing\\RevisionRouteProvider",
+    ],
+    "form" => [
+      "default" => "Drupal\\quiz\\Form\\QuizEntityForm",
+      "delete" => "Drupal\\Core\\Entity\\ContentEntityDeleteForm",
+    ],
+    "views_data" => "Drupal\\quiz\\Entity\\QuizViewsData",
+    "local_task_provider" => [
+      "default" => "Drupal\\entity\\Menu\\DefaultEntityLocalTaskProvider",
+    ],
+    "storage" => "Drupal\\quiz\\Storage\\QuizStorage",
+  ],
+  links: [
+    "canonical" => "/quiz/{quiz}",
+    "add-page" => "/quiz/add",
+    "add-form" => "/quiz/add/{quiz_type}",
+    "edit-form" => "/quiz/{quiz}/edit",
+    "delete-form" => "/quiz/{quiz}/delete",
+    "collection" => "/admin/quiz/quizzes",
+    "take" => "/quiz/{quiz}/take",
+    "version-history" => "/quiz/{quiz}/revisions",
+    "revision" => "/quiz/{quiz}/revisions/{quiz_revision}/view",
+  ],
+  admin_permission: "administer quiz",
+  permission_granularity: "bundle",
+  bundle_entity_type: "quiz_type",
+  bundle_label: new TranslatableMarkup("Quiz type"),
+  base_table: "quiz",
+  revision_table: "quiz_revision",
+  revision_data_table: "quiz_field_revision",
+  show_revision_ui: TRUE,
+  label_count: [
+    'singular' => '@count quiz',
+    'plural' => '@count quizzes',
+  ],
+  field_ui_base_route: "entity.quiz_type.edit_form",
+  revision_metadata_keys: [
+    "revision_user" => "revision_user",
+    "revision_created" => "revision_created",
+    "revision_log_message" => "revision_log_message",
+  ],
+)]
 class Quiz extends EditorialContentEntityBase implements EntityChangedInterface, EntityOwnerInterface, RevisionLogInterface, EntityPublishedInterface {
 
   /**
@@ -537,13 +537,13 @@ class Quiz extends EditorialContentEntityBase implements EntityChangedInterface,
     }
     else {
       // Get required questions first.
-      $query = \Drupal::database()->query('SELECT qqr.question_id as qqid, qqr.question_vid as vid, qq.type, qqr.qqr_id, qqr.qqr_pid, qq.title
+      $query = \Drupal::database()->query('SELECT qqr.question_id AS qqid, qqr.question_vid AS vid, qq.type, qqr.qqr_id, qqr.qqr_pid, qq.title, COALESCE(qqr2.weight, qqr.weight) AS parent_weight
     FROM {quiz_question_relationship} qqr
     JOIN {quiz_question} qq ON qqr.question_id = qq.qqid
-    LEFT JOIN {quiz_question_relationship} qqr2 ON (qqr.qqr_pid = qqr2.qqr_id OR (qqr.qqr_pid IS NULL AND qqr.qqr_id = qqr2.qqr_id))
+    LEFT JOIN {quiz_question_relationship} qqr2 ON qqr.qqr_pid = qqr2.qqr_id
     WHERE qqr.quiz_vid = :quiz_vid
     AND qqr.question_status = :question_status
-    ORDER BY qqr2.weight, qqr.weight, qq.qqid', [
+    ORDER BY parent_weight, qqr.weight, qq.qqid', [
       ':quiz_vid' => $this->getRevisionId(),
       ':question_status' => QuizQuestion::QUESTION_ALWAYS,
     ]);

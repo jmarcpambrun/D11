@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test the quiz timer.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizTimerTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -20,9 +22,12 @@ class QuizTimerTest extends QuizTestBase {
 
   /**
    * Test quiz timer expiration.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function testQuizTimer() {
-    // Set up a quiz to show us feedback, 30 second expiration.
+  public function testQuizTimer(): void {
+    // Set up a quiz to show us feedback, 30-second expiration.
     $quiz = $this->createQuiz([
       'review_options' => ['end' => ['score' => 'score']],
       'time_limit' => 30,
@@ -57,11 +62,11 @@ class QuizTimerTest extends QuizTestBase {
     ], (string) $this->t('Next'));
     $this->assertSession()->pageTextNotContains($this->t('The last answer was not submitted, as the time ran out.'));
 
-    // Set the quiz result to have started 31 seconds ago.
+    // Set the quiz result to have started well past the time limit + buffer.
     \Drupal::database()
       ->query('UPDATE {quiz_result} SET time_start = :time', [
         ':time' => \Drupal::time()
-          ->getRequestTime() - 31,
+          ->getRequestTime() - 60,
       ]);
     \Drupal::entityTypeManager()->getStorage('quiz_result')->resetCache();
 

@@ -21,6 +21,7 @@ use Drupal\quiz\Entity\Quiz;
 use Drupal\quiz\Entity\QuizResultAnswer;
 use Drupal\quiz\Form\QuizQuestionAnsweringForm;
 use Drupal\quiz\Form\QuizQuestionFeedbackForm;
+use Drupal\quiz\Services\QuizHelper;
 use Drupal\quiz\Services\QuizSessionInterface;
 use Drupal\quiz\Util\QuizUtil;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -31,34 +32,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class QuizQuestionController extends EntityController {
 
-  /**
-   * Constructs a new EntityController.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
-   *   The entity type bundle info.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
-   *   The entity repository.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation.
-   * @param \Drupal\Core\Routing\UrlGeneratorInterface $url_generator
-   *   The URL generator.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
-   *   The route match.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *   The request stack.
-   * @param \Drupal\quiz\Services\QuizSessionInterface $quizSession
-   *   The quiz session service.
-   * @param \Drupal\Core\Form\FormBuilderInterface $formBuilder
-   *   The form builder service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   An immutable configuration object.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
@@ -72,6 +45,7 @@ class QuizQuestionController extends EntityController {
     protected FormBuilderInterface $formBuilder,
     protected ConfigFactoryInterface $configFactory,
     protected TimeInterface $time,
+    protected QuizHelper $quizHelper,
   ) {
     parent::__construct(
       $entity_type_manager,
@@ -102,6 +76,7 @@ class QuizQuestionController extends EntityController {
       $container->get('form_builder'),
       $container->get('config.factory'),
       $container->get('datetime.time'),
+      $container->get('quiz.helper'),
     );
   }
 
@@ -204,7 +179,7 @@ class QuizQuestionController extends EntityController {
       }
       else {
         // Show a pager because a large select box is not fun.
-        $siblings = $this->configFactory->get('quiz.settings')->get('pager_siblings');
+        $siblings = (int) $this->configFactory->get('quiz.settings')->get('pager_siblings');
         $items[] = [
           '#wrapper_attributes' => ['class' => ['pager__item', 'pager-first']],
           'data' => Link::createFromRoute($this->t('first'), 'quiz.question.take', [
@@ -212,7 +187,7 @@ class QuizQuestionController extends EntityController {
             'question_number' => 1,
           ])->toRenderable(),
         ];
-        foreach (_quiz_pagination_helper(count($questions), 1, $current_page, $siblings) as $i) {
+        foreach ($this->quizHelper->paginationHelper(count($questions), 1, $current_page, $siblings) as $i) {
           if ($i == $current_page) {
             $items[] = [
               '#wrapper_attributes' => [

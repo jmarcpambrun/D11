@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test aspects of quiz creation.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizCreationTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -23,7 +25,7 @@ class QuizCreationTest extends QuizTestBase {
    *
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuizCreation() {
+  public function testQuizCreation(): void {
     $this->drupalLogin($this->admin);
     $this->drupalGet("quiz/add/quiz");
 
@@ -51,7 +53,7 @@ class QuizCreationTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testCloneQuiz() {
+  public function testCloneQuiz(): void {
     $this->drupalLogin($this->admin);
     $question = $this->createQuestion([
       'title' => 'TF 1',

@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz resume functionality.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizResumeTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -24,7 +26,7 @@ class QuizResumeTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuizResuming() {
+  public function testQuizResuming(): void {
     $this->drupalLogin($this->admin);
     // Resuming is default behavior.
     $quiz_node = $this->createQuiz(['allow_resume' => 1, 'takes' => 1]);

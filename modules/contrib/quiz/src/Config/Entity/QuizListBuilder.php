@@ -14,17 +14,9 @@ class QuizListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function render(): array {
-    $build = parent::render();
-    $build['table']['#caption'] = $this->t('Quiz.');
-    return $build;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function buildHeader(): array {
     $header['label'] = $this->t('Quiz');
+    $header['type'] = $this->t('Type');
     return $header + parent::buildHeader();
   }
 
@@ -33,6 +25,7 @@ class QuizListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity): array {
     $row['label'] = $entity->toLink(NULL, 'edit-form');
+    $row['type'] = $entity->bundle();
     return $row + parent::buildRow($entity);
   }
 

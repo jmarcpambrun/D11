@@ -9,12 +9,14 @@ use Drupal\quiz\Entity\QuizQuestion;
 use Drupal\quiz\Entity\QuizQuestionRelationship;
 use Drupal\quiz\Entity\QuizResult;
 use Drupal\quiz\Entity\QuizResultAnswer;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz results behavior.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizResultTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -30,7 +32,7 @@ class QuizResultTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testPassRateSummary() {
+  public function testPassRateSummary(): void {
     // Set up some alternatives.
     $a = Paragraph::create([
       'type' => 'quiz_result_feedback',
@@ -154,7 +156,7 @@ class QuizResultTest extends QuizTestBase {
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function testQuizResultCrud() {
+  public function testQuizResultCrud(): void {
     $this->drupalLogin($this->admin);
 
     $question1 = $this->createQuestion([
@@ -206,7 +208,7 @@ class QuizResultTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuizResultAccess() {
+  public function testQuizResultAccess(): void {
     $this->drupalLogin($this->admin);
 
     $question1 = $this->createQuestion([
@@ -237,7 +239,7 @@ class QuizResultTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuizResultAnswerExport() {
+  public function testQuizResultAnswerExport(): void {
 
     // Set up some alternatives.
     $a = Paragraph::create([
@@ -296,7 +298,7 @@ class QuizResultTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testBrokenResults() {
+  public function testBrokenResults(): void {
     $this->drupalLogin($this->admin);
 
     $question1 = $this->createQuestion([

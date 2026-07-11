@@ -6,41 +6,41 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the Quiz entity class.
- *
- * @ContentEntityType(
- *   id = "quiz_question_relationship",
- *   label = @Translation("Quiz question relationship"),
- *   label_collection = @Translation("Quiz question relationship"),
- *   label_singular = @Translation("quiz question relationship"),
- *   label_plural = @Translation("quiz question relationships"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz question relationship",
- *     plural = "@count quiz question relationships",
- *   ),
- *   admin_permission = "administer quiz",
- *   base_table = "quiz_question_relationship",
- *   fieldable = FALSE,
- *   entity_keys = {
- *     "id" = "qqr_id",
- *   },
- *   handlers = {
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *     },
- *     "views_data" = "Drupal\entity\EntityViewsData",
- *     "form" = {
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *     },
- *   },
- *   links = {
- *     "canonical" = "/quiz-question-relationship/{quiz_question_relationship}",
- *     "delete-form" = "/quiz-question-relationship/{quiz_question_relationship}/delete",
- *   }
- * )
  */
+#[ContentEntityType(
+  id: "quiz_question_relationship",
+  label: new TranslatableMarkup("Quiz question relationship"),
+  label_collection: new TranslatableMarkup("Quiz question relationship"),
+  label_singular: new TranslatableMarkup("quiz question relationship"),
+  label_plural: new TranslatableMarkup("quiz question relationships"),
+  entity_keys: [
+    "id" => "qqr_id",
+  ],
+  handlers: [
+    "route_provider" => [
+      "html" => "Drupal\\Core\\Entity\\Routing\\AdminHtmlRouteProvider",
+    ],
+    "views_data" => "Drupal\\entity\\EntityViewsData",
+    "form" => [
+      "delete" => "Drupal\\Core\\Entity\\ContentEntityDeleteForm",
+    ],
+  ],
+  links: [
+    "canonical" => "/quiz-question-relationship/{quiz_question_relationship}",
+    "delete-form" => "/quiz-question-relationship/{quiz_question_relationship}/delete",
+  ],
+  admin_permission: "administer quiz",
+  base_table: "quiz_question_relationship",
+  label_count: [
+    'singular' => '@count quiz question relationship',
+    'plural' => '@count quiz question relationships',
+  ],
+)]
 class QuizQuestionRelationship extends ContentEntityBase {
 
   /**

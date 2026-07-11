@@ -41,7 +41,7 @@ abstract class QuizQuestionTestBase extends QuizTestBase {
   /**
    * Test the subclass's quiz question implementation.
    */
-  public function testQuizQuestionImplementation() {
+  public function testQuizQuestionImplementation(): void {
     $qq = \Drupal::service('plugin.manager.quiz.question')->getDefinitions();
     $this->assertTrue(isset($qq[$this->getQuestionType()]), $this->t('Check that the question implementation is correct.'));
   }

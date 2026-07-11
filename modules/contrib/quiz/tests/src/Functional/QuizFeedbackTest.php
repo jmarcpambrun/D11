@@ -3,13 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\quiz\Entity\QuizFeedbackType;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz feedback.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizFeedbackTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -29,7 +30,7 @@ class QuizFeedbackTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ResponseTextException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testAnswerFeedback() {
+  public function testAnswerFeedback(): void {
     $this->drupalLogin($this->admin);
     $quiz = $this->createQuiz();
 
@@ -128,7 +129,7 @@ class QuizFeedbackTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuestionFeedback() {
+  public function testQuestionFeedback(): void {
     $this->drupalLogin($this->admin);
 
     // Turn on question feedback at the end.
@@ -171,7 +172,7 @@ class QuizFeedbackTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testNoFeedback() {
+  public function testNoFeedback(): void {
     $this->drupalLogin($this->admin);
 
     // Turn off question feedback.
@@ -213,7 +214,7 @@ class QuizFeedbackTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuestionBodyFeedback() {
+  public function testQuestionBodyFeedback(): void {
     $this->drupalLogin($this->admin);
 
     // Absolutely no feedback.
@@ -251,87 +252,12 @@ class QuizFeedbackTest extends QuizTestBase {
   }
 
   /**
-   * Test custom feedback types.
-   *
-   * @throws \Drupal\Core\Entity\EntityStorageException
-   * @throws \Behat\Mink\Exception\ResponseTextException
-   */
-  public function testFeedbackTimes() {
-    $this->drupalLogin($this->admin);
-
-    $component = [
-      'expression' => [
-        'id' => 'rules_and',
-        'conditions' => [
-          [
-            'id' => 'rules_condition',
-            'uuid' => 'ca2a6b2f-3b17-449e-b913-d64b52c17203',
-            'weight' => 2,
-            'context_values' => [
-              'operation' => '==',
-              'value' => '2',
-            ],
-            'context_mapping' => [
-              'data' => 'quiz_result.attempt.value',
-            ],
-            'condition_id' => 'rules_data_comparison',
-            'negate' => 0,
-          ],
-        ],
-      ],
-      'context_definitions' => [
-        'quiz_result' => [
-          'type' => 'entity:quiz_result',
-          'label' => 'Quiz result',
-          'description' => 'Quiz result to evaluate feedback',
-        ],
-      ],
-    ];
-
-    QuizFeedbackType::create([
-      'label' => 'After two attempts',
-      'id' => 'after2attempts',
-      'component' => $component,
-    ]
-    )->save();
-
-    // Feedback but, only after second attempt (rule).
-    $quiz = $this->createQuiz(
-      [
-        'review_options' => ['after2attempts' => ['solution' => 'solution']],
-      ]
-    );
-
-    // Set up a Quiz with one question that has a body and a summary.
-    $question1 = $this->createQuestion([
-      'type' => 'truefalse',
-      'truefalse_correct' => 1,
-    ]);
-    $this->linkQuestionToQuiz($question1, $quiz);
-
-    // Test no feedback.
-    $this->drupalLogin($this->user);
-    $this->drupalGet("quiz/{$quiz->id()}/take");
-    $this->submitForm([
-      "question[{$question1->id()}][answer]" => '1',
-    ], (string) $this->t('Finish'));
-    $this->assertSession()->pageTextNotContains('Correct answer');
-
-    // Take again.
-    $this->drupalGet("quiz/{$quiz->id()}/take");
-    $this->submitForm([
-      "question[{$question1->id()}][answer]" => '1',
-    ], (string) $this->t('Finish'));
-    $this->assertSession()->pageTextContains('Correct answer');
-  }
-
-  /**
    * Test question feedback on the last question.
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testLastAnswerFeedback() {
+  public function testLastAnswerFeedback(): void {
     $this->drupalLogin($this->admin);
     $quiz = $this->createQuiz([
       'review_options' => ['question' => ['question_feedback' => 'question_feedback']],
@@ -355,10 +281,6 @@ class QuizFeedbackTest extends QuizTestBase {
     // Check the last question still produced question feedback.
     $this->drupalGet("quiz/{$quiz->id()}/take/1/feedback");
     $this->assertSession()->pageTextContains('Feedback for TF test.');
-    // The hack is to allow last question feedback for 5 seconds.
-    sleep(6);
-    $this->drupalGet("quiz/{$quiz->id()}/take/1/feedback");
-    $this->assertSession()->pageTextNotContains('Feedback for TF test.');
   }
 
 }

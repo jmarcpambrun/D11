@@ -5,12 +5,15 @@ namespace Drupal\Tests\quiz\Functional;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz\Util\QuizUtil;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz taking behavior.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
+
 class QuizTakingTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -137,7 +140,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuizAvailability() {
+  public function testQuizAvailability(): void {
     // Anonymous doesn't have 'access quiz' permissions, so login a user that
     // has that permission.
     $this->drupalLogin($this->user);
@@ -194,7 +197,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testViewQuestionsOutsideQuiz() {
+  public function testViewQuestionsOutsideQuiz(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz();
 
@@ -225,7 +228,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ElementNotFoundException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testChangeAnswer() {
+  public function testChangeAnswer(): void {
     $quiz_node = $this->createQuiz([
       'review_options' => ['question' => ['score' => 'score']],
     ]);
@@ -295,7 +298,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuizMaxAttemptsMessage() {
+  public function testQuizMaxAttemptsMessage(): void {
     $quiz_node = $this->createQuiz([
       'takes' => 2,
     ]);
@@ -329,7 +332,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuizMaxAttempts() {
+  public function testQuizMaxAttempts(): void {
     $quiz_node = $this->createQuiz([
       'takes' => 2,
     ]);
@@ -382,7 +385,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testAnswerSkipped() {
+  public function testAnswerSkipped(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz([
       'allow_skipping' => 1,
@@ -425,7 +428,7 @@ class QuizTakingTest extends QuizTestBase {
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function testAnswerOnOldQuizRevisioning() {
+  public function testAnswerOnOldQuizRevisioning(): void {
     $this->drupalLogin($this->admin);
 
     $question1 = $this->createQuestion([
@@ -467,7 +470,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuestionCount() {
+  public function testQuestionCount(): void {
     $quiz_node = $this->createQuiz([
       'review_options' => ['question' => ['score' => 'score']],
     ]);
@@ -511,7 +514,7 @@ class QuizTakingTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ElementNotFoundException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testMarkDoubtful() {
+  public function testMarkDoubtful(): void {
     $this->drupalLogin($this->admin);
     $quiz_node = $this->createQuiz([
       'allow_skipping' => 1,

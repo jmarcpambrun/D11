@@ -75,7 +75,7 @@ entity.quiz_result_answer_type.collection:
   route_name: entity.quiz_result_answer_type.collection
   weight: 4
 entity.quiz_feedback_type.collection:
-  title: Feedback types
+  title: 'Feedback types'
   route_name: entity.quiz_feedback_type.collection
   description: 'Administer quiz feedback types and conditions.'
   parent: quiz.admin.structure

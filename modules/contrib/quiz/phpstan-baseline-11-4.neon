@@ -1,0 +1,35 @@
+parameters:
+	ignoreErrors:
+		-
+			rawMessage: '''
+				Call to deprecated function filter_default_format():
+				in drupal:11.4.0 and is removed from drupal:13.0.0. Use the
+				  \Drupal\filter\FilterFormatRepositoryInterface service with the
+				  ::getDefaultFormat() method instead.
+			'''
+			identifier: function.deprecated
+			count: 1
+			path: modules/quiz_long_answer/src/Plugin/quiz/QuizQuestion/LongAnswerQuestion.php
+
+		-
+			rawMessage: 'Method Drupal\Core\Entity\Controller\EntityController::__construct() invoked with 8 parameters, 7 required.'
+			identifier: arguments.count
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			rawMessage: 'Method Drupal\Core\Entity\Controller\EntityController::__construct() invoked with 8 parameters, 7 required.'
+			identifier: arguments.count
+			count: 1
+			path: src/Controller/QuizQuestionController.php
+
+		-
+			rawMessage: '''
+				Call to deprecated function filter_default_format():
+				in drupal:11.4.0 and is removed from drupal:13.0.0. Use the
+				  \Drupal\filter\FilterFormatRepositoryInterface service with the
+				  ::getDefaultFormat() method instead.
+			'''
+			identifier: function.deprecated
+			count: 1
+			path: src/Entity/QuizResultAnswer.php

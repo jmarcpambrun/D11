@@ -83,5 +83,13 @@ function quiz_update_9002(): void {
   /** @var \Drupal\Core\Config\StorageInterface $active_storage */
   $active_storage = \Drupal::service('config.storage');
   $active_storage->write($name, $source->read($name));
+}
 
+/**
+ * Install quiz_feedback_rules for BC.
+ */
+function quiz_update_9003(): void {
+  if (!\Drupal::moduleHandler()->moduleExists('quiz_feedback_rules')) {
+    \Drupal::service('module_installer')->install(['quiz_feedback_rules']);
+  }
 }

@@ -4,12 +4,14 @@ namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz\Util\QuizUtil;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz results behavior.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizBuildOnLastTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -25,7 +27,7 @@ class QuizBuildOnLastTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testBuildOnLastAttempt() {
+  public function testBuildOnLastAttempt(): void {
     $this->drupalLogin($this->admin);
 
     // Prepopulate correct answers.

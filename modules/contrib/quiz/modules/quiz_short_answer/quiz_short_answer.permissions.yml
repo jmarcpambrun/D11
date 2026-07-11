@@ -1,0 +1,4 @@
+use regex for short answer:
+  title: 'Use regex for short answer'
+  description: 'Use PHP "regular expressions" the advanced option for automated response evaluation.'
+  restrict access: true

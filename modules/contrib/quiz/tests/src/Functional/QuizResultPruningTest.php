@@ -6,13 +6,15 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
 use Drupal\quiz\Entity\Quiz;
 use Drupal\quiz\Entity\QuizResult;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use function count;
 
 /**
  * Test quiz result pruning behavior.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizResultPruningTest extends QuizTestBase {
 
   use CronRunTrait;
@@ -31,7 +33,7 @@ class QuizResultPruningTest extends QuizTestBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function testResultPruning() {
+  public function testResultPruning(): void {
     $this->drupalLogin($this->admin);
 
     $quiz_node = $this->createQuiz([

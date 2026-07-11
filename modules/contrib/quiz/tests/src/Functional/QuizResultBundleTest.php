@@ -6,12 +6,14 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\quiz\Entity\QuizResultType;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz result bundle and fields behavior.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizResultBundleTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -28,7 +30,7 @@ class QuizResultBundleTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ElementNotFoundException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testFieldableResults() {
+  public function testFieldableResults(): void {
     // Add a field to quiz result and make it required for starting.
     $field_storage = FieldStorageConfig::create([
       'id' => 'quiz_result.quiz_result_field_a',
@@ -95,7 +97,7 @@ class QuizResultBundleTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ElementNotFoundException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuizResultBundles() {
+  public function testQuizResultBundles(): void {
     QuizResultType::create([
       'id' => 'type_a',
       'label' => $this->t('Bundle type A'),

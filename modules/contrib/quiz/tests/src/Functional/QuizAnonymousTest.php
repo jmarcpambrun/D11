@@ -5,14 +5,15 @@ namespace Drupal\Tests\quiz\Functional;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz\Entity\QuizQuestion;
-use function quiz_get_feedback_options;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use function user_role_grant_permissions;
 
 /**
  * Test basic anonymous quiz taking.
- *
- * @group QuizQuestion
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizAnonymousTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -28,7 +29,7 @@ class QuizAnonymousTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testAnonymousQuizTake() {
+  public function testAnonymousQuizTake(): void {
     // Login as our privileged user.
     $this->drupalLogin($this->admin);
 
@@ -53,7 +54,7 @@ class QuizAnonymousTest extends QuizTestBase {
     $quiz->addQuestion($question2)->set('weight', 10)->save();
 
     // Set FB.
-    $quiz->set('review_options', ['end' => array_combine(array_keys(quiz_get_feedback_options()), array_keys(quiz_get_feedback_options()))]);
+    $quiz->set('review_options', ['end' => array_combine(array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()), array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()))]);
     $quiz->save();
 
     // Add permissions for anonymous user to take quizzes.

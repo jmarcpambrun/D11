@@ -4,12 +4,14 @@ namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz\Entity\QuizQuestion;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz revisioning.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizRevisioningTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -27,7 +29,7 @@ class QuizRevisioningTest extends QuizTestBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function testQuizRevisioning() {
+  public function testQuizRevisioning(): void {
     $config = \Drupal::configFactory()->getEditable('quiz.settings');
     $config->set('revisioning', TRUE)->save();
 
@@ -134,7 +136,7 @@ class QuizRevisioningTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuizNoRevisioning() {
+  public function testQuizNoRevisioning(): void {
     $this->drupalLogin($this->admin);
     $question_node = $this->createQuestion([
       'title' => 'Revision 1',

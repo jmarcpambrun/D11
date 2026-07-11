@@ -6,50 +6,50 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\quiz\QuizAnswerInterface;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the Quiz entity class.
- *
- * @ContentEntityType(
- *   id = "quiz_result_answer",
- *   label = @Translation("Quiz result answer"),
- *   label_collection = @Translation("Quiz result answer"),
- *   label_singular = @Translation("quiz result answer"),
- *   label_plural = @Translation("quiz result answers"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz result answer",
- *     plural = "@count quiz result answers",
- *   ),
- *   bundle_label = @Translation("Quiz result answer type"),
- *   bundle_entity_type = "quiz_result_answer_type",
- *   admin_permission = "administer quiz_result_answer",
- *   base_table = "quiz_result_answer",
- *   fieldable = TRUE,
- *   field_ui_base_route = "entity.quiz_result_answer_type.edit_form",
- *   show_revision_ui = FALSE,
- *   entity_keys = {
- *     "id" = "result_answer_id",
- *     "bundle" = "type",
- *     "uuid" = "uuid",
- *   },
- *   handlers = {
- *     "view_builder" = "Drupal\quiz\View\QuizResultAnswerViewBuilder",
- *     "access" = "Drupal\quiz\Access\QuizResultAnswerAccessControlHandler",
- *     "permission_provider" = "Drupal\entity\UncacheableEntityPermissionProvider",
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *     },
- *    "form" = {
- *       "default" = "Drupal\Core\Entity\ContentEntityForm",
- *       "delete" = "Drupal\Core\Entity\EntityDeleteForm",
- *     },
- *     "views_data" = "Drupal\entity\EntityViewsData",
- *   },
- *   links = {
- *     "canonical" = "/quiz/{quiz}/result/{quiz_result}/answer/{quiz_result_answer}",
- *   }
- * )
  */
+#[ContentEntityType(
+  id: "quiz_result_answer",
+  label: new TranslatableMarkup("Quiz result answer"),
+  label_collection: new TranslatableMarkup("Quiz result answer"),
+  label_singular: new TranslatableMarkup("quiz result answer"),
+  label_plural: new TranslatableMarkup("quiz result answers"),
+  entity_keys: [
+    "id" => "result_answer_id",
+    "bundle" => "type",
+    "uuid" => "uuid",
+  ],
+  handlers: [
+    "view_builder" => "Drupal\\quiz\\View\\QuizResultAnswerViewBuilder",
+    "access" => "Drupal\\quiz\\Access\\QuizResultAnswerAccessControlHandler",
+    "permission_provider" => "Drupal\\entity\\UncacheableEntityPermissionProvider",
+    "route_provider" => [
+      "html" => "Drupal\\Core\\Entity\\Routing\\AdminHtmlRouteProvider",
+    ],
+    "form" => [
+      "default" => "Drupal\\Core\\Entity\\ContentEntityForm",
+      "delete" => "Drupal\\Core\\Entity\\EntityDeleteForm",
+    ],
+    "views_data" => "Drupal\\entity\\EntityViewsData",
+  ],
+  links: [
+    "canonical" => "/quiz/{quiz}/result/{quiz_result}/answer/{quiz_result_answer}",
+  ],
+  admin_permission: "administer quiz_result_answer",
+  bundle_entity_type: "quiz_result_answer_type",
+  bundle_label: new TranslatableMarkup("Quiz result answer type"),
+  base_table: "quiz_result_answer",
+  show_revision_ui: FALSE,
+  label_count: [
+    'singular' => '@count quiz result answer',
+    'plural' => '@count quiz result answers',
+  ],
+  field_ui_base_route: "entity.quiz_result_answer_type.edit_form",
+)]
 class QuizResultAnswer extends ContentEntityBase implements QuizAnswerInterface {
 
   use QuizResultAnswerEntityTrait;

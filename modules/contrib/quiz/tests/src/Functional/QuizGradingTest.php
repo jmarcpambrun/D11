@@ -5,12 +5,14 @@ namespace Drupal\Tests\quiz\Functional;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\quiz\Entity\QuizResult;
 use Drupal\quiz_short_answer\Plugin\quiz\QuizQuestion\ShortAnswerQuestion;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz grading.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizGradingTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -26,7 +28,7 @@ class QuizGradingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testWeightedScore() {
+  public function testWeightedScore(): void {
     $this->drupalLogin($this->admin);
 
     $question1 = $this->createQuestion([
@@ -98,7 +100,7 @@ class QuizGradingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testManualWeightedScore() {
+  public function testManualWeightedScore(): void {
     $question1 = $this->createQuestion([
       'body' => 'What is the answer to everything?',
       'type' => 'short_answer',

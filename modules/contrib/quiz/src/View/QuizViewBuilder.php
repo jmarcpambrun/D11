@@ -14,6 +14,7 @@ use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\quiz\Entity\Quiz;
+use Drupal\quiz\Services\QuizHelper;
 use Drupal\quiz\Util\QuizUtil;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -24,24 +25,6 @@ class QuizViewBuilder extends EntityViewBuilder {
 
   use MessengerTrait;
 
-  /**
-   * Constructs a new EntityViewBuilder.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
-   *   The entity repository service.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
-   *   The language manager.
-   * @param \Drupal\Core\Theme\Registry $theme_registry
-   *   The theme registry.
-   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
-   *   The entity display repository.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
-   *   The currently active route match object.
-   * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
-   *   The date formatter service.
-   */
   public function __construct(
     EntityTypeInterface $entity_type,
     EntityRepositoryInterface $entity_repository,
@@ -50,6 +33,7 @@ class QuizViewBuilder extends EntityViewBuilder {
     EntityDisplayRepositoryInterface $entity_display_repository,
     protected RouteMatchInterface $routeMatch,
     protected DateFormatterInterface $dateFormatter,
+    protected QuizHelper $quizHelper,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -65,7 +49,8 @@ class QuizViewBuilder extends EntityViewBuilder {
       $container->get('theme.registry'),
       $container->get('entity_display.repository'),
       $container->get('current_route_match'),
-      $container->get('date.formatter')
+      $container->get('date.formatter'),
+      $container->get('quiz.helper'),
     );
     $view_builder->setMessenger($container->get('messenger'));
     return $view_builder;
@@ -155,16 +140,16 @@ class QuizViewBuilder extends EntityViewBuilder {
       ];
     }
 
-    if (!$quiz->get('time_limit')->isEmpty()) {
+    if ($quiz->get('time_limit')->value) {
       $stats[] = [
         ['header' => TRUE, 'data' => $this->t('Time limit')],
-        _quiz_format_duration($quiz->get('time_limit')->value),
+        $this->quizHelper->formatDuration($quiz->get('time_limit')->value),
       ];
     }
 
     $stats[] = [
       ['header' => TRUE, 'data' => $this->t('Backwards navigation')],
-      $quiz->get('backwards_navigation') ? $this->t('Allowed') : $this->t('Forbidden'),
+      $quiz->get('backwards_navigation')->value ? $this->t('Allowed') : $this->t('Forbidden'),
     ];
 
     return [

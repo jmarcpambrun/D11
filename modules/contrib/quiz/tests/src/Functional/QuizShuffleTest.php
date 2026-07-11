@@ -3,15 +3,17 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests for random questions.
  *
  * Since this is random by nature, there is a chance that these will fail. We
  * use 5 layout builds to try and mitigate that chance.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizShuffleTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -24,7 +26,7 @@ class QuizShuffleTest extends QuizTestBase {
   /**
    * Test random order of questions.
    */
-  public function testShuffle() {
+  public function testShuffle(): void {
     $this->drupalLogin($this->admin);
 
     $quiz = $this->createQuiz([
@@ -81,7 +83,7 @@ class QuizShuffleTest extends QuizTestBase {
   /**
    * Test that questions inside of pages are shuffled.
    */
-  public function testShuffleInPages() {
+  public function testShuffleInPages(): void {
     $this->drupalLogin($this->admin);
 
     $quiz = $this->createQuiz([

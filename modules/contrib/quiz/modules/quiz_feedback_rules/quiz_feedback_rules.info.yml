@@ -1,0 +1,14 @@
+name: Quiz Feedback Rule Integration
+type: module
+package: Quiz core
+description: Contains rules integration for quiz feedback.
+core_version_requirement: ^11.3 || ^12
+dependencies:
+  - quiz:quiz
+  - rules:rules
+configure: quiz.admin
+
+# Information added by Drupal.org packaging script on 2026-07-10
+version: '8.0.0-alpha1'
+project: 'quiz'
+datestamp: 1783696537

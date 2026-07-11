@@ -5,12 +5,14 @@ namespace Drupal\Tests\quiz\Functional;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\quiz\Entity\QuizQuestion;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test quiz repeat until correct.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizRepeatUntilCorrectTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -29,7 +31,7 @@ class QuizRepeatUntilCorrectTest extends QuizTestBase {
    * @throws \Behat\Mink\Exception\ResponseTextException
    * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testQuestionRepeatUntilCorrect() {
+  public function testQuestionRepeatUntilCorrect(): void {
     $this->drupalLogin($this->admin);
     $quiz = $this->createQuiz([
       'repeat_until_correct' => 1,

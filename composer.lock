@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ac0f432284f98d2b2485784a13238ae3",
+    "content-hash": "d4f5b23f10e3f32ee8a517ffcfa4e71a",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -8583,40 +8583,40 @@
         },
         {
             "name": "drupal/quiz",
-            "version": "7.1.1",
+            "version": "8.0.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/quiz.git",
-                "reference": "7.1.1"
+                "reference": "8.0.0-alpha1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/quiz-7.1.1.zip",
-                "reference": "7.1.1",
-                "shasum": "cf43990cf21ca45a5fc108d894a58400eabc996a"
+                "url": "https://ftp.drupal.org/files/projects/quiz-8.0.0-alpha1.zip",
+                "reference": "8.0.0-alpha1",
+                "shasum": "234590205a33b1da540f966a9eb9fb6846169f23"
             },
             "require": {
-                "drupal/core": "^11.3",
+                "drupal/core": "^11.3 || ^12",
                 "drupal/entity": "^1.5",
                 "drupal/field_group": "^3.6 || ^4.0",
                 "drupal/paragraphs": "^1.18",
                 "drupal/range": "^1.6",
-                "drupal/rules": "^4.0.1",
                 "drupal/views_bulk_operations": "^4.2"
             },
             "require-dev": {
                 "drupal/field_group": "*",
                 "drupal/paragraphs": "*",
-                "drupal/replicate": "^1.3"
+                "drupal/replicate": "^1.3",
+                "drupal/rules": "^4.0.1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "7.1.1",
-                    "datestamp": "1777650311",
+                    "version": "8.0.0-alpha1",
+                    "datestamp": "1783696534",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -8645,7 +8645,7 @@
             "description": "Create and take graded quizzes.",
             "homepage": "https://www.drupal.org/project/quiz",
             "support": {
-                "source": "http://git.drupal.org/project/quiz.git",
+                "source": "https://git.drupal.org/project/quiz.git",
                 "issues": "https://www.drupal.org/project/issues/quiz"
             }
         },
@@ -22038,6 +22038,7 @@
         "drupal/page_manager": 5,
         "drupal/phpmailer_smtp": 15,
         "drupal/private_message": 15,
+        "drupal/quiz": 15,
         "drupal/rdf": 10,
         "drupal/schema_based_config_forms": 10,
         "drupal/seven": 10,

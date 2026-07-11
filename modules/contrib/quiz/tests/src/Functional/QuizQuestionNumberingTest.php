@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test question numbering.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizQuestionNumberingTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -24,7 +26,7 @@ class QuizQuestionNumberingTest extends QuizTestBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Behat\Mink\Exception\ResponseTextException
    */
-  public function testQuestionNumbering() {
+  public function testQuestionNumbering(): void {
     $this->drupalLogin($this->admin);
 
     // Create Quiz with review of score.

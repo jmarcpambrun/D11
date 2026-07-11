@@ -3,12 +3,14 @@
 namespace Drupal\Tests\quiz\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test aspects of quiz deletion.
- *
- * @group Quiz
  */
+#[Group('quiz')]
+#[RunTestsInSeparateProcesses]
 class QuizDeleteTest extends QuizTestBase {
 
   use StringTranslationTrait;
@@ -23,7 +25,7 @@ class QuizDeleteTest extends QuizTestBase {
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function testQuizDelete() {
+  public function testQuizDelete(): void {
     $this->drupalLogin($this->user);
     $quiz_node = $this->createQuiz();
 

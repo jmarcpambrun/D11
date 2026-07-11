@@ -1,0 +1,13 @@
+# Quiz feedback type conditions (Rules UI)
+entity.quiz_feedback_type.conditions:
+  path: 'admin/quiz/feedback/type/{quiz_feedback_type}/conditions'
+  defaults:
+    _form: '\Drupal\quiz_feedback_rules\Form\QuizFeedbackConditionsForm'
+    _title_callback: '\Drupal\quiz_feedback_rules\Form\QuizFeedbackConditionsForm::titleCallback'
+  requirements:
+    _permission: 'administer quiz'
+  options:
+    _rules_ui: quiz_feedback.rules_ui_conditions
+    parameters:
+      quiz_feedback_type:
+        type: 'entity:quiz_feedback_type'

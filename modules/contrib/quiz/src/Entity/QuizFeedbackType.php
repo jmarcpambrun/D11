@@ -3,87 +3,55 @@
 namespace Drupal\quiz\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-use Drupal\rules\Engine\RulesComponent;
-use Drupal\rules\Ui\RulesUiComponentProviderInterface;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
+use Drupal\Core\Entity\EntityDeleteForm;
+use Drupal\Core\Entity\Routing\AdminHtmlRouteProvider;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\quiz\Config\Entity\QuizFeedbackTypeListBuilder;
+use Drupal\quiz\Form\QuizFeedbackTypeForm;
 
 /**
- * Defines the quiz type entity class.
- *
- * @ConfigEntityType(
- *   id = "quiz_feedback_type",
- *   label = @Translation("Quiz feedback type"),
- *   label_collection = @Translation("Quiz feedback types"),
- *   label_singular = @Translation("Quiz feedback type"),
- *   label_plural = @Translation("Quiz feedback type"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz feedback type",
- *     plural = "@count quiz feedback types",
- *   ),
- *   admin_permission = "administer quiz",
- *   config_prefix = "feedback.type",
- *   entity_keys = {
- *     "id" = "id",
- *     "label" = "label"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "description",
- *     "component"
- *   },
- *   handlers = {
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *     },
- *     "list_builder" = "Drupal\quiz\Config\Entity\QuizFeedbackTypeListBuilder",
- *     "form" = {
- *       "default" = "Drupal\quiz\Form\QuizFeedbackTypeForm",
- *       "delete" = "Drupal\Core\Entity\EntityDeleteForm"
- *     },
- *   },
- *   links = {
- *     "add-form" = "/admin/quiz/feedback/type/add",
- *     "edit-form" = "/admin/quiz/feedback/type/{quiz_feedback_type}/edit",
- *     "delete-form" = "/admin/quiz/feedback/type/{quiz_feedback_type}/delete",
- *     "collection" = "/admin/quiz/feedback"
- *   }
- * )
+ * Defines the quiz feedback type entity class.
  */
-class QuizFeedbackType extends ConfigEntityBase implements RulesUiComponentProviderInterface {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getComponent(): RulesComponent {
-    if (empty($this->component)) {
-      // Provide a default for now.
-      // @todo make expression configurable.
-      $this->component = [
-        'expression' => ['id' => 'rules_and'],
-        'context_definitions' => [
-          'quiz_result' => [
-            'type' => 'entity:quiz_result',
-            'label' => 'Quiz result',
-            'description' => 'Quiz result to evaluate feedback',
-          ],
-        ],
-      ];
-    }
-
-    if (!isset($this->componentObject)) {
-      $this->componentObject = RulesComponent::createFromConfiguration($this->component);
-    }
-    return $this->componentObject;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateFromComponent(RulesComponent $component) {
-    $this->component = $component->getConfiguration();
-    $this->componentObject = $component;
-
-    return $this;
-  }
+#[ConfigEntityType(
+  id: 'quiz_feedback_type',
+  label: new TranslatableMarkup('Quiz feedback type'),
+  label_collection: new TranslatableMarkup('Quiz feedback types'),
+  label_singular: new TranslatableMarkup('Quiz feedback type'),
+  label_plural: new TranslatableMarkup('Quiz feedback type'),
+  config_prefix: 'feedback.type',
+  entity_keys: [
+    'id' => 'id',
+    'label' => 'label',
+  ],
+  handlers: [
+    'route_provider' => [
+      'html' => AdminHtmlRouteProvider::class,
+    ],
+    'list_builder' => QuizFeedbackTypeListBuilder::class,
+    'form' => [
+      'default' => QuizFeedbackTypeForm::class,
+      'delete' => EntityDeleteForm::class,
+    ],
+  ],
+  links: [
+    'add-form' => '/admin/quiz/feedback/type/add',
+    'edit-form' => '/admin/quiz/feedback/type/{quiz_feedback_type}/edit',
+    'delete-form' => '/admin/quiz/feedback/type/{quiz_feedback_type}/delete',
+    'collection' => '/admin/quiz/feedback',
+  ],
+  admin_permission: 'administer quiz',
+  label_count: [
+    'singular' => '@count quiz feedback type',
+    'plural' => '@count quiz feedback types',
+  ],
+  config_export: [
+    'id',
+    'label',
+    'description',
+    'component',
+  ],
+)]
+class QuizFeedbackType extends ConfigEntityBase {
 
 }

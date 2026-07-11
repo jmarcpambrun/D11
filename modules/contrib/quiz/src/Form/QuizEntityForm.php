@@ -5,12 +5,27 @@ namespace Drupal\quiz\Form;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\quiz\Entity\QuizFeedbackType;
-use function quiz_get_feedback_options;
+use Drupal\quiz\Services\QuizHelper;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Quiz authoring form.
  */
 class QuizEntityForm extends ContentEntityForm {
+
+  /**
+   * The quiz helper service.
+   */
+  protected QuizHelper $quizHelper;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): static {
+    $instance = parent::create($container);
+    $instance->quizHelper = $container->get('quiz.helper');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -28,6 +43,9 @@ class QuizEntityForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+    // Disable browser HTML5 validation. Required fields in inactive vertical
+    // tabs are not focusable, causing browser validation to block submission.
+    $form['#attributes']['novalidate'] = 'novalidate';
     $form['quiz'] = [
       '#weight' => 5,
       '#type' => 'vertical_tabs',
@@ -95,7 +113,7 @@ class QuizEntityForm extends ContentEntityForm {
 
     $form['result_options']['#group'] = 'quiz_feedback';
     // Build the review options.
-    $review_options = quiz_get_feedback_options();
+    $review_options = $this->quizHelper->getFeedbackOptions();
 
     $form['question_feedback']['help']['#markup'] = $this->t('Control what feedback appears and when. To display any per-question feedback, one of the "Question" review options must be enabled.');
     $form['question_feedback']['review_options']['#tree'] = TRUE;

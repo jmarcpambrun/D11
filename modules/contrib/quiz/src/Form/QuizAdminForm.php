@@ -8,29 +8,20 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\quiz\Entity\QuizFeedbackType;
+use Drupal\quiz\Services\QuizHelper;
 use Drupal\quiz\Util\QuizUtil;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use function quiz_get_feedback_options;
 
 /**
  * Quiz global settings form.
  */
 class QuizAdminForm extends ConfigFormBase {
 
-  /**
-   * Constructs a \Drupal\system\ConfigFormBase object.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The factory for configuration objects.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
-   *   The Module handler service.
-   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
-   *   The typed config manager.
-   */
   public function __construct(
     ConfigFactoryInterface $config_factory,
     protected ModuleHandlerInterface $moduleHandler,
     TypedConfigManagerInterface $typedConfigManager,
+    protected QuizHelper $quizHelper,
   ) {
     parent::__construct($config_factory, $typedConfigManager);
   }
@@ -43,6 +34,7 @@ class QuizAdminForm extends ConfigFormBase {
       $container->get('config.factory'),
       $container->get('module_handler'),
       $container->get('config.typed'),
+      $container->get('quiz.helper'),
     );
   }
 
@@ -168,7 +160,7 @@ class QuizAdminForm extends ConfigFormBase {
     ];
 
     // Review options.
-    $review_options = quiz_get_feedback_options();
+    $review_options = $this->quizHelper->getFeedbackOptions();
 
     $form['quiz_global_settings']['admin_review_options']['override_admin_feedback'] = [
       '#title' => $this->t('Override administrator review options'),
@@ -229,22 +221,6 @@ class QuizAdminForm extends ConfigFormBase {
           ':input[name="has_timer"]' => ['checked' => TRUE],
         ],
       ],
-    ];
-
-    $form['quiz_look_feel'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Look and feel'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#description' => $this->t("Control aspects of the Quiz module's display"),
-    ];
-
-    $form['quiz_look_feel']['\Drupal\quiz\Util\QuizUtil::getQuizName()'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Display name'),
-      '#default_value' => QuizUtil::getQuizName(),
-      '#description' => $this->t('Change the name of the quiz type. Do you call it <em>test</em> or <em>assessment</em> instead? Change the display name of the module to something else. By default, it is called <em>Quiz</em>.'),
-      '#required' => TRUE,
     ];
 
     return parent::buildForm($form, $form_state);

@@ -1,4 +1,13 @@
 services:
+  Drupal\quiz\Services\QuizSessionInterface:
+    alias: quiz.session
+  Drupal\quiz\Plugin\QuizQuestionPluginManager:
+    alias: plugin.manager.quiz.question
+  Drupal\quiz\Services\QuizHelper:
+    alias: quiz.helper
+  quiz.helper:
+    class: Drupal\quiz\Services\QuizHelper
+    autowire: true
   plugin.manager.quiz.question:
     class: Drupal\quiz\Plugin\QuizQuestionPluginManager
     parent: default_plugin_manager

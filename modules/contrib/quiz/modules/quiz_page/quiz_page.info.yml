@@ -2,11 +2,11 @@ name: 'Quiz - Pages'
 type: module
 package: Quiz core
 description: 'Provides support for pages of questions.'
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^11.3 || ^12
 dependencies:
   - quiz:quiz
 
-# Information added by Drupal.org packaging script on 2026-05-01
-version: '7.1.1'
+# Information added by Drupal.org packaging script on 2026-07-10
+version: '8.0.0-alpha1'
 project: 'quiz'
-datestamp: 1777650314
+datestamp: 1783696537

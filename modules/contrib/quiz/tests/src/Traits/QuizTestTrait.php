@@ -22,7 +22,7 @@ trait QuizTestTrait {
       'body' => 'Quiz description',
       'type' => 'quiz',
       'result_type' => 'quiz_result',
-      'review_options' => ['end' => array_combine(array_keys(quiz_get_feedback_options()), array_keys(quiz_get_feedback_options()))],
+      'review_options' => ['end' => array_combine(array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()), array_keys(\Drupal::service('quiz.helper')->getFeedbackOptions()))],
     ];
     $quiz = Quiz::create($settings);
     $quiz->save();

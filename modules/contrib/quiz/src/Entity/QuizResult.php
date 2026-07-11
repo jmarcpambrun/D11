@@ -13,57 +13,56 @@ use Drupal\quiz\Util\QuizUtil;
 use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
 use function count;
-use function quiz_get_feedback_options;
+use Drupal\Core\Entity\Attribute\ContentEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the Quiz entity class.
- *
- * @ContentEntityType(
- *   id = "quiz_result",
- *   label = @Translation("Quiz result"),
- *   label_collection = @Translation("Quiz results"),
- *   label_singular = @Translation("quiz result"),
- *   label_plural = @Translation("quiz results"),
- *   label_count = @PluralTranslation(
- *     singular = "@count quiz result",
- *     plural = "@count quiz results",
- *   ),
- *   bundle_label = @Translation("Quiz result type"),
- *   bundle_entity_type = "quiz_result_type",
- *   admin_permission = "administer quiz_result",
- *   permission_granularity = "entity_type",
- *   base_table = "quiz_result",
- *   fieldable = TRUE,
- *   field_ui_base_route = "entity.quiz_result_type.edit_form",
- *   show_revision_ui = FALSE,
- *   entity_keys = {
- *     "id" = "result_id",
- *     "published" = "released",
- *     "owner" = "uid",
- *     "bundle" = "type",
- *     "uuid" = "uuid",
- *   },
- *   handlers = {
- *     "list_builder" = "Drupal\quiz\Config\Entity\QuizResultListBuilder",
- *     "view_builder" = "Drupal\quiz\View\QuizResultViewBuilder",
- *     "access" = "Drupal\quiz\Access\QuizResultAccessControlHandler",
- *     "permission_provider" = "Drupal\entity\UncacheableEntityPermissionProvider",
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *     },
- *    "form" = {
- *       "default" = "Drupal\quiz\Form\QuizResultEntityForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *     },
- *     "views_data" = "Drupal\entity\EntityViewsData",
- *   },
- *   links = {
- *     "canonical" = "/quiz/{quiz}/result/{quiz_result}",
- *     "edit-form" = "/quiz/{quiz}/result/{quiz_result}/edit",
- *     "delete-form" = "/quiz/{quiz}/result/{quiz_result}/delete"
- *   }
- * )
  */
+#[ContentEntityType(
+  id: "quiz_result",
+  label: new TranslatableMarkup("Quiz result"),
+  label_collection: new TranslatableMarkup("Quiz results"),
+  label_singular: new TranslatableMarkup("quiz result"),
+  label_plural: new TranslatableMarkup("quiz results"),
+  entity_keys: [
+    "id" => "result_id",
+    "published" => "released",
+    "owner" => "uid",
+    "bundle" => "type",
+    "uuid" => "uuid",
+  ],
+  handlers: [
+    "list_builder" => "Drupal\\quiz\\Config\\Entity\\QuizResultListBuilder",
+    "view_builder" => "Drupal\\quiz\\View\\QuizResultViewBuilder",
+    "access" => "Drupal\\quiz\\Access\\QuizResultAccessControlHandler",
+    "permission_provider" => "Drupal\\entity\\UncacheableEntityPermissionProvider",
+    "route_provider" => [
+      "html" => "Drupal\\Core\\Entity\\Routing\\AdminHtmlRouteProvider",
+    ],
+    "form" => [
+      "default" => "Drupal\\quiz\\Form\\QuizResultEntityForm",
+      "delete" => "Drupal\\Core\\Entity\\ContentEntityDeleteForm",
+    ],
+    "views_data" => "Drupal\\entity\\EntityViewsData",
+  ],
+  links: [
+    "canonical" => "/quiz/{quiz}/result/{quiz_result}",
+    "edit-form" => "/quiz/{quiz}/result/{quiz_result}/edit",
+    "delete-form" => "/quiz/{quiz}/result/{quiz_result}/delete",
+  ],
+  admin_permission: "administer quiz_result",
+  permission_granularity: "entity_type",
+  bundle_entity_type: "quiz_result_type",
+  bundle_label: new TranslatableMarkup("Quiz result type"),
+  base_table: "quiz_result",
+  show_revision_ui: FALSE,
+  label_count: [
+    'singular' => '@count quiz result',
+    'plural' => '@count quiz results',
+  ],
+  field_ui_base_route: "entity.quiz_result_type.edit_form",
+)]
 class QuizResult extends ContentEntityBase implements EntityOwnerInterface, EntityChangedInterface {
 
   use EntityOwnerTrait;
@@ -432,9 +431,15 @@ class QuizResult extends ContentEntityBase implements EntityOwnerInterface, Enti
     $feedbackTypes = QuizFeedbackType::loadMultiple();
     foreach ($review_options as $time_key => $shows) {
       if (array_filter($shows)) {
-        $component = $feedbackTypes[$time_key]->getComponent();
-        $component->setContextValue('quiz_result', $this);
-        if ($component->getExpression()->executeWithState($component->getState())) {
+        if (\Drupal::moduleHandler()->moduleExists('quiz_feedback_rules')) {
+          $component = $feedbackTypes[$time_key]->getComponent();
+          $component->setContextValue('quiz_result', $this);
+          if ($component->getExpression()->executeWithState($component->getState())) {
+            // Add selected feedbacks to the show list.
+            $all_shows += array_filter($shows);
+          }
+        }
+        else {
           // Add selected feedbacks to the show list.
           $all_shows += array_filter($shows);
         }
@@ -575,7 +580,7 @@ class QuizResult extends ContentEntityBase implements EntityOwnerInterface, Enti
    *   If the quest has been reviewed yet.
    */
   public function hasReview(): bool {
-    foreach (quiz_get_feedback_options() as $option => $label) {
+    foreach (\Drupal::service('quiz.helper')->getFeedbackOptions() as $option => $label) {
       if ($this->canReview($option)) {
         return TRUE;
       }
