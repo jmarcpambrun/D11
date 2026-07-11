@@ -2,12 +2,15 @@
 
 namespace Drupal\ai_provider_openai\Plugin\AiProvider;
 
+use Drupal\ai\AiFileProviderInterface;
+use Drupal\ai\Traits\OpenAi\FileApiTrait;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\OpenAiBasedProviderClientBase;
+use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiRateLimitException;
@@ -36,8 +39,8 @@ use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\ai\Traits\OperationType\ImageToImageTrait;
-use Drupal\ai_provider_openai\OpenAiChatMessageIterator;
 use Drupal\ai_provider_openai\OpenAiHelper;
+use Drupal\ai_provider_openai\OpenAiResponsesStreamIterator;
 use OpenAI\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -48,10 +51,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   id: 'openai',
   label: new TranslatableMarkup('OpenAI'),
 )]
-class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToImageInterface {
+class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToImageInterface, AiFileProviderInterface {
 
   use ChatTrait;
   use ImageToImageTrait;
+  use FileApiTrait;
 
   /**
    * The image mime types the image endpoints may return, with file extension.
@@ -123,21 +127,8 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
    */
   public function getModelSettings(string $model_id, array $generalConfig = []): array {
     // If its GPT 3.5 the max tokens are 2048.
-    if (preg_match('/gpt-3.5-turbo/', $model_id)) {
-      $generalConfig['max_tokens']['default'] = 2048;
-    }
-    // Do this change for o1, o3, o4 and gpt-5 models.
-    if (str_starts_with($model_id, 'gpt-5') || str_starts_with($model_id, 'o1') || str_starts_with($model_id, 'o3') || str_starts_with($model_id, 'o4')) {
-      if (array_key_exists('max_tokens', $generalConfig)) {
-        $generalConfig['max_completion_tokens'] = $generalConfig['max_tokens'];
-        unset($generalConfig['max_tokens']);
-      }
-      // Also remove specific configs for these models.
-      foreach (['frequency_penalty', 'top_p', 'presence_penalty', 'temperature'] as $config) {
-        if (isset($generalConfig[$config])) {
-          unset($generalConfig[$config]);
-        }
-      }
+    if (preg_match('/gpt-3.5-turbo/', $model_id) && isset($generalConfig['max_output_tokens'])) {
+      $generalConfig['max_output_tokens']['default'] = 2048;
     }
     // Handle image generation models.
     if (strpos($model_id, 'gpt-image') === 0) {
@@ -194,6 +185,10 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
 
     // @todo move this to an object once supported.
     if ($this->isReasoningModel($model_id)) {
+      // Reasoning models do not support the sampling parameters.
+      foreach (['frequency_penalty', 'top_p', 'presence_penalty', 'temperature'] as $config) {
+        unset($generalConfig[$config]);
+      }
 
       // See https://platform.openai.com/docs/api-reference/chat/create#chat_create-reasoning_effort.
       $generalConfig['reasoning_effort'] = [
@@ -262,149 +257,67 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
    */
   public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
     $this->loadClient();
-    // Normalize the input if needed.
-    $chat_input = $input;
+    // Normalize the input into the Responses API "input" structure. The Chat
+    // operation now talks to OpenAI's Responses endpoint instead of Chat
+    // Completions: the operation contract is unchanged, only the endpoint and
+    // request/response shape differ.
+    $responses_input = $input;
     if ($input instanceof ChatInput) {
-      $chat_input = [];
-      // Add a system role if wanted.
-      $system_prompt = $input->getSystemPrompt();
-      if ($system_prompt) {
-        // If its o1 or o3 in it, we add it as a user message.
-        if (preg_match('/(o1|o3)/i', $model_id)) {
-          $chat_input[] = [
-            'role' => 'user',
-            'content' => $system_prompt,
-          ];
-        }
-        else {
-          $chat_input[] = [
-            'role' => 'system',
-            'content' => $system_prompt,
-          ];
-        }
-      }
-      /** @var \Drupal\ai\OperationType\Chat\ChatMessage $message */
-      foreach ($input->getMessages() as $message) {
-        $content = [
-          [
-            'type' => 'text',
-            'text' => $message->getText(),
-          ],
-        ];
-        if (method_exists($message, 'getFiles') && count($message->getFiles())) {
-          foreach ($message->getFiles() as $file) {
-            if ($file instanceof ImageFile) {
-              $content[] = [
-                'type' => 'image_url',
-                'image_url' => [
-                  'url' => $file->getAsBase64EncodedString(),
-                ],
-              ];
-            }
-            elseif ($file->getMimeType() === 'application/pdf') {
-              $content[] = [
-                'type' => 'file',
-                'file' => [
-                  'filename' => $file->getFilename(),
-                  'file_data' => $file->getAsBase64EncodedString(),
-                ],
-              ];
-            }
-          }
-        }
-        elseif (count($message->getImages())) {
-          foreach ($message->getImages() as $image) {
-            $content[] = [
-              'type' => 'image_url',
-              'image_url' => [
-                'url' => $image->getAsBase64EncodedString(),
-              ],
-            ];
-          }
-        }
-        $new_message = [
-          'role' => $message->getRole(),
-          'content' => $content,
-        ];
-
-        // If it's a tool's response.
-        if ($message->getToolsId()) {
-          $new_message['tool_call_id'] = $message->getToolsId();
-        }
-
-        // If we want the results from some older tools call.
-        if ($message->getTools()) {
-          $new_message['tool_calls'] = $message->getRenderedTools();
-        }
-
-        $chat_input[] = $new_message;
-      }
+      $responses_input = $this->buildResponsesInput($input, $model_id);
     }
     // Moderation check - tokens are still there using json.
-    $this->moderationEndpoints(json_encode($chat_input));
+    $this->moderationEndpoints(is_string($responses_input) ? $responses_input : json_encode($responses_input), $tags);
 
     $payload = [
       'model' => $model_id,
-      'messages' => $chat_input,
-    ] + $this->configuration;
+      'input' => $responses_input,
+    ] + $this->prepareResponsesConfiguration($model_id);
+
     // If we want to add tools to the input.
     if (is_object($input) && method_exists($input, 'getChatTools') && $input->getChatTools()) {
-      $payload['tools'] = $input->getChatTools()->renderToolsArray();
-      foreach ($payload['tools'] as $key => $tool) {
-        $payload['tools'][$key]['function']['strict'] = FALSE;
-      }
+      $payload['tools'] = $this->renderResponsesTools($input->getChatTools());
     }
-    // Check for structured json schemas.
+    // Check for structured json schemas. The Responses API expects the schema
+    // under "text.format" rather than the Chat Completions "response_format".
     if (is_object($input) && method_exists($input, 'getChatStructuredJsonSchema') && $input->getChatStructuredJsonSchema()) {
-      $payload['response_format'] = [
+      $payload['text']['format'] = [
         'type' => 'json_schema',
-        'json_schema' => $input->getChatStructuredJsonSchema(),
-      ];
+      ] + $input->getChatStructuredJsonSchema();
     }
 
-    $usage = [];
+    // @todo The Responses endpoint unlocks features that can be layered on here
+    // as follow-ups to issue #3558801, without changing the chat contract:
+    // - Internal tools (web search, file search, code interpreter) appended to
+    //   $payload['tools'].
+    // - Conversation memory via $payload['previous_response_id'] or the
+    //   Conversations API.
+    // - Vector store integration for file search.
     try {
       if ($this->streamed) {
-        $payload['stream_options']['include_usage'] = TRUE;
-        $response = $this->client->chat()->createStreamed($payload);
-        $message = new OpenAiChatMessageIterator($response);
+        $response = $this->client->responses()->createStreamed($payload);
+        $message = new OpenAiResponsesStreamIterator($response);
       }
       // If we are in a fibre, we will use a streamed response as the SDK
       // doesn't support direct async.
       elseif (\Fiber::getCurrent()) {
-        $payload['stream_options']['include_usage'] = TRUE;
-        $response = $this->client->chat()->createStreamed($payload);
-        $stream = new OpenAiChatMessageIterator($response);
-        // We consume the stream in a fiber.
+        $response = $this->client->responses()->createStreamed($payload);
+        $stream = new OpenAiResponsesStreamIterator($response);
+        // We consume the stream in a fiber, suspending after each chunk until
+        // the stream signals it has finished.
         foreach ($stream as $chunk) {
-          // Set the usage if it is available.
-          if (is_array($chunk->getRaw()) && count($chunk->getRaw()) && !empty($chunk->getRaw()['usage'])) {
-            $usage['usage'] = $chunk->getRaw()['usage'];
-          }
-          // Suspend fiber if we haven't finished yet.
-          if (empty($stream->getFinishReason())) {
+          if ($chunk !== NULL && empty($stream->getFinishReason())) {
             \Fiber::suspend();
           }
         }
 
-        // Create the final message from accumulated data.
-        $message = $stream->reconstructChatOutput()->getNormalized();
+        // Create the final message from accumulated data. The reconstructed
+        // output also carries the token usage collected from the stream.
+        $reconstructed = $stream->reconstructChatOutput();
+        $message = $reconstructed->getNormalized();
       }
       else {
-        $response = $this->client->chat()->create($payload)->toArray();
-        // If tools are generated.
-        $tools = [];
-        if (!empty($response['choices'][0]['message']['tool_calls'])) {
-          foreach ($response['choices'][0]['message']['tool_calls'] as $tool) {
-            $arguments = Json::decode($tool['function']['arguments']);
-            $tools[] = new ToolsFunctionOutput($input->getChatTools()->getFunctionByName($tool['function']['name']), $tool['id'], $arguments);
-          }
-        }
-        $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content'] ?? "", []);
-        if (!empty($tools)) {
-          $message->setTools($tools);
-        }
-        $usage['usage'] = $response['usage'] ?? [];
+        $response = $this->client->responses()->create($payload)->toArray();
+        $message = $this->extractResponsesChatMessage($response, $input);
       }
     }
     catch (\Exception $e) {
@@ -426,12 +339,319 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
 
     $chat_output = new ChatOutput($message, $response, []);
 
-    // We only set the token usage if its not streamed or in a fiber.
-    if (count($usage)) {
-      $this->setChatTokenUsage($chat_output, $usage);
+    // For streamed responses the iterator sets the usage itself; in a fiber
+    // the usage was accumulated on the reconstructed output.
+    if (isset($reconstructed)) {
+      $chat_output->setTokenUsage($reconstructed->getTokenUsage());
+    }
+    elseif (!$this->streamed) {
+      $this->setResponsesTokenUsage($chat_output, $response);
     }
 
     return $chat_output;
+  }
+
+  /**
+   * Builds the Responses API "input" array from a ChatInput object.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatInput $input
+   *   The chat input.
+   * @param string $model_id
+   *   The model id to use.
+   *
+   * @return array
+   *   The Responses API input items.
+   */
+  protected function buildResponsesInput(ChatInput $input, string $model_id): array {
+    $items = [];
+    // Add a system role if wanted.
+    $system_prompt = $input->getSystemPrompt();
+    if ($system_prompt) {
+      // If its o1 or o3 in it, we add it as a user message.
+      $role = preg_match('/(o1|o3)/i', $model_id) ? 'user' : 'system';
+      $items[] = [
+        'role' => $role,
+        'content' => $system_prompt,
+      ];
+    }
+    /** @var \Drupal\ai\OperationType\Chat\ChatMessage $message */
+    foreach ($input->getMessages() as $message) {
+      // A tool result is its own input item in the Responses API.
+      if ($message->getToolsId()) {
+        $items[] = [
+          'type' => 'function_call_output',
+          'call_id' => $message->getToolsId(),
+          'output' => $message->getText(),
+        ];
+        continue;
+      }
+      // An assistant turn that issued tool calls becomes one message item (when
+      // it also has text) plus a separate function_call item per call.
+      if ($message->getTools()) {
+        if ($message->getText() !== '') {
+          $items[] = [
+            'role' => $message->getRole(),
+            'content' => $message->getText(),
+          ];
+        }
+        foreach ($message->getTools() as $tool) {
+          $rendered = $tool->getOutputRenderArray();
+          $items[] = [
+            'type' => 'function_call',
+            'call_id' => $tool->getToolId(),
+            'name' => $tool->getName(),
+            'arguments' => $rendered['function']['arguments'] ?? '{}',
+          ];
+        }
+        continue;
+      }
+      $items[] = $this->buildResponsesMessageItem($message);
+    }
+    return $items;
+  }
+
+  /**
+   * Builds a single Responses API message input item from a ChatMessage.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatMessage $message
+   *   The chat message.
+   *
+   * @return array
+   *   The Responses API message item.
+   */
+  protected function buildResponsesMessageItem(ChatMessage $message): array {
+    $files = method_exists($message, 'getFiles') ? $message->getFiles() : [];
+    $images = $message->getImages();
+    $remote_files = method_exists($message, 'getRemoteFiles') ? $message->getRemoteFiles() : [];
+    // Plain text messages can use the simple string content form, which the
+    // Responses API accepts for any role.
+    if (empty($files) && empty($images) && empty($remote_files)) {
+      return [
+        'role' => $message->getRole(),
+        'content' => $message->getText(),
+      ];
+    }
+    // Multimodal messages need typed content parts.
+    $content = [
+      [
+        'type' => 'input_text',
+        'text' => $message->getText(),
+      ],
+    ];
+    if (!empty($files)) {
+      foreach ($files as $file) {
+        if ($file instanceof ImageFile) {
+          $content[] = [
+            'type' => 'input_image',
+            'image_url' => $file->getAsBase64EncodedString(),
+          ];
+        }
+        elseif ($file->getMimeType() === 'application/pdf') {
+          $content[] = [
+            'type' => 'input_file',
+            'filename' => $file->getFilename(),
+            'file_data' => $file->getAsBase64EncodedString(),
+          ];
+        }
+      }
+    }
+    else {
+      foreach ($images as $image) {
+        $content[] = [
+          'type' => 'input_image',
+          'image_url' => $image->getAsBase64EncodedString(),
+        ];
+      }
+    }
+    // Files already uploaded to OpenAI are referenced by their file id.
+    foreach ($remote_files as $remote_file_id) {
+      $content[] = [
+        'type' => 'input_file',
+        'file_id' => $remote_file_id,
+      ];
+    }
+    return [
+      'role' => $message->getRole(),
+      'content' => $content,
+    ];
+  }
+
+  /**
+   * Prepares the provider configuration for the Responses endpoint.
+   *
+   * Translates Chat Completions configuration keys to their Responses API
+   * equivalents and strips parameters the endpoint does not support.
+   *
+   * @param string $model_id
+   *   The model id to use.
+   *
+   * @return array
+   *   The Responses-compatible configuration.
+   */
+  protected function prepareResponsesConfiguration(string $model_id): array {
+    $config = $this->configuration;
+    // The Responses API uses "max_output_tokens" for the output cap. Map the
+    // Chat Completions keys so existing stored configuration keeps working.
+    foreach (['max_tokens', 'max_completion_tokens'] as $legacy) {
+      if (isset($config[$legacy])) {
+        $config['max_output_tokens'] = $config[$legacy];
+        unset($config[$legacy]);
+        $this->logger?->warning('The stored chat configuration uses the deprecated "@key" setting; it was sent to the Responses API as "max_output_tokens". Update the stored configuration to use "max_output_tokens".', [
+          '@key' => $legacy,
+        ]);
+      }
+    }
+    // These Chat Completions sampling parameters are not supported by the
+    // Responses endpoint.
+    foreach (['frequency_penalty', 'presence_penalty'] as $unsupported) {
+      if (isset($config[$unsupported])) {
+        unset($config[$unsupported]);
+        $this->logger?->warning('The stored chat configuration contains "@key", which the OpenAI Responses API does not support; it was not sent. Update the stored configuration to remove it.', [
+          '@key' => $unsupported,
+        ]);
+      }
+    }
+    // The stateful context checkbox arrives as an integer, but the Responses
+    // endpoint strictly validates "store" as a boolean.
+    if (isset($config['store'])) {
+      $config['store'] = (bool) $config['store'];
+    }
+    if ($this->isReasoningModel($model_id)) {
+      // Reasoning models reject the sampling parameters.
+      unset($config['temperature'], $config['top_p']);
+      // In the Responses API the reasoning effort moved from the top-level
+      // "reasoning_effort" to "reasoning.effort".
+      if (isset($config['reasoning_effort']) && empty($config['reasoning']['effort'])) {
+        $config['reasoning']['effort'] = $config['reasoning_effort'];
+      }
+    }
+    unset($config['reasoning_effort']);
+    return $config;
+  }
+
+  /**
+   * Renders chat tools into the flat Responses API function-tool shape.
+   *
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsInputInterface $tools
+   *   The chat tools.
+   *
+   * @return array
+   *   The Responses API tools array.
+   */
+  protected function renderResponsesTools($tools): array {
+    $rendered = [];
+    foreach ($tools->renderToolsArray() as $tool) {
+      // Chat Completions nests the definition under "function"; the Responses
+      // API expects the fields flattened onto the tool itself.
+      if (($tool['type'] ?? '') === 'function' && isset($tool['function'])) {
+        $parameters = $tool['function']['parameters'] ?? NULL;
+        $rendered[] = [
+          'type' => 'function',
+          'name' => $tool['function']['name'],
+          'description' => $tool['function']['description'] ?? '',
+          'parameters' => empty($parameters) ? [
+            'type' => 'object',
+            'properties' => (object) [],
+          ] : $this->sanitizeResponsesToolSchema($parameters),
+          'strict' => FALSE,
+        ];
+      }
+      else {
+        $rendered[] = $tool;
+      }
+    }
+    return $rendered;
+  }
+
+  /**
+   * Strips non-standard keys the Responses API rejects from a JSON schema.
+   *
+   * The core tool renderer adds a redundant "name" key and a boolean "required"
+   * key to each property. The Chat Completions endpoint tolerated these, but
+   * the Responses endpoint validates schemas strictly and rejects them (the
+   * boolean "required" collides with the JSON Schema array keyword). The
+   * object-level "required" array is preserved.
+   *
+   * @param array $schema
+   *   The JSON schema fragment.
+   *
+   * @return array
+   *   The sanitized schema fragment.
+   */
+  protected function sanitizeResponsesToolSchema(array $schema): array {
+    unset($schema['name']);
+    if (isset($schema['required']) && is_bool($schema['required'])) {
+      unset($schema['required']);
+    }
+    if (isset($schema['properties']) && is_array($schema['properties'])) {
+      foreach ($schema['properties'] as $key => $property) {
+        if (is_array($property)) {
+          $schema['properties'][$key] = $this->sanitizeResponsesToolSchema($property);
+        }
+      }
+    }
+    if (isset($schema['items']) && is_array($schema['items'])) {
+      $schema['items'] = $this->sanitizeResponsesToolSchema($schema['items']);
+    }
+    return $schema;
+  }
+
+  /**
+   * Builds a ChatMessage from a non-streamed Responses API result.
+   *
+   * @param array $response
+   *   The decoded Responses API response.
+   * @param mixed $input
+   *   The original chat input (used to resolve tool definitions).
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatMessage
+   *   The chat message.
+   */
+  protected function extractResponsesChatMessage(array $response, mixed $input): ChatMessage {
+    $text = '';
+    $tools = [];
+    foreach ($response['output'] ?? [] as $item) {
+      $type = $item['type'] ?? '';
+      if ($type === 'message' && ($item['role'] ?? '') === 'assistant') {
+        foreach ($item['content'] ?? [] as $part) {
+          if (($part['type'] ?? '') === 'output_text') {
+            $text .= $part['text'] ?? '';
+          }
+        }
+      }
+      elseif ($type === 'function_call') {
+        $arguments = Json::decode($item['arguments'] ?? '') ?: [];
+        $function = NULL;
+        if (is_object($input) && method_exists($input, 'getChatTools') && $input->getChatTools()) {
+          $function = $input->getChatTools()->getFunctionByName($item['name'] ?? '');
+        }
+        $tools[] = new ToolsFunctionOutput($function, $item['call_id'] ?? ($item['id'] ?? ''), $arguments);
+      }
+    }
+    $message = new ChatMessage('assistant', $text, []);
+    if (!empty($tools)) {
+      $message->setTools($tools);
+    }
+    return $message;
+  }
+
+  /**
+   * Sets the token usage on a chat output from a Responses API result.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatOutput $chat_output
+   *   The chat output.
+   * @param array $response
+   *   The decoded Responses API response.
+   */
+  protected function setResponsesTokenUsage(ChatOutput $chat_output, array $response): void {
+    $usage = $response['usage'] ?? [];
+    $chat_output->setTokenUsage(new TokenUsageDto(
+      input: $usage['input_tokens'] ?? NULL,
+      output: $usage['output_tokens'] ?? NULL,
+      total: $usage['total_tokens'] ?? NULL,
+      reasoning: $usage['output_tokens_details']['reasoning_tokens'] ?? NULL,
+      cached: $usage['input_tokens_details']['cached_tokens'] ?? NULL,
+    ));
   }
 
   /**
@@ -462,7 +682,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       $input = $input->getText();
     }
     // Moderation.
-    $this->moderationEndpoints($input);
+    $this->moderationEndpoints($input, $tags);
     // Handle parameter naming differences between models.
     $payload = [
       'model' => $model_id,
@@ -678,7 +898,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       $input = $input->getText();
     }
     // Moderation.
-    $this->moderationEndpoints($input);
+    $this->moderationEndpoints($input, $tags);
     // Send the request.
     $payload = [
       'model' => $model_id,
@@ -763,7 +983,7 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       $input = $input->getPrompt();
     }
     // Moderation.
-    $this->moderationEndpoints($input);
+    $this->moderationEndpoints($input, $tags);
     // Send the request.
     $payload = [
       'model' => $model_id,
@@ -836,12 +1056,19 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
   /**
    * Moderation endpoints to run before the normal call.
    *
+   * @param string $prompt
+   *   The prompt to moderate.
+   * @param array $tags
+   *   Operation tags. If 'skip_moderation' is present, the check is bypassed
+   *   for this call only without altering the persistent moderation state.
+   *
    * @throws \Drupal\ai\Exception\AiUnsafePromptException
    */
-  public function moderationEndpoints(string $prompt): void {
+  public function moderationEndpoints(string $prompt, array $tags = []): void {
     $this->getClient();
-    // If moderation is disabled, we skip this.
-    if (!$this->moderation) {
+    // If moderation is disabled globally or the caller has tagged this call to
+    // skip moderation, bypass the check.
+    if (!$this->moderation || in_array('skip_moderation', $tags)) {
       return;
     }
     $payload = [
