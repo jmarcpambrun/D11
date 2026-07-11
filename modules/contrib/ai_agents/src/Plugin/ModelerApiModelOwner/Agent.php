@@ -28,7 +28,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 #[ModelOwner(
   id: "ai_agents_agent",
-  label: new TranslatableMarkup("AI Agent"),
+  label: new TranslatableMarkup("AI Agents"),
   description: new TranslatableMarkup("Configure AI Agents"),
   uiLabelNewModel: new TranslatableMarkup("New AI Agent"),
   uiLabelNewModelWithModeler: new TranslatableMarkup("New AI Agent with modeler"),
@@ -137,7 +137,7 @@ class Agent extends ModelOwnerBase {
    * {@inheritdoc}
    */
   public function configEntityBasePath(): ?string {
-    return 'admin/config/ai/agents';
+    return 'admin/config/ai/tools-automation/agents';
   }
 
   /**

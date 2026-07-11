@@ -742,7 +742,10 @@ final class AiAgentForm extends EntityForm {
         $not_break = $form_state->getValue([
           'tool_usage',
           $tool_definition['id'],
+          'property_restrictions',
+          'table',
           $property_name,
+          'restrictions',
           'not_break',
         ]);
       }
@@ -1070,6 +1073,7 @@ final class AiAgentForm extends EntityForm {
                 'action' => $restrictions['action'],
                 'values' => $all_values,
                 'hide_property' => $restrictions['hide_property'] ?? FALSE,
+                'not_break' => $restrictions['not_break'] ?? FALSE,
               ];
             }
             // Save the property description override as well.

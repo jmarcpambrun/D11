@@ -566,6 +566,15 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     if ($this->runnerId) {
       $tags[] = 'ai_agents_runner_' . $this->runnerId;
     }
+    // When this agent was invoked by a parent agent, add the parent's runner
+    // ID and the shared thread ID as tags so that all LLM calls within one
+    // conversation can be correlated in logs regardless of nesting depth.
+    if ($this->callerAgentRunnerId) {
+      $tags[] = 'ai_agents_caller_runner_' . $this->callerAgentRunnerId;
+    }
+    if ($this->threadId) {
+      $tags[] = 'ai_agents_thread_' . $this->threadId;
+    }
 
     // Append any pending images from the previous tool execution as a user
     // message. This ensures the LLM sees screenshots on this turn without
@@ -1354,6 +1363,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         }
       }
     }
+    // Apply the configured tool usage limits, including any forced values, to
+    // the tool before it is validated and run.
+    $this->applyToolUsageLimitsToContext($tool);
     $this->validateTool($tool);
     // Default information tools are system-triggered and may not include a
     // tool ID. Generate a deterministic ID from runner, plugin, and context
