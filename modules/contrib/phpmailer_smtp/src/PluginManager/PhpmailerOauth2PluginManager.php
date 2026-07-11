@@ -5,6 +5,8 @@ namespace Drupal\phpmailer_smtp\PluginManager;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\phpmailer_smtp\Attribute\PhpmailerOauth2;
+use Drupal\phpmailer_smtp\Plugin\PhpmailerOauth2\PhpmailerOauth2PluginInterface;
 
 /**
  * The PHPMailer OAuth 2 plugin manager.
@@ -22,7 +24,14 @@ class PhpmailerOauth2PluginManager extends DefaultPluginManager implements Phpma
    *   The module handler service.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cacheBackend, ModuleHandlerInterface $moduleHandler) {
-    parent::__construct('Plugin/PhpmailerOauth2', $namespaces, $moduleHandler, 'Drupal\phpmailer_smtp\Plugin\PhpmailerOauth2\PhpmailerOauth2PluginInterface', 'Drupal\phpmailer_smtp\Annotation\PhpmailerOauth2');
+    parent::__construct(
+      'Plugin/PhpmailerOauth2',
+      $namespaces,
+      $moduleHandler,
+      PhpmailerOauth2PluginInterface::class,
+      PhpmailerOauth2::class,
+      'Drupal\phpmailer_smtp\Annotation\PhpmailerOauth2',
+    );
 
     $this->alterInfo('phpmailer_oauth2_info');
     $this->setCacheBackend($cacheBackend, 'phpmailer_oauth2');

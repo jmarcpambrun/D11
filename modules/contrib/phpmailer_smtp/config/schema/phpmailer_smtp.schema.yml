@@ -52,7 +52,7 @@ phpmailer_smtp.settings:
       label: 'Verify peer name'
     smtp_ssl_allow_self_signed:
       type: boolean
-      label: 'Allow self-sigend'
+      label: 'Allow self-signed'
     smtp_envelope_sender_option:
       type: string
       label: 'Envelope sender option'

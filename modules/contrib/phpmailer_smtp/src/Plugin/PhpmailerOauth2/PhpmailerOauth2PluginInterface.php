@@ -23,7 +23,7 @@ interface PhpmailerOauth2PluginInterface extends PluginInspectionInterface, Cont
   /**
    * Retrieves the id of the PHPMailer OAuth2 plugin.
    *
-   * @return string
+   * @return string|\Drupal\Core\StringTranslation\TranslatableMarkup
    *   The id of the plugin.
    */
   public function getId();

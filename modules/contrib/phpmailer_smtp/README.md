@@ -12,7 +12,7 @@ REQUIREMENTS
 
 * Access to an SMTP server
 * The [Mail System module](http://www.drupal.org/project/mailsystem).
-* PHPMailer library 6 - installed via composer
+* PHPMailer library 7 - installed via composer
 
 INSTALLATION
 ------------
