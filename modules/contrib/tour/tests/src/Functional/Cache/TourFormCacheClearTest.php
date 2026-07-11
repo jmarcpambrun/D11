@@ -3,12 +3,12 @@
 namespace Drupal\Tests\tour\Functional\Cache;
 
 use Drupal\Tests\tour\Functional\TourTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests cache clear when updating tours.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourFormCacheClearTest extends TourTestBase {
 
   /**

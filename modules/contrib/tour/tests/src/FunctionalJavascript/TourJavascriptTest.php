@@ -6,12 +6,12 @@ namespace Drupal\Tests\tour\FunctionalJavascript;
 
 use Drupal\Core\Url;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * General Tour tests that require JavaScript.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourJavascriptTest extends WebDriverTestBase {
 
   /**

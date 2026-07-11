@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Drupal\Tests\tour\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Test the settings form of Tour.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourSettingsTest extends WebDriverTestBase {
 
   /**

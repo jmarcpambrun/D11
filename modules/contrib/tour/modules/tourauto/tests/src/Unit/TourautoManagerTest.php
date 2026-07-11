@@ -15,12 +15,14 @@ use Drupal\tourauto\TourautoManager;
 use Drupal\user\UserDataInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\tourauto\TourautoManager
- *
- * @group tourauto
+ * Tests the TourautoManager service.
  */
+#[CoversClass(TourautoManager::class)]
+#[Group('tourauto')]
 class TourautoManagerTest extends UnitTestCase {
 
   /**
@@ -104,7 +106,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::tourautoEnabled
+   * Tests tourautoEnabled() default behavior.
    */
   public function testTourautoEnabledDefaultTrue(): void {
     $this->account->method('id')->willReturn(1);
@@ -114,7 +116,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::tourautoEnabled
+   * Tests tourautoEnabled() honoring user preference.
    */
   public function testTourautoEnabledUserPreference(): void {
     $this->account->method('id')->willReturn(1);
@@ -124,7 +126,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::tourautoEnabled
+   * Tests tourautoEnabled() for anonymous users.
    */
   public function testTourautoEnabledAnonymousUser(): void {
     $this->account->method('id')->willReturn(0);
@@ -133,7 +135,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::setTourautoPreference
+   * Tests setTourautoPreference().
    */
   public function testSetTourautoPreference(): void {
     $this->account->method('id')->willReturn(1);
@@ -145,7 +147,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::setTourautoPreference
+   * Tests setTourautoPreference() for anonymous users.
    */
   public function testSetTourautoPreferenceAnonymousUser(): void {
     $this->account->method('id')->willReturn(0);
@@ -155,7 +157,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::getSeenTours
+   * Tests getSeenTours().
    */
   public function testGetSeenTours(): void {
     $this->account->method('id')->willReturn(1);
@@ -166,7 +168,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::getSeenTours
+   * Tests getSeenTours() with empty state.
    */
   public function testGetSeenToursEmptyState(): void {
     $this->account->method('id')->willReturn(1);
@@ -176,7 +178,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::markToursSeen
+   * Tests markToursSeen().
    */
   public function testMarkToursSeen(): void {
     $this->account->method('id')->willReturn(1);
@@ -189,7 +191,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::clearState
+   * Tests clearState().
    */
   public function testClearState(): void {
     $this->account->method('id')->willReturn(1);
@@ -201,7 +203,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::getManagerForAccount
+   * Tests getManagerForAccount().
    */
   public function testGetManagerForAccount(): void {
     $newAccount = $this->createMock(AccountInterface::class);
@@ -214,7 +216,7 @@ class TourautoManagerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::translate
+   * Tests translate().
    */
   public function testTranslate(): void {
     $result = $this->manager->translate('Test string');

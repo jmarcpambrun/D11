@@ -5,14 +5,14 @@ namespace Drupal\Tests\tour\Functional;
 use Drupal\Core\Url;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\tour\Entity\Tour;
+use PHPUnit\Framework\Attributes\Group;
 
 // cspell:ignore pioggia spagna
 
 /**
  * Tests the functionality of tour tips.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourTest extends TourTestBase {
 
   /**
@@ -163,7 +163,7 @@ class TourTest extends TourTestBase {
           'label' => 'The rain in spain is <strong>strong</strong>',
           'body' => 'Falls mostly on the plain.',
           'weight' => '100',
-          'selector' => '#tour-code-test-1',
+          'selector' => '.tour-code-test-1',
         ],
         'tour-code-test-2' => [
           'id' => 'tour-code-test-2',
@@ -195,7 +195,7 @@ class TourTest extends TourTestBase {
     $this->drupalGet('tour-test-1');
 
     $elements = $this->findTip([
-      'id' => 'tour-code-test-1',
+      'class' => 'tour-code-test-1',
       'title' => 'The rain in spain is <strong>strong</strong>',
     ]);
     $this->assertCount(1, $elements, 'Found the required tip markup for tip 4');

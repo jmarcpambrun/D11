@@ -200,3 +200,12 @@ function tour_update_10309(): void {
     ->set('hide_tour_when_empty', FALSE)
     ->save();
 }
+
+/**
+ * New setting enable_recap.
+ */
+function tour_update_10310(): void {
+  \Drupal::configFactory()->getEditable('tour.settings')
+    ->set('enable_recap', FALSE)
+    ->save();
+}

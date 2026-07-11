@@ -4,12 +4,12 @@ namespace Drupal\Tests\tour\Functional\Rest;
 
 use Drupal\Tests\rest\Functional\CookieResourceTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\XmlEntityNormalizationQuirksTrait;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests tour integration with restAPI, XML cookie test.
- *
- * @group rest
  */
+#[Group('tour')]
 class TourXmlCookieTest extends TourResourceTestBase {
 
   use CookieResourceTestTrait;

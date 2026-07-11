@@ -3,12 +3,12 @@
 namespace Drupal\Tests\tour\Functional\Rest;
 
 use Drupal\Tests\rest\Functional\AnonResourceTestTrait;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests tour integration with restAPI, anon test.
- *
- * @group rest
  */
+#[Group('tour')]
 class TourJsonAnonTest extends TourResourceTestBase {
 
   use AnonResourceTestTrait;

@@ -6,30 +6,28 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Path\PathMatcherInterface;
-use Drupal\Core\Routing\CurrentRouteMatch;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\taxonomy\VocabularyInterface;
 use Drupal\tour\Entity\Tour;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class TourHelper.
  *
  * Provides helper methods for the Tour module.
  */
-class TourHelper implements ContainerInjectionInterface {
+class TourHelper {
 
   use StringTranslationTrait;
 
   /**
    * Constructs a new TourHelper object.
    *
-   * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
+   * @param \Drupal\Core\Routing\RouteMatchInterface $currentRouteMatch
    *   Checks the current route.
    * @param \Drupal\Core\Path\PathMatcherInterface $pathMatcher
    *   Path matching helper service.
@@ -39,23 +37,11 @@ class TourHelper implements ContainerInjectionInterface {
    *   The config factory.
    */
   public function __construct(
-    protected CurrentRouteMatch $currentRouteMatch,
+    protected RouteMatchInterface $currentRouteMatch,
     protected PathMatcherInterface $pathMatcher,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected ConfigFactoryInterface $configFactory,
   ) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container): static {
-    return new static(
-      $container->get('current_route_match'),
-      $container->get('path_matcher'),
-      $container->get('entity_type.manager'),
-      $container->get('config.factory'),
-    );
   }
 
   /**
@@ -80,11 +66,30 @@ class TourHelper implements ContainerInjectionInterface {
    */
   public function loadTourEntities(): array {
     $route_match = $this->currentRouteMatch;
-    $route_name = $this->checkRoute();
+    $actual_route_name = $this->currentRouteMatch->getRouteName();
+    $is_front_page = $this->pathMatcher->isFrontPage();
+    $route_name = $is_front_page ? '<front>' : $actual_route_name;
+
+    // On the front page, also query for the actual route name to support
+    // page manager variants (e.g., different layouts for anonymous vs
+    // authenticated users with different route names).
+    $route_names_to_query = [$route_name];
+    if ($is_front_page && $actual_route_name !== '<front>') {
+      $route_names_to_query[] = $actual_route_name;
+    }
+
     try {
-      $results = $this->entityTypeManager->getStorage('tour')
-        ->getQuery()
-        ->condition('routes.*.route_name', $route_name)
+      $query = $this->entityTypeManager->getStorage('tour')->getQuery();
+
+      // Use IN condition when querying multiple route names.
+      if (count($route_names_to_query) > 1) {
+        $query->condition('routes.*.route_name', $route_names_to_query, 'IN');
+      }
+      else {
+        $query->condition('routes.*.route_name', $route_name);
+      }
+
+      $results = $query
         ->condition('status', TRUE)
         ->accessCheck(FALSE)
         ->execute();
@@ -102,8 +107,9 @@ class TourHelper implements ContainerInjectionInterface {
       foreach ($tours as $tour_id => $tour) {
         $tour_routes = $tour->getRoutes();
         foreach ($tour_routes as $tour_route) {
-          if ($tour_route['route_name'] != $route_name) {
-            // Ignore tour routes that are not related to this route.
+          // Check if the tour route matches any of the route names we're
+          // looking for (either <front> or the actual route name).
+          if (!in_array($tour_route['route_name'], $route_names_to_query, TRUE)) {
             continue;
           }
 
@@ -170,8 +176,12 @@ class TourHelper implements ContainerInjectionInterface {
           }
 
           // Test if the tour matches the route name and parameters.
-          if ($tour->hasMatchingRoute($route_name, $params)) {
-            $matches[$tour_id] = $results[$tour_id];
+          // Check against all route names we're querying for.
+          foreach ($route_names_to_query as $query_route_name) {
+            if ($tour->hasMatchingRoute($query_route_name, $params)) {
+              $matches[$tour_id] = $results[$tour_id];
+              break;
+            }
           }
         }
       }

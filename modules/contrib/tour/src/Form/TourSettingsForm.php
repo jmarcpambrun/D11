@@ -40,7 +40,6 @@ class TourSettingsForm extends ConfigFormBase {
     $form['tour'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Configure button label'),
-      '#description' => $this->t('Default will be "Tour" and "No tour".'),
     ];
     $form['tour']['hide_tour_when_empty'] = [
       '#type' => 'checkbox',
@@ -51,6 +50,7 @@ class TourSettingsForm extends ConfigFormBase {
     $form['tour']['display_custom_labels'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Display custom labels'),
+      '#description' => $this->t('Default will be "Tour" and "No tour".'),
       '#default_value' => $config->get('display_custom_labels'),
     ];
     $form['tour']['tour_avail_text'] = [
@@ -75,6 +75,12 @@ class TourSettingsForm extends ConfigFormBase {
         ],
       ],
     ];
+    $form['tour']['enable_recap'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable tour recap'),
+      '#description' => $this->t('Show a "View steps" button at the end of tours that opens a recap of all steps in a new window.'),
+      '#default_value' => $config->get('enable_recap'),
+    ];
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Save Configuration'),
@@ -94,6 +100,7 @@ class TourSettingsForm extends ConfigFormBase {
       ->set('display_custom_labels', $form_state->getValue('display_custom_labels'))
       ->set('tour_avail_text', $form_state->getValue('tour_avail_text'))
       ->set('tour_no_avail_text', $form_state->getValue('tour_no_avail_text'))
+      ->set('enable_recap', $form_state->getValue('enable_recap'))
       ->save();
     Cache::invalidateTags(['tour_settings']);
   }

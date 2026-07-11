@@ -4,6 +4,7 @@ namespace Drupal\tour;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -11,6 +12,7 @@ use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Theme\Registry;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -36,6 +38,8 @@ class TourViewBuilder extends EntityViewBuilder {
    *   The entity display repository.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    */
   public function __construct(
     EntityTypeInterface $entity_type,
@@ -44,6 +48,7 @@ class TourViewBuilder extends EntityViewBuilder {
     Registry $theme_registry,
     EntityDisplayRepositoryInterface $entity_display_repository,
     protected RendererInterface $renderer,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -59,6 +64,7 @@ class TourViewBuilder extends EntityViewBuilder {
       $container->get('theme.registry'),
       $container->get('entity_display.repository'),
       $container->get('renderer'),
+      $container->get('config.factory'),
     );
   }
 
@@ -181,6 +187,21 @@ class TourViewBuilder extends EntityViewBuilder {
       // see: https://www.drupal.org/project/drupal/issues/3214593
       $build['#attached']['drupalSettings']['_tour_internal'] = $items;
       $build['#attached']['library'][] = 'tour/tour';
+
+      // Add recap configuration if enabled.
+      $config = $this->configFactory->get('tour.settings');
+      if ($config->get('enable_recap')) {
+        $recap_urls = [];
+        foreach ($entities as $entity) {
+          $recap_urls[$entity->id()] = Url::fromRoute('tour.recap', ['tour' => $entity->id()])->toString();
+        }
+        $build['#attached']['drupalSettings']['tourRecap'] = [
+          'enabled' => TRUE,
+          'urls' => $recap_urls,
+          'buttonText' => $this->t('View steps'),
+        ];
+        $build['#cache']['tags'][] = 'config:tour.settings';
+      }
     }
 
     // Allow modules to alter the tour build array.

@@ -5,12 +5,12 @@ namespace Drupal\Tests\tour\FunctionalJavascript;
 use Behat\Mink\Element\NodeElement;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests that tours can be started through the tour button block.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourButtonBlockTest extends WebDriverTestBase {
 
   /**

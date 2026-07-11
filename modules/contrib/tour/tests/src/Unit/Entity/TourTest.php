@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Drupal\Tests\tour\Unit\Entity;
 
 use Drupal\Tests\UnitTestCase;
+use Drupal\tour\Entity\Tour;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\tour\Entity\Tour
- * @group tour
+ * Tests the Tour entity.
  */
+#[CoversClass(Tour::class)]
+#[Group('tour')]
 class TourTest extends UnitTestCase {
 
   /**
@@ -23,19 +28,15 @@ class TourTest extends UnitTestCase {
    *   Array of route params.
    * @param bool $result
    *   Expected result.
-   *
-   * @covers ::hasMatchingRoute
-   *
-   * @dataProvider routeProvider
    */
-  public function testHasMatchingRoute($routes, $route_name, $route_params, $result) {
+  #[DataProvider('routeProvider')]
+  public function testHasMatchingRoute(array $routes, string $route_name, array $route_params, bool $result) {
     $tour = $this->getMockBuilder('\Drupal\tour\Entity\Tour')
       ->disableOriginalConstructor()
       ->onlyMethods(['getRoutes'])
       ->getMock();
 
-    $tour->expects($this->any())
-      ->method('getRoutes')
+    $tour->method('getRoutes')
       ->willReturn($routes);
 
     $this->assertSame($result, $tour->hasMatchingRoute($route_name, $route_params));
@@ -44,7 +45,7 @@ class TourTest extends UnitTestCase {
   /**
    * Provides sample routes for testing.
    */
-  public static function routeProvider() {
+  public static function routeProvider(): array {
     return [
       // Simple match.
       [

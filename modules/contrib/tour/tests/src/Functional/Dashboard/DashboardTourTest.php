@@ -5,12 +5,12 @@ namespace Drupal\Tests\tour\Functional\Dashboard;
 use Drupal\Tests\tour\Functional\TourTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the Dashboard tour tips.
- *
- * @group tour
  */
+#[Group('tour')]
 class DashboardTourTest extends TourTestBase {
 
   /**

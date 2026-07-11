@@ -6,16 +6,18 @@ namespace Drupal\Tests\tour\Unit;
 
 use Drupal\Tests\UnitTestCase;
 use Drupal\tour\TipPluginBase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\tour\TipPluginBase
- *
- * @group tour
+ * Tests the TipPluginBase class.
  */
+#[CoversClass(TipPluginBase::class)]
+#[Group('tour')]
 class TipPluginBaseTest extends UnitTestCase {
 
   /**
-   * @covers ::getLocation
+   * Tests getLocation().
    */
   public function testGetLocationAssertion() {
     $base_plugin = $this->getMockBuilder(TipPluginBase::class)

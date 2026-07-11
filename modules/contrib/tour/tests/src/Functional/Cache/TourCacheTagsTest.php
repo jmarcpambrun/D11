@@ -7,12 +7,12 @@ use Drupal\Tests\system\Functional\Cache\PageCacheTagsTestBase;
 use Drupal\tour\Entity\Tour;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the Tour entity's cache tags.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourCacheTagsTest extends PageCacheTagsTestBase {
 
   /**
@@ -31,7 +31,7 @@ class TourCacheTagsTest extends PageCacheTagsTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    // Give anonymous users permission to view nodes, so that we can verify the
+    // Permit anonymous users to view nodes, so that we can verify the
     // cache tags of cached versions of node pages.
     Role::load(RoleInterface::ANONYMOUS_ID)->grantPermission('access tour')->save();
   }

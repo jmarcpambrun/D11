@@ -6,12 +6,12 @@ namespace Drupal\Tests\tourauto\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the tourauto JavaScript functionality.
- *
- * @group tourauto
  */
+#[Group('tourauto')]
 class TourautoJavascriptTest extends WebDriverTestBase {
 
   /**

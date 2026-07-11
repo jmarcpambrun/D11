@@ -5,12 +5,12 @@ namespace Drupal\Tests\tour\Functional\Help;
 use Behat\Mink\Exception\ExpectationException;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Verifies help page display of tours.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourHelpPageTest extends BrowserTestBase {
 
   /**

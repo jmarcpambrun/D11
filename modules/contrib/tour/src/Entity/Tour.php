@@ -3,57 +3,65 @@
 namespace Drupal\tour\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\tour\Form\TourCloneForm;
+use Drupal\tour\Form\TourDeleteForm;
+use Drupal\tour\Form\TourForm;
+use Drupal\tour\Form\TourTipsListForm;
 use Drupal\tour\TipPluginInterface;
 use Drupal\tour\TipsPluginCollection;
+use Drupal\tour\TourAccessControlHandler;
 use Drupal\tour\TourInterface;
+use Drupal\tour\TourListBuilder;
+use Drupal\tour\TourViewBuilder;
 
 /**
  * Defines the configured tour entity.
- *
- * @ConfigEntityType(
- *   id = "tour",
- *   label = @Translation("Tour"),
- *   label_collection = @Translation("Tours"),
- *   label_singular = @Translation("tour"),
- *   label_plural = @Translation("tours"),
- *   label_count = @PluralTranslation(
- *     singular = "@count tour",
- *     plural = "@count tours",
- *   ),
- *   handlers = {
- *     "view_builder" = "Drupal\tour\TourViewBuilder",
- *     "access" = "Drupal\tour\TourAccessControlHandler",
- *     "list_builder" = "Drupal\tour\TourListBuilder",
- *     "form" = {
- *       "default" = "Drupal\tour\Form\TourForm",
- *       "add" = "Drupal\tour\Form\TourForm",
- *       "edit" = "Drupal\tour\Form\TourForm",
- *       "edit_tips" = "Drupal\tour\Form\TourTipsListForm",
- *       "delete" = "Drupal\tour\Form\TourDeleteForm",
- *       "clone" = "Drupal\tour\Form\TourCloneForm",
- *     },
- *   },
- *   links = {
- *     "edit-form" = "/admin/config/user-interface/tour/manage/{tour}",
- *     "delete-form" = "/admin/config/user-interface/tour/manage/{tour}/delete",
- *     "clone-form" = "/admin/config/user-interface/tour/manage/{tour}/clone",
- *   },
- *   admin_permission = "administer tour",
- *   entity_keys = {
- *     "id" = "id",
- *     "label" = "label"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "routes",
- *     "tips",
- *   },
- *   lookup_keys = {
- *     "routes.*.route_name"
- *   }
- * )
  */
+#[ConfigEntityType(
+  id: 'tour',
+  label: new TranslatableMarkup('Tour'),
+  label_collection: new TranslatableMarkup('Tours'),
+  label_singular: new TranslatableMarkup('tour'),
+  label_plural: new TranslatableMarkup('tours'),
+  entity_keys: [
+    'id' => 'id',
+    'label' => 'label',
+  ],
+  handlers: [
+    'view_builder' => TourViewBuilder::class,
+    'access' => TourAccessControlHandler::class,
+    'list_builder' => TourListBuilder::class,
+    'form' => [
+      'default' => TourForm::class,
+      'add' => TourForm::class,
+      'edit' => TourForm::class,
+      'edit_tips' => TourTipsListForm::class,
+      'delete' => TourDeleteForm::class,
+      'clone' => TourCloneForm::class,
+    ],
+  ],
+  links: [
+    'edit-form' => '/admin/config/user-interface/tour/manage/{tour}',
+    'delete-form' => '/admin/config/user-interface/tour/manage/{tour}/delete',
+    'clone-form' => '/admin/config/user-interface/tour/manage/{tour}/clone',
+  ],
+  admin_permission: 'administer tour',
+  label_count: [
+    'singular' => '@count tour',
+    'plural' => '@count tours',
+  ],
+  config_export: [
+    'id',
+    'label',
+    'routes',
+    'tips',
+  ],
+  lookup_keys: [
+    'routes.*.route_name',
+  ],
+)]
 class Tour extends ConfigEntityBase implements TourInterface {
 
   /**

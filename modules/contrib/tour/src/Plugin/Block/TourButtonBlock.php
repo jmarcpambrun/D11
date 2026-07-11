@@ -22,20 +22,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 )]
 class TourButtonBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
-  /**
-   * Constructs a new TourButtonBlock instance.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The config factory.
-   * @param mixed $tourHelper
-   *   Helper methods for the tour module.
-   */
   public function __construct(
     array $configuration,
     $plugin_id,

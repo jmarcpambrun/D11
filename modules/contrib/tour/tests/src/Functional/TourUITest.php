@@ -4,12 +4,12 @@ namespace Drupal\Tests\tour\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Tests\BrowserTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the Tour UI.
- *
- * @group Tour
  */
+#[Group('tour')]
 class TourUITest extends BrowserTestBase {
 
   use StringTranslationTrait;

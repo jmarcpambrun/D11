@@ -5,51 +5,32 @@ namespace Drupal\tour\Plugin\HelpSection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\help\Attribute\HelpSection;
 use Drupal\help\Plugin\HelpSection\HelpSectionPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides the tours list section for the help page.
- *
- * @HelpSection(
- *   id = "tour",
- *   title = @Translation("Tours"),
- *   weight = 10,
- *   description = @Translation("Tours guide you through workflows or explain concepts on various user interface pages. The tours with links in this list are on user interface landing pages; the tours without links will show on individual pages (such as when editing a View using the Views UI module). Available tours:"),
- *   permission = "access tour"
- * )
  */
+#[HelpSection(
+  id: "tour",
+  title: new TranslatableMarkup("Tours"),
+  description: new TranslatableMarkup("Tours guide you through workflows or explain concepts on various user interface pages. The tours with links in this list are on user interface landing pages; the tours without links will show on individual pages (such as when editing a View using the Views UI module). Available tours:"),
+  permission: "access tour",
+  weight: 10,
+)]
 class TourHelpSection extends HelpSectionPluginBase implements ContainerFactoryPluginInterface {
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * Constructs a TourHelpSection object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected EntityTypeManagerInterface $entityTypeManager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static(
       $configuration,
       $plugin_id,
@@ -61,7 +42,7 @@ class TourHelpSection extends HelpSectionPluginBase implements ContainerFactoryP
   /**
    * {@inheritdoc}
    */
-  public function getCacheMaxAge() {
+  public function getCacheMaxAge(): int {
     // The calculation of which URL (if any) gets put on which tour depends
     // on a route access check. This can have a lot of inputs, including user
     // permissions and other factors. Rather than doing a complicated
@@ -74,7 +55,7 @@ class TourHelpSection extends HelpSectionPluginBase implements ContainerFactoryP
   /**
    * {@inheritdoc}
    */
-  public function listTopics() {
+  public function listTopics(): array {
     /** @var \Drupal\tour\TourInterface[] $tours */
     $tours = $this->entityTypeManager->getStorage('tour')->loadMultiple();
     // Sort in the manner defined by Tour.
@@ -114,7 +95,7 @@ class TourHelpSection extends HelpSectionPluginBase implements ContainerFactoryP
           $made_link = TRUE;
           break;
         }
-        catch (\Exception $e) {
+        catch (\Exception) {
           // Exceptions are normally due to routes that need parameters. If
           // there is an exception, just try the next route and see if we can
           // find one that will work for us.

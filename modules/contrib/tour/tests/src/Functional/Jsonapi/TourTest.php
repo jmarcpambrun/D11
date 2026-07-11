@@ -6,12 +6,12 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
 use Drupal\Tests\jsonapi\Functional\ConfigEntityResourceTestBase;
 use Drupal\tour\Entity\Tour;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * JSON:API integration test for the "Tour" config entity type.
- *
- * @group tour
  */
+#[Group('tour')]
 class TourTest extends ConfigEntityResourceTestBase {
 
   /**

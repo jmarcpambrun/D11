@@ -7,9 +7,11 @@ use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\tour\Entity\Tour;
 use Drupal\tour\TourHelper;
 use Drupal\user\UserDataInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Manages tourauto-related data for a given user account.
@@ -30,29 +32,14 @@ class TourautoManager {
    */
   protected QueryInterface $tourQuery;
 
-  /**
-   * Constructs a new TourautoManager object.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The current user account.
-   * @param \Drupal\user\UserDataInterface $userData
-   *   The user data service.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $currentRouteMatch
-   *   The current route match service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager service.
-   * @param \Drupal\tour\TourHelper $tourHelper
-   *   The tour helper service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
-   *   The string translation service.
-   */
   public function __construct(
     protected AccountInterface $account,
     protected UserDataInterface $userData,
     protected RouteMatchInterface $currentRouteMatch,
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'tour.helper')]
     protected TourHelper $tourHelper,
-    protected $stringTranslation,
+    TranslationInterface $stringTranslation,
   ) {
     $this->tourQuery = $this->entityTypeManager->getStorage('tour')->getQuery()->accessCheck(FALSE);
     $this->setStringTranslation($stringTranslation);

@@ -106,3 +106,15 @@ tour.tour_settings:
     _title: 'Settings'
   requirements:
     _permission: 'administer tour'
+
+tour.recap:
+  path: '/tour/{tour}/recap'
+  defaults:
+    _controller: '\Drupal\tour\Controller\TourRecapController::recap'
+    _title_callback: '\Drupal\tour\Controller\TourRecapController::title'
+  requirements:
+    _permission: 'access tour'
+  options:
+    parameters:
+      tour:
+        type: entity:tour

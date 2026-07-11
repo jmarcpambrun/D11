@@ -6,12 +6,12 @@ namespace Drupal\Tests\tourauto\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the tourauto module functionality.
- *
- * @group tourauto
  */
+#[Group('tourauto')]
 class TourautoFunctionalTest extends BrowserTestBase {
 
   /**

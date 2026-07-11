@@ -20,6 +20,9 @@ tour.settings:
       label: 'Tour not available text'
       constraints:
         NotNull: []
+    enable_recap:
+      type: boolean
+      label: 'Enable tour recap'
 
 tour.tour.*:
   type: config_entity

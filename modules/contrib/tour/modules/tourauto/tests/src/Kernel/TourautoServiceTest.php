@@ -7,12 +7,12 @@ namespace Drupal\Tests\tourauto\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\tourauto\TourautoManager;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the tourauto service functionality.
- *
- * @group tourauto
  */
+#[Group('tourauto')]
 class TourautoServiceTest extends KernelTestBase {
 
   /**

@@ -9,12 +9,15 @@ use Drupal\Core\Config\Action\ConfigActionManager;
 use Drupal\FunctionalTests\Core\Recipe\RecipeTestTrait;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\tour\Entity\Tour;
+use Drupal\tour\Plugin\ConfigAction\AddTipToTour;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @covers \Drupal\tour\Plugin\ConfigAction\AddTipToTour
- *
- * @group tour
+ * Test Adding a tip to tour action.
  */
+#[Group('tour')]
+#[CoversClass(AddTipToTour::class)]
 class AddTipToTourActionTest extends KernelTestBase {
 
   use RecipeTestTrait;

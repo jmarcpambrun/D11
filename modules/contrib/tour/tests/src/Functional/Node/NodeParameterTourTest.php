@@ -3,12 +3,12 @@
 namespace Drupal\Tests\tour\Functional\Node;
 
 use Drupal\Tests\tour\Functional\TourTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the Node parameters tour.
- *
- * @group tour
  */
+#[Group('tour')]
 class NodeParameterTourTest extends TourTestBase {
 
   /**
