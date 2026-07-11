@@ -49,6 +49,15 @@ drupal.burndown.unsortable_board:
       css/burndown.board.css: {}
       css/burndown.task.css: {}
       css/background-colors.css: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.form
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog
+    - core/drupal.dialog.ajax
+    - core/drupal.ajax
 
 drupal.burndown.completed:
   version: VERSION
@@ -86,6 +95,25 @@ drupal.burndown.task_edit:
     - core/drupalSettings
     - core/drupal.dialog.ajax
     - core/drupal.ajax
+
+drupal.burndown.task_log_tabs:
+  version: VERSION
+  css:
+    component:
+      css/burndown.task.css: {}
+  js:
+    js/burndown.task_log_tabs.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+drupal.burndown.task_modal:
+  version: VERSION
+  css:
+    component:
+      css/burndown.task.modal.css: {}
+  dependencies:
+    - core/drupal.dialog.ajax
 
 drupal.burndown.swimlanes:
   version: VERSION

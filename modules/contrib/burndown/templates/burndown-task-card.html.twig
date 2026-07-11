@@ -63,14 +63,14 @@
       {% endif %}
 
       <div class="ticket_id">
-        {% if user.hasPermission('edit task entities') %}
-        <a href="{{ url('<front>') }}burndown/task/{{ data.id }}/edit"
+        {% if user.hasPermission('view published task entities') or user.hasPermission(data.project_id ~ ' view project') %}
+        <a href="{{ url('<front>') }}burndown/task/{{ data.id }}"
           class="use-ajax task_id{% if data.is_completed %} completed{% endif %}"
           data-dialog-type="modal"
           data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
         {% endif %}
           {{ data.ticket_id }}
-        {% if user.hasPermission('edit task entities') %}
+        {% if user.hasPermission('view published task entities') or user.hasPermission(data.project_id ~ ' view project') %}
         </a>
         {% endif %}
       </div>

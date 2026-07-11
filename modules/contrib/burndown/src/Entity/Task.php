@@ -416,13 +416,16 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * Get data array, for usage in the board controllers.
    */
   public function getData() {
+    $project = $this->getProject();
+
     return [
       'id' => $this->id(),
       'ticket_id' => $this->getTicketId(),
       'name' => $this->getName(),
       'description' => $this->getDescription(),
       'is_completed' => $this->isCompleted(),
-      'shortcode' => $this->getProject()->getShortcode(),
+      'shortcode' => $project->getShortcode(),
+      'project_id' => $project->id(),
       'backlog' => $this->inBacklog(),
       'board' => $this->onBoard(),
       'sprint' => $this->isSprint(),

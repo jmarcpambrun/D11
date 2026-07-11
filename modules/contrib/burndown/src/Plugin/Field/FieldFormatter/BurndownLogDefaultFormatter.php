@@ -5,11 +5,11 @@ namespace Drupal\burndown\Plugin\Field\FieldFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\user\Entity\User;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Url;
 
 /**
  * Field formatter "burndown_log_default".
@@ -106,145 +106,156 @@ class BurndownLogDefaultFormatter extends FormatterBase {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
+    $logs_by_type = [
+      'all' => [],
+      'comment' => [],
+      'changed' => [],
+      'work' => [],
+    ];
 
-    $output = [];
-
-    foreach ($items as $delta => $item) {
-
-      $build = [];
-
-      $build['type'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['type'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('Log Type'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => $item->type,
-        ],
-      ];
-
-      $build['created'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['burndown_log__created'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('Date'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => $this->dateFormatter->format($item->created),
-        ],
-      ];
-
+    foreach ($items as $item) {
       $user = $this->entityTypeManager->getStorage('user')->load($item->uid);
+      $type = $this->normalizeLogValue($item->type);
 
-      $build['uid'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['burndown_log__created'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('User'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => isset($user) ? $user->getDisplayName() : '',
-        ],
+      $entry = [
+        'type' => $type,
+        'created' => $this->dateFormatter->format((int) $item->created),
+        'user' => $user ? $user->getDisplayName() : '',
+        'comment' => $this->normalizeLogValue($item->comment),
+        'work_done' => $this->normalizeLogValue($item->work_done),
+        'description' => $this->normalizeLogValue($item->description),
       ];
 
-      $build['comment'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['burndown_log__comment'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('Comment'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => $item->comment,
-        ],
-      ];
-
-      $build['work_done'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['burndown_log__work_down'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('Work Done'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => $item->work_done,
-        ],
-      ];
-
-      $build['description'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['burndown_log__description'],
-        ],
-        'label' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__label'],
-          ],
-          '#markup' => $this->t('Description'),
-        ],
-        'value' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field__item'],
-          ],
-          '#plain_text' => $item->description,
-        ],
-      ];
-
-      $output[$delta] = $build;
+      $logs_by_type['all'][] = $entry;
+      if (isset($logs_by_type[$type])) {
+        $logs_by_type[$type][] = $entry;
+      }
     }
 
+    $output = [];
+    $output[0] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['burndown-log-tabs'],
+      ],
+      '#attached' => [
+        'library' => ['burndown/drupal.burndown.task_log_tabs'],
+      ],
+      'tabs' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['log_tabs']],
+        'comment' => [
+          '#type' => 'link',
+          '#title' => $this->t('Comments'),
+          '#url' => Url::fromUserInput('#'),
+          '#attributes' => [
+            'class' => ['comment', 'is-active'],
+            'data-log-tab' => 'comment',
+          ],
+        ],
+        'changed' => [
+          '#type' => 'link',
+          '#title' => $this->t('Changes'),
+          '#url' => Url::fromUserInput('#'),
+          '#attributes' => [
+            'class' => ['changed'],
+            'data-log-tab' => 'changed',
+          ],
+        ],
+        'work' => [
+          '#type' => 'link',
+          '#title' => $this->t('Work Logs'),
+          '#url' => Url::fromUserInput('#'),
+          '#attributes' => [
+            'class' => ['work'],
+            'data-log-tab' => 'work',
+          ],
+        ],
+        'all' => [
+          '#type' => 'link',
+          '#title' => $this->t('All'),
+          '#url' => Url::fromUserInput('#'),
+          '#attributes' => [
+            'class' => ['all'],
+            'data-log-tab' => 'all',
+          ],
+        ],
+      ],
+      'panel_all' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['burndown-task-log-panel', 'is-hidden'],
+          'data-log-panel' => 'all',
+        ],
+        'content' => [
+          '#theme' => 'burndown_log_items',
+          '#data' => $logs_by_type['all'],
+        ],
+      ],
+      'panel_comment' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['burndown-task-log-panel', 'is-active'],
+          'data-log-panel' => 'comment',
+        ],
+        'content' => [
+          '#theme' => 'burndown_log_items',
+          '#data' => $logs_by_type['comment'],
+        ],
+      ],
+      'panel_changed' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['burndown-task-log-panel', 'is-hidden'],
+          'data-log-panel' => 'changed',
+        ],
+        'content' => [
+          '#theme' => 'burndown_log_items',
+          '#data' => $logs_by_type['changed'],
+        ],
+      ],
+      'panel_work' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['burndown-task-log-panel', 'is-hidden'],
+          'data-log-panel' => 'work',
+        ],
+        'content' => [
+          '#theme' => 'burndown_log_items',
+          '#data' => $logs_by_type['work'],
+        ],
+      ],
+    ];
+
     return $output;
+  }
+
+  /**
+   * Normalize burndown log field values to a plain string.
+   *
+   * The custom burndown_log field stores `comment` as serialized `any`, so
+   * existing records may contain arrays (for example ['value' => '...']).
+   * `#plain_text` must always receive a string scalar.
+   *
+   * @param mixed $value
+   *   The raw field property value.
+   *
+   * @return string
+   *   A safe string representation.
+   */
+  protected function normalizeLogValue($value) {
+    if (is_array($value)) {
+      if (isset($value['value']) && is_scalar($value['value'])) {
+        return (string) $value['value'];
+      }
+      return '';
+    }
+
+    if (is_scalar($value)) {
+      return (string) $value;
+    }
+
+    return '';
   }
 
 }

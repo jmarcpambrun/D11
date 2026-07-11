@@ -19,6 +19,12 @@
   {{ attributes.addClass('burndown_task', 'list-group-item', 'row') }}
   data-ticket-id="{{ ticket_id }}">
 
-    {% include 'burndown-task-row.html.twig' %}
+    {% set current_view_mode = elements['#view_mode']|default('') %}
+    {% if current_view_mode in ['full', 'default'] %}
+      {{ attach_library('burndown/drupal.burndown.task_modal') }}
+      {{ content }}
+    {% else %}
+      {% include 'burndown-task-row.html.twig' %}
+    {% endif %}
 
 </div>
