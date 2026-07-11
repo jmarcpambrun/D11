@@ -6,7 +6,9 @@
  * 1. Top level: a "Select token category" list — Step data, Global (n),
  *    Template (n).
  * 2. Drill into a category to browse its (possibly nested) tokens.
- * 3. Each usable (leaf) token shows a `Use →` button that inserts the token.
+ * 3. Each usable (leaf) token is itself the clickable option — clicking (or
+ *    pressing Enter on) the whole row inserts the token; there is no separate
+ *    "Use" pill.
  * 4. A search box at the top filters the visible tokens (label/token
  *    substring, case-insensitive); while filtering, the picker shows a flat
  *    list of matching usable tokens across all categories. The search box owns
@@ -20,7 +22,7 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { FiChevronRight, FiChevronLeft, FiArrowRight, FiSearch, FiActivity, FiChevronDown, FiClock, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiChevronRight, FiChevronLeft, FiSearch, FiActivity, FiChevronDown, FiClock, FiRefreshCw, FiX } from 'react-icons/fi';
 import { t } from '../utils/translation';
 import { useTokenSources } from './TokenSourceContext';
 import { LISTEN_ITEM_INDEX } from '../hooks/useReplayLoader';
@@ -55,12 +57,30 @@ export interface TokenPickerProps {
 }
 
 /**
+ * The subtle "predicted" pill shown once in the step-data category header when
+ * the currently-shown step data was propagated from a replay-covered
+ * predecessor (issue #3577207). A NON-interactive `<span>` so it never
+ * introduces a nested-interactive a11y violation. Rendered a single time in the
+ * breadcrumb header (never per-token) so the indicator reads as a header-level
+ * status rather than clutter on every row.
+ */
+const PredictedBadge: React.FC = () => (
+  <span
+    className="token-predicted-badge"
+    title={t('Predicted from the previous step; not yet confirmed by a test run.')}
+    aria-label={t('Predicted token')}
+  >
+    {t('Predicted')}
+  </span>
+);
+
+/**
  * A single usable (leaf) token row. The ENTIRE row is the actionable
- * `role="option"` (click / Enter inserts the token) — the "Use →" affordance is
- * a NON-interactive visual span so we never nest an interactive control inside
- * an option (WAI-ARIA / axe `nested-interactive`). Focus stays in the host
- * field; activation is driven by click here and by Enter in the picker's
- * keyboard handler.
+ * `role="option"` (click / Enter inserts the token); there is no separate
+ * "Use" pill. Keeping the whole row as the sole clickable target avoids
+ * nesting an interactive control inside an option (WAI-ARIA / axe
+ * `nested-interactive`). Focus stays in the host field; activation is driven by
+ * click here and by Enter in the picker's keyboard handler.
  */
 const TokenLeafRow: React.FC<{
   node: TokenNode;
@@ -90,9 +110,6 @@ const TokenLeafRow: React.FC<{
           </span>
         )}
       </span>
-      <span className="token-picker-use-btn" aria-hidden="true">
-        {t('Use')} <FiArrowRight aria-hidden="true" />
-      </span>
     </div>
   );
 };
@@ -103,6 +120,7 @@ const TokenPicker: React.FC<TokenPickerProps> = React.memo(({ position, onSelect
     templateTokens,
     isTemplate,
     stepData,
+    stepDataPredicted = false,
     hasStepData,
     onReviewModel,
     reviewAvailable,
@@ -156,13 +174,14 @@ const TokenPicker: React.FC<TokenPickerProps> = React.memo(({ position, onSelect
         templateTokens,
         isTemplate,
         canResolveStepData,
+        stepPredicted: stepDataPredicted,
         labels: {
           step: t('Step data tokens'),
           global: t('Global tokens'),
           template: t('Template tokens'),
         },
       }),
-    [stepData, globalTokens, templateTokens, isTemplate, canResolveStepData],
+    [stepData, globalTokens, templateTokens, isTemplate, canResolveStepData, stepDataPredicted],
   );
 
   // Resolve the live open category from its id (re-resolved each render so the
@@ -629,10 +648,16 @@ const TokenPicker: React.FC<TokenPickerProps> = React.memo(({ position, onSelect
   //   • empty   → no dataset selected / no step data captured.
   const renderStepBody = (): React.ReactNode => {
     if (stepShowsWaiting) {
+      const polling = isLoadingStepData && !isListening;
       return (
         <div className="token-picker-listening">
           <FiRefreshCw className="spinning token-picker-listening-icon" aria-hidden="true" />
-          <p>{isLoadingStepData && !isListening ? t('Polling for data…') : t('Listening for event…')}</p>
+          <p>{polling ? t('Polling for data…') : t('Listening for event…')}</p>
+          {!polling && (
+            <p className="token-picker-listening-hint">
+              {t('Trigger the selected event on your Drupal site so that the workflow gets executed and the results are captured.')}
+            </p>
+          )}
         </div>
       );
     }
@@ -783,6 +808,10 @@ const TokenPicker: React.FC<TokenPickerProps> = React.memo(({ position, onSelect
               </span>
             );
           })()}
+          {/* Show the "Predicted" indicator ONCE, as a header-level status, and
+              only for the step-data category when its data is predicted (never
+              for the global/template categories). */}
+          {isStepCategoryOpen && stepDataPredicted && <PredictedBadge />}
         </div>
         {/* Feature J: at the top level of the step-data category, show the
             dataset dropdown and the load-on-demand waiting/empty/token body. */}

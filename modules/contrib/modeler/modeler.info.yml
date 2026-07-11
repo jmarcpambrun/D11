@@ -6,7 +6,7 @@ core_version_requirement: ^11.3 || ^12.0
 dependencies:
   - modeler_api:modeler_api
 
-# Information added by Drupal.org packaging script on 2026-06-29
-version: '1.0.4-alpha5'
+# Information added by Drupal.org packaging script on 2026-07-06
+version: '1.0.4'
 project: 'modeler'
-datestamp: 1782745881
+datestamp: 1783336320

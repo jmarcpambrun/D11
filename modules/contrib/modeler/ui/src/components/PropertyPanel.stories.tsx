@@ -316,9 +316,10 @@ export const ReviewModelView: Story = {
 };
 
 /**
- * Active session, NON-event node selected in Properties view: the "Review flow"
- * button still appears so the user can return to the running replay from any
- * node (coexisting views).
+ * Active session, NON-event node that traces to a starting event: the "Review
+ * flow" button appears and is ENABLED so the user can jump to the flow the
+ * selected node belongs to (coexisting views). The owning event is supplied
+ * structurally via `pickerOwningEventId`.
  */
 export const ActiveSessionReturnFromAnyNode: Story = {
   tags: ['!test'],
@@ -329,6 +330,7 @@ export const ActiveSessionReturnFromAnyNode: Story = {
     settings: reviewCapableSettings,
     hasAnyReplayCapability: true,
     replaySessionActive: true,
+    pickerOwningEventId: 'event_1',
     globalTokens: sampleGlobalTokens,
     onRequestReviewMode: fn(),
   },
@@ -349,10 +351,12 @@ export const ReviewButtonHiddenWhenUnsaved: Story = {
 };
 
 /**
- * Non-event node selected with NO active session: the "Review flow" button is
- * NOT shown (a session can only be started from an event node).
+ * ORPHANED non-event node (no owning event: no session AND no structural
+ * `pickerOwningEventId`): the "Review flow" button IS shown (a single node is
+ * selected) but stays DISABLED, since the node reaches no starting event to
+ * review. This demonstrates the disabled state of the button.
  */
-export const ReviewButtonHiddenForNonEvent: Story = {
+export const ReviewButtonDisabledForOrphanNode: Story = {
   tags: ['!test'],
   decorators: [withPanelMode('event')],
   args: {
@@ -360,5 +364,27 @@ export const ReviewButtonHiddenForNonEvent: Story = {
     edge: null,
     settings: reviewCapableSettings,
     hasAnyReplayCapability: true,
+    reviewableEventId: null,
+    pickerOwningEventId: null,
+    onRequestReviewMode: fn(),
+  },
+};
+
+/**
+ * NON-event node with a STRUCTURAL owning event but NO session yet: the "Review
+ * flow" button appears and is ENABLED. Clicking it starts a review session for
+ * the owning event resolved via `pickerOwningEventId`.
+ */
+export const ReviewButtonEnabledViaStructuralOwner: Story = {
+  tags: ['!test'],
+  decorators: [withPanelMode('event')],
+  args: {
+    node: sampleNode,
+    edge: null,
+    settings: reviewCapableSettings,
+    hasAnyReplayCapability: true,
+    reviewableEventId: null,
+    pickerOwningEventId: 'event_1',
+    onRequestReviewMode: fn(),
   },
 };

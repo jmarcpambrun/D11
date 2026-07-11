@@ -1713,10 +1713,11 @@ describe('ContentEditableField', () => {
       const searchInput = document.querySelector('.token-picker-search-input') as HTMLInputElement;
       fireEvent.change(searchInput, { target: { value: 'site' } });
 
-      // Click the Use button on the matching token (in the portaled picker).
-      const useBtn = document.querySelector('.token-picker-use-btn') as HTMLElement;
-      expect(useBtn).toBeTruthy();
-      fireEvent.click(useBtn);
+      // Click the matching token row (the whole row is the option; the "Use"
+      // pill was removed) in the portaled picker.
+      const useRow = document.querySelector('.token-picker-option') as HTMLElement;
+      expect(useRow).toBeTruthy();
+      fireEvent.click(useRow);
 
       // The picker closes and the token pill is now in the field.
       expect(picker()).toBeNull();
@@ -2155,9 +2156,9 @@ describe('ContentEditableField', () => {
       expect(editableDiv.contains(sel.getRangeAt(0).startContainer)).toBe(false);
 
       fireEvent.change(searchInput, { target: { value: 'site' } });
-      const useBtn = document.querySelector('.token-picker-use-btn') as HTMLElement;
-      expect(useBtn).toBeTruthy();
-      fireEvent.click(useBtn);
+      const useRow = document.querySelector('.token-picker-option') as HTMLElement;
+      expect(useRow).toBeTruthy();
+      fireEvent.click(useRow);
 
       // No stray "[" anywhere, exactly two pills, and the new pill is positioned
       // where the "[" was (after "abc"), not orphaned at a wrong index.
@@ -2189,9 +2190,9 @@ describe('ContentEditableField', () => {
       sel.addRange(inPicker);
 
       fireEvent.change(searchInput, { target: { value: 'site' } });
-      const useBtn = document.querySelector('.token-picker-use-btn') as HTMLElement;
-      expect(useBtn).toBeTruthy();
-      fireEvent.click(useBtn);
+      const useRow = document.querySelector('.token-picker-option') as HTMLElement;
+      expect(useRow).toBeTruthy();
+      fireEvent.click(useRow);
 
       expect(editableDiv.textContent).not.toContain('[');
       expectCorrectOrdering(editableDiv);

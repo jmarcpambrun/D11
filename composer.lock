@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cb01c221895be0b05e5d3a948447494e",
+    "content-hash": "6b5a254b2c20a2224023b9282eb683b6",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -7836,17 +7836,17 @@
         },
         {
             "name": "drupal/modeler",
-            "version": "1.0.4-alpha5",
+            "version": "1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler.git",
-                "reference": "1.0.4-alpha5"
+                "reference": "1.0.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.4-alpha5.zip",
-                "reference": "1.0.4-alpha5",
-                "shasum": "855c817428c21d9345c4169517f07a31b48d1014"
+                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.4.zip",
+                "reference": "1.0.4",
+                "shasum": "2bb20bc1328d72462f8afd04141a2f3179f7e442"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -7856,11 +7856,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.4-alpha5",
-                    "datestamp": "1782745877",
+                    "version": "1.0.4",
+                    "datestamp": "1783337230",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -22033,7 +22033,6 @@
         "drupal/group": 15,
         "drupal/h5p": 10,
         "drupal/mailer_transport": 15,
-        "drupal/modeler": 15,
         "drupal/multivalue_form_element": 10,
         "drupal/openai": 10,
         "drupal/page_manager": 5,

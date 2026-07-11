@@ -1,6 +1,8 @@
 import {
   buildBreadcrumb,
+  buildStepNodes,
   buildTokenCategories,
+  markPredictedDeep,
   computePickerPlacement,
   formatTokenValue,
   pickerMinHeight,
@@ -55,6 +57,129 @@ describe('buildTokenCategories (Feature J)', () => {
     const step = categories.find((c) => c.id === 'step');
     expect(step).toBeTruthy();
     expect(step?.count).toBe(1);
+  });
+});
+
+describe('buildStepNodes (predicted flag — issue #3577207)', () => {
+  const stepData = {
+    user: { label: 'User', token: '[user:name]', value: 'admin' },
+    bare: 'value',
+  };
+
+  it('leaves confirmed tokens unchanged (no predicted key) by default', () => {
+    const nodes = buildStepNodes(stepData);
+    expect(nodes).toEqual([
+      { label: 'User', token: '[user:name]', value: 'admin' },
+      { label: 'bare', value: 'value' },
+    ]);
+    nodes.forEach((n) => expect('predicted' in n).toBe(false));
+  });
+
+  it('leaves confirmed tokens unchanged when predicted is explicitly false', () => {
+    const nodes = buildStepNodes(stepData, false);
+    nodes.forEach((n) => expect(n.predicted).toBeUndefined());
+  });
+
+  it('stamps predicted: true on EVERY node when predicted is true', () => {
+    const nodes = buildStepNodes(stepData, true);
+    expect(nodes).toHaveLength(2);
+    nodes.forEach((n) => expect(n.predicted).toBe(true));
+    // The underlying token data is otherwise preserved.
+    expect(nodes[0]).toMatchObject({ label: 'User', token: '[user:name]', value: 'admin' });
+  });
+
+  it('returns [] for null/undefined regardless of the predicted flag', () => {
+    expect(buildStepNodes(null, true)).toEqual([]);
+    expect(buildStepNodes(undefined, true)).toEqual([]);
+  });
+
+  describe('deep-stamping nested descendants (issue #3577207)', () => {
+    const nestedStepData = {
+      entity: {
+        label: 'Entity',
+        data: {
+          title: { label: 'Title', token: '[entity:title]', value: 'Hello' },
+          author: {
+            label: 'Author',
+            data: {
+              name: { label: 'Name', token: '[entity:author:name]', value: 'admin' },
+            },
+          },
+        },
+      },
+    };
+
+    it('stamps predicted: true on the node AND every nested descendant when predicted is true', () => {
+      const [entity] = buildStepNodes(nestedStepData, true);
+      expect(entity.predicted).toBe(true);
+      const title = entity.data!.title;
+      const author = entity.data!.author;
+      expect(title.predicted).toBe(true);
+      expect(author.predicted).toBe(true);
+      // Recurse one level deeper.
+      expect(author.data!.name.predicted).toBe(true);
+    });
+
+    it('leaves NO predicted key anywhere (top level or nested) when predicted is false', () => {
+      const [entity] = buildStepNodes(nestedStepData);
+      expect('predicted' in entity).toBe(false);
+      expect('predicted' in entity.data!.title).toBe(false);
+      expect('predicted' in entity.data!.author).toBe(false);
+      expect('predicted' in entity.data!.author.data!.name).toBe(false);
+    });
+
+    it('does NOT mutate the input step data when deep-stamping (pure)', () => {
+      const original = JSON.parse(JSON.stringify(nestedStepData));
+      buildStepNodes(nestedStepData, true);
+      expect(nestedStepData).toEqual(original);
+    });
+  });
+});
+
+describe('markPredictedDeep (issue #3577207)', () => {
+  it('returns a deep-cloned node with predicted on the node and all descendants', () => {
+    const node = {
+      label: 'Entity',
+      data: { title: { label: 'Title', token: '[entity:title]' } },
+    };
+    const result = markPredictedDeep(node);
+    expect(result.predicted).toBe(true);
+    expect(result.data!.title.predicted).toBe(true);
+    // Non-mutating: distinct objects, input untouched.
+    expect(result).not.toBe(node);
+    expect(result.data).not.toBe(node.data);
+    expect('predicted' in node).toBe(false);
+    expect('predicted' in node.data.title).toBe(false);
+  });
+
+  it('handles leaf nodes without a data map', () => {
+    const node = { label: 'Title', token: '[entity:title]', value: 'Hello' };
+    const result = markPredictedDeep(node);
+    expect(result).toEqual({ label: 'Title', token: '[entity:title]', value: 'Hello', predicted: true });
+    expect(result.data).toBeUndefined();
+  });
+});
+
+describe('buildTokenCategories (predicted step data — issue #3577207)', () => {
+  it('stamps predicted on step nodes when stepPredicted is true', () => {
+    const categories = buildTokenCategories({
+      stepData: { foo: { label: 'Foo', token: '[foo]' } },
+      isTemplate: false,
+      stepPredicted: true,
+      labels,
+    });
+    const step = categories.find((c) => c.id === 'step');
+    expect(step?.nodes.every((n) => n.predicted === true)).toBe(true);
+  });
+
+  it('leaves step nodes unflagged when stepPredicted is omitted (confirmed)', () => {
+    const categories = buildTokenCategories({
+      stepData: { foo: { label: 'Foo', token: '[foo]' } },
+      isTemplate: false,
+      labels,
+    });
+    const step = categories.find((c) => c.id === 'step');
+    expect(step?.nodes.every((n) => n.predicted === undefined)).toBe(true);
   });
 });
 

@@ -25,6 +25,13 @@ export interface TokenSourceValue {
   isTemplate?: boolean;
   /** Expanded step-data tokens for the currently selected replay step. */
   stepData?: Record<string, unknown> | null;
+  /**
+   * Whether {@link stepData} was PREDICTED from a replay-covered predecessor of
+   * the selected node (issue #3577207) rather than confirmed by a replay run on
+   * the node. When `true`, the picker stamps each step token `predicted` so a
+   * subtle badge + tooltip renders. Defaults to `false` (confirmed).
+   */
+  stepDataPredicted?: boolean;
   /** Whether any step data is currently cached/available. */
   hasStepData?: boolean;
   /** Optional session timestamp (ISO string or Unix seconds) for the step data. */

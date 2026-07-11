@@ -134,6 +134,31 @@ export const StepContainer: StoryObj<typeof StepDataContainer> = {
 };
 
 /**
+ * StepDataContainer rendering PREDICTED tokens (issue #3577207): each top-level
+ * token carries a subtle "Predicted" badge + tooltip, indicating the data was
+ * propagated from a replay-covered predecessor and not yet confirmed by a run.
+ */
+export const StepContainerPredicted: StoryObj<typeof StepDataContainer> = {
+  render: () => (
+    <StepDataContainer
+      predicted
+      stepData={{
+        entity: {
+          label: 'Entity',
+          token: '[entity:title]',
+          value: 'Published Article',
+        },
+        event: {
+          label: 'Content: After inserting a new entity',
+          token: '[event:machine-name]',
+          value: 'content:entity_insert',
+        },
+      }}
+    />
+  ),
+};
+
+/**
  * Token data structure with label/token/value hierarchy
  */
 export const TokenDataStructure: Story = {

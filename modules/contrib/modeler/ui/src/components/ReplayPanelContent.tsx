@@ -79,6 +79,13 @@ export interface ReplayPanelContentProps {
   onSelectStep: (step: number) => void;
   currentStep?: number;
   stepData?: Record<string, any> | null;
+  /**
+   * Whether {@link stepData} was PREDICTED from a replay-covered predecessor of
+   * the selected node (issue #3577207). When `true`, the Step-data container
+   * renders a subtle "predicted" badge + tooltip on its tokens. Defaults to
+   * `false` (confirmed step data, unchanged rendering).
+   */
+  stepDataPredicted?: boolean;
   stepInfo?: StepInfo | null;
   edges?: Edge[];
   nodes?: Node[];
@@ -137,6 +144,7 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
   onSelectStep,
   currentStep = -1,
   stepData,
+  stepDataPredicted = false,
   stepInfo,
   edges = [],
   nodes = [],
@@ -607,7 +615,7 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
               <div className="data-content" tabIndex={0} role="region" aria-label={t('Step Data')}>
                 {stepData && Object.keys(stepData).length > 0 ? (
                   <>
-                    <StepDataContainer stepData={stepData} />
+                    <StepDataContainer stepData={stepData} predicted={stepDataPredicted} />
                   </>
                 ) : (
                   <>

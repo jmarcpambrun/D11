@@ -109,7 +109,7 @@ fi
 echo "Working directory: $(pwd)"
 
 # In development mode, run type checks and linter
-if [[ "$VALIDATION_MODE" == "true" ]]; then
+if [[ "$VALIDATE_MODE" == "true" ]]; then
 
   # Run TypeScript type checking (if available)
   echo "Running TypeScript type checking..."

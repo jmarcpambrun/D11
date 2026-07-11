@@ -259,19 +259,39 @@ export const ReplayDataRenderer: React.FC<ReplayDataRendererProps> = ({
 interface StepDataContainerProps {
   /** Step data object to render */
   stepData: Record<string, any>;
+  /**
+   * Whether this step data was PREDICTED from a replay-covered predecessor of
+   * the selected node (issue #3577207) rather than confirmed by a replay run.
+   * When `true`, a subtle "predicted" badge + tooltip is rendered on each
+   * top-level token. Defaults to `false` (confirmed; rendering unchanged).
+   */
+  predicted?: boolean;
 }
 
-export const StepDataContainer: React.FC<StepDataContainerProps> = ({ stepData }) => {
+export const StepDataContainer: React.FC<StepDataContainerProps> = ({ stepData, predicted = false }) => {
   return (
-    <div className="token-data-container">
+    // The container is a scrollable region (`overflow-y: auto`), so it must be
+    // keyboard-focusable to satisfy axe `scrollable-region-focusable` — a focused
+    // user can scroll it with the arrow keys. Labeled as a group for screen
+    // readers. Applies to BOTH confirmed and predicted rendering (shared root).
+    <div className="token-data-container" tabIndex={0} role="group" aria-label={t('Step data')}>
       {Object.entries(stepData).map(([key, value]) => {
         // If value doesn't have a label, add the key as the label
         const dataWithLabel = (value && typeof value === 'object' && 'label' in value)
           ? value
           : { label: key, ...(typeof value === 'object' && value !== null ? value : { value }) };
         return (
-          <div key={key}>
+          <div key={key} className={predicted ? 'token-data-entry token-data-entry--predicted' : 'token-data-entry'}>
             <ReplayDataRenderer data={dataWithLabel} basePath={`tokenData.${key}`} />
+            {predicted && (
+              <span
+                className="token-predicted-badge"
+                title={t('Predicted from the previous step; not yet confirmed by a test run.')}
+                aria-label={t('Predicted token')}
+              >
+                {t('Predicted')}
+              </span>
+            )}
           </div>
         );
       })}

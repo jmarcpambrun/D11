@@ -359,6 +359,27 @@ describe('A11y Audit: Replay Components', () => {
     );
     expect(results).toHaveNoViolations();
   });
+
+  test('StepDataContainer (predicted) has no a11y violations', async () => {
+    const results = await audit(
+      <StepDataContainer
+        predicted
+        stepData={{ entity: { label: 'Entity', token: '[entity:title]', value: 'Test' } }}
+      />
+    );
+    expect(results).toHaveNoViolations();
+  });
+
+  test('StepDataContainer scrollable region is keyboard-focusable and labeled (axe scrollable-region-focusable)', () => {
+    const { container } = render(
+      <StepDataContainer stepData={{ entity: { title: 'Test' } }} />
+    );
+    const region = container.querySelector('.token-data-container')!;
+    // tabindex=0 makes the scrollable region reachable/scrollable by keyboard.
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.getAttribute('role')).toBe('group');
+    expect(region.getAttribute('aria-label')).toBe('Step data');
+  });
 });
 
 // ─── Documentation Components ────────────────────────────────────────────────

@@ -36,7 +36,8 @@ import { t } from '../utils/translation';
 import { showDrupalMessage } from '../utils/drupalMessage';
 import { validateModelConstraints, validateNoAdjacentConditions, validateConditionOutdegree } from '../utils/constraintValidation';
 import { expandReplayStep } from '../utils/replayExpansion';
-import { findElementForReplayStep } from '../utils/replayStepUtils';
+import { findElementForReplayStep, findReplayStepForElement } from '../utils/replayStepUtils';
+import { resolvePredictedTokens } from '../utils/predecessorTokens';
 import { useReplayLoader, LISTEN_ITEM_INDEX } from '../hooks/useReplayLoader';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
 import type { Settings, DrupalAjax, ModelConstraints } from '../types/settings';
@@ -430,15 +431,35 @@ function FlowInner({ settings, drupal }: FlowProps) {
     return initialReplayData;
   }, [selectedReplayEntryIndex, loadedReplayEntries, initialReplayData]);
 
-  // Lazily expand the selected step's compact `@prev`/`@ref` markers for
-  // display ONLY. ECA delivers `replayData` in its compact, marker-bearing
-  // form; expansion happens here on a non-mutating deep copy so the stored
-  // `replayData` (and therefore the JSON export) keeps the markers intact.
-  // Recomputed only when the selected step or the underlying data changes.
-  const expandedStepData = useMemo(
-    () => expandReplayStep(replayData, currentReplayStep),
-    [replayData, currentReplayStep],
-  );
+  // Selected-node-aware step-data resolution (issue #3577207). ECA delivers
+  // `replayData` in its compact, marker-bearing form; expansion always happens
+  // on a non-mutating deep copy so the stored `replayData` (and therefore the
+  // JSON export) keeps the markers intact. The result carries a `predicted`
+  // flag so the panel/picker can render the predicted badge.
+  //
+  // Resolution order (spec §3.2):
+  //   (a) the selected node IS replay-covered → use ITS own step data
+  //       (predicted=false); selecting a covered node always shows its data.
+  //   (b) else if predecessor tokens resolve (a covered predecessor exists) →
+  //       use those (predicted=true), so a freshly-added successor inherits the
+  //       predecessor's runtime context without re-running replay.
+  //   (c) else fall back to the legacy current-step data (e.g. while stepping
+  //       through replay), predicted=false.
+  // Recomputed when the selection, graph, replay data, or current step changes.
+  const expandedStepData = useMemo<{ data: Record<string, unknown> | null; predicted: boolean }>(() => {
+    const selId = selectedNode?.id;
+    if (selId) {
+      const ownIdx = findReplayStepForElement(replayData, edges, selId, 'node');
+      if (ownIdx >= 0) {
+        return { data: expandReplayStep(replayData, ownIdx), predicted: false };
+      }
+      const predicted = resolvePredictedTokens({ nodeId: selId, nodes, edges, replayData });
+      if (Object.keys(predicted).length > 0) {
+        return { data: predicted, predicted: true };
+      }
+    }
+    return { data: expandReplayStep(replayData, currentReplayStep), predicted: false };
+  }, [replayData, currentReplayStep, selectedNode, nodes, edges]);
   
   // Configuration management
   const {
@@ -1282,7 +1303,10 @@ function FlowInner({ settings, drupal }: FlowProps) {
   //   (c) selected node is NOT an event → resume the session of the event whose
   //       flow OWNS the selected node (active-preferred). This makes the node
   //       in-flow for the now-active event so the auto-exit effect will NOT
-  //       bounce back to Properties. If no session-event owns it, do nothing.
+  //       bounce back to Properties. If no session owns it yet but it traces
+  //       back STRUCTURALLY to a starting event (`pickerOwningEventId`), START a
+  //       new session for that event (validate first). Only a truly orphaned
+  //       node (no owning event at all) is a no-op.
   const requestReviewMode = useCallback(() => {
     const selectedEventId = selectedStartNodeId;
 
@@ -1293,6 +1317,18 @@ function FlowInner({ settings, drupal }: FlowProps) {
     if (!selectedEventId) {
       if (reviewableEventId) {
         resumeReviewForNode(reviewableEventId);
+      } else if (pickerOwningEventId) {
+        // No session yet owns this node, but we can trace back structurally to
+        // its starting event — start a review session for that event so the
+        // user can review the flow the selected action belongs to. Prefer the
+        // structural resolution only when no session owns the node (the
+        // `reviewableEventId` branch above handles the session case).
+        const validationError = validateBeforeSave();
+        if (validationError) {
+          showDrupalMessage(validationError, 'error');
+          return;
+        }
+        enterReviewForNode(pickerOwningEventId);
       }
       return;
     }
@@ -1315,7 +1351,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
     }
 
     enterReviewForNode(selectedEventId);
-  }, [validateBeforeSave, selectedStartNodeId, reviewableEventId, enterReviewForNode, resumeReviewForNode]);
+  }, [validateBeforeSave, selectedStartNodeId, reviewableEventId, pickerOwningEventId, enterReviewForNode, resumeReviewForNode]);
 
   // Auto-enter Review mode when a model OPENS already carrying saved replay data
   // (settings.modeler.replayData → initialReplayData). The embedded data is shown
@@ -1710,7 +1746,8 @@ function FlowInner({ settings, drupal }: FlowProps) {
             onSelectReplayStep={handleReplayStepSelect}
             onToggleReplay={toggleReplayMode}
             isReplayMode={isReplayMode}
-            stepData={expandedStepData}
+            stepData={expandedStepData.data}
+            stepDataPredicted={expandedStepData.predicted}
             stepInfo={currentReplayStep >= 0 && currentReplayStep < replayData.length ? {
               type: replayData[currentReplayStep].type,
               id: replayData[currentReplayStep].id,

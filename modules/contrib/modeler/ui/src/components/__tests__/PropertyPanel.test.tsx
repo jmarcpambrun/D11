@@ -290,6 +290,27 @@ describe('PropertyPanel', () => {
       const iconsZone = container.querySelector('.panel-header-icons');
       expect(iconsZone?.querySelector('.header-info-btn')).toBeTruthy();
     });
+
+    it('should keep the switch button as the LAST child of .panel-header in Properties view, even when the icons zone has content — fixes the left/right jump bug', () => {
+      const { container } = render(<PropertyPanel node={actionNode as any} />);
+      const header = container.querySelector('.panel-header');
+      const iconsZone = container.querySelector('.panel-header-icons');
+      const switchZone = container.querySelector('.panel-header-switch');
+      // The icons zone has content (the info button) in Properties view.
+      expect(iconsZone?.querySelector('.header-info-btn')).toBeTruthy();
+      // Yet the switch zone is still the last grid column / last DOM child.
+      expect(header?.lastElementChild).toBe(switchZone);
+    });
+
+    it('should keep the switch button as the LAST child of .panel-header in Review view too — both views agree on right-most position', () => {
+      mockPanelState.panelMode = 'review';
+      const { container } = render(
+        <PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />,
+      );
+      const header = container.querySelector('.panel-header');
+      const switchZone = container.querySelector('.panel-header-switch');
+      expect(header?.lastElementChild).toBe(switchZone);
+    });
   });
 
   describe('documentation button', () => {
@@ -550,10 +571,70 @@ describe('PropertyPanel', () => {
       expect(btn.disabled).toBe(false);
     });
 
-    it('should render the Review flow button ENABLED with NO node selected when a session is active', () => {
-      render(<PropertyPanel hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />);
+    it('should NOT render the Review flow button when NO node is selected (even with an active session)', () => {
+      // Visibility contract: the button shows ONLY for a single selected NODE.
+      // With nothing selected there is no node to trace to an event, so the
+      // button is hidden (the empty switch cell keeps the layout stable).
+      const { container } = render(
+        <PropertyPanel hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />,
+      );
+      expect(screen.queryByRole('button', { name: 'Review flow' })).toBeNull();
+      expect(container.querySelector('.panel-header-switch')).toBeTruthy();
+    });
+
+    it('should NOT render the Review flow button when MULTIPLE nodes are selected', () => {
+      // Multi-select has no single node context → button hidden.
+      const nodes = [
+        { id: 'n1', type: 'element', data: { label: 'A' }, position: { x: 0, y: 0 } },
+        { id: 'n2', type: 'element', data: { label: 'B' }, position: { x: 0, y: 0 } },
+      ];
+      const { container } = render(
+        <PropertyPanel
+          selectedNodes={nodes as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          replaySessionActive
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Review flow' })).toBeNull();
+      expect(container.querySelector('.panel-header-switch')).toBeTruthy();
+    });
+
+    it('should NOT render the Review flow button when a single EDGE is selected', () => {
+      // An edge selection sets `edge` but not `node` → button hidden.
+      const edge = { id: 'edge-1', source: 'a', target: 'b', data: {} };
+      const { container } = render(
+        <PropertyPanel
+          edge={edge as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          replaySessionActive
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Review flow' })).toBeNull();
+      expect(container.querySelector('.panel-header-switch')).toBeTruthy();
+    });
+
+    // ── Structural owning event: enabled WITHOUT a session ──────────────────
+    it('should ENABLE the Review flow button for a NON-event node with a STRUCTURAL owning event but NO session', () => {
+      // No `reviewableEventId` (no session) but Flow supplies a structural
+      // owning event via `pickerOwningEventId` → the button is rendered AND
+      // enabled so the user can start a review session for the owning event.
+      render(
+        <PropertyPanel
+          node={actionNode as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          reviewableEventId={null}
+          pickerOwningEventId="event-1"
+          onRequestReviewMode={jest.fn()}
+        />,
+      );
       const btn = screen.getByRole('button', { name: 'Review flow' }) as HTMLButtonElement;
+      expect(btn).toBeTruthy();
       expect(btn.disabled).toBe(false);
+      expect(btn.getAttribute('aria-disabled')).toBe('false');
+      expect(btn.getAttribute('title')).toBe('Review flow');
     });
 
     // ── BUG 2: non-event node OUTSIDE every reviewed flow → DISABLED ──────────
@@ -1023,7 +1104,7 @@ describe('PropertyPanel', () => {
       expect(screen.queryByTestId('replay-panel-content')).toBeNull();
     });
 
-    it('FREEZES the config-loader isReplayMode input while the picker is open (no replay-reload → no field unmount), reconciles on close', () => {
+    it('FREEZES the config-loader isReplayMode input while the picker is open (no replay-reload → no field unmount), reconciles on close for a NON-picker-initiated session', () => {
       const { useConfigurationLoader } = require('../../hooks/useConfigurationLoader');
       useConfigurationLoader.mockReturnValue({ configurationForm: null, loading: false });
       const lastIsReplayMode = () => {
@@ -1045,7 +1126,54 @@ describe('PropertyPanel', () => {
       // Picker opens → freeze the loader input at its open-time value (false).
       act(() => { capturedTokenSources.onPickerOpenChange?.(true); });
 
-      // Session arms → Flow flips the LIVE isReplayMode prop true.
+      // Session arms (NOT picker-initiated) → Flow flips the LIVE isReplayMode
+      // prop true. This models a real Review that armed behind the picker.
+      rerender(
+        <PropertyPanel
+          node={actionNode as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          isReplayMode
+          replaySessionActive
+        />,
+      );
+      // FROZEN: the loader still receives false → no "always reload in replay
+      // mode" → no setLoading(true) → the field is never unmounted.
+      expect(lastIsReplayMode()).toBe(false);
+      // The field stays mounted (no loading swap).
+      expect(screen.getByTestId('node-properties-panel')).toBeTruthy();
+
+      // Close → reconcile: with pickerInitiatedSession false, the loader sees
+      // the LIVE isReplayMode again (real-Review reload path intact).
+      act(() => { capturedTokenSources.onPickerOpenChange?.(false); });
+      expect(lastIsReplayMode()).toBe(true);
+    });
+
+    it('does NOT drive the config loader into replay-reload on close for a PICKER-INITIATED session (the repaint-on-insert fix)', () => {
+      const { useConfigurationLoader } = require('../../hooks/useConfigurationLoader');
+      useConfigurationLoader.mockReturnValue({ configurationForm: null, loading: false });
+      const lastIsReplayMode = () => {
+        const calls = useConfigurationLoader.mock.calls;
+        return calls[calls.length - 1][0].isReplayMode as boolean;
+      };
+
+      // Open-time: not in replay mode → loader sees false.
+      const { rerender } = render(
+        <PropertyPanel
+          node={actionNode as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          isReplayMode={false}
+        />,
+      );
+      expect(lastIsReplayMode()).toBe(false);
+
+      // Picker opens → freeze.
+      act(() => { capturedTokenSources.onPickerOpenChange?.(true); });
+
+      // The [-token picker armed a per-event review session purely to feed
+      // itself: Flow flips the LIVE isReplayMode prop true AND marks the
+      // session as picker-initiated.
       rerender(
         <PropertyPanel
           node={actionNode as any}
@@ -1056,14 +1184,42 @@ describe('PropertyPanel', () => {
           pickerInitiatedSession
         />,
       );
-      // FROZEN: the loader still receives false → no "always reload in replay
-      // mode" → no setLoading(true) → the field is never unmounted.
+      // While open the loader still receives false (freeze).
       expect(lastIsReplayMode()).toBe(false);
-      // The field stays mounted (no loading swap).
-      expect(screen.getByTestId('node-properties-panel')).toBeTruthy();
 
-      // Close → reconcile: the loader sees the LIVE isReplayMode again.
+      // User inserts the FIRST token → the picker CLOSES → the freeze releases.
+      // BUT the session is picker-initiated (the user is still editing), so the
+      // loader must STILL receive false — it must NOT reconcile to the live
+      // true and re-run the "always reload in replay mode" rule (which would
+      // swap in the loading spinner = the ugly repaint).
       act(() => { capturedTokenSources.onPickerOpenChange?.(false); });
+      expect(lastIsReplayMode()).toBe(false);
+      // The field body stays mounted — no loading spinner swap on insert.
+      expect(screen.getByTestId('node-properties-panel')).toBeTruthy();
+    });
+
+    it('DOES drive the config loader into replay-reload on close for a real (non-picker-initiated) Review (reload path preserved)', () => {
+      const { useConfigurationLoader } = require('../../hooks/useConfigurationLoader');
+      useConfigurationLoader.mockReturnValue({ configurationForm: null, loading: false });
+      const lastIsReplayMode = () => {
+        const calls = useConfigurationLoader.mock.calls;
+        return calls[calls.length - 1][0].isReplayMode as boolean;
+      };
+
+      // A genuine Review session is active and NOT picker-initiated (Flow's
+      // enterReviewForNode/resumeReviewForNode clears pickerInitiatedSession).
+      // The picker is closed. The loader MUST receive the live true so the
+      // config form reloads in replay mode as before.
+      render(
+        <PropertyPanel
+          node={actionNode as any}
+          hasAnyReplayCapability
+          settings={savedReviewSettings as any}
+          isReplayMode
+          replaySessionActive
+          pickerInitiatedSession={false}
+        />,
+      );
       expect(lastIsReplayMode()).toBe(true);
     });
 

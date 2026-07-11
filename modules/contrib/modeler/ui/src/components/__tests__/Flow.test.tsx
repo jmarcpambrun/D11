@@ -1734,7 +1734,7 @@ describe('Flow', () => {
       expect(mockSetPanelMode).not.toHaveBeenCalledWith('event');
     });
 
-    it('BUG2: action whose owning event has NO session → reviewableEventId null (button hidden)', () => {
+    it('action whose owning event has NO session → reviewableEventId null, but STRUCTURAL owner starts a session on Review flow', () => {
       // Only event_1 gets a session. Select action_3 (belongs to event_3, which
       // has no session) while reviewing event_1.
       setup('review', eventNode('event_1'), { running: true });
@@ -1744,10 +1744,36 @@ describe('Flow', () => {
       setup('event', actionNode('action_3'), { running: true });
       rerender(<Flow {...reviewProps} />);
 
-      // action_3 is in no session-flow → no owning event → button hides.
+      // action_3 is in no session-flow → reviewableEventId is null (session-
+      // gated), but it traces STRUCTURALLY to event_3.
       expect(capturedPropertyPanelProps.reviewableEventId).toBeNull();
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBe('event_3');
 
-      // And clicking Review flow on it is a no-op (no resume, no start).
+      // Clicking Review flow now STARTS a review session for the structural
+      // owning event (event_3) so the user can review action_3's flow.
+      mockStartTest.mockClear();
+      mockLoadReplayData.mockClear();
+      mockSetPanelMode.mockClear();
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+      expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+      expect(mockStartTest).toHaveBeenCalledWith('event_3');
+      expect(mockLoadReplayData).toHaveBeenCalledWith('event_3');
+    });
+
+    it('orphan node (no owning event at all) → Review flow is a no-op (no start)', () => {
+      // Only event_1 gets a session. Select an orphan node in no flow.
+      setup('review', eventNode('event_1'), { running: true });
+      const { rerender } = render(<Flow {...reviewProps} />);
+      act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });
+
+      const orphan = { id: 'orphan', type: 'element', data: {}, position: { x: 0, y: 0 } };
+      setup('event', orphan, { running: true });
+      rerender(<Flow {...reviewProps} />);
+
+      // No session and no structural owner → nothing to review.
+      expect(capturedPropertyPanelProps.reviewableEventId).toBeNull();
+      expect(capturedPropertyPanelProps.pickerOwningEventId).toBeNull();
+
       mockStartTest.mockClear();
       mockSetPanelMode.mockClear();
       act(() => { capturedPropertyPanelProps.onRequestReviewMode(); });

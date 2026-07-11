@@ -19,6 +19,14 @@ export interface TokenNode {
   value?: unknown;
   /** Child nodes keyed by an arbitrary id. */
   data?: Record<string, TokenNode>;
+  /**
+   * Whether this token was PREDICTED from a replay-covered predecessor of the
+   * selected node (rather than confirmed by a replay run on the node itself).
+   * When `true`, the UI renders a subtle "predicted" badge + tooltip. Confirmed
+   * tokens leave this `undefined`/`false` so their rendering is unchanged
+   * (issue #3577207).
+   */
+  predicted?: boolean;
 }
 
 /**
@@ -168,11 +176,61 @@ function normalizeStepEntry(key: string, value: unknown): TokenNode {
 }
 
 /**
- * Build the step-data category nodes from the raw expanded step data.
+ * Return a NON-mutating deep copy of a token node with `predicted: true`
+ * stamped on the node AND, recursively, on every descendant inside its nested
+ * `data` objects.
+ *
+ * The picker drills into structured step data via `node.data`, so the visible
+ * leaf rows after drilling are the CHILD nodes — stamping only the top level
+ * (the old behavior) left those children unflagged and the badge never showed.
+ * Deep-stamping guarantees the predicted indicator is available at every level
+ * the picker can render (issue #3577207).
+ *
+ * Pure: the input node is never mutated; a fresh node (and fresh `data` map) is
+ * returned.
+ *
+ * @param node
+ *   The token node to stamp (read-only).
+ *
+ * @returns A deep-cloned node with `predicted: true` on it and all descendants.
  */
-export function buildStepNodes(stepData?: Record<string, unknown> | null): TokenNode[] {
+export function markPredictedDeep(node: TokenNode): TokenNode {
+  const stamped: TokenNode = { ...node, predicted: true };
+  if (node.data) {
+    const children: Record<string, TokenNode> = {};
+    for (const [childKey, child] of Object.entries(node.data)) {
+      children[childKey] = markPredictedDeep(child);
+    }
+    stamped.data = children;
+  }
+  return stamped;
+}
+
+/**
+ * Build the step-data category nodes from the raw expanded step data.
+ *
+ * @param stepData
+ *   The expanded step-data object (key -> entry), or null/undefined.
+ * @param predicted
+ *   When `true`, every produced {@link TokenNode} — and recursively every
+ *   nested descendant — is stamped `predicted: true` so the UI can render the
+ *   "predicted from a predecessor" badge + tooltip at any drill level (issue
+ *   #3577207). Defaults to `false`, leaving confirmed tokens unchanged.
+ *
+ * @returns The normalized top-level token nodes for the step-data category.
+ */
+export function buildStepNodes(
+  stepData?: Record<string, unknown> | null,
+  predicted = false,
+): TokenNode[] {
   if (!stepData) return [];
-  return Object.entries(stepData).map(([key, value]) => normalizeStepEntry(key, value));
+  return Object.entries(stepData).map(([key, value]) => {
+    const node = normalizeStepEntry(key, value);
+    // Only stamp the flag for predicted data; confirmed nodes stay byte-for-byte
+    // identical (no `predicted` key added anywhere) so existing rendering is
+    // unchanged. Predicted data is deep-stamped so nested leaves carry it too.
+    return predicted ? markPredictedDeep(node) : node;
+  });
 }
 
 /**
@@ -196,6 +254,13 @@ interface BuildCategoriesArgs {
    * when cached step data exists). Template models never get a step category.
    */
   canResolveStepData?: boolean;
+  /**
+   * Whether the step data was PREDICTED from a replay-covered predecessor of the
+   * selected node (issue #3577207). When `true`, every step-data {@link TokenNode}
+   * is stamped `predicted: true` so the picker renders the predicted badge.
+   * Defaults to `false` (confirmed step data, unchanged rendering).
+   */
+  stepPredicted?: boolean;
   /** Translation function (injected to avoid importing t() into a pure util test). */
   labels: { step: string; global: string; template: string };
 }
@@ -217,11 +282,12 @@ export function buildTokenCategories({
   templateTokens,
   isTemplate,
   canResolveStepData = false,
+  stepPredicted = false,
   labels,
 }: BuildCategoriesArgs): TokenCategory[] {
   const categories: TokenCategory[] = [];
 
-  const stepNodes = buildStepNodes(stepData);
+  const stepNodes = buildStepNodes(stepData, stepPredicted);
   // Feature J: offer the step category for non-template models with a resolvable
   // owning event even when there are no cached nodes yet (load-on-demand). Never
   // for templates. Otherwise fall back to the legacy "only when data" rule.

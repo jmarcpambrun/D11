@@ -227,6 +227,32 @@ describe('StepDataContainer', () => {
     expect(screen.getByText('primitiveValue')).toBeInTheDocument();
     expect(screen.getByText('42')).toBeInTheDocument();
   });
+
+  it('does NOT render a predicted badge for confirmed step data (default)', () => {
+    render(<StepDataContainer stepData={{ token1: { label: 'Token 1', value: 'v' } }} />);
+    expect(screen.queryByLabelText('Predicted token')).not.toBeInTheDocument();
+  });
+
+  it('renders a predicted badge + tooltip on each token when predicted is true (issue #3577207)', () => {
+    render(
+      <StepDataContainer
+        predicted
+        stepData={{
+          token1: { label: 'Token 1', value: 'v1' },
+          token2: { label: 'Token 2', value: 'v2' },
+        }}
+      />,
+    );
+    const badges = screen.getAllByLabelText('Predicted token');
+    expect(badges).toHaveLength(2);
+    badges.forEach((badge) => {
+      expect(badge).toHaveTextContent('Predicted');
+      expect(badge).toHaveAttribute(
+        'title',
+        'Predicted from the previous step; not yet confirmed by a test run.',
+      );
+    });
+  });
 });
 
 describe('GlobalTokensContainer', () => {

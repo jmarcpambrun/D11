@@ -44,7 +44,7 @@
     "@storybook/react": "^8.6.15",
     "@storybook/react-vite": "^8.6.15",
     "@storybook/test": "^8.6.15",
-    "@storybook/test-runner": "^0.21.0",
+    "@storybook/test-runner": "^0.23.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",
@@ -79,8 +79,11 @@
     "ts-jest": "^29.4.6",
     "tsx": "^4.7.0",
     "typescript": "^5.9.3",
-    "uuid": "^9.0.1",
+    "uuid": "^14.0.1",
     "wait-on": "^9.0.3",
     "zustand": "^4.4.7"
+  },
+  "overrides": {
+    "uuid": "$uuid"
   }
 }

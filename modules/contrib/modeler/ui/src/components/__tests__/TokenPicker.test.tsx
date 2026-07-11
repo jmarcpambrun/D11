@@ -7,7 +7,6 @@ import type { TokenSourceValue } from '../TokenSourceContext';
 jest.mock('react-icons/fi', () => ({
   FiChevronRight: () => <span data-testid="fi-chevron-right" />,
   FiChevronLeft: () => <span data-testid="fi-chevron-left" />,
-  FiArrowRight: () => <span data-testid="fi-arrow-right" />,
   FiSearch: () => <span data-testid="fi-search" />,
   FiActivity: () => <span data-testid="fi-activity" />,
   FiChevronDown: () => <span data-testid="fi-chevron-down" />,
@@ -206,6 +205,108 @@ describe('TokenPicker', () => {
       const valueEl = row.querySelector('.token-picker-leaf-value');
       expect(valueEl).toBeTruthy();
       expect(valueEl!.textContent).toBe(JSON.stringify({ qty: 2, sku: 'A1' }));
+    });
+  });
+
+  describe('predicted step tokens (issue #3577207)', () => {
+    // A flat step token (top-level leaf).
+    const predictedStep = {
+      user: { label: 'User name', token: '[user:name]', value: 'admin' },
+    } as any;
+
+    // Structured step data: the top-level entry is a BRANCH (has children), the
+    // user must DRILL IN to reach the leaf token. Used to prove drilling never
+    // stamps per-row badges.
+    const nestedPredictedStep = {
+      entity: {
+        label: 'Entity',
+        data: {
+          title: { label: 'Title', token: '[entity:title]', value: 'Hello' },
+        },
+      },
+    } as any;
+
+    // The single header-level badge lives in the breadcrumb region. Assert its
+    // text, tooltip, and accessible label.
+    const assertHeaderBadge = (badge: Element | null) => {
+      expect(badge).toBeTruthy();
+      expect(badge!.textContent).toContain('Predicted');
+      expect(badge!.getAttribute('title')).toBe(
+        'Predicted from the previous step; not yet confirmed by a test run.',
+      );
+      expect(badge!.getAttribute('aria-label')).toBe('Predicted token');
+    };
+
+    it('renders EXACTLY ONE predicted badge, in the step-data header, when stepDataPredicted is true', () => {
+      renderPicker({ stepData: predictedStep, hasStepData: true, stepDataPredicted: true });
+      fireEvent.click(screen.getByText('Step data tokens'));
+      // Exactly one badge in the whole document...
+      const badges = document.querySelectorAll('.token-predicted-badge');
+      expect(badges.length).toBe(1);
+      // ...and it lives in the breadcrumb/header region, not on a row.
+      const header = document.querySelector('.token-picker-breadcrumb')!;
+      assertHeaderBadge(header.querySelector('.token-predicted-badge'));
+      // The leaf row itself carries NO badge.
+      const row = screen.getByText('User name').closest('.token-picker-option')!;
+      expect(row.querySelector('.token-predicted-badge')).toBeNull();
+    });
+
+    it('drilling into a predicted branch does NOT add per-row badges (still one, in the header)', () => {
+      renderPicker({ stepData: nestedPredictedStep, hasStepData: true, stepDataPredicted: true });
+      fireEvent.click(screen.getByText('Step data tokens'));
+      // Branch row carries no badge; header still holds the single badge.
+      const branchRow = screen.getByText('Entity').closest('.token-picker-category')!;
+      expect(branchRow.querySelector('.token-predicted-badge')).toBeNull();
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(1);
+
+      // Drill in → the nested leaf carries no badge, and there is still exactly
+      // one badge total (in the header).
+      fireEvent.click(screen.getByText('Entity'));
+      const leafRow = screen.getByText('Title').closest('.token-picker-option')!;
+      expect(leafRow.querySelector('.token-predicted-badge')).toBeNull();
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(1);
+      const header = document.querySelector('.token-picker-breadcrumb')!;
+      assertHeaderBadge(header.querySelector('.token-predicted-badge'));
+    });
+
+    it('renders ZERO predicted badges for confirmed step tokens (stepDataPredicted omitted)', () => {
+      renderPicker({ stepData: predictedStep, hasStepData: true });
+      fireEvent.click(screen.getByText('Step data tokens'));
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(0);
+    });
+
+    it('renders ZERO predicted badges for confirmed branch/nested-leaf step data', () => {
+      renderPicker({ stepData: nestedPredictedStep, hasStepData: true });
+      fireEvent.click(screen.getByText('Step data tokens'));
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(0);
+      fireEvent.click(screen.getByText('Entity'));
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(0);
+    });
+
+    it('does NOT render the predicted badge for the GLOBAL category header', () => {
+      // Even though stepDataPredicted is true, opening the Global category must
+      // not show the badge — it is gated on the step-data category header.
+      renderPicker({
+        globalTokens: sampleGlobalTokens,
+        stepData: predictedStep,
+        hasStepData: true,
+        stepDataPredicted: true,
+      });
+      fireEvent.click(screen.getByText('Global tokens'));
+      // We are in the Global drill-down; no badge in its header or anywhere.
+      expect(document.querySelector('.token-picker-breadcrumb')).toBeTruthy();
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(0);
+    });
+
+    it('does NOT render the predicted badge for the TEMPLATE category header', () => {
+      renderPicker({
+        templateTokens: sampleTemplateTokens,
+        isTemplate: true,
+        stepDataPredicted: true,
+      });
+      fireEvent.click(screen.getByText('Template tokens'));
+      expect(document.querySelector('.token-picker-breadcrumb')).toBeTruthy();
+      expect(document.querySelectorAll('.token-predicted-badge').length).toBe(0);
     });
   });
 
@@ -435,6 +536,11 @@ describe('TokenPicker', () => {
       renderPicker({ owningEventId: 'event_1', isLoadingStepData: true, onLoadStepData: jest.fn() });
       fireEvent.click(screen.getByText('Step data tokens'));
       expect(screen.getByText('Polling for data…')).toBeTruthy();
+      expect(
+        screen.queryByText(
+          'Trigger the selected event on your Drupal site so that the workflow gets executed and the results are captured.',
+        ),
+      ).toBeNull();
     });
 
     it('renders the dataset dropdown newest-first with the most-recent selected by default', () => {
@@ -583,6 +689,11 @@ describe('TokenPicker', () => {
       });
       fireEvent.click(screen.getByText('Step data tokens'));
       expect(screen.getByText('Listening for event…')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'Trigger the selected event on your Drupal site so that the workflow gets executed and the results are captured.',
+        ),
+      ).toBeTruthy();
     });
 
     it('renders the selected dataset step-data tokens below the dropdown', () => {

@@ -216,6 +216,13 @@
   /* --- Edge Default Stroke --- */
   --modeler-color-edge-stroke: #595959;          /* default edge marker/stroke color */
 
+  /* --- Predicted token badge (issue #3577207) --- */
+  /* Subtle "predicted" pill on tokens propagated from a replay-covered
+     predecessor. Indigo-700 text on indigo-50 bg ≈ 8.6:1 (WCAG AA). */
+  --modeler-color-predicted-badge-bg: #eef2ff;     /* indigo-50 */
+  --modeler-color-predicted-badge-text: #3730a3;   /* indigo-800 */
+  --modeler-color-predicted-badge-border: #c7d2fe; /* indigo-200 */
+
   /* --- Repeated RGBA values --- */
   --modeler-color-shadow-light: rgba(0, 0, 0, 0.1);
   --modeler-color-shadow-medium: rgba(0, 0, 0, 0.15);
@@ -386,6 +393,12 @@
   --modeler-color-info-light: #0c1e3a;       /* dark blue bg */
   --modeler-color-result-edge-bg: #2e1044;   /* dark purple bg */
   --modeler-color-interactive-glow: rgba(96, 165, 250, 0.5);
+
+  /* --- Predicted token badge (issue #3577207) --- */
+  /* Indigo-200 text on a dark indigo bg keeps the pill subtle yet AA-legible. */
+  --modeler-color-predicted-badge-bg: #312e81;     /* indigo-900 */
+  --modeler-color-predicted-badge-text: #c7d2fe;   /* indigo-200 */
+  --modeler-color-predicted-badge-border: #4f46e5; /* indigo-600 */
 
   /* --- MiniMap Colors --- */
   --modeler-color-minimap-bg: #1f2937;       /* gray-800 */
@@ -2400,10 +2413,12 @@ g.replay-transition-highlighted path {
 }
 
 /* Property Panel Header — fixed height matches the replay panel header. */
-/* Fixed 3-zone header grid: [ LABEL (1fr) | SWITCH (auto) | ICONS (auto) ].
-   The 1fr label column absorbs all slack, so the switch sits in a fixed middle
-   slot and the icons stay pinned to the right edge — regardless of whether the
-   switch button is shown or which view is active. Zones never reflow. */
+/* Fixed 3-zone header grid: [ LABEL (1fr) | ICONS (auto) | SWITCH (auto) ].
+   The 1fr label column absorbs all slack. The switch occupies the LAST grid
+   column, so it is always pinned to the true right edge — regardless of
+   whether the icons zone (the middle column) has content or which view is
+   active. An empty middle `auto` column simply collapses toward zero width
+   without displacing the last column. Zones never reflow. */
 .workflow-property-panel .panel-header {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -2416,7 +2431,7 @@ g.replay-transition-highlighted path {
 }
 
 /* Zone 1 — context label, left-anchored. Truncates rather than pushing the
-   switch/icons when long. */
+   icons/switch when long. */
 .panel-header-label {
   min-width: 0;
   display: flex;
@@ -2434,28 +2449,37 @@ g.replay-transition-highlighted path {
   white-space: nowrap;
 }
 
-/* Zone 2 — view-switch slot. Always present (auto-width; collapses to 0 when
-   empty), keeping the icons zone from shifting when the switch toggles. */
+/* Zone 2 — icons, middle slot. Reserved (may be empty) in every state; sits
+   BEFORE the switch zone in the DOM so it occupies the middle `auto` column,
+   leaving the switch as the true last column. */
+.panel-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Zone 3 — view-switch slot. Always present and is the LAST grid column, so
+   it is always pinned to the true right edge in both Properties and Review
+   views, independent of whether the icons zone has content. */
 .panel-header-switch {
   display: flex;
   align-items: center;
 }
 
-/* Zone 3 — icons, right-anchored. Reserved (may be empty) in every state. */
-.panel-header-icons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-self: end;
-}
-
 /* Header view-switch button. Used by BOTH the "Review flow" (go-to-replay)
    button in the Properties header and the "Properties" (go-to-properties)
-   button in the Replay header — both views share the same header structure. */
+   button in the Replay header — both views share the same header structure.
+   min-width is fixed so the button does not change width when its label
+   switches between "Review flow" and "Properties": padding (10px + 10px) +
+   icon (14px) + gap (6px) + the "Review flow" text at 12px/600 weight
+   (longer of the two labels, ~7px/char average for 11 characters ≈ 78px) =
+   ~118px, rounded up to 120px for a safe buffer. */
 .header-review-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 120px;
   padding: 5px 10px;
   border: 1px solid var(--modeler-color-primary);
   border-radius: var(--modeler-radius-md);
@@ -5629,6 +5653,14 @@ g[style*="#ef4444"] path {
   overflow-y: auto;
 }
 
+/* The scrollable step-data region is keyboard-focusable (tabindex=0) so it can
+   be reached and scrolled via the keyboard (axe scrollable-region-focusable).
+   Show a visible focus ring; no global rule suppresses the outline here. */
+.token-data-container:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: -2px;
+}
+
 
 
 /* ContentEditable Wrapper */
@@ -6161,30 +6193,35 @@ g[style*="#ef4444"] path {
   white-space: nowrap;
 }
 
-.token-picker-use-btn {
+/* Predicted token badge (issue #3577207): a small, subtle pill rendered next to
+   a token that was PROPAGATED from a replay-covered predecessor (not yet
+   confirmed by a test run). Themed so it stays AA-legible in light and dark. */
+.token-predicted-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border: 1px solid var(--modeler-color-primary);
-  border-radius: var(--modeler-radius-md);
-  background: var(--modeler-color-primary);
-  color: var(--modeler-color-text-on-dark);
-  font-size: var(--modeler-font-size-sm);
+  flex: 0 0 auto;
+  margin-left: var(--modeler-spacing-xs);
+  padding: 0 var(--modeler-spacing-xs);
+  font-size: var(--modeler-font-size-xs);
+  line-height: 1.6;
   font-weight: 600;
-  cursor: pointer;
-  transition: var(--modeler-transition-default);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border-radius: var(--modeler-radius-sm);
+  color: var(--modeler-color-predicted-badge-text);
+  background-color: var(--modeler-color-predicted-badge-bg);
+  border: 1px solid var(--modeler-color-predicted-badge-border);
+  cursor: help;
 }
 
-.token-picker-use-btn:hover {
-  background: var(--modeler-color-primary-hover);
-  border-color: var(--modeler-color-primary-hover);
-}
-
-.token-picker-use-btn svg {
-  width: 12px;
-  height: 12px;
+/* Step-data panel entry carrying a predicted badge: keep the renderer and its
+   trailing badge on one baseline so the pill reads as attached to the token. */
+.token-data-entry--predicted {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--modeler-spacing-xs);
 }
 
 .token-picker-empty {
@@ -6369,6 +6406,17 @@ g[style*="#ef4444"] path {
 
 .token-picker-listening p {
   margin: 0;
+}
+
+/* Explanatory hint under the primary "Listening for event…" line. Visually
+   subordinate: smaller, tertiary text. Uses --modeler-* variables so it adapts
+   to dark mode automatically. */
+.token-picker-listening-hint {
+  margin: 0;
+  max-width: 260px;
+  color: var(--modeler-color-text-tertiary);
+  font-size: var(--modeler-font-size-xs);
+  line-height: 1.4;
 }
 
 /* Token expand/collapse button (used in ReplayDataRenderer) */

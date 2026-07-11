@@ -40,8 +40,15 @@ interface ReviewModeProps {
   onSelectReplayStep?: (step: number) => void;
   /** Toggle replay (playback) mode. */
   onToggleReplay?: () => void;
-  /** Expanded token data for the current step. */
+  /** Expanded token data for the current step (or predicted predecessor data). */
   stepData?: Record<string, any> | null;
+  /**
+   * Whether {@link stepData} was PREDICTED from a replay-covered predecessor of
+   * the selected node (issue #3577207) rather than confirmed by a replay run on
+   * the node itself. Drives the subtle "predicted" badge + tooltip in the
+   * Step-data panel and the @-token picker. Defaults to `false` (confirmed).
+   */
+  stepDataPredicted?: boolean;
   /** Metadata about the current step (type, ids, exception, ...). */
   stepInfo?: StepInfo | null;
   /** All nodes (for step labeling / filtering). */
@@ -182,6 +189,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   onSelectReplayStep,
   onToggleReplay,
   stepData,
+  stepDataPredicted = false,
   stepInfo,
   reviewNodes = [],
   reviewEdges = [],
@@ -232,8 +240,11 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   // body swaps to the spinner → ContentEditableField UNMOUNTS → the picker's
   // freeze is released). Feeding it the open-time `isReplayMode` (false on a
   // fresh field) keeps the loader's input STABLE so it never triggers that
-  // reload while the picker is open. Reconciles to live on close. Explicit
-  // Review (picker closed) drives the loader live, as before.
+  // reload while the picker is open. Reconciles to live on close — but a
+  // picker-initiated session further clamps the loader input to false even
+  // after close (see `configLoaderReplayMode` below), so the reconcile does not
+  // trigger the reload/repaint on token insert. Explicit Review (which clears
+  // `pickerInitiatedSession`) drives the loader live, as before.
   const frozenIsReplayModeRef = useRef<boolean | null>(null);
   if (pickerOpen) {
     if (frozenIsReplayModeRef.current === null) {
@@ -245,11 +256,24 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   const passedIsReplayMode =
     pickerOpen && frozenIsReplayModeRef.current !== null ? frozenIsReplayModeRef.current : isReplayMode;
 
+  // A picker-initiated session means the user is still editing this field's
+  // properties (not reviewing the flow), so the configuration form must NOT
+  // reload into replay mode — doing so swaps the panel body to the loading
+  // spinner when the picker closes on insert (the "ugly repaint"). The freeze
+  // above only holds WHILE the picker is open; on close it reconciles to the
+  // live `true`, which would re-run the loader's "always reload in replay mode"
+  // rule. Mirror the same picker-initiated intent used by `liveEffectiveMode`
+  // below so the loader never enters replay-reload mode for a picker-driven
+  // session, regardless of whether the picker is open or was just closed. An
+  // EXPLICIT Review action clears `pickerInitiatedSession` in Flow, so genuine
+  // Review still falls back to `passedIsReplayMode` and reloads as before.
+  const configLoaderReplayMode = pickerInitiatedSession ? false : passedIsReplayMode;
+
   // Use extracted hooks for cleaner architecture
   const { configurationForm, loading } = useConfigurationLoader({
     node,
     settings,
-    isReplayMode: passedIsReplayMode,
+    isReplayMode: configLoaderReplayMode,
   });
 
   const isStartNode = node?.type === 'start';
@@ -284,18 +308,24 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
   const liveEffectiveMode: 'event' | 'review' =
     replaySessionActive && !pickerInitiatedSession ? panelMode : 'event';
 
-  // The "Review flow" (go-to-replay) button is ALWAYS rendered; this boolean
-  // controls whether it is ENABLED (clickable) vs disabled. Enabled when the
-  // selected node has an event-flow to review:
+  // The "Review flow" (go-to-replay) button is rendered only for a single
+  // selected node (see the header render below); this boolean controls whether
+  // it is ENABLED (clickable) vs disabled. Enabled when the selected node has an
+  // event-flow to review:
   //   • EVENT/start node with review available → start/resume its own session.
-  //   • NON-event node whose OWNING event has a session (`reviewableEventId`).
+  //   • NON-event node that traces back to a starting event, resolved either by
+  //     an existing session (`reviewableEventId`) OR STRUCTURALLY from the graph
+  //     alone (`pickerOwningEventIdProp` via Flow.findOwningEventId) — so the
+  //     button works BEFORE any review session has been loaded. Still gated on
+  //     `reviewAvailable` so it stays disabled on new/unsaved/no-capability
+  //     models.
   //   • Isolated contexts (tests/stories) with no handler keep the legacy
   //     `replaySessionActive` fallback so the control is operable.
-  // Disabled otherwise (new/unsaved model, node outside any reviewable flow, no
-  // replay capability).
+  // Disabled otherwise (new/unsaved model, orphaned node that reaches no event,
+  // no replay capability).
   const liveReviewButtonEnabled =
     (!!node && isStartNode && reviewAvailable) ||
-    (!!node && !isStartNode && !!reviewableEventId) ||
+    (!!node && !isStartNode && reviewAvailable && (!!reviewableEventId || !!pickerOwningEventIdProp)) ||
     (replaySessionActive && !onRequestReviewMode);
 
   // Snapshot the chrome derivations while the picker is open; resume live when
@@ -390,6 +420,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
     templateTokens,
     isTemplate,
     stepData,
+    stepDataPredicted,
     hasStepData,
     onReviewModel: canReviewFromHint ? goToReplay : undefined,
     reviewAvailable: canReviewFromHint,
@@ -414,6 +445,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
     templateTokens,
     isTemplate,
     stepData,
+    stepDataPredicted,
     hasStepData,
     canReviewFromHint,
     goToReplay,
@@ -568,13 +600,15 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       )}
       <div className="panel-content">
 
-      {/* Fixed 3-zone header grid: [ LABEL | SWITCH | ICONS ].
-          Every state renders all three zones (label flexes via 1fr; switch and
-          icons are auto-width and right-anchored), so elements never jump
-          horizontally between states. The switch always lives in the middle
-          zone in BOTH views; the icons stay pinned right whether or not the
-          switch is shown. The "Loading..." throbber is NOT in the header — it
-          renders in the body below (see .panel-loading). */}
+      {/* Fixed 3-zone header grid: [ LABEL | ICONS | SWITCH ].
+          Every state renders all three zones (label flexes via 1fr; icons and
+          switch are auto-width), so elements never jump horizontally between
+          states. The switch is the LAST grid column, so it is always pinned to
+          the true right edge in both Properties and Review views — even when
+          the icons zone (the middle column) is empty, since an empty middle
+          `auto` column simply collapses without affecting the last column's
+          position. The "Loading..." throbber is NOT in the header — it renders
+          in the body below (see .panel-loading). */}
       <div className="panel-header">
         {/* Zone 1 — label (left-anchored) */}
         <div className="panel-header-label">
@@ -595,51 +629,10 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           ) : null}
         </div>
 
-        {/* Zone 2 — view-switch button (fixed middle slot, both modes).
-            The cell is ALWAYS rendered so the icons zone never shifts; the
-            button is placed inside it only when applicable. */}
-        <div className="panel-header-switch">
-          {isReviewMode ? (
-            <button
-              type="button"
-              className="header-review-btn"
-              onClick={goToProperties}
-              aria-label={t('Show properties')}
-              title={t('Show properties')}
-            >
-              <FiSliders aria-hidden="true" />
-              <span>{t('Properties')}</span>
-            </button>
-          ) : reviewAvailable ? (
-            /* "Review flow" (go-to-replay) button — rendered ONLY when the model
-               has replay/test capability (a saved model with replay/test URL or
-               embedded data). Within the capable case it is ALWAYS rendered so
-               its footprint is stable (no layout shift): ENABLED when the
-               selected node has an event-flow to review; DISABLED otherwise,
-               with an explanatory tooltip. When NO capability exists (e.g.
-               permission denied), no Review affordance is rendered at all — the
-               empty middle cell below keeps the header layout stable. */
-            <button
-              type="button"
-              className="header-review-btn"
-              onClick={goToReplay}
-              disabled={!reviewButtonEnabled}
-              aria-disabled={!reviewButtonEnabled}
-              aria-label={t('Review flow')}
-              title={
-                reviewButtonEnabled
-                  ? t('Review flow')
-                  : t('Review is available once this step belongs to an executable event flow.')
-              }
-            >
-              <FiActivity aria-hidden="true" />
-              <span>{t('Review flow')}</span>
-            </button>
-          ) : null}
-        </div>
-
-        {/* Zone 3 — icons (right-anchored). Properties view only; stays an
-            empty reserved cell in Review / multi / empty states. */}
+        {/* Zone 2 — icons (middle slot). Properties view only; stays an empty
+            reserved cell in Review / multi / empty states. Placed BEFORE the
+            switch zone in the DOM so it occupies the middle grid column,
+            leaving the switch as the true last column. */}
         <div className="panel-header-icons">
           {!isReviewMode && !hasMultipleSelection && (node || edge) && (
             <>
@@ -662,6 +655,51 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
             </>
           )}
         </div>
+
+        {/* Zone 3 — view-switch button (fixed LAST slot, both modes).
+            The cell is ALWAYS rendered so it is always pinned to the true
+            right edge — regardless of whether the icons zone has content —
+            fixing the "button jumps left/right between views" bug. */}
+        <div className="panel-header-switch">
+          {isReviewMode ? (
+            <button
+              type="button"
+              className="header-review-btn"
+              onClick={goToProperties}
+              aria-label={t('Show properties')}
+              title={t('Show properties')}
+            >
+              <FiSliders aria-hidden="true" />
+              <span>{t('Properties')}</span>
+            </button>
+          ) : (!hasMultipleSelection && !!node && reviewAvailable) ? (
+            /* "Review flow" (go-to-replay) button — rendered ONLY when EXACTLY
+               ONE NODE is selected (not on empty, multi-select, or a single
+               EDGE — `node` is null in those cases) AND the model has replay/
+               test capability (a saved model with replay/test URL or embedded
+               data). Within that case the button is ENABLED when the selected
+               node has an event-flow to review; DISABLED otherwise, with an
+               explanatory tooltip. When the button is hidden, the empty last
+               cell above still renders so the header layout stays stable (no
+               horizontal shift between states). */
+            <button
+              type="button"
+              className="header-review-btn"
+              onClick={goToReplay}
+              disabled={!reviewButtonEnabled}
+              aria-disabled={!reviewButtonEnabled}
+              aria-label={t('Review flow')}
+              title={
+                reviewButtonEnabled
+                  ? t('Review flow')
+                  : t('Review is available once this step belongs to an executable event flow.')
+              }
+            >
+              <FiActivity aria-hidden="true" />
+              <span>{t('Review flow')}</span>
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {!isReviewMode && showInfoPopup && infoItems.length > 0 && (
@@ -676,6 +714,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           onSelectStep={onSelectReplayStep ?? (() => {})}
           currentStep={currentReplayStep}
           stepData={stepData}
+          stepDataPredicted={stepDataPredicted}
           stepInfo={stepInfo}
           edges={reviewEdges}
           nodes={reviewNodes}
