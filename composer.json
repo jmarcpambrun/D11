@@ -137,7 +137,7 @@
         "drupal/views_slideshow": "5.0.1",
         "drupal/views_templates": "1.7",
         "drupal/views_timelinejs": "4.2.2",
-        "drupal/webform": "^6.3-rc2",
+        "drupal/webform": "^6.3",
         "drupal/webform_content_creator": "^4.0.14",
         "drupal/webform_deprecated": "6.3-beta4",
         "drupal/webform_entity_handler": "2.0.4",
