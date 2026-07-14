@@ -604,6 +604,27 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
   }
 
   /**
+   * Redirects directly to the task add form for a given project shortcode.
+   *
+   * @param string $shortcode
+   *   The project shortcode.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A redirect to the task add form with shortcode and destination.
+   */
+  public function addTaskRedirect($shortcode) {
+    $destination = '/burndown/backlog/' . $shortcode;
+    $url = Url::fromUri('base:/burndown/task/add/task', [
+      'absolute' => TRUE,
+      'query' => [
+        'shortcode' => $shortcode,
+        'destination' => $destination,
+      ],
+    ]);
+    return new RedirectResponse($url->toString());
+  }
+
+  /**
    * Callback for task bundle add route.
    */
   public function addBundleSelect($shortcode) {

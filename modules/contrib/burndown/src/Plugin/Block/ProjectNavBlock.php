@@ -74,7 +74,6 @@ class ProjectNavBlock extends BlockBase implements ContainerFactoryPluginInterfa
    * {@inheritdoc}
    */
   public function build() {
-    $boards = [];
     $links = [];
 
     // Get current user.
@@ -95,11 +94,6 @@ class ProjectNavBlock extends BlockBase implements ContainerFactoryPluginInterfa
     }
 
     if ($shortcode = $this->routeMatch->getParameter('shortcode')) {
-      // Boards for the project.
-      $boards[] = Link::fromTextAndUrl('Backlog', Url::fromRoute('burndown.backlog', ['shortcode' => $shortcode], ['absolute' => TRUE]));
-      $boards[] = Link::fromTextAndUrl('Project Board', Url::fromRoute('burndown.board', ['shortcode' => $shortcode], ['absolute' => TRUE]));
-      $boards[] = Link::fromTextAndUrl('Completed Tasks', Url::fromRoute('burndown.completed', ['shortcode' => $shortcode], ['absolute' => TRUE]));
-
       // Return destination:
       $current_board = $this->getBoard();
       $destination = base_path() . 'burndown/' . $current_board . '/' . $shortcode;
@@ -160,7 +154,6 @@ class ProjectNavBlock extends BlockBase implements ContainerFactoryPluginInterfa
     return [
       '#theme' => 'burndown_sidebar_nav',
       '#shortcode' => $shortcode,
-      '#boards' => $boards,
       '#links' => $links,
       '#attached' => [
         'library' => [

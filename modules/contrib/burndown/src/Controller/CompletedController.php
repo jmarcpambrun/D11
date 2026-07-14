@@ -13,6 +13,7 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -108,6 +109,11 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
    * Callback for `burndown/completed/{shortcode} route.
    */
   public function getCompleted($shortcode) {
+    // Redirect to project dashboard if no shortcode is provided.
+    if (empty($shortcode)) {
+      return new RedirectResponse('/burndown/project');
+    }
+
     // Sanitize input.
     $code = Html::escape($shortcode);
 

@@ -28,16 +28,28 @@ class ChangeDiffService {
       // Produce a nicely formatted change list.
       foreach ($changed as $field_name) {
         // Ignore changed timestamp, as well as sorting fields and the log.
-        if ($field_name === 'changed' ||
-          $field_name === 'watch_list' ||
-          $field_name === 'log' ||
-          $field_name === 'backlog_sort' ||
-          $field_name === 'board_sort') {
+        $ignore_fields = [
+          'backlog_sort',
+          'board_sort',
+          'changed',
+          'log',
+          'revision_default',
+          'watch_list',
+        ];
+        if (in_array($field_name, $ignore_fields)) {
           continue;
         }
 
-        $original = $entity->original->get($field_name)->value;
-        $new = $entity->get($field_name)->value;
+        $field_definition = $entity->getFieldDefinition($field_name);
+        if ($field_definition && $field_definition->getType() === 'entity_reference') {
+          $original = $entity->original->get($field_name)->entity->label();
+          $new = $entity->get($field_name)->entity->label();
+        }
+        else {
+          $original = $entity->original->get($field_name)->value;
+          $new = $entity->get($field_name)->value;
+        }
+
         $diff = $this->htmlDiff($original, $new);
         $label = $entity->get($field_name)->getFieldDefinition()->getLabel();
         if (!is_string($label)) {

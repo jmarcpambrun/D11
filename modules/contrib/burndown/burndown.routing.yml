@@ -232,6 +232,15 @@ burndown.task_add_multi_bundle:
   requirements:
     _permission: 'add task entities'
 
+burndown.task_add_redirect:
+  path: '/burndown/add-task/{shortcode}'
+  defaults:
+    _controller: '\Drupal\burndown\Controller\TaskController::addTaskRedirect'
+    shortcode: ''
+  methods:  [GET]
+  requirements:
+    _permission: 'add task entities'
+
 burndown.close_sprint:
   path: '/burndown/close_sprint/{sprint_id}'
   defaults:

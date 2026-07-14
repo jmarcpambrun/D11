@@ -6,6 +6,7 @@ use Drupal\burndown\Event\TaskChangedEvent;
 use Drupal\burndown\Event\TaskCommentEvent;
 use Drupal\burndown\Event\TaskCreatedEvent;
 use Drupal\Core\Link;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -14,6 +15,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * @package Drupal\burndown\EventSubscriber
  */
 class TaskNotificationsSubscriber implements EventSubscriberInterface {
+
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -48,6 +51,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
       $created_by = $task->getOwnerName();
+      $created_by_email = $task->getOwner()->getEmail();
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -81,16 +85,25 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $module = 'burndown';
         $send = TRUE;
 
-        $message = $created_by . ' created a new task.<br><br>';
-        $message .= $project_link . ' / ' . $task_link . '<br><br>';
-        $message .= $created_by . ' - ' . $created . '<br><br>';
+        $task_action = $this->t('created a task');
+        $description = $this->t('Description');
+        $message = "{$created_by} {$task_action}.<br><br>";
+        $message .= "{$project_link} / {$task_link}: {$title} <br>";
+        $message .= "{$created} <br>";
+        $message .= "{$description}: <br>";
         $message .= $task->getDescription();
 
         foreach ($watchlist as $watcher) {
           // Get username, email and language preference.
           $to = $watcher->getEmail();
+
           $username = $watcher->getDisplayName();
           $langcode = $watcher->getPreferredLangcode();
+
+          // Do not send to the person who added the task.
+          if ($to === $created_by_email) {
+            continue;
+          }
 
           // Set up params.
           $params = [
@@ -127,6 +140,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
       $created_by = $task->getOwnerName();
+      $created_by_email = $task->getOwner()->getEmail();
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -154,6 +168,12 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $change_list_service = \Drupal::service('burndown_service.change_diff_service');
       $change_list = $change_list_service->getChanges($task);
 
+      if (empty($change_list)) {
+        // Since this is an edit, but there are no showable changes, due to
+        // skipped fields. We will not send an email notification.
+        return;
+      }
+
       // Get watchlist.
       $watchlist = $task->getWatchlist();
 
@@ -164,9 +184,12 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $module = 'burndown';
         $send = TRUE;
 
-        $message = $created_by . ' edited a task.<br><br>';
-        $message .= $project_link . ' / ' . $task_link . '<br><br>';
-        $message .= $created_by . ' - ' . $created . '<br><br>';
+        $task_action = $this->t('edited a task');
+        $what_changed = $this->t('What changed');
+        $message = "{$created_by} {$task_action}.<br><br>";
+        $message .= "{$project_link} / {$task_link}: {$title} <br>";
+        $message .= "{$created} <br>";
+        $message .= "{$what_changed}: <br>";
         $message .= $change_list;
 
         foreach ($watchlist as $watcher) {
@@ -174,6 +197,11 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $to = $watcher->getEmail();
           $username = $watcher->getDisplayName();
           $langcode = $watcher->getPreferredLangcode();
+
+          // Do not send to the person who edited the task.
+          if ($to === $created_by_email) {
+            continue;
+          }
 
           // Set up params.
           $params = [
@@ -213,6 +241,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
       $created_by = $task->getOwnerName();
+      $created_by_email = $task->getOwner()->getEmail();
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -246,9 +275,12 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $module = 'burndown';
         $send = TRUE;
 
-        $message = $created_by . ' commented on a task.<br><br>';
-        $message .= $project_link . ' / ' . $task_link . '<br><br>';
-        $message .= $created_by . ' - ' . $created . '<br><br>';
+        $task_action = $this->t('commented on a task');
+        $commment_label = $this->t('Comment');
+        $message = "{$created_by} {$task_action}.<br><br>";
+        $message .= "{$project_link} / {$task_link}: {$title} <br>";
+        $message .= "{$created} <br>";
+        $message .= "{$commment_label}: <br>";
         $message .= $comment;
 
         foreach ($watchlist as $watcher) {
@@ -256,6 +288,11 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $to = $watcher->getEmail();
           $username = $watcher->getDisplayName();
           $langcode = $watcher->getPreferredLangcode();
+
+          // Do not send to the person who commented on the task.
+          if ($to === $created_by_email) {
+            continue;
+          }
 
           // Set up params.
           $params = [

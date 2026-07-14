@@ -1,3 +1,28 @@
+# Project board view tabs (backlog/board/completed/add task)
+burndown.backlog_tab:
+  route_name: burndown.backlog
+  base_route: burndown.backlog
+  title: 'Backlog'
+  weight: 0
+
+burndown.board_tab:
+  route_name: burndown.board
+  base_route: burndown.backlog
+  title: 'Board'
+  weight: 1
+
+burndown.completed_tab:
+  route_name: burndown.completed
+  base_route: burndown.backlog
+  title: 'Completed'
+  weight: 2
+
+burndown.add_task_tab:
+  route_name: burndown.task_add_redirect
+  base_route: burndown.backlog
+  title: 'Add Task'
+  weight: 3
+
 # Project routing definition
 
 entity.burndown_project.canonical:

@@ -144,7 +144,6 @@ function burndown_theme() {
   $theme['burndown_sidebar_nav'] = [
     'variables' => [
       'shortcode' => NULL,
-      'boards' => NULL,
       'links' => NULL,
     ],
   ];
@@ -526,17 +525,19 @@ function burndown_mail($key, &$message, $params) {
       break;
 
     case 'task_changed':
-      $message['subject'] = t('[BURNDOWN] @username edited @ticket_id', [
-        '@username' => $params['username'],
+      $message['subject'] = t('[BURNDOWN] @created_by edited @ticket_id: @title', [
+        '@created_by' => $params['created_by'],
         '@ticket_id' => $params['ticket_id'],
+        '@title' => $params['title'],
       ],
         $options);
       break;
 
     case 'task_commented':
-      $message['subject'] = t('[BURNDOWN] @username commented on @ticket_id', [
-        '@username' => $params['username'],
+      $message['subject'] = t('[BURNDOWN] @created_by commented on @ticket_id: @title', [
+        '@created_by' => $params['created_by'],
         '@ticket_id' => $params['ticket_id'],
+        '@title' => $params['title'],
       ],
         $options);
       break;

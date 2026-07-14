@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Controller object for the Burndown Backlog.
@@ -110,6 +111,11 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
    * Callback for `burndown/backlog/{shortcode} route.
    */
   public function getBacklog($shortcode) {
+    // Redirect to project dashboard if no shortcode is provided.
+    if (empty($shortcode)) {
+      return new RedirectResponse('/burndown/project');
+    }
+
     // Sanitize input.
     $code = Html::escape($shortcode);
 
