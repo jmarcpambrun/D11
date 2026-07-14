@@ -2,13 +2,17 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Test RSS View integration.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class RssViewIntegrationTest extends BrowserTestBase {
 
   /**
@@ -31,7 +35,7 @@ class RssViewIntegrationTest extends BrowserTestBase {
    * @return array[]
    *   The test cases.
    */
-  public function providerRdfNamespacesAreAddedToRssViews(): array {
+  public static function providerRdfNamespacesAreAddedToRssViews(): array {
     return [
       'content with default settings' => [
         'rdf-rss-test-node',
@@ -53,6 +57,7 @@ class RssViewIntegrationTest extends BrowserTestBase {
    *
    * @dataProvider providerRdfNamespacesAreAddedToRssViews
    */
+  #[DataProvider('providerRdfNamespacesAreAddedToRssViews')]
   public function testRdfNamespacesAreAddedToRssViews(string $path): void {
     $this->drupalGet($path);
     $this->assertSession()->statusCodeEquals(200);
@@ -64,7 +69,7 @@ class RssViewIntegrationTest extends BrowserTestBase {
     $this->assertTrue($document->loadXML($xml));
 
     // Ensure that RDF's namespaces are defined on the root <rss> element.
-    $namespaces = rdf_get_namespaces();
+    $namespaces = \Drupal::service(RdfMappingHelper::class)->getNamespaces();
     // Views' RSS feed plugins unconditionally override the `dc` namespace.
     // @see \Drupal\views\Plugin\views\row\RssFields::render()
     // @see \Drupal\views\Plugin\views\style\Rss::render()

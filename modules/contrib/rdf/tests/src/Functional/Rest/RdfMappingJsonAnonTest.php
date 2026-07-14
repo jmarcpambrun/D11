@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Functional\Rest;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\rest\Functional\AnonResourceTestTrait;
 
 /**
@@ -9,6 +11,8 @@ use Drupal\Tests\rest\Functional\AnonResourceTestTrait;
  *
  * @group rest
  */
+#[Group('rest')]
+#[RunTestsInSeparateProcesses]
 class RdfMappingJsonAnonTest extends RdfMappingResourceTestBase {
 
   use AnonResourceTestTrait;

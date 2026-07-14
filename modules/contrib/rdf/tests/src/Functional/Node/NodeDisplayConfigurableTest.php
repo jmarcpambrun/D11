@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\rdf\Functional\Node;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\node\Functional\NodeTestBase;
@@ -9,10 +12,10 @@ use Drupal\user\UserInterface;
 
 /**
  * Tests making node base fields' displays configurable.
- *
- * @group node
- * @group rdf
  */
+#[Group('node')]
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class NodeDisplayConfigurableTest extends NodeTestBase {
 
   /**
@@ -28,23 +31,6 @@ class NodeDisplayConfigurableTest extends NodeTestBase {
   protected $defaultTheme = 'stark';
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    $data = $this->getProvidedData();
-    $theme = reset($data);
-    \Drupal::service('theme_installer')->install([$theme]);
-    $this->config('system.theme')->set('default', $theme)->save();
-    $settings = [
-      'theme' => $theme,
-      'region' => 'content',
-      'weight' => -100,
-    ];
-    $this->drupalPlaceBlock('page_title_block', $settings);
-  }
-
-  /**
    * Sets base fields to configurable display and check settings are respected.
    *
    * @param string $theme
@@ -56,7 +42,16 @@ class NodeDisplayConfigurableTest extends NodeTestBase {
    *
    * @dataProvider provideThemes
    */
+  #[DataProvider('provideThemes')]
   public function testDisplayConfigurable(string $theme, string $metadata_region, bool $field_classes): void {
+    \Drupal::service('theme_installer')->install([$theme]);
+    $this->config('system.theme')->set('default', $theme)->save();
+    $this->drupalPlaceBlock('page_title_block', [
+      'theme' => $theme,
+      'region' => 'content',
+      'weight' => -100,
+    ]);
+
     // Change the node type setting to show submitted by information.
     $node_type = \Drupal::entityTypeManager()->getStorage('node_type')->load('page');
     $node_type->setDisplaySubmitted(TRUE);
@@ -171,13 +166,12 @@ class NodeDisplayConfigurableTest extends NodeTestBase {
    * @return array
    *   Theme info for testing.
    */
-  public function provideThemes(): array {
+  public static function provideThemes(): array {
     return [
       ['claro', 'footer', TRUE],
       // @todo Add coverage for olivero after fixing
       // https://www.drupal.org/project/drupal/issues/3215220.
       // ['olivero', 'footer', TRUE],
-      ['stable9', 'footer', FALSE],
       ['starterkit_theme', 'footer', TRUE],
     ];
   }

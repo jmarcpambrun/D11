@@ -24,7 +24,7 @@
  *
  * @ingroup rdf
  */
-function hook_rdf_namespaces() {
+function hook_rdf_namespaces(): array {
   return [
     'content'  => 'http://purl.org/rss/1.0/modules/content/',
     'dc'       => 'http://purl.org/dc/terms/',

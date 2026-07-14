@@ -2,17 +2,20 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Url;
 use Drupal\taxonomy\VocabularyInterface;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
 use Drupal\Tests\taxonomy\Functional\TaxonomyTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests RDFa markup generation for taxonomy term fields.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class EntityReferenceFieldAttributesTest extends TaxonomyTestBase {
 
   use RdfParsingTrait;
@@ -84,14 +87,14 @@ class EntityReferenceFieldAttributesTest extends TaxonomyTestBase {
       ->save();
 
     // Set the RDF mapping for the new field.
-    rdf_get_mapping('node', 'article')
+    \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article')
       ->setFieldMapping($this->fieldName, [
         'properties' => ['dc:subject'],
         'mapping_type' => 'rel',
       ])
       ->save();
 
-    rdf_get_mapping('taxonomy_term', $this->vocabulary->id())
+    \Drupal::service(RdfMappingHelper::class)->getMapping('taxonomy_term', $this->vocabulary->id())
       ->setBundleMapping(['types' => ['skos:Concept']])
       ->setFieldMapping('name', ['properties' => ['rdfs:label']])
       ->save();
@@ -106,7 +109,7 @@ class EntityReferenceFieldAttributesTest extends TaxonomyTestBase {
    * Ensure that file fields have the correct resource as the object in RDFa
    * when displayed as a teaser.
    */
-  public function testNodeTeaser() {
+  public function testNodeTeaser(): void {
     // Set the teaser display to show this field.
     \Drupal::service('entity_display.repository')
       ->getViewDisplay('node', 'article', 'teaser')

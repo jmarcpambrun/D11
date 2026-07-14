@@ -2,16 +2,19 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use Drupal\Tests\file\Functional\FileFieldTestBase;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa markup of filefields.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class FileFieldAttributesTest extends FileFieldTestBase {
 
   use RdfParsingTrait;
@@ -74,7 +77,7 @@ class FileFieldAttributesTest extends FileFieldTestBase {
       ->save();
 
     // Set the RDF mapping for the new field.
-    $mapping = rdf_get_mapping('node', 'article');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article');
     $mapping->setFieldMapping($this->fieldName, ['properties' => ['rdfs:seeAlso'], 'mapping_type' => 'rel'])->save();
 
     $test_file = $this->getTestFile('text');
@@ -96,7 +99,7 @@ class FileFieldAttributesTest extends FileFieldTestBase {
    * Ensure that file fields have the correct resource as the object in RDFa
    * when displayed as a teaser.
    */
-  public function testNodeTeaser() {
+  public function testNodeTeaser(): void {
     // Render the teaser.
     $node_render_array = \Drupal::entityTypeManager()
       ->getViewBuilder('node')

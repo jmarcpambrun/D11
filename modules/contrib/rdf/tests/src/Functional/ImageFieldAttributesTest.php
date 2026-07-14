@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use Drupal\image\Entity\ImageStyle;
@@ -10,12 +12,13 @@ use Drupal\node\NodeInterface;
 use Drupal\Tests\image\Functional\ImageFieldTestBase;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
 use Drupal\Tests\TestFileCreationTrait;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa markup of imagefields.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class ImageFieldAttributesTest extends ImageFieldTestBase {
 
   use RdfParsingTrait;
@@ -76,7 +79,7 @@ class ImageFieldAttributesTest extends ImageFieldTestBase {
     $this->createImageField($this->fieldName, 'node', 'article');
 
     // Set the RDF mapping for the new field.
-    rdf_get_mapping('node', 'article')
+    \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article')
       ->setFieldMapping($this->fieldName, [
         'properties' => ['og:image'],
         'mapping_type' => 'rel',

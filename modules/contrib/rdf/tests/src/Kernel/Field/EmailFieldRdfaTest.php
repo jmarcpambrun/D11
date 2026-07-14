@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Kernel\Field;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests RDFa output by email field formatters.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class EmailFieldRdfaTest extends FieldRdfaTestBase {
 
   /**
@@ -30,7 +33,7 @@ class EmailFieldRdfaTest extends FieldRdfaTestBase {
     $this->createTestField();
 
     // Add the mapping.
-    $mapping = rdf_get_mapping('entity_test', 'entity_test');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('entity_test', 'entity_test');
     $mapping->setFieldMapping($this->fieldName, [
       'properties' => ['schema:email'],
     ])->save();

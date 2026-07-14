@@ -169,7 +169,7 @@ abstract class FieldRdfaTestBase extends FieldKernelTestBase {
       $xpath = $this->buildXPathQuery($xpath, $arguments);
       $result = $elements->xpath($xpath);
       // Some combinations of PHP / libxml versions return an empty array
-      // instead of the documented FALSE. Forcefully convert any falsish values
+      // instead of the documented FALSE. Forcefully convert any false values
       // to an empty array to allow foreach(...) constructions.
       return $result ? $result : [];
     }

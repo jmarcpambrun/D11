@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Functional\Jsonapi;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\node\Entity\NodeType;
 use Drupal\rdf\Entity\RdfMapping;
@@ -9,10 +11,10 @@ use Drupal\Tests\jsonapi\Functional\ConfigEntityResourceTestBase;
 
 /**
  * JSON:API integration test for the "RdfMapping" config entity type.
- *
- * @group jsonapi
- * @group rdf
  */
+#[Group('jsonapi')]
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class RdfMappingTest extends ConfigEntityResourceTestBase {
 
   /**
@@ -45,7 +47,7 @@ class RdfMappingTest extends ConfigEntityResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUpAuthorization($method) {
+  protected function setUpAuthorization($method): void {
     $this->grantPermissionsToTestedRole(['administer site configuration']);
   }
 
@@ -91,10 +93,10 @@ class RdfMappingTest extends ConfigEntityResourceTestBase {
       'jsonapi' => [
         'meta' => [
           'links' => [
-            'self' => ['href' => 'http://jsonapi.org/format/1.0/'],
+            'self' => ['href' => 'http://jsonapi.org/format/1.1/'],
           ],
         ],
-        'version' => '1.0',
+        'version' => '1.1',
       ],
       'links' => [
         'self' => ['href' => $self_url],

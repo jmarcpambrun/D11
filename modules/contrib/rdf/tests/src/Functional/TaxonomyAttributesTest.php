@@ -2,16 +2,19 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\taxonomy\VocabularyInterface;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
 use Drupal\Tests\taxonomy\Functional\TaxonomyTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa markup of Taxonomy terms.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class TaxonomyAttributesTest extends TaxonomyTestBase {
 
   use RdfParsingTrait;
@@ -51,7 +54,7 @@ class TaxonomyAttributesTest extends TaxonomyTestBase {
     $this->vocabulary = $this->createVocabulary();
 
     // RDF mapping - term bundle.
-    rdf_get_mapping('taxonomy_term', $this->vocabulary->id())
+    \Drupal::service(RdfMappingHelper::class)->getMapping('taxonomy_term', $this->vocabulary->id())
       ->setBundleMapping(['types' => ['skos:Concept']])
       ->setFieldMapping('name', [
         'properties' => ['rdfs:label', 'skos:prefLabel'],
@@ -65,7 +68,7 @@ class TaxonomyAttributesTest extends TaxonomyTestBase {
   /**
    * Creates a random term and ensures the RDF output is correct.
    */
-  public function testTaxonomyTermRdfaAttributes() {
+  public function testTaxonomyTermRdfaAttributes(): void {
     $term = $this->createTerm($this->vocabulary);
     $term_uri = $term->toUrl('canonical', ['absolute' => TRUE])->toString();
 

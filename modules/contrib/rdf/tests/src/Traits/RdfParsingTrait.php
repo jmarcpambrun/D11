@@ -15,6 +15,19 @@ trait RdfParsingTrait {
   use UiHelperTrait;
 
   /**
+   * Runs an easyrdf callback with E_DEPRECATED suppressed.
+   */
+  private function withEasyRdf(callable $callback): mixed {
+    $previous = error_reporting(error_reporting() & ~E_DEPRECATED);
+    try {
+      return $callback();
+    }
+    finally {
+      error_reporting($previous);
+    }
+  }
+
+  /**
    * Checks if a html document contains a resource with a given property value.
    *
    * @param string $html
@@ -40,11 +53,12 @@ trait RdfParsingTrait {
    * @throws \EasyRdf\Exception
    */
   protected function hasRdfProperty(string $html, string $base_uri, string $resource, string $property, array $value): bool {
-    $parser = new Rdfa();
-    $graph = new Graph();
-    $parser->parse($graph, $html, 'rdfa', $base_uri);
-
-    return $graph->hasProperty($resource, $property, $value);
+    return $this->withEasyRdf(function () use ($html, $base_uri, $resource, $property, $value): bool {
+      $parser = new Rdfa();
+      $graph = new Graph();
+      $parser->parse($graph, $html, 'rdfa', $base_uri);
+      return $graph->hasProperty($resource, $property, $value);
+    });
   }
 
   /**
@@ -75,11 +89,13 @@ trait RdfParsingTrait {
    * @throws \EasyRdf\Exception
    */
   protected function hasRdfChildProperty(string $html, string $base_uri, string $resource, string $parent_property, string $child_property, array $value): bool {
-    $parser = new Rdfa();
-    $graph = new Graph();
-    $parser->parse($graph, $html, 'rdfa', $base_uri);
-    $node = $graph->get($resource, $parent_property);
-    return $graph->hasProperty($node, $child_property, $value);
+    return $this->withEasyRdf(function () use ($html, $base_uri, $resource, $parent_property, $child_property, $value): bool {
+      $parser = new Rdfa();
+      $graph = new Graph();
+      $parser->parse($graph, $html, 'rdfa', $base_uri);
+      $node = $graph->get($resource, $parent_property);
+      return $graph->hasProperty($node, $child_property, $value);
+    });
   }
 
   /**
@@ -98,10 +114,13 @@ trait RdfParsingTrait {
    * @throws \EasyRdf\Exception
    */
   protected function getElementByRdfTypeCount(Url $url, string $base_uri, string $type): int {
-    $parser = new Rdfa();
-    $graph = new Graph();
-    $parser->parse($graph, $this->drupalGet($url), 'rdfa', $base_uri);
-    return count($graph->allOfType($type));
+    $html = $this->drupalGet($url);
+    return $this->withEasyRdf(function () use ($html, $base_uri, $type): int {
+      $parser = new Rdfa();
+      $graph = new Graph();
+      $parser->parse($graph, $html, 'rdfa', $base_uri);
+      return count($graph->allOfType($type));
+    });
   }
 
   /**
@@ -120,10 +139,13 @@ trait RdfParsingTrait {
    * @throws \EasyRdf\Exception
    */
   protected function getElementRdfType(Url $url, string $base_uri, string $resource_uri): ?string {
-    $parser = new Rdfa();
-    $graph = new Graph();
-    $parser->parse($graph, $this->drupalGet($url), 'rdfa', $base_uri);
-    return $graph->type($resource_uri);
+    $html = $this->drupalGet($url);
+    return $this->withEasyRdf(function () use ($html, $base_uri, $resource_uri): ?string {
+      $parser = new Rdfa();
+      $graph = new Graph();
+      $parser->parse($graph, $html, 'rdfa', $base_uri);
+      return $graph->type($resource_uri);
+    });
   }
 
   /**
@@ -144,10 +166,12 @@ trait RdfParsingTrait {
    * @throws \EasyRdf\Exception
    */
   protected function rdfElementIsBlankNode(string $html, string $base_uri, string $resource_uri, string $property): bool {
-    $parser = new Rdfa();
-    $graph = new Graph();
-    $parser->parse($graph, $html, 'rdfa', $base_uri);
-    return $graph->get($resource_uri, $property)->isBnode();
+    return $this->withEasyRdf(function () use ($html, $base_uri, $resource_uri, $property): bool {
+      $parser = new Rdfa();
+      $graph = new Graph();
+      $parser->parse($graph, $html, 'rdfa', $base_uri);
+      return $graph->get($resource_uri, $property)->isBnode();
+    });
   }
 
 }

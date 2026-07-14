@@ -1,0 +1,9 @@
+services:
+  _defaults:
+    autoconfigure: true
+    autowire: true
+
+  Drupal\rdf\RdfMappingHelper: ~
+  Drupal\rdf\Hook\RdfHooks: ~
+  Drupal\rdf\Hook\RdfThemeHooks: ~
+  Drupal\rdf\Hook\RdfPreprocessHooks: ~

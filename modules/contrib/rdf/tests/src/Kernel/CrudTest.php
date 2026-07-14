@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDF mapping CRUD functions.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class CrudTest extends KernelTestBase {
 
   /**
@@ -16,7 +19,7 @@ class CrudTest extends KernelTestBase {
    *
    * @var array
    */
-  protected static $modules = ['entity_test', 'rdf', 'system'];
+  protected static $modules = ['entity_test', 'field', 'rdf', 'system', 'text', 'user'];
 
   /**
    * The prefix.
@@ -44,6 +47,7 @@ class CrudTest extends KernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->installEntitySchema('entity_test');
     $this->prefix = 'rdf.mapping';
     $this->entityType = $this->bundle = 'entity_test';
   }
@@ -55,7 +59,7 @@ class CrudTest extends KernelTestBase {
     $mapping_config_name = "{$this->prefix}.{$this->entityType}.{$this->bundle}";
 
     // Save bundle mapping config.
-    rdf_get_mapping($this->entityType, $this->bundle)->save();
+    \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)->save();
     // Test that config file was saved.
     $mapping_config = \Drupal::configFactory()->listAll('rdf.mapping.');
     $this->assertContains($mapping_config_name, $mapping_config, 'Rdf mapping config saved.');
@@ -67,19 +71,19 @@ class CrudTest extends KernelTestBase {
   public function testBundleMapping(): void {
     // Test that the bundle mapping can be saved.
     $types = ['sioc:Post', 'foaf:Document'];
-    rdf_get_mapping($this->entityType, $this->bundle)
+    \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->setBundleMapping(['types' => $types])
       ->save();
-    $bundle_mapping = rdf_get_mapping($this->entityType, $this->bundle)
+    $bundle_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->getBundleMapping();
     $this->assertEquals($types, $bundle_mapping['types'], 'Bundle mapping saved.');
 
     // Test that the bundle mapping can be edited.
     $types = ['schema:BlogPosting'];
-    rdf_get_mapping($this->entityType, $this->bundle)
+    \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->setBundleMapping(['types' => $types])
       ->save();
-    $bundle_mapping = rdf_get_mapping($this->entityType, $this->bundle)
+    $bundle_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->getBundleMapping();
     $this->assertEquals($types, $bundle_mapping['types'], 'Bundle mapping updated.');
   }
@@ -96,10 +100,10 @@ class CrudTest extends KernelTestBase {
       'datatype' => 'xsd:dateTime',
       'datatype_callback' => ['callable' => 'Drupal\rdf\CommonDataConverter::dateIso8601Value'],
     ];
-    rdf_get_mapping($this->entityType, $this->bundle)
+    \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->setFieldMapping($field_name, $mapping)
       ->save();
-    $field_mapping = rdf_get_mapping($this->entityType, $this->bundle)
+    $field_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->getFieldMapping($field_name);
     $this->assertEquals($mapping, $field_mapping, 'Field mapping saved.');
 
@@ -109,10 +113,10 @@ class CrudTest extends KernelTestBase {
       'datatype' => 'foo:bar',
       'datatype_callback' => ['callable' => 'Drupal\rdf\CommonDataConverter::dateIso8601Value'],
     ];
-    rdf_get_mapping($this->entityType, $this->bundle)
+    \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->setFieldMapping($field_name, $mapping)
       ->save();
-    $field_mapping = rdf_get_mapping($this->entityType, $this->bundle)
+    $field_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping($this->entityType, $this->bundle)
       ->getFieldMapping($field_name);
     $this->assertEquals($mapping, $field_mapping, 'Field mapping updated.');
   }

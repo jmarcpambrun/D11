@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests RDFa attribute generation from RDF mapping.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class RdfaAttributesTest extends KernelTestBase {
 
   /**
@@ -21,7 +24,7 @@ class RdfaAttributesTest extends KernelTestBase {
   /**
    * Tests attribute creation for mappings which use 'property'.
    */
-  public function testProperty() {
+  public function testProperty(): void {
     $properties = ['dc:title'];
 
     $mapping = ['properties' => $properties];
@@ -33,7 +36,7 @@ class RdfaAttributesTest extends KernelTestBase {
   /**
    * Tests attribute creation for mappings which use 'datatype'.
    */
-  public function testDatatype() {
+  public function testDatatype(): void {
     $properties = ['foo:bar1'];
     $datatype = 'foo:bar1type';
 
@@ -52,7 +55,7 @@ class RdfaAttributesTest extends KernelTestBase {
   /**
    * Tests attribute creation for mappings that override human-readable content.
    */
-  public function testDatatypeCallback() {
+  public function testDatatypeCallback(): void {
     $properties = ['dc:created'];
     $datatype = 'xsd:dateTime';
 
@@ -76,7 +79,7 @@ class RdfaAttributesTest extends KernelTestBase {
   /**
    * Tests attribute creation for mappings which use data converters.
    */
-  public function testDatatypeCallbackWithConverter() {
+  public function testDatatypeCallbackWithConverter(): void {
     $properties = ['schema:interactionCount'];
 
     $data = "23";
@@ -100,7 +103,7 @@ class RdfaAttributesTest extends KernelTestBase {
   /**
    * Tests attribute creation for mappings which use 'rel'.
    */
-  public function testRel() {
+  public function testRel(): void {
     $properties = ['sioc:has_creator', 'dc:creator'];
 
     $mapping = [
@@ -116,17 +119,17 @@ class RdfaAttributesTest extends KernelTestBase {
    * Helper function to test attribute generation.
    *
    * @param array $expected_attributes
-   *   The expected return of rdf_rdfa_attributes.
+   *   The expected return of RdfMappingHelper::rdfaAttributes().
    * @param array $field_mapping
    *   The field mapping to merge into the RDF mapping config.
    * @param mixed|null $data
    *   The data to pass into the datatype callback, if specified.
    */
   protected function testAttributes(array $expected_attributes, array $field_mapping, mixed $data = NULL): void {
-    $mapping = rdf_get_mapping('node', 'article')
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article')
       ->setFieldMapping('field_test', $field_mapping)
       ->getPreparedFieldMapping('field_test');
-    $attributes = rdf_rdfa_attributes($mapping, $data);
+    $attributes = \Drupal::service(RdfMappingHelper::class)->rdfaAttributes($mapping, $data);
     ksort($expected_attributes);
     ksort($attributes);
     $this->assertEquals($expected_attributes, $attributes);

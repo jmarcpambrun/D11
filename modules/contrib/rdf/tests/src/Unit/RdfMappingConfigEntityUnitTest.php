@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\rdf\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\rdf\Entity\RdfMapping;
@@ -9,8 +10,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\rdf\Entity\RdfMapping
- * @group rdf
  */
+#[Group('rdf')]
 class RdfMappingConfigEntityUnitTest extends UnitTestCase {
 
   /**

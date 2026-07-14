@@ -2,15 +2,18 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\Tests\node\Functional\NodeTestBase;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa markup of Nodes.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class NodeAttributesTest extends NodeTestBase {
 
   use RdfParsingTrait;
@@ -40,7 +43,7 @@ class NodeAttributesTest extends NodeTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    rdf_get_mapping('node', 'article')
+    \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article')
       ->setBundleMapping([
         'types' => ['sioc:Item', 'foaf:Document'],
       ])
@@ -60,7 +63,7 @@ class NodeAttributesTest extends NodeTestBase {
   /**
    * Creates a node of type article and tests its RDFa markup.
    */
-  public function testNodeAttributes() {
+  public function testNodeAttributes(): void {
     // Create node with single quotation mark title to ensure it does not get
     // escaped more than once.
     $node = $this->drupalCreateNode([

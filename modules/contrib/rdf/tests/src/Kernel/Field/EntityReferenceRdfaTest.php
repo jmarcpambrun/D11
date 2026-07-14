@@ -2,7 +2,10 @@
 
 namespace Drupal\Tests\rdf\Kernel\Field;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\field\Traits\EntityReferenceFieldCreationTrait;
+use Drupal\rdf\RdfMappingHelper;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
 
@@ -14,9 +17,9 @@ if (!trait_exists(EntityReferenceFieldCreationTrait::class)) {
 
 /**
  * Tests the RDFa output of the entity reference field formatter.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class EntityReferenceRdfaTest extends FieldRdfaTestBase {
 
   use EntityReferenceFieldCreationTrait;
@@ -69,7 +72,7 @@ class EntityReferenceRdfaTest extends FieldRdfaTestBase {
     $this->createEntityReferenceField($this->entityType, $this->bundle, $this->fieldName, 'Field test', $this->entityType);
 
     // Add the mapping.
-    $mapping = rdf_get_mapping('entity_test', 'entity_test');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('entity_test', 'entity_test');
     $mapping->setFieldMapping($this->fieldName, [
       'properties' => ['schema:knows'],
     ])->save();

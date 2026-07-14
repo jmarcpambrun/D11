@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Kernel\Field;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa output of a text field formatter with a datatype callback.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class FieldRdfaDatatypeCallbackTest extends FieldRdfaTestBase {
 
   /**
@@ -32,7 +35,7 @@ class FieldRdfaDatatypeCallbackTest extends FieldRdfaTestBase {
     $this->installConfig(['filter']);
 
     // Add the mapping.
-    $mapping = rdf_get_mapping('entity_test', 'entity_test');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('entity_test', 'entity_test');
     $mapping->setFieldMapping($this->fieldName, [
       'properties' => ['schema:interactionCount'],
       'datatype_callback' => [

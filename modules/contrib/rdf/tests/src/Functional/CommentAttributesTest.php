@@ -2,29 +2,33 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\comment\AnonymousContact;
+use Drupal\comment\CommentPreviewMode;
 use Drupal\comment\CommentInterface;
 use Drupal\comment\CommentManagerInterface;
 use Drupal\comment\Entity\Comment;
 use Drupal\Core\Url;
 use Drupal\Tests\comment\Functional\CommentTestBase;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
+use Drupal\rdf\RdfMappingHelper;
 use Drupal\user\Entity\User;
 use Drupal\user\RoleInterface;
 use Drupal\user\UserInterface;
 
 /**
  * Tests the RDFa markup of comments.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class CommentAttributesTest extends CommentTestBase {
 
   use RdfParsingTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
   protected static $modules = [
     'views',
@@ -66,8 +70,9 @@ class CommentAttributesTest extends CommentTestBase {
       'skip comment approval' => TRUE,
     ]);
     // Allows anonymous to leave their contact information.
-    $this->setCommentAnonymous(CommentInterface::ANONYMOUS_MAY_CONTACT);
-    $this->setCommentPreview(DRUPAL_OPTIONAL);
+    // @phpstan-ignore-next-line class.notFound
+    $this->setCommentAnonymous(DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => AnonymousContact::Allowed, fn() => CommentInterface::ANONYMOUS_MAY_CONTACT));
+    DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.3.0', fn() => $this->setCommentPreview(CommentPreviewMode::Optional), fn() => $this->setCommentPreview(DRUPAL_OPTIONAL));
     $this->setCommentForm(TRUE);
     $this->setCommentSubject(TRUE);
     $this->setCommentSettings('comment_default_mode', CommentManagerInterface::COMMENT_MODE_THREADED, 'Comment paging changed.');
@@ -77,7 +82,7 @@ class CommentAttributesTest extends CommentTestBase {
     $this->nodeUri = $this->node->toUrl('canonical', ['absolute' => TRUE])->toString();
 
     // Set relation between node and comment.
-    $article_mapping = rdf_get_mapping('node', 'article');
+    $article_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('node', 'article');
     $comment_count_mapping = [
       'properties' => ['sioc:num_replies'],
       'datatype' => 'xsd:integer',
@@ -86,7 +91,7 @@ class CommentAttributesTest extends CommentTestBase {
     $article_mapping->setFieldMapping('comment_count', $comment_count_mapping)->save();
 
     // Save user mapping.
-    $user_mapping = rdf_get_mapping('user', 'user');
+    $user_mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('user', 'user');
     $username_mapping = [
       'properties' => ['foaf:name'],
     ];
@@ -94,7 +99,7 @@ class CommentAttributesTest extends CommentTestBase {
     $user_mapping->setFieldMapping('homepage', ['properties' => ['foaf:page'], 'mapping_type' => 'rel'])->save();
 
     // Save comment mapping.
-    $mapping = rdf_get_mapping('comment', 'comment');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('comment', 'comment');
     $mapping->setBundleMapping(['types' => ['sioc:Post', 'sioct:Comment']])->save();
     $field_mappings = [
       'subject' => [
@@ -160,7 +165,7 @@ class CommentAttributesTest extends CommentTestBase {
    */
   public function testCommentRdfAuthorMarkup(): void {
     // Set to test the altered display name.
-    \Drupal::state()->set('user_hooks_test_user_format_name_alter', TRUE);
+    \Drupal::keyValue('user_hooks_test')->set('user_format_name_alter', TRUE);
 
     // Post a comment as a registered user.
     $this->saveComment($this->node->id(), $this->webUser->id());
@@ -184,7 +189,7 @@ class CommentAttributesTest extends CommentTestBase {
    */
   public function testCommentRdfaMarkup(): void {
     // Set to test the altered display name.
-    \Drupal::state()->set('user_hooks_test_user_format_name_alter', TRUE);
+    \Drupal::keyValue('user_hooks_test')->set('user_format_name_alter', TRUE);
 
     // Posts comment #1 on behalf of registered user.
     $comment1 = $this->saveComment($this->node->id(), $this->webUser->id());
@@ -216,7 +221,7 @@ class CommentAttributesTest extends CommentTestBase {
   /**
    * Tests RDF comment replies.
    */
-  public function testCommentReplyOfRdfaMarkup() {
+  public function testCommentReplyOfRdfaMarkup(): void {
     // Posts comment #1 on behalf of registered user.
     $this->drupalLogin($this->webUser);
     $comment_1 = $this->saveComment($this->node->id(), $this->webUser->id());
@@ -259,7 +264,7 @@ class CommentAttributesTest extends CommentTestBase {
    *   (optional) An array containing information about an anonymous user.
    *   Defaults to NULL.
    */
-  protected function testBasicCommentRdfaMarkup(CommentInterface $comment, UserInterface $account = NULL): void {
+  protected function testBasicCommentRdfaMarkup(CommentInterface $comment, ?UserInterface $account = NULL): void {
     $this->drupalGet($this->node->toUrl());
     $comment_uri = $comment->toUrl('canonical', ['absolute' => TRUE])->toString();
 
@@ -355,7 +360,7 @@ class CommentAttributesTest extends CommentTestBase {
    * @return \Drupal\comment\Entity\Comment
    *   The saved comment.
    */
-  public function saveComment(int $nid, int $uid, array $contact = NULL, int $pid = 0): Comment {
+  public function saveComment(int $nid, int $uid, ?array $contact = NULL, int $pid = 0): Comment {
     $values = [
       'entity_id' => $nid,
       'entity_type' => 'node',

@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests hook_rdf_namespaces().
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class GetRdfNamespacesTest extends BrowserTestBase {
 
   /**
@@ -47,7 +50,7 @@ class GetRdfNamespacesTest extends BrowserTestBase {
     $this->assertCount(1, $element, 'When a prefix has conflicting namespaces, the first declared one is used.');
 
     // Get all RDF namespaces.
-    $ns = rdf_get_namespaces();
+    $ns = \Drupal::service(RdfMappingHelper::class)->getNamespaces();
 
     $this->assertEquals('http://www.w3.org/2000/01/rdf-schema#', $ns['rdfs'], 'A prefix declared once is included.');
     $this->assertEquals('http://xmlns.com/foaf/0.1/', $ns['foaf'], 'The same prefix declared in several implementations of hook_rdf_namespaces() is valid as long as all the namespaces are the same.');
@@ -57,7 +60,7 @@ class GetRdfNamespacesTest extends BrowserTestBase {
     // when RDF namespaces are conflicting.
     \Drupal::service('module_installer')->install(['rdf_conflicting_namespaces'], TRUE);
     try {
-      $ns = rdf_get_namespaces();
+      $ns = \Drupal::service(RdfMappingHelper::class)->getNamespaces();
       $this->fail('Expected exception not thrown for conflicting namespace declaration.');
     }
     catch (\Exception $e) {

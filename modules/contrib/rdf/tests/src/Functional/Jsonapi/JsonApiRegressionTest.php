@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Functional\Jsonapi;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\comment\Entity\Comment;
 use Drupal\comment\Tests\CommentTestTrait;
 use Drupal\Core\Url;
@@ -11,10 +13,10 @@ use GuzzleHttp\RequestOptions;
 
 /**
  * JSON:API regression tests.
- *
- * @group jsonapi
- * @group rdf
  */
+#[Group('jsonapi')]
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class JsonApiRegressionTest extends JsonApiFunctionalTestBase {
 
   use CommentTestTrait;

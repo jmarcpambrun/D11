@@ -44,7 +44,8 @@ interface RdfMappingInterface extends ConfigEntityInterface {
    * Example usage:
    * -Map the 'article' bundle to 'sioc:Post'.
    * @code
-   * rdf_get_mapping('node', 'article')
+   * \Drupal::service(\Drupal\rdf\RdfMappingHelper::class)
+   *   ->getMapping('node', 'article')
    *   ->setBundleMapping([
    *     'types' => ['sioc:Post'],
    *   ])

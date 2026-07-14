@@ -2,15 +2,18 @@
 
 namespace Drupal\Tests\rdf\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\rdf\Traits\RdfParsingTrait;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the RDFa markup of Users.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class UserAttributesTest extends BrowserTestBase {
 
   use RdfParsingTrait;
@@ -39,7 +42,7 @@ class UserAttributesTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    rdf_get_mapping('user', 'user')
+    \Drupal::service(RdfMappingHelper::class)->getMapping('user', 'user')
       ->setBundleMapping([
         'types' => ['sioc:UserAccount'],
       ])

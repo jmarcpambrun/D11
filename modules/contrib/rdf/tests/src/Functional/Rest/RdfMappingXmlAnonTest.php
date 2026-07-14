@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Functional\Rest;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\rest\Functional\AnonResourceTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\XmlEntityNormalizationQuirksTrait;
 
@@ -10,6 +12,8 @@ use Drupal\Tests\rest\Functional\EntityResource\XmlEntityNormalizationQuirksTrai
  *
  * @group rest
  */
+#[Group('rest')]
+#[RunTestsInSeparateProcesses]
 class RdfMappingXmlAnonTest extends RdfMappingResourceTestBase {
 
   use AnonResourceTestTrait;

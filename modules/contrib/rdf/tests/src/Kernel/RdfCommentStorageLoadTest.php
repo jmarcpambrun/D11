@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\rdf\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\comment\Entity\Comment;
 use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Field\Plugin\Field\FieldType\CreatedItem;
@@ -9,9 +11,9 @@ use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 
 /**
  * Tests rdf_comment_storage_load.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class RdfCommentStorageLoadTest extends EntityKernelTestBase {
 
   /**
@@ -22,7 +24,7 @@ class RdfCommentStorageLoadTest extends EntityKernelTestBase {
   /**
    * Tests rdf_comment_storage_load.
    */
-  public function testRdfCommentStorageLoad() {
+  public function testRdfCommentStorageLoad(): void {
     $field_created_item = $this->prophesize(CreatedItem::class);
     $field_created_item->setValue([time()]);
 

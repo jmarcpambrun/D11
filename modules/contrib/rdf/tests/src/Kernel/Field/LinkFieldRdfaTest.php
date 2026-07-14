@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\rdf\Kernel\Field;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\rdf\RdfMappingHelper;
 
 /**
  * Tests the placement of RDFa in link field formatters.
- *
- * @group rdf
  */
+#[Group('rdf')]
+#[RunTestsInSeparateProcesses]
 class LinkFieldRdfaTest extends FieldRdfaTestBase {
 
   /**
@@ -30,7 +33,7 @@ class LinkFieldRdfaTest extends FieldRdfaTestBase {
     $this->createTestField();
 
     // Add the mapping.
-    $mapping = rdf_get_mapping('entity_test', 'entity_test');
+    $mapping = \Drupal::service(RdfMappingHelper::class)->getMapping('entity_test', 'entity_test');
     $mapping->setFieldMapping($this->fieldName, [
       'properties' => ['schema:link'],
     ])->save();
@@ -40,7 +43,7 @@ class LinkFieldRdfaTest extends FieldRdfaTestBase {
   /**
    * Tests all formatters with link to external page.
    */
-  public function testAllFormattersExternal() {
+  public function testAllFormattersExternal(): void {
     // Set up test values.
     $this->testValue = 'http://test.me/foo/bar/neque/porro/quisquam/est/qui-dolorem?path=foo/bar/neque/porro/quisquam/est/qui-dolorem';
     $this->entity = EntityTest::create([]);
@@ -58,7 +61,7 @@ class LinkFieldRdfaTest extends FieldRdfaTestBase {
   /**
    * Tests all formatters with link to internal page.
    */
-  public function testAllFormattersInternal() {
+  public function testAllFormattersInternal(): void {
     // Set up test values.
     $this->testValue = 'admin';
     $this->entity = EntityTest::create([]);
@@ -77,7 +80,7 @@ class LinkFieldRdfaTest extends FieldRdfaTestBase {
   /**
    * Tests all formatters with link to frontpage.
    */
-  public function testAllFormattersFront() {
+  public function testAllFormattersFront(): void {
     // Set up test values.
     $this->testValue = '/';
     $this->entity = EntityTest::create([]);

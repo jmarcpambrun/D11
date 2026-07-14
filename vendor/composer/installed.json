@@ -9122,33 +9122,33 @@
         },
         {
             "name": "drupal/rdf",
-            "version": "3.0.0-beta2",
-            "version_normalized": "3.0.0.0-beta2",
+            "version": "4.0.0-alpha1",
+            "version_normalized": "4.0.0.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/rdf.git",
-                "reference": "3.0.0-beta2"
+                "reference": "4.0.0-alpha1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/rdf-3.0.0-beta2.zip",
-                "reference": "3.0.0-beta2",
-                "shasum": "1cdc2900f70bc405d542fb56209905ebc8d5dae2"
+                "url": "https://ftp.drupal.org/files/projects/rdf-4.0.0-alpha1.zip",
+                "reference": "4.0.0-alpha1",
+                "shasum": "fa4cd82b2cab2e72a78aeaceef8937852ca402cd"
             },
             "require": {
-                "drupal/core": "^10.3 || ^11.0"
+                "drupal/core": "^11.3 || ^12"
             },
             "require-dev": {
-                "easyrdf/easyrdf": "^1.0 || ^1.1"
+                "sweetrdf/easyrdf": "^1.0"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.0-beta2",
-                    "datestamp": "1721596082",
+                    "version": "4.0.0-alpha1",
+                    "datestamp": "1783794017",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Beta releases are not covered by Drupal security advisories."
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 }
             },
