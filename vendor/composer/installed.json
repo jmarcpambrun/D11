@@ -4212,17 +4212,17 @@
         },
         {
             "name": "drupal/core",
-            "version": "11.4.3",
-            "version_normalized": "11.4.3.0",
+            "version": "11.4.4",
+            "version_normalized": "11.4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core.git",
-                "reference": "209e8dd33d34f09e98e4dfb399e7afdaaa68647b"
+                "reference": "37366eee85534e018eb53eadc261d26a46a9b6f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core/zipball/209e8dd33d34f09e98e4dfb399e7afdaaa68647b",
-                "reference": "209e8dd33d34f09e98e4dfb399e7afdaaa68647b",
+                "url": "https://api.github.com/repos/drupal/core/zipball/37366eee85534e018eb53eadc261d26a46a9b6f4",
+                "reference": "37366eee85534e018eb53eadc261d26a46a9b6f4",
                 "shasum": ""
             },
             "require": {
@@ -4315,7 +4315,7 @@
             "suggest": {
                 "ext-zip": "Needed to extend the plugin.manager.archiver service capability with the handling of files in the ZIP format."
             },
-            "time": "2026-07-14T09:31:32+00:00",
+            "time": "2026-07-15T18:02:21+00:00",
             "bin": [
                 "scripts/dr"
             ],
@@ -4392,7 +4392,7 @@
             ],
             "description": "Drupal is an open source content management platform powering millions of websites and applications.",
             "support": {
-                "source": "https://github.com/drupal/core/tree/11.4.3"
+                "source": "https://github.com/drupal/core/tree/11.4.4"
             },
             "funding": [
                 {
@@ -4404,8 +4404,8 @@
         },
         {
             "name": "drupal/core-composer-scaffold",
-            "version": "11.4.3",
-            "version_normalized": "11.4.3.0",
+            "version": "11.4.4",
+            "version_normalized": "11.4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-composer-scaffold.git",
@@ -4451,14 +4451,14 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.4.3"
+                "source": "https://github.com/drupal/core-composer-scaffold/tree/11.4.4"
             },
             "install-path": "../drupal/core-composer-scaffold"
         },
         {
             "name": "drupal/core-project-message",
-            "version": "11.4.3",
-            "version_normalized": "11.4.3.0",
+            "version": "11.4.4",
+            "version_normalized": "11.4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-project-message.git",
@@ -4498,30 +4498,30 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-project-message/tree/11.4.3"
+                "source": "https://github.com/drupal/core-project-message/tree/11.4.4"
             },
             "install-path": "../drupal/core-project-message"
         },
         {
             "name": "drupal/core-recommended",
-            "version": "11.4.3",
-            "version_normalized": "11.4.3.0",
+            "version": "11.4.4",
+            "version_normalized": "11.4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-recommended.git",
-                "reference": "fa1e8e6b93066eb2900469a56368c2242fd845be"
+                "reference": "17ea388598063ead0f9dc70cdaac8afaf2828048"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core-recommended/zipball/fa1e8e6b93066eb2900469a56368c2242fd845be",
-                "reference": "fa1e8e6b93066eb2900469a56368c2242fd845be",
+                "url": "https://api.github.com/repos/drupal/core-recommended/zipball/17ea388598063ead0f9dc70cdaac8afaf2828048",
+                "reference": "17ea388598063ead0f9dc70cdaac8afaf2828048",
                 "shasum": ""
             },
             "require": {
                 "asm89/stack-cors": "~v2.4.0",
                 "composer/semver": "~3.4.4",
                 "doctrine/lexer": "~3.0.1",
-                "drupal/core": "11.4.3",
+                "drupal/core": "11.4.4",
                 "egulias/email-validator": "~4.0.4",
                 "justinrainbow/json-schema": "~6.8.2",
                 "marc-mabe/php-enum": "~v4.7.2",
@@ -4567,7 +4567,7 @@
             "conflict": {
                 "webflo/drupal-core-strict": "*"
             },
-            "time": "2026-07-14T09:31:32+00:00",
+            "time": "2026-07-15T18:02:21+00:00",
             "type": "metapackage",
             "extra": {
                 "branch-alias": []
@@ -4578,7 +4578,7 @@
             ],
             "description": "Core and its dependencies with known-compatible minor versions. Require this project INSTEAD OF drupal/core.",
             "support": {
-                "source": "https://github.com/drupal/core-recommended/tree/11.4.3"
+                "source": "https://github.com/drupal/core-recommended/tree/11.4.4"
             },
             "install-path": null
         },
@@ -12510,17 +12510,17 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.14.1",
-            "version_normalized": "7.14.1.0",
+            "version": "7.14.2",
+            "version_normalized": "7.14.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "6b1d2429a2c312474c523aa9017fba0c07b5f4a0"
+                "reference": "fa88c57803501ad0770f5cddb1e60525d49da9a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/6b1d2429a2c312474c523aa9017fba0c07b5f4a0",
-                "reference": "6b1d2429a2c312474c523aa9017fba0c07b5f4a0",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/fa88c57803501ad0770f5cddb1e60525d49da9a1",
+                "reference": "fa88c57803501ad0770f5cddb1e60525d49da9a1",
                 "shasum": ""
             },
             "require": {
@@ -12549,7 +12549,7 @@
                 "ext-intl": "Required for Internationalized Domain Name (IDN) support",
                 "psr/log": "Required for using the Log middleware"
             },
-            "time": "2026-07-13T01:32:54+00:00",
+            "time": "2026-07-14T18:15:01+00:00",
             "type": "library",
             "extra": {
                 "bamarni-bin": {
@@ -12621,7 +12621,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.14.1"
+                "source": "https://github.com/guzzle/guzzle/tree/7.14.2"
             },
             "funding": [
                 {
