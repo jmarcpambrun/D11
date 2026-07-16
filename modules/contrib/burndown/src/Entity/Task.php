@@ -1205,6 +1205,23 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getProjectId(): ?string {
+    $id = $this->getProject()->id();
+    return $id ?: NULL;
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getProjectShortcode(): string {
+    $shortcode = $this->getProject()->getShortcode();
+    return $shortcode ?: '';
+  }
+
+  /**
    * Find the index (if exists) of a relationship .
    *
    * Note that this doesn't check back-references. Also note that we
@@ -1594,10 +1611,13 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('view', [
-        'region' => 'hidden',
+        'type' => 'entity_reference_label',
+        'label' => 'inline',
+        'weight' => 13,
       ])
       ->setDisplayOptions('form', [
-        'region' => 'hidden',
+        'type' => 'entity_reference_autocomplete_tags',
+        'weight' => 13,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

@@ -218,7 +218,6 @@ class TaskForm extends ContentEntityForm {
       $form['sprint']['#access'] = FALSE;
       $form['backlog_sort']['#access'] = FALSE;
       $form['board_sort']['#access'] = FALSE;
-      $form['watch_list']['#access'] = FALSE;
       $form['completed']['#access'] = FALSE;
       $form['resolution']['#access'] = FALSE;
       $form['log']['#access'] = FALSE;

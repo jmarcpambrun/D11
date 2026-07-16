@@ -8,6 +8,7 @@ use Drupal\burndown\Entity\TaskInterface;
 use Drupal\burndown\Event\TaskCommentEvent;
 use Drupal\burndown\Event\TaskWorkEvent;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Link;
@@ -275,8 +276,9 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    * @param int $user_id
    *   The User ID.
    */
-  public static function addToWatchlist(string $ticket_id, int $user_id) {
+  public function addToWatchlist(string $ticket_id, int $user_id) {
     // Load the task.
+    /** @var \Drupal\burndown\Entity\TaskInterface $task */
     $task = Task::loadFromTicketId($ticket_id);
     if ($task === FALSE) {
       // Task doesn't exist; throw 404.
@@ -289,14 +291,18 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       throw new NotFoundHttpException();
     }
 
-    // Check if this is the current user.
-    $current_user = $this->account;
-    if ($current_user->id() !== $user_id) {
-      // Only allow admins to subscribe somebody else.
-      $current_user_roles = $current_user->getRoles();
-      if (!in_array('administrator', $current_user_roles)) {
-        throw new NotFoundHttpException();
-      }
+    // Check access.
+    $project_id = $task->getProjectId();
+    $allowed_perms = [
+      'add task entities',
+      'edit task entities',
+      "{$project_id} edit own entities",
+      "{$project_id} edit any entities",
+      'administer task entities',
+    ];
+    $access = AccessResult::allowedIfHasPermissions($this->account, $allowed_perms, 'OR');
+    if (!$access->isAllowed()) {
+      throw new NotFoundHttpException();
     }
 
     // Add to watchlist.
@@ -319,8 +325,9 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    * @param int $user_id
    *   The User ID.
    */
-  public static function removeFromWatchlist(string $ticket_id, $user_id) {
+  public function removeFromWatchlist(string $ticket_id, $user_id) {
     // Load the task.
+    /** @var \Drupal\burndown\Entity\TaskInterface $task */
     $task = Task::loadFromTicketId($ticket_id);
     if ($task === FALSE) {
       // Task doesn't exist; throw 404.
@@ -333,14 +340,18 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       throw new NotFoundHttpException();
     }
 
-    // Check if this is the current user.
-    $current_user = $this->account;
-    if ($current_user->id() !== $user_id) {
-      // Only allow admins to unsubscribe somebody else.
-      $current_user_roles = $current_user->getRoles();
-      if (!in_array('administrator', $current_user_roles)) {
-        throw new NotFoundHttpException();
-      }
+    // Check access.
+    $project_id = $task->getProjectId();
+    $allowed_perms = [
+      'add task entities',
+      'edit task entities',
+      "{$project_id} edit own entities",
+      "{$project_id} edit any entities",
+      'administer task entities',
+    ];
+    $access = AccessResult::allowedIfHasPermissions($this->account, $allowed_perms, 'OR');
+    if (!$access->isAllowed()) {
+      throw new NotFoundHttpException();
     }
 
     // Remove from watchlist.

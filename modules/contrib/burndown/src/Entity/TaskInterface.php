@@ -95,4 +95,22 @@ interface TaskInterface extends ContentEntityInterface, RevisionLogInterface, En
    */
   public function setRevisionUserId($uid);
 
+  /**
+   * Gets the Project id.
+   *
+   * @return string
+   *   The Project id this task belongs to.
+   */
+  public function getProjectId(): ?string;
+
+
+  /**
+   * Gets the Project shortcode.
+   *
+   * @return string
+   *   The Project shortcode this task belongs to.
+   */
+  public function getProjectShortcode(): string;
+
+
 }

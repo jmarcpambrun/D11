@@ -42,8 +42,8 @@ class ChangeDiffService {
 
         $field_definition = $entity->getFieldDefinition($field_name);
         if ($field_definition && $field_definition->getType() === 'entity_reference') {
-          $original = $entity->original->get($field_name)->entity->label();
-          $new = $entity->get($field_name)->entity->label();
+          $original = ($entity->original->get($field_name)->entity) ? $entity->original->get($field_name)->entity->label() : '';
+          $new = ($entity->get($field_name)->entity) ? $entity->get($field_name)->entity->label() : '';
         }
         else {
           $original = $entity->original->get($field_name)->value;
