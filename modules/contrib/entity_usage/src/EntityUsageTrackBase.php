@@ -72,7 +72,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
    *
    * @var string[]|null
    */
-  private readonly ?array $enabledTargetEntityTypes;
+  protected ?array $enabledTargetEntityTypes;
 
   /**
    * Logger for entity usage.
@@ -91,7 +91,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
    *
    * @var string[]
    */
-  private array $alwaysTrackBaseFields;
+  protected array $alwaysTrackBaseFields;
 
   /**
    * Plugin constructor.
@@ -413,6 +413,18 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
         '%field' => $field_name,
       ]
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __wakeup(): void {
+    parent::__wakeup();
+    // @phpstan-ignore globalDrupalDependencyInjection.useDependencyInjection
+    $container = \Drupal::getContainer();
+    $this->alwaysTrackBaseFields = $container->getParameter('entity_usage')['always_track_base_fields'] ?? [];
+    $this->config = $container->get('config.factory')->get('entity_usage.settings');
+    $this->enabledTargetEntityTypes = $this->config->get('track_enabled_target_entity_types');
   }
 
 }
