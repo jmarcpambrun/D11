@@ -8,6 +8,7 @@
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
 use Drupal\burndown\Entity\Task;
+use Drupal\Core\Config\FileStorage;
 
 /**
  * Implements hook_install().
@@ -122,4 +123,28 @@ function burndown_update_8002(&$sandbox) {
   else {
     $sandbox['#finished'] = ($sandbox['current'] / $sandbox['total']);
   }
+}
+
+/**
+ * Imports the My Tasks View from module install config for existing sites.
+ */
+function burndown_update_8003() {
+  $config_name = 'views.view.my_tasks';
+  $module_path = \Drupal::service('extension.list.module')->getPath('burndown');
+  $source_storage = new FileStorage($module_path . '/config/install');
+  $source_data = $source_storage->read($config_name);
+
+  if (empty($source_data)) {
+    throw new \RuntimeException(sprintf('Unable to read %s from burndown config/install.', $config_name));
+  }
+
+  // Preserve the existing UUID to avoid changing the config entity identity.
+  $active_config = \Drupal::configFactory()->getEditable($config_name);
+  $existing_uuid = $active_config->get('uuid');
+  if (!empty($existing_uuid)) {
+    $source_data['uuid'] = $existing_uuid;
+  }
+
+  $active_config->setData($source_data)->save(TRUE);
+  return t('Imported the My Tasks View from burndown config/install.');
 }

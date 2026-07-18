@@ -12,6 +12,7 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -90,6 +91,128 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->entityTypeBundleInfo = $container->get('entity_type.bundle.info');
     return $instance;
+  }
+
+  /**
+   * Custom access check for task view operations.
+   *
+   * @param string $ticket_id
+   *   The ticket ID route parameter.
+   * @param string $from_ticket_id
+   *   The from-ticket route parameter used by relationship routes.
+   * @param \Drupal\Core\Session\AccountInterface|null $account
+   *   The user account.
+   *
+   * @return \Drupal\Core\Access\AccessResult
+   *   The access result.
+   */
+  public function checkTaskViewAccess($ticket_id = '', $from_ticket_id = '', ?AccountInterface $account = NULL) {
+    $account = $account ?: $this->account;
+    // Start with the broad perms.
+    $access_perms = [
+      'access burndown board',
+      'access burndown',
+      'access completed board',
+      'add task entities',
+      'administer task entities',
+      'delete all task revisions',
+      'delete task entities',
+      'edit task entities',
+      'modify sprint tasks',
+      'revert all task revisions',
+      'view all task revisions',
+      'view published task entities',
+      'view unpublished task entities',
+    ];
+
+    $task = $this->loadTaskForAccess($ticket_id, $from_ticket_id);
+    if ($task) {
+      // Be specific about the Project ID perms.
+       $project_id = $task->getProjectId();
+       $access_perms[] = "{$project_id} create entities";
+       $access_perms[] = "{$project_id} edit any entities";
+       $access_perms[] = "{$project_id} edit own entities";
+       $access_perms[] = "{$project_id} view project";
+    }
+    else {
+      // This is not a specific task, so go broad and see if they have ANY
+      // project view perms.
+      $projects = \Drupal::entityTypeManager()->getStorage('burndown_project')->loadMultiple();
+      foreach ($projects as $project_id => $project) {
+        $access_perms[] = "{$project_id} create entities";
+        $access_perms[] = "{$project_id} edit any entities";
+        $access_perms[] = "{$project_id} edit own entities";
+        $access_perms[] = "{$project_id} view project";
+      }
+    }
+
+    $task_access = AccessResult::allowedIfHasPermissions($account, $access_perms, 'OR');
+    if ($task_access->isNeutral()) {
+      return AccessResult::forbidden()->addCacheableDependency($task_access);
+    }
+
+    return $task_access;
+  }
+
+  /**
+   * Custom access check for task edit operations.
+   *
+   * @param string $ticket_id
+   *   The ticket ID route parameter.
+   * @param string $from_ticket_id
+   *   The from-ticket route parameter used by relationship routes.
+   * @param \Drupal\Core\Session\AccountInterface|null $account
+   *   The user account.
+   *
+   * @return \Drupal\Core\Access\AccessResult
+   *   The access result.
+   */
+  public function checkTaskEditAccess($ticket_id = '', $from_ticket_id = '', ?AccountInterface $account = NULL) {
+    $account = $account ?: $this->account;
+    $task = $this->loadTaskForAccess($ticket_id, $from_ticket_id);
+    if (!$task) {
+      return AccessResult::forbidden();
+    }
+
+    $project_id = $task->getProjectId();
+    $access_perms = [
+      'administer task entities',
+      'edit task entities',
+      'modify sprint tasks',
+      "{$project_id} delete any entities",
+      "{$project_id} delete own entities",
+      "{$project_id} edit any entities",
+      "{$project_id} edit own entities",
+    ];
+    $task_access = AccessResult::allowedIfHasPermissions($account, $access_perms, 'OR');
+    if ($task_access->isNeutral()) {
+      return AccessResult::forbidden()->addCacheableDependency($task_access);
+    }
+
+    return $task_access;
+  }
+
+  /**
+   * Loads a task for route-based access checks.
+   *
+   * @param string $ticket_id
+   *   The ticket ID route parameter.
+   * @param string $from_ticket_id
+   *   The from-ticket route parameter used by relationship routes.
+   *
+   * @return \Drupal\burndown\Entity\Task|false
+   *   A task entity, or FALSE when not available.
+   */
+  protected function loadTaskForAccess($ticket_id = '', $from_ticket_id = '') {
+    if (!empty($ticket_id)) {
+      return Task::loadFromTicketId($ticket_id);
+    }
+
+    if (!empty($from_ticket_id)) {
+      return Task::loadFromTicketId($from_ticket_id);
+    }
+
+    return FALSE;
   }
 
   /**
@@ -291,16 +414,8 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       throw new NotFoundHttpException();
     }
 
-    // Check access.
-    $project_id = $task->getProjectId();
-    $allowed_perms = [
-      'add task entities',
-      'edit task entities',
-      "{$project_id} edit own entities",
-      "{$project_id} edit any entities",
-      'administer task entities',
-    ];
-    $access = AccessResult::allowedIfHasPermissions($this->account, $allowed_perms, 'OR');
+    // Check access using the shared task edit access checker.
+    $access = $this->checkTaskEditAccess($ticket_id, '');
     if (!$access->isAllowed()) {
       throw new NotFoundHttpException();
     }
@@ -340,16 +455,8 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       throw new NotFoundHttpException();
     }
 
-    // Check access.
-    $project_id = $task->getProjectId();
-    $allowed_perms = [
-      'add task entities',
-      'edit task entities',
-      "{$project_id} edit own entities",
-      "{$project_id} edit any entities",
-      'administer task entities',
-    ];
-    $access = AccessResult::allowedIfHasPermissions($this->account, $allowed_perms, 'OR');
+    // Check access using the shared task edit access checker.
+    $access = $this->checkTaskEditAccess($ticket_id, '');
     if (!$access->isAllowed()) {
       throw new NotFoundHttpException();
     }

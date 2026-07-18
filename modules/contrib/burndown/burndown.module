@@ -5,18 +5,20 @@
  * Contains burndown.module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\burndown\Entity\Project;
+use Drupal\burndown\Entity\Swimlane;
+use Drupal\burndown\Event\TaskChangedEvent;
+use Drupal\burndown\Event\TaskCreatedEvent;
+use Drupal\burndown\Hook\BurndownHooks;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\burndown\Entity\Swimlane;
-use Drupal\burndown\Entity\Project;
-use Drupal\burndown\Event\TaskCreatedEvent;
-use Drupal\burndown\Event\TaskChangedEvent;
-use Drupal\Component\Utility\Html;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_help().
@@ -542,4 +544,20 @@ function burndown_mail($key, &$message, $params) {
         $options);
       break;
   }
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+#[LegacyHook]
+function burndown_views_data_alter(&$data) {
+  return \Drupal::service(BurndownHooks::class)->viewsDataAlter($data);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+#[LegacyHook]
+function burndown_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  return \Drupal::service(BurndownHooks::class)->formAlter($form, $form_state, $form_id);
 }

@@ -15,3 +15,8 @@ services:
     class: Drupal\burndown\EventSubscriber\TaskNotificationsSubscriber
     tags:
       - { name: 'event_subscriber' }
+
+  burndown_my_tasks_route_subscriber:
+    class: Drupal\burndown\EventSubscriber\MyTasksRouteSubscriber
+    tags:
+      - { name: 'event_subscriber' }

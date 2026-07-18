@@ -39,7 +39,7 @@ burndown.backlog:
   requirements:
     _custom_access: '\Drupal\burndown\Controller\BacklogController::checkAccess'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 burndown.backlog_reorder:
   path: '/burndown/api/backlog_reorder'
@@ -92,7 +92,7 @@ burndown.board:
   requirements:
     _custom_access: '\Drupal\burndown\Controller\BoardController::checkAccess'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 burndown.board_change_swimlane:
   path: '/burndown/api/change_swimlane'
@@ -128,7 +128,7 @@ burndown.completed:
   requirements:
     _custom_access: '\Drupal\burndown\Controller\CompletedController::checkAccess'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 burndown.close_task:
   path: '/burndown/close_task/{ticket_id}/{board}'
@@ -156,7 +156,7 @@ burndown.get_task_log:
     ticket_id: ''
     type: 'all'
   requirements:
-    _permission: 'access burndown'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskViewAccess'
 
 burndown.task_add_comment:
   path: '/burndown/api/task/add_comment'
@@ -182,7 +182,7 @@ burndown.task_add_to_watchlist:
     user_id: ''
   methods:  [GET]
   requirements:
-    _permission: 'edit task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.task_remove_from_watchlist:
   path: '/burndown/api/task/remove_from_watchlist/{ticket_id}/{user_id}'
@@ -192,7 +192,7 @@ burndown.task_remove_from_watchlist:
     user_id: ''
   methods:  [GET]
   requirements:
-    _permission: 'edit task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.task_get_relationships:
   path: '/burndown/api/task/get_relationships/{ticket_id}'
@@ -201,9 +201,9 @@ burndown.task_get_relationships:
     ticket_id: ''
   methods:  [GET]
   requirements:
-    _permission: 'edit task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 burndown.task_add_relationship:
   path: '/burndown/api/task/add_relationship'
@@ -211,7 +211,7 @@ burndown.task_add_relationship:
     _controller: '\Drupal\burndown\Controller\TaskController::addRelationship'
   methods:  [POST]
   requirements:
-    _permission: 'edit task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.task_remove_relationship:
   path: '/burndown/api/task/remove_relationship/{from_ticket_id}/{to_ticket_id}'
@@ -221,7 +221,7 @@ burndown.task_remove_relationship:
     to_ticket_id: ''
   methods:  [GET]
   requirements:
-    _permission: 'edit task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.task_add_multi_bundle:
   path: '/burndown/task_add_multi_bundle/{shortcode}'
@@ -230,7 +230,7 @@ burndown.task_add_multi_bundle:
     shortcode: ''
   methods:  [GET]
   requirements:
-    _permission: 'add task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.task_add_redirect:
   path: '/burndown/add-task/{shortcode}'
@@ -239,7 +239,7 @@ burndown.task_add_redirect:
     shortcode: ''
   methods:  [GET]
   requirements:
-    _permission: 'add task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
 
 burndown.close_sprint:
   path: '/burndown/close_sprint/{sprint_id}'
@@ -259,7 +259,7 @@ burndown.project_swimlanes:
   requirements:
     _permission: 'administer burndown'
   options:
-    no_cache: 'TRUE'
+    no_cache: TRUE
 
 burndown.reorder_project_swimlanes:
   path: '/burndown/api/swimlane_reorder'
@@ -299,4 +299,4 @@ entity.burndown_task.collection:
     _entity_list: 'burndown_task'
     _title: 'Tasks'
   requirements:
-    _permission: 'administer task entities'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskViewAccess'
