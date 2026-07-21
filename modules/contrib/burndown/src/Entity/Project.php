@@ -89,6 +89,15 @@ class Project extends EditorialContentEntityBase implements ProjectInterface {
    * Load a project using its shortcode.
    */
   public static function loadFromShortcode($shortcode) {
+    if (!is_scalar($shortcode)) {
+      return FALSE;
+    }
+
+    $shortcode = trim((string) $shortcode);
+    if ($shortcode === '') {
+      return FALSE;
+    }
+
     $project_ids = \Drupal::entityQuery('burndown_project')
       ->condition('shortcode', $shortcode)
       ->accessCheck(FALSE)

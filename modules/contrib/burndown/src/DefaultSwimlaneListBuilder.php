@@ -42,7 +42,7 @@ class DefaultSwimlaneListBuilder extends ConfigEntityListBuilder {
     if ($show_completed) {
       $boards[] = 'Completed Board';
     }
-    $row['boards'] = implode('<br />', $boards);
+    $row['boards'] = implode(', ', $boards);
 
     $row['sort_order'] = $entity->getSortOrder();
     return $row + parent::buildRow($entity);

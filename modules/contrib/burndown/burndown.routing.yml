@@ -230,7 +230,7 @@ burndown.task_add_multi_bundle:
     shortcode: ''
   methods:  [GET]
   requirements:
-    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskAddAccess'
 
 burndown.task_add_redirect:
   path: '/burndown/add-task/{shortcode}'
