@@ -493,6 +493,10 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
       '#default_value' => $prompt,
       '#required' => TRUE,
       '#description' => $this->t('AI prompt. What do you want AI to do?  Token replacements shown below. <b>There are some operation types that do not use prompts. For those operation types, any non-blank prompt will suffice.</b>'),
+      '#attributes' => [
+          'rows' => 6,
+          'data-mdxeditor' => 'maestro_ai_task_assistant_post_process_prompt',
+        ],
     ];
 
     /*
@@ -694,7 +698,7 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
 
     $task['data']['ai']['hold_task_on_null'] = $form_state->getValue('hold_task_on_null');
     $task['data']['ai']['ai_provider'] = $form_state->getValue('ai_provider');
-    $task['data']['ai']['ai_prompt'] = $form_state->getValue('ai_prompt');
+    $task['data']['ai']['ai_prompt'] = self::unescapeMdxEditorArtifacts($form_state->getValue('ai_prompt') ?? '');
     $task['data']['ai']['ai_return_format'] = $form_state->getValue('ai_return_format');
     $task['data']['ai']['ai_return_custom_format'] = $form_state->getValue('ai_return_custom_format');
     $task['data']['ai']['ai_return_into'] = $form_state->getValue('ai_return_into');
@@ -757,6 +761,26 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
    */
   public function getTemplateBuilderCapabilities() {
     return ['edit', 'drawlineto', 'removelines', 'remove'];
+  }
+
+  /**
+   * Reverses the MDX/Markdown editor's escaping of literal special characters.
+   *
+   * The editor round-trips every edit through a Markdown parse/serialize
+   * cycle, which unconditionally backslash-escapes '[', '_', '*' and '`'
+   * wherever they appear in plain text, including inside a literal Maestro
+   * token like [maestro:process-variable-value:node_id], breaking it. This
+   * field is never rendered as Markdown downstream (it's concatenated into
+   * an AI prompt and token-replaced as plain text).
+   *
+   * @param string $text
+   *   The raw value from the MDX-editor-backed ai_prompt textarea.
+   *
+   * @return string
+   *   The text with the editor's escaping undone.
+   */
+  protected static function unescapeMdxEditorArtifacts(string $text): string {
+    return str_replace(['\\[', '\\_', '\\*', '\\`'], ['[', '_', '*', '`'], $text);
   }
 
 }

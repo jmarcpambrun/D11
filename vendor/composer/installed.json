@@ -7661,37 +7661,39 @@
         },
         {
             "name": "drupal/maestro",
-            "version": "4.4.1",
-            "version_normalized": "4.4.1.0",
+            "version": "4.5.0",
+            "version_normalized": "4.5.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/maestro.git",
-                "reference": "4.4.1"
+                "reference": "4.5.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/maestro-4.4.1.zip",
-                "reference": "4.4.1",
-                "shasum": "d8244364682d03a77fe69384afa1c2f6fc442ea6"
+                "url": "https://ftp.drupal.org/files/projects/maestro-4.5.0.zip",
+                "reference": "4.5.0",
+                "shasum": "51d2eac78083abbfc067eb01be912ef4d5b3e49a"
             },
             "require": {
                 "drupal/core": "^10 || ^11"
             },
             "require-dev": {
                 "drupal/ai": "*",
+                "drupal/ai_assistant_api": "*",
                 "drupal/eca": "*",
                 "drupal/eca_content-eca_content": "*",
                 "drupal/eca_log-eca_log": "*",
                 "drupal/key": "*",
                 "drupal/maestro_ai_task-maestro_ai_task": "*",
                 "drupal/maestro_taskconsole": "*",
+                "drupal/tool": "*",
                 "drupal/webform": "*"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.4.1",
-                    "datestamp": "1782139795",
+                    "version": "4.5.0",
+                    "datestamp": "1784644302",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"

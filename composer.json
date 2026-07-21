@@ -88,7 +88,7 @@
         "drupal/key": "1.22",
         "drupal/klaro": "^3.1",
         "drupal/ludwig": "^2.0",
-        "drupal/maestro": "^4.4",
+        "drupal/maestro": "^4.5",
         "drupal/mail_box_management": "1.0.1",
         "drupal/mailer_transport": "^2.0.0-alpha1",
         "drupal/mailsystem": "4.5",

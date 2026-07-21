@@ -1,0 +1,13 @@
+name: 'Maestro AI Tools'
+type: module
+description: 'Exposes public Maestro workflow templates as Tool API tools, discoverable as AI function calls.'
+package: Maestro
+core_version_requirement: ^10 || ^11
+dependencies:
+  - maestro:maestro (>=4.3)
+  - tool:tool
+
+# Information added by Drupal.org packaging script on 2026-07-21
+version: '4.5.0'
+project: 'maestro'
+datestamp: 1784644304

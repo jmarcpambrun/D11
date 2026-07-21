@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the Maestro AI Task Assistant module.
+ */
+
+/**
+ * Implements hook_form_template_edit_task_alter().
+ *
+ * MaestroAiTaskAssistantCapability::allowConfigurableReturnFormat() returns
+ * FALSE so MaestroAITask never appends its return-format instruction onto
+ * the prompt sent to the Assistant (see that method's docblock for why).
+ * One side effect: MaestroAITask::getTaskEditForm() then renders
+ * 'ai_return_format' as a hidden field forced to '', which would make both
+ * MaestroAITask::validateTaskEditForm() and MaestroAITask::execute() reject
+ * the 'process_in_task' return mode outright (both require that field to
+ * equal 'json_yes_no' or 'json_true_false'). Force it to 'json_true_false'
+ * whenever this capability is selected so 'process_in_task' keeps working;
+ * MaestroAiTaskAssistantCapability::execute() does the actual boolean
+ * classification itself, decoupled from this field's value.
+ */
+function maestro_ai_task_assistant_form_template_edit_task_alter(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  $provider = $form_state->getValue('ai_provider') ?? ($form['ai_provider']['#default_value'] ?? NULL);
+  if ($provider !== 'MaestroAiTaskAssistantCapability') {
+    return;
+  }
+  if (isset($form['capabilities_wrapper']['ai_return_format'])) {
+    $form['capabilities_wrapper']['ai_return_format']['#value'] = 'json_true_false';
+    $form['capabilities_wrapper']['ai_return_format']['#default_value'] = 'json_true_false';
+  }
+  // "Process in task" is defined on the shared MaestroAITask form, not by
+  // this capability, so its own #description can't mention how this
+  // capability specifically satisfies it. Append that explanation here,
+  // only when this capability is selected, rather than editing contrib's
+  // field definition.
+  if (isset($form['ai_return_into']['#description'])) {
+    $form['ai_return_into']['#description'] = $form['ai_return_into']['#description'] . '<br><br>' . t(
+      '<strong>Using the AI Assistant capability:</strong> since an Assistant can be configured with its own tools, agents, and system prompt, its raw answer is not guaranteed to already be true/false-shaped. By default, "Process in task" is satisfied automatically the Assistant\'s answer is classified as {"result":"true"} / {"result":"false"} for you. If you write your own text into this capability\'s "Post-processing instructions" field, that overrides the default entirely, and your instructions become fully responsible for producing that exact JSON shape.'
+    );
+  }
+}

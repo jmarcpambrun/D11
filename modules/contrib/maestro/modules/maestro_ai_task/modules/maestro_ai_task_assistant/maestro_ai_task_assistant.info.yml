@@ -1,0 +1,13 @@
+name: 'Maestro AI Task Assistant Capability'
+type: module
+description: 'Maestro AI Task capability that delegates a task prompt to a configured AI Assistant.'
+package: Maestro
+core_version_requirement: ^10 || ^11
+dependencies:
+  - maestro_ai_task:maestro_ai_task
+  - ai:ai_assistant_api
+
+# Information added by Drupal.org packaging script on 2026-07-21
+version: '4.5.0'
+project: 'maestro'
+datestamp: 1784644304

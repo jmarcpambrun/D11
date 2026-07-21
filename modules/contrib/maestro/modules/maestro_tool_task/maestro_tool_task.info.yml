@@ -1,0 +1,13 @@
+name: 'Maestro Tool Task'
+type: module
+description: 'A Maestro engine task that directly invokes a Tool API tool, mapping Maestro tokens/process variables to the tool inputs and its outputs back into process variables. No AI involved.'
+package: Maestro
+core_version_requirement: ^10 || ^11
+dependencies:
+  - maestro:maestro (>=4.3)
+  - tool:tool
+
+# Information added by Drupal.org packaging script on 2026-07-21
+version: '4.5.0'
+project: 'maestro'
+datestamp: 1784644304

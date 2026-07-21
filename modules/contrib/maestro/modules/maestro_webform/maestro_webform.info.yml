@@ -7,7 +7,7 @@ dependencies:
   - webform:webform
   - maestro:maestro
 
-# Information added by Drupal.org packaging script on 2026-06-22
-version: '4.4.1'
+# Information added by Drupal.org packaging script on 2026-07-21
+version: '4.5.0'
 project: 'maestro'
-datestamp: 1782139797
+datestamp: 1784644304
