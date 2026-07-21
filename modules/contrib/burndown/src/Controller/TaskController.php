@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -128,11 +129,11 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $task = $this->loadTaskForAccess($ticket_id, $from_ticket_id);
     if ($task) {
       // Be specific about the Project ID perms.
-       $project_id = $task->getProjectId();
-       $access_perms[] = "{$project_id} create entities";
-       $access_perms[] = "{$project_id} edit any entities";
-       $access_perms[] = "{$project_id} edit own entities";
-       $access_perms[] = "{$project_id} view project";
+      $project_id = $task->getProjectId();
+      $access_perms[] = "{$project_id} create entities";
+      $access_perms[] = "{$project_id} edit any entities";
+      $access_perms[] = "{$project_id} edit own entities";
+      $access_perms[] = "{$project_id} view project";
     }
     else {
       // This is not a specific task, so go broad and see if they have ANY
@@ -251,6 +252,29 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
   }
 
   /**
+   * Route-level access check for editing task log entries.
+   *
+   * @param \Drupal\Core\Session\AccountInterface|null $account
+   *   The user account.
+   *
+   * @return \Drupal\Core\Access\AccessResult
+   *   The access result.
+   */
+  public function checkTaskLogEditApiAccess(?AccountInterface $account = NULL) {
+    $account = $account ?: $this->account;
+    $task_access = AccessResult::allowedIfHasPermissions($account, [
+      'administer burndown',
+      'burndown comment on task',
+    ], 'OR');
+
+    if ($task_access->isNeutral()) {
+      return AccessResult::forbidden()->addCacheableDependency($task_access);
+    }
+
+    return $task_access;
+  }
+
+  /**
    * Loads a task for route-based access checks.
    *
    * @param string $ticket_id
@@ -295,12 +319,15 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
 
     $log = $task->getLog();
     if (!empty($log)) {
-      foreach ($log as $log_item) {
+      foreach ($log as $delta => $log_item) {
         if ($type !== 'all') {
           if ($log_item['type'] !== $type) {
             continue;
           }
         }
+
+        $log_item['delta'] = $delta;
+        $log_item['can_edit'] = $this->canEditTaskLogItem($log_item);
 
         // Get user name.
         $user = $this->entityTypeManager->getStorage('user')->load($log_item['uid']);
@@ -326,6 +353,75 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
   }
 
   /**
+   * Edit an existing comment or work-log entry on a task.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request containing task log update data.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response indicating success or failure.
+   */
+  public function editLog(Request $request) {
+    $ticket_id = $request->request->get('ticket_id');
+    $delta = $request->request->get('delta');
+    $comment = $request->request->get('comment');
+    $work = $request->request->get('work');
+    $work_increment = $request->request->get('work_increment');
+
+    if (!is_numeric($delta)) {
+      throw new NotFoundHttpException();
+    }
+
+    $task = Task::loadFromTicketId($ticket_id);
+    if ($task === FALSE) {
+      throw new NotFoundHttpException();
+    }
+
+    $log = $task->getLog();
+    $delta = (int) $delta;
+    if (!isset($log[$delta])) {
+      throw new NotFoundHttpException();
+    }
+
+    $log_item = $log[$delta];
+    if (!$this->canEditTaskLogItem($log_item)) {
+      throw new AccessDeniedHttpException();
+    }
+
+    $type = isset($log_item['type']) ? $log_item['type'] : '';
+    $filtered_comment = Xss::filter((string) $comment);
+    $log[$delta]['comment'] = $filtered_comment;
+
+    if ($type === 'work' && ($work !== NULL || $work_increment !== NULL)) {
+      if (!is_numeric($work)) {
+        return new JsonResponse([
+          'message' => 'Invalid work quantity',
+          'success' => 0,
+          'method' => 'POST',
+        ], 400);
+      }
+
+      $allowed = ['m', 'h', 'd', 'w', 'M', 'Y'];
+      if (!in_array($work_increment, $allowed, TRUE)) {
+        return new JsonResponse([
+          'message' => 'Invalid work increment',
+          'success' => 0,
+          'method' => 'POST',
+        ], 400);
+      }
+
+      $log[$delta]['work_done'] = $work . $work_increment;
+    }
+
+    $task->set('log', $log)->save();
+
+    return new JsonResponse([
+      'success' => 1,
+      'method' => 'POST',
+    ]);
+  }
+
+  /**
    * Normalize burndown log comment payloads to a plain string.
    *
    * @param mixed $comment
@@ -348,6 +444,40 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     }
 
     return '';
+  }
+
+  /**
+   * Determines whether the current user can edit a specific task log item.
+   *
+   * @param array $log_item
+   *   A task log item payload.
+   * @param \Drupal\Core\Session\AccountInterface|null $account
+   *   Optional account override.
+   *
+   * @return bool
+   *   TRUE when the user can edit this log entry.
+   */
+  protected function canEditTaskLogItem(array $log_item, ?AccountInterface $account = NULL) {
+    $account = $account ?: $this->account;
+
+    $type = isset($log_item['type']) ? $log_item['type'] : '';
+    if (!in_array($type, ['comment', 'work'], TRUE)) {
+      return FALSE;
+    }
+
+    if ($account->hasPermission('administer burndown')) {
+      return TRUE;
+    }
+
+    if (!$account->hasPermission('burndown comment on task')) {
+      return FALSE;
+    }
+
+    if (!isset($log_item['uid']) || !is_numeric($log_item['uid'])) {
+      return FALSE;
+    }
+
+    return (int) $log_item['uid'] === (int) $account->id();
   }
 
   /**

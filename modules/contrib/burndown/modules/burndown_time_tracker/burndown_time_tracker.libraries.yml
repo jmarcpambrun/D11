@@ -1,0 +1,8 @@
+hours_only_units:
+  version: 1.x
+  js:
+    js/hours_only_units.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/jquery

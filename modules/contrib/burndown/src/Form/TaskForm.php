@@ -231,6 +231,7 @@ class TaskForm extends ContentEntityForm {
       $form['log'] = [
         '#type' => 'details',
         '#title' => $this->t('Log'),
+        '#open' => TRUE,
         '#weight' => 35,
       ];
       // "Tabs" to load different types.

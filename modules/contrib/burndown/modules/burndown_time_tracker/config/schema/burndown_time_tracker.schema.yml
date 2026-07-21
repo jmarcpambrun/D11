@@ -1,0 +1,3 @@
+views.access.burndown_hours_access:
+  type: mapping
+  label: 'Burndown hours access'

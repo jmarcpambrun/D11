@@ -1,16 +1,10 @@
-name: 'Burndown'
+name: 'Burndown Time Tracker'
 type: module
-description: 'Burndown Project Management'
+description: 'Time reporting and editing tools for Burndown work log entries in Tasks.'
 core_version_requirement: ^9 || ^10 || ^11
 package: 'Burndown'
-
 dependencies:
-  - drupal:datetime
-  - drupal:field
-  - drupal:image
-  - drupal:link
-  - drupal:options
-  - drupal:taxonomy
+  - drupal:burndown
   - drupal:views
 
 # Information added by Drupal.org packaging script on 2026-07-21

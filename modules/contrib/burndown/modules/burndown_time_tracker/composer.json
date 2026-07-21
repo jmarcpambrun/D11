@@ -1,0 +1,12 @@
+{
+  "name": "drupal/burndown_time_tracker",
+  "type": "drupal-module",
+  "description": "Time reporting submodule for Burndown",
+  "keywords": [
+    "Drupal"
+  ],
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "drupal/burndown": "*"
+  }
+}

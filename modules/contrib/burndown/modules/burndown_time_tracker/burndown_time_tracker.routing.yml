@@ -1,0 +1,11 @@
+burndown_time_tracker.time_entry_edit:
+  path: '/burndown/hours/time-entry/{burndown_task}/{delta}/edit'
+  defaults:
+    _form: '\Drupal\burndown_time_tracker\Form\TimeEntryEditForm'
+    _title: 'Edit Time Entry'
+  requirements:
+    _custom_access: '\Drupal\burndown_time_tracker\Controller\HoursReportController::checkTimeEntryAccess'
+  options:
+    parameters:
+      burndown_task:
+        type: entity:burndown_task

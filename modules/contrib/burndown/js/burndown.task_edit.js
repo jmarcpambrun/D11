@@ -151,6 +151,147 @@
           });
         });
 
+      // Editing an existing comment/work log entry.
+      $(once('editLogAction','body'))
+        .on('click', 'a.edit-log-entry', function (e) {
+          // Do not follow the link.
+          e.preventDefault();
+          e.stopPropagation();
+
+          var link = $(e.currentTarget);
+          var row = link.closest('.log-item');
+
+          if (row.find('.edit-log-inline').length) {
+            return;
+          }
+
+          var type = link.data('type');
+          var currentComment = '';
+          if (type === 'comment') {
+            currentComment = row.find('.comment').first().text().trim();
+          }
+          else {
+            currentComment = row.find('.log-item-changes').first().text().trim();
+          }
+
+          var editor = $('<div/>', {
+            'class': 'edit-log-inline',
+            'data-type': type,
+            'data-delta': link.data('delta')
+          });
+
+          var commentField = $('<div/>')
+            .append($('<label/>').text('Comment'))
+            .append($('<textarea/>', {
+              'class': 'edit-log-comment'
+            }).val(currentComment));
+          editor.append(commentField);
+
+          if (type === 'work') {
+            var workDone = String(link.data('work-done') || '').trim();
+            var workMatch = workDone.match(/^([0-9]*\.?[0-9]+)\s*([mhdwMY])$/);
+            var currentWork = workMatch ? workMatch[1] : '';
+            var currentIncrement = workMatch ? workMatch[2] : 'h';
+
+            var workField = $('<div/>')
+              .append($('<label/>').text('Work amount'))
+              .append($('<input/>', {
+                'type': 'number',
+                'step': '0.01',
+                'min': '0',
+                'class': 'edit-log-work'
+              }).val(currentWork));
+
+            var unitField = $('<div/>')
+              .append($('<label/>').text('Work unit'));
+
+            var unitSelect = $('<select/>', {
+              'class': 'edit-log-work-increment'
+            });
+            ['m', 'h', 'd', 'w', 'M', 'Y'].forEach(function (unit) {
+              unitSelect.append($('<option/>', {
+                'value': unit,
+                'text': unit
+              }));
+            });
+            unitSelect.val(currentIncrement);
+            unitField.append(unitSelect);
+
+            editor.append(workField);
+            editor.append(unitField);
+          }
+
+          var actions = $('<div/>', { 'class': 'edit-log-actions' })
+            .append($('<a/>', {
+              'href': '#',
+              'class': 'button save-log-entry',
+              'text': 'Save'
+            }))
+            .append(' ')
+            .append($('<a/>', {
+              'href': '#',
+              'class': 'button cancel-log-entry',
+              'text': 'Cancel'
+            }));
+          editor.append(actions);
+
+          row.children('.comment, .hours, .log-item-changes').hide();
+          link.hide();
+          row.append(editor);
+        });
+
+      // Save inline-edited comment/work log entry.
+      $(once('saveEditedLogAction','body'))
+        .on('click', 'a.save-log-entry', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var saveLink = $(e.currentTarget);
+          var row = saveLink.closest('.log-item');
+          var editor = saveLink.closest('.edit-log-inline');
+          var type = editor.data('type');
+
+          var payload = {
+            ticket_id: $('#burndown_task_log').data('ticket-id'),
+            delta: editor.data('delta'),
+            comment: editor.find('.edit-log-comment').val()
+          };
+
+          if (type === 'work') {
+            payload.work = editor.find('.edit-log-work').val();
+            payload.work_increment = editor.find('.edit-log-work-increment').val();
+          }
+
+          $.ajax({
+              url: '/burndown/api/task/edit_log',
+              method :'POST',
+              data: payload,
+              success: function (result) {
+                update_log(type);
+              },
+              error: function (XMLHttpRequest, textStatus, errorThrown) {
+                row.find('.edit-log-inline').remove();
+                row.children('.comment, .hours, .log-item-changes').show();
+                row.find('a.edit-log-entry').show();
+                console.log('Could not edit log entry.');
+              }
+          });
+        });
+
+      // Cancel inline log entry edit.
+      $(once('cancelEditedLogAction','body'))
+        .on('click', 'a.cancel-log-entry', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var cancelLink = $(e.currentTarget);
+          var row = cancelLink.closest('.log-item');
+
+          row.find('.edit-log-inline').remove();
+          row.children('.comment, .hours, .log-item-changes').show();
+          row.find('a.edit-log-entry').show();
+        });
+
       // Add a relationship.
       // POST to
       $(once('postRelationshipAction','body'))

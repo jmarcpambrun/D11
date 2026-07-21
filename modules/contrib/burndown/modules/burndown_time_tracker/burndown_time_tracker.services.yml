@@ -1,0 +1,5 @@
+services:
+  burndown_time_tracker.hours_only_work_unit_subscriber:
+    class: Drupal\burndown_time_tracker\EventSubscriber\HoursOnlyWorkUnitSubscriber
+    tags:
+      - { name: event_subscriber }

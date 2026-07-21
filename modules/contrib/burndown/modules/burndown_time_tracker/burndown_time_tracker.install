@@ -1,0 +1,75 @@
+<?php
+
+use Drupal\views\Entity\View;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Implements hook_install().
+ */
+function burndown_time_tracker_install() {
+  burndown_time_tracker_sync_hours_view();
+}
+
+/**
+ * Sync the Burndown hours view definition into active configuration.
+ */
+function burndown_time_tracker_sync_hours_view() {
+  $config_path = __DIR__ . '/config/install/views.view.burndown_hours.yml';
+  if (!file_exists($config_path)) {
+    return;
+  }
+
+  $definition = Yaml::parseFile($config_path);
+  if (!is_array($definition) || empty($definition['id'])) {
+    return;
+  }
+
+  // Normalize the Date field to schema-valid keys for the Views date handler.
+  if (isset($definition['display']['default']['display_options']['fields']['log_created'])) {
+    $log_created = &$definition['display']['default']['display_options']['fields']['log_created'];
+    $log_created['plugin_id'] = 'date';
+    $stale_keys = [
+      'click_sort_column',
+      'group_column',
+      'group_columns',
+      'group_rows',
+      'delta_limit',
+      'delta_offset',
+      'delta_reversed',
+      'delta_first_last',
+      'multi_type',
+      'separator',
+      'field_api_classes',
+    ];
+    foreach ($stale_keys as $key) {
+      unset($log_created[$key]);
+    }
+    unset($log_created);
+  }
+
+  // Remove immutable export-only metadata keys if present.
+  unset($definition['uuid']);
+  unset($definition['_core']);
+
+  $view = View::load('burndown_hours');
+  if (!$view) {
+    $view = View::create($definition);
+    $view->save();
+    return;
+  }
+
+  $view->set('label', $definition['label'] ?? $view->label());
+  $view->set('description', $definition['description'] ?? $view->get('description'));
+  $view->set('base_table', $definition['base_table'] ?? $view->get('base_table'));
+  $view->set('base_field', $definition['base_field'] ?? $view->get('base_field'));
+  $view->set('display', $definition['display']);
+  $view->save();
+}
+
+/**
+ * Update the Burndown hours view to use the page display.
+ */
+function burndown_time_tracker_update_9001() {
+  burndown_time_tracker_sync_hours_view();
+  return t("Updated the Burndown hours View to match module's config.");
+}

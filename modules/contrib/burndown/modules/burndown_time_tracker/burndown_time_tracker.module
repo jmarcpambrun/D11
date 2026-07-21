@@ -1,0 +1,49 @@
+<?php
+
+use Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerHooks;
+use Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerViewsHooks;
+use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\views\Plugin\views\query\QueryPluginBase;
+use Drupal\views\Plugin\views\query\Sql;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_help().
+ */
+#[LegacyHook]
+function burndown_time_tracker_help($route_name, RouteMatchInterface $route_match) {
+  return \Drupal::service(BurndownTimeTrackerHooks::class)->help($route_name, $route_match);
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+#[LegacyHook]
+function burndown_time_tracker_views_data_alter(array &$data) {
+  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsDataAlter($data);
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+#[LegacyHook]
+function burndown_time_tracker_page_attachments(array &$attachments) {
+  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->pageAttachments($attachments);
+}
+
+/**
+ * Implements hook_views_pre_view().
+ */
+#[LegacyHook]
+function burndown_time_tracker_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsPreView($view, $display_id, $args);
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+#[LegacyHook]
+function burndown_time_tracker_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
+  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsQueryAlter($view, $query);
+}

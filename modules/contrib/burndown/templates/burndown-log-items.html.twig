@@ -22,6 +22,10 @@
 
         <label>{{ log.user }} commented at {{ log.created }}</label>
 
+        {% if log.can_edit %}
+          <a href="#" class="edit-log-entry" data-delta="{{ log.delta }}" data-type="comment">Edit</a>
+        {% endif %}
+
         <div class="comment">
           {{ log.comment|raw }}
         </div>
@@ -29,6 +33,10 @@
       {% elseif log.type == 'work' %}
 
         <label>{{ log.user }} added a work log at {{ log.created }}</label>
+
+        {% if log.can_edit %}
+          <a href="#" class="edit-log-entry" data-delta="{{ log.delta }}" data-type="work" data-work-done="{{ log.work_done }}">Edit</a>
+        {% endif %}
 
         <div class="hours">
           {{ log.work_done }}

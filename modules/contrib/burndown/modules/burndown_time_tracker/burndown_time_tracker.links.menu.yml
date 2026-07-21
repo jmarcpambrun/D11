@@ -1,0 +1,6 @@
+burndown_time_tracker.hours:
+  title: 'Hours'
+  description: 'View and edit your burndown work log time entries.'
+  route_name: view.burndown_hours.hours
+  parent: burndown.dashboard
+  weight: 26

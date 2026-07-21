@@ -3341,17 +3341,17 @@
         },
         {
             "name": "drupal/burndown",
-            "version": "1.0.71",
+            "version": "1.0.72",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/burndown.git",
-                "reference": "1.0.71"
+                "reference": "1.0.72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.71.zip",
-                "reference": "1.0.71",
-                "shasum": "8d1d3f136ca629703df5563d23c0401dc9ad247d"
+                "url": "https://ftp.drupal.org/files/projects/burndown-1.0.72.zip",
+                "reference": "1.0.72",
+                "shasum": "d0e7974a7f38f107caf43b706cc334d09a0b9c21"
             },
             "require": {
                 "drupal/core": "^9 || ^10 || ^11"
@@ -3359,8 +3359,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.71",
-                    "datestamp": "1784534116",
+                    "version": "1.0.72",
+                    "datestamp": "1784651723",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
