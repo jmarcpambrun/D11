@@ -152,7 +152,6 @@ return array(
     'GPBMetadata\\Google\\Cloud\\Translate\\' => array($vendorDir . '/google/cloud-translate/metadata'),
     'GPBMetadata\\Google\\Cloud\\' => array($vendorDir . '/google/common-protos/metadata/Cloud'),
     'GPBMetadata\\Google\\Api\\' => array($vendorDir . '/google/common-protos/metadata/Api'),
-    'GPBMetadata\\ApiCore\\' => array($vendorDir . '/google/gax/metadata/ApiCore'),
     'FontLib\\' => array($vendorDir . '/dompdf/php-font-lib/src/FontLib'),
     'Flow\\JSONPath\\' => array($vendorDir . '/softcreatr/jsonpath/src'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
