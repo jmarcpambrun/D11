@@ -137,43 +137,6 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
     // Get return destination.
     $destination = '/burndown/backlog/' . $code;
 
-    $project_id = $this->getProjectId();
-    $add_task_perms = [
-      'add task entities',
-      "{$project_id} create entities"
-    ];
-    $access = AccessResult::allowedIfHasPermissions($this->currentUser, $add_task_perms, 'OR');
-    $add_link = [];
-    if ($access->isAllowed()) {
-      // Determine what the link to add a new task should be (when there
-      // are multiple task bundles, we don't need to specify which one).
-      if (Task::numberOfTaskTypes() == 1) {
-        $add_link = '/burndown/task/add/task';
-        $add_link = Link::fromTextAndUrl(
-        $this->t('Add a Task'),
-        Url::fromUri('base:' . $add_link, [
-          'absolute' => TRUE,
-          'query' => [
-            'shortcode' => $code,
-            'destination' => $destination,
-          ],
-        ]));
-      }
-      else {
-        $add_link = '/burndown/task_add_multi_bundle/' . $shortcode;
-        $add_link = Link::fromTextAndUrl(
-        $this->t('Add a Task'),
-        Url::fromUri('base:' . $add_link, [
-          'absolute' => TRUE,
-          'query' => [
-            'destination' => $destination,
-          ],
-        ]));
-      }
-      $add_link = $add_link->toRenderable();
-      $add_link['#attributes']['class'] = 'button button-action';
-    }
-
     // Kanban boards.
     if ($board_type == 'kanban') {
       $data = [];
@@ -193,7 +156,6 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
           'project' => $code,
           'board_type' => $board_type,
           'tasks' => $data,
-          'add_link' => $add_link,
         ],
         '#attached' => [
           'library' => [
@@ -254,7 +216,6 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
           'sprints' => $rendered_sprints,
           'sprint_tasks' => $sprint_tasks,
           'tasks' => $tasks,
-          'add_link' => $add_link,
         ],
         '#attached' => [
           'library' => [
@@ -340,6 +301,8 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
     $task_id = $request->request->get('task_id');
     $from_sprint_id = $request->request->get('from_sprint');
     $to_sprint_id = $request->request->get('to_sprint');
+    $from_sprint = FALSE;
+    $to_sprint = FALSE;
 
     // Sanitize input.
     $task_id = Html::escape($task_id);

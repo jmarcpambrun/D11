@@ -247,7 +247,7 @@ burndown.task_add_redirect:
     shortcode: ''
   methods:  [GET]
   requirements:
-    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskEditAccess'
+    _custom_access: '\Drupal\burndown\Controller\TaskController::checkTaskAddAccess'
 
 burndown.close_sprint:
   path: '/burndown/close_sprint/{sprint_id}'

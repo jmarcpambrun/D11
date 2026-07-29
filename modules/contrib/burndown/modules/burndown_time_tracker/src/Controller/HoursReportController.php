@@ -25,7 +25,7 @@ class HoursReportController {
       return AccessResult::forbidden();
     }
 
-    if ($account->hasPermission('administer burndown')) {
+    if ($account->hasPermission('manage user work hours')) {
       return AccessResult::allowed()->cachePerPermissions();
     }
 

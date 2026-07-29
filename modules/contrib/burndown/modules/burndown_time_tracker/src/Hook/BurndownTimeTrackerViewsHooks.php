@@ -181,6 +181,11 @@ final class BurndownTimeTrackerViewsHooks {
   #[Hook('page_attachments')]
   public function pageAttachments(array &$attachments): void {
     $attachments['#attached']['library'][] = 'burndown_time_tracker/hours_only_units';
+
+    $route_name = \Drupal::routeMatch()->getRouteName();
+    if (in_array($route_name, ['burndown.board', 'burndown.backlog'], TRUE) && \Drupal::currentUser()->hasPermission('burndown comment on task')) {
+      $attachments['#attached']['library'][] = 'burndown_time_tracker/task_timer';
+    }
   }
 
   /**
@@ -193,7 +198,7 @@ final class BurndownTimeTrackerViewsHooks {
     }
 
     $account = \Drupal::currentUser();
-    $is_admin = $account->hasPermission('administer burndown');
+    $is_admin = $account->hasPermission('manage user work hours');
     $input = \Drupal::request()->query->all();
     $selected_uid = BurndownTimeTrackerUtils::resolveSelectedUserId($input, $is_admin, (int) $account->id());
 
@@ -252,7 +257,7 @@ final class BurndownTimeTrackerViewsHooks {
     }
 
     $account = \Drupal::currentUser();
-    $is_admin = $account->hasPermission('administer burndown');
+    $is_admin = $account->hasPermission('manage user work hours');
     $input = \Drupal::request()->query->all();
     $selected_uid = BurndownTimeTrackerUtils::resolveSelectedUserId($input, $is_admin, (int) $account->id());
 

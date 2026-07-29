@@ -42,7 +42,7 @@ class TimeEntryEditForm extends FormBase {
     $account = $this->currentUser();
     $entry_uid = isset($entry['uid']) && is_numeric($entry['uid']) ? (int) $entry['uid'] : 0;
 
-    if (!$account->hasPermission('administer burndown') && (!$account->hasPermission('burndown comment on task') || $entry_uid !== (int) $account->id())) {
+    if (!$account->hasPermission('manage user work hours') && (!$account->hasPermission('burndown comment on task') || $entry_uid !== (int) $account->id())) {
       throw new AccessDeniedHttpException();
     }
 
@@ -146,7 +146,7 @@ class TimeEntryEditForm extends FormBase {
     $account = $this->currentUser();
     $entry_uid = isset($entry['uid']) && is_numeric($entry['uid']) ? (int) $entry['uid'] : 0;
 
-    if (!$account->hasPermission('administer burndown') && (!$account->hasPermission('burndown comment on task') || $entry_uid !== (int) $account->id())) {
+    if (!$account->hasPermission('manage user work hours') && (!$account->hasPermission('burndown comment on task') || $entry_uid !== (int) $account->id())) {
       throw new AccessDeniedHttpException();
     }
 

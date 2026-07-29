@@ -11,6 +11,42 @@ function burndown_time_tracker_install() {
 }
 
 /**
+ * Implements hook_schema().
+ */
+function burndown_time_tracker_schema() {
+  $schema['burndown_time_tracker_timer'] = [
+    'description' => 'Tracks active per-user task timers.',
+    'fields' => [
+      'uid' => [
+        'description' => 'User ID owning the active timer.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'task_id' => [
+        'description' => 'Related Burndown task entity ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'started' => [
+        'description' => 'Unix timestamp when the timer started.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['uid'],
+    'indexes' => [
+      'task_id' => ['task_id'],
+      'started' => ['started'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
  * Sync the Burndown hours view definition into active configuration.
  */
 function burndown_time_tracker_sync_hours_view() {
@@ -72,4 +108,17 @@ function burndown_time_tracker_sync_hours_view() {
 function burndown_time_tracker_update_9001() {
   burndown_time_tracker_sync_hours_view();
   return t("Updated the Burndown hours View to match module's config.");
+}
+
+/**
+ * Ensure the timer table exists for active task timers.
+ */
+function burndown_time_tracker_update_9002() {
+  $schema = burndown_time_tracker_schema();
+  if (!\Drupal::database()->schema()->tableExists('burndown_time_tracker_timer')) {
+    \Drupal::database()->schema()->createTable('burndown_time_tracker_timer', $schema['burndown_time_tracker_timer']);
+    return t('Created the Burndown time tracker timer table.');
+  }
+
+  return t('No need to create the Burndown time tracker timer table, it exists.');
 }

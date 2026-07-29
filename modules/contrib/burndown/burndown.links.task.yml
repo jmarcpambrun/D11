@@ -20,7 +20,19 @@ burndown.completed_tab:
 burndown.add_task_tab:
   route_name: burndown.task_add_redirect
   base_route: burndown.backlog
-  title: 'Add Task'
+  title: 'Add a Task'
+  weight: 3
+
+burndown.add_task_board_tab:
+  route_name: burndown.task_add_redirect
+  base_route: burndown.board
+  title: 'Add a Task'
+  weight: 3
+
+burndown.add_task_completed_tab:
+  route_name: burndown.task_add_redirect
+  base_route: burndown.completed
+  title: 'Add a Task'
   weight: 3
 
 # Project routing definition

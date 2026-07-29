@@ -6,3 +6,16 @@ hours_only_units:
     - core/drupal
     - core/once
     - core/jquery
+
+task_timer:
+  version: 1.x
+  css:
+    component:
+      css/task_timer.css: {}
+  js:
+    js/task_timer.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/jquery
+    - core/drupal.message

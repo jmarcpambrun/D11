@@ -9,3 +9,36 @@ burndown_time_tracker.time_entry_edit:
     parameters:
       burndown_task:
         type: entity:burndown_task
+
+burndown_time_tracker.timer_state:
+  path: '/burndown/api/time-tracker/state'
+  defaults:
+    _controller: '\Drupal\burndown_time_tracker\Controller\TaskTimerController::state'
+  methods: [GET]
+  requirements:
+    _permission: 'burndown comment on task'
+
+burndown_time_tracker.timer_start:
+  path: '/burndown/api/time-tracker/start/{ticket_id}'
+  defaults:
+    _controller: '\Drupal\burndown_time_tracker\Controller\TaskTimerController::start'
+    ticket_id: ''
+  methods: [POST]
+  requirements:
+    _permission: 'burndown comment on task'
+
+burndown_time_tracker.timer_stop:
+  path: '/burndown/api/time-tracker/stop'
+  defaults:
+    _controller: '\Drupal\burndown_time_tracker\Controller\TaskTimerController::stop'
+  methods: [POST]
+  requirements:
+    _permission: 'burndown comment on task'
+
+burndown_time_tracker.manage_work_timers:
+  path: '/burndown/hours/manage-work-timers'
+  defaults:
+    _form: '\Drupal\burndown_time_tracker\Form\ManageWorkTimersForm'
+    _title: 'Manage work timers'
+  requirements:
+    _permission: 'manage user work hours'

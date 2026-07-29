@@ -191,18 +191,6 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
        $access_perms[] = "{$project_id} create entities";
        $access_perms[] = "{$project_id} edit any entities";
        $access_perms[] = "{$project_id} edit own entities";
-       $access_perms[] = "{$project_id} view project";
-    }
-    else {
-      // This is not a specific task, so go broad and see if they have ANY
-      // project view perms.
-      $projects = \Drupal::entityTypeManager()->getStorage('burndown_project')->loadMultiple();
-      foreach ($projects as $project_id => $project) {
-        $access_perms[] = "{$project_id} create entities";
-        $access_perms[] = "{$project_id} edit any entities";
-        $access_perms[] = "{$project_id} edit own entities";
-        $access_perms[] = "{$project_id} view project";
-      }
     }
 
     $task_access = AccessResult::allowedIfHasPermissions($account, $access_perms, 'OR');

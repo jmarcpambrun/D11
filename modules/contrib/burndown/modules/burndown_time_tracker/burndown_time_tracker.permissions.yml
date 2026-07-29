@@ -1,0 +1,3 @@
+manage user work hours:
+  title: 'Manage user work hours'
+  description: 'Edit work hour entries for any user and manage the Burndown time tracker report.'

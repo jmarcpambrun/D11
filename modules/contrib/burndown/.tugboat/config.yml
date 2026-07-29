@@ -44,8 +44,8 @@ services:
 
         # Create a sample sprint project and tasks.
         vendor/bin/drush burndown:add_project --name="Sample Sprint Project" --shortcode="SSPR" --username="admin" --board_type="sprint" --estimate_type="tshirt"
-        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="New Task on Sprint" --assignee=admin --reported_by=admin --priority=Medium --estimate=3 --description="This is a description of the task."
-        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="An easy Sprint task" --assignee=admin --reported_by=admin --priority=High --estimate=1 --description="A more urgent task."
+        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="New Task on Sprint" --assignee=admin --reported_by=admin --priority=Medium --estimate=XS --description="This is a description of the task."
+        vendor/bin/drush burndown:add_task --shortcode=SSPR --task_name="An easy Sprint task" --assignee=admin --reported_by=admin --priority=High --estimate=M --description="A more urgent task."
 
       build: |
         set -eux

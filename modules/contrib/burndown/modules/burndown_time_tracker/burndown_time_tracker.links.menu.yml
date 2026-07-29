@@ -4,3 +4,10 @@ burndown_time_tracker.hours:
   route_name: view.burndown_hours.hours
   parent: burndown.dashboard
   weight: 26
+
+burndown_time_tracker.manage_work_timers:
+  title: 'Manage work timers'
+  description: 'View and stop active work timers.'
+  route_name: burndown_time_tracker.manage_work_timers
+  parent: burndown.dashboard
+  weight: 27

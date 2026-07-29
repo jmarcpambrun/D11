@@ -3,7 +3,6 @@
 namespace Drupal\burndown\Plugin\Block;
 
 use Drupal\burndown\Entity\Project;
-use Drupal\burndown\Entity\Task;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Link;
@@ -111,31 +110,6 @@ class ProjectNavBlock extends BlockBase implements ContainerFactoryPluginInterfa
             'destination' => $destination,
           ],
         ]));
-      }
-
-      // If user can add tasks:
-      if ($user->hasPermission('add task entities')) {
-        if (Task::numberOfTaskTypes() == 1) {
-          $add_link = 'burndown/task/add/task';
-
-          $links[] = Link::fromTextAndUrl('Add a Task', Url::fromUri('base:' . $add_link, [
-            'absolute' => TRUE,
-            'query' => [
-              'shortcode' => $shortcode,
-              'destination' => $destination,
-            ],
-          ]));
-        }
-        else {
-          $add_link = '/burndown/task_add_multi_bundle/' . $shortcode;
-
-          $links[] = Link::fromTextAndUrl('Add a Task', Url::fromUri('base:' . $add_link, [
-            'absolute' => TRUE,
-            'query' => [
-              'destination' => $destination,
-            ],
-          ]));
-        }
       }
 
       // Check if project is a sprint project.

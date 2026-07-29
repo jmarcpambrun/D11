@@ -20,17 +20,62 @@
   flex-grow: 4;
 }
 
+#backlog .burndown_task .task_link_group,
+#completed .burndown_task .task_link_group {
+  flex-grow: 4;
+  min-width: 0;
+}
+
+.task_link_group_link {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+}
+
 .ticket_id a:hover,
 .ticket_id a:visited,
 .ticket_id a:link,
 .ticket_id a:active {
-  text-decoration: none;
-  outline: 0;
-  border-bottom: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
   font-weight: bold;
 }
 
-.task_id.completed {
+.ticket_title a,
+.ticket_title a:hover,
+.ticket_title a:visited,
+.ticket_title a:link,
+.ticket_title a:active {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+}
+
+.task_link_group_link,
+.task_link_group_link:hover,
+.task_link_group_link:visited,
+.task_link_group_link:link,
+.task_link_group_link:active {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+}
+
+.ticket_title a:hover,
+.ticket_title a:focus-visible,
+.ticket_id a:hover,
+.ticket_id a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+.task_link_group_link:hover,
+.task_link_group_link:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+.ticket_id .task_id.completed {
   text-decoration: line-through;
 }
 
@@ -47,10 +92,12 @@
 }
 
 .priority {
-  width: 16px;
-  height: 16px;
-  margin: 4px;
-  background-size: cover;
+  width: 30px;
+  height: 30px;
+  margin: 0 4px 0 0;
+  background-size: 24px 24px;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .circle {
@@ -167,10 +214,16 @@
 }
 
 a.send_to_board {
-  display: block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-size: 20px 20px;
+  background-position: center;
   overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
@@ -179,10 +232,16 @@ a.send_to_board {
 }
 
 a.send_to_backlog {
-  display: block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-size: 20px 20px;
+  background-position: center;
   overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
@@ -191,10 +250,16 @@ a.send_to_backlog {
 }
 
 a.close_task {
-  display: block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-size: 20px 20px;
+  background-position: center;
   overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
@@ -203,10 +268,16 @@ a.close_task {
 }
 
 a.edit_task {
-  display: block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-size: 20px 20px;
+  background-position: center;
   overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
@@ -214,7 +285,28 @@ a.edit_task {
   background-repeat: no-repeat;
 }
 
+a.send_to_board:hover,
+a.send_to_backlog:hover,
+a.close_task:hover,
+a.edit_task:hover,
+a.send_to_board:focus-visible,
+a.send_to_backlog:focus-visible,
+a.close_task:focus-visible,
+a.edit_task:focus-visible {
+  background-color: transparent;
+  box-shadow: 0 0 0 3px #111;
+}
+
+a.send_to_board:focus-visible,
+a.send_to_backlog:focus-visible,
+a.close_task:focus-visible,
+a.edit_task:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
 #board .ticket_title {
+  clear: both;
   height: 44px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -244,8 +336,8 @@ a.edit_task {
 }
 
 #board .action_link a {
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
 }
 
 .log-items label {

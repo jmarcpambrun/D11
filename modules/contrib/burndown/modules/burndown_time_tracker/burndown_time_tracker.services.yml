@@ -1,4 +1,9 @@
 services:
+  burndown_time_tracker.task_timer:
+    class: Drupal\burndown_time_tracker\Service\TaskTimerService
+    arguments:
+      - '@database'
+
   burndown_time_tracker.hours_only_work_unit_subscriber:
     class: Drupal\burndown_time_tracker\EventSubscriber\HoursOnlyWorkUnitSubscriber
     tags:

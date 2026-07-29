@@ -22,7 +22,7 @@ class HoursReportAccess extends AccessPluginBase {
    * {@inheritdoc}
    */
   public function access(AccountInterface $account) {
-    return $account->hasPermission('administer burndown') || $account->hasPermission('burndown comment on task');
+    return $account->hasPermission('manage user work hours') || $account->hasPermission('burndown comment on task');
   }
 
   /**
@@ -36,7 +36,7 @@ class HoursReportAccess extends AccessPluginBase {
    * Custom route access callback for the generated view route.
    */
   public static function routeAccess(AccountInterface $account) {
-    return AccessResult::allowedIf($account->hasPermission('administer burndown') || $account->hasPermission('burndown comment on task'))
+    return AccessResult::allowedIf($account->hasPermission('manage user work hours') || $account->hasPermission('burndown comment on task'))
       ->cachePerPermissions();
   }
 

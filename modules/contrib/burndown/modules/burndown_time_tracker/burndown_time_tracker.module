@@ -47,3 +47,13 @@ function burndown_time_tracker_views_pre_view(ViewExecutable $view, $display_id,
 function burndown_time_tracker_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
   return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsQueryAlter($view, $query);
 }
+
+/**
+ * Implements hook_preprocess_burndown_task_card().
+ */
+#[LegacyHook]
+function burndown_time_tracker_preprocess_burndown_task_card(array &$variables) {
+  /** @var \Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerHooks $hooks */
+  $hooks = \Drupal::service(BurndownTimeTrackerHooks::class);
+  return $hooks->preprocessBurndownTaskCard($variables);
+}

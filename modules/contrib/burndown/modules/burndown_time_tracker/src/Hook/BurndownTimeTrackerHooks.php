@@ -26,4 +26,17 @@ final class BurndownTimeTrackerHooks {
     return '<pre>' . Html::escape($text) . '</pre>';
   }
 
+  /**
+   * Implements hook_preprocess_burndown_task_card().
+   */
+  #[Hook('preprocess_burndown_task_card')]
+  public function preprocessBurndownTaskCard(array &$variables): void {
+    if (!isset($variables['data']) || !is_array($variables['data'])) {
+      return;
+    }
+
+    $has_comment_permission = \Drupal::currentUser()->hasPermission('burndown comment on task');
+    $variables['data']['time_tracker_available'] = $has_comment_permission;
+  }
+
 }

@@ -1,16 +1,15 @@
-<div class="priority priority-{{ priority }}"></div>
+<div class="priority priority-{{ priority }}" title="priority: {{ priority }}" aria-label="priority: {{ priority }}"></div>
 
 {# This should be wrapped in a permission checkbut there are several dynamic permissions that require the project id and that is not available. #}
-<div class="ticket_id">
-  <a href="{{ url('<front>') }}burndown/task/{{ id }}/edit"
-    class="use-ajax task_id{% if is_completed %} completed{% endif %}"
+<div class="task_link_group">
+  <a href="{{ url('<front>') }}burndown/task/{{ id }}"
+    class="use-ajax task_id{% if is_completed %} completed{% endif %} task_link_group_link"
     data-dialog-type="modal"
     data-dialog-options="{&quot;width&quot;:800,&quot;height&quot;:500}">
-    {{ ticket_id }}
+    <span class="ticket_id">{{ ticket_id }}</span>
+    <span class="ticket_title">{{ name }}</span>
   </a>
 </div>
-
-<div class="ticket_title">{{ name }}</div>
 
 {% if tags is not empty %}
   <div class="tags">
@@ -23,17 +22,18 @@
 {% endif %}
 
 {% if assigned_to %}
-  <div class="assigned_to user_circle circle">
+  <div class="assigned_to user_circle circle" title="Assigned to {{ assigned_to }}" aria-label="Assigned to {{ assigned_to }}">
     {% if assigned_to_image %}
-      <img src="{{ assigned_to_image }}" alt="Assigned to {{ assigned_to }}" class="circle" />
+      <img src="{{ assigned_to_image }}" alt="Assigned to {{ assigned_to }}" title="Assigned to {{ assigned_to }}" class="circle" />
     {% else %}
-      <span class="letter-{{ assigned_to_first_letter }} circle">{{ assigned_to_first_letter }}</span>
+      <span class="letter-{{ assigned_to_first_letter }} circle" title="Assigned to {{ assigned_to }}">{{ assigned_to_first_letter }}</span>
     {% endif %}
   </div>
 {% endif %}
 
 {% if estimate is not empty %}
-  <div class="estimate estimate-type-{{ estimate_type }} estimate-{{ estimate }} circle">{{ estimate }}</div>
+  {% set estimate_units = estimate_type == 'tshirt' ? 'size' : 'points' %}
+  <div class="estimate estimate-type-{{ estimate_type }} estimate-{{ estimate }} circle" title="Estimate: {{ estimate }} {{ estimate_units }}" aria-label="Estimate: {{ estimate }} {{ estimate_units }}">{{ estimate }}</div>
 {% endif %}
 
 {% if user.hasPermission('edit task entities') %}
