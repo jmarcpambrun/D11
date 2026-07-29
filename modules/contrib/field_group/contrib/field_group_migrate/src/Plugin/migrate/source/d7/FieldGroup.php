@@ -18,6 +18,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   source_module = "field_group",
  *   destination_module = "field_group"
  * )
+ *
+ * @phpstan-ignore-next-line DrupalSqlBase is removed in Drupal 12 and has
+ * no replacement.
  */
 class FieldGroup extends DrupalSqlBase {
 
@@ -47,6 +50,10 @@ class FieldGroup extends DrupalSqlBase {
    *   The field group formatter plugin manager.
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, MigrationInterface $migration, StateInterface $state, EntityTypeManagerInterface $entity_type_manager, FieldGroupFormatterPluginManager $field_group_formatter_manager) {
+    /*
+     * @phpstan-ignore-next-line DrupalSqlBase is removed in Drupal 12 and has
+     * no replacement.
+     */
     parent::__construct($configuration, $plugin_id, $plugin_definition, $migration, $state, $entity_type_manager);
     $this->fieldGroupFormatterManager = $field_group_formatter_manager;
   }

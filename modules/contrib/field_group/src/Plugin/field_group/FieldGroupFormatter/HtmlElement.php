@@ -251,7 +251,7 @@ class HtmlElement extends FieldGroupFormatterBase {
       'speed' => 'fast',
       'attributes' => '',
       'show_empty_fields' => FALSE,
-    ] + parent::defaultSettings($context);
+    ] + parent::defaultContextSettings($context);
 
     if ($context == 'form') {
       $defaults['required_fields'] = 1;

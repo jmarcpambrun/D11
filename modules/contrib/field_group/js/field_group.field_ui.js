@@ -40,7 +40,6 @@
     getRegion() {
       return 'main';
     },
-    // eslint-disable-next-line no-unused-vars
     regionChange(region, recurse) {
       return {};
     },
@@ -49,7 +48,6 @@
       // Create a new tabledrag rowObject, that will compute the group's child
       // rows for us.
       const { tableDrag } = element;
-      // eslint-disable-next-line new-cap
       const rowObject = new tableDrag.row(element.row, 'mouse', true);
       // Skip the main row, we handled it above.
       rowObject.group.shift();
@@ -112,7 +110,6 @@
       // Create a new tabledrag rowObject, that will compute the group's child
       // rows for us.
       const { tableDrag } = element;
-      // eslint-disable-next-line new-cap
       const rowObject = new tableDrag.row(element.row, 'mouse', true);
       // Skip the main row, we handled it above.
       rowObject.group.shift();

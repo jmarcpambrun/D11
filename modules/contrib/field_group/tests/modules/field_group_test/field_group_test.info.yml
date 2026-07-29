@@ -4,7 +4,7 @@ package: Testing
 type: module
 hidden: TRUE
 
-# Information added by Drupal.org packaging script on 2026-05-18
-version: '4.1.0-alpha2'
+# Information added by Drupal.org packaging script on 2026-07-29
+version: '4.1.0-alpha4'
 project: 'field_group'
-datestamp: 1779120012
+datestamp: 1785336530

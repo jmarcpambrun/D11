@@ -117,7 +117,6 @@ class FormatterHelper implements TrustedCallbackInterface {
           });
         }
         else {
-          // @phpstan-ignore-next-line
           foreach (\Drupal::moduleHandler()->getImplementations('field_group_form_process') as $module) {
             $function = $module . '_field_group_form_process';
             $function($field_group_element, $group, $element);

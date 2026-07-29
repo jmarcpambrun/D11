@@ -48,10 +48,10 @@ interface FieldGroupFormatterInterface extends PluginInspectionInterface {
    * administrators to configure the formatter. The field_group module takes
    * care of handling submitted form values.
    *
-   * @param $form
-   *    An associative array containing the structure of the form.
-   * @param $form_state
-   *    The current state of the form.
+   * @param array $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    *
    * @return array
    *   The form elements for the formatter settings.

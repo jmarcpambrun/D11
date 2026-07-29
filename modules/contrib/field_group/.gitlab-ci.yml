@@ -46,7 +46,28 @@ variables:
 
   # Opt-in to more tests.
   OPT_IN_TEST_MAX_PHP: '1'
-  OPT_IN_TEST_NEXT_MAJOR: 0
+
+  OPT_IN_TEST_PREVIOUS_MINOR: 1
+  OPT_IN_TEST_NEXT_MINOR: 1
+#  OPT_IN_TEST_NEXT_MAJOR: 1
+#  OPT_IN_TEST_MAX_PHP: 1
+
+composer-lint: {allow_failure: false}
+composer (next major): {allow_failure: true}
+eslint: {allow_failure: true}
+cspell: {allow_failure: false}
+phpcs: {allow_failure: false}
+phpstan: {allow_failure: true}
+phpstan (max PHP version): {allow_failure: true}
+phpstan (next minor): {allow_failure: true}
+phpstan (next major): {allow_failure: true}
+phpunit: {allow_failure: false}
+phpunit (max PHP version): {allow_failure: false}
+phpunit (next minor): {allow_failure: true}
+phpunit (next major): {allow_failure: true}
+phpunit (previous minor): {allow_failure: true}
+phpunit (previous major): {allow_failure: true}
+
 
 #
 # Composer overrides and configuration.

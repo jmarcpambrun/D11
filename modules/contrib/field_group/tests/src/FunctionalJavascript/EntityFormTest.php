@@ -196,7 +196,8 @@ class EntityFormTest extends WebDriverTestBase {
   /**
    * Tests required marker when both tab orientations share a page.
    *
-   * Regression coverage for https://www.drupal.org/project/field_group/issues/3505096:
+   * Regression coverage for
+   * https://www.drupal.org/project/field_group/issues/3505096:
    * previously the tabs.js effect was keyed on the bare "tabs" format type, so
    * drupalSettings would hold only one direction's config and the JS would
    * mark just that side's tab label as required.

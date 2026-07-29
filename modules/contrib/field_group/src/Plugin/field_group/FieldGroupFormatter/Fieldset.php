@@ -114,7 +114,7 @@ class Fieldset extends FieldGroupFormatterBase {
   public static function defaultContextSettings($context) {
     $defaults = [
       'description' => '',
-    ] + parent::defaultSettings($context);
+    ] + parent::defaultContextSettings($context);
 
     if ($context == 'form') {
       $defaults['required_fields'] = 1;

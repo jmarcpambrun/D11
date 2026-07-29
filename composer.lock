@@ -5943,17 +5943,17 @@
         },
         {
             "name": "drupal/field_group",
-            "version": "4.1.0-alpha2",
+            "version": "4.1.0-alpha4",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/field_group.git",
-                "reference": "4.1.0-alpha2"
+                "reference": "4.1.0-alpha4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/field_group-4.1.0-alpha2.zip",
-                "reference": "4.1.0-alpha2",
-                "shasum": "29168e76196cc77a6dcf8f3a30f931e1a22f72e3"
+                "url": "https://ftp.drupal.org/files/projects/field_group-4.1.0-alpha4.zip",
+                "reference": "4.1.0-alpha4",
+                "shasum": "1f8e8c5a1dbf97e89b1c4801a083316538980acb"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11"
@@ -5964,8 +5964,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.1.0-alpha2",
-                    "datestamp": "1779120010",
+                    "version": "4.1.0-alpha4",
+                    "datestamp": "1785336527",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."

@@ -10,9 +10,12 @@ yched
 zuuperman
 
 # Custom variable names, mostly key values used in format types, or CSS rules.
+horizontaltabbutton
 htab
 htabs
 multipage
+tabshorizontal
+tabsvertical
 vtab
 # Ignore keyword 'bounceslide' used for Accordion formatter display effect.
 bounceslide

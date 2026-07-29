@@ -97,7 +97,7 @@ class Accordion extends FieldGroupFormatterBase {
   public static function defaultContextSettings($context) {
     return [
       'effect' => 'none',
-    ] + parent::defaultSettings($context);
+    ] + parent::defaultContextSettings($context);
   }
 
 }

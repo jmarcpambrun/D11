@@ -24,9 +24,16 @@ class MigrateUiFieldGroupTest extends MigrateUpgradeTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
+    'comment',
+    'config_translation',
+    'contact',
+    'content_translation',
+    'datetime_range',
     'field_group_migrate',
     'field_ui',
+    'language',
     'migrate_drupal_ui',
+    'shortcut',
     'telephone',
   ];
 

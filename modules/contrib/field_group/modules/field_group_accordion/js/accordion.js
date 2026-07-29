@@ -70,12 +70,13 @@
 
           // Save first error item, for focussing it.
           if (!$firstErrorItem) {
-            // eslint-disable-next-line jquery/no-css
-            $('.ui-accordion-content-active', $firstErrorItem).css({
-              height: 'auto',
-              width: 'auto',
-              display: 'block',
-            });
+            $('.ui-accordion-content-active', $firstErrorItem).each(
+              (i, element) => {
+                element.style.height = 'auto';
+                element.style.width = 'auto';
+                element.style.display = 'block';
+              },
+            );
           }
         }
       });

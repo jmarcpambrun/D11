@@ -122,7 +122,7 @@ class Details extends FieldGroupFormatterBase {
     $defaults = [
       'open' => FALSE,
       'required_fields' => $context == 'form',
-    ] + parent::defaultSettings($context);
+    ] + parent::defaultContextSettings($context);
 
     if ($context == 'form') {
       $defaults['required_fields'] = 1;

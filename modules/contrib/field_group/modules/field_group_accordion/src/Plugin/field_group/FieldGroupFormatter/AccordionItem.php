@@ -131,7 +131,7 @@ class AccordionItem extends FieldGroupFormatterBase {
     $defaults = [
       'formatter' => 'closed',
       'description' => '',
-    ] + parent::defaultSettings($context);
+    ] + parent::defaultContextSettings($context);
 
     if ($context == 'form') {
       $defaults['required_fields'] = 1;

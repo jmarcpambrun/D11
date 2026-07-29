@@ -35,6 +35,10 @@ class D7FieldGroupDeriver extends DeriverBase {
       return $this->derivatives;
     }
 
+    /*
+     * @phpstan-ignore-next-line DrupalSqlBase is removed in Drupal 12 and has
+     * no replacement.
+     */
     assert($field_group_source instanceof DrupalSqlBase);
 
     try {
