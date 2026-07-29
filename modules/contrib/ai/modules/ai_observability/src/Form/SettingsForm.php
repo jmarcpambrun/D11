@@ -50,6 +50,11 @@ class SettingsForm extends ConfigFormBase {
   const OTEL_METRIC_TOKEN_USAGE_PREFIX = 'ai_token_usage';
 
   /**
+   * The OTel GenAI token-usage histogram name (OTel semantic conventions).
+   */
+  const OTEL_HISTOGRAM_NAME_TOKEN_USAGE = 'gen_ai.client.token.usage';
+
+  /**
    * A TypedConfigManager.
    *
    * @var \Drupal\Core\Config\TypedConfigManagerInterface

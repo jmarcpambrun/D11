@@ -23,7 +23,7 @@ plugins:
   - mike:
       alias_type: redirect
       # This is for SEO reasons, not redirects.
-      canonical_version: 1.4.0
+      canonical_version: 1.2.0
       version_selector: true
       deploy_prefix: "mkdocs"
 markdown_extensions:
@@ -62,7 +62,9 @@ nav:
     - AI Logging: modules/ai_logging/index.md
     - AI Observability: modules/ai_observability/index.md
     - AI Providers: modules/providers/index.md
-    - AI Search: modules/ai_search/index.md
+    - AI Search:
+      - Overview: modules/ai_search/index.md
+      - AI Reranker Processor: modules/ai_search/reranker.md
     - AI Translate: modules/ai_translate/index.md
     - AI VDB Providers: modules/vdb_providers/index.md
     - AI Validations: modules/ai_validations/index.md
@@ -81,6 +83,7 @@ nav:
       - Text-To-Speech Call: developers/call_text_to_speech.md
       - Speech-To-Text Call: developers/call_speech_to_text.md
       - Embeddings Call: developers/call_embeddings.md
+      - Extractive Question Answering Call: developers/call_extractive_question_answering.md
       - Moderation Call: developers/call_moderation.md
       - Audio-To-Audio Call: developers/call_audio_to_audio.md
       - Speech-To-Speech Call: developers/call_speech_to_speech.md
@@ -89,6 +92,7 @@ nav:
       - Translate Text Call: developers/call_translate_text.md
       - Image-To-Image Call: developers/call_image_to_image.md
       - Object Detection Call: developers/call_object_detection.md
+      - Rerank Call: developers/call_rerank.md
     - Plugins/Managers:
       - Function Call Plugins: developers/function_call.md
       - ChatProcessor Plugin: developers/writing_a_chat_processor_plugin.md
@@ -116,6 +120,7 @@ nav:
     - Prompt Management: developers/ai_prompt_management.md
     - Recipes: developers/recipes.md
     - Mock a Provider: developers/virtual_provider.md
+    - Visual Regression Testing: developers/visual_regression_testing.md
     - Form Elements:
       - AI Provider Configuration: developers/ai_provider_configuration_element.md
       - Chat History: developers/chat_history_element.md

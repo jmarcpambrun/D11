@@ -71,6 +71,7 @@ deepchat
 deepgram
 Deepgrams
 deepl
+deepseek
 defintion
 derivite
 detab
@@ -102,6 +103,7 @@ endhours
 endverbatim
 erging
 etcdctl
+exfiltration
 Euser
 evals
 Explainability
@@ -241,7 +243,10 @@ reparses
 replayable
 Rerank
 reranked
+reranker
+rerankers
 reranking
+topn
 retag
 rhristov
 robloach
@@ -261,6 +266,7 @@ sqpo
 sshleifer
 starthours
 streamable
+Stringable
 Sublists
 subprompt
 subtag
@@ -299,6 +305,7 @@ Valiudate
 vals
 valthebald
 vectordb
+vertexai
 vframes
 voiceovers
 vsync
@@ -362,7 +369,11 @@ cyberattack
 hotlinking
 pymdownx.superfences
 python/name:pymdownx.superfences.fence_code_format
+deepset
+distilbert
 drupalcode
+darkmode
+runserver
 nondet
 acquia
 aliyun
@@ -387,3 +398,4 @@ hostless
 mple
 cript
 DKAN
+unconfigured

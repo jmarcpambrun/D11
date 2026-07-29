@@ -66,6 +66,18 @@ config:
           - milvus
 ```
 
+#### vector_search_is_setup
+This checks if any VDB provider is installed and set up, without requiring a specific one to be named.
+
+Example:
+```
+config:
+  actions:
+    ai.settings:
+      verifySetupAi:
+        vector_search_is_setup: true
+```
+
 ### setupAiProvider
 This makes it possible to setup an AI Provider, but also automatically fill out the key value for it. This will work for any simple provider that is setup using a key.
 

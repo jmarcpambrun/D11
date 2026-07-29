@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -181,13 +182,19 @@ class AiAutomatorEntityModifier {
     $automatorConfig = [];
     /** @var \Drupal\ai_automators\Entity\AiAutomator $field */
     foreach ($fields as $field) {
+      $fieldName = $field->get('field_name');
+      if (empty($fieldName) || !isset($fieldDefinitions[$fieldName])) {
+        continue;
+      }
       // Check if enabled and return the config.
-      $fieldConfigs[$field->id()]['fieldDefinition'] = $fieldDefinitions[$field->get('field_name')];
+      $fieldConfigs[$field->id()]['fieldDefinition'] = $fieldDefinitions[$fieldName];
       $automatorConfig = [
-        'field_name' => $field->get('field_name'),
+        'field_name' => $fieldName,
       ];
       foreach ($field->get('plugin_config') as $key => $setting) {
-        $automatorConfig[substr($key, 10)] = $setting;
+        if (str_starts_with($key, 'automator_')) {
+          $automatorConfig[substr($key, 10)] = $setting;
+        }
       }
       $fieldConfigs[$field->id()]['automatorConfig'] = $automatorConfig;
     }
@@ -284,8 +291,14 @@ class AiAutomatorEntityModifier {
       }
       else {
         $originalEntity = $this->getOriginalEntity($entity);
-        $original = $originalEntity ? json_encode($originalEntity->get($automatorConfig['base_field'])->getValue()) : NULL;
-        $current = json_encode($entity->get($automatorConfig['base_field'])->getValue());
+        if (!$entity->hasField($automatorConfig['base_field'])) {
+          $shouldProcess = FALSE;
+          $event = new ShouldProcessFieldEvent($entity, $fieldDefinition, $automatorConfig, $shouldProcess);
+          $this->eventDispatcher->dispatch($event, ShouldProcessFieldEvent::EVENT_NAME);
+          return $event->shouldProcess();
+        }
+        $original = $originalEntity && $originalEntity->hasField($automatorConfig['base_field']) ? Json::encode($originalEntity->get($automatorConfig['base_field'])->getValue()) : NULL;
+        $current = Json::encode($entity->get($automatorConfig['base_field'])->getValue());
         $shouldProcess = $current !== $original;
       }
     }
@@ -301,12 +314,16 @@ class AiAutomatorEntityModifier {
    * If base mode, check if it should run.
    */
   private function baseShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    if (empty($automatorConfig['base_field']) || !$entity->hasField($automatorConfig['base_field'])) {
+      return FALSE;
+    }
+
     // Check if a value exists.
     $value = $entity->get($automatorConfig['field_name'])->getValue();
 
     $originalEntity = $this->getOriginalEntity($entity);
-    $original = $originalEntity ? json_encode($originalEntity->get($automatorConfig['base_field'])->getValue()) : NULL;
-    $change = json_encode($entity->get($automatorConfig['base_field'])->getValue()) !== $original;
+    $original = $originalEntity && $originalEntity->hasField($automatorConfig['base_field']) ? Json::encode($originalEntity->get($automatorConfig['base_field'])->getValue()) : NULL;
+    $change = Json::encode($entity->get($automatorConfig['base_field'])->getValue()) !== $original;
 
     // Get the rule to check the value.
     $rule = $this->fieldRules->findRule($automatorConfig['rule']);

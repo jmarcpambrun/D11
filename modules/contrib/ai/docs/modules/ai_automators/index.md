@@ -262,6 +262,32 @@ For step-by-step examples of configuring AI Automators with Field Widget Actions
 - [Text to Address Field](examples/address_automator.md) - Generate address from content using the `LLM: Address` automator
 - [Metatag](examples/metatag_automator.md) - Generate metatags for content using the `LLM: Metatag` automator
 
+## Queue processing
+
+When an Automator's worker type is set to run via the queue (instead of
+processing directly on entity save), its jobs are added to the
+`ai_automator_field_modifier` queue and processed on cron.
+
+AI Automators processes this queue from its own `hook_cron()` implementation,
+which lets you control how many items run per cron run:
+
+- Go to **Administration » Configuration » AI » AI Automators**
+  (`/admin/config/ai/ai-automators/settings`).
+- **Queue items per cron run** — the maximum number of queued items processed
+  during each cron run. Set to `0` to process all pending items in one run.
+  New installations default to `10`; sites updated from an earlier version are
+  set to `1` to preserve the previous behavior.
+
+As a rough guide, one queue item takes about one second, but fast Automators
+(for example regex-based ones) can run in milliseconds, so a higher limit is
+often safe.
+
+Items that fail are retried on subsequent cron runs and are dropped after a few
+attempts, so a permanently failing item cannot block the queue.
+
+If you use Ultimate Cron, target the `ai_automators_cron` hook rather than the
+`ai_automator_field_modifier` queue worker.
+
 ## Developer documentation
 Check the [developers guide](../../developers/writing_an_ai_automators_plugin.md) for
 information on how to write a third party module using the AI module.

@@ -45,6 +45,9 @@ ai.settings:
         image_to_video:
           label: 'Default image to video provider'
           type: ai.default_operation_provider
+        extractive_question_answering:
+          label: 'Default extractive question answering provider'
+          type: ai.default_operation_provider
         moderation:
           label: 'Default moderation provider'
           type: ai.default_operation_provider
@@ -203,6 +206,26 @@ ai.guardrail.settings.restrict_to_topic:
     llm_config:
       type: mapping
       label: LLM configuration
+    matching_mode:
+      type: string
+      label: 'Topic matching mode'
+    similarity_threshold:
+      type: float
+      label: 'Similarity threshold'
+
+ai.guardrail.settings.sensitive_content_stream:
+  type: mapping
+  label: Sensitive Content Stream Filter settings
+  mapping:
+    start_marker:
+      type: string
+      label: Start marker
+    stop_marker:
+      type: string
+      label: Stop marker
+    replacement_message:
+      type: string
+      label: Replacement message
 
 ai.ai_guardrail_set.*:
   type: config_entity
@@ -237,3 +260,17 @@ ai.ai_guardrail_set.*:
           type: sequence
           sequence:
             type: string
+
+field.widget.third_party.ai:
+  type: mapping
+  label: AI Module Field Widget 3rd Party Settings
+  mapping:
+    use_mdx_editor:
+      type: boolean
+      label: Use MDX Editor
+
+ai_chat_processor.configuration.*:
+  type: ai_chat_processor.configuration_base
+
+ai_chat_processor.configuration_base:
+  type: mapping

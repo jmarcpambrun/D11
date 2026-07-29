@@ -5,13 +5,16 @@ namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Guardrail\AiGuardrailHelper;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\RuleBase;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
+use Drupal\ai_automators\Traits\RichTextImageDescriptionTrait;
 use Drupal\content_moderation\ModerationInformation;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -26,6 +29,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 )]
 class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
 
+  use RichTextImageDescriptionTrait;
+
   /**
    * The moderation information service.
    *
@@ -37,11 +42,11 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
+    AiGuardrailHelper $aiGuardrailHelper,
+    ?LoggerChannelInterface $logger = NULL,
     ?ModerationInformation $moderationInformation = NULL,
   ) {
-    $this->aiPluginManager = $pluginManager;
-    $this->formHelper = $formHelper;
-    $this->promptJsonDecoder = $promptJsonDecoder;
+    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder, $aiGuardrailHelper, $logger);
     $this->moderationInformation = $moderationInformation;
   }
 
@@ -57,6 +62,8 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
+      $container->get('ai.guardrail_helper'),
+      $container->get('logger.factory')->get('ai_automators'),
       $moderation,
     );
   }
@@ -91,6 +98,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
     $tokens = [
       'context' => 'The cleaned text from the base field.',
       'raw_context' => 'The raw text from the base field. Can include HTML',
+      'image_descriptions' => 'Generated descriptions for images discovered in raw_context when enabled.',
       'max_amount' => 'The max amount of entries to set. If unlimited this value will be empty.',
     ];
     $flags = $this->getFlags($entity);
@@ -104,13 +112,9 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function generateTokens(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, $delta = 0) {
-    $values = $entity->get($automatorConfig['base_field'])->getValue();
+    $tokens = parent::generateTokens($entity, $fieldDefinition, $automatorConfig, $delta);
+    $tokens = $this->appendImageDescriptionsToTokens($entity, $automatorConfig, (int) $delta, $tokens);
     $flags = $this->getFlags($entity);
-    $tokens = [
-      'context' => strip_tags($values[$delta]['value'] ?? ''),
-      'raw_context' => $values[$delta]['value'] ?? '',
-      'max_amount' => $fieldDefinition->getFieldStorageDefinition()->getCardinality() == -1 ? '' : $fieldDefinition->getFieldStorageDefinition()->getCardinality(),
-    ];
     foreach ($flags as $key => $label) {
       $tokens[$key] = $key;
     }
@@ -158,7 +162,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
       '#default_value' => $defaultValues['automator_store_explanation'] ?? FALSE,
     ];
 
-    return $form;
+    return $this->addImageDescriptionConfigurationForm($form, $defaultValues);
   }
 
   /**
@@ -192,6 +196,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    $this->initializeImageDescriptionMetadata();
     // Generate the real prompt if needed.
     $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
 
@@ -282,6 +287,23 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
         }
       }
     }
+
+    if ($this->hasImageDescriptionLimitExceeded()) {
+      $availableStates = $this->getFlags($entity);
+      if (isset($availableStates['flagged'])) {
+        $entity->set($fieldDefinition->getName(), 'flagged');
+      }
+      else {
+        if ($this->logger) {
+          $this->logger->warning('Cannot set moderation state to "flagged": state does not exist in this workflow. Content requires manual review.');
+        }
+      }
+      if (!empty($automatorConfig['store_explanation'])) {
+        $entity->set($automatorConfig['store_explanation'], $this->getImageDescriptionLimitMessage());
+      }
+    }
+
+    $this->storeImageDescriptionsMetadata($entity, $automatorConfig);
   }
 
   /**

@@ -15,6 +15,7 @@ import {
   quotePlugin,
   tablePlugin,
   thematicBreakPlugin,
+  markdownShortcutPlugin,
   diffSourcePlugin,
   DiffSourceToggleWrapper,
   UndoRedo,
@@ -102,6 +103,7 @@ function Editor({
           thematicBreakPlugin(),
           linkDialogPlugin(),
           tablePlugin(),
+          markdownShortcutPlugin(),
           codeBlockPlugin({ defaultCodeBlockLanguage: "javascript" }),
           codeMirrorPlugin({
             codeBlockLanguages: {

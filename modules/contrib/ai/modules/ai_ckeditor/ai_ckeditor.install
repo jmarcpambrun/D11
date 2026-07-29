@@ -6,6 +6,49 @@
  */
 
 /**
+ * Implements hook_requirements().
+ */
+function ai_ckeditor_requirements($phase): array {
+  if ($phase !== 'runtime') {
+    return [];
+  }
+
+  $module_path = \Drupal::service('extension.path.resolver')->getPath('module', 'ai_ckeditor');
+  $assets = [
+    'js/build/aickeditor.js',
+    'js/build/ai_balloon_menu.js',
+  ];
+
+  $missing = [];
+  foreach ($assets as $asset) {
+    if (!file_exists($module_path . '/' . $asset)) {
+      $missing[] = $asset;
+    }
+  }
+
+  if (empty($missing)) {
+    return [
+      'ai_ckeditor_assets' => [
+        'title' => t('AI CKEditor assets'),
+        'value' => t('Built assets are present.'),
+        'severity' => REQUIREMENT_OK,
+      ],
+    ];
+  }
+
+  return [
+    'ai_ckeditor_assets' => [
+      'title' => t('AI CKEditor assets'),
+      'value' => t('Built assets are missing.'),
+      'description' => t('The AI CKEditor plugin assets are not built, so the editor toolbar buttons will not load. Run <code>npm ci</code> and <code>npm run build</code> in <code>modules/ai_ckeditor</code> inside the AI module to generate them. See <code>docs/modules/ai_ckeditor/index.md</code> for details. Missing files: @files', [
+        '@files' => implode(', ', $missing),
+      ]),
+      'severity' => REQUIREMENT_WARNING,
+    ],
+  ];
+}
+
+/**
  * Add modify prompt configuration and enable the plugin in text formats.
  */
 function ai_ckeditor_update_10001() {

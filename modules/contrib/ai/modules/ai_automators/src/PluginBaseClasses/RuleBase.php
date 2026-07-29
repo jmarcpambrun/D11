@@ -278,6 +278,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
     return [
       'context' => 'The cleaned text from the base field.',
       'raw_context' => 'The raw text from the base field. Can include HTML',
+      'image_descriptions' => 'Descriptions generated from embedded images in rich text.',
       'max_amount' => 'The max amount of entries to set. If unlimited this value will be empty.',
     ];
   }
@@ -484,9 +485,11 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
    */
   public function generateTokens(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, $delta = 0) {
     $values = $entity->get($automatorConfig['base_field'])->getValue();
+    $rawContext = $values[$delta]['value'] ?? '';
+
     return [
-      'context' => strip_tags($values[$delta]['value'] ?? ''),
-      'raw_context' => $values[$delta]['value'] ?? '',
+      'context' => strip_tags($rawContext),
+      'raw_context' => $rawContext,
       'max_amount' => $fieldDefinition->getFieldStorageDefinition()->getCardinality() == -1 ? '' : $fieldDefinition->getFieldStorageDefinition()->getCardinality(),
     ];
   }

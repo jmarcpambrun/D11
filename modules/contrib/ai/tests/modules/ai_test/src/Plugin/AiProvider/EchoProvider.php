@@ -9,6 +9,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -17,9 +18,16 @@ use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionInput;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionInterface;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\OperationType\ExtractiveQuestionAnswering\ExtractiveQuestionAnsweringInput;
+use Drupal\ai\OperationType\ExtractiveQuestionAnswering\ExtractiveQuestionAnsweringInterface;
+use Drupal\ai\OperationType\ExtractiveQuestionAnswering\ExtractiveQuestionAnsweringItem;
+use Drupal\ai\OperationType\ExtractiveQuestionAnswering\ExtractiveQuestionAnsweringOutput;
 use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
@@ -34,9 +42,15 @@ use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
 use Drupal\ai\OperationType\Moderation\ModerationOutput;
 use Drupal\ai\OperationType\Moderation\ModerationResponse;
+use Drupal\ai\OperationType\Rerank\ReRankInput;
+use Drupal\ai\OperationType\Rerank\ReRankInterface;
+use Drupal\ai\OperationType\Rerank\ReRankOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
+use Drupal\ai\OperationType\Summarization\SummarizationInput;
+use Drupal\ai\OperationType\Summarization\SummarizationInterface;
+use Drupal\ai\OperationType\Summarization\SummarizationOutput;
 use Drupal\ai\OperationType\TextClassification\TextClassificationInput;
 use Drupal\ai\OperationType\TextClassification\TextClassificationInterface;
 use Drupal\ai\OperationType\TextClassification\TextClassificationItem;
@@ -65,14 +79,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class EchoProvider extends AiProviderClientBase implements
   ChatInterface,
   EmbeddingsInterface,
+  EmbeddingsCollectionInterface,
   ModerationInterface,
+  ReRankInterface,
   SpeechToTextInterface,
+  SummarizationInterface,
   TextToSpeechInterface,
   ImageClassificationInterface,
   TextToImageInterface,
   EchoInterface,
   ImageToImageInterface,
-  TextClassificationInterface {
+  TextClassificationInterface,
+  ExtractiveQuestionAnsweringInterface {
 
   use ImageToImageTrait;
 
@@ -153,11 +171,14 @@ class EchoProvider extends AiProviderClientBase implements
     return [
       'chat',
       'embeddings',
+      'rerank',
       'speech_to_text',
       'text_to_speech',
+      'summarize',
       'moderation',
       'image_classification',
       'text_classification',
+      'extractive_question_answering',
       'echo',
     ];
   }
@@ -172,6 +193,12 @@ class EchoProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
+    // Allow tests to deterministically trigger a provider failure, so the
+    // exception handling in ProviderProxy (AiExceptionEvent dispatching,
+    // metadata propagation) can be covered.
+    if ($model_id === 'test_exception') {
+      throw new AiResponseErrorException('Simulated provider failure for testing.');
+    }
     // First try to match the request with the requests to test.
     $matched_request = $this->getMatchingRequest('chat', $input);
     if ($matched_request) {
@@ -282,6 +309,17 @@ class EchoProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
+  public function embeddingsCollection(EmbeddingsCollectionInput $input, string $model_id, array $tags = []): EmbeddingsCollectionOutput {
+    $vectors = [];
+    foreach ($input->getPrompts() as $prompt) {
+      $vectors[] = [strlen($prompt)];
+    }
+    return new EmbeddingsCollectionOutput($vectors, $vectors, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function embeddingsVectorSize(string $model_id): int {
     return 1;
   }
@@ -314,6 +352,16 @@ class EchoProvider extends AiProviderClientBase implements
     ];
 
     return new SpeechToTextOutput($response['input'], $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function summarize(string|array|SummarizationInput $input, string $model_id, array $tags = []): SummarizationOutput {
+    $text = $input instanceof SummarizationInput ? $input->getText() : (string) (is_array($input) ? reset($input) : $input);
+    $summary = sprintf('Summary of: %s', $text);
+
+    return new SummarizationOutput($summary, ['summary' => $summary], []);
   }
 
   /**
@@ -395,6 +443,61 @@ class EchoProvider extends AiProviderClientBase implements
     }
 
     return new TextClassificationOutput($output, $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function extractiveQuestionAnswering(string|ExtractiveQuestionAnsweringInput $input, string $model_id, array $tags = []): ExtractiveQuestionAnsweringOutput {
+    $output = [];
+    $response = [];
+    if ($input instanceof ExtractiveQuestionAnsweringInput) {
+      $context = $input->getContext();
+      // Find the position of the first word of the question in the context.
+      $start = strpos($context, ' ');
+      $start = $start !== FALSE ? $start + 1 : 0;
+      $answer = substr($context, $start, 10);
+      $end = $start + strlen($answer);
+      $output[] = new ExtractiveQuestionAnsweringItem($answer, 0.85, $start, $end);
+      $response[] = [
+        'answer' => $answer,
+        'score' => 0.85,
+        'start' => $start,
+        'end' => $end,
+      ];
+    }
+
+    return new ExtractiveQuestionAnsweringOutput($output, $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function rerank(ReRankInput $input, string $model_id, array $tags = []): ReRankOutput {
+    // Test sentinel: return a response with no usable "index" values so the
+    // processor's fallback path can be exercised.
+    if ($model_id === 'unusable-rerank') {
+      return new ReRankOutput([
+        ['relevance_score' => 0.9],
+        ['relevance_score' => 0.1],
+      ], 'echo-rerank-unusable', []);
+    }
+
+    $documents = $input->getInputs();
+    $results = [];
+    $count = count($documents);
+    foreach ($documents as $index => $document) {
+      // Assign ascending scores so the LAST document scores highest.
+      $score = ($index + 1) / $count;
+      $results[] = [
+        'index' => $index,
+        'relevance_score' => round($score, 2),
+        'document' => ['text' => $document],
+      ];
+    }
+    // Return sorted descending by score so last-input item comes first.
+    usort($results, fn($a, $b) => $b['relevance_score'] <=> $a['relevance_score']);
+    return new ReRankOutput($results, 'echo-rerank-' . $model_id, []);
   }
 
   /**

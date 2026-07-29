@@ -14,13 +14,13 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
+use Drupal\ai\Response\AiStreamedResponse;
 use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\editor\EditorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Drupal\ai\Response\AiStreamedResponse;
 
 /**
  * Returns responses for CKEditor integration routes.
@@ -93,6 +93,15 @@ class AiRequest implements ContainerInjectionInterface {
   public function doRequest(Request $request, EditorInterface $editor, AiCKEditorPluginInterface $ai_ckeditor_plugin): AiStreamedResponse|Response {
     $data = json_decode($request->getContent());
 
+    // Extract and validate entity context from the request payload. The
+    // editor's dialog JS sets these from drupalSettings, which is populated
+    // server-side via hook_form_alter on the host entity form. This avoids
+    // fragile URL parsing and handles nested/AJAX-loaded forms.
+    $entity_context = $this->validateEntityContext(
+      (string) ($data->entity_type ?? ''),
+      (string) ($data->entity_id ?? ''),
+    );
+
     try {
       $settings = $editor->getSettings();
       $configuration = $settings["plugins"]["ai_ckeditor_ai"]["plugins"];
@@ -137,13 +146,25 @@ class AiRequest implements ContainerInjectionInterface {
       }
       $data->prompt = "Do not try to use any image, video, or audio tags. Do not use backticks or ```html indicator." . $data->prompt;
 
+      // Build the system prompt.
+      $system_prompt = 'You are a helpful website assistant for content writing and editing.';
+      $system_prompt .= ' Do not give responses in the first, second or third person form. Do not add any commentary to the answer.';
+
       $messages = new ChatInput([
         new ChatMessage('user', $data->prompt),
       ]);
 
       // Add the system message.
       $messages->setStreamedOutput(TRUE);
-      $messages->setSystemPrompt('You are helpful website assistant for content writing and editing. Do not give responses in the first, second or third person form. Do not add any commentary to the answer.');
+      $messages->setSystemPrompt($system_prompt);
+
+      // Attach entity context as directed event metadata. Subscribers to the
+      // generic PreGenerateResponseEvent can read this via
+      // $event->getMetadata('entity_context') to do bundle-scoped context
+      // injection without any ai_ckeditor-specific wiring.
+      if ($entity_context !== NULL) {
+        $messages->setRequestMetadataValue('entity_context', $entity_context);
+      }
 
       /** @var \Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface $response */
       $response = $ai_provider->chat($messages, $ai_model, ['ai_ckeditor'])->getNormalized();
@@ -165,6 +186,42 @@ class AiRequest implements ContainerInjectionInterface {
     }
 
     return new Response("The request could not be completed.", Response::HTTP_BAD_REQUEST);
+  }
+
+  /**
+   * Validates the entity context payload from the client.
+   *
+   * @param string $entity_type
+   *   The submitted entity type id.
+   * @param string $entity_id
+   *   The submitted entity id (integer for content entities, string for
+   *   config entities).
+   *
+   * @return array|null
+   *   An array with entity_type, bundle, and id keys, or NULL if nothing
+   *   valid was submitted. Bundle is read from the loaded entity, not
+   *   from the client payload.
+   */
+  protected function validateEntityContext(string $entity_type, string $entity_id): ?array {
+    if ($entity_type === '' || $entity_id === '') {
+      return NULL;
+    }
+    if (!$this->entityTypeManager->hasDefinition($entity_type)) {
+      return NULL;
+    }
+    // Validate by loading instead of checking ID format. This supports
+    // both content entities (integer IDs) and config entities (string IDs)
+    // and confirms the entity actually exists.
+    $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
+    if ($entity === NULL || !$entity->access('view')) {
+      return NULL;
+    }
+    // Use the loaded entity's bundle rather than trusting the client value.
+    return [
+      'entity_type' => $entity_type,
+      'bundle' => $entity->bundle(),
+      'id' => $entity_id,
+    ];
   }
 
 }

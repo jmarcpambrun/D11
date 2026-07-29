@@ -13,8 +13,9 @@ The AI module includes the following built-in guardrails:
 *   **[Input Length Limit](input_length_limit.md)**: Blocks input that exceeds a configurable character or token count limit.
 *   **[Regexp Guardrail](regexp_guardrail.md)**: Deterministic check that matches the last chat message against a configurable regular expression pattern.
 *   **[Restrict to Topic](restrict_to_topic.md)**: Non-deterministic check using an LLM to verify whether the input matches allowed or disallowed topics.
+*   **[Sensitive Content Stream Filter](sensitive_content_stream.md)**: Streaming guardrail that suppresses content enclosed between configurable plain-text markers in real time, replacing it with a safe message before it reaches the consumer.
 
-For developers looking to implement their own checks, see the guide on **[Writing a Custom Guardrail Plugin](custom_guardrail.md)**.
+For developers looking to implement their own checks, see the guide on **[Writing a Custom Guardrail Plugin](custom_guardrail.md)**. To implement a streaming guardrail, see the **[StreamableGuardrailInterface](custom_guardrail.md#streamableguardrailinterface)** section of that guide.
 
 ---
 

@@ -60,13 +60,20 @@
         Drupal.clearDeepchatMessages = (event) => {
           // Don't run parent event
           event.stopPropagation();
-          // Make a request to clear the history.
-          let url = drupalSettings.path.baseUrl + 'ajax/chatbot/reset-session/' + drupalSettings.ai_deepchat.assistant_id + '/' + drupalSettings.ai_deepchat.thread_id;
-          fetch(url, {
+          // Ask the server to rotate the conversation thread. The thread id
+          // itself lives server-side in the session; we only identify which
+          // chatbot instance to reset.
+          const connect = JSON.parse(deepchatElement.getAttribute('connect'));
+          fetch(drupalSettings.path.baseUrl + 'api/deepchat/reset', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              thread_id: drupalSettings.ai_deepchat.thread_id,
+              chat_processor_plugin: connect.additionalBodyProps.chat_processor_plugin,
+              plugin_configuration: connect.additionalBodyProps.plugin_configuration,
+            }),
           }).then(response => {
             if (!response.ok) {
               throw new Error('Failed to clear the chat history.');
@@ -287,6 +294,7 @@
   function getAllMessages(deepchatElement) {
     // Start processing.
     Drupal.behaviors.deepChatToggle.processing = true;
+    const connect = JSON.parse(deepchatElement.getAttribute('connect'));
     const n = (deepchatElement.getMessages().length - 1);
     fetch(deepchatElement.connect.url, {
       method: 'POST',
@@ -294,10 +302,10 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        chat_processor_plugin: connect.additionalBodyProps.chat_processor_plugin,
+        plugin_configuration: connect.additionalBodyProps.plugin_configuration,
         thread_id: drupalSettings.ai_deepchat.thread_id,
-        assistant_id: drupalSettings.ai_deepchat.assistant_id,
         show_copy_icon: drupalSettings.ai_deepchat.show_copy_icon,
-        structured_results: drupalSettings.ai_deepchat.structured_results,
         messages: [
           {
             role: 'user',
@@ -355,6 +363,7 @@
         // Reset the should continue.
         Drupal.behaviors.deepChatToggle.shouldContinue = false;
 
+        // Trigger event when agent call is completed.
         const agentCallEvent = new CustomEvent("agent-call-completed", {
           detail: {
             message: {
@@ -363,7 +372,6 @@
             }
           }
         });
-
         deepchatElement.dispatchEvent(agentCallEvent);
       }
       // Empty

@@ -44,6 +44,12 @@ greatly improve the relevance of search results.
 Optionally use the `hook_ai_search_boost_results_alter` to rerank results
 before passing them to the database or SOLR search.
 
+### AI Reranker Processor
+The AI Core module ships an **AI Reranker** Search API processor that re-orders
+results from any backend (Database, Solr, or Vector) using a dedicated
+reranking model. It is owned by AI Core (not this submodule). See
+[AI Reranker Processor](reranker.md) for configuration and usage details.
+
 ### Programmatically
 Find relevant results and use them in your own manner, e.g. along with Chat
 endpoints from various LLMs (AI Providers). Get a vector representation of your
