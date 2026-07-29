@@ -3,6 +3,7 @@
 namespace Drupal\session_limit\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -10,7 +11,6 @@ use Drupal\session_limit\Services\SessionLimit;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Config\TypedConfigManagerInterface;
 
 /**
  * Session limit configuration form.
@@ -24,20 +24,30 @@ class SettingsForm extends ConfigFormBase {
    */
   protected $moduleHandler;
 
+  /**
+   * Constructs a \Drupal\system\ConfigFormBase object.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The factory for configuration objects.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager
+   *   The typed config manager.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler instance to use.
+   */
   public function __construct(ConfigFactoryInterface $config_factory, TypedConfigManagerInterface $typed_config_manager, ModuleHandlerInterface $module_handler) {
     parent::__construct($config_factory, $typed_config_manager);
-         $this->moduleHandler = $module_handler;
-   }
+    $this->moduleHandler = $module_handler;
+  }
 
   /**
    * {@inheritdoc}
    */
-     public static function create(ContainerInterface $container) {
-     return new static(
-       $container->get('config.factory'),
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
       $container->get('config.typed'),
-       $container->get('module_handler')
-     );
+      $container->get('module_handler')
+    );
   }
 
   /**
