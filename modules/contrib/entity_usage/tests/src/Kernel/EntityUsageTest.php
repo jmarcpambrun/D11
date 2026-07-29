@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\Kernel;
 
 use Drupal\Core\Entity\EntityInterface;
@@ -118,7 +120,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     $target_entity = $this->testEntities[0];
     /** @var \Drupal\Core\Entity\EntityInterface $source_entity */
     $source_entity = $this->testEntities[1];
-    $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? $source_entity->getRevisionId() : 0;
+    $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? (int) $source_entity->getRevisionId() : 0;
     $field_name = 'body';
     $this->insertEntityUsage($source_entity, $target_entity, $field_name);
 
@@ -142,7 +144,7 @@ class EntityUsageTest extends EntityKernelTestBase {
         (string) $entity_3->id() => [
           0 => [
             'source_langcode' => $entity_3->language()->getId(),
-            'source_vid' => $entity_3->getRevisionId() ?: 0,
+            'source_vid' => (int) $entity_3->getRevisionId() ?: 0,
             'method' => 'entity_reference',
             'field_name' => $field_name,
             'count' => 1,
@@ -191,18 +193,18 @@ class EntityUsageTest extends EntityKernelTestBase {
     // Original entity with no usage.
     $source_entity = EntityTestMulRevPub::create(['name' => $this->randomMachineName()]);
     $source_entity->save();
-    $original_revision_id = $source_entity->getRevisionId();
+    $original_revision_id = (int) $source_entity->getRevisionId();
 
     // Revisioned entity with 1 usage.
     $source_entity->set('name', $this->randomMachineName());
-    $source_entity->setNewRevision(TRUE);
+    $source_entity->setNewRevision();
     $source_entity->save();
-    $revision1_revision_id = $source_entity->getRevisionId();
+    $revision1_revision_id = (int) $source_entity->getRevisionId();
     $this->insertEntityUsage($source_entity, $target_entity, $field_name);
 
     // Revisioned again with 1 usage.
     $source_entity->set('name', $this->randomMachineName());
-    $source_entity->setNewRevision(TRUE);
+    $source_entity->setNewRevision();
     $source_entity->save();
     $this->insertEntityUsage($source_entity, $target_entity, $field_name);
 
@@ -267,7 +269,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    *   The field name.
    */
   protected function insertEntityUsage(EntityInterface $source, EntityInterface $target, string $field_name): void {
-    $source_vid = ($source instanceof RevisionableInterface && $source->getRevisionId()) ? $source->getRevisionId() : 0;
+    $source_vid = ($source instanceof RevisionableInterface && $source->getRevisionId()) ? (int) $source->getRevisionId() : 0;
 
     $this->injectedDatabase->insert($this->tableName)
       ->fields([
@@ -296,7 +298,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     $entity_usage = $this->container->get('entity_usage.usage');
 
     // Register a new usage.
-    $entity_usage->registerUsage($entity->id(), $entity->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name, 1);
+    $entity_usage->registerUsage($entity->id(), $entity->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name);
 
     $event = \Drupal::state()->get('entity_usage_events_test.usage_register', []);
 
@@ -340,7 +342,7 @@ class EntityUsageTest extends EntityKernelTestBase {
       ->set('track_enabled_target_entity_types', [])
       ->save();
     drupal_flush_all_caches();
-    $this->container->get('entity_usage.usage')->registerUsage($entity->id(), $entity->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name, 1);
+    $this->container->get('entity_usage.usage')->registerUsage($entity->id(), $entity->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name);
 
     $real_usage = $this->injectedDatabase->select($this->tableName, 'e')
       ->fields('e', ['count'])
@@ -451,7 +453,7 @@ class EntityUsageTest extends EntityKernelTestBase {
 
     // Create 2 fake registers on the database table, one for each entity.
     foreach ($this->testEntities as $entity) {
-      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? $entity->getRevisionId() : 0;
+      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? (int) $entity->getRevisionId() : 0;
       $this->injectedDatabase->insert($this->tableName)
         ->fields([
           'target_id' => 1,
@@ -507,7 +509,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     // Create 2 fake registers on the database table, one for each entity.
     $i = 0;
     foreach ($this->testEntities as $entity) {
-      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? $entity->getRevisionId() : 0;
+      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? (int) $entity->getRevisionId() : 0;
       $this->injectedDatabase->insert($this->tableName)
         ->fields([
           'target_id' => 1,
@@ -546,7 +548,7 @@ class EntityUsageTest extends EntityKernelTestBase {
       ->condition('e.source_type', $entity_type)
       ->execute()
       ->fetchAll();
-    $source_vid = ($this->testEntities[0] instanceof RevisionableInterface && $this->testEntities[0]->getRevisionId()) ? $this->testEntities[0]->getRevisionId() : 0;
+    $source_vid = ($this->testEntities[0] instanceof RevisionableInterface && $this->testEntities[0]->getRevisionId()) ? (int) $this->testEntities[0]->getRevisionId() : 0;
     $expected_result = [
       'target_id' => '1',
       'target_id_string' => NULL,
@@ -577,7 +579,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     $i = 0;
     foreach ($this->testEntities as $entity) {
       $i++;
-      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? $entity->getRevisionId() : 0;
+      $source_vid = ($entity instanceof RevisionableInterface && $entity->getRevisionId()) ? (int) $entity->getRevisionId() : 0;
       $this->injectedDatabase->insert($this->tableName)
         ->fields([
           'target_id' => $i,
@@ -716,7 +718,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     $entity_usage->enableBulkInsert();
 
     // Register a new usage.
-    $entity_usage->registerUsage($this->testEntities[0]->id(), $this->testEntities[0]->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name, 1);
+    $entity_usage->registerUsage($this->testEntities[0]->id(), $this->testEntities[0]->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', $field_name);
     $event = \Drupal::state()->get('entity_usage_events_test.usage_register', []);
     $this->assertEmpty($event);
     $real_usage = $this->injectedDatabase->select($this->tableName, 'e')->countQuery()->execute()->fetchField();
@@ -775,10 +777,10 @@ class EntityUsageTest extends EntityKernelTestBase {
     $entity_usage->enableBulkInsert();
     $target = $this->testEntities[0];
     // Same entity pair and source_vid=1 (truthy), but different field names.
-    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'field_a', 1);
-    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'field_b', 1);
+    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'field_a');
+    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'field_b');
     // Same entity pair and source_vid=1, but a different method.
-    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'typed_data', 'field_a', 1);
+    $entity_usage->registerUsage($target->id(), $target->getEntityTypeId(), 1, 'foo', 'en', 1, 'typed_data', 'field_a');
     $entity_usage->bulkInsert();
     $real_usage = $this->injectedDatabase->select($this->tableName, 'e')->countQuery()->execute()->fetchField();
     $this->assertEquals(6, $real_usage);
@@ -808,7 +810,7 @@ class EntityUsageTest extends EntityKernelTestBase {
     $this->assertSame(0, (int) $this->container->get('database')->select('entity_usage')->countQuery()->execute()->fetchField());
     /** @var \Drupal\entity_usage\EntityUsage $entity_usage */
     $entity_usage = $this->container->get('entity_usage.usage');
-    $entity_usage->registerUsage($this->testEntities[0]->id(), $this->testEntities[0]->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'body', 1);
+    $entity_usage->registerUsage($this->testEntities[0]->id(), $this->testEntities[0]->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'body');
     $entity_usage->registerUsage($this->testEntities[1]->id(), $this->testEntities[1]->getEntityTypeId(), 1, 'foo', 'en', 1, 'entity_reference', 'body', 2);
     $this->assertSame(2, (int) $this->container->get('database')->select('entity_usage')->countQuery()->execute()->fetchField());
 
@@ -873,7 +875,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageRegisterEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageRegisterEventRecorder(EntityUsageEvent $event, string $name): void {
     $events = $this->state->get('entity_usage_events_test.usage_register', []);
     $events[] = [
       'event_name' => $name,
@@ -898,7 +900,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageDeleteByFieldEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageDeleteByFieldEventRecorder(EntityUsageEvent $event, string $name): void {
     $this->state->set('entity_usage_events_test.usage_delete_by_field', [
       'event_name' => $name,
       'target_id' => $event->getTargetEntityId(),
@@ -921,7 +923,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageDeleteBySourceEntityEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageDeleteBySourceEntityEventRecorder(EntityUsageEvent $event, string $name): void {
     $this->state->set('entity_usage_events_test.usage_delete_by_source_entity', [
       'event_name' => $name,
       'target_id' => $event->getTargetEntityId(),
@@ -944,7 +946,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageDeleteByTargetEntityEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageDeleteByTargetEntityEventRecorder(EntityUsageEvent $event, string $name): void {
     $this->state->set('entity_usage_events_test.usage_delete_by_target_entity', [
       'event_name' => $name,
       'target_id' => $event->getTargetEntityId(),
@@ -967,7 +969,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageBulkTargetDeleteEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageBulkTargetDeleteEventRecorder(EntityUsageEvent $event, string $name): void {
     $this->state->set('entity_usage_events_test.usage_bulk_delete_targets', [
       'event_name' => $name,
       'target_id' => $event->getTargetEntityId(),
@@ -990,7 +992,7 @@ class EntityUsageTest extends EntityKernelTestBase {
    * @param string $name
    *   The name of the event.
    */
-  public function usageBulkSourceDeleteEventRecorder(EntityUsageEvent $event, $name): void {
+  public function usageBulkSourceDeleteEventRecorder(EntityUsageEvent $event, string $name): void {
     $this->state->set('entity_usage_events_test.usage_bulk_delete_sources', [
       'event_name' => $name,
       'target_id' => $event->getTargetEntityId(),

@@ -8,6 +8,8 @@
  * @see \Drupal\Tests\entity_usage\Functional\Update\UpdateTest::testUpdate8206()
  */
 
+declare(strict_types=1);
+
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Database\Database;
 

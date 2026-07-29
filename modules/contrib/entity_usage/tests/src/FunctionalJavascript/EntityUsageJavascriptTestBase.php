@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\JSWebAssert;
@@ -78,7 +80,7 @@ abstract class EntityUsageJavascriptTestBase extends WebDriverTestBase {
    * @param string $message
    *   (Optional) Message to pass to assertJsCondition().
    */
-  protected function waitUntilVisible($selector, $timeout = 2000, $message = ''): void {
+  protected function waitUntilVisible(string $selector, int $timeout = 2000, string $message = ''): void {
     $condition = "jQuery('" . $selector . ":visible').length > 0";
     $this->assertJsCondition($condition, $timeout, $message);
   }

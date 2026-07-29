@@ -5821,21 +5821,25 @@
         },
         {
             "name": "drupal/entity_usage",
-            "version": "5.0.0-beta2",
-            "version_normalized": "5.0.0.0-beta2",
+            "version": "5.0.0-beta5",
+            "version_normalized": "5.0.0.0-beta5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/entity_usage.git",
-                "reference": "5.0.0-beta2"
+                "reference": "5.0.0-beta5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/entity_usage-5.0.0-beta2.zip",
-                "reference": "5.0.0-beta2",
-                "shasum": "a46622c2581fa93228381771e413f647695af2f1"
+                "url": "https://ftp.drupal.org/files/projects/entity_usage-5.0.0-beta5.zip",
+                "reference": "5.0.0-beta5",
+                "shasum": "2db2968a784a23151b18b7ab9a290f5011fd1f96"
             },
             "require": {
-                "drupal/core": "^11.2 || ^12"
+                "drupal/core": "^11.4 || ^12"
+            },
+            "conflict": {
+                "drupal/trash": "< 3.0.30",
+                "drush/drush": "< 13.7"
             },
             "require-dev": {
                 "drupal/block_field": "~1.0",
@@ -5847,23 +5851,18 @@
                 "drupal/inline_entity_form": "^3.0@RC",
                 "drupal/paragraphs": "^1.19",
                 "drupal/redirect": "^1.11",
-                "drupal/trash": "^3.0.22",
+                "drupal/trash": "^3.0.30",
                 "drupal/webform": "^6.3@beta",
-                "drush/drush": "^13.0 || ^14.0"
+                "drush/drush": "^13.7 || ^14.0"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "5.0.0-beta2",
-                    "datestamp": "1784128262",
+                    "version": "5.0.0-beta5",
+                    "datestamp": "1784811586",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
-                    }
-                },
-                "drush": {
-                    "services": {
-                        "drush.services.yml": "^11"
                     }
                 }
             },
@@ -5896,8 +5895,8 @@
                 "Drupal"
             ],
             "support": {
-                "source": "http://cgit.drupalcode.org/entity_usage",
-                "issues": "http://drupal.org/project/issues/entity_usage"
+                "source": "https://git.drupalcode.org/project/entity_usage",
+                "issues": "https://drupal.org/project/issues/entity_usage"
             },
             "install-path": "../../modules/contrib/entity_usage"
         },

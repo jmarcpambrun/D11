@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\entity_usage\EntityUsageBatchManager;
 use Drupal\node\Entity\Node;
 use Drupal\user\Entity\Role;
+use Drush\TestTraits\DrushTestTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
@@ -18,6 +21,7 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 #[Group('entity_usage')]
 #[RunTestsInSeparateProcesses]
 class BatchUpdateTest extends EntityUsageJavascriptTestBase {
+  use DrushTestTrait;
 
   /**
    * Tests the batch update.
@@ -151,27 +155,38 @@ class BatchUpdateTest extends EntityUsageJavascriptTestBase {
     $events = \Drupal::keyValue('entity_usage_test')->get('register', []);
     $this->assertCount(5, $events);
     // Test a target with a string ID.
-    $this->assertSame('1', $events[0]->getCount());
+    $this->assertSame(1, $events[0]->getCount());
     $this->assertSame('entity_reference', $events[0]->getMethod());
     $this->assertSame('type', $events[0]->getFieldName());
     $this->assertSame('1', $events[0]->getSourceEntityId());
-    $this->assertSame('1', $events[0]->getSourceEntityRevisionId());
+    $this->assertSame(1, $events[0]->getSourceEntityRevisionId());
     $this->assertSame('node', $events[0]->getSourceEntityType());
     $this->assertSame('en', $events[0]->getSourceEntityLangcode());
     $this->assertSame('eu_test_ct', $events[0]->getTargetEntityId());
     $this->assertSame('node_type', $events[0]->getTargetEntityType());
     // Test a target with an integer ID.
-    $this->assertSame('1', $events[2]->getCount());
+    $this->assertSame(1, $events[2]->getCount());
     $this->assertSame('entity_reference', $events[2]->getMethod());
     $this->assertSame('field_eu_test_related_nodes', $events[2]->getFieldName());
     $this->assertSame('2', $events[2]->getSourceEntityId());
-    $this->assertSame('2', $events[2]->getSourceEntityRevisionId());
+    $this->assertSame(2, $events[2]->getSourceEntityRevisionId());
     $this->assertSame('node', $events[2]->getSourceEntityType());
     $this->assertSame('en', $events[2]->getSourceEntityLangcode());
     $this->assertSame('1', $events[2]->getTargetEntityId());
     $this->assertSame('node', $events[2]->getTargetEntityType());
 
     $this->assertFalse(\Drupal::database()->schema()->tableExists(EntityUsageBatchManager::BULK_TABLE_NAME), 'Entity usage bulk table has been removed.');
+
+    // Ensure the drush command works too.
+    $this->drush('entity-usage:recreate', ['-vvv'], ['uri' => $this->baseUrl]);
+    $this->assertStringContainsString('[notice] Truncated the entity usage table', $this->getErrorOutput());
+    $this->assertStringNotContainsString('[notice] Updating entity usage for node: 1 of 3', $this->getErrorOutput());
+    $this->assertStringContainsString('[notice] Message: Recreated entity usage for 3 entities.', $this->getErrorOutput());
+
+    $this->drush('entity-usage:recreate', ['-vvv', '--keep-existing-records'], ['uri' => $this->baseUrl]);
+    $this->assertStringNotContainsString('[notice] Truncated the entity usage table', $this->getErrorOutput());
+    $this->assertStringContainsString('[notice] Updating entity usage for node: 1 of 3', $this->getErrorOutput());
+    $this->assertStringContainsString('[notice] Message: Recreated entity usage for 3 entities.', $this->getErrorOutput());
   }
 
 }

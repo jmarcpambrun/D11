@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage\EventSubscriber;
 
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
@@ -12,7 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Deletes the container if default language has changed.
  */
-class ConfigSubscriber implements EventSubscriberInterface {
+readonly class ConfigSubscriber implements EventSubscriberInterface {
 
   public function __construct(
     private RouteBuilderInterface $routeBuilder,

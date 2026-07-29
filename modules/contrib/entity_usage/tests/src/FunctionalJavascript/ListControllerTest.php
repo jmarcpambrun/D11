@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\Tests\entity_usage\Traits\EntityUsageLastEntityQueryTrait;
@@ -169,10 +171,8 @@ class ListControllerTest extends EntityUsageJavascriptTestBase {
     // Make sure we only have 2 rows (so no previous revision shows up).
     $this->assertEquals(2, count($this->xpath('//table/tbody/tr')));
 
-    // Create some additional languages.
-    foreach (['es'] as $langcode) {
-      ConfigurableLanguage::createFromLangcode($langcode)->save();
-    }
+    // Create an additional language.
+    ConfigurableLanguage::createFromLangcode('es')->save();
 
     // Let the logged-in user do multi-lingual stuff.
     /** @var \Drupal\user\RoleInterface $authenticated_role */

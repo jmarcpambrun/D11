@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 // cspell:ignore mnchen münchen
@@ -177,7 +179,7 @@ class ConfigurationFormTest extends EntityUsageJavascriptTestBase {
       else {
         $assert_session->fieldExists($field_name);
         // By default all content entity types are tracked.
-        if (in_array($entity_type_id, array_keys($content_entity_types))) {
+        if (in_array($entity_type_id, array_keys($content_entity_types), TRUE)) {
           $assert_session->checkboxChecked($field_name);
         }
         else {
@@ -201,7 +203,7 @@ class ConfigurationFormTest extends EntityUsageJavascriptTestBase {
       else {
         $assert_session->fieldExists($field_name);
         // By default all content entity types are tracked.
-        if (in_array($entity_type_id, array_keys($content_entity_types))) {
+        if (in_array($entity_type_id, array_keys($content_entity_types), TRUE)) {
           $assert_session->checkboxChecked($field_name);
         }
         else {
@@ -225,7 +227,7 @@ class ConfigurationFormTest extends EntityUsageJavascriptTestBase {
         $node2->id() => [
           [
             'source_langcode' => $node2->language()->getId(),
-            'source_vid' => $node2->getRevisionId(),
+            'source_vid' => (int) $node2->getRevisionId(),
             'method' => 'entity_reference',
             'field_name' => 'field_eu_test_related_media',
             'count' => 1,
@@ -295,7 +297,7 @@ class ConfigurationFormTest extends EntityUsageJavascriptTestBase {
         $node5->id() => [
           [
             'source_langcode' => $node5->language()->getId(),
-            'source_vid' => $node5->getRevisionId(),
+            'source_vid' => (int) $node5->getRevisionId(),
             'method' => 'entity_reference',
             'field_name' => 'field_eu_test_related_media',
             'count' => 1,

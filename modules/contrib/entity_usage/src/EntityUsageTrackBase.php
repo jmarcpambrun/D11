@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -133,7 +135,6 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
     ?array $always_track_base_fields = NULL,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->configuration += $this->defaultConfiguration();
     $this->usageService = $usage_service;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
@@ -160,7 +161,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static(
       $configuration,
       $plugin_id,
@@ -174,13 +175,6 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
       $container->get(UrlToEntityInterface::class),
       $container->getParameter('entity_usage')['always_track_base_fields'] ?? []
     );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function defaultConfiguration(): array {
-    return [];
   }
 
   /**
@@ -245,7 +239,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
         $target_entities = array_unique($target_entities);
         foreach ($target_entities as $target_entity) {
           [$target_type, $target_id] = explode("|", $target_entity);
-          $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? $source_entity->getRevisionId() : 0;
+          $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? (int) $source_entity->getRevisionId() : 0;
           $this->usageService->registerUsage($target_id, $target_type, $source_entity->id(), $source_entity->getEntityTypeId(), $source_entity->language()->getId(), $source_vid, $this->pluginId, $field_name);
         }
       }
@@ -285,7 +279,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
     $source_entity_type_id = $source_entity->getEntityTypeId();
     $all_fields_on_bundle = $this->entityFieldManager->getFieldDefinitions($source_entity_type_id, $source_entity->bundle());
     foreach ($all_fields_on_bundle as $field_name => $field) {
-      if (in_array($field->getType(), $field_types)) {
+      if (in_array($field->getType(), $field_types, TRUE)) {
         $referencing_fields_on_bundle[$field_name] = $field;
       }
     }
@@ -326,7 +320,7 @@ abstract class EntityUsageTrackBase extends PluginBase implements EntityUsageTra
     }
 
     $source_entity_langcode = $source_entity->language()->getId();
-    $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? $source_entity->getRevisionId() : 0;
+    $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId()) ? (int) $source_entity->getRevisionId() : 0;
     $original_targets = $this->usageService->listTargetEntitiesByFieldAndMethod($source_entity->id(), $source_entity->getEntityTypeId(), $source_entity_langcode, $source_vid, $this->pluginId, $field_name);
 
     // If a field references the same target entity, we record only one usage.

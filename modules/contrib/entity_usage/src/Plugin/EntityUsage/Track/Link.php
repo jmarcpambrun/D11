@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
 use Drupal\Core\Field\FieldItemInterface;
@@ -21,14 +23,14 @@ class Link extends EntityUsageTrackBase {
   /**
    * {@inheritdoc}
    */
-  public function getTargetEntities(FieldItemInterface $link): array {
-    /** @var \Drupal\link\LinkItemInterface $link */
-    if ($link->isExternal()) {
-      $url = $link->getUrl()->toString();
+  public function getTargetEntities(FieldItemInterface $item): array {
+    /** @var \Drupal\link\LinkItemInterface $item */
+    if ($item->isExternal()) {
+      $url = $item->getUrl()->toString();
       $entity_info = $this->urlToEntity->findEntityIdByUrl($url);
     }
     else {
-      $url = $link->getUrl();
+      $url = $item->getUrl();
       if ($url->isRouted()) {
         $entity_info = $this->urlToEntity->findEntityIdByRoutedUrl($url);
       }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
@@ -83,7 +85,7 @@ class EntityUsageLayoutBuilderTest extends KernelTestBase {
       new Section('layout_onecol', [], [
         'first-uuid' => new SectionComponent('first-uuid', 'content', [
           'id' => 'inline_block:' . $type->id(),
-          'block_revision_id' => $block->getRevisionId(),
+          'block_revision_id' => (int) $block->getRevisionId(),
         ]),
         // Ensure plugins that don't exist don't throw errors.
         'second-uuid' => new SectionComponent('second-uuid', 'content', [
@@ -150,7 +152,7 @@ class EntityUsageLayoutBuilderTest extends KernelTestBase {
     $type->save();
     $block = BlockContent::create(['type' => $type->id()]);
     $block->save();
-    $block_a_initial_revision = $block->getRevisionId();
+    $block_a_initial_revision = (int) $block->getRevisionId();
 
     // Create a new revision of the block.
     $block->setNewRevision();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -158,7 +160,7 @@ class EntityUpdateManager implements EntityUpdateManagerInterface {
     switch ($type) {
       case 'revision':
         assert($entity instanceof RevisionableInterface);
-        $this->usageService->deleteBySourceEntity($entity->id(), $entity->getEntityTypeId(), NULL, $entity->getRevisionId());
+        $this->usageService->deleteBySourceEntity($entity->id(), $entity->getEntityTypeId(), NULL, (int) $entity->getRevisionId());
         break;
 
       case 'translation':

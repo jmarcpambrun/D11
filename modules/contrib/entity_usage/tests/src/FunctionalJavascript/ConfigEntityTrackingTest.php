@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\Tests\entity_usage\Traits\EntityUsageLastEntityQueryTrait;
@@ -222,8 +224,8 @@ class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
     // Create a node referencing this view through a Block Field field.
     $this->drupalGet('/node/add/eu_test_ct');
     $page->fillField('title[0][value]', 'Node that points to a block with a view');
-    $assert_session->optionExists('field_eu_test_related_views[0][plugin_id]', "views_block:{$view_name}-block_1");
-    $page->selectFieldOption('field_eu_test_related_views[0][plugin_id]', "views_block:{$view_name}-block_1");
+    $assert_session->optionExists('field_eu_test_related_views[0][plugin_id]', "views_block:$view_name-block_1");
+    $page->selectFieldOption('field_eu_test_related_views[0][plugin_id]', "views_block:$view_name-block_1");
     $assert_session->assertWaitOnAjaxRequest();
     $this->saveHtmlOutput();
     $page->pressButton('Save');
@@ -239,7 +241,7 @@ class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
         $host_node->id() => [
           [
             'source_langcode' => $host_node->language()->getId(),
-            'source_vid' => $host_node->getRevisionId(),
+            'source_vid' => (int) $host_node->getRevisionId(),
             'method' => 'block_field',
             'field_name' => 'field_eu_test_related_views',
             'count' => 1,
@@ -356,7 +358,7 @@ class ConfigEntityTrackingTest extends EntityUsageJavascriptTestBase {
         $host_node->id() => [
           [
             'source_langcode' => $host_node->language()->getId(),
-            'source_vid' => $host_node->getRevisionId(),
+            'source_vid' => (int) $host_node->getRevisionId(),
             'method' => 'block_field',
             'field_name' => 'field_eu_test_related_blocks',
             'count' => 1,

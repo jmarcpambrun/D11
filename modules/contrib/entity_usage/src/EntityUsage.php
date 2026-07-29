@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -38,12 +40,12 @@ class EntityUsage implements EntityUsageBulkInterface {
    * Construct the EntityUsage service.
    */
   final public function __construct(
-    private Connection $connection,
-    private EventDispatcherInterface $eventDispatcher,
-    private ConfigFactoryInterface $configFactory,
-    private ModuleHandlerInterface $moduleHandler,
-    private EntityUsageTrackManager $trackManager,
-    private string $tableName,
+    readonly private Connection $connection,
+    readonly private EventDispatcherInterface $eventDispatcher,
+    readonly private ConfigFactoryInterface $configFactory,
+    readonly private ModuleHandlerInterface $moduleHandler,
+    readonly private EntityUsageTrackManager $trackManager,
+    readonly private string $tableName,
   ) {
   }
 
@@ -100,7 +102,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function registerUsage($target_id, $target_type, $source_id, $source_type, $source_langcode, $source_vid, $method, $field_name, $count = 1): void {
+  public function registerUsage(int|string $target_id, string $target_type, int|string $source_id, string $source_type, string $source_langcode, int $source_vid, string $method, string $field_name, int $count = 1): void {
     // Inline entity types (e.g. paragraphs) are never recorded as a source or
     // target — their inline tracking plugin records the host entity instead.
     $inline_entity_type_ids = $this->trackManager->getInlineEntityTypeIds();
@@ -143,7 +145,9 @@ class EntityUsage implements EntityUsageBulkInterface {
         $target_id_int = $this->isInt($target_id);
         $source_id_int = $this->isInt($source_id);
 
-        $key = $target_id . $target_type . $source_id . $source_type . $source_langcode . ($source_vid ?: 0) . $method . $field_name;
+        // Avoid key collisions by concatenating with a null byte character.
+        // @phpcs:ignore Drupal.Arrays.Array.LongLineDeclaration
+        $key = implode("\0", [$target_id, $target_type, $source_id, $source_type, $source_langcode, $source_vid ?: 0, $method, $field_name]);
         $this->inserts[$key] = [
           'target_id' => $target_id_int ? $target_id : 0,
           // Target ID string default value is an empty string.
@@ -241,7 +245,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function deleteBySourceEntity($source_id, $source_type, $source_langcode = NULL, $source_vid = NULL): void {
+  public function deleteBySourceEntity(int|string $source_id, string $source_type, ?string $source_langcode = NULL, ?int $source_vid = NULL): void {
     // Entities can have string IDs. We support that by using different columns
     // on each case.
     $source_id_column = $this->isInt($source_id) ? 'source_id' : 'source_id_string';
@@ -264,7 +268,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function deleteByTargetEntity($target_id, $target_type): void {
+  public function deleteByTargetEntity(int|string $target_id, string $target_type): void {
     // Entities can have string IDs. We support that by using different columns
     // on each case.
     $target_id_column = $this->isInt($target_id) ? 'target_id' : 'target_id_string';
@@ -281,7 +285,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function listSources(EntityInterface $target_entity, $nest_results = TRUE, int $limit = 0): array {
+  public function listSources(EntityInterface $target_entity, bool $nest_results = TRUE, int $limit = 0): array {
     // Entities can have string IDs. We support that by using different columns
     // on each case.
     $target_id_column = $this->isInt($target_entity->id()) ? 'target_id' : 'target_id_string';
@@ -346,7 +350,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function listTargets(EntityInterface $source_entity, $vid = NULL): array {
+  public function listTargets(EntityInterface $source_entity, ?int $vid = NULL): array {
     // Entities can have string IDs. We support that by using different columns
     // on each case.
     $source_id_column = $this->isInt($source_entity->id()) ? 'source_id' : 'source_id_string';
@@ -405,14 +409,15 @@ class EntityUsage implements EntityUsageBulkInterface {
    * @todo Fix bigint support once fixed in core. More info on #2680571 and
    *   #2989033.
    */
-  protected function isInt($value) {
-    return ((string) (int) $value === (string) $value) && strlen($value) < 11;
+  protected function isInt(int|string $value): bool {
+    $string_value = (string) $value;
+    return ((string) (int) $value === $string_value) && strlen($string_value) < 11;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function listUsage(EntityInterface $entity, $include_method = FALSE): array {
+  public function listUsage(EntityInterface $entity, bool $include_method = FALSE): array {
     $result = $this->listSources($entity);
     $references = [];
     foreach ($result as $source_entity_type => $entity_record) {
@@ -478,7 +483,7 @@ class EntityUsage implements EntityUsageBulkInterface {
   /**
    * {@inheritdoc}
    */
-  public function listTargetEntitiesByFieldAndMethod(string|int $source_id, string $source_entity_type_id, string $source_langcode, string|int $source_vid, string $method, string $field_name): array {
+  public function listTargetEntitiesByFieldAndMethod(string|int $source_id, string $source_entity_type_id, string $source_langcode, int $source_vid, string $method, string $field_name): array {
     // Entities can have string IDs. We support that by using different columns
     // on each case.
     $source_id_column = $this->isInt($source_id) ? 'source_id' : 'source_id_string';

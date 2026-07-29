@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\entity_usage\FunctionalJavascript;
 
 use Drupal\Tests\entity_usage\Traits\EntityUsageLastEntityQueryTrait;
@@ -72,7 +74,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node2->id() => [
           [
             'source_langcode' => $node2->language()->getId(),
-            'source_vid' => $node2->getRevisionId(),
+            'source_vid' => (int) $node2->getRevisionId(),
             'method' => 'entity_embed',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,
@@ -179,7 +181,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node2->id() => [
           [
             'source_langcode' => $node2->language()->getId(),
-            'source_vid' => $node2->getRevisionId(),
+            'source_vid' => (int) $node2->getRevisionId(),
             'method' => 'linkit',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,
@@ -302,7 +304,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node2->id() => [
           [
             'source_langcode' => $node2->language()->getId(),
-            'source_vid' => $node2->getRevisionId(),
+            'source_vid' => (int) $node2->getRevisionId(),
             'method' => 'html_link',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,
@@ -361,7 +363,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
     $this->assertEquals([], $usage);
 
     // Create node 5 referencing node 4 using an absolute URL.
-    $embedded_text = '<p>foo <a href="' . $node4->toUrl()->setAbsolute(TRUE)->toString() . '">linked text</a> bar</p>';
+    $embedded_text = '<p>foo <a href="' . $node4->toUrl()->setAbsolute()->toString() . '">linked text</a> bar</p>';
     $node5 = Node::create([
       'type' => 'eu_test_ct',
       'title' => 'Node 5',
@@ -378,7 +380,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node5->id() => [
           [
             'source_langcode' => $node5->language()->getId(),
-            'source_vid' => $node5->getRevisionId(),
+            'source_vid' => (int) $node5->getRevisionId(),
             'method' => 'html_link',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,
@@ -457,7 +459,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node7->id() => [
           [
             'source_langcode' => $node7->language()->getId(),
-            'source_vid' => $node7->getRevisionId(),
+            'source_vid' => (int) $node7->getRevisionId(),
             'method' => 'html_link',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,
@@ -520,7 +522,7 @@ class EmbeddedContentTest extends EntityUsageJavascriptTestBase {
         $node1->id() => [
           [
             'source_langcode' => $node1->language()->getId(),
-            'source_vid' => $node1->getRevisionId(),
+            'source_vid' => (int) $node1->getRevisionId(),
             'method' => 'media_embed',
             'field_name' => 'field_eu_test_rich_text',
             'count' => 1,

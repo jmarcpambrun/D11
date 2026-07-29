@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage;
 
 use Drupal\Component\Utility\UrlHelper;
@@ -14,21 +16,21 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *
  * Provides a BC wrapper and helper methods for the site domains configuration.
  */
-final class SiteDomains {
+readonly final class SiteDomains {
 
   /**
    * The list of domains information considered to be part of the site.
    *
    * @var list<array{host:string, path:string}>
    */
-  public readonly array $list;
+  public array $list;
 
   /**
    * The site subdirectory if it is installed in one.
    *
    * @var string
    */
-  public readonly string $subPath;
+  public string $subPath;
 
   public function __construct(
     ConfigFactoryInterface $configFactory,

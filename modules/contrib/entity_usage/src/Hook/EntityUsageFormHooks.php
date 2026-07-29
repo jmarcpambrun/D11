@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage\Hook;
 
 use Drupal\Core\Cache\CacheableMetadata;
@@ -47,12 +49,12 @@ class EntityUsageFormHooks {
     $edit_entity_types = $config->get('edit_warning_message_entity_types') ?: [];
     $delete_entity_types = $config->get('delete_warning_message_entity_types') ?: [];
     // Abort early if this entity is not configured to show any message.
-    if (!in_array($entity_type_id, $edit_entity_types) && !in_array($entity_type_id, $delete_entity_types)) {
+    if (!in_array($entity_type_id, $edit_entity_types, TRUE) && !in_array($entity_type_id, $delete_entity_types, TRUE)) {
       return;
     }
-    $is_edit_form = $form_object->getOperation() === 'edit' && in_array($entity_type_id, $edit_entity_types);
+    $is_edit_form = $form_object->getOperation() === 'edit' && in_array($entity_type_id, $edit_entity_types, TRUE);
     $is_delete_form = FALSE;
-    if (!$is_edit_form && in_array($entity_type_id, $delete_entity_types)) {
+    if (!$is_edit_form && in_array($entity_type_id, $delete_entity_types, TRUE)) {
       // Even if this is not on the UI, sites can define additional form classes
       // where the delete message can be shown.
       $form_classes = $config->get('delete_warning_form_classes') ?: [
@@ -76,7 +78,7 @@ class EntityUsageFormHooks {
       return;
     }
     $local_task_entity_types = $config->get('local_task_enabled_entity_types');
-    $usage_url = in_array($entity_type_id, $local_task_entity_types, TRUE) ? Url::fromRoute("entity.{$entity_type_id}.entity_usage", [
+    $usage_url = in_array($entity_type_id, $local_task_entity_types, TRUE) ? Url::fromRoute("entity.$entity_type_id.entity_usage", [
       $entity_type_id => $entity->id(),
     ]) : Url::fromRoute('entity_usage.usage_list', [
       'entity_type' => $entity_type_id,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
 use Drupal\Core\Entity\EntityInterface;
@@ -42,7 +44,7 @@ class EntityReferenceRevisionField extends EntityUsageTrackBase implements Entit
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $plugin = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $plugin->trackManager = $container->get('plugin.manager.entity_usage.track');
     return $plugin;
@@ -82,7 +84,7 @@ class EntityReferenceRevisionField extends EntityUsageTrackBase implements Entit
     $trackable_field_types = $this->getApplicableFieldTypes();
     $fields = array_keys($this->getReferencingFields($source_entity, $trackable_field_types));
     $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId())
-      ? $source_entity->getRevisionId() : 0;
+      ? (int) $source_entity->getRevisionId() : 0;
 
     foreach ($fields as $field_name) {
       if (!$source_entity->hasField($field_name) || $source_entity->{$field_name}->isEmpty()) {
@@ -149,7 +151,7 @@ class EntityReferenceRevisionField extends EntityUsageTrackBase implements Entit
 
     $source_entity_langcode = $source_entity->language()->getId();
     $source_vid = ($source_entity instanceof RevisionableInterface && $source_entity->getRevisionId())
-      ? $source_entity->getRevisionId() : 0;
+      ? (int) $source_entity->getRevisionId() : 0;
     $original_targets = $this->usageService->listTargetEntitiesByFieldAndMethod(
       $source_entity->id(),
       $source_entity->getEntityTypeId(),

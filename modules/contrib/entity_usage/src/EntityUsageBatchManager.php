@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage;
 
 use Drupal\Core\Batch\BatchBuilder;
@@ -31,32 +33,34 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   /**
    * Table name to bulk entity usage data to.
    */
-  const BULK_TABLE_NAME = 'entity_usage_bulk';
+  const string BULK_TABLE_NAME = 'entity_usage_bulk';
 
   /**
    * Table name to backup new entity usage data to.
    */
-  const BACKUP_TABLE_NAME = 'entity_usage_backup';
+  const string BACKUP_TABLE_NAME = 'entity_usage_backup';
 
   /**
    * The size of the batch for the revision queries.
    */
-  const REVISION_BATCH_SIZE = 15;
+  const int REVISION_BATCH_SIZE = 15;
 
   /**
    * The number of revisions to load when in bulk mode.
    */
-  const BULK_BATCH_SIZE = 200;
+  const int BULK_BATCH_SIZE = 200;
 
   /**
    * The number of IDs to load when in bulk mode.
    */
-  const BULK_ID_LOAD = 100000;
+  const int BULK_ID_LOAD = 100000;
 
   /**
    * The entity_usage table's fields not including the usage_id field.
+   *
+   * @var string[]
    */
-  private const FIELD_LIST = [
+  private const array FIELD_LIST = [
     'target_id',
     'target_id_string',
     'target_type',
@@ -75,14 +79,10 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    */
   final public function __construct(
     TranslationInterface $stringTranslation,
-    private EntityUsageTrackManager $trackManager,
-    private ?EntityUsageInterface $entityUsage = NULL,
+    readonly private EntityUsageTrackManager $trackManager,
+    readonly private EntityUsageInterface $entityUsage,
   ) {
     $this->setStringTranslation($stringTranslation);
-    if ($entityUsage === NULL) {
-      // @phpstan-ignore-next-line
-      $this->entityUsage = \Drupal::service('entity_usage.usage');
-    }
   }
 
   /**
@@ -98,7 +98,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    *   (optional) If TRUE, existing usage records won't be deleted. Defaults to
    *   FALSE.
    */
-  public function recreate($keep_existing_records = FALSE): void {
+  public function recreate(bool $keep_existing_records = FALSE): void {
     $batch = $this->generateBatch($keep_existing_records);
     batch_set($batch);
   }
@@ -113,7 +113,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    * @return array
    *   The batch array.
    */
-  public function generateBatch($keep_existing_records = FALSE): array {
+  public function generateBatch(bool $keep_existing_records = FALSE): array {
     $batch = new BatchBuilder();
     $batch
       ->setTitle($this->t('Updating entity usage statistics.'))
@@ -254,7 +254,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         $context['sandbox']['progress']++;
         $target_id_column = (int) $insert['target_id'] > 0 ? 'target_id' : 'target_id_string';
         $source_id_column = (int) $insert['source_id'] > 0 ? 'source_id' : 'source_id_string';
-        $event = new EntityUsageEvent($insert[$target_id_column], $insert['target_type'], $insert[$source_id_column], $insert['source_type'], $insert['source_langcode'], $insert['source_vid'], $insert['method'], $insert['field_name'], $insert['count']);
+        $event = new EntityUsageEvent($insert[$target_id_column], $insert['target_type'], $insert[$source_id_column], $insert['source_type'], $insert['source_langcode'], (int) $insert['source_vid'], $insert['method'], $insert['field_name'], (int) $insert['count']);
         $dispatcher->dispatch($event, Events::USAGE_REGISTER);
       }
 
@@ -307,7 +307,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    * @param BatchContext $context
    *   Batch context.
    */
-  public static function updateSourcesBatchWorker($entity_type_id, $keep_existing_records, &$context): void {
+  public static function updateSourcesBatchWorker(string $entity_type_id, bool $keep_existing_records, array &$context): void {
     $entity_type = \Drupal::entityTypeManager()->getDefinition($entity_type_id);
     $entity_storage = \Drupal::entityTypeManager()->getStorage($entity_type->id());
     $entity_usage = \Drupal::service('entity_usage.usage');
@@ -367,13 +367,13 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       $context['sandbox']['revision_ids'] = array_keys(
         $entity_storage->getQuery()->allRevisions()
           ->accessCheck(FALSE)
-          ->sort($entity_type->getKey('revision'), 'ASC')
+          ->sort($entity_type->getKey('revision'))
           ->range(0, static::BULK_ID_LOAD)
           ->execute()
       );
       $context['sandbox']['total'] = $entity_storage->getQuery()->allRevisions()
         ->accessCheck(FALSE)
-        ->sort($entity_type->getKey('revision'), 'ASC')
+        ->sort($entity_type->getKey('revision'))
         ->count()
         ->execute();
     }
@@ -386,7 +386,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
 
       try {
         foreach ($entity_storage->loadMultipleRevisions($revision_ids) as $entity_revision) {
-          $revision_id = $entity_revision->getRevisionId();
+          $revision_id = (int) $entity_revision->getRevisionId();
           \Drupal::service('entity_usage.entity_update_manager')->trackUpdateOnCreation($entity_revision);
           $context['sandbox']['current_id'] = $revision_id;
         }
@@ -405,7 +405,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         $entity_storage->getQuery()->allRevisions()
           ->condition($entity_type_key, $context['sandbox']['current_id'], '>')
           ->accessCheck(FALSE)
-          ->sort($entity_type->getKey('revision'), 'ASC')
+          ->sort($entity_type->getKey('revision'))
           ->range(0, static::BULK_BATCH_SIZE)
           ->execute()
       );
@@ -416,13 +416,13 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         $entity_storage->getQuery()->allRevisions()
           ->condition($entity_type_key, $context['sandbox']['current_id'], '>')
           ->accessCheck(FALSE)
-          ->sort($entity_type->getKey('revision'), 'ASC')
+          ->sort($entity_type->getKey('revision'))
           ->range(0, static::BULK_ID_LOAD)
           ->execute()
       );
       $context['sandbox']['total'] = $entity_storage->getQuery()->allRevisions()
         ->accessCheck(FALSE)
-        ->sort($entity_type->getKey('revision'), 'ASC')
+        ->sort($entity_type->getKey('revision'))
         ->count()
         ->execute();
     }

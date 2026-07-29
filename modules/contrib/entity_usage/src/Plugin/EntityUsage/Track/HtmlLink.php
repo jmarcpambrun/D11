@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\entity_usage\Plugin\EntityUsage\Track;
 
 use Drupal\Component\Utility\Html;
@@ -44,7 +46,7 @@ class HtmlLink extends TextFieldEmbedBase implements EntityUsageTrackUrlUpdateIn
   /**
    * {@inheritdoc}
    */
-  public function parseEntitiesFromText($text) {
+  public function parseEntitiesFromText(string $text): array {
     $dom = Html::load($text);
     $xpath = new \DOMXPath($dom);
     $entities = [];
