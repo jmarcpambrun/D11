@@ -50,7 +50,7 @@
         "drupal/core-vendor-hardening": "^10.2",
         "drupal/counter": "^1.5",
         "drupal/csv_serialization": "4.0.1",
-        "drupal/ctools": "4.1.0",
+        "drupal/ctools": "^4.1",
         "drupal/devel": "5.5.0",
         "drupal/devel_entity_updates": "^5.0",
         "drupal/drd": "4.1.7",
