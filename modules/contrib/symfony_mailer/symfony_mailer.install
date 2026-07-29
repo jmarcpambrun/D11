@@ -98,14 +98,11 @@ function symfony_mailer_update_20002() {
       }
     }
 
-    if (array_filter($override, fn($x) => $x != 3)) {
-      // At least one override is enabled.
-      if (!$module_handler->moduleExists('mailer_override')) {
-        $module_installer->install(['mailer_override']);
-      }
-
-      $config_factory->getEditable('mailer_override.settings')->set('override', $override)->save();
+    if (!$module_handler->moduleExists('mailer_override')) {
+      $module_installer->install(['mailer_override']);
     }
+
+    $config_factory->getEditable('mailer_override.settings')->set('override', $override)->save();
     $settings->delete();
   }
 }

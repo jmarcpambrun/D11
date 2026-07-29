@@ -57,6 +57,10 @@ class LegacyEmailTest extends SymfonyMailerTestBase {
     $this->assertBodyContains("This is the default legacy test email template.");
     $this->assertBodyContains("Rendered in theme: stark");
 
+    // The plain-text alternative was supplied as a Markup object; it must be
+    // accepted (not throw a TypeError) and stored as the text body.
+    $this->assertStringContainsString("This is the plain-text alternative.", $this->email->getTextBody());
+
     // Check attachment.
     $this->assertCount(1, $this->email->getAttachments());
     $this->assertAttachment(LegacyTestEmailForm::ATTACHMENT_URI);

@@ -59,24 +59,22 @@ class MailerLookup extends DefaultPluginManager implements MailerLookupInterface
    * {@inheritdoc}
    */
   public function processDefinition(&$definition, $plugin_id): void {
-    // Look up the related entity or module, which can be used to generate the
-    // label and provider.
-    [$base_id] = explode('.', $plugin_id);
+    // Set the provider from the first part of the plugin ID, which is required
+    // to be the module name. We allow one module to proxy a mailer definition
+    // for another. The proxy will be ignored if the target module is missing
+    // based on this provider setting.
+    [$module] = explode('.', $plugin_id);
+    $definition['provider'] = $module;
+
+    // Default the label from the related entity or module.
     if ($meta_key = $definition['metadata_key']) {
       if ($entity_def = $this->entityTypeManager->getDefinition($meta_key, FALSE)) {
         $definition['label'] ??= $entity_def->getLabel();
-        $definition['provider'] = $entity_def->getProvider();
       }
     }
-    elseif ($this->moduleHandler->moduleExists($base_id)) {
-      $definition['label'] ??= $this->moduleList->getName($base_id);
+    elseif ($this->moduleHandler->moduleExists($module)) {
+      $definition['label'] ??= $this->moduleList->getName($module);
     }
-
-    // Normally, the provider is defaulted from the namespace, but we prefer
-    // instead to set from the ID. This allows one module to proxy a
-    // definition for another, and it will be ignored if the target module
-    // isn't enabled.
-    $definition['provider'] = $base_id;
 
     $definition['labels'] = [$definition['label']];
     $this->checkSubDef($definition);
@@ -166,6 +164,7 @@ class MailerLookup extends DefaultPluginManager implements MailerLookupInterface
       $sub_def['metadata_key'] ??= $definition['metadata_key'];
       $sub_def['required_config'] ??= $definition['required_config'];
       $sub_def['labels'] = array_merge($definition['labels'], [$sub_def['label']]);
+      $sub_def['provider'] = $definition['provider'];
       $sub_def['token_types'] ??= [];
       $sub_def['token_types'] += $definition['token_types'];
       $sub_def['variables'] ??= [];

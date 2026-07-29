@@ -189,8 +189,7 @@ class MailerPolicy extends ConfigEntityBase implements EntityWithPluginCollectio
    * {@inheritdoc}
    */
   public function getEntityLabel(): string|MarkupInterface {
-    $this->parse();
-    if (empty($this->mailerDefinition['metadata_key'])) {
+    if (empty($this->getMailerDefinition()['metadata_key'])) {
       return '';
     }
     if ($this->entity) {
@@ -290,7 +289,7 @@ class MailerPolicy extends ConfigEntityBase implements EntityWithPluginCollectio
     if ($this->entity) {
       $this->addDependency('config', $this->entity->getConfigDependencyName());
     }
-    elseif ($provider = $this->mailerDefinition['provider'] ?? NULL) {
+    elseif ($provider = $this->getMailerDefinition()['provider'] ?? NULL) {
       $this->addDependency('module', $provider);
     }
     return $this;
@@ -308,6 +307,7 @@ class MailerPolicy extends ConfigEntityBase implements EntityWithPluginCollectio
     $mailer_info->setClass('');
     $this->mailerDefinition = $mailer_info->get();
     $this->mailerLookup->processDefinition($this->mailerDefinition, $this->id);
+    unset($this->mailerDefinition['provider']);
   }
 
   /**

@@ -5,6 +5,7 @@
  * Hook implementations for the Mailer Override legacy email test module.
  */
 
+use Drupal\Core\Render\Markup;
 use Drupal\mailer_override_legacy_test\Form\LegacyTestEmailForm;
 
 /**
@@ -17,6 +18,10 @@ function mailer_override_legacy_test_mail($key, &$message, $params) {
     $message['body'][] = mailer_override_legacy_test_add_template_to_body();
     $message['headers']['Cc'] = LegacyTestEmailForm::ADDRESS_CC;
     $message['headers']['bcc'] = LegacyTestEmailForm::ADDRESS_BCC;
+    // A plain-text alternative supplied as a Markup object, as senders such as
+    // Easy Email and Commerce do by rendering a template. Core's PhpMail cast
+    // it to a string implicitly, so the legacy bridge must accept it too.
+    $message['plain'] = Markup::create('This is the plain-text alternative.');
   }
 }
 

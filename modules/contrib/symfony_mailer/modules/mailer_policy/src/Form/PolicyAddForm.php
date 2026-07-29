@@ -72,7 +72,16 @@ class PolicyAddForm extends EntityForm {
 
       $options2 = [];
       foreach ($definition['sub_defs'] as $id => $sub_def) {
-        $options2[$id] = $sub_def['label'];
+        // A legacy hook_mail() module exposes a single wildcard sub-type
+        // ("*") for its unknown sub-definitions. Don't offer it as a
+        // selectable option: "*" is an illegal character in a config name
+        // and, being the only option, the select would force the user to
+        // pick it. Skipping it here leaves the free text Tag 2 field in
+        // place (blank means "all"), while keeping the "*" sub-definition
+        // available to MailerLookup for label resolution.
+        if ($id !== '*') {
+          $options2[$id] = $sub_def['label'];
+        }
       }
       asort($options2);
 

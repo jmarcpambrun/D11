@@ -40,6 +40,14 @@ class UserMailer extends ComponentMailerBase implements UserMailerInterface {
       $this->newEmail("{$op}_admin")->setEntityParam($user)->send();
     }
 
+    if (!$user->getEmail()) {
+      \Drupal::logger('user')->info('Could not send a user email for the operation "%op" because the user account %account does not have an email address.', [
+        '%op' => $op,
+        '%account' => $user->getDisplayName(),
+      ]);
+      return FALSE;
+    }
+
     return $this->newEmail($op)
       ->setEntityParam($user)
       ->setTo($user)

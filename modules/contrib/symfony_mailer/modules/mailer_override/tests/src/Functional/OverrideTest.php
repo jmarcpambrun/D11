@@ -40,6 +40,7 @@ class OverrideTest extends SymfonyMailerTestBase {
    */
   public function testForm() {
     $this->container->get('module_installer')->install(['contact', 'user']);
+    $this->resetAll();
     $session = $this->assertSession();
     $this->drupalLogin($this->adminUser);
 

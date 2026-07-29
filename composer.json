@@ -122,7 +122,7 @@
         "drupal/seven": "^2.0-beta6",
         "drupal/stable": "2.1",
         "drupal/statistics": "1.0.1",
-        "drupal/symfony_mailer": "^2.0.0-alpha1",
+        "drupal/symfony_mailer": "^2.0",
         "drupal/tfa": "2.0-alpha5",
         "drupal/token": "1.17",
         "drupal/tour": "^3.0",

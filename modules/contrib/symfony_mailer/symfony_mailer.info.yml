@@ -7,7 +7,7 @@ dependencies:
   - symfony_mailer:mailer_transport
   - drupal:filter
 
-# Information added by Drupal.org packaging script on 2026-05-22
-version: '2.0.1'
+# Information added by Drupal.org packaging script on 2026-07-25
+version: '2.0.2'
 project: 'symfony_mailer'
-datestamp: 1779430121
+datestamp: 1784974469

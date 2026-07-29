@@ -150,7 +150,9 @@ class LegacyMailerHelper implements LegacyMailerHelperInterface {
 
     // Plain-text version.
     if (isset($message['plain'])) {
-      $email->setTextBody($message['plain']);
+      // The legacy mail API permits a stringifiable Markup object here (core's
+      // PhpMail cast it implicitly); setTextBody() requires a string.
+      $email->setTextBody((string) $message['plain']);
     }
 
     // Parameters.
