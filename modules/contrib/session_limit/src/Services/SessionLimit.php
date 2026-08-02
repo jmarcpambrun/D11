@@ -3,6 +3,7 @@
 namespace Drupal\session_limit\Services;
 
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -270,15 +271,18 @@ class SessionLimit implements EventSubscriberInterface {
       return;
     }
 
-    $route = $this->getRouteMatch();
-    $current_path = $route->getRouteObject()->getPath();
+    $route_name = $this->getRouteMatch()->getRouteName();
 
-    $bypass_paths = [
-      '/session-limit',
-      '/user/logout',
+    $bypass_routes = [
+      'session_limit.limit_form',
+      'user.logout',
+      'system.css_asset',
+      'system.js_asset',
+      'image.style_public',
+      'image.style_private',
     ];
 
-    if (in_array($current_path, $bypass_paths)) {
+    if (in_array($route_name, $bypass_routes, TRUE)) {
       // Don't session check on these routes.
       $event->setBypass(TRUE);
       return;
@@ -575,7 +579,8 @@ class SessionLimit implements EventSubscriberInterface {
    *   Logout message.
    */
   public function getMessage(AccountInterface $account) {
-    return new FormattableMarkup($this->configFactory->get('session_limit_logged_out_display_message'), ['@number' => $this->getUserMaxSessions($account)]);
+    $message = Html::escape($this->configFactory->get('session_limit_logged_out_display_message'));
+    return new FormattableMarkup($message, ['@number' => $this->getUserMaxSessions($account)]);
   }
 
 }

@@ -27,7 +27,7 @@ class SessionLimit extends Variable {
       ->condition('v.name', 'session_limit_rid_%', 'LIKE')
       ->execute();
     foreach ($rids as $item) {
-      $row->setSourceProperty($item['name'], unserialize($item['value']));
+      $row->setSourceProperty($item['name'], unserialize($item['value'], ['allowed_classes' => FALSE]));
     }
     return parent::prepareRow($row);
   }

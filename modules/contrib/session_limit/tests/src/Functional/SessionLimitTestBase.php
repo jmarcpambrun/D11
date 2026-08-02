@@ -5,9 +5,9 @@ namespace Drupal\Tests\session_limit\Functional;
 use Drupal\Tests\BrowserTestBase;
 
 /**
- * Defines a base class for testing the Security.txt module.
+ * Defines a base class for testing the Session Limit module.
  *
- * @group securitytxt
+ * @group session_limit
  */
 abstract class SessionLimitTestBase extends BrowserTestBase {
 

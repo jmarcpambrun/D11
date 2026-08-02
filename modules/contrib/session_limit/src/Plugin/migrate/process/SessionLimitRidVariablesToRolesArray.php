@@ -34,7 +34,7 @@ class SessionLimitRidVariablesToRolesArray extends ProcessPluginBase implements 
   protected $migrateLookup;
 
   /**
-   * Constructs a SesionLimit object.
+   * Constructs a SessionLimit object.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -56,7 +56,7 @@ class SessionLimitRidVariablesToRolesArray extends ProcessPluginBase implements 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition, MigrationInterface $migration = NULL) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition, ?MigrationInterface $migration = NULL) {
     return new static(
       $configuration,
       $plugin_id,
