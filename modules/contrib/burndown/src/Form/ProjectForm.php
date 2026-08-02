@@ -79,14 +79,15 @@ class ProjectForm extends ContentEntityForm {
         $this->messenger()->addMessage($this->t('Created the %label Project.', [
           '%label' => $entity->label(),
         ]));
+        $form_state->setRedirect('entity.burndown_project.collection');
         break;
 
       default:
         $this->messenger()->addMessage($this->t('Saved the %label Project.', [
           '%label' => $entity->label(),
         ]));
+        $form_state->setRedirect('entity.burndown_project.canonical', ['burndown_project' => $entity->id()]);
     }
-    $form_state->setRedirect('entity.burndown_project.canonical', ['burndown_project' => $entity->id()]);
   }
 
 }

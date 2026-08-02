@@ -30,7 +30,11 @@ class ProjectListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     /** @var \Drupal\burndown\Entity\Project $entity */
-    $row['id'] = $entity->getShortcode() . ' - ' . $entity->label();
+    $row['id'] = Link::createFromRoute(
+      $entity->getShortcode() . ' - ' . $entity->label(),
+      'entity.burndown_project.canonical',
+      ['burndown_project' => $entity->id()]
+    );
     $row['backlog'] = Link::createFromRoute(
       $this->t('Backlog'),
       'burndown.backlog',
