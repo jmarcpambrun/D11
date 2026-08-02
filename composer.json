@@ -101,7 +101,7 @@
         "drupal/multivalue_form_element": "1.0.0-beta8",
         "drupal/openai": "1.0.0-beta6",
         "drupal/page_manager": "^4.0",
-        "drupal/paragraphs": "^1.21",
+        "drupal/paragraphs": "^1.22",
         "drupal/pathologic": "^2.0",
         "drupal/phpmailer_smtp": "^3.0-alpha",
         "drupal/private_files_download_permission": "3.1.3",
