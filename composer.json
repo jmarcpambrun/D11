@@ -60,7 +60,7 @@
         "drupal/eca_ui": "3.1.0",
         "drupal/eca_webform": "2.0.2",
         "drupal/encrypt": "^3.3",
-        "drupal/entity": "1.6",
+        "drupal/entity": "^1.7",
         "drupal/entity_browser": "2.15",
         "drupal/entity_print": "2.18",
         "drupal/entity_reference_revisions": "1.14",
