@@ -447,11 +447,7 @@ class RssFields extends StylePluginBase {
             if (!empty($rss_element['value'])) {
               // Render arrays.
               if (is_array($rss_element['value'])) {
-                $render_element['#value'] = method_exists($renderer, 'renderInIsolation') ?
-                  $renderer->renderInIsolation($rss_element['value'], FALSE) :
-                  // @todo use DeprecationHelper when D9 support will be dropped
-                  // @phpstan-ignore method.deprecated
-                  $renderer->renderPlain($rss_element['value'], FALSE);
+                $render_element['#value'] = $renderer->renderInIsolation($rss_element['value'], FALSE);
               }
               // Simple values.
               else {

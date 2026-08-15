@@ -141,11 +141,7 @@ function views_rss_media_preprocess_item_thumbnail(&$variables) {
     elseif (!empty($item['rendered']['#media'])) {
       // Render the output so the URL can be extracted.
       $renderer = \Drupal::service('renderer');
-      $output = method_exists($renderer, 'renderInIsolation') ?
-        $renderer->renderInIsolation($item['rendered'], FALSE) :
-        // @todo use DeprecationHelper when D9 support will be dropped
-        // @phpstan-ignore method.deprecated
-        $renderer->renderPlain($item['rendered'], FALSE);
+      $output = $renderer->renderInIsolation($item['rendered'], FALSE);
 
       // Extract the URL from the output string.
       preg_match('/src="(.*)" width="(.*)" height="(.*)" alt="([^"]*)"/', $output, $matches);

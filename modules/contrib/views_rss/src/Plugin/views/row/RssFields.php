@@ -224,7 +224,7 @@ class RssFields extends RowPluginBase {
             $field_name = $this->options['item'][$namespace][$module][$definition['group']][$element_name];
           }
           else {
-            $field_name = NULL;
+            $field_name = '';
           }
 
           // Assign values for all elements, not only those defined in view

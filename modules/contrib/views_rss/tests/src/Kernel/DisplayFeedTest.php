@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\views_rss\Kernel;
 
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\Url;
+use Drupal\filter\FilterFormatRepositoryInterface;
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
@@ -81,6 +83,7 @@ class DisplayFeedTest extends EntityKernelTestBase {
     $this->installEntitySchema('file');
     $this->installEntitySchema('node');
     $this->installEntitySchema('taxonomy_term');
+    $this->installConfig('system');
     $this->installConfig('filter');
     $this->installConfig('node');
     $this->installConfig('views_rss');
@@ -129,8 +132,8 @@ class DisplayFeedTest extends EntityKernelTestBase {
       'title' => $node_title,
       'body' => [
         0 => [
-          'value' => 'A paragraph',
-          'format' => filter_default_format(),
+          'value' => 'A paragraph containing characters & content that should be escaped.',
+          'format' => DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(FilterFormatRepositoryInterface::class)->getDefaultFormat()->id(), fn() => filter_default_format()),
         ],
       ],
       'field_image' => $this->image,
@@ -152,8 +155,10 @@ class DisplayFeedTest extends EntityKernelTestBase {
     $this->assertEquals($node_link, $xml->channel->item[0]->link);
     $this->assertEquals($node_link, $xml->channel->item[0]->comments);
     $this->assertEquals('Weather', (string) $xml->channel->item[0]->category);
-    // Verify HTML is properly escaped in the description field.
-    $this->assertStringContainsString('&lt;p&gt;A paragraph&lt;/p&gt;', (string) $xml->channel->item[0]->description);
+    // Verify HTML is properly escaped in the description field (getting the
+    // HTML tags here means that the XML parser did not interpret the
+    // description as XML).
+    $this->assertStringContainsString('<p>A paragraph containing characters &amp; content that should be escaped.</p>', (string) $xml->channel->item[0]->description);
 
     $enclosure = $xml->channel->item[0]->enclosure;
     $this->assertEquals(\Drupal::service('file_url_generator')->generateAbsoluteString('public://example.jpg'), $enclosure['url']);
@@ -185,7 +190,7 @@ class DisplayFeedTest extends EntityKernelTestBase {
       'body' => [
         0 => [
           'value' => 'A paragraph',
-          'format' => filter_default_format(),
+          'format' => DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.4.0', fn() => \Drupal::service(FilterFormatRepositoryInterface::class)->getDefaultFormat()->id(), fn() => filter_default_format()),
         ],
       ],
       'field_image' => $this->image,

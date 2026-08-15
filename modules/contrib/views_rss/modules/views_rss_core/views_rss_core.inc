@@ -425,6 +425,7 @@ function views_rss_core_preprocess_item_source(&$variables) {
     ->setOption('query', \Drupal::request()->query->all())
     ->toString();
   $variables['elements'][0]['attributes']['url'] = $url;
+  $variables['view']->element['#cache']['contexts'][] = 'url.query_args';
 }
 
 /**
@@ -465,7 +466,9 @@ function _convert_to_external_file(&$filename, $force_http = TRUE) {
 function views_rss_core_preprocess_item_link(&$variables) {
   // Hack for using CDN files.
   // @todo make this more generalized to handle file and image entities.
-  _convert_to_external_file($variables['elements'][0]['value']);
+  if (!empty($variables['elements'][0]['value'])) {
+    _convert_to_external_file($variables['elements'][0]['value']);
+  }
 }
 
 /**

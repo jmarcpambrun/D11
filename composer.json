@@ -133,7 +133,7 @@
         "drupal/upgrade_status": "^5.0-alpha",
         "drupal/views_bulk_operations": "^4.4",
         "drupal/views_data_export": "^1.9",
-        "drupal/views_rss": "2.4",
+        "drupal/views_rss": "^2.5",
         "drupal/views_slideshow": "5.0.1",
         "drupal/views_templates": "1.7",
         "drupal/views_timelinejs": "4.2.2",
