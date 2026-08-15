@@ -2,10 +2,13 @@
 
 namespace Drupal\burndown\Form;
 
+use Drupal\burndown\Entity\SprintInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides a form for deleting a Sprint revision.
@@ -24,7 +27,7 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
   /**
    * The Sprint storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\Core\Entity\RevisionableStorageInterface
    */
   protected $sprintStorage;
 
@@ -36,12 +39,24 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
   protected $connection;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->sprintStorage = $container->get('entity_type.manager')->getStorage('burndown_sprint');
+    $storage = $container->get('entity_type.manager')->getStorage('burndown_sprint');
+    if (!$storage instanceof RevisionableStorageInterface) {
+      throw new \RuntimeException('Sprint storage must be revisionable.');
+    }
+    $instance->sprintStorage = $storage;
     $instance->connection = $container->get('database');
+    $instance->dateFormatter = $container->get('date.formatter');
     return $instance;
   }
 
@@ -57,7 +72,7 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to delete the revision from %revision-date?', [
-      '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+      '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
     ]);
   }
 
@@ -79,7 +94,11 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $burndown_sprint_revision = NULL) {
-    $this->revision = $this->SprintStorage->loadRevision($burndown_sprint_revision);
+    $revision = $this->sprintStorage->loadRevision($burndown_sprint_revision);
+    if (!$revision instanceof SprintInterface) {
+      throw new NotFoundHttpException();
+    }
+    $this->revision = $revision;
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -89,7 +108,7 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->SprintStorage->deleteRevision($this->revision->getRevisionId());
+    $this->sprintStorage->deleteRevision($this->revision->getRevisionId());
 
     $this->logger('content')
       ->notice('Sprint: deleted %title revision %revision.',
@@ -102,7 +121,7 @@ class SprintRevisionDeleteForm extends ConfirmFormBase {
       ->addMessage(
         $this->t('Revision from %revision-date of Sprint %title has been deleted.',
           [
-            '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+            '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
             '%title' => $this->revision->label(),
           ]
         )

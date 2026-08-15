@@ -210,7 +210,10 @@ class Project extends EditorialContentEntityBase implements ProjectInterface {
         else {
           $key = $val[0];
         }
+        // phpcs:disable Drupal.Semantics.FunctionT.NotLiteralString
         $values[$key] = $this->t(strval($val[1]));
+        // phpcs:enable Drupal.Semantics.FunctionT.NotLiteralString
+
       }
     }
 
@@ -316,14 +319,17 @@ class Project extends EditorialContentEntityBase implements ProjectInterface {
    * {@inheritdoc}
    */
   public function getOwner() {
-    return $this->get('user_id')->entity;
+    /** @var \Drupal\user\UserInterface|null $owner */
+    $owner = $this->get('user_id')->entity;
+    return $owner;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getOwnerId() {
-    return $this->get('user_id')->target_id;
+    $owner_id = $this->get('user_id')->target_id;
+    return is_numeric($owner_id) ? (int) $owner_id : NULL;
   }
 
   /**
@@ -361,6 +367,7 @@ class Project extends EditorialContentEntityBase implements ProjectInterface {
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+    /** @var \Drupal\Core\Field\BaseFieldDefinition[] $fields */
     $fields = parent::baseFieldDefinitions($entity_type);
 
     // Add the published field.

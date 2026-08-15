@@ -44,11 +44,13 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
 
   /**
    * Constructs a CompletedController object.
+   *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entityTypeManager.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   A request stack.
    * @param \Drupal\Core\Session\AccountInterface $currentUser
+   *   The current user.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
@@ -91,7 +93,7 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The currently logged-in user.
    *
-   * @return \Drupal\Core\Access\AccessResultInterface
+   * @return \Drupal\Core\Access\AccessResult
    *   The access result.
    */
   public function checkAccess(AccountInterface $account): AccessResult {
@@ -144,13 +146,13 @@ class CompletedController extends ControllerBase implements ContainerInjectionIn
           $lane_tasks = Task::getTasksForSwimlane($code, $lane->getName());
 
           // Check if tasks are actually completed.
-		  if(!empty($lane_tasks)) {
+          if (!empty($lane_tasks)) {
             foreach ($lane_tasks as $lane_task) {
               if ($lane_task->isCompleted()) {
                 $tasks[] = $lane_task;
               }
             }
-		  }
+          }
         }
       }
 

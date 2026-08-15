@@ -96,13 +96,20 @@ interface TaskInterface extends ContentEntityInterface, RevisionLogInterface, En
   public function setRevisionUserId($uid);
 
   /**
+   * Gets the project entity this task belongs to.
+   *
+   * @return \Drupal\burndown\Entity\ProjectInterface|null
+   *   The project entity, if set.
+   */
+  public function getProject();
+
+  /**
    * Gets the Project id.
    *
    * @return string
    *   The Project id this task belongs to.
    */
   public function getProjectId(): ?string;
-
 
   /**
    * Gets the Project shortcode.
@@ -111,6 +118,5 @@ interface TaskInterface extends ContentEntityInterface, RevisionLogInterface, En
    *   The Project shortcode this task belongs to.
    */
   public function getProjectShortcode(): string;
-
 
 }

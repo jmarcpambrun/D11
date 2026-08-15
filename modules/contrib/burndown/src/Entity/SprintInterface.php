@@ -95,4 +95,12 @@ interface SprintInterface extends ContentEntityInterface, RevisionLogInterface, 
    */
   public function setRevisionUserId($uid);
 
+  /**
+   * Gets the project entity this sprint belongs to.
+   *
+   * @return \Drupal\burndown\Entity\ProjectInterface|null
+   *   The project entity, if set.
+   */
+  public function getProject();
+
 }

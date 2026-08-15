@@ -34,7 +34,6 @@ class ProjectForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\burndown\Entity\Project $entity */
     $form = parent::buildForm($form, $form_state);
 
     if (!$this->entity->isNew()) {
@@ -88,6 +87,7 @@ class ProjectForm extends ContentEntityForm {
         ]));
         $form_state->setRedirect('entity.burndown_project.canonical', ['burndown_project' => $entity->id()]);
     }
+    return $status;
   }
 
 }

@@ -1,7 +1,7 @@
 .burndown_task {
-  background-color: white;
   cursor: move;
-  cursor: -webkit-grabbing;
+  cursor: grabbing;
+  background-color: white;
 }
 
 #backlog .burndown_task,
@@ -11,7 +11,7 @@
 }
 
 #backlog .burndown_task > div,
-#completed  .burndown_task > div {
+#completed .burndown_task > div {
   margin: 0 0.25em;
 }
 
@@ -80,33 +80,33 @@
 }
 
 .tags {
-  height: 25px;
   overflow: hidden;
+  height: 25px;
 }
 
 .tag {
-  border-radius: 8px;
   float: left;
-  padding: 2px 8px;
   margin: 0 5px;
+  padding: 2px 8px;
+  border-radius: 8px;
 }
 
 .priority {
   width: 30px;
   height: 30px;
   margin: 0 4px 0 0;
-  background-size: 24px 24px;
-  background-position: center;
   background-repeat: no-repeat;
+  background-position: center;
+  background-size: 24px 24px;
 }
 
 .circle {
   display: flex;
-  justify-content: center;
   align-items: center;
-  border-radius: 50%;
+  justify-content: center;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
+  border-radius: 50%;
 }
 
 .user_circle {
@@ -133,41 +133,41 @@
 }
 
 .priority.priority-0 {
-  background-image: url('../icons/priority/0-trivial.png');
+  background-image: url("../icons/priority/0-trivial.png");
 }
 
 .priority.priority-1 {
-  background-image: url('../icons/priority/1-low.png');
+  background-image: url("../icons/priority/1-low.png");
 }
 
 .priority.priority-2 {
-  background-image: url('../icons/priority/2-medium.png');
+  background-image: url("../icons/priority/2-medium.png");
 }
 
 .priority.priority-3 {
-  background-image: url('../icons/priority/3-high.png');
+  background-image: url("../icons/priority/3-high.png");
 }
 
 .priority.priority-4 {
-  background-image: url('../icons/priority/4-critical.png');
+  background-image: url("../icons/priority/4-critical.png");
 }
 
 .priority.priority-5 {
-  background-image: url('../icons/priority/5-blocker.png');
+  background-image: url("../icons/priority/5-blocker.png");
 }
 
 .estimate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 16px;
   height: 16px;
   padding: 4px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 50%;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .estimate.estimate-type-geometric,
@@ -176,32 +176,32 @@
 }
 
 .estimate.estimate-type-dot {
-  background-color: transparent;
+  overflow: hidden;
   width: 30px;
   height: 24px;
-  background-position: center;
-  background-size: contain;
-  overflow: hidden;
   text-indent: -100px;
   text-transform: uppercase;
-  background-image: url('../icons/dots/0.png');
-  background-repeat: no-repeat;
   border-radius: 0;
+  background-color: transparent;
+  background-image: url("../icons/dots/0.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 .estimate.estimate-type-dot.estimate-1 {
-  background-image: url('../icons/dots/1.png');
+  background-image: url("../icons/dots/1.png");
 }
 .estimate.estimate-type-dot.estimate-2 {
-  background-image: url('../icons/dots/2.png');
+  background-image: url("../icons/dots/2.png");
 }
 .estimate.estimate-type-dot.estimate-3 {
-  background-image: url('../icons/dots/3.png');
+  background-image: url("../icons/dots/3.png");
 }
 .estimate.estimate-type-dot.estimate-4 {
-  background-image: url('../icons/dots/4.png');
+  background-image: url("../icons/dots/4.png");
 }
 .estimate.estimate-type-dot.estimate-5 {
-  background-image: url('../icons/dots/5.png');
+  background-image: url("../icons/dots/5.png");
 }
 
 .action_link a:hover,
@@ -209,80 +209,80 @@
 .action_link a:link,
 .action_link a:active {
   text-decoration: none;
-  outline: 0;
   border-bottom: 0;
+  outline: 0;
 }
 
 a.send_to_board {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
   padding: 3px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background-size: 20px 20px;
-  background-position: center;
-  overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
-  background-image: url('../icons/actions/send_to.png');
+  border-radius: 50%;
+  background-image: url("../icons/actions/send_to.png");
   background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
 }
 
 a.send_to_backlog {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
   padding: 3px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background-size: 20px 20px;
-  background-position: center;
-  overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
-  background-image: url('../icons/actions/send_back.png');
+  border-radius: 50%;
+  background-image: url("../icons/actions/send_back.png");
   background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
 }
 
 a.close_task {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
   padding: 3px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background-size: 20px 20px;
-  background-position: center;
-  overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
-  background-image: url('../icons/actions/close.png');
+  border-radius: 50%;
+  background-image: url("../icons/actions/close.png");
   background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
 }
 
 a.edit_task {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
   padding: 3px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background-size: 20px 20px;
-  background-position: center;
-  overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
-  background-image: url('../icons/actions/edit.png');
+  border-radius: 50%;
+  background-image: url("../icons/actions/edit.png");
   background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
 }
 
 a.send_to_board:hover,
@@ -306,12 +306,12 @@ a.edit_task:focus-visible {
 }
 
 #board .ticket_title {
-  clear: both;
-  height: 44px;
   display: -webkit-box;
+  clear: both;
+  overflow: hidden;
+  height: 44px;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .burndown_task .card_footer {
@@ -331,8 +331,8 @@ a.edit_task:focus-visible {
 
 #board .ticket_id {
   flex-grow: 4;
-  text-align: right;
   margin-right: 0.5em;
+  text-align: right;
 }
 
 #board .action_link a {
@@ -345,20 +345,20 @@ a.edit_task:focus-visible {
   font-weight: bold;
 }
 .log-items ins {
-  background-color: rgba(0,255,0,0.2);
+  background-color: rgb(0, 255, 0, 0.2);
 }
 .log-items del {
-  background-color: rgba(255,0,0,0.2);
+  background-color: rgb(255, 0, 0, 0.2);
 }
 
 .log-item {
   margin: 1em 0;
-  border: 1px dotted #ccc;
   padding: 1em;
+  border: 1px dotted #ccc;
   border-radius: 12px;
 }
 .log-item .log-item-changes {
-  margin: 0 1.5emem;
+  margin: 0 1.5em;
 }
 
 .burndown-task-form {
@@ -367,43 +367,43 @@ a.edit_task:focus-visible {
 
 .watch_list {
   position: absolute;
-  right: 3em;
   top: 2em;
+  right: 3em;
 }
 
 .watch_list a {
-  background-repeat: no-repeat;
-  text-indent: 34px;
-  background-size: contain;
   display: block;
-  height: 24px;
   width: auto;
+  height: 24px;
+  text-indent: 34px;
+  background-repeat: no-repeat;
+  background-size: contain;
   line-height: 24px;
 }
 
 .watch_list.watch a {
-  background-image: url('../icons/actions/sound.png');
+  background-image: url("../icons/actions/sound.png");
 }
 
 .watch_list.mute a {
-  background-image: url('../icons/actions/mute.png');
+  background-image: url("../icons/actions/mute.png");
 }
 
 .reopen_task {
   position: absolute;
-  right: 5.9em;
   top: 4.4em;
+  right: 5.9em;
 }
 
 .reopen_task a {
-  background-repeat: no-repeat;
-  text-indent: 34px;
-  background-size: contain;
   display: block;
-  height: 24px;
   width: auto;
+  height: 24px;
+  text-indent: 34px;
+  background-image: url("../icons/actions/open.png");
+  background-repeat: no-repeat;
+  background-size: contain;
   line-height: 24px;
-  background-image: url('../icons/actions/open.png');
 }
 
 .burndown_task_log {
@@ -417,38 +417,38 @@ a.edit_task:focus-visible {
 
 .form-wrapper .log_tabs a {
   display: block;
-  padding: 0.5em 0.85em;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 80px;
   margin: 0;
-  border-bottom: 0px;
-  background-color: #f3f4ee;
+  padding: 0.5em 0.85em;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 0;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  min-width: 80px;
-  width: auto;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  text-align: center;
+  background-color: #f3f4ee;
 }
 
 .burndown-log-tabs .log_tabs {
   display: flex;
-  border-bottom: 1px solid #f3f4ee;
   margin-bottom: 0.5em;
+  border-bottom: 1px solid #f3f4ee;
 }
 
 .burndown-log-tabs .log_tabs a {
   display: block;
-  padding: 0.5em 0.85em;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 80px;
   margin: 0;
+  padding: 0.5em 0.85em;
+  text-align: center;
+  white-space: nowrap;
   border-bottom: 0;
-  background-color: #f3f4ee;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  min-width: 80px;
-  width: auto;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  text-align: center;
+  background-color: #f3f4ee;
 }
 
 .burndown-log-tabs .log_tabs a.is-active {
@@ -469,15 +469,15 @@ a.edit_task:focus-visible {
 }
 
 .add_work .form-item-quantity {
-  width: 180px;
   float: left;
+  width: 180px;
 }
 
 .add_work .form-item-quantity-type {
-  width: 90px;
-  float: left;
-  top: 18px;
   position: relative;
+  top: 18px;
+  float: left;
+  width: 90px;
 }
 
 .add_work #edit-quantity-type {
@@ -485,14 +485,14 @@ a.edit_task:focus-visible {
 }
 
 .add_work a {
-  clear: both;
   display: block;
+  clear: both;
   width: 180px;
 }
 
 .relationship {
-  clear: both;
   display: flex;
+  clear: both;
   align-items: center;
   margin: 0.5em 0;
 }
@@ -509,15 +509,15 @@ a.edit_task:focus-visible {
 
 a.remove_relationship {
   display: block;
+  overflow: hidden;
   width: 18px;
   height: 18px;
-  background-size: contain;
-  overflow: hidden;
   text-indent: -200px;
   text-transform: uppercase;
-  background-image: url('../icons/actions/delete.png');
+  border-bottom: 0 transparent;
+  background-image: url("../icons/actions/delete.png");
   background-repeat: no-repeat;
-  border-bottom: 0px transparent;
+  background-size: contain;
 }
 
 .add_relationship {
@@ -530,16 +530,16 @@ a.remove_relationship {
 }
 
 div.field--name-assigned-to .form-type-entity-autocomplete {
-  width: 400px;
   float: left;
+  width: 400px;
 }
 
 .assign_to_me {
+  display: block;
+  float: left;
+  width: auto;
   margin-top: 2.4em;
   margin-left: 1em;
-  display: block;
-  width: auto;
-  float: left;
 }
 
 div.field--name-tags,

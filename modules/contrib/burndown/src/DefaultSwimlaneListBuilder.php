@@ -25,6 +25,7 @@ class DefaultSwimlaneListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+    /** @var \Drupal\burndown\Entity\DefaultSwimlane $entity */
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
 

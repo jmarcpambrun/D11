@@ -14,7 +14,7 @@ class MyTasksRouteSubscriber extends RouteSubscriberBase {
    * {@inheritdoc}
    */
   protected function alterRoutes(RouteCollection $collection) {
-    foreach (['view.my_tasks.my_asssigned_tasks', 'view.my_tasks.my_watchlist'] as $route_name) {
+    foreach (['view.my_tasks.my_assigned_tasks', 'view.my_tasks.my_watchlist'] as $route_name) {
       $route = $collection->get($route_name);
       if ($route) {
         $route->setRequirement('_custom_access', '\\Drupal\\burndown\\Controller\\TaskController::checkTaskViewAccess');

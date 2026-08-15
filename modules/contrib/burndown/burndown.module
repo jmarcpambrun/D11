@@ -239,8 +239,6 @@ function burndown_page_attachments(array &$attachments) {
 
 /**
  * Implements hook_entity_type_alter().
- *
- * @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[]
  */
 function burndown_entity_type_alter(array &$entity_types) {
   // Add unique shortcode constraint to projects.
@@ -254,9 +252,12 @@ function burndown_entity_type_alter(array &$entity_types) {
  * After creating a Project, set up the default Column (swimlane) entities.
  */
 function burndown_burndown_project_insert(EntityInterface $entity) {
+  /** @var \Drupal\burndown\Entity\Project $entity */
+
   // Get Default Column (swimlane) config entities.
   $storage = \Drupal::entityTypeManager()
     ->getStorage('default_swimlane');
+  /** @var \Drupal\burndown\Entity\DefaultSwimlane[] $default_swimlanes */
   $default_swimlanes = $storage->loadMultiple();
 
   // Get the project.
@@ -285,6 +286,8 @@ function burndown_burndown_project_insert(EntityInterface $entity) {
  * Change log for tasks.
  */
 function burndown_burndown_task_presave(EntityInterface $entity) {
+  /** @var \Drupal\burndown\Entity\Task $entity */
+
   // If there's an assignee, add them to the watchlist.
   $assigned_to = $entity->getAssignedTo();
   if (!is_null($assigned_to)) {
@@ -392,7 +395,6 @@ function burndown_form_burndown_task_task_add_form_alter(&$form, FormStateInterf
   // Hide miscellaneous items.
   $form['ticket_id']['#access'] = FALSE;
   $form['project']['#access'] = FALSE;
-  $form['swimlane']['#access'] = FALSE;
   $form['revision_log']['#access'] = FALSE;
   $form['status']['#access'] = FALSE;
   $form['sprint']['#access'] = FALSE;
@@ -428,7 +430,10 @@ function burndown_form_burndown_sprint_add_form_alter(&$form, FormStateInterface
  */
 function _burndown_task_ajax_submit(array $form, FormStateInterface &$form_state) {
   // Get the project shortcode.
-  $task = $form_state->getformObject()->getEntity();
+  /** @var \Drupal\Core\Entity\ContentEntityFormInterface $form_object */
+  $form_object = $form_state->getFormObject();
+  /** @var \Drupal\burndown\Entity\Task $task */
+  $task = $form_object->getEntity();
   $project = $task->getProject();
   $shortcode = $project->getShortcode();
   if ($destination = \Drupal::request()->query->get('destination')) {

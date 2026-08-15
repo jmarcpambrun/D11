@@ -41,19 +41,17 @@ class BurndownHoursOperations extends FieldPluginBase {
       'burndown_task' => (int) $task_id,
       'delta' => (int) $delta,
     ], [
+      'attributes' => [
+        'class' => ['use-ajax', 'button'],
+        'data-dialog-type' => 'modal',
+        'data-dialog-options' => json_encode(['width' => 700]),
+      ],
       'query' => [
         'destination' => $report_url,
       ],
     ]);
 
-    $link = Link::fromTextAndUrl($this->t('Edit time'), $url)->toRenderable();
-    $link['#attributes'] = [
-      'class' => ['use-ajax', 'button'],
-      'data-dialog-type' => 'modal',
-      'data-dialog-options' => json_encode(['width' => 700]),
-    ];
-
-    return $link;
+    return Link::fromTextAndUrl($this->t('Edit time'), $url)->toString();
   }
 
 }

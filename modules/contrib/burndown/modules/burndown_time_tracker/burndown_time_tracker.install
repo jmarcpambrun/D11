@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Provides install and update hooks for the Burndown Time Tracker module.
+ */
+
 use Drupal\views\Entity\View;
 use Symfony\Component\Yaml\Yaml;
 

@@ -60,6 +60,8 @@ class ProjectTypeForm extends EntityForm {
         ]));
     }
     $form_state->setRedirectUrl($burndown_project_type->toUrl('collection'));
+
+    return $status;
   }
 
 }

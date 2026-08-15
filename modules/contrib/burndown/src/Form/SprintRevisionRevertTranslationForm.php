@@ -75,8 +75,8 @@ class SprintRevisionRevertTranslationForm extends SprintRevisionRevertForm {
   protected function prepareRevertedRevision(SprintInterface $revision, FormStateInterface $form_state) {
     $revert_untranslated_fields = $form_state->getValue('revert_untranslated_fields');
 
-    /** @var \Drupal\burndown\Entity\SprintInterface $default_revision */
-    $latest_revision = $this->SprintStorage->load($revision->id());
+    /** @var \Drupal\burndown\Entity\SprintInterface $latest_revision */
+    $latest_revision = $this->sprintStorage->load($revision->id());
     $latest_revision_translation = $latest_revision->getTranslation($this->langcode);
 
     $revision_translation = $revision->getTranslation($this->langcode);
@@ -89,7 +89,7 @@ class SprintRevisionRevertTranslationForm extends SprintRevisionRevertForm {
 
     $latest_revision_translation->setNewRevision();
     $latest_revision_translation->isDefaultRevision(TRUE);
-    $revision->setRevisionCreationTime(\Drupal::time()->getRequestTime());
+    $revision->setRevisionCreationTime($this->time->getRequestTime());
 
     return $latest_revision_translation;
   }

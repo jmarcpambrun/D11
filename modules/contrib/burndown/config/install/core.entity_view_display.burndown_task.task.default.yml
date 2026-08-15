@@ -45,6 +45,15 @@ content:
     settings:
       link: false
     third_party_settings: {  }
+  swimlane:
+    label: above
+    type: entity_reference_entity_view
+    weight: 6
+    region: content
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
   ticket_id:
     label: hidden
     type: string
@@ -68,4 +77,3 @@ hidden:
   created: true
   description: true
   sprint: true
-  swimlane: true

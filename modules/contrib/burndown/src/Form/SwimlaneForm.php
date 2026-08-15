@@ -34,7 +34,6 @@ class SwimlaneForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\burndown\Entity\Swimlane $entity */
     $form = parent::buildForm($form, $form_state);
 
     // Hide miscellaneous items.
@@ -70,6 +69,8 @@ class SwimlaneForm extends ContentEntityForm {
         ]));
     }
     $form_state->setRedirect('entity.burndown_swimlane.canonical', ['burndown_swimlane' => $entity->id()]);
+
+    return $status;
   }
 
 }

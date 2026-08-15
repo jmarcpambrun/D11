@@ -2,8 +2,8 @@
 
 namespace Drupal\burndown\Event;
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Component\EventDispatcher\Event;
+use Drupal\burndown\Entity\Task;
 
 /**
  * Event that is fired when a task is closed.
@@ -15,17 +15,17 @@ class TaskClosedEvent extends Event {
   /**
    * The task.
    *
-   * @var Drupal\Core\Entity\EntityInterface
+   * @var \Drupal\burndown\Entity\Task
    */
   public $task;
 
   /**
    * Constructs the object.
    *
-   * @param Drupal\Core\Entity\EntityInterface $task
+   * @param \Drupal\burndown\Entity\Task $task
    *   The task that was closed.
    */
-  public function __construct(EntityInterface $task) {
+  public function __construct(Task $task) {
     $this->task = $task;
   }
 

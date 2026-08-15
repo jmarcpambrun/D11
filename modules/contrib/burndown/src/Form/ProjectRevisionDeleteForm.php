@@ -2,10 +2,13 @@
 
 namespace Drupal\burndown\Form;
 
+use Drupal\burndown\Entity\ProjectInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides a form for deleting a Project revision.
@@ -24,7 +27,7 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
   /**
    * The Project storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\Core\Entity\RevisionableStorageInterface
    */
   protected $projectStorage;
 
@@ -36,12 +39,24 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
   protected $connection;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->projectStorage = $container->get('entity_type.manager')->getStorage('burndown_project');
+    $storage = $container->get('entity_type.manager')->getStorage('burndown_project');
+    if (!$storage instanceof RevisionableStorageInterface) {
+      throw new \RuntimeException('Project storage must be revisionable.');
+    }
+    $instance->projectStorage = $storage;
     $instance->connection = $container->get('database');
+    $instance->dateFormatter = $container->get('date.formatter');
     return $instance;
   }
 
@@ -57,7 +72,7 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to delete the revision from %revision-date?', [
-      '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+      '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
     ]);
   }
 
@@ -79,7 +94,11 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $burndown_project_revision = NULL) {
-    $this->revision = $this->ProjectStorage->loadRevision($burndown_project_revision);
+    $revision = $this->projectStorage->loadRevision($burndown_project_revision);
+    if (!$revision instanceof ProjectInterface) {
+      throw new NotFoundHttpException();
+    }
+    $this->revision = $revision;
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -89,7 +108,7 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->ProjectStorage->deleteRevision($this->revision->getRevisionId());
+    $this->projectStorage->deleteRevision($this->revision->getRevisionId());
 
     $this->logger('content')
       ->notice(
@@ -103,7 +122,7 @@ class ProjectRevisionDeleteForm extends ConfirmFormBase {
       ->addMessage(
         $this->t('Revision from %revision-date of Project %title has been deleted.',
         [
-          '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+          '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
           '%title' => $this->revision->label(),
         ]
       )

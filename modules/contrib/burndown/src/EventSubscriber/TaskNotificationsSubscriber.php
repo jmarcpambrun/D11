@@ -20,9 +20,6 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
 
   /**
    * {@inheritdoc}
-   *
-   * @return array
-   *   The event names to listen for, and the methods that should be executed.
    */
   public static function getSubscribedEvents(): array {
     return [
@@ -35,7 +32,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
   /**
    * React to a task being created.
    *
-   * @param Drupal\burndown\Event\TaskCreatedEvent $event
+   * @param \Drupal\burndown\Event\TaskCreatedEvent $event
    *   Task added event.
    */
   public function taskAdded(TaskCreatedEvent $event) {
@@ -51,7 +48,8 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
       $created_by = $task->getOwnerName();
-      $created_by_email = $task->getOwner()->getEmail();
+      $owner = $task->getOwner();
+      $created_by_email = $owner ? $owner->getEmail() : '';
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -60,7 +58,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $task_link = $task_link->toRenderable();
-      $task_link = \Drupal::service('renderer')->renderPlain($task_link);
+      $task_link = \Drupal::service('renderer')->renderInIsolation($task_link);
       $task_link = (String) $task_link;
 
       // Get project.
@@ -72,7 +70,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $project_link = $project_link->toRenderable();
-      $project_link = \Drupal::service('renderer')->renderPlain($project_link);
+      $project_link = \Drupal::service('renderer')->renderInIsolation($project_link);
       $project_link = (String) $project_link;
 
       // Get watchlist.
@@ -94,6 +92,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $message .= $task->getDescription();
 
         foreach ($watchlist as $watcher) {
+          /** @var \Drupal\user\UserInterface $watcher */
           // Get username, email and language preference.
           $to = $watcher->getEmail();
 
@@ -124,7 +123,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
   /**
    * React to a task being edited.
    *
-   * @param Drupal\burndown\Event\TaskChangedEvent $event
+   * @param \Drupal\burndown\Event\TaskChangedEvent $event
    *   Task changed event.
    */
   public function taskChanged(TaskChangedEvent $event) {
@@ -140,7 +139,8 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
       $created_by = $task->getOwnerName();
-      $created_by_email = $task->getOwner()->getEmail();
+      $owner = $task->getOwner();
+      $created_by_email = $owner ? $owner->getEmail() : '';
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -149,7 +149,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $task_link = $task_link->toRenderable();
-      $task_link = \Drupal::service('renderer')->renderPlain($task_link);
+      $task_link = \Drupal::service('renderer')->renderInIsolation($task_link);
       $task_link = (String) $task_link;
 
       // Get project.
@@ -161,7 +161,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $project_link = $project_link->toRenderable();
-      $project_link = \Drupal::service('renderer')->renderPlain($project_link);
+      $project_link = \Drupal::service('renderer')->renderInIsolation($project_link);
       $project_link = (String) $project_link;
 
       // Get changes.
@@ -169,7 +169,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $change_list = $change_list_service->getChanges($task);
 
       if (empty($change_list)) {
-        // Since this is an edit, but there are no showable changes, due to
+        // Since this is an edit, but there are no visible changes, due to
         // skipped fields. We will not send an email notification.
         return;
       }
@@ -193,6 +193,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $message .= $change_list;
 
         foreach ($watchlist as $watcher) {
+          /** @var \Drupal\user\UserInterface $watcher */
           // Get username, email and language preference.
           $to = $watcher->getEmail();
           $username = $watcher->getDisplayName();
@@ -222,7 +223,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
   /**
    * React to a task comment.
    *
-   * @param Drupal\burndown\Event\TaskCommentEvent $event
+   * @param \Drupal\burndown\Event\TaskCommentEvent $event
    *   Task comment event.
    */
   public function taskCommented(TaskCommentEvent $event) {
@@ -250,7 +251,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $task_link = $task_link->toRenderable();
-      $task_link = \Drupal::service('renderer')->renderPlain($task_link);
+      $task_link = \Drupal::service('renderer')->renderInIsolation($task_link);
       $task_link = (String) $task_link;
 
       // Get project.
@@ -262,7 +263,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         ['absolute' => TRUE]
       );
       $project_link = $project_link->toRenderable();
-      $project_link = \Drupal::service('renderer')->renderPlain($project_link);
+      $project_link = \Drupal::service('renderer')->renderInIsolation($project_link);
       $project_link = (String) $project_link;
 
       // Get watchlist.
@@ -276,14 +277,15 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
         $send = TRUE;
 
         $task_action = $this->t('commented on a task');
-        $commment_label = $this->t('Comment');
+        $comment_label = $this->t('Comment');
         $message = "{$created_by} {$task_action}.<br><br>";
         $message .= "{$project_link} / {$task_link}: {$title} <br>";
         $message .= "{$created} <br>";
-        $message .= "{$commment_label}: <br>";
+        $message .= "{$comment_label}: <br>";
         $message .= $comment;
 
         foreach ($watchlist as $watcher) {
+          /** @var \Drupal\user\UserInterface $watcher */
           // Get username, email and language preference.
           $to = $watcher->getEmail();
           $username = $watcher->getDisplayName();

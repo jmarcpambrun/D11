@@ -114,16 +114,21 @@ class BurndownLogDefaultFormatter extends FormatterBase {
     ];
 
     foreach ($items as $item) {
-      $user = $this->entityTypeManager->getStorage('user')->load($item->uid);
-      $type = $this->normalizeLogValue($item->type);
+      $item_values = $item->getValue();
+
+      /** @var \Drupal\user\UserStorageInterface $user_storage */
+      $user_storage = $this->entityTypeManager->getStorage('user');
+      /** @var \Drupal\user\UserInterface|null $user */
+      $user = $user_storage->load($item_values['uid'] ?? NULL);
+      $type = $this->normalizeLogValue($item_values['type'] ?? '');
 
       $entry = [
         'type' => $type,
-        'created' => $this->dateFormatter->format((int) $item->created),
+        'created' => $this->dateFormatter->format((int) ($item_values['created'] ?? 0)),
         'user' => $user ? $user->getDisplayName() : '',
-        'comment' => $this->normalizeLogValue($item->comment),
-        'work_done' => $this->normalizeLogValue($item->work_done),
-        'description' => $this->normalizeLogValue($item->description),
+        'comment' => $this->normalizeLogValue($item_values['comment'] ?? ''),
+        'work_done' => $this->normalizeLogValue($item_values['work_done'] ?? ''),
+        'description' => $this->normalizeLogValue($item_values['description'] ?? ''),
       ];
 
       $logs_by_type['all'][] = $entry;

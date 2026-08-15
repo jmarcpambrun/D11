@@ -3,10 +3,12 @@
 namespace Drupal\burndown\Form;
 
 use Drupal\burndown\Entity\TaskInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides a form for reverting a Task revision.
@@ -25,7 +27,7 @@ class TaskRevisionRevertForm extends ConfirmFormBase {
   /**
    * The Task storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\Core\Entity\RevisionableStorageInterface
    */
   protected $taskStorage;
 
@@ -37,12 +39,24 @@ class TaskRevisionRevertForm extends ConfirmFormBase {
   protected $dateFormatter;
 
   /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $time;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->taskStorage = $container->get('entity_type.manager')->getStorage('burndown_task');
+    $storage = $container->get('entity_type.manager')->getStorage('burndown_task');
+    if (!$storage instanceof RevisionableStorageInterface) {
+      throw new \RuntimeException('Task storage must be revisionable.');
+    }
+    $instance->taskStorage = $storage;
     $instance->dateFormatter = $container->get('date.formatter');
+    $instance->time = $container->get('datetime.time');
     return $instance;
   }
 
@@ -80,14 +94,18 @@ class TaskRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    return '';
+    return $this->t('This action cannot be undone.');
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $burndown_task_revision = NULL) {
-    $this->revision = $this->TaskStorage->loadRevision($burndown_task_revision);
+    $revision = $this->taskStorage->loadRevision($burndown_task_revision);
+    if (!$revision instanceof TaskInterface) {
+      throw new NotFoundHttpException();
+    }
+    $this->revision = $revision;
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -102,9 +120,9 @@ class TaskRevisionRevertForm extends ConfirmFormBase {
     $original_revision_timestamp = $this->revision->getRevisionCreationTime();
 
     $this->revision = $this->prepareRevertedRevision($this->revision, $form_state);
-    $this->revision->revision_log = $this->t('Copy of the revision from %date.', [
+    $this->revision->setRevisionLogMessage((string) $this->t('Copy of the revision from %date.', [
       '%date' => $this->dateFormatter->format($original_revision_timestamp),
-    ]);
+    ]));
     $this->revision->save();
 
     $this->logger('content')
@@ -144,7 +162,7 @@ class TaskRevisionRevertForm extends ConfirmFormBase {
   protected function prepareRevertedRevision(TaskInterface $revision, FormStateInterface $form_state) {
     $revision->setNewRevision();
     $revision->isDefaultRevision(TRUE);
-    $revision->setRevisionCreationTime(\Drupal::time()->getRequestTime());
+    $revision->setRevisionCreationTime($this->time->getRequestTime());
 
     return $revision;
   }

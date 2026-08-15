@@ -8,13 +8,33 @@ use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\burndown\Event\TaskClosedEvent;
 use Drush\Commands\DrushCommands;
+use Drupal\user\UserInterface;
 
 /**
  * A drush command file.
  *
  * @package Drupal\burndown\Commands
+ *
+ * @phpcs:disable Drupal.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
  */
 class BurndownDrushCommands extends DrushCommands {
+
+  /**
+   * Loads a user entity by account name.
+   *
+   * @param string $username
+   *   The account name.
+   *
+   * @return \Drupal\user\UserInterface|null
+   *   The user entity, if found.
+   */
+  protected function loadUserByName(string $username): ?UserInterface {
+    /** @var \Drupal\user\UserStorageInterface $user_storage */
+    $user_storage = \Drupal::entityTypeManager()->getStorage('user');
+    $users = $user_storage->loadByProperties(['name' => $username]);
+    $user = reset($users);
+    return $user instanceof UserInterface ? $user : NULL;
+  }
 
   /**
    * Drush command that lists Burndown projects.
@@ -82,7 +102,14 @@ class BurndownDrushCommands extends DrushCommands {
    *   Show completed tasks.
    * @usage burndown:task_list --backlog --board --completed {shortcode}
    */
-  public function task_list(string $shortcode = '', array $options = ['backlog' => FALSE, 'board' => FALSE, 'completed' => FALSE]) {
+  public function task_list(
+    string $shortcode = '',
+    array $options = [
+      'backlog' => FALSE,
+      'board' => FALSE,
+      'completed' => FALSE,
+    ],
+  ) {
     if ($shortcode == '') {
       $text = "No project shortcode specified.";
       $this->io()->caution($text);
@@ -566,15 +593,17 @@ class BurndownDrushCommands extends DrushCommands {
    * @option description A detailed description of the task.
    * @usage burndown:add_task --shortcode=PROJ --task_name="New Task" --assignee=john --reported_by=admin --priority=Medium --estimate=3 --description="This is a detailed description of the task."
    */
-  public function add_task($options = [
-    'shortcode' => self::REQ,
-    'task_name' => self::REQ,
-    'assignee' => self::REQ,
-    'reported_by' => self::REQ,
-    'priority' => self::REQ,
-    'estimate' => self::REQ,
-    'description' => self::REQ,
-  ]) {
+  public function add_task(
+    $options = [
+      'shortcode' => self::REQ,
+      'task_name' => self::REQ,
+      'assignee' => self::REQ,
+      'reported_by' => self::REQ,
+      'priority' => self::REQ,
+      'estimate' => self::REQ,
+      'description' => self::REQ,
+    ],
+  ) {
     // Title of the command.
     $this->io()->title('Add a Burndown Task');
 
@@ -625,8 +654,8 @@ class BurndownDrushCommands extends DrushCommands {
       // Get reported by user name from the user.
       $reported_by = $this->io()->ask('What is the "reported by" username?', 'admin');
     }
-    $reported_by_user = user_load_by_name($reported_by);
-    if ($reported_by_user === FALSE) {
+    $reported_by_user = $this->loadUserByName($reported_by);
+    if ($reported_by_user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -641,8 +670,8 @@ class BurndownDrushCommands extends DrushCommands {
     }
 
     if (!empty($assigned_to)) {
-      $assigned_to_user = user_load_by_name($assigned_to);
-      if ($assigned_to_user === FALSE) {
+      $assigned_to_user = $this->loadUserByName($assigned_to);
+      if ($assigned_to_user === NULL) {
         $this->io()->caution('User account does not exist.');
         return;
       }
@@ -769,8 +798,8 @@ class BurndownDrushCommands extends DrushCommands {
 
     // Get reported by user name from the user.
     $reported_by = $this->io()->ask('What is the "reported by" username?', $task->getOwnerName());
-    $reported_by_user = user_load_by_name($reported_by);
-    if ($reported_by_user === FALSE) {
+    $reported_by_user = $this->loadUserByName($reported_by);
+    if ($reported_by_user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -779,8 +808,8 @@ class BurndownDrushCommands extends DrushCommands {
     $assigned_to_id = NULL;
     $assigned_to = $this->io()->ask('What is the "assigned to" username (optional)?', $task->getAssignedToName());
     if (!empty($assigned_to)) {
-      $assigned_to_user = user_load_by_name($assigned_to);
-      if ($assigned_to_user === FALSE) {
+      $assigned_to_user = $this->loadUserByName($assigned_to);
+      if ($assigned_to_user === NULL) {
         $this->io()->caution('User account does not exist.');
         return;
       }
@@ -826,10 +855,10 @@ class BurndownDrushCommands extends DrushCommands {
     $task
       ->setName($name)
       ->setOwnerId($reported_by_user->id())
-      ->setAssignedToId($assigned_to_id)
-      ->setPriority($priority)
-      ->setEstimate($estimate)
-      ->setDescription($description)
+      ->set('assigned_to', $assigned_to_id)
+      ->set('priority', $priority)
+      ->set('estimate', $estimate)
+      ->set('description', $description)
       ->save();
 
     $ticket_id = $task->getTicketId();
@@ -1032,8 +1061,8 @@ class BurndownDrushCommands extends DrushCommands {
       return;
     }
 
-    $user = user_load_by_name($username);
-    if ($user === FALSE) {
+    $user = $this->loadUserByName($username);
+    if ($user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -1065,8 +1094,8 @@ class BurndownDrushCommands extends DrushCommands {
       return;
     }
 
-    $user = user_load_by_name($username);
-    if ($user === FALSE) {
+    $user = $this->loadUserByName($username);
+    if ($user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -1190,13 +1219,15 @@ class BurndownDrushCommands extends DrushCommands {
    * @option estimate_type The type of estimation for the project (geometric, tshirt, dot).
    * @usage burndown:add_project --name="Project Name" --shortcode="PRJ" --username="admin" --board_type="kanban" --estimate_type="geometric"
    */
-    public function add_project(array $options = [
+  public function add_project(
+    array $options = [
       'name' => self::REQ,
       'shortcode' => self::REQ,
       'username' => self::REQ,
       'board_type' => self::REQ,
       'estimate_type' => self::REQ,
-      ]) {
+    ],
+  ) {
     // Title of the command.
     $this->io()->title('Add a Burndown Project');
 
@@ -1205,7 +1236,7 @@ class BurndownDrushCommands extends DrushCommands {
     }
     else {
       // Get project name from user.
-    $name = $this->io()->ask('What is the name of the project (max 50 chars)?');
+      $name = $this->io()->ask('What is the name of the project (max 50 chars)?');
     }
 
     // Check for blank name.
@@ -1252,12 +1283,12 @@ class BurndownDrushCommands extends DrushCommands {
       $username = $options['username'];
     }
     else {
-    // Get project owner from user.
-    $username = $this->io()->ask('What is the username of the project owner?', 'admin');
+      // Get project owner from user.
+      $username = $this->io()->ask('What is the username of the project owner?', 'admin');
     }
 
-    $user = user_load_by_name($username);
-    if ($user === FALSE) {
+    $user = $this->loadUserByName($username);
+    if ($user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -1276,7 +1307,7 @@ class BurndownDrushCommands extends DrushCommands {
       }
     }
     else {
-      $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, $board_types[0]);
+      $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, 'kanban');
     }
     // Estimate type.
     $estimate_types = [
@@ -1293,7 +1324,7 @@ class BurndownDrushCommands extends DrushCommands {
       }
     }
     else {
-      $estimate_type = $this->io()->choice('What type of estimation do you want to use for this project?', $estimate_types, $estimate_types[0]);
+      $estimate_type = $this->io()->choice('What type of estimation do you want to use for this project?', $estimate_types, 'geometric');
     }
 
     // Try to add the project.
@@ -1356,8 +1387,8 @@ class BurndownDrushCommands extends DrushCommands {
 
     // Get project owner from user.
     $username = $this->io()->ask('What is the username of the project owner?', $project->getOwner()->getDisplayName());
-    $user = user_load_by_name($username);
-    if ($user === FALSE) {
+    $user = $this->loadUserByName($username);
+    if ($user === NULL) {
       $this->io()->caution('User account does not exist.');
       return;
     }
@@ -1367,7 +1398,6 @@ class BurndownDrushCommands extends DrushCommands {
       'kanban' => 'Kanban',
       'sprint' => 'Sprint',
     ];
-
 
     $board_type = $this->io()->choice('Is this a kanban or sprint-based project?', $board_types, $project->getBoardType());
 
@@ -1386,9 +1416,9 @@ class BurndownDrushCommands extends DrushCommands {
     // Update project.
     $project
       ->setName($name)
-      ->setBoardType($board_type)
-      ->setEstimateType($estimate_type)
-      ->setStatus($status)
+      ->set('board_type', $board_type)
+      ->set('estimate_type', $estimate_type)
+      ->set('status', $status)
       ->save();
 
     // Success message.
@@ -1402,7 +1432,7 @@ class BurndownDrushCommands extends DrushCommands {
    * @aliases burndown-search-tasks bdst
    * @usage burndown:search_tasks
    */
-  public function search_tasks() {
+  public function searchTasks() {
     // Title of the command.
     $this->io()->title('Search for a Burndown Task');
 

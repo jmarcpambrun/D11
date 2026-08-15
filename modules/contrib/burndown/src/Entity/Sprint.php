@@ -410,7 +410,8 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
    * {@inheritdoc}
    */
   public function getProject() {
-    return $this->get('project')->entity;
+    $project = $this->get('project')->entity;
+    return $project instanceof ProjectInterface ? $project : NULL;
   }
 
   /**
@@ -470,14 +471,17 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
    * {@inheritdoc}
    */
   public function getOwner() {
-    return $this->get('user_id')->entity;
+    /** @var \Drupal\user\UserInterface|null $owner */
+    $owner = $this->get('user_id')->entity;
+    return $owner;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getOwnerId() {
-    return $this->get('user_id')->target_id;
+    $owner_id = $this->get('user_id')->target_id;
+    return is_numeric($owner_id) ? (int) $owner_id : NULL;
   }
 
   /**
@@ -514,6 +518,7 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+    /** @var \Drupal\Core\Field\BaseFieldDefinition[] $fields */
     $fields = parent::baseFieldDefinitions($entity_type);
 
     // Add the published field.

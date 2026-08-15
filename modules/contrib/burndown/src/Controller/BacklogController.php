@@ -11,9 +11,7 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,6 +51,7 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   A request stack.
    * @param \Drupal\Core\Session\AccountInterface $currentUser
+   *   The current user.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, RequestStack $request_stack, AccountInterface $currentUser) {
     $this->entityTypeManager = $entityTypeManager;
@@ -95,7 +94,7 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The currently logged-in user.
    *
-   * @return \Drupal\Core\Access\AccessResultInterface
+   * @return \Drupal\Core\Access\AccessResult
    *   The access result.
    */
   public function checkAccess(AccountInterface $account): AccessResult {
@@ -476,7 +475,7 @@ class BacklogController extends ControllerBase implements ContainerInjectionInte
    * Get the project ID for the current request.
    *
    * @return string
-   *  The project ID which is a string integer, or 'no_project' if not found.
+   *   The project ID which is a string integer, or 'no_project' if not found.
    */
   public function getProjectId(): string {
     $shortcode = $this->requestStack->getCurrentRequest()->attributes->get('shortcode');

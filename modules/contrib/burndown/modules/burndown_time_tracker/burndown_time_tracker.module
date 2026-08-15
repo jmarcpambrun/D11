@@ -1,11 +1,15 @@
 <?php
 
+/**
+ * @file
+ * Provides the main module file for the Burndown Time Tracker module.
+ */
+
 use Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerHooks;
 use Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerViewsHooks;
 use Drupal\Core\Hook\Attribute\LegacyHook;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
-use Drupal\views\Plugin\views\query\Sql;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -21,7 +25,7 @@ function burndown_time_tracker_help($route_name, RouteMatchInterface $route_matc
  */
 #[LegacyHook]
 function burndown_time_tracker_views_data_alter(array &$data) {
-  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsDataAlter($data);
+  \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsDataAlter($data);
 }
 
 /**
@@ -29,7 +33,7 @@ function burndown_time_tracker_views_data_alter(array &$data) {
  */
 #[LegacyHook]
 function burndown_time_tracker_page_attachments(array &$attachments) {
-  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->pageAttachments($attachments);
+  \Drupal::service(BurndownTimeTrackerViewsHooks::class)->pageAttachments($attachments);
 }
 
 /**
@@ -37,7 +41,7 @@ function burndown_time_tracker_page_attachments(array &$attachments) {
  */
 #[LegacyHook]
 function burndown_time_tracker_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
-  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsPreView($view, $display_id, $args);
+  \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsPreView($view, $display_id, $args);
 }
 
 /**
@@ -45,7 +49,7 @@ function burndown_time_tracker_views_pre_view(ViewExecutable $view, $display_id,
  */
 #[LegacyHook]
 function burndown_time_tracker_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
-  return \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsQueryAlter($view, $query);
+  \Drupal::service(BurndownTimeTrackerViewsHooks::class)->viewsQueryAlter($view, $query);
 }
 
 /**
@@ -55,5 +59,5 @@ function burndown_time_tracker_views_query_alter(ViewExecutable $view, QueryPlug
 function burndown_time_tracker_preprocess_burndown_task_card(array &$variables) {
   /** @var \Drupal\burndown_time_tracker\Hook\BurndownTimeTrackerHooks $hooks */
   $hooks = \Drupal::service(BurndownTimeTrackerHooks::class);
-  return $hooks->preprocessBurndownTaskCard($variables);
+  $hooks->preprocessBurndownTaskCard($variables);
 }

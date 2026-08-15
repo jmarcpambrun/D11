@@ -29,7 +29,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *  Returns responses for Task routes.
  */
 class TaskController extends ControllerBase implements ContainerInjectionInterface {
-
   /**
    * The current user account.
    *
@@ -187,10 +186,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $task = $this->loadTaskForAccess($ticket_id, $from_ticket_id);
     if ($task) {
       // Be specific about the Project ID perms.
-       $project_id = $task->getProjectId();
-       $access_perms[] = "{$project_id} create entities";
-       $access_perms[] = "{$project_id} edit any entities";
-       $access_perms[] = "{$project_id} edit own entities";
+      $project_id = $task->getProjectId();
+      $access_perms[] = "{$project_id} create entities";
+      $access_perms[] = "{$project_id} edit any entities";
+      $access_perms[] = "{$project_id} edit own entities";
     }
 
     $task_access = AccessResult::allowedIfHasPermissions($account, $access_perms, 'OR');
@@ -210,12 +209,19 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    *   The from-ticket route parameter used by relationship routes.
    * @param \Drupal\Core\Session\AccountInterface|null $account
    *   The user account.
+   * @param \Symfony\Component\HttpFoundation\Request|null $request
+   *   The current request.
    *
    * @return \Drupal\Core\Access\AccessResult
    *   The access result.
    */
-  public function checkTaskEditAccess($ticket_id = '', $from_ticket_id = '', ?AccountInterface $account = NULL) {
+  public function checkTaskEditAccess($ticket_id = '', $from_ticket_id = '', ?AccountInterface $account = NULL, ?Request $request = NULL) {
     $account = $account ?: $this->account;
+    // For POST routes that carry the ticket ID in the request body rather than
+    // in the URL, fall back to the body when route params are empty.
+    if (empty($ticket_id) && empty($from_ticket_id) && $request !== NULL) {
+      $from_ticket_id = (string) $request->request->get('from_ticket_id', '');
+    }
     $task = $this->loadTaskForAccess($ticket_id, $from_ticket_id);
     if (!$task) {
       return AccessResult::forbidden();
@@ -293,8 +299,8 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    * @param string $type
    *   The type of log to return.
    *
-   * @return array
-   *   An array suitable for drupal_render().
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The rendered task log response.
    */
   public function getTaskLog($ticket_id, $type = 'all') {
     $data = [];
@@ -318,11 +324,14 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
         $log_item['can_edit'] = $this->canEditTaskLogItem($log_item);
 
         // Get user name.
-        $user = $this->entityTypeManager->getStorage('user')->load($log_item['uid']);
+        /** @var \Drupal\user\UserStorageInterface $user_storage */
+        $user_storage = $this->entityTypeManager->getStorage('user');
+        /** @var \Drupal\user\UserInterface|null $user */
+        $user = $user_storage->load($log_item['uid']);
         $log_item['user'] = $user ? $user->getDisplayName() : $this->t('Anonymous');
 
         // Normalize log comment to a single string.
-        $log_item['comment'] = $this->normalizeLogComment(isset($log_item['comment']) ? $log_item['comment'] : '');
+        $log_item['comment'] = $this->normalizeLogComment($log_item['comment'] ?? '');
 
         // Date format.
         $created_date = date('r', intval($log_item['created']));
@@ -376,7 +385,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       throw new AccessDeniedHttpException();
     }
 
-    $type = isset($log_item['type']) ? $log_item['type'] : '';
+    $type = $log_item['type'] ?? '';
     $filtered_comment = Xss::filter((string) $comment);
     $log[$delta]['comment'] = $filtered_comment;
 
@@ -448,7 +457,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
   protected function canEditTaskLogItem(array $log_item, ?AccountInterface $account = NULL) {
     $account = $account ?: $this->account;
 
-    $type = isset($log_item['type']) ? $log_item['type'] : '';
+    $type = $log_item['type'] ?? '';
     if (!in_array($type, ['comment', 'work'], TRUE)) {
       return FALSE;
     }
@@ -502,7 +511,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $event = new TaskCommentEvent($task, $filtered_comment);
 
     // Dispatch the event.
-	$this->eventDispatcher->dispatch($event, TaskCommentEvent::COMMENTED);
+    $this->eventDispatcher->dispatch($event, TaskCommentEvent::COMMENTED);
 
     // Return JSON response.
     return new JsonResponse([
@@ -577,7 +586,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    */
   public function addToWatchlist(string $ticket_id, int $user_id) {
     // Load the task.
-    /** @var \Drupal\burndown\Entity\TaskInterface $task */
+    /** @var \Drupal\burndown\Entity\Task $task */
     $task = Task::loadFromTicketId($ticket_id);
     if ($task === FALSE) {
       // Task doesn't exist; throw 404.
@@ -618,7 +627,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    */
   public function removeFromWatchlist(string $ticket_id, $user_id) {
     // Load the task.
-    /** @var \Drupal\burndown\Entity\TaskInterface $task */
+    /** @var \Drupal\burndown\Entity\Task $task */
     $task = Task::loadFromTicketId($ticket_id);
     if ($task === FALSE) {
       // Task doesn't exist; throw 404.
@@ -713,7 +722,6 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     ];
 
     return new Response($this->renderer->render($build));
-
   }
 
   /**
@@ -773,8 +781,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
 
     // Check if there is a relationship between the two tasks.
     // We have to test both tasks, as it could reside on either.
-    if ($from_task->checkIfRelationshipExists($to_task_id) !== FALSE ||
-      $to_task->checkIfRelationshipExists($from_task_id) !== FALSE) {
+    if (
+          $from_task->checkIfRelationshipExists($to_task_id) !== FALSE ||
+          $to_task->checkIfRelationshipExists($from_task_id) !== FALSE
+      ) {
       return new JsonResponse([
         'message' => 'There is already a relationship between these tickets',
         'success' => 0,
@@ -960,8 +970,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    *   An array suitable for drupal_render().
    */
   public function revisionShow($burndown_task_revision) {
-    $burndown_task = $this->entityTypeManager()->getStorage('burndown_task')
-      ->loadRevision($burndown_task_revision);
+    /** @var \Drupal\burndown\TaskStorageInterface $task_storage */
+    $task_storage = $this->entityTypeManager()->getStorage('burndown_task');
+    /** @var \Drupal\burndown\Entity\Task $burndown_task */
+    $burndown_task = $task_storage->loadRevision($burndown_task_revision);
     $view_builder = $this->entityTypeManager()->getViewBuilder('burndown_task');
 
     return $view_builder->view($burndown_task);
@@ -977,8 +989,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    *   The page title.
    */
   public function revisionPageTitle($burndown_task_revision) {
-    $burndown_task = $this->entityTypeManager()->getStorage('burndown_task')
-      ->loadRevision($burndown_task_revision);
+    /** @var \Drupal\burndown\TaskStorageInterface $task_storage */
+    $task_storage = $this->entityTypeManager()->getStorage('burndown_task');
+    /** @var \Drupal\burndown\Entity\Task $burndown_task */
+    $burndown_task = $task_storage->loadRevision($burndown_task_revision);
     return $this->t('Revision of %title from %date', [
       '%title' => $burndown_task->label(),
       '%date' => $this->dateFormatter->format($burndown_task->getRevisionCreationTime()),
@@ -996,6 +1010,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
    */
   public function revisionOverview(TaskInterface $burndown_task) {
     $account = $this->currentUser();
+    /** @var \Drupal\burndown\TaskStorageInterface $burndown_task_storage */
     $burndown_task_storage = $this->entityTypeManager()->getStorage('burndown_task');
 
     $langcode = $burndown_task->language()->getId();
@@ -1003,17 +1018,23 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $languages = $burndown_task->getTranslationLanguages();
     $has_translations = (count($languages) > 1);
     $build['#title'] = $has_translations ? $this->t(
-      '@langname revisions for %title', [
-        '@langname' => $langname,
-        '%title' => $burndown_task->label(),
-      ]) : $this->t(
-      'Revisions for %title', [
-        '%title' => $burndown_task->label(),
-      ]);
+          '@langname revisions for %title',
+          [
+            '@langname' => $langname,
+            '%title' => $burndown_task->label(),
+          ]
+      ) : $this->t(
+          'Revisions for %title',
+          [
+            '%title' => $burndown_task->label(),
+          ]
+      );
 
     $header = [$this->t('Revision'), $this->t('Operations')];
-    $revert_permission = (($account->hasPermission("revert all task revisions") || $account->hasPermission('administer task entities')));
-    $delete_permission = (($account->hasPermission("delete all task revisions") || $account->hasPermission('administer task entities')));
+    $revert_permission = $account->hasPermission("revert all task revisions")
+          || $account->hasPermission('administer task entities');
+    $delete_permission = $account->hasPermission("delete all task revisions")
+          || $account->hasPermission('administer task entities');
 
     $rows = [];
 
@@ -1022,12 +1043,13 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
     $latest_revision = TRUE;
 
     foreach (array_reverse($vids) as $vid) {
-      /** @var \Drupal\burndown\TaskInterface $revision */
+      /** @var \Drupal\burndown\Entity\TaskInterface $revision */
       $revision = $burndown_task_storage->loadRevision($vid);
       // Only show revisions that are affected by the language that is being
       // displayed.
-      if ($revision->hasTranslation($langcode)
-        && $revision->getTranslation($langcode)->isRevisionTranslationAffected()
+      if (
+            $revision->hasTranslation($langcode)
+            && $revision->getTranslation($langcode)->isRevisionTranslationAffected()
         ) {
         $username = [
           '#theme' => 'username',
@@ -1037,10 +1059,10 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
         // Use revision link to link to revisions that are not active.
         $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $burndown_task->getRevisionId()) {
-		  $link = Link::fromTextAndUrl($date, new Url('entity.burndown_task.revision', [
+          $link = Link::fromTextAndUrl($date, new Url('entity.burndown_task.revision', [
             'burndown_task' => $burndown_task->id(),
             'burndown_task_revision' => $vid,
-           ]))->toString();
+          ]))->toString();
         }
         else {
           $link = $burndown_task->toLink($date)->toString();
@@ -1050,10 +1072,11 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
         $column = [
           'data' => [
             '#type' => 'inline_template',
-            '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
+            '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}'
+            . '{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
             '#context' => [
               'date' => $link,
-              'username' => $this->renderer->renderPlain($username),
+              'username' => $this->renderer->renderInIsolation($username),
               'message' => [
                 '#markup' => $revision->getRevisionLogMessage(),
                 '#allowed_tags' => Xss::getHtmlTagList(),

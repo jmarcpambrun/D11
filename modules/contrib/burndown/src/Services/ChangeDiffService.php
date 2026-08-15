@@ -27,13 +27,22 @@ class ChangeDiffService {
 
       // Produce a nicely formatted change list.
       foreach ($changed as $field_name) {
-        // Ignore changed timestamp, as well as sorting fields and the log.
+        // Ignore changed timestamp, sorting fields, the log, and any fields
+        // that Drupal or entity presave hooks manage automatically on every
+        // save so they don't produce spurious change-log entries.
         $ignore_fields = [
           'backlog_sort',
           'board_sort',
           'changed',
           'log',
           'revision_default',
+          'revision_log',
+          'revision_log_message',
+          'revision_timestamp',
+          'revision_translation_affected',
+          'revision_uid',
+          'user_id',
+          'vid',
           'watch_list',
         ];
         if (in_array($field_name, $ignore_fields)) {
@@ -73,6 +82,8 @@ class ChangeDiffService {
   private function diff($old, $new) {
     $matrix = [];
     $maxlen = 0;
+    $omax = 0;
+    $nmax = 0;
 
     foreach ($old as $oindex => $ovalue) {
       $nkeys = array_keys($new, $ovalue);

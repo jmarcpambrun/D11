@@ -1,0 +1,22 @@
+burndown.config_settings:
+  type: config_object
+  label: 'Burndown Settings'
+  mapping:
+    enable_email_notifications:
+      type: boolean
+      label: 'Enable Email Notifications'
+    geometric_size_defaults:
+      type: string
+      label: 'Geometric Size Defaults'
+    tshirt_size_defaults:
+      type: string
+      label: 'T-Shirt Size Defaults'
+    resolution_statuses:
+      type: string
+      label: 'Resolution Statuses'
+    relationship_types:
+      type: string
+      label: 'Relationship Types'
+    relationship_opposites:
+      type: string
+      label: 'Relationship Opposites'

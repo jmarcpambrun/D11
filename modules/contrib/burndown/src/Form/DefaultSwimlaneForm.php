@@ -16,6 +16,7 @@ class DefaultSwimlaneForm extends EntityForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
+    /** @var \Drupal\burndown\Entity\DefaultSwimlane $default_swimlane */
     $default_swimlane = $this->entity;
     $form['label'] = [
       '#type' => 'textfield',
@@ -72,6 +73,7 @@ class DefaultSwimlaneForm extends EntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\burndown\Entity\DefaultSwimlane $default_swimlane */
     $default_swimlane = $this->entity;
     $default_swimlane->set('sort_order', $form_state->getValue('sort_order'));
     $default_swimlane->set('show_backlog', $form_state->getValue('show_backlog'));
@@ -92,6 +94,8 @@ class DefaultSwimlaneForm extends EntityForm {
         ]));
     }
     $form_state->setRedirectUrl($default_swimlane->toUrl('collection'));
+
+    return $status;
   }
 
 }

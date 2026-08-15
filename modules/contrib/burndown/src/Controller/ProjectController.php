@@ -51,8 +51,10 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
    *   An array suitable for drupal_render().
    */
   public function revisionShow($burndown_project_revision) {
-    $burndown_project = $this->entityTypeManager()->getStorage('burndown_project')
-      ->loadRevision($burndown_project_revision);
+    /** @var \Drupal\burndown\ProjectStorageInterface $project_storage */
+    $project_storage = $this->entityTypeManager()->getStorage('burndown_project');
+    /** @var \Drupal\burndown\Entity\Project $burndown_project */
+    $burndown_project = $project_storage->loadRevision($burndown_project_revision);
     $view_builder = $this->entityTypeManager()->getViewBuilder('burndown_project');
 
     return $view_builder->view($burndown_project);
@@ -68,8 +70,10 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
    *   The page title.
    */
   public function revisionPageTitle($burndown_project_revision) {
-    $burndown_project = $this->entityTypeManager()->getStorage('burndown_project')
-      ->loadRevision($burndown_project_revision);
+    /** @var \Drupal\burndown\ProjectStorageInterface $project_storage */
+    $project_storage = $this->entityTypeManager()->getStorage('burndown_project');
+    /** @var \Drupal\burndown\Entity\Project $burndown_project */
+    $burndown_project = $project_storage->loadRevision($burndown_project_revision);
     return $this->t('Revision of %title from %date', [
       '%title' => $burndown_project->label(),
       '%date' => $this->dateFormatter->format($burndown_project->getRevisionCreationTime()),
@@ -87,6 +91,7 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
    */
   public function revisionOverview(ProjectInterface $burndown_project) {
     $account = $this->currentUser();
+    /** @var \Drupal\burndown\ProjectStorageInterface $burndown_project_storage */
     $burndown_project_storage = $this->entityTypeManager()->getStorage('burndown_project');
 
     $langcode = $burndown_project->language()->getId();
@@ -117,7 +122,7 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
     $latest_revision = TRUE;
 
     foreach (array_reverse($vids) as $vid) {
-      /** @var \Drupal\burndown\ProjectInterface $revision */
+      /** @var \Drupal\burndown\Entity\ProjectInterface $revision */
       $revision = $burndown_project_storage->loadRevision($vid);
       // Only show revisions that are affected by the language that is being
       // displayed.
@@ -130,10 +135,10 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
         // Use revision link to link to revisions that are not active.
         $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $burndown_project->getRevisionId()) {
-		  $link = Link::fromTextAndUrl($date, new Url('entity.burndown_project.revision', [
+          $link = Link::fromTextAndUrl($date, new Url('entity.burndown_project.revision', [
             'burndown_project' => $burndown_project->id(),
             'burndown_project_revision' => $vid,
-           ]))->toString();
+          ]))->toString();
         }
         else {
           $link = $burndown_project->toLink($date)->toString();
@@ -146,7 +151,7 @@ class ProjectController extends ControllerBase implements ContainerInjectionInte
             '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
             '#context' => [
               'date' => $link,
-              'username' => $this->renderer->renderPlain($username),
+              'username' => $this->renderer->renderInIsolation($username),
               'message' => [
                 '#markup' => $revision->getRevisionLogMessage(),
                 '#allowed_tags' => Xss::getHtmlTagList(),

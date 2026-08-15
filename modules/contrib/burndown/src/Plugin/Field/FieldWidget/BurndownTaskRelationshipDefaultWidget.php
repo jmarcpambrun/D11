@@ -32,7 +32,7 @@ class BurndownTaskRelationshipDefaultWidget extends WidgetBase implements Widget
   /**
    * The burndown configuration.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
 
@@ -82,6 +82,7 @@ class BurndownTaskRelationshipDefaultWidget extends WidgetBase implements Widget
     ];
 
     // Load the task.
+    $task = NULL;
     if (isset($item->task_id)) {
       $task = Task::load($item->task_id);
     }

@@ -2,6 +2,7 @@
 
 namespace Drupal\burndown\Form;
 
+use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
@@ -51,7 +52,6 @@ class TaskForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\burndown\Entity\Task $entity */
     $form = parent::buildForm($form, $form_state);
 
     // Disable form cache so that the image upload can work.
@@ -77,9 +77,13 @@ class TaskForm extends ContentEntityForm {
     }
 
     // Set estimate options based on project.
-    $task = $form_state->getformObject()->getEntity();
+    /** @var \Drupal\burndown\Entity\Task $task */
+    $task = $this->entity;
     $project = $task->getProject();
-    $options = $project->getEstimateSizes();
+    $options = [];
+    if (!is_null($project)) {
+      $options = $project->getEstimateSizes();
+    }
 
     // Remove delete button (too easy to accidentally press).
     unset($form['actions']['delete']);
@@ -96,6 +100,86 @@ class TaskForm extends ContentEntityForm {
 
       // Update the form widget.
       $form['estimate']['widget']['#options'] = $options;
+    }
+
+    // Scope the Column selector to this project's columns.
+    $swimlanes = FALSE;
+    if (!is_null($project)) {
+      $swimlanes = Swimlane::loadForProject($project->getShortcode());
+    }
+    $swimlane_options = [];
+    $backlog_swimlane_id = NULL;
+    if ($swimlanes !== FALSE) {
+      $backlog_swimlanes = [];
+      $normal_swimlanes = [];
+      $completed_swimlanes = [];
+
+      foreach ($swimlanes as $swimlane) {
+        if ($swimlane->getShowBacklog()) {
+          $backlog_swimlanes[] = $swimlane;
+        }
+        elseif ($swimlane->getShowCompleted()) {
+          $completed_swimlanes[] = $swimlane;
+        }
+        else {
+          $normal_swimlanes[] = $swimlane;
+        }
+      }
+
+      $sort_swimlanes = function (array &$lanes): void {
+        usort($lanes, function ($a, $b) {
+          $sort_compare = $a->getSortOrder() <=> $b->getSortOrder();
+          if ($sort_compare !== 0) {
+            return $sort_compare;
+          }
+          return strnatcasecmp($a->getName(), $b->getName());
+        });
+      };
+
+      $sort_swimlanes($backlog_swimlanes);
+      $sort_swimlanes($normal_swimlanes);
+      $sort_swimlanes($completed_swimlanes);
+
+      $ordered_swimlanes = array_merge($backlog_swimlanes, $normal_swimlanes, $completed_swimlanes);
+
+      foreach ($ordered_swimlanes as $swimlane) {
+        $swimlane_options[$swimlane->id()] = $swimlane->getName();
+        if ($backlog_swimlane_id === NULL && $swimlane->getShowBacklog()) {
+          $backlog_swimlane_id = $swimlane->id();
+        }
+      }
+    }
+    $default_swimlane = $task->get('swimlane')->target_id;
+    if (is_null($default_swimlane)) {
+      if (!is_null($backlog_swimlane_id)) {
+        $default_swimlane = $backlog_swimlane_id;
+      }
+      elseif (!empty($swimlane_options)) {
+        $default_swimlane = array_key_first($swimlane_options);
+      }
+    }
+
+    // Always render Column as a select list on add/edit forms.
+    if (isset($form['swimlane']['widget'][0]['target_id'])) {
+      $form['swimlane']['#access'] = TRUE;
+      $form['swimlane']['widget'][0]['target_id']['#type'] = 'select';
+      $form['swimlane']['widget'][0]['target_id']['#options'] = $swimlane_options;
+      $form['swimlane']['widget'][0]['target_id']['#default_value'] = $default_swimlane;
+
+      // Remove autocomplete-only settings when forcing select rendering.
+      unset($form['swimlane']['widget'][0]['target_id']['#target_type']);
+      unset($form['swimlane']['widget'][0]['target_id']['#selection_handler']);
+      unset($form['swimlane']['widget'][0]['target_id']['#selection_settings']);
+      unset($form['swimlane']['widget'][0]['target_id']['#tags']);
+      unset($form['swimlane']['widget'][0]['target_id']['#autocreate']);
+      unset($form['swimlane']['widget'][0]['target_id']['#process_default_value']);
+      unset($form['swimlane']['widget'][0]['target_id']['#validate_reference']);
+    }
+    elseif (isset($form['swimlane']['widget'])) {
+      $form['swimlane']['#access'] = TRUE;
+      $form['swimlane']['widget']['#type'] = 'select';
+      $form['swimlane']['widget']['#options'] = $swimlane_options;
+      $form['swimlane']['widget']['#default_value'] = $default_swimlane;
     }
 
     // Close the images section by default to save space.
@@ -187,7 +271,7 @@ class TaskForm extends ContentEntityForm {
         '#type' => 'select',
         '#title' => $this->t('Relationship Type'),
         '#options' => Task::getRelationshipTypes(),
-		'#attributes' => [
+        '#attributes' => [
           'class' => ['add_relationship_select'],
         ],
       ];
@@ -198,7 +282,7 @@ class TaskForm extends ContentEntityForm {
         '#tags' => TRUE,
         '#size' => 15,
         '#maxlength' => 25,
-		'#attributes' => [
+        '#attributes' => [
           'class' => ['add_relationship_entity'],
         ],
       ];
@@ -212,7 +296,6 @@ class TaskForm extends ContentEntityForm {
       // Hide miscellaneous items.
       $form['ticket_id']['#access'] = FALSE;
       $form['project']['#access'] = FALSE;
-      $form['swimlane']['#access'] = FALSE;
       $form['revision_log']['#access'] = FALSE;
       $form['status']['#access'] = FALSE;
       $form['sprint']['#access'] = FALSE;
@@ -276,7 +359,7 @@ class TaskForm extends ContentEntityForm {
       ];
       $form['log']['comment']['body'] = [
         '#type' => 'textarea',
-		'#attributes' => [
+        '#attributes' => [
           'class' => ['add_comment_text'],
         ],
       ];
@@ -297,7 +380,7 @@ class TaskForm extends ContentEntityForm {
       $form['log']['work']['body'] = [
         '#type' => 'textarea',
         '#title' => $this->t('Comment'),
-		'#attributes' => [
+        '#attributes' => [
           'class' => ['add_work_text'],
         ],
       ];
@@ -306,8 +389,8 @@ class TaskForm extends ContentEntityForm {
         '#title' => $this->t('Time'),
         '#min' => 0,
         '#default_value' => 0,
-		'#attributes' => [
-           'class' => ['add_work_quantity'],
+        '#attributes' => [
+          'class' => ['add_work_quantity'],
         ],
       ];
       $form['log']['work']['quantity_type'] = [
@@ -318,8 +401,8 @@ class TaskForm extends ContentEntityForm {
           'd' => $this->t('Days'),
         ],
         '#default_value' => 'h',
-		'#attributes' => [
-           'class' => ['add_work_quantity_type'],
+        '#attributes' => [
+          'class' => ['add_work_quantity_type'],
         ],
       ];
       $form['log']['work']['link'] = [
@@ -347,6 +430,20 @@ class TaskForm extends ContentEntityForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     $entity = $this->entity;
+
+    // Persist Column from the swimlane widget.
+    $swimlane_value = $form_state->getValue('swimlane');
+    $swimlane_id = NULL;
+    if (is_scalar($swimlane_value) && $swimlane_value !== '') {
+      $swimlane_id = $swimlane_value;
+    }
+    elseif (is_array($swimlane_value) && isset($swimlane_value[0]['target_id']) && is_scalar($swimlane_value[0]['target_id']) && $swimlane_value[0]['target_id'] !== '') {
+      $swimlane_id = $swimlane_value[0]['target_id'];
+    }
+
+    if (!is_null($swimlane_id)) {
+      $entity->set('swimlane', $swimlane_id);
+    }
 
     // Save as a new revision if requested to do so.
     if (!$form_state->isValueEmpty('new_revision') && $form_state->getValue('new_revision') != FALSE) {
@@ -380,6 +477,8 @@ class TaskForm extends ContentEntityForm {
         ]));
     }
     $form_state->setRedirect('entity.burndown_task.canonical', ['burndown_task' => $entity->id()]);
+
+    return $status;
   }
 
 }

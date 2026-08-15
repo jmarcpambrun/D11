@@ -6,7 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Provices a settings form for managing Column (swimlane) entity types.
+ * Provides a settings form for managing Column (swimlane) entity types.
  *
  * @ingroup burndown
  */

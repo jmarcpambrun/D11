@@ -2,8 +2,8 @@
 
 namespace Drupal\burndown\Event;
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Component\EventDispatcher\Event;
+use Drupal\burndown\Entity\Task;
 
 /**
  * Event that is fired when someone comments on a task.
@@ -15,7 +15,7 @@ class TaskCommentEvent extends Event {
   /**
    * The task.
    *
-   * @var Drupal\Core\Entity\EntityInterface
+   * @var \Drupal\burndown\Entity\Task
    */
   public $task;
 
@@ -29,12 +29,12 @@ class TaskCommentEvent extends Event {
   /**
    * Constructs the object.
    *
-   * @param Drupal\Core\Entity\EntityInterface $task
+   * @param \Drupal\burndown\Entity\Task $task
    *   The newly created task.
    * @param string $comment
    *   The text of the comment.
    */
-  public function __construct(EntityInterface $task, $comment) {
+  public function __construct(Task $task, $comment) {
     $this->task = $task;
     $this->comment = $comment;
   }

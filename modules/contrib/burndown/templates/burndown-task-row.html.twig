@@ -1,6 +1,6 @@
 <div class="priority priority-{{ priority }}" title="priority: {{ priority }}" aria-label="priority: {{ priority }}"></div>
 
-{# This should be wrapped in a permission checkbut there are several dynamic permissions that require the project id and that is not available. #}
+{# This should be wrapped in a permission check but there are several dynamic permissions that require the project id and that is not available. #}
 <div class="task_link_group">
   <a href="{{ url('<front>') }}burndown/task/{{ id }}"
     class="use-ajax task_id{% if is_completed %} completed{% endif %} task_link_group_link"

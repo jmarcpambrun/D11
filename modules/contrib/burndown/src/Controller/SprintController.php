@@ -32,7 +32,7 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
   protected $renderer;
 
   /**
-   * @var {@inheritdoc}
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
@@ -51,8 +51,10 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
    *   An array suitable for drupal_render().
    */
   public function revisionShow($burndown_sprint_revision) {
-    $burndown_sprint = $this->entityTypeManager()->getStorage('burndown_sprint')
-      ->loadRevision($burndown_sprint_revision);
+    /** @var \Drupal\burndown\SprintStorageInterface $sprint_storage */
+    $sprint_storage = $this->entityTypeManager()->getStorage('burndown_sprint');
+    /** @var \Drupal\burndown\Entity\Sprint $burndown_sprint */
+    $burndown_sprint = $sprint_storage->loadRevision($burndown_sprint_revision);
     $view_builder = $this->entityTypeManager()->getViewBuilder('burndown_sprint');
 
     return $view_builder->view($burndown_sprint);
@@ -68,8 +70,10 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
    *   The page title.
    */
   public function revisionPageTitle($burndown_sprint_revision) {
-    $burndown_sprint = $this->entityTypeManager()->getStorage('burndown_sprint')
-      ->loadRevision($burndown_sprint_revision);
+    /** @var \Drupal\burndown\SprintStorageInterface $sprint_storage */
+    $sprint_storage = $this->entityTypeManager()->getStorage('burndown_sprint');
+    /** @var \Drupal\burndown\Entity\Sprint $burndown_sprint */
+    $burndown_sprint = $sprint_storage->loadRevision($burndown_sprint_revision);
     return $this->t('Revision of %title from %date', [
       '%title' => $burndown_sprint->label(),
       '%date' => $this->dateFormatter->format($burndown_sprint->getRevisionCreationTime()),
@@ -87,13 +91,19 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
    */
   public function revisionOverview(SprintInterface $burndown_sprint) {
     $account = $this->currentUser();
+    /** @var \Drupal\burndown\SprintStorageInterface $burndown_sprint_storage */
     $burndown_sprint_storage = $this->entityTypeManager()->getStorage('burndown_sprint');
 
     $langcode = $burndown_sprint->language()->getId();
     $langname = $burndown_sprint->language()->getName();
     $languages = $burndown_sprint->getTranslationLanguages();
     $has_translations = (count($languages) > 1);
-    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $burndown_sprint->label()]) : $this->t('Revisions for %title', ['%title' => $burndown_sprint->label()]);
+    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', [
+      '@langname' => $langname,
+      '%title' => $burndown_sprint->label(),
+    ]) : $this->t('Revisions for %title', [
+      '%title' => $burndown_sprint->label(),
+    ]);
 
     $header = [$this->t('Revision'), $this->t('Operations')];
     $revert_permission = (($account->hasPermission("revert all sprint revisions") || $account->hasPermission('administer sprint entities')));
@@ -106,7 +116,7 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
     $latest_revision = TRUE;
 
     foreach (array_reverse($vids) as $vid) {
-      /** @var \Drupal\burndown\SprintInterface $revision */
+      /** @var \Drupal\burndown\Entity\SprintInterface $revision */
       $revision = $burndown_sprint_storage->loadRevision($vid);
       // Only show revisions that are affected by the language that is being
       // displayed.
@@ -119,10 +129,10 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
         // Use revision link to link to revisions that are not active.
         $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $burndown_sprint->getRevisionId()) {
-		  $link = Link::fromTextAndUrl($date, new Url('entity.burndown_sprint.revision', [
-             'burndown_sprint' => $burndown_sprint->id(),
-             'burndown_sprint_revision' => $vid,
-           ]))->toString();
+          $link = Link::fromTextAndUrl($date, new Url('entity.burndown_sprint.revision', [
+            'burndown_sprint' => $burndown_sprint->id(),
+            'burndown_sprint_revision' => $vid,
+          ]))->toString();
         }
         else {
           $link = $burndown_sprint->toLink($date)->toString();
@@ -135,7 +145,7 @@ class SprintController extends ControllerBase implements ContainerInjectionInter
             '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
             '#context' => [
               'date' => $link,
-              'username' => $this->renderer->renderPlain($username),
+              'username' => $this->renderer->renderInIsolation($username),
               'message' => [
                 '#markup' => $revision->getRevisionLogMessage(),
                 '#allowed_tags' => Xss::getHtmlTagList(),

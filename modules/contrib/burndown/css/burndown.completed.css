@@ -1,7 +1,7 @@
 #backlog h3,
 .backlog h3 {
-  font-weight: bold;
   margin: 0 1em 0 0;
+  font-weight: bold;
 }
 
 a.button-action {
@@ -10,30 +10,30 @@ a.button-action {
 
 .list-group {
   min-height: 40px;
-  border-left: 1px dotted rgba(0,0,0,0.05);
-  border-right: 1px dotted rgba(0,0,0,0.05);
-  border-bottom: 1px dotted rgba(0,0,0,0.05);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  padding: 0.5em;
-  background-color: rgba(0,0,0,0.01);
   margin-bottom: 1.5em;
+  padding: 0.5em;
+  border-right: 1px dotted rgb(0, 0, 0, 0.05);
+  border-bottom: 1px dotted rgb(0, 0, 0, 0.05);
+  border-left: 1px dotted rgb(0, 0, 0, 0.05);
+  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 12px;
+  background-color: rgb(0, 0, 0, 0.01);
 }
 
 .list-group-item {
-  border: 1px solid rgba(0,0,0,.125);
   margin: 0.5em 0;
   padding: 0.5em;
+  border: 1px solid rgb(0, 0, 0, 0.125);
   border-radius: 5px;
 }
 
 .burndown_sprint,
 #backlog_label {
-  border: 1px dotted rgba(0,0,0,0.05);
+  padding: 0.5em;
+  border: 1px dotted rgb(0, 0, 0, 0.05);
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  padding: 0.5em;
-  background-color: rgba(0,0,0,0.1);
+  background-color: rgb(0, 0, 0, 0.1);
 }
 
 .burndown_sprint .backlog {
@@ -44,14 +44,14 @@ a.button-action {
 
 .burndown_sprint .backlog .num_tasks {
   flex-grow: 4;
-  font-style: italic;
   font-weight: 500;
+  font-style: italic;
 }
 
 .burndown_sprint .backlog .status {
-  text-transform: capitalize;
   margin: 0 2em 0 1em;
   padding: 0.25em 0.5em;
+  text-transform: capitalize;
   border-radius: 5px;
   background-color: lightgreen;
 }
@@ -59,21 +59,21 @@ a.button-action {
 .burndown_sprint .open_button a {
   display: block;
   height: 24px;
-  background-size: contain;
   text-indent: 27px;
-  background-image: url('../icons/actions/open.png');
-  background-repeat: no-repeat;
   color: black;
+  background-image: url("../icons/actions/open.png");
+  background-repeat: no-repeat;
+  background-size: contain;
   line-height: 23px;
 }
 
 .burndown_sprint .close_button a {
   display: block;
   height: 24px;
-  background-size: contain;
   text-indent: 27px;
-  background-image: url('../icons/actions/close.png');
-  background-repeat: no-repeat;
   color: black;
+  background-image: url("../icons/actions/close.png");
+  background-repeat: no-repeat;
+  background-size: contain;
   line-height: 23px;
 }

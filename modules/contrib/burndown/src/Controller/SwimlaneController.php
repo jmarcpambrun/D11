@@ -48,9 +48,9 @@ class SwimlaneController extends ControllerBase {
   public function getSwimlanes($shortcode = NULL) {
     $data = [];
 
-	// When short code variable is null
+    // When short code variable is null
     // route request to project collection.
-    if($shortcode == null) {
+    if ($shortcode == NULL) {
       $url = Url::fromRoute('entity.burndown_project.collection')->toString();
       return new RedirectResponse($url);
     }

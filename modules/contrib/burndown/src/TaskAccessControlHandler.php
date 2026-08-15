@@ -2,6 +2,7 @@
 
 namespace Drupal\burndown;
 
+use Drupal\burndown\Entity\TaskInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
@@ -79,7 +80,7 @@ class TaskAccessControlHandler extends EntityAccessControlHandler {
   /**
    * Test for given 'own' permission.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\burndown\Entity\TaskInterface $entity
    *   The entity for which ownership is being checked.
    * @param string $operation
    *   The operation which user is attempting to carry out.
@@ -89,13 +90,13 @@ class TaskAccessControlHandler extends EntityAccessControlHandler {
    * @return string|null
    *   The permission string indicating it's allowed.
    */
-  protected function checkOwn(EntityInterface $entity, $operation, AccountInterface $account) {
+  protected function checkOwn(TaskInterface $entity, $operation, AccountInterface $account) {
     $status = $entity->isPublished();
     $uid = $entity->getOwnerId();
 
     $is_own = $account->isAuthenticated() && $account->id() == $uid;
     if (!$is_own) {
-      return;
+      return NULL;
     }
 
     $bundle = $entity->bundle();

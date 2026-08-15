@@ -60,6 +60,8 @@ class TaskTypeForm extends EntityForm {
         ]));
     }
     $form_state->setRedirectUrl($burndown_task_type->toUrl('collection'));
+
+    return $status;
   }
 
 }

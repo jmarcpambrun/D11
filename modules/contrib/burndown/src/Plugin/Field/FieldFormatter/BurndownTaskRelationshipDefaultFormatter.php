@@ -42,10 +42,10 @@ class BurndownTaskRelationshipDefaultFormatter extends FormatterBase {
     $output = [];
 
     foreach ($items as $delta => $item) {
-
+      $item_values = $item->getValue();
       $build = [];
 
-      $task = Task::load($item->task_id);
+      $task = Task::load($item_values['task_id'] ?? 0);
 
       $build['task_id'] = [
         '#type' => 'container',
@@ -85,7 +85,7 @@ class BurndownTaskRelationshipDefaultFormatter extends FormatterBase {
           '#attributes' => [
             'class' => ['field__item'],
           ],
-          '#plain_text' => $item->type,
+          '#plain_text' => $item_values['type'] ?? '',
         ],
       ];
 

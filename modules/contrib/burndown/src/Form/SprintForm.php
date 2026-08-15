@@ -34,7 +34,6 @@ class SprintForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\burndown\Entity\Sprint $entity */
     $form = parent::buildForm($form, $form_state);
 
     if (!$this->entity->isNew()) {
@@ -89,6 +88,8 @@ class SprintForm extends ContentEntityForm {
         ]));
     }
     $form_state->setRedirect('entity.burndown_sprint.canonical', ['burndown_sprint' => $entity->id()]);
+
+    return $status;
   }
 
 }

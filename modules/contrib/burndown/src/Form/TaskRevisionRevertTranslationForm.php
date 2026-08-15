@@ -75,8 +75,8 @@ class TaskRevisionRevertTranslationForm extends TaskRevisionRevertForm {
   protected function prepareRevertedRevision(TaskInterface $revision, FormStateInterface $form_state) {
     $revert_untranslated_fields = $form_state->getValue('revert_untranslated_fields');
 
-    /** @var \Drupal\burndown\Entity\TaskInterface $default_revision */
-    $latest_revision = $this->TaskStorage->load($revision->id());
+    /** @var \Drupal\burndown\Entity\TaskInterface $latest_revision */
+    $latest_revision = $this->taskStorage->load($revision->id());
     $latest_revision_translation = $latest_revision->getTranslation($this->langcode);
 
     $revision_translation = $revision->getTranslation($this->langcode);
@@ -89,7 +89,7 @@ class TaskRevisionRevertTranslationForm extends TaskRevisionRevertForm {
 
     $latest_revision_translation->setNewRevision();
     $latest_revision_translation->isDefaultRevision(TRUE);
-    $revision->setRevisionCreationTime(\Drupal::time()->getRequestTime());
+    $revision->setRevisionCreationTime($this->time->getRequestTime());
 
     return $latest_revision_translation;
   }

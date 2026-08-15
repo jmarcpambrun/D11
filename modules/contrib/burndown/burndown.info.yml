@@ -13,7 +13,7 @@ dependencies:
   - drupal:taxonomy
   - drupal:views
 
-# Information added by Drupal.org packaging script on 2026-07-31
-version: '1.0.75'
+# Information added by Drupal.org packaging script on 2026-08-14
+version: '1.0.77'
 project: 'burndown'
-datestamp: 1785517315
+datestamp: 1786716379

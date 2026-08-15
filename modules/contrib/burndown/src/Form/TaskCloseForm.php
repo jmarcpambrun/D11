@@ -23,8 +23,7 @@ class TaskCloseForm extends FormBase {
   /**
    * Event dispatcher.
    *
-   * @var \Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher
-   * $event_dispatcher.
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
 

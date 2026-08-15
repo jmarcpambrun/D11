@@ -330,8 +330,16 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   public function inBacklog() {
     $swimlane = $this->getSwimlane();
     $project = $this->getProject();
+    if (is_null($swimlane) || is_null($project)) {
+      return FALSE;
+    }
+
     $shortcode = $project->getShortcode();
     $backlog = Swimlane::getBacklogFor($shortcode);
+    if ($backlog === FALSE) {
+      return FALSE;
+    }
+
     return ($backlog->id() == $swimlane->id());
   }
 
@@ -341,6 +349,10 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   public function onBoard() {
     $swimlane = $this->getSwimlane();
     $project = $this->getProject();
+    if (is_null($swimlane) || is_null($project)) {
+      return FALSE;
+    }
+
     $shortcode = $project->getShortcode();
     $board_lanes = Swimlane::getBoardSwimlanes($shortcode);
     if ($board_lanes !== FALSE) {
@@ -360,6 +372,10 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   public function onCompletedBoard() {
     $swimlane = $this->getSwimlane();
     $project = $this->getProject();
+    if (is_null($swimlane) || is_null($project)) {
+      return FALSE;
+    }
+
     $shortcode = $project->getShortcode();
     $completed_lanes = Swimlane::getCompletedSwimlanes($shortcode);
     if ($completed_lanes !== FALSE) {
@@ -385,14 +401,18 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     // Check if in the final "done" lane of the board.
     $project = $this->getProject();
-    $shortcode = $project->getShortcode();
     $swimlane = $this->getSwimlane();
+    if (is_null($project) || is_null($swimlane)) {
+      return FALSE;
+    }
+
+    $shortcode = $project->getShortcode();
     $done = Swimlane::getDoneSwimlane($shortcode);
-	if ($done !== FALSE) {
+    if ($done !== FALSE) {
       if ($swimlane->id() == $done->id()) {
         return TRUE;
       }
-	}
+    }
 
     // The task is not yet completed.
     return FALSE;
@@ -409,7 +429,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * Check if this task's project is an sprint mode.
    */
   public function isSprint() {
-    return $this->getProject()->isSprint();
+    $project = $this->getProject();
+    return !is_null($project) && $project->isSprint();
   }
 
   /**
@@ -464,16 +485,49 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
 
+    // Ensure a swimlane is set before saving.
+    $project = $this->getProject();
+    if (!is_null($project) && empty($this->get('swimlane')->target_id)) {
+      $shortcode = $project->getShortcode();
+      $backlog = Swimlane::getBacklogFor($shortcode);
+      if ($backlog !== FALSE) {
+        $this->set('swimlane', $backlog->id());
+      }
+      else {
+        $project_swimlanes = Swimlane::loadForProject($shortcode);
+        if (!empty($project_swimlanes)) {
+          usort($project_swimlanes, function ($a, $b) {
+            return $a->getSortOrder() <=> $b->getSortOrder();
+          });
+          $first_swimlane = reset($project_swimlanes);
+          if ($first_swimlane !== FALSE) {
+            $this->set('swimlane', $first_swimlane->id());
+          }
+        }
+      }
+    }
+
+    // Keep the completed flag in sync with selected column semantics.
+    $swimlane = $this->getSwimlane();
+    if (!is_null($swimlane)) {
+      $is_completed_lane = (bool) $swimlane->getShowCompleted();
+      $is_currently_completed = (bool) $this->getCompleted();
+      if ($is_currently_completed !== $is_completed_lane) {
+        $this->setCompleted($is_completed_lane);
+      }
+    }
+
+    $ticket_id = '';
+
     // On ticket creation (but not edit), we need to obtain a unique
     // id from the project.
     if ($this->isNew()) {
       // Get the project.
-      $project = $this->getProject();
       if (is_null($project)) {
         throw new \Exception('Task does not have a Project');
       }
       $project_id = $project->id();
-      $shortcode = $project->getShortCode();
+      $shortcode = $project->getShortcode();
 
       // Get the next task id from the project.
       $next_id_service = \Drupal::service('burndown_service.next_id');
@@ -742,7 +796,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function getProject() {
-    return $this->get('project')->entity;
+    $project = $this->get('project')->entity;
+    return $project instanceof ProjectInterface ? $project : NULL;
   }
 
   /**
@@ -918,10 +973,15 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     $user_id = $this->getAssignedToId();
     $user = User::load($user_id);
+    if (!$user) {
+      return FALSE;
+    }
     if ($user->hasField('user_picture') &&
       !$user->user_picture->isEmpty()) {
+      /** @var \Drupal\file\FileInterface $picture_file */
+      $picture_file = $user->user_picture->entity;
       return \Drupal::service('file_url_generator')
-        ->generateAbsoluteString($user->user_picture->entity->getFileUri());
+        ->generateAbsoluteString($picture_file->getFileUri());
     }
 
     return FALSE;
@@ -966,14 +1026,17 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function getOwner() {
-    return $this->get('user_id')->entity;
+    /** @var \Drupal\user\UserInterface|null $owner */
+    $owner = $this->get('user_id')->entity;
+    return $owner;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getOwnerId() {
-    return $this->get('user_id')->target_id;
+    $owner_id = $this->get('user_id')->target_id;
+    return is_numeric($owner_id) ? (int) $owner_id : NULL;
   }
 
   /**
@@ -994,10 +1057,15 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     $user_id = $this->getOwnerId();
     $user = User::load($user_id);
+    if (!$user) {
+      return FALSE;
+    }
     if ($user->hasField('user_picture') &&
       !$user->user_picture->isEmpty()) {
+      /** @var \Drupal\file\FileInterface $picture_file */
+      $picture_file = $user->user_picture->entity;
       return \Drupal::service('file_url_generator')
-        ->generateAbsoluteString($user->user_picture->entity->getFileUri());
+        ->generateAbsoluteString($picture_file->getFileUri());
     }
 
     return FALSE;
@@ -1068,7 +1136,9 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function getTags() {
-    return $this->get('tags')->referencedEntities();
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $tags */
+    $tags = $this->get('tags');
+    return $tags->referencedEntities();
   }
 
   /**
@@ -1081,6 +1151,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     if (!empty($tags)) {
       foreach ($tags as $tag) {
+        /** @var \Drupal\taxonomy\TermInterface $tag */
         $name = $tag->getName();
 
         $first = substr($name, 0, 1);
@@ -1188,7 +1259,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
     $watch_list = $this->get('watch_list')->getValue();
     if (!empty($watch_list)) {
       foreach ($watch_list as $key => $watcher) {
-        if ($watcher['target_id'] == $uid) {
+        if (isset($watcher['target_id']) && (string) $watcher['target_id'] === (string) $uid) {
           return $key;
         }
       }
@@ -1201,7 +1272,9 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * Get the watchlist.
    */
   public function getWatchlist() {
-    return $this->get('watch_list')->referencedEntities();
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $watch_list */
+    $watch_list = $this->get('watch_list');
+    return $watch_list->referencedEntities();
   }
 
   /**
@@ -1211,7 +1284,6 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
     $id = $this->getProject()->id();
     return $id ?: NULL;
   }
-
 
   /**
    * {@inheritdoc}
@@ -1307,6 +1379,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+    /** @var \Drupal\Core\Field\BaseFieldDefinition[] $fields */
     $fields = parent::baseFieldDefinitions($entity_type);
 
     // Add the published field.
@@ -1445,7 +1518,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
     // Swimlane.
     $fields['swimlane'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Column'))
-      ->setDescription(t('The Column that the task is currently in.'))
+      ->setDescription(t('The location or status of the task.'))
       ->setSetting('target_type', 'burndown_swimlane')
       ->setSetting('handler', 'default')
       ->setDisplayOptions('view', [
@@ -1454,17 +1527,12 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
         'weight' => 2,
       ])
       ->setDisplayOptions('form', [
-        'region' => 'hidden',
-        'weight' => 0,
-        'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => '60',
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
-        ],
+        'type' => 'options_select',
+        'weight' => 1,
       ])
       ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('view', TRUE)
+      ->setRequired(TRUE);
 
     // Sprint (optional).
     $fields['sprint'] = BaseFieldDefinition::create('entity_reference')

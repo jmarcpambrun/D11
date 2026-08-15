@@ -20,12 +20,29 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class ManageWorkTimersForm extends FormBase {
 
   /**
+   * Task timer service.
+   *
+   * @var \Drupal\burndown_time_tracker\Service\TaskTimerService
+   */
+  protected $taskTimerService;
+
+  /**
+   * Date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * Constructs the form.
    */
   public function __construct(
-    private readonly TaskTimerService $taskTimerService,
-    private readonly DateFormatterInterface $dateFormatter,
-  ) {}
+    TaskTimerService $taskTimerService,
+    DateFormatterInterface $dateFormatter,
+  ) {
+    $this->taskTimerService = $taskTimerService;
+    $this->dateFormatter = $dateFormatter;
+  }
 
   /**
    * {@inheritdoc}

@@ -51,6 +51,8 @@ class SwimlaneHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
 }

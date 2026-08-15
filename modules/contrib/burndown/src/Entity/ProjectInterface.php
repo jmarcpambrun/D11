@@ -95,4 +95,36 @@ interface ProjectInterface extends ContentEntityInterface, RevisionLogInterface,
    */
   public function setRevisionUserId($uid);
 
+  /**
+   * Returns whether this project uses sprint boards.
+   *
+   * @return bool
+   *   TRUE for sprint projects, FALSE otherwise.
+   */
+  public function isSprint();
+
+  /**
+   * Gets the project shortcode.
+   *
+   * @return string
+   *   The project shortcode.
+   */
+  public function getShortcode();
+
+  /**
+   * Gets the estimation mode for this project.
+   *
+   * @return string
+   *   The estimate type value.
+   */
+  public function getEstimateType();
+
+  /**
+   * Gets available estimate values for this project.
+   *
+   * @return array
+   *   Estimate options keyed by machine value.
+   */
+  public function getEstimateSizes();
+
 }

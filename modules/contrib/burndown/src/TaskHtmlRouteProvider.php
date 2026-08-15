@@ -71,6 +71,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
   /**
@@ -95,6 +97,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
   /**
@@ -119,6 +123,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
   /**
@@ -143,6 +149,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
   /**
@@ -167,6 +175,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
   /**
@@ -191,6 +201,8 @@ class TaskHtmlRouteProvider extends AdminHtmlRouteProvider {
 
       return $route;
     }
+
+    return NULL;
   }
 
 }

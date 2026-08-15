@@ -2,10 +2,13 @@
 
 namespace Drupal\burndown\Form;
 
+use Drupal\burndown\Entity\TaskInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides a form for deleting a Task revision.
@@ -24,7 +27,7 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
   /**
    * The Task storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\Core\Entity\RevisionableStorageInterface
    */
   protected $taskStorage;
 
@@ -36,12 +39,24 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
   protected $connection;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->taskStorage = $container->get('entity_type.manager')->getStorage('burndown_task');
+    $storage = $container->get('entity_type.manager')->getStorage('burndown_task');
+    if (!$storage instanceof RevisionableStorageInterface) {
+      throw new \RuntimeException('Task storage must be revisionable.');
+    }
+    $instance->taskStorage = $storage;
     $instance->connection = $container->get('database');
+    $instance->dateFormatter = $container->get('date.formatter');
     return $instance;
   }
 
@@ -57,7 +72,7 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to delete the revision from %revision-date?', [
-      '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+      '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
     ]);
   }
 
@@ -79,7 +94,11 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $burndown_task_revision = NULL) {
-    $this->revision = $this->TaskStorage->loadRevision($burndown_task_revision);
+    $revision = $this->taskStorage->loadRevision($burndown_task_revision);
+    if (!$revision instanceof TaskInterface) {
+      throw new NotFoundHttpException();
+    }
+    $this->revision = $revision;
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -89,7 +108,7 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->TaskStorage->deleteRevision($this->revision->getRevisionId());
+    $this->taskStorage->deleteRevision($this->revision->getRevisionId());
 
     $this->logger('content')
       ->notice(
@@ -103,7 +122,7 @@ class TaskRevisionDeleteForm extends ConfirmFormBase {
       ->addMessage(
         $this->t('Revision from %revision-date of Task %title has been deleted.',
           [
-            '%revision-date' => \Drupal::service('date.formatter')->format($this->revision->getRevisionCreationTime()),
+            '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
             '%title' => $this->revision->label(),
           ]
         )

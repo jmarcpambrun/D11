@@ -1,0 +1,13 @@
+parameters:
+  level: 3
+  paths:
+    - src
+  excludePaths:
+    - tests
+  reportUnmatchedIgnoredErrors: false
+  treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    # new static() is a best practice in Drupal, so we cannot fix that.
+    - "#^Unsafe usage of new static#"
+    # Legacy contrib code still uses static \Drupal service access in multiple places.
+    - identifier: globalDrupalDependencyInjection.useDependencyInjection

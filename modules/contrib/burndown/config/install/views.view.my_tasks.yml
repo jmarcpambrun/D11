@@ -827,8 +827,8 @@ display:
         - user
         - user.permissions
       tags: {  }
-  my_asssigned_tasks:
-    id: my_asssigned_tasks
+  my_assigned_tasks:
+    id: my_assigned_tasks
     display_title: 'My Assigned'
     display_plugin: page
     position: 1

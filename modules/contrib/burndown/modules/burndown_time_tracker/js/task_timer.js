@@ -1,11 +1,18 @@
 /**
+ * @param $
+ * @param Drupal
+ * @param once
  * @file
  * Task timer UI behavior for Burndown task cards.
  */
 (function ($, Drupal, once) {
   Drupal.behaviors.burndownTaskTimer = {
-    attach: function (context) {
-      var buttons = once('burndown-task-timer', '.burndown-time-timer-toggle', context);
+    attach(context) {
+      const buttons = once(
+        'burndown-task-timer',
+        '.burndown-time-timer-toggle',
+        context,
+      );
       if (!buttons.length) {
         return;
       }
@@ -35,19 +42,25 @@
           }
 
           function highlighted(title) {
-            return '<strong class="burndown-time-timer-task-title">"' + normalizeQuoteEntities(title) + '"</strong>';
+            return `<strong class="burndown-time-timer-task-title">"${normalizeQuoteEntities(
+              title,
+            )}"</strong>`;
           }
 
-          var safe = escapeHtml(normalizeQuoteEntities(message));
-          var matched = false;
+          let safe = escapeHtml(normalizeQuoteEntities(message));
+          let matched = false;
 
           // Match the full auto-stop message first so both task names are highlighted.
           safe = safe.replace(
             /^Since a new timer was started for task (.*?), your previously running timer for (.*?) has been stopped and recorded for that task\.$/,
             function (_, newTask, oldTask) {
               matched = true;
-              return 'Since a new timer was started for task ' + highlighted(newTask) + ', your previously running timer for ' + highlighted(oldTask) + ' has been stopped and recorded for that task.';
-            }
+              return `Since a new timer was started for task ${highlighted(
+                newTask,
+              )}, your previously running timer for ${highlighted(
+                oldTask,
+              )} has been stopped and recorded for that task.`;
+            },
           );
 
           // Match direct start message.
@@ -55,8 +68,8 @@
             /^Timer started for task (.*?)\.$/,
             function (_, task) {
               matched = true;
-              return 'Timer started for task ' + highlighted(task) + '.';
-            }
+              return `Timer started for task ${highlighted(task)}.`;
+            },
           );
 
           // Match already-running message.
@@ -64,8 +77,8 @@
             /^Timer is already running for task (.*?)\.$/,
             function (_, task) {
               matched = true;
-              return 'Timer is already running for task ' + highlighted(task) + '.';
-            }
+              return `Timer is already running for task ${highlighted(task)}.`;
+            },
           );
 
           if (matched) {
@@ -73,20 +86,28 @@
           }
 
           // Emphasize task names in known timer status messages.
-          safe = safe.replace(/(for task )(.+?)([,.])/g, function (_, prefix, title, suffix) {
-            return prefix + highlighted(title) + suffix;
-          });
+          safe = safe.replace(
+            /(for task )(.+?)([,.])/g,
+            function (_, prefix, title, suffix) {
+              return prefix + highlighted(title) + suffix;
+            },
+          );
 
-          safe = safe.replace(/(timer for )(.+?)( has been stopped and recorded for that task\.)/g, function (_, prefix, title, suffix) {
-            return prefix + highlighted(title) + suffix;
-          });
+          safe = safe.replace(
+            /(timer for )(.+?)( has been stopped and recorded for that task\.)/g,
+            function (_, prefix, title, suffix) {
+              return prefix + highlighted(title) + suffix;
+            },
+          );
 
           return safe;
         }
 
-        var messageType = type || 'status';
-        var formattedMessage = emphasizeTaskTitles(text);
-        var toastRoot = document.getElementById('burndown-time-timer-toast-root');
+        const messageType = type || 'status';
+        const formattedMessage = emphasizeTaskTitles(text);
+        let toastRoot = document.getElementById(
+          'burndown-time-timer-toast-root',
+        );
 
         if (!toastRoot) {
           toastRoot = document.createElement('div');
@@ -101,13 +122,18 @@
           document.body.appendChild(toastRoot);
         }
 
-        var toast = document.createElement('div');
-        toast.setAttribute('role', messageType === 'error' ? 'alert' : 'status');
+        const toast = document.createElement('div');
+        toast.setAttribute(
+          'role',
+          messageType === 'error' ? 'alert' : 'status',
+        );
         toast.style.padding = '10px 12px';
         toast.style.borderRadius = '4px';
         toast.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-        toast.style.backgroundColor = messageType === 'error' ? '#fbeaea' : '#eaf6ed';
-        toast.style.border = messageType === 'error' ? '1px solid #d84a4a' : '1px solid #2f7d4b';
+        toast.style.backgroundColor =
+          messageType === 'error' ? '#fbeaea' : '#eaf6ed';
+        toast.style.border =
+          messageType === 'error' ? '1px solid #d84a4a' : '1px solid #2f7d4b';
         toast.style.color = '#111';
         toast.innerHTML = formattedMessage;
         toastRoot.appendChild(toast);
@@ -119,7 +145,7 @@
         }, 10000);
 
         if (Drupal.Message) {
-          (new Drupal.Message()).add(text, { type: messageType });
+          new Drupal.Message().add(text, { type: messageType });
           return;
         }
 
@@ -129,13 +155,13 @@
       }
 
       function setButtonState(button, isRunning) {
-        var label = isRunning ? 'stop timer' : 'start timer';
+        const label = isRunning ? 'stop timer' : 'start timer';
         button.setAttribute('data-state', isRunning ? 'running' : 'stopped');
         button.setAttribute('aria-label', label);
         button.setAttribute('title', label);
         button.classList.toggle('is-running', isRunning);
 
-        var hiddenText = button.querySelector('.burndown-time-timer-label');
+        const hiddenText = button.querySelector('.burndown-time-timer-label');
         if (hiddenText) {
           hiddenText.textContent = label;
         }
@@ -171,7 +197,7 @@
       $.ajax({
         url: '/burndown/api/time-tracker/state',
         method: 'GET',
-        dataType: 'json'
+        dataType: 'json',
       }).done(function (result) {
         if (result && result.success) {
           applyActiveTicket(readTicketId(result));
@@ -185,9 +211,9 @@
           event.preventDefault();
           event.stopPropagation();
 
-          var isRunning = button.getAttribute('data-state') === 'running';
-          var ticketId = button.getAttribute('data-task-ticket-id');
-          var request;
+          const isRunning = button.getAttribute('data-state') === 'running';
+          const ticketId = button.getAttribute('data-task-ticket-id');
+          let request;
 
           button.disabled = true;
 
@@ -195,32 +221,41 @@
             request = $.ajax({
               url: '/burndown/api/time-tracker/stop',
               method: 'POST',
-              dataType: 'json'
+              dataType: 'json',
             });
-          }
-          else {
+          } else {
             request = $.ajax({
-              url: '/burndown/api/time-tracker/start/' + encodeURIComponent(ticketId),
+              url: `/burndown/api/time-tracker/start/${encodeURIComponent(
+                ticketId,
+              )}`,
               method: 'POST',
-              dataType: 'json'
+              dataType: 'json',
             });
           }
 
-          request.done(function (result) {
-            if (!result || !result.success) {
-              notify(result && result.message ? result.message : 'Timer request failed.', 'error');
-              return;
-            }
+          request
+            .done(function (result) {
+              if (!result || !result.success) {
+                notify(
+                  result && result.message
+                    ? result.message
+                    : 'Timer request failed.',
+                  'error',
+                );
+                return;
+              }
 
-            applyActiveTicket(readTicketId(result));
-            notify(result.message || '', 'status');
-          }).fail(function () {
-            notify('Timer request failed. Please reload the page.', 'error');
-          }).always(function () {
-            button.disabled = false;
-          });
+              applyActiveTicket(readTicketId(result));
+              notify(result.message || '', 'status');
+            })
+            .fail(function () {
+              notify('Timer request failed. Please reload the page.', 'error');
+            })
+            .always(function () {
+              button.disabled = false;
+            });
         });
       });
-    }
+    },
   };
 })(jQuery, Drupal, once);

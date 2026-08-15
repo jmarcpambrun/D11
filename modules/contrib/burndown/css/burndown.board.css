@@ -1,6 +1,6 @@
 #board {
-  clear: both;
   display: flex;
+  clear: both;
   flex-direction: row;
   align-items: stretch;
 }
@@ -12,25 +12,25 @@
 }
 
 .list-group {
-  min-height: 50vh;
   height: 90%;
-  border: 1px dotted rgba(0,0,0,0.05);
-  border-radius: 12px;
-  padding: 0.5em;
+  min-height: 50vh;
   margin: 0.5em 0.5em 0.5em 0;
-  background-color: rgba(0,0,0,0.01);
+  padding: 0.5em;
+  border: 1px dotted rgb(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background-color: rgb(0, 0, 0, 0.01);
 }
 
 .list-group-item {
-  border: 1px solid rgba(0,0,0,.125);
   margin: 0.5em 0;
   padding: 0.5em;
+  border: 1px solid rgb(0, 0, 0, 0.125);
   border-radius: 5px;
 }
 
 .swimlane .counter {
-  font-style: italic;
   font-weight: 500;
+  font-style: italic;
 }
 
 #user_list {
@@ -49,20 +49,20 @@
 }
 
 #user_list h4 {
-  line-height: 24px;
   margin: 0;
+  line-height: 24px;
 }
 
 #user_list div.assigned_to,
 #user_list div.reset {
-  cursor: pointer;
   margin: 0 0.5em;
+  cursor: pointer;
 }
 
 #user_list div.reset {
   height: 24px;
-  line-height: 24px;
   padding: 0 0.5rem;
+  line-height: 24px;
 }
 
 #user_list div.assigned_to {
