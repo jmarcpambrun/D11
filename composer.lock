@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "02b734668bc0ff01cf8d3ad1537c83fa",
+    "content-hash": "a6d8362e6db15355fba809ef9d960a1b",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -8288,17 +8288,17 @@
         },
         {
             "name": "drupal/phpmailer_smtp",
-            "version": "3.0.0-alpha1",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/phpmailer_smtp.git",
-                "reference": "3.0.0-alpha1"
+                "reference": "3.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/phpmailer_smtp-3.0.0-alpha1.zip",
-                "reference": "3.0.0-alpha1",
-                "shasum": "e382f17ce8390101b9b299cf5645beb681400808"
+                "url": "https://ftp.drupal.org/files/projects/phpmailer_smtp-3.0.0.zip",
+                "reference": "3.0.0",
+                "shasum": "d7cb1fd7350c511f0bc5e127ddfb43e2b8d0f443"
             },
             "require": {
                 "drupal/core": "^11.2 || ^12",
@@ -8307,11 +8307,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.0-alpha1",
-                    "datestamp": "1783029991",
+                    "version": "3.0.0",
+                    "datestamp": "1786063705",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -22055,7 +22055,6 @@
         "drupal/mailer_transport": 15,
         "drupal/multivalue_form_element": 10,
         "drupal/openai": 10,
-        "drupal/phpmailer_smtp": 15,
         "drupal/private_message": 15,
         "drupal/quiz": 15,
         "drupal/schema_based_config_forms": 10,

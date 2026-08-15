@@ -5,7 +5,7 @@ package: Mail
 configure: phpmailer_smtp.settings
 core_version_requirement: ^11.2 || ^12
 
-# Information added by Drupal.org packaging script on 2026-07-02
-version: '3.0.0-alpha1'
+# Information added by Drupal.org packaging script on 2026-08-07
+version: '3.0.0'
 project: 'phpmailer_smtp'
-datestamp: 1783029812
+datestamp: 1786063707
