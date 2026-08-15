@@ -133,14 +133,14 @@ class Settings extends ConfigFormBase {
     $form['user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Execute models with user'),
-      '#description' => $this->t('Specify here, which user ECA should always switch to when executing models. Leave empty to let ECA always execute models with the current user. <br/>Can be a numeric user ID (UID) or a valid UUID that identifies the user.<br/>When a user is specified here, you will have access to the original ID of the session user with the <em>[session_user:uid]</em> token.'),
+      '#description' => $this->t('Specify here, which user ECA should always switch to when executing models. Leave empty to let ECA always execute models with the current user. <br />Can be a numeric user ID (UID) or a valid UUID that identifies the user.<br />When a user is specified here, you will have access to the original ID of the session user with the <em>[session_user:uid]</em> token.'),
       '#default_value' => $config->get('user'),
       '#weight' => 0,
     ];
     $form['service_user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Service account user'),
-      '#description' => $this->t('The service account is a Drupal user that ECA will switch to when the action "Switch to service user" will be executed in a model. <br/>Can be a numeric user ID (UID) or a valid UUID that identifies the user.'),
+      '#description' => $this->t('The service account is a Drupal user that ECA will switch to when the action "Switch to service user" will be executed in a model. <br />Can be a numeric user ID (UID) or a valid UUID that identifies the user.'),
       '#default_value' => $config->get('service_user'),
       '#weight' => 5,
     ];

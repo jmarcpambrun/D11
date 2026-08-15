@@ -145,7 +145,7 @@ class ConfigurableLoggerChannel extends LoggerChannel {
         }
         if ($data) {
           $this->getTokenInfo($context, $tokens, $data, 'eca_token', 0);
-          $message .= '<br>' . implode('<br>', $tokens);
+          $message .= '<br />' . implode('<br />', $tokens);
         }
       }
       $this->loggerChannel->log($level, $message, $context);

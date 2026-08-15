@@ -43,7 +43,6 @@ class HtmxRequestDataProvider implements DataProviderInterface {
       new Token(name: 'trigger', description: 'The value of the HX-Trigger request header.'),
       new Token(name: 'trigger_name', description: 'The value of the HX-Trigger-Name request header.'),
       new Token(name: 'current_url', description: 'The value of the HX-Current-URL request header.'),
-      new Token(name: 'prompt', description: 'The value of the HX-Prompt request header.'),
     ],
   )]
   public function getData(string $key): mixed {
@@ -58,7 +57,6 @@ class HtmxRequestDataProvider implements DataProviderInterface {
       'trigger' => $this->htmxRequestInfo->trigger(),
       'trigger_name' => $this->htmxRequestInfo->triggerName(),
       'current_url' => $this->htmxRequestInfo->currentUrl(),
-      'prompt' => $this->htmxRequestInfo->prompt(),
     ]);
   }
 

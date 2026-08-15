@@ -47,11 +47,6 @@ class HtmxHeader extends StringComparisonBase {
   protected const string VALUE_CURRENT_URL = 'current_url';
 
   /**
-   * The HTMX request value to compare: the prompt response.
-   */
-  protected const string VALUE_PROMPT = 'prompt';
-
-  /**
    * The HTMX request value to compare: whether this is an HTMX request.
    */
   protected const string VALUE_IS_REQUEST = 'is_request';
@@ -94,7 +89,6 @@ class HtmxHeader extends StringComparisonBase {
       self::VALUE_TRIGGER => $this->htmxRequestInfo->trigger(),
       self::VALUE_TRIGGER_NAME => $this->htmxRequestInfo->triggerName(),
       self::VALUE_CURRENT_URL => $this->htmxRequestInfo->currentUrl(),
-      self::VALUE_PROMPT => $this->htmxRequestInfo->prompt(),
       self::VALUE_IS_REQUEST => $this->htmxRequestInfo->isRequest() ? '1' : '0',
       self::VALUE_BOOSTED => $this->htmxRequestInfo->isBoosted() ? '1' : '0',
       self::VALUE_HISTORY_RESTORE => $this->htmxRequestInfo->isHistoryRestore() ? '1' : '0',
@@ -132,7 +126,6 @@ class HtmxHeader extends StringComparisonBase {
         self::VALUE_TRIGGER => $this->t('Trigger id (HX-Trigger)'),
         self::VALUE_TRIGGER_NAME => $this->t('Trigger name (HX-Trigger-Name)'),
         self::VALUE_CURRENT_URL => $this->t('Current URL (HX-Current-URL)'),
-        self::VALUE_PROMPT => $this->t('Prompt response (HX-Prompt)'),
         self::VALUE_IS_REQUEST => $this->t('Is HTMX request (HX-Request)'),
         self::VALUE_BOOSTED => $this->t('Is boosted (HX-Boosted)'),
         self::VALUE_HISTORY_RESTORE => $this->t('Is history restore (HX-History-Restore-Request)'),

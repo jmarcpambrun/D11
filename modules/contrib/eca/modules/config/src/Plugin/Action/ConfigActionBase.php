@@ -71,6 +71,7 @@ abstract class ConfigActionBase extends ConfigurableActionBase {
       '#default_value' => $this->configuration['config_name'],
       '#required' => TRUE,
       '#weight' => -90,
+      '#eca_token_replacement' => TRUE,
     ];
     $form['config_key'] = [
       '#type' => 'textfield',
@@ -78,6 +79,7 @@ abstract class ConfigActionBase extends ConfigurableActionBase {
       '#description' => $this->t('The config key, for example <em>page.front</em>. Leave empty to use the whole config.'),
       '#default_value' => $this->configuration['config_key'],
       '#weight' => -80,
+      '#eca_token_replacement' => TRUE,
     ];
     return parent::buildConfigurationForm($form, $form_state);
   }

@@ -156,18 +156,19 @@ class Conditions {
    *   meaningful log messages.
    *
    * @return bool
-   *   TRUE, if the condition can be asserted, FALSE otherwise.
+   *   TRUE, if the condition evaluates to TRUE, FALSE otherwise.
    */
   public function assertCondition(Event $event, string|bool|null $condition_id, ?array $condition, array $context): bool {
     if (empty($condition_id)) {
-      $this->logger->info('Unconditional %successorlabel (%successorid) from ECA %ecalabel (%ecaid) for event %event.', $context);
+      $this->logger->info('Unconditional successor %successorlabel from ECA %ecalabel for event %event. (successor: %successorid, ECA: %ecaid)', $context);
       return TRUE;
     }
     $context['%conditionid'] = $condition_id;
     if ($condition === NULL) {
-      $this->logger->error('Non existent condition %conditionid for %successorlabel from ECA %ecalabel (%ecaid) for event %event.', $context);
+      $this->logger->error('Non existent condition for successor %successorlabel from ECA %ecalabel for event %event. (condition: %conditionid, ECA: %ecaid)', $context);
       return FALSE;
     }
+    $context['%conditionlabel'] = !empty($condition['label']) ? $condition['label'] : 'noname';
     try {
       /**
        * @var \Drupal\eca\Plugin\ECA\Condition\ConditionInterface $plugin
@@ -217,17 +218,17 @@ class Conditions {
           $plugin->setContextValue($key, $data);
         }
         catch (ContextException $e) {
-          $this->logger->error('Invalid context data for condition %conditionid for %successorlabel from ECA %ecalabel (%ecaid) for event %event.', $context);
+          $this->logger->error('Invalid context data for condition %conditionlabel of successor %successorlabel from ECA %ecalabel for event %event. (condition: %conditionid, ECA: %ecaid)', $context);
         }
       }
       if ($plugin->reset()->evaluate()) {
-        $this->logger->info('Asserted condition %conditionid for %successorlabel from ECA %ecalabel (%ecaid) for event %event.', $context);
+        $this->logger->info('Evaluated condition %conditionlabel to TRUE for successor %successorlabel from ECA %ecalabel for event %event. (condition: %conditionid, ECA: %ecaid)', $context);
         return TRUE;
       }
-      $this->logger->info('Not asserting condition %conditionid for %successorlabel from ECA %ecalabel (%ecaid) for event %event.', $context);
+      $this->logger->info('Evaluated condition %conditionlabel to FALSE for successor %successorlabel from ECA %ecalabel for event %event. (condition: %conditionid, ECA: %ecaid)', $context);
     }
     else {
-      $this->logger->error('Invalid condition %conditionid for %successorlabel from ECA %ecalabel (%ecaid) for event %event.', $context);
+      $this->logger->error('Invalid condition %conditionlabel for successor %successorlabel from ECA %ecalabel for event %event. (condition: %conditionid, ECA: %ecaid)', $context);
     }
     return FALSE;
   }

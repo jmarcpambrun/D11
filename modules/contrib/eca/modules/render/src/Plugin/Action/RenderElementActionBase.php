@@ -36,6 +36,9 @@ abstract class RenderElementActionBase extends RenderActionBase {
   public function execute(?object $object = NULL): void {
     $build = [];
     $this->doBuild($build);
+    if (empty($build)) {
+      return;
+    }
     if ($this->configuration['weight'] !== '') {
       $weight = trim((string) $this->tokenService->replaceClear($this->configuration['weight']));
       if ($weight !== '' && is_numeric($weight)) {
@@ -200,6 +203,7 @@ abstract class RenderElementActionBase extends RenderActionBase {
       '#default_value' => $this->configuration['weight'],
       '#weight' => -25,
       '#required' => FALSE,
+      '#eca_token_replacement' => TRUE,
     ];
     $form['mode'] = [
       '#type' => 'select',

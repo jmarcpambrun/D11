@@ -90,7 +90,14 @@ class HtmxRequestInfo {
    *   The value of the 'HX-Trigger' header, or an empty string if not set.
    */
   public function trigger(): string {
-    return $this->getHtmxTrigger();
+    // getHtmxTrigger() is deprecated in drupal:11.5.0 and removed in
+    // drupal:12.0.0 in favour of getHtmxSource(). Call the new method when it
+    // is available and fall back to the deprecated one otherwise.
+    // @see https://www.drupal.org/node/3583674
+    if (method_exists($this, 'getHtmxSource')) {
+      return $this->getHtmxSource();
+    }
+    return $this->getRequest()->headers->get('HX-Trigger', '');
   }
 
   /**
@@ -111,16 +118,6 @@ class HtmxRequestInfo {
    */
   public function currentUrl(): string {
     return $this->getHtmxCurrentUrl();
-  }
-
-  /**
-   * Retrieves the prompt response from the HTMX request header.
-   *
-   * @return string
-   *   The value of the 'HX-Prompt' header, or an empty string if not set.
-   */
-  public function prompt(): string {
-    return $this->getHtmxPrompt();
   }
 
 }

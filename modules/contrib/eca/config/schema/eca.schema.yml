@@ -180,14 +180,6 @@ eca.wrapper.successor:
 eca.event.plugin:
   type: mapping
   label: 'ECA Event Plugin'
-  mapping:
-    id:
-      type: string
-      label: 'ID'
-      constraints:
-        PluginExists:
-          manager: plugin.manager.eca.event
-          interface: 'Drupal\eca\Plugin\ECA\Event\EventInterface'
 
 eca.condition.plugin:
   type: mapping

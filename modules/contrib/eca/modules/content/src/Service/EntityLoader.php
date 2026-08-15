@@ -180,7 +180,7 @@ class EntityLoader {
       '#type' => 'textarea',
       '#title' => $this->t('Property values'),
       '#default_value' => $plugin_configuration['properties'],
-      '#description' => $this->t('A key-value list of raw field values of the entity to load. This will only be used when loading by properties is selected above. Supports YAML format. Example:<em><br/>field_mynumber: 1</em>. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>title: "[node:title]"</em>'),
+      '#description' => $this->t('A key-value list of raw field values of the entity to load. This will only be used when loading by properties is selected above. Supports YAML format. Example:<em><br />field_mynumber: 1</em>. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>title: "[node:title]"</em>'),
       '#eca_token_replacement' => TRUE,
       '#states' => [
         'visible' => [

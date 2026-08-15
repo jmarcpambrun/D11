@@ -42,6 +42,20 @@ eca.event.plugin.migrate:pre_row_save:
   type: eca.event.plugin
   label: 'Saving migration row'
 
+eca.event.plugin.migrate:process:
+  type: eca.event.plugin
+  label: 'Processing migration row value'
+  mapping:
+    token_name:
+      type: string
+      label: 'Token name holding the processed value'
+    migration_id:
+      type: string
+      label: 'Restrict by migration ID'
+    destination_property:
+      type: string
+      label: 'Restrict by destination property'
+
 action.configuration.eca_migrate_run_migration:
   type: mapping
   label: 'Configuration for the "Migrate: Run migration" action'
