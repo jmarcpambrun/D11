@@ -12,6 +12,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
+use Drupal\ai\Service\HostnameFilter;
 use Drupal\ai_agents\Attribute\AiAgent;
 use Drupal\ai_agents\PluginBase\AiAgentEntityWrapper;
 use Drupal\ai_agents\PluginInterfaces\AiAgentInterface;
@@ -64,6 +65,8 @@ class AiAgentManager extends DefaultPluginManager {
    *   The AI guardrail helper.
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
    *   The logger channel.
+   * @param \Drupal\ai\Service\HostnameFilter $hostnameFilter
+   *   The hostname filter service.
    */
   public function __construct(
     \Traversable $namespaces,
@@ -81,6 +84,7 @@ class AiAgentManager extends DefaultPluginManager {
     protected AiAgentOverrideApplierInterface $overrideApplier,
     protected AiGuardrailHelper $aiGuardrailHelper,
     protected LoggerChannelInterface $logger,
+    protected HostnameFilter $hostnameFilter,
   ) {
     parent::__construct(
       'Plugin/AiAgent',
@@ -133,7 +137,8 @@ class AiAgentManager extends DefaultPluginManager {
         $this->artifactHelper,
         $this->uuid,
         $this->aiGuardrailHelper,
-        $this->logger
+        $this->logger,
+        $this->hostnameFilter
       );
       return $instance;
     }

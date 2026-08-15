@@ -6,6 +6,7 @@ use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai_agents\Entity\AiAgent;
 use Drupal\ai_agents\Form\AiAgentForm;
+use Drupal\ai_agents\PluginBase\AiAgentEntityWrapper;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Component\Utility\Random;
@@ -270,6 +271,8 @@ class Agent extends ModelOwnerBase {
     if ($plugin instanceof FunctionCallInterface) {
       $config['return_directly'] = FALSE;
       $config['require_usage'] = FALSE;
+      $config['restrict_multiple_calls'] = FALSE;
+      $config['multiple_call_error_message'] = '';
       $config['use_artifacts'] = FALSE;
       $config['progress_message'] = '';
       $properties = $plugin->normalize()->getProperties();
@@ -345,6 +348,24 @@ class Agent extends ModelOwnerBase {
         '#title' => $this->t('Require usage'),
         '#description' => $this->t('Check this box if you want to require that this tool is used at least once in the agent execution. If the LLM does not use this tool, an error will be thrown. This is useful for tools that must be used, e.g. for compliance reasons.'),
         '#default_value' => FALSE,
+      ];
+
+      $form['restrict_multiple_calls'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Restrict to one call per response'),
+        '#description' => $this->t('Check this box if this tool may be called at most once per LLM response. If the LLM calls it multiple times in a single response, all tool calls in that response are rejected and the LLM is asked to try again. Use this for tools where each call depends on the result of the previous call.'),
+        '#default_value' => FALSE,
+      ];
+
+      $form['multiple_call_error_message'] = [
+        '#type' => 'textarea',
+        '#title' => $this->t('Multiple call error message'),
+        '#attributes' => [
+          'rows' => 2,
+          'placeholder' => AiAgentEntityWrapper::MULTIPLE_CALL_DEFAULT_ERROR_MESSAGE,
+        ],
+        '#description' => $this->t('The error message sent back to the LLM when this tool is called more than once in a single response. Keep it empty to use the default message shown as the placeholder. You may use the placeholder [tool_name] for the tool name.'),
+        '#default_value' => '',
       ];
 
       $form['use_artifacts'] = [

@@ -7,7 +7,7 @@ include:
       - '/includes/include.drupalci.workflows.yml'
 
 variables:
-  _PHPUNIT_EXTRA: --verbose
+  _PHPUNIT_EXTRA: --verbose --suppress-deprecations
   CORE_STABLE: '11.x-dev'
   OPT_IN_TEST_PREVIOUS_MAJOR: 1
   OPT_IN_TEST_CURRENT: 1

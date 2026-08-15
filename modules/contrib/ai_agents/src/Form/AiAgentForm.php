@@ -18,8 +18,10 @@ use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionGroupPluginManager;
 use Drupal\ai_agents\AiAgentOverrideInterface;
 use Drupal\ai_agents\Entity\AiAgent;
+use Drupal\ai_agents\PluginBase\AiAgentEntityWrapper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
+use Drupal\Component\Serialization\Yaml as SerializationYaml;
 
 /**
  * AI Agent form.
@@ -317,7 +319,7 @@ final class AiAgentForm extends EntityForm {
     $form['prompt_detail']['advanced']['structured_output_detail']['structured_output_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable Structured Output'),
-      '#description' => $this->t('Check this box if you want the AI agent to provide structured (JSON) output. This is useful if you want to use the output in a structured way, like in a workflow or to parse it easily. You will have to provider a JSON schema of the output wanted.'),
+      '#description' => $this->t('Check this box if you want the AI agent to provide structured (JSON) output. This is useful if you want to use the output in a structured way, like in a workflow or to parse it easily. You will have to provide a JSON schema of the output wanted.<br><br><strong>Important:</strong> Certain AI providers (including Mistral and Claude) cannot combine structured output with tool calling, as they use the same underlying mechanism. If you enable structured output with these providers while using tools, you may encounter errors or unexpected behavior. Use structured output sparingly and consider using it only when tools are not required.'),
       '#default_value' => $config['structured_output_enabled'],
     ];
 
@@ -394,7 +396,7 @@ final class AiAgentForm extends EntityForm {
         'orchestration_agent' => $this->entity->get('orchestration_agent') ?? FALSE,
         'triage_agent' => $this->entity->get('triage_agent') ?? FALSE,
         'secured_system_prompt' => $this->entity->get('secured_system_prompt') ?? '[ai_agent:agent_instructions]',
-        'default_information_tools' => $this->entity->get('default_information_tools') ? Yaml::dump(Yaml::parse($this->entity->get('default_information_tools') ?? ''), 10, 2) : NULL,
+        'default_information_tools' => $this->entity->get('default_information_tools') ? Yaml::dump(SerializationYaml::decode($this->entity->get('default_information_tools') ?? ''), 10, 2) : NULL,
         'structured_output_enabled' => $this->entity->get('structured_output_enabled') ?? FALSE,
         'structured_output_schema' => $this->entity->get('structured_output_schema') ?? '',
         'hostname_filter_disabled' => $this->entity->get('hostname_filter_disabled') ?? FALSE,
@@ -599,7 +601,7 @@ final class AiAgentForm extends EntityForm {
           <div class="ai-modal__container" role="dialog" aria-modal="true" aria-labelledby="' . $id . '-title" >
             <div class="ai-modal__header">
               <h2 class="ai-modal__title" id="' . $id . '-title">' . Html::escape((string) $tool_name) . '</h2>
-              <a class="ai-tools-library-item__remove" aria-label="Close modal" data-micromodal-close></a>
+              <a class="ai-modal__close" aria-label="Close modal" data-micromodal-close></a>
             </div>
 
           <div class="ai-modal__content" id="' . $id . '-content">
@@ -632,6 +634,34 @@ final class AiAgentForm extends EntityForm {
       '#title' => $this->t('Require Usage'),
       '#description' => $this->t('Check this box if there should be a reminder to the agent anytime it tries to output text, but this tool has not been used.'),
       '#default_value' => $this->entity->get('tool_settings')[$tool_definition['id']]['require_usage'] ?? FALSE,
+    ];
+
+    // Allow to restrict the tool to one call per response.
+    $form['prompt_detail']['tool_usage'][$tool_definition['id']]['tool_settings']['restrict_multiple_calls'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Restrict to one call per response'),
+      '#description' => $this->t('Check this box if this tool may be called at most once per LLM response. If the LLM calls it multiple times in a single response, all tool calls in that response are rejected, an error message is added to the conversation and the LLM is asked to try again. Use this for tools where each call depends on the result of the previous call.'),
+      '#default_value' => $this->entity->get('tool_settings')[$tool_definition['id']]['restrict_multiple_calls'] ?? FALSE,
+    ];
+
+    $form['prompt_detail']['tool_usage'][$tool_definition['id']]['tool_settings']['multiple_call_error_message'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Multiple call error message'),
+      '#attributes' => [
+        'rows' => 2,
+        'placeholder' => AiAgentEntityWrapper::MULTIPLE_CALL_DEFAULT_ERROR_MESSAGE,
+      ],
+      '#description' => $this->t('The error message sent back to the LLM when this tool is called more than once in a single response. Keep it empty to use the default message shown as the placeholder. You may use the placeholder %placeholder for the tool name.', [
+        '%placeholder' => '[tool_name]',
+      ]),
+      '#default_value' => $this->entity->get('tool_settings')[$tool_definition['id']]['multiple_call_error_message'] ?? "",
+      '#states' => [
+        'visible' => [
+          ':input[name="tool_usage[' . $tool_definition['id'] . '][tool_settings][restrict_multiple_calls]"]' => [
+            ['checked' => TRUE],
+          ],
+        ],
+      ],
     ];
 
     // Allow to override description.
@@ -1050,6 +1080,14 @@ final class AiAgentForm extends EntityForm {
         // Check if it should return directly.
         $tool_settings[$tool_id]['return_directly'] = $tool_usage['tool_settings']['return_directly'] ?? FALSE;
         $tool_settings[$tool_id]['require_usage'] = $tool_usage['tool_settings']['require_usage'] ?? FALSE;
+        // Check if the tool is restricted to one call per response.
+        $tool_settings[$tool_id]['restrict_multiple_calls'] = $tool_usage['tool_settings']['restrict_multiple_calls'] ?? FALSE;
+        if (!empty($tool_usage['tool_settings']['restrict_multiple_calls'])) {
+          $tool_settings[$tool_id]['multiple_call_error_message'] = $tool_usage['tool_settings']['multiple_call_error_message'] ?? '';
+        }
+        else {
+          $tool_settings[$tool_id]['multiple_call_error_message'] = '';
+        }
         // Check if description override is enabled.
         if (!empty($tool_usage['tool_settings']['description_enabled'])) {
           $tool_settings[$tool_id]['description_override'] = $tool_usage['tool_settings']['description_override'] ?? '';

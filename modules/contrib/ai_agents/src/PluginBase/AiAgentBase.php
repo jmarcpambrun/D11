@@ -25,7 +25,7 @@ use Drupal\ai_agents\Service\AgentHelper;
 use Drupal\ai_agents\Task\Task;
 use Drupal\ai_agents\Task\TaskInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Yaml\Yaml;
+use Drupal\Component\Serialization\Yaml;
 
 /**
  * Helper for worker agents.
@@ -804,7 +804,7 @@ abstract class AiAgentBase extends PluginBase implements AiAgentInterface, Conta
     if (!file_exists($file)) {
       throw new \Exception("The action prompt file '$file' does not exist.");
     }
-    $data = Yaml::parse(file_get_contents($file));
+    $data = Yaml::decode(file_get_contents($file));
     // Set introduction.
     $prompt = $data['prompt']['introduction'] . "\n\n";
     // Set formats to use.

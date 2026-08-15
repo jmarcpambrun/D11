@@ -61,6 +61,7 @@
   background: transparent;
   border: 0;
   color: black;
+  cursor: pointer;
 }
 
 .ai-modal__header .ai-modal__close:before {
@@ -111,11 +112,4 @@
 .ai-modal__btn-primary {
   background-color: #00449e;
   color: #fff;
-}
-
-/* We reuse the close button style for the "x" in the header */
-.ai-modal__header .ai-tools-library-item__remove {
-  position: relative;
-  top: 0;
-  cursor: pointer;
 }

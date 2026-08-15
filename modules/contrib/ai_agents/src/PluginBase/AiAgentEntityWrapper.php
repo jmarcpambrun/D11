@@ -21,11 +21,14 @@ use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
+use Drupal\ai\OperationType\GenericType\AbstractFileBase;
+use Drupal\ai\OperationType\GenericType\FileBaseInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai\Service\FunctionCalling\OverridableFunctionCallInterface;
+use Drupal\ai\Service\HostnameFilter;
 use Drupal\ai\Traits\PluginManager\AiDataTypeConverterPluginManagerTrait;
 use Drupal\ai_agents\AiAgentInterface;
 use Drupal\ai_agents\Event\AgentFinishedExecutionEvent;
@@ -45,7 +48,7 @@ use Drupal\ai_agents\Service\AgentHelper;
 use Drupal\ai_agents\Service\ArtifactHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Validator\ConstraintViolationInterface;
-use Symfony\Component\Yaml\Yaml;
+use Drupal\Component\Serialization\Yaml;
 
 /**
  * AI Agent Entity Wrapper.
@@ -53,6 +56,11 @@ use Symfony\Component\Yaml\Yaml;
 class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAiAgentInterface {
 
   use AiDataTypeConverterPluginManagerTrait;
+
+  /**
+   * Default error message when a single-call tool is called multiple times.
+   */
+  const MULTIPLE_CALL_DEFAULT_ERROR_MESSAGE = 'Error: The tool "[tool_name]" may only be called once per response, but it was called multiple times. None of the tool calls in this response were executed. Please respond again, calling "[tool_name]" at most once and waiting for its result before deciding on further calls.';
 
   /**
    * The AI Provider.
@@ -236,6 +244,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The AI guardrail helper.
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
    *   The logger channel interface.
+   * @param \Drupal\ai\Service\HostnameFilter $hostnameFilter
+   *   The hostname filter service.
    */
   public function __construct(
     protected AiAgentInterface $aiAgent,
@@ -250,6 +260,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     protected UuidInterface $uuid,
     protected AiGuardrailHelper $aiGuardrailHelper,
     protected LoggerChannelInterface $logger,
+    protected HostnameFilter $hostnameFilter,
   ) {
   }
 
@@ -623,12 +634,10 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     );
     $this->eventDispatcher->dispatch($request_event, AgentRequestEvent::EVENT_NAME);
 
-    // Check if we should turn off the hostname filtering for this request.
-    if ($this->aiAgent->get('hostname_filter_disabled')) {
-      $hostnameFilterDto = new HostnameFilterDto(
-        fullTrust: TRUE,
-      );
-      $input->setHostnameFilter($hostnameFilterDto);
+    // Attach this agent's hostname filter override to the chat input.
+    // @see \Drupal\ai\Plugin\ProviderProxy::__call()
+    if ($hostname_filter_dto = $this->getHostnameFilterDto()) {
+      $input->setHostnameFilter($hostname_filter_dto);
     }
 
     try {
@@ -680,15 +689,29 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     $tools = $response->getTools();
 
     if (!empty($tools)) {
+      // Convert all tool responses to function call objects first, so that
+      // multiple-call restrictions can be checked per plugin id before
+      // anything is queued for execution.
+      $functions = [];
       foreach ($tools as $tool) {
 
         // Replace any artifact placeholders actual values.
         $this->artifactHelper->replaceArtifactArguments($tool);
 
-        $function = $this->functionCallPluginManager->convertToolResponseToObject($tool);
-        $this->contextTools[] = $function;
+        $functions[] = $this->functionCallPluginManager->convertToolResponseToObject($tool);
       }
-      // If tools are available, we should run this again filled out.
+
+      // Reject the whole response when a single-call tool was called more
+      // than once; otherwise queue every call for execution.
+      $rejections = $this->getSingleCallViolationMessages($functions);
+      if ($rejections !== NULL) {
+        array_push($this->chatHistory, ...$rejections);
+      }
+      else {
+        $this->contextTools = array_merge($this->contextTools, $functions);
+      }
+
+      // Run again either way, so the agent acts on the updated history.
       if ($this->loopedEnabled) {
         return $this->determineSolvability();
       }
@@ -1002,7 +1025,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   public function getDefaultInformationTools() {
     // Parse YAML before token replacement so that token values containing
     // special characters (e.g. single quotes) do not corrupt YAML syntax.
-    $data = Yaml::parse($this->aiAgent->get('default_information_tools') ?? '[]');
+    $data = Yaml::decode($this->aiAgent->get('default_information_tools') ?? '[]');
     // Apply tokens to each string value in the parsed array.
     if (is_array($data)) {
       array_walk_recursive($data, function (mixed &$value): void {
@@ -1109,7 +1132,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   /**
    * Set function overrides.
    *
-   * @param array{tools: array<string, bool>, tool_usage_limits: array<string, array<string, array{action: string, hide_property: bool, values: scalar[]}>>, tool_settings: array<string, array{return_directly: bool}>} $functions
+   * @param array{tools: array<string, bool>, tool_usage_limits: array<string, array<string, array{action: string, hide_property: bool, values: scalar[]}>>, tool_settings: array<string, array{return_directly: bool, restrict_multiple_calls: bool, multiple_call_error_message: string}>} $functions
    *   An array of function overrides.
    */
   public function overrideFunctions(array $functions): void {
@@ -1181,6 +1204,90 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     // Use overridden functions, if set.
     $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
     return $settings[$tool->getPluginId()]['use_artifacts'] ?? FALSE;
+  }
+
+  /**
+   * Helper function for checking if a tool is limited to one call per response.
+   *
+   * @param \Drupal\ai\Service\FunctionCalling\FunctionCallInterface $tool
+   *   The function call plugin.
+   *
+   * @return bool
+   *   True if the tool may only be called once per LLM response.
+   */
+  public function toolRestrictsMultipleCalls(FunctionCallInterface $tool): bool {
+    // Use overridden functions, if set.
+    $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
+    return (bool) ($settings[$tool->getPluginId()]['restrict_multiple_calls'] ?? FALSE);
+  }
+
+  /**
+   * Gets the error message for a violated single-call restriction.
+   *
+   * @param \Drupal\ai\Service\FunctionCalling\FunctionCallInterface $tool
+   *   The function call plugin.
+   *
+   * @return string
+   *   The configured or default error message, with [tool_name] replaced.
+   */
+  public function getMultipleCallErrorMessage(FunctionCallInterface $tool): string {
+    // Use overridden functions, if set.
+    $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
+    $message = $settings[$tool->getPluginId()]['multiple_call_error_message'] ?? '';
+    if (!is_string($message) || trim($message) === '') {
+      $message = self::MULTIPLE_CALL_DEFAULT_ERROR_MESSAGE;
+    }
+    return str_replace('[tool_name]', $tool->getFunctionName(), $message);
+  }
+
+  /**
+   * Rejects a response when a single-call tool was called more than once.
+   *
+   * The assistant message containing the tool calls is already part of the
+   * chat history, so every tool call id must receive a tool-role result
+   * message — violators get their configured error, all other calls in the
+   * same response get a generic rejection asking the LLM to retry.
+   *
+   * @param \Drupal\ai\Service\FunctionCalling\FunctionCallInterface[] $functions
+   *   All function calls from one LLM response.
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatMessage[]|null
+   *   One tool-role message per call when a restriction is violated (every
+   *   call is rejected); NULL when the response is valid and may run.
+   */
+  protected function getSingleCallViolationMessages(array $functions): ?array {
+    $counts = array_count_values(array_map(
+      static fn (FunctionCallInterface $function): string => $function->getPluginId(),
+      $functions,
+    ));
+    // Restricted tools that were called more than once, keyed by name.
+    $violated = [];
+    foreach ($functions as $function) {
+      if ($counts[$function->getPluginId()] > 1 && $this->toolRestrictsMultipleCalls($function)) {
+        $violated[$function->getFunctionName()] = TRUE;
+      }
+    }
+    if (!$violated) {
+      return NULL;
+    }
+
+    $this->logger->warning('The agent "@agent" called the single-call tool(s) "@tools" multiple times in one response. All @count tool calls were rejected.', [
+      '@agent' => $this->aiAgent->id(),
+      '@tools' => implode('", "', array_keys($violated)),
+      '@count' => count($functions),
+    ]);
+
+    $generic = 'Error: This tool call was not executed, because the tool(s) "' . implode('", "', array_keys($violated)) . '" may only be called once per response, so all calls were rejected. Please issue your tool calls again.';
+    $messages = [];
+    foreach ($functions as $function) {
+      $text = isset($violated[$function->getFunctionName()])
+        ? $this->getMultipleCallErrorMessage($function)
+        : $generic;
+      $message = new ChatMessage('tool', $text);
+      $message->setToolsId($function->getToolsId());
+      $messages[] = $message;
+    }
+    return $messages;
   }
 
   /**
@@ -1564,28 +1671,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   public function fromArray(array $data): void {
     $tools = [];
     $tool_results = [];
-    $chat_history = [];
-    foreach ($data['chat_history'] ?? [] as $message) {
-      if (is_array($message)) {
-        $new_message = new ChatMessage($message['role'], $message['text'], $message['images'] ?? []);
-        if ($message['tool_id'] ?? NULL) {
-          $new_message->setToolsId($message['tool_id']);
-        }
-        if (!empty($message['tools'])) {
-          $message_tools = [];
-          foreach ($message['tools'] as $tool) {
-            $function = $this->functionCallPluginManager->getFunctionCallFromFunctionName($tool['function']['name']);
-            $function->setToolsId($tool['id'] ?? NULL);
-            $normalized_tool = $function->normalize();
-            $arguments = json_decode($tool['function']['arguments'] ?? '{}', TRUE);
-            $message_tools[] = new ToolsFunctionOutput($normalized_tool, $tool['id'] ?? NULL, $arguments);
-          }
-          $new_message->setTools($message_tools);
-        }
-        $chat_history[] = $new_message;
-      }
-    }
-    $data['chat_history'] = $chat_history;
+    $data['chat_history'] = $this->rebuildChatHistory($data['chat_history'] ?? []);
     if (!empty($data['chat_history'])) {
       $tmp_tools = $this->getContextTools($data['chat_history'], $data['tool_results'] ?? []);
       foreach ($tmp_tools as $tool) {
@@ -1637,6 +1723,91 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     $this->threadId = $data['progress_thread_id'] ?? NULL;
     $this->progressTracking = $data['progress_tracking'] ?? FALSE;
     $this->progressTrackingItems = $data['progress_tracking_items'] ?? [];
+  }
+
+  /**
+   * Rebuilds serialized chat history into chat message objects.
+   *
+   * @param array $messages
+   *   The serialized chat history, as written by ::toArray().
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatMessage[]
+   *   The rebuilt chat history.
+   *
+   * @see \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyResult::setValue()
+   */
+  protected function rebuildChatHistory(array $messages): array {
+    // Snapshot the filter service, then put this agent's hostname filter
+    // override on it for the duration of the rebuild below, which filters the
+    // string arguments of every stored tool call it reconstructs.
+    // @see \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput::addArguments()
+    $hostname_filter_dto = $this->getHostnameFilterDto();
+    $hostname_filter_snapshot = NULL;
+    if ($hostname_filter_dto) {
+      $hostname_filter_snapshot = $this->hostnameFilter->snapshotSettings();
+      $this->hostnameFilter->applySettings($hostname_filter_dto);
+    }
+
+    try {
+      $chat_history = [];
+      foreach ($messages as $message) {
+        if (is_array($message)) {
+          // ::toArray() serialized each file down to an array, so rebuild them
+          // into the file objects ChatMessage expects, restoring each one to
+          // the class it recorded under 'type'.
+          // @see \Drupal\ai\OperationType\GenericType\AbstractFileBase::toArray()
+          $files = array_map(
+            static function (array $file): FileBaseInterface {
+              $class = $file['type'] ?? NULL;
+              if (!is_string($class) || !is_a($class, AbstractFileBase::class, TRUE)) {
+                throw new \UnexpectedValueException(sprintf('Serialized chat history holds a file of unknown type "%s".', is_string($class) ? $class : gettype($class)));
+              }
+              return $class::fromArray($file);
+            },
+            $message['images'] ?? [],
+          );
+          $new_message = new ChatMessage($message['role'], $message['text'], $files);
+          if ($message['tool_id'] ?? NULL) {
+            $new_message->setToolsId($message['tool_id']);
+          }
+          if (!empty($message['tools'])) {
+            $message_tools = [];
+            foreach ($message['tools'] as $tool) {
+              $function = $this->functionCallPluginManager->getFunctionCallFromFunctionName($tool['function']['name']);
+              $function->setToolsId($tool['id'] ?? NULL);
+              $normalized_tool = $function->normalize();
+              $arguments = json_decode($tool['function']['arguments'] ?? '{}', TRUE);
+              $message_tools[] = new ToolsFunctionOutput($normalized_tool, $tool['id'] ?? NULL, $arguments);
+            }
+            $new_message->setTools($message_tools);
+          }
+          $chat_history[] = $new_message;
+        }
+      }
+      return $chat_history;
+    }
+    finally {
+      // Restore the filter service on both the success and the throw path.
+      if ($hostname_filter_snapshot !== NULL) {
+        $this->hostnameFilter->restoreSettings($hostname_filter_snapshot);
+      }
+    }
+  }
+
+  /**
+   * Gets the hostname filter override this agent is configured with.
+   *
+   * @return \Drupal\ai\Dto\HostnameFilterDto|null
+   *   The override to apply, or NULL to leave the filter service on the site
+   *   defaults.
+   */
+  protected function getHostnameFilterDto(): ?HostnameFilterDto {
+    if (!$this->aiAgent->get('hostname_filter_disabled')) {
+      return NULL;
+    }
+    return new HostnameFilterDto(
+      fullTrust: TRUE,
+    );
   }
 
   /**
