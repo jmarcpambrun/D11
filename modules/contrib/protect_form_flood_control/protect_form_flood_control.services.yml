@@ -5,3 +5,8 @@ services:
   protect_form_flood_control.manager:
     class: Drupal\protect_form_flood_control\Manager
     arguments: ['@flood', '@config.factory', '@datetime.time', '@date.formatter', '@request_stack', '@current_user', '@path.matcher', '@messenger', '@logger.channel.protect_form_flood_control']
+  cache_context.protect_form_flood_control_allowlist:
+    class: Drupal\protect_form_flood_control\Cache\Context\AllowlistCacheContext
+    arguments: ['@request_stack', '@config.factory', '@path.matcher']
+    tags:
+      - { name: cache.context }

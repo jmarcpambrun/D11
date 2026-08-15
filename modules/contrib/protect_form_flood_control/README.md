@@ -57,8 +57,8 @@ The window interval of the flood control.
 
 * Threshold
 
-If a user submit more than the threshold set, during the window interval, then the
-user will be blocked.
+If a user submit more than the threshold set, during the window interval,
+then the user will be blocked.
 
 * Protected form IDs
 

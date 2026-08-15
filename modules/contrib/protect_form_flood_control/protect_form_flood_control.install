@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for protect_form_flood_control.
+ */
+
+/**
+ * Migrate the general.whitelist config key to general.allowlist.
+ *
+ * phpcs:ignore Drupal.Commenting.DocComment.LongNotCapital
+ * cspell:ignore whitelist
+ */
+function protect_form_flood_control_update_10001() {
+  $config = \Drupal::configFactory()->getEditable('protect_form_flood_control.settings');
+  $whitelist = $config->get('general.whitelist');
+  if ($whitelist !== NULL) {
+    $config->clear('general.whitelist')
+      ->set('general.allowlist', $whitelist)
+      ->save(TRUE);
+  }
+}

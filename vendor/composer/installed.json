@@ -8848,18 +8848,18 @@
         },
         {
             "name": "drupal/protect_form_flood_control",
-            "version": "1.1.0",
-            "version_normalized": "1.1.0.0",
+            "version": "1.1.1",
+            "version_normalized": "1.1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/protect_form_flood_control.git",
-                "reference": "1.1.0"
+                "reference": "1.1.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/protect_form_flood_control-1.1.0.zip",
-                "reference": "1.1.0",
-                "shasum": "1e544e7da453f836f32db22062db0ea1da0af908"
+                "url": "https://ftp.drupal.org/files/projects/protect_form_flood_control-1.1.1.zip",
+                "reference": "1.1.1",
+                "shasum": "582d36bbd324df16663cdc3dcb66696f501a7458"
             },
             "require": {
                 "drupal/core": "^9.1 || ^10 || ^11"
@@ -8867,8 +8867,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.1.0",
-                    "datestamp": "1729679168",
+                    "version": "1.1.1",
+                    "datestamp": "1786015594",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -8889,7 +8889,7 @@
             "description": "Provide flood control protection on any form.",
             "homepage": "https://www.drupal.org/project/protect_form_flood_control",
             "support": {
-                "source": "https://cgit.drupalcode.org/protect_form_flood_control",
+                "source": "https://git.drupalcode.org/project/protect_form_flood_control",
                 "issues": "https://www.drupal.org/project/issues/protect_form_flood_control"
             },
             "install-path": "../../modules/contrib/protect_form_flood_control"

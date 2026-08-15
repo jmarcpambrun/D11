@@ -4,7 +4,7 @@ general:
   threshold: 50
   protected_ids: {}
   unprotected_ids: {}
-  whitelist:
+  allowlist:
     - 127.0.0.1
   log: false
 forms: {}

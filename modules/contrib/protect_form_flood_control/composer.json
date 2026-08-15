@@ -8,6 +8,6 @@
     "minimum-stability": "dev",
     "support": {
         "issues": "https://www.drupal.org/project/issues/protect_form_flood_control",
-        "source": "https://cgit.drupalcode.org/protect_form_flood_control"
+        "source": "https://git.drupalcode.org/project/protect_form_flood_control"
     }
 }

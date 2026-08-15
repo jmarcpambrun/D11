@@ -69,7 +69,7 @@ class ProtectFormFloodControlFormTest extends BrowserTestBase {
       'threshold' => 2,
       'protected_ids' => ['comment_*', 'user_register_form'],
       'unprotected_ids' => [],
-      'whitelist' => [],
+      'allowlist' => [],
       'log' => FALSE,
     ];
     $config->set('general', $general_config);
@@ -183,7 +183,7 @@ class ProtectFormFloodControlFormTest extends BrowserTestBase {
   public function testProtectCommentFormBypass() {
     // Log in the admin user.
     $this->drupalLogin($this->adminUser);
-drupal_flush_all_caches();
+    drupal_flush_all_caches();
     // Get the comment reply form and ensure there's no 'url' field.
     $this->drupalGet('comment/reply/node/' . $this->node->id() . '/comment');
     $this->assertSession()->responseNotContains('name="protect_form_flood_control"');

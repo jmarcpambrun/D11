@@ -5,7 +5,7 @@ core_version_requirement: ^9.1 || ^10 || ^11
 configure: 'protect_form_flood_control.settings'
 package: 'Spam control'
 
-# Information added by Drupal.org packaging script on 2024-10-23
-version: '1.1.0'
+# Information added by Drupal.org packaging script on 2026-08-06
+version: '1.1.1'
 project: 'protect_form_flood_control'
-datestamp: 1729679171
+datestamp: 1786015596

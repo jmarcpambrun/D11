@@ -35,7 +35,8 @@ function protect_form_flood_control_form_alter(&$form, FormStateInterface $form_
 
 /**
  * Custom callback to validate submissions based on flood control.
- * @See Manager->alterForm().
+ *
+ * @see Manager->alterForm()
  */
 function _protect_form_flood_control_validate_element(array &$element, FormStateInterface $form_state, array &$complete_form) {
   /** @var \Drupal\protect_form_flood_control\ManagerInterface $manager */

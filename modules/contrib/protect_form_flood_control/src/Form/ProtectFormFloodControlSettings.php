@@ -8,7 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Class ProtectFormFloodControlSettings.
+ * The main settings form for protect_form_flood_control.
  *
  * @package Drupal\protect_form_flood_control\Form
  */
@@ -49,7 +49,7 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Protect all forms'),
       '#default_value' => $config->get('general.protect_all'),
-      '#description' => $this->t('When enabled, all the form are protected. <b>Be careful</b> with this option, all forms, included all forms related to the site configuration, will be protected by flood control. This option is not recommended unless you are well aware of the implications. With this option enabled, it is highly recommended that you set the IP addresses of the administrators in the white list, or to give the Bypass permission to theses users.'),
+      '#description' => $this->t('When enabled, all the form are protected. <b>Be careful</b> with this option, all forms, included all forms related to the site configuration, will be protected by flood control. This option is not recommended unless you are well aware of the implications. With this option enabled, it is highly recommended that you set the IP addresses of the administrators in the allow list, or to give the Bypass permission to theses users.'),
     ];
     $form['general']['window'] = [
       '#type' => 'number',
@@ -89,11 +89,11 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
         ],
       ],
     ];
-    $default_whitelist = $config->get('general.whitelist') ? implode("\r\n", $config->get('general.whitelist')) : '';
-    $form['general']['whitelist'] = [
+    $default_allowlist = $config->get('general.allowlist') ? implode("\r\n", $config->get('general.allowlist')) : '';
+    $form['general']['allowlist'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Allowed IP addresses'),
-      '#default_value' => $default_whitelist,
+      '#default_value' => $default_allowlist,
       '#description' => $this->t('Specify IP addresses that should bypass Flood Control. Each IP address should be on a separate line. Wildcard (*) characters can be used (for example, 192.0.2.*).'),
     ];
     $form['general']['log'] = [
@@ -167,7 +167,7 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
         '#attributes' => [
           'data-delete-item-id' => $i,
           'class' => ['button', 'button--trash'],
-        ]
+        ],
       ];
     }
 
@@ -221,7 +221,8 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
   /**
    * Massage the values before saving them.
    *
-   * @param $values
+   * @param array $values
+   *   The values array to massage.
    */
   protected function massageValues(&$values) {
     unset($values['forms']['actions']);
@@ -229,8 +230,8 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
     $values['general']['protected_ids'] = array_filter($protected_ids);
     $unprotected_ids = explode("\r\n", $values['general']['unprotected_ids']);
     $values['general']['unprotected_ids'] = array_filter($unprotected_ids);
-    $whitelist = explode("\r\n", $values['general']['whitelist']);
-    $values['general']['whitelist'] = array_filter($whitelist);
+    $allowlist = explode("\r\n", $values['general']['allowlist']);
+    $values['general']['allowlist'] = array_filter($allowlist);
     foreach ($values['forms'] as $key => $form) {
       $values['forms'][$key]['ids'] = explode("\r\n", $form['ids']);
       unset($values['forms'][$key]['item']);
@@ -241,11 +242,15 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
   /**
    * Get element property value.
    *
-   * @param $property
+   * @param mixed $property
+   *   The requested property.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    * @param mixed $default
+   *   A default value.
    *
    * @return array|mixed|null
+   *   The requested value, if any.
    */
   protected function getElementPropertyValue($property, FormStateInterface $form_state, $default = '') {
     $user_input = $form_state->getUserInput();
@@ -285,8 +290,9 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
    * Delete item callback.
    *
    * @param array $form
+   *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *
+   *   The form state.
    */
   public function deleteItemCallback(array $form, FormStateInterface $form_state) {
     $id = $form_state->getTriggeringElement()['#attributes']['data-delete-item-id'];
@@ -310,9 +316,12 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
    * Ajax delete item callback.
    *
    * @param array $form
+   *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
    * @return array
+   *   The updated form.
    */
   public function ajaxDeleteItemCallback(array $form, FormStateInterface $form_state) {
     return $form['forms'];
@@ -342,6 +351,7 @@ class ProtectFormFloodControlSettings extends ConfigFormBase {
    *   The form state.
    *
    * @return array
+   *   The updated form.
    */
   public function ajaxAddFormConfigurationCallback(array $form, FormStateInterface $form_state) {
     return $form['forms'];

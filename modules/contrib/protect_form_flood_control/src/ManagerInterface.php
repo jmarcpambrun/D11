@@ -5,7 +5,7 @@ namespace Drupal\protect_form_flood_control;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Interface ManagerInterface.
+ * Interface defining functions for Protect Form Flood Control Manager classes.
  */
 interface ManagerInterface {
 
@@ -106,12 +106,12 @@ interface ManagerInterface {
   public function getUnprotectedFormIds();
 
   /**
-   * Gets the general IP addresses whitelisted.
+   * Gets the general IP addresses allowlisted.
    *
    * @return array
-   *   The IP addresses whitelisted.
+   *   The IP addresses allowlisted.
    */
-  public function getWhitelist();
+  public function getAllowlist();
 
   /**
    * Gets the protected forms IDs as patterns for the path matcher.
@@ -135,7 +135,7 @@ interface ManagerInterface {
    * @return string
    *   The IP addresses as a string.
    */
-  public function getWhitelistPatterns();
+  public function getAllowlistPatterns();
 
   /**
    * Should we display form ID?
@@ -150,6 +150,7 @@ interface ManagerInterface {
    *
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state object.
+   *
    * @return string
    *   The base form ID.
    */
@@ -160,26 +161,32 @@ interface ManagerInterface {
    *
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state object.
-   * @param $form_id
+   * @param string $form_id
    *   The form id.
    */
-  public function displayFormID(FormStateInterface $form_state, $form_id);
+  public function displayFormId(FormStateInterface $form_state, string $form_id);
 
   /**
    * Should we bypass flood control?
    *
+   * @param array $form
+   *   The form.
+   *
    * @return bool
    *   Return TRUE if current user has permissions to bypass flood control.
    */
-  public function byPassFloodControl();
+  public function byPassFloodControl(array &$form);
 
   /**
-   * Is the client IP address is whitelisted?
+   * Is the client IP address in the allowlist?
+   *
+   * @param array $form
+   *   The form.
    *
    * @return bool
-   *   Return TRUE if client IP is whitelisted.
+   *   Return TRUE if client IP is in the allowlist.
    */
-  public function clientIpIsWhiteListed();
+  public function clientIpIsInAllowlist(array &$form);
 
   /**
    * Is the form protected?
@@ -267,4 +274,5 @@ interface ManagerInterface {
    *   The form ID truncated.
    */
   public function truncateFormId(string $form_id);
+
 }

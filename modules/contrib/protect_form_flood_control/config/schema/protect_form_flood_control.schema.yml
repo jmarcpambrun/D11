@@ -27,9 +27,9 @@ protect_form_flood_control.settings:
           sequence:
             type: string
             label: 'The form ID'
-        whitelist:
+        allowlist:
           type: sequence
-          label: 'The whitelist of IP addresses'
+          label: 'The allowlist of IP addresses'
           sequence:
             type: string
             label: 'IP Address'

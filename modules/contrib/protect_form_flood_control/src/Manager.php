@@ -16,7 +16,7 @@ use Drupal\Core\Path\PathMatcherInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 
 /**
- * Class Manager.
+ * Manager class that handles flood-protecting forms.
  */
 class Manager implements ManagerInterface {
 
@@ -92,7 +92,6 @@ class Manager implements ManagerInterface {
    */
   protected $config;
 
-
   /**
    * Manager constructor.
    *
@@ -132,18 +131,16 @@ class Manager implements ManagerInterface {
    * {@inheritdoc}
    */
   public function alterForm(array &$form, FormStateInterface $form_state, string $form_id) {
-    $this->displayFormID($form_state, $form_id);
+    $this->displayFormId($form_state, $form_id);
     if (!isset($form['#cache']['tags'])) {
       $form['#cache']['tags'] = [];
     }
     $tags = $form['#cache']['tags'];
     $form['#cache']['tags'] = Cache::mergeTags($tags, $this->config->getCacheTags());
-    $form['#cache']['contexts'][] = 'user.permissions';
-    $form['#cache']['contexts'][] = 'ip';
-    if ($this->byPassFloodControl()) {
-      return;
-    }
     if ($this->formIsProtected($form_state, $form_id)) {
+      if ($this->byPassFloodControl($form)) {
+        return;
+      }
       // Only static method can be called from validate callback. So we use
       // a custom callback in .module file.
       $form['protect_form_flood_control'] = [
@@ -185,7 +182,8 @@ class Manager implements ManagerInterface {
    */
   public function formIsSystemForm(string $form_id) {
     // Check if the form is a system form. We don't want to protect them.
-    // Theses forms may be programmatically submitted by drush and other modules.
+    // Theses forms may be programmatically submitted by drush
+    // and other modules.
     // Thanks to Honeypot module.
     if (preg_match('/[^a-zA-Z]system_/', $form_id) === 1 || preg_match('/[^a-zA-Z]search_/', $form_id) === 1 || preg_match('/[^a-zA-Z]views_exposed_form_/', $form_id) === 1) {
       return TRUE;
@@ -231,8 +229,8 @@ class Manager implements ManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getWhitelist() {
-    return $this->config->get('general.whitelist') ?: [];
+  public function getAllowlist() {
+    return $this->config->get('general.allowlist') ?: [];
   }
 
   /**
@@ -254,8 +252,8 @@ class Manager implements ManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getWhitelistPatterns() {
-    $ip_addresses = $this->getWhitelist();
+  public function getAllowlistPatterns() {
+    $ip_addresses = $this->getAllowlist();
     return implode("\r\n", $ip_addresses);
   }
 
@@ -266,7 +264,7 @@ class Manager implements ManagerInterface {
     if (!$this->showIds()) {
       return FALSE;
     }
-   return $this->currentUser->hasPermission('administer protect form flood control') || $this->currentUser->hasPermission('view protect form flood control form ids');
+    return $this->currentUser->hasPermission('administer protect form flood control') || $this->currentUser->hasPermission('view protect form flood control form ids');
   }
 
   /**
@@ -280,14 +278,20 @@ class Manager implements ManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function displayFormID(FormStateInterface $form_state, $form_id) {
+  public function displayFormId(FormStateInterface $form_state, string $form_id) {
     if (!$this->shouldDisplayFormId()) {
       return;
     }
     $message = $this->t('Form ID: @form_id', ['@form_id' => $form_id]);
     $base_form_id = $this->getBaseFormId($form_state);
     if (!empty($base_form_id)) {
-      $message = $this->t('Form ID: @form_id - Base form ID: @base_form_id', ['@form_id' => $form_id, '@base_form_id' => $base_form_id]);
+      $message = $this->t(
+        'Form ID: @form_id - Base form ID: @base_form_id',
+        [
+          '@form_id' => $form_id,
+          '@base_form_id' => $base_form_id,
+        ]
+      );
     }
     $this->messenger->addStatus($message);
   }
@@ -295,22 +299,28 @@ class Manager implements ManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function byPassFloodControl() {
-    $bypass = FALSE;
-    if ($this->currentUser->hasPermission('bypass protect form flood control')
-        || $this->clientIpIsWhiteListed()) {
-      $bypass = TRUE;
+  public function byPassFloodControl(array &$form) {
+    $form['#cache']['contexts'][] = 'user.permissions';
+    if ($this->currentUser->hasPermission('bypass protect form flood control')) {
+      return TRUE;
     }
-    return $bypass;
+    if ($this->clientIpIsInAllowlist($form)) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function clientIpIsWhiteListed() {
+  public function clientIpIsInAllowlist(array &$form) {
+    $allowlist_patterns = $this->getAllowlistPatterns();
+    if (empty($allowlist_patterns)) {
+      return FALSE;
+    }
+    $form['#cache']['contexts'][] = 'protect_form_flood_control_allowlist';
     $client_ip = $this->requestStack->getCurrentRequest()->getClientIp();
-    $whitelist_patterns = $this->getWhitelistPatterns();
-    return $this->pathMatcher->matchPath($client_ip, $whitelist_patterns);
+    return $this->pathMatcher->matchPath($client_ip, $allowlist_patterns);
   }
 
   /**
