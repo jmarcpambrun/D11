@@ -250,9 +250,10 @@ action.configuration.eca_endpoint_set_ajax_response_open_off_canvas_dialog:
       type: string
       label: 'Position'
       constraints:
-        Choice:
-          - side
-          - top
+        EcaChoice:
+          choices:
+            - side
+            - top
         NotBlank: []
     title:
       type: string
@@ -453,10 +454,11 @@ action.configuration.eca_endpoint_set_ajax_response_message:
       type: string
       label: 'Type'
       constraints:
-        Choice:
-          - status
-          - warning
-          - error
+        EcaChoice:
+          choices:
+            - status
+            - warning
+            - error
         NotBlank: []
     announce:
       type: string

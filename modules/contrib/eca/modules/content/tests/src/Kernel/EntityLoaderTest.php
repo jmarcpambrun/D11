@@ -95,6 +95,7 @@ class EntityLoaderTest extends KernelTestBase {
     $entity_loader = \Drupal::service('eca_content.service.entity_loader');
     /** @var \Drupal\eca\Token\TokenInterface $token_services */
     $token_services = \Drupal::service('eca.token_services');
+    $plugin_id = 'eca_token_load_entity';
 
     /** @var \Drupal\node\NodeInterface $node */
     $node = Node::create([
@@ -121,18 +122,18 @@ class EntityLoaderTest extends KernelTestBase {
       'latest_revision' => FALSE,
       'unchanged' => FALSE,
     ];
-    $this->assertTrue($entity_loader->loadEntity($node, $defaults) instanceof NodeInterface, 'Entity must exist.');
-    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, $defaults)->id(), 'Node ID must match up.');
+    $this->assertTrue($entity_loader->loadEntity($node, $defaults, $plugin_id) instanceof NodeInterface, 'Entity must exist.');
+    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, $defaults, $plugin_id)->id(), 'Node ID must match up.');
 
-    $this->assertTrue($entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults) instanceof NodeInterface, 'Entity must exist.');
-    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults)->id(), 'Node ID must match up.');
-    $this->assertEquals($first_vid, $entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults)->getRevisionId(), 'Revision ID must match up (first revision ID).');
+    $this->assertTrue($entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults, $plugin_id) instanceof NodeInterface, 'Entity must exist.');
+    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults, $plugin_id)->id(), 'Node ID must match up.');
+    $this->assertEquals($first_vid, $entity_loader->loadEntity($node, ['revision_id' => $first_vid] + $defaults, $plugin_id)->getRevisionId(), 'Revision ID must match up (first revision ID).');
 
-    $this->assertTrue($entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults) instanceof NodeInterface, 'Entity must exist.');
-    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults)->id(), 'Node ID must match up.');
-    $this->assertEquals('en', $entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults)->language()->getId(), 'Language ID must match up (en).');
+    $this->assertTrue($entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults, $plugin_id) instanceof NodeInterface, 'Entity must exist.');
+    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults, $plugin_id)->id(), 'Node ID must match up.');
+    $this->assertEquals('en', $entity_loader->loadEntity($node, ['langcode' => 'en'] + $defaults, $plugin_id)->language()->getId(), 'Language ID must match up (en).');
 
-    $this->assertNull($entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults), 'Entity must not exist as the translation (de) is not available.');
+    $this->assertNull($entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults, $plugin_id), 'Entity must not exist as the translation (de) is not available.');
 
     $node->addTranslation('de', [
       'type' => 'article',
@@ -141,9 +142,9 @@ class EntityLoaderTest extends KernelTestBase {
       'uid' => 1,
       'status' => 0,
     ])->save();
-    $this->assertTrue($entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults) instanceof NodeInterface, 'Entity must exist now as its translation (de) is now available.');
-    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults)->id(), 'Node ID must match up.');
-    $this->assertEquals('de', $entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults)->language()->getId(), 'Language ID must match up (de).');
+    $this->assertTrue($entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults, $plugin_id) instanceof NodeInterface, 'Entity must exist now as its translation (de) is now available.');
+    $this->assertEquals($node->id(), $entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults, $plugin_id)->id(), 'Node ID must match up.');
+    $this->assertEquals('de', $entity_loader->loadEntity($node, ['langcode' => 'de'] + $defaults, $plugin_id)->language()->getId(), 'Language ID must match up (de).');
 
     $token_services->addTokenData('mynode', $node);
 
@@ -153,12 +154,12 @@ class EntityLoaderTest extends KernelTestBase {
       'entity_type' => 'node',
       'entity_id' => '[mynode:nid]',
       'latest_revision' => TRUE,
-    ] + $defaults);
+    ] + $defaults, $plugin_id);
     $this->assertTrue($entity instanceof NodeInterface, 'Entity must exist.');
     $this->assertEquals($node->id(), $entity->id(), 'Node ID must match up.');
 
     $node->title = 'Changed on runtime';
-    $entity = $entity_loader->loadEntity($node, ['unchanged' => TRUE] + $defaults);
+    $entity = $entity_loader->loadEntity($node, ['unchanged' => TRUE] + $defaults, $plugin_id);
     $this->assertTrue($entity instanceof NodeInterface, 'Entity must exist as it is stored in the database.');
     $this->assertEquals($node->id(), $entity->id(), 'Node ID must match up.');
     $this->assertEquals('456', $entity->label(), 'Node title must be the unchanged one.');
@@ -168,13 +169,13 @@ class EntityLoaderTest extends KernelTestBase {
       'from' => 'properties',
       'entity_type' => 'node',
       'properties' => "title: 456\nuid: 0",
-    ] + $defaults);
+    ] + $defaults, $plugin_id);
     $this->assertTrue($entity instanceof NodeInterface, 'Entity must exist.');
     $entity = $entity_loader->loadEntity(NULL, [
       'from' => 'properties',
       'entity_type' => 'node',
       'properties' => "title: 88888\nuid: 1",
-    ] + $defaults);
+    ] + $defaults, $plugin_id);
     $this->assertFalse($entity instanceof NodeInterface, 'Node must not exist.');
   }
 

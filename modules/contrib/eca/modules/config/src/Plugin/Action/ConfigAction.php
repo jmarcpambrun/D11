@@ -77,7 +77,7 @@ class ConfigAction extends ConfigurableActionBase {
         }
       }
     }
-    return $return_as_object ? $result->cachePerPermissions() : FALSE;
+    return $return_as_object ? $result->cachePerPermissions() : $result->isAllowed();
   }
 
   /**

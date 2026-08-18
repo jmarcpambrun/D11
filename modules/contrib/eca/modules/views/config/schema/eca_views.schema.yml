@@ -64,7 +64,7 @@ action.configuration.eca_views_query:
       type: string
       label: 'View'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca_views\Plugin\Action\ViewsQuery::getAllValidViews'
         NotBlank: []
     display_id:
@@ -94,7 +94,7 @@ action.configuration.eca_views_export:
       type: string
       label: 'View'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca_views\Plugin\Action\ViewsQuery::getAllValidViews'
         NotBlank: []
     display_id:

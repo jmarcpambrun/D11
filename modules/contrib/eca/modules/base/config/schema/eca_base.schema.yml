@@ -36,13 +36,13 @@ eca.condition.plugin.eca_state:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -62,13 +62,13 @@ eca.condition.plugin.eca_count:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -86,9 +86,10 @@ eca.condition.plugin.eca_list_contains:
       label: 'Method'
       constraints:
         NotBlank: []
-        Choice:
-          - index
-          - value
+        EcaChoice:
+          choices:
+            - index
+            - value
     value:
       type: text
       label: 'Value to lookup'
@@ -115,13 +116,13 @@ eca.condition.plugin.eca_scalar:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -264,10 +265,11 @@ action.configuration.eca_list_add:
       label: 'Method'
       constraints:
         NotBlank: []
-        Choice:
-          - append
-          - prepend
-          - set
+        EcaChoice:
+          choices:
+            - append
+            - prepend
+            - set
     index:
       type: string
       label: 'Index key'
@@ -351,11 +353,12 @@ action.configuration.eca_list_remove:
       label: 'Method'
       constraints:
         NotBlank: []
-        Choice:
-          - first
-          - last
-          - index
-          - value
+        EcaChoice:
+          choices:
+            - first
+            - last
+            - index
+            - value
     index:
       type: string
       label: 'Index key'
@@ -497,7 +500,8 @@ action.configuration.eca_set_eca_log_level:
       label: 'Log level'
       constraints:
         # @see \Drupal\Core\Logger::getLevels()
-        Choice: [0, 1, 2, 3, 4, 5, 6, 7]
+        EcaChoice:
+          choices: [0, 1, 2, 3, 4, 5, 6, 7]
 
 action.configuration.eca_sharedtempstore_delete:
   type: mapping
@@ -561,6 +565,11 @@ action.configuration.eca_token_replace:
       type: boolean
       label: 'Validate YAML to prevent this from being executed when invalid'
 
+action.configuration.eca_token_set_context:
+  type: mapping
+  label: 'Configuration for the "Token Set Context" action'
+  mapping: {}
+
 action.configuration.eca_token_set_random_value:
   type: mapping
   label: 'Configuration for the "Token Set Random Value" action'
@@ -573,20 +582,21 @@ action.configuration.eca_token_set_random_value:
       label: 'Mode'
       constraints:
         NotBlank: []
-        Choice:
-          - image
-          - integer
-          - machine_name unique
-          - machine_name
-          - name unique
-          - name
-          - paragraphs
-          - password
-          - sentences capitalize
-          - sentences
-          - string unique
-          - string
-          - word
+        EcaChoice:
+          choices:
+            - image
+            - integer
+            - machine_name unique
+            - machine_name
+            - name unique
+            - name
+            - paragraphs
+            - password
+            - sentences capitalize
+            - sentences
+            - string unique
+            - string
+            - word
     length:
       type: string
       label: 'Length or min/max'
@@ -631,7 +641,8 @@ action.configuration.eca_translate:
       label: 'Target language'
       constraints:
         NotBlank: []
-        Choice: []
+        EcaChoice:
+          callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidLangcodesAndPreferred'
 
 action.configuration.eca_trigger_custom_event:
   type: mapping

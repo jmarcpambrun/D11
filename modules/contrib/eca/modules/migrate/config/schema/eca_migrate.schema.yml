@@ -75,6 +75,17 @@ action.configuration.eca_migrate_rollback_migration:
       type: string
       label: 'Migration ID'
 
+action.configuration.eca_migrate_skip_row:
+  type: mapping
+  label: 'Configuration for the "Migrate: Skip Row" action'
+  mapping:
+    message:
+      type: string
+      label: 'Skip message'
+    save_to_map:
+      type: boolean
+      label: 'Save to map'
+
 action.configuration.eca_migrate_reset_migration:
   type: mapping
   label: 'Configuration for the "Migrate: Reset migration" action'

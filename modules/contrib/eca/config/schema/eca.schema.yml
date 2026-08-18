@@ -1,3 +1,42 @@
+# Reusable types for the machine-name-like fields of ECA plugins.
+#
+# Every plugin field whose form element is validated by
+# \Drupal\eca\Plugin\FormFieldMachineName::validateElementsMachineName()
+# implements exactly one of the three contracts below. Apply the matching type
+# so that configuration validation reaches the same verdict as the user
+# interface.
+#
+# None of these types declares a value to be required: all three accept the
+# empty string, just like the form element validator does. Add a "NotBlank"
+# constraint next to the type where, and only where, the form element is
+# "#required".
+#
+# @see \Drupal\eca\Plugin\FormFieldMachineName
+# @see \Drupal\eca\Plugin\Validation\Constraint\EcaElementsMachineNameConstraint
+eca.machine_name:
+  type: string
+  label: 'Machine name'
+  constraints:
+    # For a form element carrying neither ECA token flag.
+    EcaElementsMachineName:
+      contract: machine_name
+
+eca.token_reference:
+  type: string
+  label: 'Token name'
+  constraints:
+    # For a form element flagged "#eca_token_reference".
+    EcaElementsMachineName:
+      contract: token_reference
+
+eca.token_replaced_machine_name:
+  type: string
+  label: 'Machine name'
+  constraints:
+    # For a form element flagged "#eca_token_replacement".
+    EcaElementsMachineName:
+      contract: token_replacement
+
 eca.settings:
   type: config_object
   label: 'ECA settings'

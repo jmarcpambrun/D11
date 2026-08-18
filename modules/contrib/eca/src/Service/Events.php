@@ -2,7 +2,6 @@
 
 namespace Drupal\eca\Service;
 
-use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\eca\ErrorHandlerTrait;
@@ -61,19 +60,13 @@ class Events {
    *   The sorted list of events.
    */
   public function events(): array {
-    static $events;
+    $events = &drupal_static('eca_events');
     if ($events === NULL) {
       $this->enableExtendedErrorHandling('Collecting all available events');
       $events = [];
       foreach ($this->eventManager->getDefinitions() as $plugin_id => $definition) {
-        try {
-          /** @var \Drupal\eca\Plugin\ECA\Event\EventInterface $plugin */
-          $plugin = $this->eventManager->createInstance($plugin_id);
+        if ($plugin = $this->createInstance($plugin_id)) {
           $events[] = $plugin;
-        }
-        // @phpstan-ignore catch.neverThrown
-        catch (PluginException | \Throwable) {
-          // Can be ignored.
         }
       }
       $this->resetExtendedErrorHandling();

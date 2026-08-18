@@ -4,3 +4,4 @@ eca_float_or_token:
 eca_integer_or_token:
   label: 'Integer or Token'
   class: '\Drupal\eca\Plugin\DataType\IntegerOrToken'
+  definition_class: '\Drupal\eca\TypedData\IntegerOrTokenDataDefinition'

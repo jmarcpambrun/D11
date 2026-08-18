@@ -104,9 +104,14 @@ class Processor {
   /**
    * The template token resolver.
    *
-   * @var \Drupal\modeler_api\TemplateTokenResolver
+   * This is NULL while the Modeler API is not installed, which is the case for
+   * a site that boots ECA 3 code before eca_update_8012() has installed it.
+   *
+   * @var \Drupal\modeler_api\TemplateTokenResolver|null
+   *
+   * @see \Drupal\eca\EcaServiceProvider::alter()
    */
-  protected TemplateTokenResolver $templateTokenResolver;
+  protected ?TemplateTokenResolver $templateTokenResolver;
 
   /**
    * The current user.
@@ -150,14 +155,14 @@ class Processor {
    *   The Drupal state.
    * @param \Drupal\eca\Token\Browser $tokenBrowser
    *   The token browser.
-   * @param \Drupal\modeler_api\TemplateTokenResolver $templateTokenResolver
-   *   The template token resolver.
+   * @param \Drupal\modeler_api\TemplateTokenResolver|null $templateTokenResolver
+   *   The template token resolver, or NULL if the Modeler API is not installed.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
    * @param int $recursion_threshold
    *   A parameterized threshold of the maximum allowed level of recursion.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelInterface $logger, EventDispatcherInterface $event_dispatcher, PluginManagerEvent $event_plugin_manager, StateInterface $state, Browser $tokenBrowser, TemplateTokenResolver $templateTokenResolver, AccountProxyInterface $currentUser, int $recursion_threshold) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelInterface $logger, EventDispatcherInterface $event_dispatcher, PluginManagerEvent $event_plugin_manager, StateInterface $state, Browser $tokenBrowser, ?TemplateTokenResolver $templateTokenResolver, AccountProxyInterface $currentUser, int $recursion_threshold) {
     $this->entityTypeManager = $entity_type_manager;
     $this->logger = $logger;
     $this->eventDispatcher = $event_dispatcher;
@@ -247,7 +252,7 @@ class Processor {
         $debugger->setEventLabel($ecaEvent->getLabel());
         $context['%eventlabel'] = $ecaEvent->getLabel();
 
-        if ($this->currentUser->hasPermission('modeler api edit eca')) {
+        if ($this->templateTokenResolver !== NULL && $this->currentUser->hasPermission('modeler api edit eca')) {
           $appliedTemplates = $eca->get('events')[$eca_event_id]['applied_templates'] ?? [];
           foreach ($appliedTemplates as $applied_template) {
             [$eventId, $ecaId, $target, $config] = json_decode($applied_template, TRUE);

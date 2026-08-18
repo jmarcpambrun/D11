@@ -96,7 +96,7 @@ class Conditions {
    *   The sorted list of conditions.
    */
   public function conditions(): array {
-    static $conditions;
+    $conditions = &drupal_static('eca_conditions');
     if ($conditions === NULL) {
       $this->enableExtendedErrorHandling('Collecting all available conditions');
       $conditions = [];

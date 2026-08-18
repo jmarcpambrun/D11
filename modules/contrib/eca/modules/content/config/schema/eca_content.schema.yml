@@ -141,10 +141,11 @@ eca.condition.plugin.eca_entity_field_is_accessible:
       type: string
       label: 'Operation'
       constraints:
-        Choice:
-          - 'view'
-          - 'update'
-          - 'delete'
+        EcaChoice:
+          choices:
+            - 'view'
+            - 'update'
+            - 'delete'
         NotBlank: []
     entity:
       type: string
@@ -158,15 +159,16 @@ eca.condition.plugin.eca_entity_exists:
       type: string
       label: 'Load entity from'
       constraints:
-        Choice:
-          - current
-          - id
-          - properties
+        EcaChoice:
+          choices:
+            - current
+            - id
+            - properties
     entity_type:
       type: string
       label: 'Entity type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypesAndNone'
     entity_id:
       type: string
@@ -181,7 +183,7 @@ eca.condition.plugin.eca_entity_exists:
       type: string
       label: 'Language'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidLangcodes'
     latest_revision:
       type: boolean
@@ -237,7 +239,7 @@ eca.condition.plugin.eca_entity_type_bundle:
       type: string
       label: 'Entity type (and bundle)'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypesAndBundles'
     entity:
       type: string
@@ -254,13 +256,13 @@ eca.condition.plugin.eca_content_form_display_mode:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -280,13 +282,13 @@ eca.condition.plugin.eca_entity_field_value:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -309,13 +311,13 @@ eca.condition.plugin.eca_entity_original_field_value:
       type: string
       label: 'Comparison operator'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidOperators'
     type:
       type: string
       label: 'Comparison type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Plugin\ECA\Condition\StringComparisonBase::getAllValidTypes'
     case:
       type: boolean
@@ -343,11 +345,12 @@ eca.condition.plugin.eca_entity_is_accessible:
       type: string
       label: 'Operation'
       constraints:
-        Choice:
-          - 'view'
-          - 'update'
-          - 'delete'
-          - 'create'
+        EcaChoice:
+          choices:
+            - 'view'
+            - 'update'
+            - 'delete'
+            - 'create'
         NotBlank: []
     entity:
       type: string
@@ -442,13 +445,13 @@ action.configuration.eca_new_entity:
       type: string
       label: 'Entity Type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypesAndBundles'
     langcode:
       type: string
       label: 'Language'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidLangcodes'
     label:
       type: string
@@ -502,7 +505,7 @@ action.configuration.eca_get_bundle_list:
       type: string
       label: 'Type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypes'
     mode:
       type: string
@@ -538,15 +541,16 @@ action.configuration.eca_token_load_entity:
       type: string
       label: 'Load entity from'
       constraints:
-        Choice:
-          - current
-          - id
-          - properties
+        EcaChoice:
+          choices:
+            - current
+            - id
+            - properties
     entity_type:
       type: string
       label: 'Entity type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypesAndNone'
     entity_id:
       type: string
@@ -561,7 +565,7 @@ action.configuration.eca_token_load_entity:
       type: string
       label: 'Language'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidLangcodes'
     latest_revision:
       type: boolean
@@ -587,15 +591,16 @@ action.configuration.eca_token_load_entity_ref:
       type: string
       label: 'Load entity from'
       constraints:
-        Choice:
-          - current
-          - id
-          - properties
+        EcaChoice:
+          choices:
+            - current
+            - id
+            - properties
     entity_type:
       type: string
       label: 'Entity type'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidContentEntityTypesAndNone'
     entity_id:
       type: string
@@ -610,7 +615,7 @@ action.configuration.eca_token_load_entity_ref:
       type: string
       label: 'Language'
       constraints:
-        Choice:
+        EcaChoice:
           callback: '\Drupal\eca\Validation\EcaConstraintCallbacks::getAllValidLangcodes'
     latest_revision:
       type: boolean
@@ -636,18 +641,19 @@ action.configuration.eca_set_field_value:
       type: string
       label: 'Method'
       constraints:
-        Choice:
-          # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
-          - 'set:clear'
-          - 'set:force_clear'
-          - 'set:empty'
-          - 'append:not_full'
-          - 'append:drop_first'
-          - 'append:drop_last'
-          - 'prepend:not_full'
-          - 'prepend:drop_first'
-          - 'prepend:drop_last'
-          - 'remove'
+        EcaChoice:
+          choices:
+            # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
+            - 'set:clear'
+            - 'set:force_clear'
+            - 'set:empty'
+            - 'append:not_full'
+            - 'append:drop_first'
+            - 'append:drop_last'
+            - 'prepend:not_full'
+            - 'prepend:drop_first'
+            - 'prepend:drop_last'
+            - 'remove'
     strip_tags:
       type: boolean
       label: 'Strip tags'
@@ -702,18 +708,19 @@ action.configuration.eca_list_add_entity:
       type: string
       label: 'Method'
       constraints:
-        Choice:
-          # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
-          - 'set:clear'
-          - 'set:force_clear'
-          - 'set:empty'
-          - 'append:not_full'
-          - 'append:drop_first'
-          - 'append:drop_last'
-          - 'prepend:not_full'
-          - 'prepend:drop_first'
-          - 'prepend:drop_last'
-          - 'remove'
+        EcaChoice:
+          choices:
+            # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
+            - 'set:clear'
+            - 'set:force_clear'
+            - 'set:empty'
+            - 'append:not_full'
+            - 'append:drop_first'
+            - 'append:drop_last'
+            - 'prepend:not_full'
+            - 'prepend:drop_first'
+            - 'prepend:drop_last'
+            - 'remove'
         NotBlank: []
     index:
       type: string
@@ -736,18 +743,19 @@ action.configuration.eca_list_remove_entity:
       type: string
       label: 'Method'
       constraints:
-        Choice:
-          # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
-          - 'set:clear'
-          - 'set:force_clear'
-          - 'set:empty'
-          - 'append:not_full'
-          - 'append:drop_first'
-          - 'append:drop_last'
-          - 'prepend:not_full'
-          - 'prepend:drop_first'
-          - 'prepend:drop_last'
-          - 'remove'
+        EcaChoice:
+          choices:
+            # @see \Drupal\eca_content\Plugin\Action\FieldUpdateActionBase::buildConfigurationForm
+            - 'set:clear'
+            - 'set:force_clear'
+            - 'set:empty'
+            - 'append:not_full'
+            - 'append:drop_first'
+            - 'append:drop_last'
+            - 'prepend:not_full'
+            - 'prepend:drop_first'
+            - 'prepend:drop_last'
+            - 'remove'
         NotBlank: []
     index:
       type: string

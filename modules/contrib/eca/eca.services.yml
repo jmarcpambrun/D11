@@ -170,6 +170,7 @@ services:
   Drupal\eca\Service\Actions: '@eca.service.action'
   Drupal\eca\Service\Conditions: '@eca.service.condition'
   Drupal\eca\Service\ContentEntityTypes: '@eca.service.content_entity_types'
+  Drupal\eca\Service\Events: '@eca.service.event'
   Drupal\eca\Token\TokenServices: '@eca.token_services'
   Drupal\eca\PluginManager\Event: '@plugin.manager.eca.event'
 
