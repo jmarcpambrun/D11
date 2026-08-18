@@ -5,7 +5,6 @@
 
 import { useCallback } from 'react';
 import { useGraphStore } from '../store/useGraphStore';
-import { useSelectionStore } from '../store/useSelectionStore';
 import { autoLayout } from '../utils/modelUtils';
 import { getEdgeType } from '../utils/edgeTypeUtils';
 import type { NodeData, EdgeData } from '../types/settings';
@@ -17,14 +16,18 @@ interface UseConfigurationProps {
 }
 
 export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfigurationProps) {
-  const nodes = useGraphStore(state => state.nodes);
-  const edges = useGraphStore(state => state.edges);
   const setNodes = useGraphStore(state => state.setNodes);
   const setEdges = useGraphStore(state => state.setEdges);
-  const selectedNode = useSelectionStore(state => state.selectedNode);
-  const setSelectedNode = useSelectionStore(state => state.setSelectedNode);
 
   // Configuration change handler - updates node configuration (primary callback)
+  //
+  // Deliberately does NOT write to the selection store (issue #3589111).
+  // Refreshing the selected node object is useSelectionSync's job: it runs in
+  // an effect keyed on the nodes array, so it reads fresh state after the
+  // commit that follows setNodes() and only writes when the object identity
+  // actually changed. Doing it here as well would mean reading a render-time
+  // snapshot that setNodes() has not updated, pushing the pre-update node back
+  // into the property panel and clobbering debounced fields mid-edit.
   const onConfigurationChange = useCallback((nodeId: string, configuration: Record<string, unknown>) => {
     if (saveHistory) saveHistory();
     setNodes(prev => prev.map(node => 
@@ -41,19 +44,9 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
           }
         : node
     ));
-    
-    // Update selected node to reflect changes in property panel
-    if (selectedNode?.id === nodeId) {
-      setTimeout(() => {
-        const updatedNode = nodes.find(n => n.id === nodeId);
-        if (updatedNode) {
-          setSelectedNode(updatedNode);
-        }
-      }, 10);
-    }
-    
+
     setHasUnsavedChanges(true);
-  }, [setNodes, selectedNode, setSelectedNode, setHasUnsavedChanges, nodes, saveHistory]);
+  }, [setNodes, setHasUnsavedChanges, saveHistory]);
 
   // Node update handler (for broader updates than just config)
   const onNodeUpdate = useCallback((nodeId: string, newData: Partial<NodeData>) => {
@@ -120,14 +113,25 @@ export function useConfiguration({ setHasUnsavedChanges, saveHistory }: UseConfi
   );
 
   // Auto-layout handler
+  //
+  // Reads the live graph from the store at call time instead of closing over
+  // a render-time snapshot (issue #3589109). The plugin API mutates the store
+  // synchronously, so a plugin can add nodes and call autoLayout() within a
+  // single tick — before React has re-rendered. A captured snapshot would
+  // therefore be stale, and because setNodes() replaces the whole array when
+  // given a plain array, writing that snapshot back deleted every node added
+  // in the same tick and left orphaned edges behind. Reading getState() here
+  // also removes nodes/edges from the dependency array, making the callback
+  // stable for the plugin-API hook registered in Flow.tsx.
   const handleAutoLayout = useCallback(() => {
     if (saveHistory) saveHistory();
-    const layoutedNodes = autoLayout(nodes, edges);
+    const { nodes: currentNodes, edges: currentEdges } = useGraphStore.getState();
+    const layoutedNodes = autoLayout(currentNodes, currentEdges);
     if (layoutedNodes) {
       setNodes(layoutedNodes);
       setHasUnsavedChanges(true);
     }
-  }, [nodes, edges, setNodes, setHasUnsavedChanges, saveHistory]);
+  }, [setNodes, setHasUnsavedChanges, saveHistory]);
 
   return {
     onConfigurationChange,

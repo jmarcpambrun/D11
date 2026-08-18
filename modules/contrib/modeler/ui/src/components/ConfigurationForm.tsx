@@ -28,8 +28,13 @@ import type { YamlSchema } from './YamlEditor';
 interface StateCondition {
   /** The (flat) field key this condition observes. */
   field: string;
-  /** Match when the observed field equals this value. */
-  value?: string | number | boolean;
+  /**
+   * Match when the observed field equals this value. When an array is given,
+   * match when the observed field equals ANY listed value (Drupal's
+   * "equals any" semantics). The backend normally expands array values into
+   * OR groups, but the array form is accepted here for robustness.
+   */
+  value?: (string | number | boolean) | (string | number | boolean)[];
   /** Match when the observed field's checked state equals this. */
   checked?: boolean;
   /** Match when the observed field's empty state equals this. */
@@ -37,14 +42,21 @@ interface StateCondition {
 }
 
 /**
- * Normalized Drupal #states, keyed by state type. Conditions within a single
- * state type combine with logical AND.
+ * A group of conditions combined with logical AND. All conditions in a group
+ * must hold for the group to match.
+ */
+type StateGroup = StateCondition[];
+
+/**
+ * Normalized Drupal #states, keyed by state type. Each value is a list of
+ * OR groups: conditions within a group combine with logical AND, and groups
+ * combine with logical OR (the state holds when ANY group fully matches).
  */
 interface FieldStates {
-  visible?: StateCondition[];
-  invisible?: StateCondition[];
-  required?: StateCondition[];
-  optional?: StateCondition[];
+  visible?: StateGroup[];
+  invisible?: StateGroup[];
+  required?: StateGroup[];
+  optional?: StateGroup[];
 }
 
 interface FormField {
@@ -116,6 +128,10 @@ interface ConfigurationFormProps {
 function evaluateCondition(condition: StateCondition, values: Record<string, unknown>): boolean {
   const current = values[condition.field];
   if (condition.value !== undefined) {
+    // An array value means "equals any listed value" (Drupal's match-any).
+    if (Array.isArray(condition.value)) {
+      return condition.value.some((v) => String(current ?? '') === String(v));
+    }
     return String(current ?? '') === String(condition.value);
   }
   if (condition.checked !== undefined) {
@@ -136,15 +152,23 @@ function evaluateCondition(condition: StateCondition, values: Record<string, unk
 }
 
 /**
- * Evaluate an array of conditions with logical AND (all must hold). An empty
- * or missing array is treated as "not applicable" by the caller, so here an
- * empty array trivially holds.
+ * Evaluate a single group with logical AND: every condition in the group must
+ * hold. An empty group trivially holds.
  */
-function evaluateConditions(conditions: StateCondition[] | undefined, values: Record<string, unknown>): boolean {
-  if (!conditions || conditions.length === 0) {
+function evaluateGroup(group: StateGroup, values: Record<string, unknown>): boolean {
+  return group.every((condition) => evaluateCondition(condition, values));
+}
+
+/**
+ * Evaluate a list of OR groups: the state holds when ANY group fully matches.
+ * An empty or missing list is treated as "not applicable" and trivially holds,
+ * so callers can guard on the presence of the state type.
+ */
+function evaluateGroups(groups: StateGroup[] | undefined, values: Record<string, unknown>): boolean {
+  if (!groups || groups.length === 0) {
     return true;
   }
-  return conditions.every((condition) => evaluateCondition(condition, values));
+  return groups.some((group) => evaluateGroup(group, values));
 }
 
 /**
@@ -166,19 +190,19 @@ function resolveFieldState(field: FormField, values: Record<string, unknown>): R
   const states = field.states;
   if (states) {
     if (states.visible) {
-      // Field is shown only while the visible conditions hold.
-      hidden = hidden || !evaluateConditions(states.visible, values);
+      // Field is shown only while ANY visible group holds.
+      hidden = hidden || !evaluateGroups(states.visible, values);
     }
     if (states.invisible) {
-      // Field is hidden while the invisible conditions hold.
-      hidden = hidden || evaluateConditions(states.invisible, values);
+      // Field is hidden while ANY invisible group holds.
+      hidden = hidden || evaluateGroups(states.invisible, values);
     }
     if (states.required) {
-      required = evaluateConditions(states.required, values);
+      required = evaluateGroups(states.required, values);
     }
     if (states.optional) {
       // Optional is the inverse of required.
-      required = !evaluateConditions(states.optional, values);
+      required = !evaluateGroups(states.optional, values);
     }
   }
 

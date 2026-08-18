@@ -46,7 +46,17 @@ function shouldIncludeStep(
       return true;
     }
 
-    // For non-gateway nodes, check if there's an edge with a condition between the nodes
+    // Conditions are first-class NODES now (issue #3589093), so the direct
+    // source -> target edge was replaced by source -> condition -> target and
+    // no edge carries `data.condition` any more.  A gated successor is
+    // therefore identified by the step's own conditionId, mirroring the
+    // 'add successor' branch above (issue #3589108).
+    if (step.conditionId) {
+      return true;
+    }
+
+    // Legacy fallback: pre-promotion data where the condition lived on the
+    // edge between the two nodes.
     const edge = edges.find(e =>
       ((e.source === step.id && e.target === step.successorId) ||
        (e.source === step.successorId && e.target === step.id)) &&

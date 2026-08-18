@@ -248,6 +248,26 @@ describe('replayHighlightUtils', () => {
       expect(result.find(n => n.id === 'cond-node')!.data.highlighted).toBe(true);
     });
 
+    it('should prefer data.conditionId over data.plugin when both match different nodes', () => {
+      // Issue #3589108: step.conditionId is ECA's condition CONFIG id, so the
+      // node whose data.conditionId matches must win over a plugin-id collision.
+      const conditionNodes: Node[] = [
+        createNode('cond-by-plugin', {
+          type: 'condition',
+          data: { label: 'Wrong', plugin: 'shared', conditionId: 'other', __isConditionNode: true },
+        }),
+        createNode('cond-by-config-id', {
+          type: 'condition',
+          data: { label: 'Right', plugin: 'eca_scalar', conditionId: 'shared', __isConditionNode: true },
+        }),
+      ];
+      const step: ReplayStep = { type: 'ignore successor', id: 'n1', conditionId: 'shared' };
+      const result = highlightNodesForStep(conditionNodes, step);
+
+      expect(result.find(n => n.id === 'cond-by-config-id')!.data.highlighted).toBe(true);
+      expect(result.find(n => n.id === 'cond-by-plugin')!.data.highlighted).toBe(false);
+    });
+
     it('should clear highlights for a condition step with no matching condition node', () => {
       const step: ReplayStep = { type: 'add successor', id: 'n1', conditionId: 'cond1' };
       const result = highlightNodesForStep(nodes, step);

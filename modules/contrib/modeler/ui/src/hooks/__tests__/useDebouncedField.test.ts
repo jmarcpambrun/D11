@@ -40,7 +40,11 @@ describe('useDebouncedField', () => {
   });
 
   describe('value synchronization', () => {
-    it('should sync local value when initialValue prop changes', () => {
+    // The contract, in short: an incoming initialValue wins unless the user
+    // has local edits that are not saved yet, in which case the local value
+    // wins until the pending debounce settles. See issue #3589113.
+
+    it('should sync local value when initialValue prop changes and no edit is pending', () => {
       const { result, rerender } = renderHook(
         ({ initialValue }) => useDebouncedField({ ...defaultProps, initialValue }),
         { initialProps: { initialValue: 'initial' } }
@@ -51,6 +55,119 @@ describe('useDebouncedField', () => {
       rerender({ initialValue: 'new value' });
       
       expect(result.current.value).toBe('new value');
+    });
+
+    it('should keep in-flight typing when initialValue changes and reverts', () => {
+      // Issue #3589113. A store write that changes the source value and then
+      // restores it registers as two dependency changes. The second one used
+      // to overwrite whatever the user had typed since, so the field did not
+      // need to end up wrong for the edit to be destroyed.
+      const onDebouncedChange = jest.fn();
+      const { result, rerender } = renderHook(
+        ({ initialValue }) => useDebouncedField({
+          ...defaultProps,
+          initialValue,
+          onDebouncedChange,
+        }),
+        { initialProps: { initialValue: 'committed' } }
+      );
+
+      // The user types. This edit is not saved yet - its debounce is pending.
+      act(() => {
+        result.current.onChange({ target: { value: 'committed extra' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+      expect(result.current.value).toBe('committed extra');
+
+      // A there-and-back-again write to the source value.
+      rerender({ initialValue: 'stale' });
+      rerender({ initialValue: 'committed' });
+
+      // The round trip must not have touched the local value.
+      expect(result.current.value).toBe('committed extra');
+
+      // And the pending debounce still commits what the user typed.
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(onDebouncedChange).toHaveBeenCalledTimes(1);
+      expect(onDebouncedChange).toHaveBeenCalledWith('committed extra');
+    });
+
+    it('should suppress a one-way sync while a debounce is pending', () => {
+      // While an edit is not saved yet the local value must win over the
+      // incoming prop, so the sync is skipped whatever the incoming value is -
+      // not only on a there-and-back-again.
+      const { result, rerender } = renderHook(
+        ({ initialValue }) => useDebouncedField({ ...defaultProps, initialValue }),
+        { initialProps: { initialValue: 'committed' } }
+      );
+
+      act(() => {
+        result.current.onChange({ target: { value: 'typed' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+
+      rerender({ initialValue: 'from elsewhere' });
+
+      expect(result.current.value).toBe('typed');
+    });
+
+    it('should resume syncing once the pending debounce has settled', () => {
+      // The guard covers a window only; it never sticks. Once the edit is
+      // saved the field must accept external updates again, otherwise
+      // undo/redo would stop updating the input for the rest of its lifetime.
+      const { result, rerender } = renderHook(
+        ({ initialValue }) => useDebouncedField({ ...defaultProps, initialValue }),
+        { initialProps: { initialValue: 'committed' } }
+      );
+
+      act(() => {
+        result.current.onChange({ target: { value: 'typed' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      rerender({ initialValue: 'from elsewhere' });
+
+      expect(result.current.value).toBe('from elsewhere');
+    });
+
+    it('should resume syncing once flush has cleared a pending debounce', () => {
+      const { result, rerender } = renderHook(
+        ({ initialValue }) => useDebouncedField({ ...defaultProps, initialValue }),
+        { initialProps: { initialValue: 'committed' } }
+      );
+
+      act(() => {
+        result.current.onChange({ target: { value: 'typed' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+      act(() => {
+        result.current.flush();
+      });
+
+      rerender({ initialValue: 'from elsewhere' });
+
+      expect(result.current.value).toBe('from elsewhere');
+    });
+
+    it('should still sync while disabled, where no debounce can be pending', () => {
+      // A locked field never starts a timer, so it must never suppress.
+      const { result, rerender } = renderHook(
+        ({ initialValue }) => useDebouncedField({
+          ...defaultProps,
+          initialValue,
+          disabled: true,
+        }),
+        { initialProps: { initialValue: 'committed' } }
+      );
+
+      act(() => {
+        result.current.onChange({ target: { value: 'typed' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+
+      rerender({ initialValue: 'from elsewhere' });
+
+      expect(result.current.value).toBe('from elsewhere');
     });
 
     it('should allow direct setValue calls', () => {

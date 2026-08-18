@@ -8,6 +8,12 @@
  *   - Single codepath: all viewport operations go through this hook.
  *   - Deferred execution: operations queued before ReactFlow is ready are
  *     applied once readiness is signaled.
+ *   - Live state: node lookups read useGraphStore.getState() at call time
+ *     rather than closing over a render-time snapshot. The plugin API mutates
+ *     the store synchronously, so a plugin can create a node and focus it
+ *     within one tick, before React has re-rendered (issue #3589109). Reading
+ *     live state also keeps these callbacks stable, so the deferred operation
+ *     effect below runs on readiness changes instead of on every graph edit.
  *
  * IMPORTANT: ReactFlow's setCenter() defaults to maxZoom when no zoom option
  * is provided. This hook always passes the current zoom explicitly to prevent
@@ -133,7 +139,6 @@ export interface ViewportActions {
 
 export function useViewportActions(): ViewportActions {
   const { setCenter, fitView, getViewport, getZoom } = useReactFlow();
-  const nodes = useGraphStore(state => state.nodes);
   const setSelectedNode = useSelectionStore(state => state.setSelectedNode);
 
   const [ready, setReadyState] = useState(false);
@@ -146,7 +151,7 @@ export function useViewportActions(): ViewportActions {
       pendingRef.current = { kind: 'panToNode', nodeId };
       return;
     }
-    const node = nodes.find(n => n.id === nodeId);
+    const node = useGraphStore.getState().nodes.find(n => n.id === nodeId);
     if (!node) return;
 
     const center = getNodeCenter(node);
@@ -154,14 +159,14 @@ export function useViewportActions(): ViewportActions {
     const duration = getAnimationDuration();
 
     setCenter(center.x, center.y, { zoom: currentZoom, duration });
-  }, [ready, nodes, getZoom, setCenter]);
+  }, [ready, getZoom, setCenter]);
 
   const panToNodeIfOffscreen = useCallback((nodeId: string) => {
     if (!ready) {
       pendingRef.current = { kind: 'panToNodeIfOffscreen', nodeId };
       return;
     }
-    const node = nodes.find(n => n.id === nodeId);
+    const node = useGraphStore.getState().nodes.find(n => n.id === nodeId);
     if (!node) return;
 
     const center = getNodeCenter(node);
@@ -177,7 +182,7 @@ export function useViewportActions(): ViewportActions {
       const duration = getAnimationDuration();
       setCenter(center.x, center.y, { zoom: currentZoom, duration });
     }
-  }, [ready, nodes, getViewport, getZoom, setCenter]);
+  }, [ready, getViewport, getZoom, setCenter]);
 
   const fitToNodes = useCallback((nodeIds?: string[]) => {
     if (!ready) {
@@ -185,6 +190,7 @@ export function useViewportActions(): ViewportActions {
       return;
     }
 
+    const { nodes } = useGraphStore.getState();
     const duration = getAnimationDuration();
 
     if (nodeIds && nodeIds.length > 0) {
@@ -216,14 +222,14 @@ export function useViewportActions(): ViewportActions {
         duration,
       });
     }
-  }, [ready, nodes, fitView]);
+  }, [ready, fitView]);
 
   const topAlignNode = useCallback((nodeId: string) => {
     if (!ready) {
       pendingRef.current = { kind: 'topAlignNode', nodeId };
       return;
     }
-    const node = nodes.find(n => n.id === nodeId);
+    const node = useGraphStore.getState().nodes.find(n => n.id === nodeId);
     if (!node) return;
 
     const center = getNodeCenter(node);
@@ -240,14 +246,14 @@ export function useViewportActions(): ViewportActions {
     const adjustedY = center.y + viewportCenterOffset;
 
     setCenter(center.x, adjustedY, { zoom: currentZoom, duration });
-  }, [ready, nodes, getZoom, setCenter]);
+  }, [ready, getZoom, setCenter]);
 
   const focusNode = useCallback((nodeId: string) => {
     if (!ready) {
       pendingRef.current = { kind: 'focusNode', nodeId };
       return;
     }
-    const node = nodes.find(n => n.id === nodeId);
+    const node = useGraphStore.getState().nodes.find(n => n.id === nodeId);
     if (!node) return;
 
     const center = getNodeCenter(node);
@@ -255,7 +261,7 @@ export function useViewportActions(): ViewportActions {
     const duration = getAnimationDuration();
 
     setCenter(center.x, center.y, { zoom: currentZoom, duration });
-  }, [ready, nodes, getZoom, setCenter]);
+  }, [ready, getZoom, setCenter]);
 
   const fitToNodePair = useCallback((nodeId1: string, nodeId2: string) => {
     if (!ready) {
@@ -263,6 +269,7 @@ export function useViewportActions(): ViewportActions {
       return;
     }
 
+    const { nodes } = useGraphStore.getState();
     const targetNodes = nodes.filter(n => n.id === nodeId1 || n.id === nodeId2);
     if (targetNodes.length === 0) return;
 
@@ -273,7 +280,7 @@ export function useViewportActions(): ViewportActions {
       maxZoom: VIEWPORT.FIT_MAX_ZOOM,
       duration,
     });
-  }, [ready, nodes, fitView]);
+  }, [ready, fitView]);
 
   const selectAndFocus = useCallback((node: StoreNode, kind: 'topAlignNode' | 'focusNode') => {
     if (!ready) {

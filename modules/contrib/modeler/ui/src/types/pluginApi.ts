@@ -141,8 +141,30 @@ export interface AddNodeDescriptor {
   componentType: number;
   /** Human-readable label. If omitted, derived from the plugin ID. */
   label?: string;
-  /** Canvas position. If omitted, placed automatically. */
+  /**
+   * Canvas position. If omitted, placed automatically by the shared
+   * incremental layout primitives — see `sourceNodeId` for the two
+   * automatic placement modes.
+   */
   position?: { x: number; y: number };
+  /**
+   * ID of an existing node the new node is being added *below*, as its
+   * successor.  Placement then matches exactly what quick-add produces
+   * for the same parent: column-aligned one row-gap under the parent,
+   * with neighboring flows shifted aside if required.
+   *
+   * This only controls **placement** — no edge is created.  Call
+   * `addEdge(sourceNodeId, newNodeId)` to wire the two nodes together.
+   *
+   * Ignored when `position` is given (an explicit position always wins).
+   * If the referenced node does not exist, `addNode()` returns `null`
+   * without mutating the graph, consistent with `addEdge()`.
+   *
+   * When omitted, the node is placed as a brand-new event flow to the
+   * right of every existing flow — the same position the modeler's own
+   * "add event" affordance would choose.
+   */
+  sourceNodeId?: string;
   /** Initial configuration values. */
   configuration?: Record<string, unknown>;
   /** Short description. */
@@ -297,9 +319,13 @@ export interface ModelerPluginApi {
   // ── Node mutations ──────────────────────────────────────────────────
   /**
    * Add a new node to the canvas.  Returns the ID of the newly created
-   * node, or `null` if the operation was rejected (read-only mode).
+   * node, or `null` if the operation was rejected (read-only mode, or an
+   * unknown `sourceNodeId`).
    *
-   * If `position` is omitted the node is placed automatically.
+   * If `position` is omitted the node is placed automatically by the same
+   * layout primitives the UI itself uses: as a successor of
+   * `descriptor.sourceNodeId` when that is given, otherwise as a new event
+   * flow to the right of everything already on the canvas.
    */
   addNode: (descriptor: AddNodeDescriptor) => string | null;
   /**
@@ -375,10 +401,15 @@ export interface ModelerPluginApi {
 export interface PluginPanelDescriptor {
   /** Unique identifier for the panel (e.g. `'my_module_analytics'`). */
   id: string;
-  /** Human-readable label shown in the collapsed tab. */
+  /** Human-readable label shown in the panel header. */
   label: string;
   /**
    * Where to render the panel.
+   *
+   * For docked panels this is the slot the panel is placed in.  For
+   * floating panels (see `floating`) it only seeds the initial on-screen
+   * corner the panel appears at.
+   *
    * @default 'right'
    */
   position?: PanelPosition;
@@ -392,6 +423,19 @@ export interface PluginPanelDescriptor {
    * @default 320
    */
   width?: number;
+  /**
+   * Render the panel detached from the layout, floating above the canvas.
+   *
+   * A floating panel reserves no space next to the canvas and can be moved
+   * by the user by dragging its header (or by focusing the move handle and
+   * using the arrow keys).  It is always kept within the modeler's bounds.
+   *
+   * This is a registration-time choice: there is no user-facing control to
+   * switch a panel between docked and floating.
+   *
+   * @default false
+   */
+  floating?: boolean;
   /**
    * Render the panel content into the given container element.
    * Called once when the panel mounts.  The `api` object provides
@@ -416,6 +460,7 @@ export interface RegisteredPanel extends PluginPanelDescriptor {
   position: PanelPosition;
   weight: number;
   width: number;
+  floating: boolean;
 }
 
 // ── Toolbar Widget Types ──────────────────────────────────────────────

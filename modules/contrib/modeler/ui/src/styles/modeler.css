@@ -5369,6 +5369,21 @@ g[style*="#ef4444"] path {
 
 /* Replay Steps */
 
+/*
+ * Base rule: the step list is ALWAYS the scroll container.
+ *
+ * ReplayPanelContent renders in two places: inside the standalone
+ * `.replay-panel` wrapper, and embedded in PropertyPanel's "Review flow" mode
+ * (which has no `.replay-panel` ancestor). Scrolling used to be declared only
+ * on the `.replay-panel .replay-steps` override, so in the embedded mode the
+ * list simply clipped. `min-height: 0` lets this flex child shrink below its
+ * content height, which is what makes `overflow-y` take effect at all.
+ */
+.replay-steps {
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .replay-step {
   display: flex;
   align-items: center;
@@ -7374,6 +7389,9 @@ g[style*="#ef4444"] path {
 .plugin-panel-slot--left,
 .plugin-panel-slot--right {
   flex-direction: column;
+  /* Stretched to the height of .workflow-modeler-content; min-height: 0 lets
+     the panels inside actually shrink to that height instead of overflowing. */
+  min-height: 0;
 }
 
 .plugin-panel-slot--bottom {
@@ -7393,6 +7411,23 @@ g[style*="#ef4444"] path {
   flex-shrink: 0;
 }
 
+/*
+ * Docked side panels must never grow past the height of their slot.  The slot
+ * is stretched to the content row, so a panel whose content is taller has to
+ * shrink and let .plugin-panel-content scroll instead.
+ *
+ * Without `flex: 0 1 auto` + `min-height: 0` here the panel keeps its full
+ * content height (the base rule sets `flex-shrink: 0`), .plugin-panel-content's
+ * `flex: 1` then resolves against that unbounded height so its `overflow: auto`
+ * never has anything to scroll, and the excess is silently clipped by
+ * `.workflow-modeler-content { overflow: hidden }` — unreachable to the user.
+ */
+.plugin-panel--left,
+.plugin-panel--right {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
 .plugin-panel--left {
   border-right: 1px solid var(--modeler-color-border-light);
   border-left: none;
@@ -7408,22 +7443,40 @@ g[style*="#ef4444"] path {
   border-bottom: none;
   flex: 1;
   min-height: 100px;
-  max-height: 400px;
+  /* Cap in absolute terms, but never take more than half a short viewport. */
+  max-height: min(400px, 50vh);
 }
 
-/* Collapsed state */
-.plugin-panel.collapsed {
-  min-width: 40px;
-  max-width: 40px;
-  cursor: pointer;
+/*
+ * Floating panels.
+ *
+ * Positioned against `.workflow-modeler`, which is the nearest positioned
+ * ancestor in every view mode (fixed overlay, `.restored` window,
+ * `.standalone` container), so a floating panel stays inside a windowed or
+ * embedded modeler.
+ *
+ * `left`, `top` and `max-height` are all supplied inline by
+ * PluginPanelContainer — the height cap depends on how far down the panel
+ * currently sits, which CSS alone cannot express.
+ *
+ * Being out of flow, the panel contributes no size to its slot, so the slot
+ * collapses and the canvas keeps the full width.  These rules follow the
+ * position modifiers above so that, at equal specificity, they win.
+ */
+.plugin-panel--floating {
+  position: absolute;
+  z-index: 1000;
+  flex: none;
+  min-height: 0;
+  border: 1px solid var(--modeler-color-border-light);
+  border-radius: var(--modeler-radius-lg);
+  box-shadow: var(--modeler-shadow-lg);
+  /* Width changes are applied live while dragging the resize handle. */
+  transition: none;
 }
 
-.plugin-panel.collapsed:hover {
-  background: var(--modeler-color-bg-surface);
-}
-
-.plugin-panel.collapsed .plugin-panel-content {
-  display: none;
+.plugin-panel--floating.is-dragging {
+  user-select: none;
 }
 
 /* Resize handle */
@@ -7451,51 +7504,67 @@ g[style*="#ef4444"] path {
   right: 0;
 }
 
-/* Collapse tab button */
-.plugin-panel-collapse-tab {
+/* Panel header — names the panel, and is the drag surface when floating */
+.plugin-panel-header {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 8px;
   background: var(--modeler-color-bg-surface);
-  border: none;
   border-bottom: 1px solid var(--modeler-color-border-light);
-  cursor: pointer;
   color: var(--modeler-color-text-secondary);
   font-size: var(--modeler-font-size-xs);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  width: 100%;
-  text-align: left;
+  flex-shrink: 0;
 }
 
-.plugin-panel-collapse-tab:hover {
+.plugin-panel-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-panel--floating .plugin-panel-header {
+  cursor: grab;
+}
+
+.plugin-panel--floating.is-dragging .plugin-panel-header,
+.plugin-panel--floating.is-dragging .plugin-panel-drag-handle {
+  cursor: grabbing;
+}
+
+/*
+ * Move handle for floating panels.  A real button so the gesture is not
+ * mouse-only: focus it and the arrow keys move the panel (Shift for a
+ * larger step).
+ */
+.plugin-panel-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--modeler-radius-sm);
+  background: transparent;
+  color: var(--modeler-color-text-secondary);
+  cursor: grab;
+}
+
+.plugin-panel-drag-handle:hover {
   background: var(--modeler-color-bg-muted);
   color: var(--modeler-color-text-primary);
 }
 
-.plugin-panel-collapse-tab:focus-visible {
+.plugin-panel-drag-handle:focus-visible {
   outline: 2px solid var(--modeler-color-interactive);
   outline-offset: -2px;
-}
-
-/* Collapsed label — rotated vertically */
-.plugin-panel.collapsed .plugin-panel-collapse-tab {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  border-bottom: none;
-  padding: 12px 8px;
-}
-
-.plugin-panel-collapse-label {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  white-space: nowrap;
-  font-size: var(--modeler-font-size-sm);
 }
 
 /* Panel content area — the plugin owns this element */

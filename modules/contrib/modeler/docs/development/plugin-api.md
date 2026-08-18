@@ -115,8 +115,18 @@ window.WorkflowModeler.unregisterWidget('my_module_toggle');
 ## Panels
 
 Panels are larger content areas rendered alongside the canvas. They can be
-positioned on the left, right, or bottom of the modeler and support resize and
-collapse.
+positioned on the left, right, or bottom of the modeler, are resizable, and
+scroll vertically when their content outgrows the available height.
+
+A panel can also be registered as **floating**, in which case it is detached
+from the layout and the user can drag it around over the canvas. See
+[Floating panels](#floating-panels).
+
+!!! info "Showing and hiding a panel"
+    Panels have no built-in collapse control. Visibility belongs to the
+    plugin: call `registerPanel()` to show the panel and `unregisterPanel()`
+    to hide it again -- typically from a toolbar widget that toggles between
+    the two.
 
 ### Registering a panel
 
@@ -161,10 +171,11 @@ modeler.registerPanel({
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `id` | `string` | *required* | Unique identifier for the panel. |
-| `label` | `string` | *required* | Human-readable label shown in the collapsed tab. |
-| `position` | `'left' \| 'right' \| 'bottom'` | `'right'` | Where to render the panel. `right` places it after the property panel; `left` places it before the canvas; `bottom` places it below the canvas. |
+| `label` | `string` | *required* | Human-readable label shown in the panel header. |
+| `position` | `'left' \| 'right' \| 'bottom'` | `'right'` | Where to render the panel. `right` places it after the property panel; `left` places it before the canvas; `bottom` places it below the canvas. For a floating panel this only seeds the corner it first appears in. |
 | `weight` | `number` | `0` | Ordering weight within the position. Lower values appear first. |
 | `width` | `number` | `320` | Initial width in pixels (min: 200, max: 600). |
+| `floating` | `boolean` | `false` | Detach the panel from the layout so it floats over the canvas and can be dragged by the user. See [Floating panels](#floating-panels). |
 | `render` | `(container, api) => void` | *required* | Called once when the panel mounts. Receives a DOM element to render into and the [public API](#public-api-reference). |
 | `destroy` | `(container) => void` | -- | Optional cleanup callback called before the panel is removed. |
 | `onResize` | `(width, height) => void` | -- | Optional callback fired after the user finishes resizing the panel. |
@@ -173,11 +184,47 @@ modeler.registerPanel({
 
 Each registered panel automatically receives:
 
-- **Collapse/expand toggle** -- a button in the panel header that collapses the
-  panel to a narrow vertical tab with a rotated label.
+- **Header** -- a strip showing the panel label. For a floating panel it is
+  also the drag surface.
 - **Resize handle** -- drag the panel edge to adjust its width.
+- **Vertical scrolling** -- when the content is taller than the space
+  available, the content area scrolls instead of being clipped. Your
+  `render()` container is the scroll container, so you do not need to manage
+  overflow yourself.
 - **Error boundary** -- if the panel's render function throws, only that panel
   shows an error; the rest of the modeler continues working.
+
+### Floating panels
+
+Set `floating: true` to lift a panel out of the layout. A floating panel:
+
+- reserves no space beside the canvas, so the canvas keeps its full width;
+- is drawn above the canvas with a drop shadow;
+- can be moved by dragging its header, or by focusing the move handle in the
+  header and pressing the arrow keys (hold Shift for a larger step);
+- is kept inside the modeler's bounds, including when the window is resized,
+  so it can never be dragged out of reach;
+- remembers where the user put it for the rest of the page session, so hiding
+  the panel with `unregisterPanel()` and showing it again later does not reset
+  its position. A page reload returns it to its default corner.
+
+```javascript
+modeler.registerPanel({
+  id: 'my_module_inspector',
+  label: 'Inspector',
+  position: 'right',
+  floating: true,
+  width: 280,
+  render(container, api) {
+    container.textContent = api.getModelData()?.metadata?.label || '';
+  },
+});
+```
+
+`floating` is a registration-time choice. There is no user-facing control to
+switch a panel between docked and floating, so pick the mode that suits your
+content: floating suits small, occasional inspectors, while docked suits
+panels the user keeps open while working.
 
 ### Removing a panel
 

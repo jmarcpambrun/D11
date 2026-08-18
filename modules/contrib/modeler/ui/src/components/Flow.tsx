@@ -446,10 +446,15 @@ function FlowInner({ settings, drupal }: FlowProps) {
   //   (c) else fall back to the legacy current-step data (e.g. while stepping
   //       through replay), predicted=false.
   // Recomputed when the selection, graph, replay data, or current step changes.
+  //
+  // `nodes` is passed to findReplayStepForElement so that a selected condition
+  // NODE resolves to the successor step that evaluated it (issue #3589108).
+  // Condition nodes are never a step's `id`, so without this they always fell
+  // through to the predicted-token branch and were mislabeled "Predicted".
   const expandedStepData = useMemo<{ data: Record<string, unknown> | null; predicted: boolean }>(() => {
     const selId = selectedNode?.id;
     if (selId) {
-      const ownIdx = findReplayStepForElement(replayData, edges, selId, 'node');
+      const ownIdx = findReplayStepForElement(replayData, edges, selId, 'node', nodes);
       if (ownIdx >= 0) {
         return { data: expandReplayStep(replayData, ownIdx), predicted: false };
       }

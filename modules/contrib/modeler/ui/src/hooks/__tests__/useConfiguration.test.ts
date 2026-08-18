@@ -31,17 +31,22 @@ const mockSetSelectedEdge = jest.fn((edge) => {
   mockSelectedEdge = edge;
 });
 
-jest.mock('../../store/useGraphStore', () => ({
-  useGraphStore: jest.fn((selector) => {
-    const state = {
-      nodes: mockNodes,
-      edges: mockEdges,
-      setNodes: mockSetNodes,
-      setEdges: mockSetEdges,
-    };
-    return selector(state);
-  }),
-}));
+// The hook reads live state via useGraphStore.getState() (issue #3589109),
+// so the mock exposes getState() alongside the selector call signature.
+jest.mock('../../store/useGraphStore', () => {
+  const getState = () => ({
+    nodes: mockNodes,
+    edges: mockEdges,
+    setNodes: mockSetNodes,
+    setEdges: mockSetEdges,
+  });
+  return {
+    useGraphStore: Object.assign(
+      jest.fn((selector) => selector(getState())),
+      { getState },
+    ),
+  };
+});
 
 jest.mock('../../store/useSelectionStore', () => ({
   useSelectionStore: jest.fn((selector) => {
@@ -352,8 +357,15 @@ describe('useConfiguration', () => {
     });
   });
 
-  describe('selected node update on configuration change', () => {
-    it('should update selectedNode when matching node is changed', async () => {
+  describe('selected node is not written by configuration changes', () => {
+    // Regression guard for issue #3589111. onConfigurationChange used to
+    // re-sync the selection store from a render-time snapshot behind a 10ms
+    // setTimeout, which pushed the PRE-update node back into the property
+    // panel. Refreshing the selected node object belongs to useSelectionSync
+    // (see useSelectionSync.test.ts), which reads fresh state in an effect
+    // keyed on the nodes array. This test fails if that duplicate path is
+    // ever reinstated.
+    it('should not write to the selection store when the selected node changes', async () => {
       mockSelectedNode = { id: 'node-1', position: { x: 100, y: 100 }, data: { label: 'Node 1' } };
       const { result } = renderUseConfiguration();
 
@@ -361,12 +373,13 @@ describe('useConfiguration', () => {
         result.current.onConfigurationChange('node-1', { field: 'value' });
       });
 
-      // Wait for the setTimeout
+      // Wait past the window the removed setTimeout used to fire in.
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 20));
       });
 
       expect(mockSetNodes).toHaveBeenCalled();
+      expect(mockSetSelectedNode).not.toHaveBeenCalled();
     });
   });
 

@@ -219,6 +219,115 @@ describe('useReplayStepFilter', () => {
       expect(result.current.filteredReplayData).toHaveLength(1);
     });
 
+    // ---- Promoted condition NODES (issues #3589093 / #3589108) ------------
+    // After promoteConditionEdges() the direct source -> target edge is gone
+    // (replaced by source -> condition -> target) and no edge carries
+    // `data.condition`. FALSE conditions were therefore filtered out of the
+    // step list entirely, which also suppressed the red replay indicator.
+
+    const createConditionNode = (id: string, conditionId: string, plugin: string): Node => ({
+      id,
+      type: 'condition',
+      position: { x: 0, y: 0 },
+      data: { label: `Condition ${id}`, conditionId, plugin, __isConditionNode: true },
+    });
+
+    it('should include "ignore successor" steps that carry a conditionId (promoted condition node)', () => {
+      const nodes = [
+        createNode('node1', 'element'),
+        createConditionNode('cond1', 'cfg-1', 'eca_scalar'),
+        createNode('node2', 'element'),
+      ];
+      // Post-promotion edges: no direct node1 -> node2 edge, no data.condition.
+      const edges = [
+        createEdge('e-in', 'node1', 'cond1'),
+        createEdge('e-out', 'cond1', 'node2'),
+      ];
+
+      const replayData: ReplayStep[] = [
+        createStep('started', { id: 'node1' }),
+        createStep('ignore successor', { id: 'node1', successorId: 'node2', conditionId: 'cfg-1' }),
+      ];
+
+      const { result } = renderHook(() =>
+        useReplayStepFilter({ replayData, nodes, edges })
+      );
+
+      expect(result.current.filteredReplayData).toHaveLength(2);
+      expect(result.current.filteredReplayData[1].type).toBe('ignore successor');
+      expect(result.current.filteredReplayData[1].conditionId).toBe('cfg-1');
+    });
+
+    it('should include "ignore successor" steps with a conditionId even without any edges', () => {
+      const nodes = [createNode('node1', 'element'), createNode('node2', 'element')];
+
+      const replayData: ReplayStep[] = [
+        createStep('ignore successor', { id: 'node1', successorId: 'node2', conditionId: 'cfg-1' }),
+      ];
+
+      const { result } = renderHook(() =>
+        useReplayStepFilter({ replayData, nodes, edges: [] })
+      );
+
+      expect(result.current.filteredReplayData).toHaveLength(1);
+    });
+
+    it('should still exclude "ignore successor" steps with no conditionId and a non-gateway successor', () => {
+      const nodes = [createNode('node1', 'element'), createNode('node2', 'element')];
+      const edges = [createEdge('e1', 'node1', 'node2')]; // plain edge, no condition
+
+      const replayData: ReplayStep[] = [
+        createStep('ignore successor', { id: 'node1', successorId: 'node2' }),
+      ];
+
+      const { result } = renderHook(() =>
+        useReplayStepFilter({ replayData, nodes, edges })
+      );
+
+      expect(result.current.filteredReplayData).toHaveLength(0);
+    });
+
+    it('should still include gateway "ignore successor" steps with no conditionId', () => {
+      const nodes = [createNode('node1', 'element'), createNode('gateway1', 'gateway')];
+
+      const replayData: ReplayStep[] = [
+        createStep('ignore successor', { id: 'node1', successorId: 'gateway1' }),
+      ];
+
+      const { result } = renderHook(() =>
+        useReplayStepFilter({ replayData, nodes, edges: [] })
+      );
+
+      expect(result.current.filteredReplayData).toHaveLength(1);
+    });
+
+    it('should keep both TRUE and FALSE condition steps in the same replay', () => {
+      const nodes = [
+        createNode('node1', 'element'),
+        createConditionNode('condTrue', 'cfg-true', 'eca_scalar'),
+        createConditionNode('condFalse', 'cfg-false', 'eca_scalar'),
+        createNode('node2', 'element'),
+        createNode('node3', 'element'),
+      ];
+
+      const replayData: ReplayStep[] = [
+        createStep('started', { id: 'node1' }),
+        createStep('add successor', { id: 'node1', successorId: 'node2', conditionId: 'cfg-true' }),
+        createStep('ignore successor', { id: 'node1', successorId: 'node3', conditionId: 'cfg-false' }),
+      ];
+
+      const { result } = renderHook(() =>
+        useReplayStepFilter({ replayData, nodes, edges: [] })
+      );
+
+      expect(result.current.filteredReplayData).toHaveLength(3);
+      expect(result.current.filteredReplayData.map(s => s.type)).toEqual([
+        'started',
+        'add successor',
+        'ignore successor',
+      ]);
+    });
+
     it('should handle edge direction from target to source', () => {
       const nodes = [
         createNode('node1', 'element'),

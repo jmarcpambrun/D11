@@ -58,10 +58,12 @@ import type {
 } from '../types/pluginApi';
 import { resolveNodeType } from '../utils/componentUtils';
 import { generateNodeId, generateEdgeId } from '../utils/clipboardUtils';
-import { LAYOUT, NODE_DIMENSIONS } from '../constants/dimensions';
-import { findFreePosition } from '../utils/positionUtils';
+import { NODE_DIMENSIONS } from '../constants/dimensions';
 import {
+  applyFlowShifts,
   buildConditionInsertion,
+  computeNewEventPosition,
+  computeSuccessorPosition,
   isConditionNode,
   placeChainOnEdge,
 } from '../utils/incrementalLayout';
@@ -78,6 +80,26 @@ function deepClone<T>(value: T): T {
   } catch {
     return JSON.parse(JSON.stringify(value));
   }
+}
+
+/**
+ * Collision-avoidance footprint for a node of the given resolved type.
+ *
+ * Gateways render as compact cards, so feeding the standard card height
+ * into the placement primitives would reserve more vertical room than a
+ * gateway actually occupies.  Every other type uses the uniform card box.
+ */
+function nodeFootprint(nodeType: string): { width: number; height: number } {
+  if (nodeType === 'gateway') {
+    return { width: NODE_DIMENSIONS.CARD_WIDTH, height: NODE_DIMENSIONS.GATEWAY_HEIGHT };
+  }
+  if (nodeType === 'start') {
+    return {
+      width: NODE_DIMENSIONS.START_NODE_WIDTH,
+      height: NODE_DIMENSIONS.START_NODE_HEIGHT,
+    };
+  }
+  return { width: NODE_DIMENSIONS.CARD_WIDTH, height: NODE_DIMENSIONS.CARD_HEIGHT };
 }
 
 /**
@@ -493,33 +515,44 @@ export function createPluginApi(): ModelerPluginApi {
     addNode(descriptor: AddNodeDescriptor): string | null {
       if (currentReadOnly) return null;
 
+      const nodeType = resolveNodeType(descriptor.componentType);
+      const { nodes, edges } = useGraphStore.getState();
+
+      // Resolve placement BEFORE any mutation so that a rejected descriptor
+      // (unknown sourceNodeId) leaves no history entry behind — the same
+      // validate-then-mutate ordering addEdge() uses for unknown endpoints.
+      let position = descriptor.position;
+      let shiftNodeIds: Set<string> | null = null;
+      let shiftAmount = 0;
+
+      if (!position) {
+        if (descriptor.sourceNodeId !== undefined) {
+          // Successor placement. Reject an unknown parent rather than lean on
+          // computeSuccessorPosition's silent fallback, which would strand the
+          // node at the legacy default corner with no hint anything went wrong.
+          if (!nodes.some((n) => n.id === descriptor.sourceNodeId)) return null;
+
+          // No siblingIndex / totalSiblings: the plugin API adds one node per
+          // call and has no fan-out context, exactly like quick-add's
+          // addSuccessorNode. Passing neither keeps both paths byte-identical.
+          const placement = computeSuccessorPosition({
+            nodes,
+            edges,
+            sourceNodeId: descriptor.sourceNodeId,
+          });
+          position = placement.position;
+          shiftNodeIds = placement.shiftNodeIds;
+          shiftAmount = placement.shiftAmount;
+        } else {
+          // Fresh event flow, to the right of everything already on canvas.
+          position = computeNewEventPosition({ nodes, ...nodeFootprint(nodeType) });
+        }
+      }
+
       beforeMutation();
 
-      const nodeType = resolveNodeType(descriptor.componentType);
       const label = descriptor.label || descriptor.plugin.split('.').pop() || 'New Node';
       const newNodeId = generateNodeId(label, nodeType);
-
-      // Determine position: use provided or find an automatic one.
-      let position = descriptor.position;
-      if (!position) {
-        const nodes = useGraphStore.getState().nodes;
-        let candidateX: number = LAYOUT.DEFAULT_POSITION_X;
-        let candidateY: number = LAYOUT.DEFAULT_POSITION_Y;
-
-        if (nodes.length > 0) {
-          const maxX = Math.max(...nodes.map((n) => n.position.x));
-          const minY = Math.min(...nodes.map((n) => n.position.y));
-          candidateX = maxX + LAYOUT.NODE_SPACING_X;
-          candidateY = minY;
-        }
-
-        position = findFreePosition(
-          { x: candidateX, y: candidateY },
-          nodes,
-          NODE_DIMENSIONS.DEFAULT_WIDTH,
-          NODE_DIMENSIONS.DEFAULT_HEIGHT,
-        );
-      }
 
       const newNode: Node = {
         id: newNodeId,
@@ -534,6 +567,18 @@ export function createPluginApi(): ModelerPluginApi {
           documentationUrl: descriptor.documentationUrl,
         },
       };
+
+      // Make horizontal room by pushing neighboring flows aside, if the
+      // placement primitive asked for it.  Unlike quick-add we do NOT
+      // deselect: quick-add deselects because it immediately selects the
+      // node the user just asked for, whereas a plugin adding a node in the
+      // background must not silently clobber the user's current selection.
+      if (shiftNodeIds && shiftAmount > 0) {
+        const ids = shiftNodeIds;
+        useGraphStore
+          .getState()
+          .setNodes((prev) => applyFlowShifts(prev, ids, shiftAmount, { deselectAll: false }));
+      }
 
       useGraphStore.getState().addNode(newNode);
       afterMutation();

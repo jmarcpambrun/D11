@@ -170,6 +170,69 @@ describe('useReplayIndicators', () => {
       expect(result.current.replayIndicators).toEqual([]);
     });
 
+    // ---- ECA condition CONFIG id is the primary match (issue #3589108) ----
+    // `step.conditionId` is ECA's condition config id, round-tripped by the
+    // backend as `edge.conditionId` and copied onto the node as
+    // `data.conditionId`. It must win over the legacy `data.plugin` match.
+    describe('matching by the ECA condition config id', () => {
+      beforeEach(() => {
+        mockNodes = [
+          { id: 'node-1', position: { x: 100, y: 100 }, width: 200, height: 100 },
+          {
+            id: 'cond-wrong',
+            type: 'condition',
+            position: { x: 0, y: 0 },
+            width: 200,
+            height: 100,
+            // Its PLUGIN id collides with the step's conditionId — must lose.
+            data: { plugin: 'eca-config-uuid', conditionId: 'other-cfg', __isConditionNode: true },
+          },
+          {
+            id: 'cond-right',
+            type: 'condition',
+            position: { x: 250, y: 100 },
+            width: 200,
+            height: 100,
+            data: { plugin: 'eca_scalar', conditionId: 'eca-config-uuid', __isConditionNode: true },
+          },
+          { id: 'node-2', position: { x: 400, y: 100 }, width: 200, height: 100 },
+        ];
+      });
+
+      it('should place a GREEN indicator on the config-id match for "add successor"', () => {
+        const replayData = [
+          { type: 'add successor', id: 'node-1', conditionId: 'eca-config-uuid', successorId: 'node-2' },
+        ];
+        const { result } = renderUseReplayIndicators({
+          isReplayMode: true,
+          currentReplayStep: 0,
+          replayData,
+        });
+
+        expect(result.current.replayIndicators.length).toBe(1);
+        expect(result.current.replayIndicators[0].color).toBe('var(--modeler-color-success)');
+        // cond-right: x=250 width=200 -> 350; y=100 -> 80. (cond-wrong is at 0/0.)
+        expect(result.current.replayIndicators[0].x).toBe(350);
+        expect(result.current.replayIndicators[0].y).toBe(80);
+      });
+
+      it('should place a RED indicator on the config-id match for "ignore successor"', () => {
+        const replayData = [
+          { type: 'ignore successor', id: 'node-1', conditionId: 'eca-config-uuid', successorId: 'node-2' },
+        ];
+        const { result } = renderUseReplayIndicators({
+          isReplayMode: true,
+          currentReplayStep: 0,
+          replayData,
+        });
+
+        expect(result.current.replayIndicators.length).toBe(1);
+        expect(result.current.replayIndicators[0].color).toBe('var(--modeler-color-danger-soft)');
+        expect(result.current.replayIndicators[0].x).toBe(350);
+        expect(result.current.replayIndicators[0].y).toBe(80);
+      });
+    });
+
     it('should not create indicator if conditionId matches no node', () => {
       // CHANGED (node model): condition node exists but neither its plugin
       // nor its conditionId matches the step.

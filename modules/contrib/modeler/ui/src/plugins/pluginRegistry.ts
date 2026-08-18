@@ -48,6 +48,7 @@ const DEFAULT_POSITION: PanelPosition = 'right';
 const DEFAULT_WIDGET_POSITION: ToolbarWidgetPosition = 'right';
 const DEFAULT_WEIGHT = 0;
 const DEFAULT_WIDTH = PANEL_DIMENSIONS.PLUGIN_PANEL.DEFAULT_WIDTH;
+const DEFAULT_FLOATING = false;
 
 // ── Public API ────────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export function registerPanel(descriptor: PluginPanelDescriptor): void {
     position: descriptor.position ?? DEFAULT_POSITION,
     weight: descriptor.weight ?? DEFAULT_WEIGHT,
     width: descriptor.width ?? DEFAULT_WIDTH,
+    floating: descriptor.floating ?? DEFAULT_FLOATING,
   };
 
   panels.set(registered.id, registered);

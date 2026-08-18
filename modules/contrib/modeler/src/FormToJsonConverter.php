@@ -261,17 +261,30 @@ class FormToJsonConverter {
    *
    * The selector ":input[name=\"KEY\"]" (and the "KEY[subkey]" array-name form)
    * is simplified to the bare field key "KEY". Each Drupal condition object is
-   * mapped to a single normalized condition supporting the common keys
-   * "value", "checked" and "empty". Multiple selector entries within one state
-   * type combine with logical AND.
+   * mapped to a normalized condition supporting the common keys "value",
+   * "checked" and "empty".
+   *
+   * Each state type is normalized to a list of condition GROUPS. Groups are
+   * OR'd together (any group matching satisfies the state) and conditions
+   * within a group are AND'd (all must match). This mirrors Drupal semantics:
+   *   - Multiple selectors within one state type combine with logical AND
+   *     (one group carrying all their conditions).
+   *   - A selector mapped to a numerically-indexed list of condition arrays
+   *     (the "OR form") means "match ANY", producing one OR alternative per
+   *     entry.
+   *   - A "value" that is itself an array of scalars means "equals any listed
+   *     value", producing one OR alternative per value.
+   * When AND and OR forms mix within one state type, the alternatives combine
+   * as the Cartesian product: A AND (B1 OR B2) = (A AND B1) OR (A AND B2).
    *
    * @param array $element
    *   The Drupal form element.
    *
    * @return array|null
    *   A normalized states structure keyed by state type (visible, invisible,
-   *   required, optional), each an array of condition objects, or NULL when
-   *   the element declares no usable #states.
+   *   required, optional). Each value is a list of OR groups, and each group
+   *   is a list of AND conditions. Returns NULL when the element declares no
+   *   usable #states.
    */
   protected function extractStates(array $element): ?array {
     if (empty($element['#states']) || !is_array($element['#states'])) {
@@ -285,7 +298,10 @@ class FormToJsonConverter {
       if (!in_array($state_type, $supported, TRUE) || !is_array($selectors)) {
         continue;
       }
-      $conditions = [];
+      // Each selector contributes a list of OR alternatives (one or more
+      // normalized conditions). Selectors AND together, so we build the
+      // Cartesian product of their alternatives into a list of OR groups.
+      $groups = [[]];
       foreach ($selectors as $selector => $condition) {
         if (!is_string($selector) || !is_array($condition)) {
           continue;
@@ -294,24 +310,84 @@ class FormToJsonConverter {
         if ($field_key === NULL) {
           continue;
         }
-        $normalized = ['field' => $field_key];
-        if (array_key_exists('value', $condition)) {
-          $normalized['value'] = $condition['value'];
+        $alternatives = $this->normalizeSelectorConditions($field_key, $condition);
+        if ($alternatives === []) {
+          continue;
         }
-        if (array_key_exists('checked', $condition)) {
-          $normalized['checked'] = (bool) $condition['checked'];
+        $expanded = [];
+        foreach ($groups as $group) {
+          foreach ($alternatives as $alternative) {
+            $expanded[] = array_merge($group, [$alternative]);
+          }
         }
-        if (array_key_exists('empty', $condition)) {
-          $normalized['empty'] = (bool) $condition['empty'];
-        }
-        $conditions[] = $normalized;
+        $groups = $expanded;
       }
-      if (!empty($conditions)) {
-        $states[$state_type] = $conditions;
+      // Drop the seed empty group if no usable conditions were collected.
+      if ($groups === [[]]) {
+        continue;
       }
+      $states[$state_type] = $groups;
     }
 
     return $states === [] ? NULL : $states;
+  }
+
+  /**
+   * Normalize a single selector's condition into a list of OR alternatives.
+   *
+   * Handles the simple associative form (`['value' => 'x']`), the Drupal
+   * OR form (a numerically-indexed list of condition arrays), and the
+   * array-value form (`['value' => ['a', 'b']]`, meaning "equals any").
+   *
+   * @param string $field_key
+   *   The simplified field key the condition observes.
+   * @param array $condition
+   *   The raw Drupal condition array for one selector.
+   *
+   * @return array
+   *   A list of normalized condition arrays representing OR alternatives.
+   *   Empty when the condition carries no supported keys.
+   */
+  protected function normalizeSelectorConditions(string $field_key, array $condition): array {
+    // OR form: a numerically-indexed list of condition arrays under one
+    // selector. Each entry becomes its own OR alternative.
+    if (array_is_list($condition) && $condition !== []) {
+      $alternatives = [];
+      foreach ($condition as $entry) {
+        if (is_array($entry)) {
+          $alternatives = array_merge($alternatives, $this->normalizeSelectorConditions($field_key, $entry));
+        }
+      }
+      return $alternatives;
+    }
+
+    // Array-value form: "value" is a list of scalars ("equals any"). Expand
+    // to one OR alternative per value.
+    if (array_key_exists('value', $condition) && is_array($condition['value'])) {
+      $alternatives = [];
+      foreach ($condition['value'] as $value) {
+        $alternatives[] = ['field' => $field_key, 'value' => $value];
+      }
+      return $alternatives;
+    }
+
+    // Simple associative form: a single condition supporting value / checked /
+    // empty.
+    $normalized = ['field' => $field_key];
+    $has_key = FALSE;
+    if (array_key_exists('value', $condition)) {
+      $normalized['value'] = $condition['value'];
+      $has_key = TRUE;
+    }
+    if (array_key_exists('checked', $condition)) {
+      $normalized['checked'] = (bool) $condition['checked'];
+      $has_key = TRUE;
+    }
+    if (array_key_exists('empty', $condition)) {
+      $normalized['empty'] = (bool) $condition['empty'];
+      $has_key = TRUE;
+    }
+    return $has_key ? [$normalized] : [];
   }
 
   /**

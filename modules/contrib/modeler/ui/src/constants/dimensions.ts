@@ -26,7 +26,17 @@ export const PANEL_DIMENSIONS = {
     DEFAULT_WIDTH: 320,
     MIN_WIDTH: 200,
     MAX_WIDTH: 600,
-    COLLAPSED_WIDTH: 40,
+    /**
+     * Gap (px) kept between a floating panel and the edge of the modeler.
+     * Doubles as the clamp margin, so a floating panel can never be dragged
+     * fully out of reach, and as the bottom clearance in the inline
+     * `max-height` that PluginPanelContainer applies to a floating panel.
+     */
+    FLOATING_MARGIN: 16,
+    /** Keyboard nudge step (px) for the floating panel move handle. */
+    FLOATING_NUDGE_STEP: 10,
+    /** Keyboard nudge step (px) when Shift is held. */
+    FLOATING_NUDGE_STEP_LARGE: 50,
   },
 } as const;
 

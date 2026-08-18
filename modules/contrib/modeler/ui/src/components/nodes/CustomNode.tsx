@@ -1,12 +1,15 @@
 import React, { Profiler, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { FiActivity } from 'react-icons/fi';
 import classNames from 'classnames';
+import { NODE_TYPE_ICONS } from '../../utils/nodeIcons';
 import { getComponentLabel } from '../../utils/componentUtils';
 import { t } from '../../utils/translation';
 import NodeWrapper from './NodeWrapper';
 import { onRenderCallback } from '../../utils/profiling';
 import type { BaseNodeData } from '../../types/settings';
+
+/** Shared canvas icon — the replay step list resolves the same one. */
+const ElementIcon = NODE_TYPE_ICONS.element;
 
 const CustomNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
   // Explanatory tooltip when the source handle is disabled (issue #3589093).
@@ -24,7 +27,7 @@ const CustomNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
       />
 
       <div className="node-header">
-        <FiActivity className="node-icon" />
+        <ElementIcon className="node-icon" />
         <span className="node-type">{getComponentLabel('element')}</span>
       </div>
 

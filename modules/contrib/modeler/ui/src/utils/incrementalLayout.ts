@@ -7,11 +7,12 @@
  *
  * Both code paths use these primitives:
  *
- * - **Quick-add / drag-to-connect / plugin API addNode/addEdge**: place one
- *   new successor at a time by calling {@link placeSuccessor}.
+ * - **Quick-add / drag-to-connect / plugin API addNode**: place one new
+ *   node at a time by calling {@link computeSuccessorPosition} (successor
+ *   of a named parent) or {@link computeNewEventPosition} (fresh flow).
  * - **Auto-layout (model load + toolbar button)**: simulate the incremental
  *   build by walking the graph from each start node and calling
- *   {@link placeSuccessor} once per edge in topological order.
+ *   {@link computeSuccessorPosition} once per edge in topological order.
  *
  * Because both paths share the same primitives, the auto-layout output is
  * by definition equivalent to "what the user would have seen if they had
@@ -113,8 +114,12 @@ function gatewayChildX(
  * Place one new successor below its parent, optionally shifting downstream
  * nodes to make vertical room and shifting neighboring flows to make
  * horizontal room.  This is the primitive that drives quick-add,
- * drag-to-connect, the plugin API's addNode/addEdge, and (via
- * {@link simulateIncrementalBuild}) auto-layout.
+ * drag-to-connect, the plugin API's `addNode` when the caller names a
+ * `sourceNodeId`, and (via {@link simulateIncrementalBuild}) auto-layout.
+ *
+ * The plugin API's `addEdge` is deliberately NOT a caller: it only wires
+ * two existing nodes (routing parallel edges where needed) and never
+ * repositions either endpoint.
  *
  * The new successor must already exist in `options.nodes` with whatever
  * temporary position it was created at; this function returns an updated

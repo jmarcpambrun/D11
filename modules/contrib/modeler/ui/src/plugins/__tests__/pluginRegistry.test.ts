@@ -76,6 +76,7 @@ describe('registerPanel', () => {
       position: 'right',
       weight: 0,
       width: 320,
+      floating: false,
     });
     expect(typeof panels[0].render).toBe('function');
   });
@@ -89,6 +90,12 @@ describe('registerPanel', () => {
       weight: 5,
       width: 400,
     });
+  });
+
+  it('opts a panel into floating mode', () => {
+    registerPanel(makePanel({ id: 'p1', floating: true }));
+
+    expect(getRegisteredPanels()[0].floating).toBe(true);
   });
 
   it('includes optional destroy and onResize callbacks', () => {

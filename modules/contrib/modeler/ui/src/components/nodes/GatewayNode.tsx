@@ -1,7 +1,8 @@
 import React, { Profiler, memo, useCallback } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { FiGitBranch, FiTrash2, FiFileText } from 'react-icons/fi';
+import { FiTrash2, FiFileText } from 'react-icons/fi';
 import classNames from 'classnames';
+import { NODE_TYPE_ICONS } from '../../utils/nodeIcons';
 import { getComponentLabel } from '../../utils/componentUtils';
 import { t } from '../../utils/translation';
 import NodeWrapper from './NodeWrapper';
@@ -13,6 +14,9 @@ import type { BaseNodeData } from '../../types/settings';
  * Compact gateway card — annotation + delete live in the header
  * (same pattern as condition edge cards) instead of a separate footer.
  */
+/** Shared canvas icon — the replay step list resolves the same one. */
+const GatewayIcon = NODE_TYPE_ICONS.gateway;
+
 const GatewayNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -40,7 +44,7 @@ const GatewayNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
       />
 
       <div className="node-header">
-        <FiGitBranch className="node-icon" />
+        <GatewayIcon className="node-icon" />
         <span className="node-type">{getComponentLabel('gateway')}</span>
         <div className="node-header-actions">
           {hasAnnotation && (

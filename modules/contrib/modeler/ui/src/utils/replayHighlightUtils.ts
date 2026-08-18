@@ -8,7 +8,7 @@
  */
 
 import { Node, Edge } from 'reactflow';
-import { ReplayStep, isNodeExecutionStep, isSuccessorStep, isAccessDeniedStep, isExceptionStep, isConditionStep } from './replayStepUtils';
+import { ReplayStep, isNodeExecutionStep, isSuccessorStep, isAccessDeniedStep, isExceptionStep, isConditionStep, findConditionNodeForStep } from './replayStepUtils';
 
 // ============ Clear Highlights ============
 
@@ -108,45 +108,6 @@ export function applyEdgeHighlight(
 // ============ Composite Operations ============
 
 /**
- * Find the condition NODE that a condition step refers to.
- *
- * Conditions are first-class nodes now (issue #3589093), so a condition
- * step highlights the condition node rather than a (nonexistent) condition
- * edge.  The replay step's `conditionId` historically matched the legacy
- * `edge.data.condition` value, which carried the condition *plugin* id (see
- * P2 `modelUtils.promoteConditionsToNodes`, where `node.data.plugin` is set
- * from `edge.condition`).  We therefore match `step.conditionId` against the
- * condition node's `data.plugin` FIRST, then fall back to `data.conditionId`
- * (the backend round-trip id).
- *
- * Returns the matching condition node id, or null when none matches.
- */
-function findConditionNodeForStep(
-  nodes: Node[],
-  step: ReplayStep
-): string | null {
-  if (!isConditionStep(step)) return null;
-
-  const isConditionNode = (n: Node): boolean =>
-    n.type === 'condition' || n.data?.__isConditionNode === true;
-
-  // Priority 1: match the step's conditionId against the node's plugin id
-  // (this is what the legacy edge-based matcher used).
-  const byPlugin = nodes.find(
-    n => isConditionNode(n) && n.data?.plugin === step.conditionId
-  );
-  if (byPlugin) return byPlugin.id;
-
-  // Priority 2: match against the node's backend round-trip conditionId.
-  const byConditionId = nodes.find(
-    n => isConditionNode(n) && n.data?.conditionId === step.conditionId
-  );
-  if (byConditionId) return byConditionId.id;
-
-  return null;
-}
-
-/**
  * Apply full replay step highlighting to nodes.
  * Clears existing highlights and applies new ones based on the step.
  */
@@ -158,11 +119,12 @@ export function highlightNodesForStep(
 
   // For condition steps, highlight the condition NODE (issue #3589093).
   // Conditions used to be edges; they are nodes now, so this is where the
-  // condition highlight lives.  Resolve via plugin id, then conditionId.
+  // condition highlight lives.  The shared findConditionNodeForStep() helper
+  // resolves via the ECA condition config id, then the legacy plugin id.
   if (isConditionStep(step)) {
-    const conditionNodeId = findConditionNodeForStep(cleared, step);
-    if (!conditionNodeId) return cleared;
-    return applyNodeHighlight(cleared, conditionNodeId, false);
+    const conditionNode = findConditionNodeForStep(cleared, step);
+    if (!conditionNode) return cleared;
+    return applyNodeHighlight(cleared, conditionNode.id, false);
   }
 
   if (!step.id) return cleared;

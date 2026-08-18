@@ -567,7 +567,7 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStepClick(index); } }}
                   >
                     <div className="step-indicator">
-                      {getStepIcon(step)}
+                      {getStepIcon(step, nodes)}
                     </div>
                     <div className="step-label">{getStepLabel(step, index, nodes, edges)}</div>
                   </div>

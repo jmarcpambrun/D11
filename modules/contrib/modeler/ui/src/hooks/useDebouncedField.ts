@@ -52,8 +52,30 @@ export function useDebouncedField({
   const disabledRef = useRef(disabled);
   disabledRef.current = disabled;
 
-  // Sync local value when initial value changes (e.g., when selecting different node)
+  // Sync the local value when the source value changes.
+  //
+  // This effect cannot simply be removed, even though the consumer usually
+  // resets the field itself when the selection changes. Undo, redo and model
+  // reload replace the node behind an unchanged selection, and the consumer's
+  // reset effects are keyed on the selected element's id, which those paths do
+  // not change - so this is the only thing that can refresh the input for
+  // them. See useDebouncedFieldUndoSync.test.tsx, which fails if this is
+  // deleted.
+  //
+  // The sync is skipped while a debounce is pending, because in that window
+  // the user has keystrokes that are not saved yet, and the local value must
+  // win over the incoming one. Without the guard, any store write that
+  // changes the source value and then restores it discards in-flight typing:
+  // the round trip is two dependency changes, and the second setValue
+  // overwrites whatever was typed since (issue #3589113).
+  //
+  // The guard covers a window only; it never sticks. A pending debounce always
+  // ends by writing the local value to the source, so the two converge and
+  // later changes sync normally.
   useEffect(() => {
+    if (debounceTimer.current !== null) {
+      return;
+    }
     setValue(initialValue);
   }, [initialValue]);
 

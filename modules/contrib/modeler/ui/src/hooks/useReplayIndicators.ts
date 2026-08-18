@@ -9,7 +9,12 @@
 import { useState, useEffect } from 'react';
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
 import { NODE_DIMENSIONS } from '../constants/dimensions';
-import { ReplayStep, isConditionStep, isAddSuccessorStep } from '../utils/replayStepUtils';
+import {
+  ReplayStep,
+  isConditionStep,
+  isAddSuccessorStep,
+  findConditionNodeForStep,
+} from '../utils/replayStepUtils';
 
 interface ReplayIndicator {
   id: string;
@@ -51,22 +56,10 @@ export function useReplayIndicators({
     //
     // Conditions are first-class NODES now (issue #3589093), so the
     // true/false result indicator attaches to the condition NODE's position
-    // rather than to a (nonexistent) condition edge.  The step's conditionId
-    // historically matched the legacy edge.data.condition value, which carried
-    // the condition *plugin* id (see P2 modelUtils, where node.data.plugin is
-    // set from edge.condition), so we match plugin id first, then the backend
-    // round-trip conditionId.
+    // rather than to a (nonexistent) condition edge.  Resolution rules live in
+    // the shared findConditionNodeForStep() helper.
     if (isConditionStep(currentStep)) {
-      const conditionId = currentStep.conditionId;
-
-      const isConditionNode = (n: Node): boolean =>
-        n.type === 'condition' || n.data?.__isConditionNode === true;
-
-      // Primary: match conditionId against the condition node's plugin id,
-      // then against its backend round-trip conditionId.
-      const conditionNode =
-        nodes.find(n => isConditionNode(n) && n.data?.plugin === conditionId) ??
-        nodes.find(n => isConditionNode(n) && n.data?.conditionId === conditionId);
+      const conditionNode = findConditionNodeForStep(nodes, currentStep);
 
       if (conditionNode) {
         // Center the indicator above the condition node.  Nodes carry no

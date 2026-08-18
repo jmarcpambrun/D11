@@ -2,19 +2,111 @@
  * PluginPanelContainer - Renders external plugin panels registered by
  * other Drupal modules.
  *
- * Each registered panel gets a resizable container with a collapse tab,
- * wrapped in a PanelErrorBoundary so plugin crashes cannot tear down the
- * modeler.  The panel's `render()` callback receives a plain DOM element
- * and the public API — it owns everything inside that element.
+ * Each registered panel gets a resizable container with a header showing the
+ * panel label, wrapped in a PanelErrorBoundary so plugin crashes cannot tear
+ * down the modeler.  The panel's `render()` callback receives a plain DOM
+ * element and the public API — it owns everything inside that element.
+ *
+ * Panels have no collapse control.  Visibility is owned by the plugin, which
+ * shows and hides its panel with `registerPanel()` / `unregisterPanel()` —
+ * usually from a toolbar widget.
+ *
+ * Panels registered with `floating: true` are lifted out of their slot and
+ * drawn over the canvas.  The user moves them by dragging the header, or by
+ * focusing the move handle and pressing the arrow keys.  They are kept inside
+ * the modeler, both by clamping every position they are given and by capping
+ * their height to the room left below them.
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import { FiMove } from 'react-icons/fi';
 import PanelErrorBoundary from './PanelErrorBoundary';
 import { usePanelResize } from '../hooks/usePanelResize';
+import {
+  useFloatingPanelDrag,
+  clampFloatingPosition,
+  getFloatingBounds,
+} from '../hooks/useFloatingPanelDrag';
+import type { FloatingPosition } from '../hooks/useFloatingPanelDrag';
 import { PANEL_DIMENSIONS } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import type { RegisteredPanel, ModelerPluginApi, PanelPosition } from '../types/pluginApi';
+
+const FLOATING_MARGIN = PANEL_DIMENSIONS.PLUGIN_PANEL.FLOATING_MARGIN;
+
+/**
+ * Last known position of each floating panel, keyed by panel ID.
+ *
+ * The documented way for a plugin to hide a panel is to unregister it, which
+ * unmounts this component.  Without a store outside the component tree, every
+ * hide/show cycle would throw the user's chosen position away.  This keeps it
+ * for the lifetime of the page — it is deliberately not persisted, so a page
+ * reload returns every panel to its default corner.
+ */
+const floatingPositions = new Map<string, FloatingPosition>();
+
+/** Forget all remembered floating panel positions (also used by tests). */
+export function resetFloatingPanelPositions(): void {
+  floatingPositions.clear();
+}
+
+/**
+ * Vertical origin for a floating panel's default placement.
+ *
+ * Floating panels are positioned against `.workflow-modeler`, which also
+ * holds the toolbar — and they outrank it on z-index.  Anchoring at the bare
+ * top margin would therefore drop every newly shown panel straight on top of
+ * the toolbar controls.
+ *
+ * The panel's slot stays in normal flow even when all its panels float, and
+ * it is measured against the same box, so its `offsetTop` is exactly the top
+ * of the region the plugin asked for: below the toolbar for a `left`/`right`
+ * panel, down at the foot of the modeler for a `bottom` one.  Clamping then
+ * pulls a bottom panel fully back into view.
+ *
+ * This only seeds the default. Dragging is still clamped to the whole
+ * modeler, so the user remains free to park a panel over the toolbar.
+ */
+function slotOffsetTop(el: HTMLElement | null): number {
+  return el?.parentElement?.offsetTop ?? 0;
+}
+
+/**
+ * Where a floating panel first appears.
+ *
+ * The horizontal anchor is derived from the registered `position`, so a
+ * plugin still has a say in where its panel shows up.  Vertically the panel
+ * is anchored to the top of its slot: a panel's height only becomes known
+ * once the plugin's `render()` has filled it, which happens in a passive
+ * effect *after* this placement runs, so any height-dependent maths here
+ * would be measuring an empty panel.  Width, by contrast, is set by us and
+ * is exact.
+ */
+function defaultFloatingPosition(
+  el: HTMLElement | null,
+  position: PanelPosition,
+): FloatingPosition {
+  const bounds = getFloatingBounds(el);
+  const width = el?.offsetWidth ?? 0;
+
+  let x: number;
+  switch (position) {
+    case 'left':
+      x = FLOATING_MARGIN;
+      break;
+    case 'bottom':
+      x = (bounds.width - width) / 2;
+      break;
+    case 'right':
+    default:
+      x = bounds.width - width - FLOATING_MARGIN;
+      break;
+  }
+
+  const y = slotOffsetTop(el) + FLOATING_MARGIN;
+
+  return clampFloatingPosition(el, { x, y }, FLOATING_MARGIN);
+}
 
 interface PluginPanelProps {
   panel: RegisteredPanel;
@@ -22,23 +114,49 @@ interface PluginPanelProps {
 }
 
 /**
- * Renders a single plugin panel.  Handles mount/unmount lifecycle,
- * resize, and collapse/expand.
+ * Renders a single plugin panel.  Handles mount/unmount lifecycle, resize
+ * and — for floating panels — moving.
  */
 function PluginPanel({ panel, api }: PluginPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [panelWidth, setPanelWidth] = useState(panel.width);
   const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [floatingPosition, setFloatingPosition] = useState<FloatingPosition>(
+    () => floatingPositions.get(panel.id) ?? { x: FLOATING_MARGIN, y: FLOATING_MARGIN },
+  );
+
+  const isFloating = panel.floating === true;
+
+  // A floating panel is anchored by its top-left corner, so the right edge is
+  // always the one that grows it.  A docked panel grows away from its slot.
+  const resizeEdge: 'left' | 'right' =
+    isFloating || panel.position === 'left' ? 'right' : 'left';
 
   const { startResize } = usePanelResize({
     panelWidth,
     setPanelWidth,
     setPanelResizing: setIsResizing,
-    direction: panel.position === 'left' ? 'right' : 'left',
+    direction: resizeEdge,
     minWidth: PANEL_DIMENSIONS.PLUGIN_PANEL.MIN_WIDTH,
     maxWidth: PANEL_DIMENSIONS.PLUGIN_PANEL.MAX_WIDTH,
+  });
+
+  /** Record the position so it survives an unregister/re-register cycle. */
+  const commitFloatingPosition = useCallback((position: FloatingPosition) => {
+    floatingPositions.set(panel.id, position);
+    setFloatingPosition(position);
+  }, [panel.id]);
+
+  const { startDrag, nudge } = useFloatingPanelDrag({
+    position: floatingPosition,
+    setPosition: commitFloatingPosition,
+    setDragging: setIsDragging,
+    elementRef: panelRef,
+    margin: FLOATING_MARGIN,
+    enabled: isFloating,
   });
 
   // Mount: call render() once; Unmount: call destroy()
@@ -68,6 +186,33 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel.id]);
 
+  // Place a floating panel once it has been measured.  Runs before paint, so
+  // the provisional top-left position used for the first render is never
+  // visible.  A remembered position is re-clamped rather than replaced.
+  useLayoutEffect(() => {
+    if (!isFloating) return;
+    const remembered = floatingPositions.get(panel.id);
+    commitFloatingPosition(
+      remembered
+        ? clampFloatingPosition(panelRef.current, remembered, FLOATING_MARGIN)
+        : defaultFloatingPosition(panelRef.current, panel.position),
+    );
+  }, [isFloating, panel.id, panel.position, commitFloatingPosition]);
+
+  // Shrinking the window must not strand a floating panel off-screen.
+  useEffect(() => {
+    if (!isFloating) return;
+    const handleWindowResize = () => {
+      setFloatingPosition((previous) => {
+        const clamped = clampFloatingPosition(panelRef.current, previous, FLOATING_MARGIN);
+        floatingPositions.set(panel.id, clamped);
+        return clamped;
+      });
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [isFloating, panel.id]);
+
   // Notify plugin of resize events
   useEffect(() => {
     if (!isResizing && panel.onResize && containerRef.current) {
@@ -80,62 +225,98 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     }
   }, [isResizing, panelWidth, panel]);
 
-  const toggleCollapse = useCallback(() => {
-    setCollapsed((prev) => !prev);
-  }, []);
+  /** Keyboard alternative to dragging: arrow keys nudge, Shift moves faster. */
+  const handleMoveKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const step = e.shiftKey
+      ? PANEL_DIMENSIONS.PLUGIN_PANEL.FLOATING_NUDGE_STEP_LARGE
+      : PANEL_DIMENSIONS.PLUGIN_PANEL.FLOATING_NUDGE_STEP;
 
-  // Determine collapse icon based on position and state
-  const isRight = panel.position === 'right';
-  const CollapseIcon = collapsed
-    ? (isRight ? FiChevronLeft : FiChevronRight)
-    : (isRight ? FiChevronRight : FiChevronLeft);
+    let deltaX = 0;
+    let deltaY = 0;
+    switch (e.key) {
+      case 'ArrowLeft': deltaX = -step; break;
+      case 'ArrowRight': deltaX = step; break;
+      case 'ArrowUp': deltaY = -step; break;
+      case 'ArrowDown': deltaY = step; break;
+      default: return;
+    }
 
-  const collapsedWidth = PANEL_DIMENSIONS.PLUGIN_PANEL.COLLAPSED_WIDTH;
+    e.preventDefault();
+    nudge(deltaX, deltaY);
+  }, [nudge]);
+
+  const className = [
+    'plugin-panel',
+    `plugin-panel--${panel.position}`,
+    isFloating ? 'plugin-panel--floating' : '',
+    isResizing ? 'is-resizing' : '',
+    isDragging ? 'is-dragging' : '',
+  ].filter(Boolean).join(' ');
+
+  const style: React.CSSProperties = isFloating
+    ? {
+        width: panelWidth,
+        left: floatingPosition.x,
+        top: floatingPosition.y,
+        /*
+         * Cap the height so the foot of the panel stays inside the modeler,
+         * leaving the same margin below it as above.  This has to live here
+         * rather than in the stylesheet: CSS can only cap against the whole
+         * containing block, which would let a panel parked further down
+         * overhang the bottom edge and put the end of its scrollable content
+         * out of reach.
+         */
+        maxHeight: `calc(100% - ${floatingPosition.y + FLOATING_MARGIN}px)`,
+      }
+    : { width: panelWidth };
 
   return (
     <div
-      className={`plugin-panel plugin-panel--${panel.position} ${collapsed ? 'collapsed' : ''} ${isResizing ? 'is-resizing' : ''}`}
-      style={{ width: collapsed ? collapsedWidth : panelWidth }}
+      ref={panelRef}
+      className={className}
+      style={style}
       data-plugin-panel-id={panel.id}
     >
       {/* Resize handle */}
-      {!collapsed && (
-        <div
-          className={`plugin-panel-resize-handle plugin-panel-resize-handle--${panel.position === 'left' ? 'right' : 'left'}`}
-          onMouseDown={startResize}
-          role="separator"
-          aria-orientation="vertical"
-          aria-label={t('Resize @panel panel', { '@panel': panel.label })}
-          tabIndex={0}
-        />
-      )}
+      <div
+        className={`plugin-panel-resize-handle plugin-panel-resize-handle--${resizeEdge}`}
+        onMouseDown={startResize}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t('Resize @panel panel', { '@panel': panel.label })}
+        tabIndex={0}
+      />
 
-      {/* Collapse tab */}
-      <button
-        className="plugin-panel-collapse-tab"
-        onClick={toggleCollapse}
-        aria-expanded={!collapsed}
-        aria-label={collapsed
-          ? t('Expand @panel panel', { '@panel': panel.label })
-          : t('Collapse @panel panel', { '@panel': panel.label })
-        }
-        title={panel.label}
+      {/*
+        * Panel header.  Static text for a docked panel; for a floating panel
+        * the whole strip is a drag surface, with the button below providing
+        * the visible affordance and the keyboard route.
+        */}
+      <div
+        className="plugin-panel-header"
+        onMouseDown={isFloating ? startDrag : undefined}
       >
-        <CollapseIcon size={14} />
-        {collapsed && (
-          <span className="plugin-panel-collapse-label">{panel.label}</span>
+        <span className="plugin-panel-title">{panel.label}</span>
+        {isFloating && (
+          <button
+            type="button"
+            className="plugin-panel-drag-handle"
+            onKeyDown={handleMoveKeyDown}
+            aria-label={t('Move @panel panel', { '@panel': panel.label })}
+            title={t('Drag to move, or press the arrow keys')}
+          >
+            <FiMove size={14} aria-hidden="true" />
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Panel content — plugin owns this element */}
-      {!collapsed && (
-        <div
-          ref={containerRef}
-          className="plugin-panel-content"
-          role="region"
-          aria-label={panel.label}
-        />
-      )}
+      <div
+        ref={containerRef}
+        className="plugin-panel-content"
+        role="region"
+        aria-label={panel.label}
+      />
     </div>
   );
 }
@@ -151,6 +332,9 @@ interface PluginPanelSlotProps {
 /**
  * Renders all registered plugin panels for a given position.
  * Each panel is wrapped in a PanelErrorBoundary for isolation.
+ *
+ * Floating panels are rendered here too, but they are taken out of flow by
+ * CSS, so they contribute no width or height to the slot.
  */
 const PluginPanelSlot: React.FC<PluginPanelSlotProps> = ({ panels, api, position }) => {
   if (panels.length === 0) return null;

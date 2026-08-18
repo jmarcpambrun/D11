@@ -601,7 +601,7 @@ describe('ConfigurationForm', () => {
           key: 'dependent',
           type: 'textfield',
           title: 'Dependent',
-          states: { visible: [{ field: 'toggle', checked: true }] },
+          states: { visible: [[{ field: 'toggle', checked: true }]] },
         },
       ];
 
@@ -622,7 +622,7 @@ describe('ConfigurationForm', () => {
           key: 'advanced',
           type: 'textfield',
           title: 'Advanced',
-          states: { invisible: [{ field: 'mode', value: 'simple' }] },
+          states: { invisible: [[{ field: 'mode', value: 'simple' }]] },
         },
       ];
 
@@ -646,7 +646,7 @@ describe('ConfigurationForm', () => {
           key: 'name',
           type: 'textfield',
           title: 'Name',
-          states: { required: [{ field: 'enabled', checked: true }] },
+          states: { required: [[{ field: 'enabled', checked: true }]] },
         },
       ];
 
@@ -659,6 +659,94 @@ describe('ConfigurationForm', () => {
       // Checking the controlling checkbox makes the dependent required.
       fireEvent.click(screen.getByRole('checkbox'));
       expect(container.querySelector('.required')).toBeInTheDocument();
+    });
+
+    it('should show a field visible when ANY of two OR groups matches', () => {
+      // Mirrors the ECA LoadEntity 'properties' textarea, which is visible when
+      // (from == 'properties') OR (from == '_eca_token'). The normalized shape
+      // is two OR groups, each a single-condition AND group.
+      const form = [
+        {
+          key: 'properties',
+          type: 'textarea',
+          title: 'Properties',
+          states: {
+            visible: [
+              [{ field: 'from', value: 'properties' }],
+              [{ field: 'from', value: '_eca_token' }],
+            ],
+          },
+        },
+      ];
+
+      // from === 'id' => neither group matches => hidden.
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ from: 'id' }} />
+      );
+      expect(container.querySelectorAll('.form-field')[0]).toHaveStyle('display: none');
+
+      // from === 'properties' => first group matches => shown.
+      const { container: container2 } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ from: 'properties' }} />
+      );
+      expect(container2.querySelectorAll('.form-field')[0]).not.toHaveStyle('display: none');
+
+      // from === '_eca_token' => second group matches => shown.
+      const { container: container3 } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ from: '_eca_token' }} />
+      );
+      expect(container3.querySelectorAll('.form-field')[0]).not.toHaveStyle('display: none');
+    });
+
+    it('should require all conditions within a single AND group', () => {
+      const form = [
+        {
+          key: 'field',
+          type: 'textfield',
+          title: 'Field',
+          states: {
+            visible: [[
+              { field: 'mode', value: 'advanced' },
+              { field: 'enabled', checked: true },
+            ]],
+          },
+        },
+      ];
+
+      // Only one condition of the AND group holds => hidden.
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'advanced', enabled: false }} />
+      );
+      expect(container.querySelectorAll('.form-field')[0]).toHaveStyle('display: none');
+
+      // Both conditions hold => shown.
+      const { container: container2 } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'advanced', enabled: true }} />
+      );
+      expect(container2.querySelectorAll('.form-field')[0]).not.toHaveStyle('display: none');
+    });
+
+    it('should treat an array condition value as match-any', () => {
+      const form = [
+        {
+          key: 'field',
+          type: 'textfield',
+          title: 'Field',
+          states: { visible: [[{ field: 'mode', value: ['a', 'b'] }]] },
+        },
+      ];
+
+      // mode not in ['a', 'b'] => hidden.
+      const { container } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'c' }} />
+      );
+      expect(container.querySelectorAll('.form-field')[0]).toHaveStyle('display: none');
+
+      // mode === 'b' => shown.
+      const { container: container2 } = render(
+        <ConfigurationForm {...defaultProps} form={form} configuration={{ mode: 'b' }} />
+      );
+      expect(container2.querySelectorAll('.form-field')[0]).not.toHaveStyle('display: none');
     });
   });
 

@@ -11,8 +11,10 @@
  */
 
 import React from 'react';
-import { FiPlay, FiActivity, FiChevronRight, FiAlertTriangle, FiXCircle, FiClock } from 'react-icons/fi';
+import { FiChevronRight, FiAlertTriangle, FiXCircle, FiClock } from 'react-icons/fi';
+import type { IconType } from 'react-icons';
 import type { StoreNode as Node, StoreEdge as Edge, ReplayDataEntry } from '../types/settings';
+import { NODE_TYPE_ICONS, DEFAULT_NODE_ICON, getNodeTypeIcon } from './nodeIcons';
 import { t } from './translation';
 
 /**
@@ -54,26 +56,131 @@ export function isConditionStep(step: ReplayStep): boolean {
   return isSuccessorStep(step) && !!step.conditionId;
 }
 
+// ============ Condition Node Helpers ============
+
+/**
+ * Minimal structural shape required to match a canvas node against a replay
+ * step's `conditionId`.
+ *
+ * Declared structurally (rather than as `StoreNode`) so that callers holding
+ * plain ReactFlow `Node` objects — such as `replayHighlightUtils` — can use
+ * the same helpers without a cast.
+ */
+export interface ConditionNodeLike {
+  id: string;
+  type?: string;
+  data?: {
+    plugin?: unknown;
+    conditionId?: unknown;
+    __isConditionNode?: unknown;
+  };
+}
+
+/**
+ * A node is a condition node (issue #3589093) when its type is `condition`
+ * or its data carries the synthesized `__isConditionNode` marker.
+ */
+export function isConditionNode(node: ConditionNodeLike | null | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'condition' || node.data?.__isConditionNode === true;
+}
+
+/**
+ * Return every identifier a condition node can be matched by, in priority
+ * order, when comparing against a replay step's `conditionId`.
+ *
+ * 1. `data.conditionId` — the ECA condition *config* id. This is what
+ *    `ProcessDebugger` puts into `step.conditionId` and what the modeler
+ *    backend plugin round-trips as `edge.conditionId`, so it is the correct
+ *    primary key.
+ * 2. `data.plugin` — the condition *plugin* id. Retained only as a legacy
+ *    fallback for replay data recorded before the config id was emitted.
+ *
+ * Empty/blank identifiers are omitted so they can never match a blank
+ * `conditionId` by accident.
+ */
+export function getConditionNodeIdentifiers(node: ConditionNodeLike): string[] {
+  const identifiers: string[] = [];
+  const conditionId = node.data?.conditionId;
+  if (typeof conditionId === 'string' && conditionId !== '') {
+    identifiers.push(conditionId);
+  }
+  const plugin = node.data?.plugin;
+  if (typeof plugin === 'string' && plugin !== '') {
+    identifiers.push(plugin);
+  }
+  return identifiers;
+}
+
+/**
+ * Find the condition NODE that a replay step's `conditionId` refers to.
+ *
+ * Conditions are first-class nodes now (issue #3589093), so a condition step
+ * resolves to a condition node rather than a (nonexistent) condition edge.
+ * `step.conditionId` is ECA's condition *config* id (see
+ * `Drupal\eca\Entity\Eca::getSuccessors()`), which the modeler backend plugin
+ * emits as `edge.conditionId` and which `promoteConditionEdges()` copies onto
+ * the synthesized node as `data.conditionId`. That is therefore matched FIRST;
+ * `data.plugin` is only a legacy fallback for older replay recordings.
+ *
+ * Returns `undefined` when the step carries no `conditionId` or nothing matches.
+ */
+export function findConditionNodeForStep<T extends ConditionNodeLike>(
+  nodes: readonly T[],
+  step: ReplayStep
+): T | undefined {
+  const conditionId = step.conditionId;
+  if (!conditionId) return undefined;
+
+  // Priority 1: the backend round-tripped ECA condition config id.
+  const byConditionId = nodes.find(
+    n => isConditionNode(n) && n.data?.conditionId === conditionId
+  );
+  if (byConditionId) return byConditionId;
+
+  // Priority 2 (legacy): the condition plugin id.
+  return nodes.find(n => isConditionNode(n) && n.data?.plugin === conditionId);
+}
+
 // ============ Element Matching ============
 
 /**
  * Find the first replay step index that matches a given canvas element.
  * Used for canvas-to-replay synchronization.
+ *
+ * Pass `nodes` to make the lookup condition-aware (issue #3589108). Condition
+ * nodes are never the `step.id` of an execution step — the step id is always
+ * the *predecessor* component — so a condition node can only be resolved by
+ * matching `step.conditionId` against the node's own condition identifiers
+ * (see {@link getConditionNodeIdentifiers}). Without `nodes` the function
+ * keeps its previous, condition-blind behavior so existing callers that have
+ * no graph at hand are unaffected.
  */
 export function findReplayStepForElement(
   replayData: ReplayStep[],
   edges: Edge[],
   elementId: string,
-  elementType: 'node' | 'edge' | 'condition'
+  elementType: 'node' | 'edge' | 'condition',
+  nodes: Node[] = []
 ): number {
   if (!replayData || replayData.length === 0) return -1;
-  
+
+  // Resolve the selected node once; a condition node changes how we match.
+  const selectedNode = nodes.find(n => n.id === elementId);
+  const selectedIsCondition = isConditionNode(selectedNode);
+  const conditionIdentifiers = selectedNode ? getConditionNodeIdentifiers(selectedNode) : [];
+
   for (let i = 0; i < replayData.length; i++) {
     const step = replayData[i];
     
     if (elementType === 'node') {
-      // Priority: Find steps where this node is the main actor
-      if (step.id === elementId && isNodeExecutionStep(step)) {
+      if (selectedIsCondition) {
+        // A condition node is covered by the successor step that evaluated it.
+        if (step.conditionId && isConditionStep(step) && conditionIdentifiers.includes(step.conditionId)) {
+          return i;
+        }
+      } else if (step.id === elementId && isNodeExecutionStep(step)) {
+        // Priority: Find steps where this node is the main actor
         return i;
       }
     } else if (elementType === 'edge') {
@@ -83,8 +190,14 @@ export function findReplayStepForElement(
         return i;
       }
     } else if (elementType === 'condition') {
-      // For conditions attached to edges
-      if (step.conditionId === elementId) {
+      // When `elementId` is a condition NODE id, resolve through the node's own
+      // condition identifiers; `step.conditionId` never equals a node id.
+      if (selectedIsCondition) {
+        if (step.conditionId && conditionIdentifiers.includes(step.conditionId)) {
+          return i;
+        }
+      } else if (step.conditionId === elementId) {
+        // Legacy: `elementId` already IS a raw condition identifier.
         return i;
       }
     }
@@ -109,23 +222,14 @@ export function findElementForReplayStep(
 
   // Conditions are first-class NODES now (issue #3589093).  A condition step
   // therefore resolves to the condition NODE rather than a (nonexistent)
-  // condition edge.  The step's conditionId historically matched the legacy
-  // edge.data.condition value, which carried the condition *plugin* id (see
-  // P2 modelUtils, where node.data.plugin is set from edge.condition), so we
-  // match plugin id first, then the backend round-trip conditionId.
-  const isConditionNode = (n: Node): boolean =>
-    n.type === 'condition' || n.data?.__isConditionNode === true;
+  // condition edge.  See findConditionNodeForStep() for the matching rules.
 
   // For successor steps, handle condition node finding.
   if (isSuccessorStep(step)) {
     // Priority 1: If step has conditionId, find the condition node.
-    if (step.conditionId) {
-      const condNode =
-        nodes.find(n => isConditionNode(n) && n.data?.plugin === step.conditionId) ??
-        nodes.find(n => isConditionNode(n) && n.data?.conditionId === step.conditionId);
-      if (condNode) {
-        return { type: 'node', id: condNode.id };
-      }
+    const condNode = findConditionNodeForStep(nodes, step);
+    if (condNode) {
+      return { type: 'node', id: condNode.id };
     }
 
     // Priority 2: If step has successorId, find the edge by source/target.
@@ -138,13 +242,9 @@ export function findElementForReplayStep(
   }
 
   // Priority 3: For other steps with conditionId, find the condition node.
-  if (step.conditionId) {
-    const condNode =
-      nodes.find(n => isConditionNode(n) && n.data?.plugin === step.conditionId) ??
-      nodes.find(n => isConditionNode(n) && n.data?.conditionId === step.conditionId);
-    if (condNode) {
-      return { type: 'node', id: condNode.id };
-    }
+  const otherCondNode = findConditionNodeForStep(nodes, step);
+  if (otherCondNode) {
+    return { type: 'node', id: otherCondNode.id };
   }
 
   // Priority 4: Find the node by ID.
@@ -194,18 +294,73 @@ export function findMatchingReplayStepForSelection(
 }
 
 /**
- * Get the appropriate icon for a replay step based on its type
+ * Resolve a canvas node to the icon it renders on the canvas.
+ *
+ * Condition nodes are checked first because a promoted condition node may be
+ * flagged only by `data.__isConditionNode` without a `condition` type
+ * (issue #3589093). Otherwise the ReactFlow `type` wins, falling back to the
+ * internal `data.nodeType` (which is what carries `gateway` for nodes that
+ * ReactFlow types generically).
  */
-export function getStepIcon(step: ReplayStep): React.ReactNode {
+function resolveNodeIcon(node: Node | undefined): IconType {
+  if (!node) return DEFAULT_NODE_ICON;
+  if (isConditionNode(node)) return NODE_TYPE_ICONS.condition;
+  return getNodeTypeIcon(node.type ?? node.data?.nodeType);
+}
+
+/**
+ * Get the appropriate icon for a replay step.
+ *
+ * Icons mirror the CANVAS node icons (shared {@link NODE_TYPE_ICONS} map) so a
+ * step row always shows the same glyph as the node it describes. Error states
+ * (`access denied`, `exception`) and the unknown-type fallback keep their own
+ * icons because they describe a state, not a node type.
+ *
+ * `nodes` is optional and trailing so existing callers keep compiling; without
+ * it the node-derived cases degrade to sensible type-based defaults.
+ */
+export function getStepIcon(step: ReplayStep, nodes: Node[] = []): React.ReactNode {
   switch (step.type) {
-    case 'started':
-      return <FiPlay className="step-icon started" />;
-    case 'execute':
-      return <FiActivity className="step-icon execute" />;
+    case 'started': {
+      // The process always starts at an event node.
+      const StartIcon = NODE_TYPE_ICONS.start;
+      return <StartIcon className="step-icon started" />;
+    }
+    case 'execute': {
+      // Whatever component actually executed — action, subprocess, gateway...
+      const ExecuteIcon = resolveNodeIcon(nodes.find(n => n.id === step.id));
+      return <ExecuteIcon className="step-icon execute" />;
+    }
     case 'add successor':
-      return <FiChevronRight className="step-icon add-successor" />;
-    case 'ignore successor':
-      return <FiChevronRight className="step-icon ignore-successor" style={{ opacity: 0.5 }} />;
+    case 'ignore successor': {
+      const isIgnore = step.type === 'ignore successor';
+      // A condition-gated step is LABELED with the condition's name, so it must
+      // also carry the condition icon. Otherwise fall back to the successor's
+      // own icon (which covers gateways via resolveNodeIcon), and finally to
+      // the original chevron when nothing resolves.
+      const conditionNode = findConditionNodeForStep(nodes, step);
+      const successorNode = step.successorId
+        ? nodes.find(n => n.id === step.successorId)
+        : undefined;
+
+      let SuccessorIcon: IconType;
+      if (conditionNode) {
+        SuccessorIcon = NODE_TYPE_ICONS.condition;
+      } else if (successorNode) {
+        SuccessorIcon = resolveNodeIcon(successorNode);
+      } else {
+        SuccessorIcon = FiChevronRight;
+      }
+
+      // Keep the TRUE/FALSE distinction: the modifier class drives a distinct
+      // color and the dimming keeps ignored successors visually recessive.
+      return (
+        <SuccessorIcon
+          className={`step-icon ${isIgnore ? 'ignore-successor' : 'add-successor'}`}
+          style={isIgnore ? { opacity: 0.5 } : undefined}
+        />
+      );
+    }
     case 'access denied':
       return <FiAlertTriangle className="step-icon access-denied" />;
     case 'exception':
@@ -238,10 +393,18 @@ export function getStepLabel(
       return `${index + 1}: ${getNodeLabel(step.id || '')}`;
     case 'add successor':
     case 'ignore successor': {
-      // For add/ignore successor, the conditionId is the edge ID that was evaluated
-      // The condition is on the edge from step.id to step.successorId
+      // `step.conditionId` is ECA's condition *config* id — never an edge id
+      // and never a node id.  Conditions are first-class NODES (issue
+      // #3589093), so the step must be labeled with the condition NODE's own
+      // label; falling through to the successor's label was issue #3589108.
       if (step.conditionId) {
-        // Find the edge by its ID
+        const conditionNode = findConditionNodeForStep(nodes, step);
+        if (conditionNode?.data?.label) {
+          return `${index + 1}: ${conditionNode.data.label}`;
+        }
+
+        // Legacy fallback: pre-promotion replay data where the condition still
+        // lived on an edge whose id happened to be the conditionId.
         const edge = edges.find(e => e.id === step.conditionId);
         const conditionLabel = edge?.data?.conditionLabel || edge?.data?.condition;
         if (conditionLabel) {

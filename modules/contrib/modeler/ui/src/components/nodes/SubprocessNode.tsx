@@ -1,6 +1,6 @@
 import React, { Profiler, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { FiLayers } from 'react-icons/fi';
+import { NODE_TYPE_ICONS } from '../../utils/nodeIcons';
 import { t } from '../../utils/translation';
 import { getComponentLabel } from '../../utils/componentUtils';
 import NodeWrapper from './NodeWrapper';
@@ -10,6 +10,9 @@ import type { BaseNodeData } from '../../types/settings';
 interface SubprocessNodeData extends BaseNodeData {
   subflowCount?: number;
 }
+
+/** Shared canvas icon — the replay step list resolves the same one. */
+const SubprocessIcon = NODE_TYPE_ICONS.subprocess;
 
 const SubprocessNode = memo<NodeProps<SubprocessNodeData>>(({ data, selected }) => {
   return (
@@ -23,7 +26,7 @@ const SubprocessNode = memo<NodeProps<SubprocessNodeData>>(({ data, selected }) 
       />
 
       <div className="node-header">
-        <FiLayers className="node-icon" />
+        <SubprocessIcon className="node-icon" />
         <span className="node-type">{getComponentLabel('subprocess')}</span>
       </div>
 

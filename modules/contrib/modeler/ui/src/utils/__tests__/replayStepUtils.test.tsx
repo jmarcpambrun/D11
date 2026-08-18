@@ -5,6 +5,17 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import {
+  FiZap,
+  FiActivity,
+  FiGitBranch,
+  FiFilter,
+  FiLayers,
+  FiChevronRight,
+  FiAlertTriangle,
+  FiXCircle,
+  FiClock,
+} from 'react-icons/fi';
+import {
   getStepIcon,
   getStepLabel,
   ReplayStep,
@@ -16,6 +27,9 @@ import {
   findReplayStepForElement,
   findElementForReplayStep,
   findMatchingReplayStepForSelection,
+  isConditionNode,
+  getConditionNodeIdentifiers,
+  findConditionNodeForStep,
 } from '../replayStepUtils';
 import type { StoreNode as Node, StoreEdge as Edge } from '../../types/settings';
 
@@ -57,6 +71,118 @@ describe('replayStepUtils', () => {
       const step: ReplayStep = { type: 'unknown' };
       const { container } = render(<>{getStepIcon(step)}</>);
       expect(container.querySelector('.step-icon.default')).toBeInTheDocument();
+    });
+
+    // ---- Canvas icon alignment --------------------------------------------
+    // The step list must show the SAME glyph the canvas shows for the node the
+    // step describes. See nodeIcons.test.tsx for the end-to-end drift lock.
+
+    /** Inner SVG markup of the rendered step icon (identifies the glyph). */
+    const stepIconMarkup = (step: ReplayStep, nodes: Node[] = []): string => {
+      const { container } = render(<>{getStepIcon(step, nodes)}</>);
+      return container.querySelector('svg.step-icon')!.innerHTML;
+    };
+
+    /** Inner SVG markup of a bare react-icons component. */
+    const refMarkup = (Icon: React.ComponentType): string => {
+      const { container } = render(<Icon />);
+      return container.querySelector('svg')!.innerHTML;
+    };
+
+    const conditionNode: Node = {
+      id: 'cond1',
+      type: 'condition',
+      position: { x: 0, y: 0 },
+      data: { label: 'Field is empty', conditionId: 'cfg-1', plugin: 'eca_scalar', __isConditionNode: true },
+    };
+    const gatewayNode: Node = {
+      id: 'gw1',
+      type: 'gateway',
+      position: { x: 0, y: 0 },
+      data: { label: 'Gateway' },
+    };
+    const actionNode: Node = {
+      id: 'act1',
+      type: 'element',
+      position: { x: 0, y: 0 },
+      data: { label: 'Action' },
+    };
+    const subprocessNode: Node = {
+      id: 'sub1',
+      type: 'subprocess',
+      position: { x: 0, y: 0 },
+      data: { label: 'Subprocess' },
+    };
+
+    it('should use the event icon (FiZap) for a started step', () => {
+      expect(stepIconMarkup({ type: 'started', id: 'e1' })).toBe(refMarkup(FiZap));
+    });
+
+    it('should use the action icon (FiActivity) for an execute step on an action node', () => {
+      expect(stepIconMarkup({ type: 'execute', id: 'act1' }, [actionNode])).toBe(refMarkup(FiActivity));
+    });
+
+    it('should use the subprocess icon (FiLayers) for an execute step on a subprocess node', () => {
+      expect(stepIconMarkup({ type: 'execute', id: 'sub1' }, [subprocessNode])).toBe(refMarkup(FiLayers));
+    });
+
+    it('should use the gateway icon (FiGitBranch) for an execute step on a gateway node', () => {
+      expect(stepIconMarkup({ type: 'execute', id: 'gw1' }, [gatewayNode])).toBe(refMarkup(FiGitBranch));
+    });
+
+    it('should use the condition icon (FiFilter) for an add successor step with a resolvable condition', () => {
+      const step: ReplayStep = { type: 'add successor', id: 'n1', successorId: 'n2', conditionId: 'cfg-1' };
+      expect(stepIconMarkup(step, [conditionNode])).toBe(refMarkup(FiFilter));
+    });
+
+    it('should use the condition icon (FiFilter) for an ignore successor step, and keep it visually dimmed', () => {
+      const step: ReplayStep = { type: 'ignore successor', id: 'n1', successorId: 'n2', conditionId: 'cfg-1' };
+      expect(stepIconMarkup(step, [conditionNode])).toBe(refMarkup(FiFilter));
+
+      // TRUE vs FALSE must stay distinguishable now that both are FiFilter.
+      const { container } = render(<>{getStepIcon(step, [conditionNode])}</>);
+      const icon = container.querySelector('svg.step-icon')!;
+      expect(icon).toHaveClass('ignore-successor');
+      expect(icon).not.toHaveClass('add-successor');
+      expect(icon).toHaveStyle({ opacity: '0.5' });
+    });
+
+    it('should NOT dim the add successor icon (TRUE branch stays full opacity)', () => {
+      const step: ReplayStep = { type: 'add successor', id: 'n1', successorId: 'n2', conditionId: 'cfg-1' };
+      const { container } = render(<>{getStepIcon(step, [conditionNode])}</>);
+      const icon = container.querySelector('svg.step-icon')!;
+      expect(icon).toHaveClass('add-successor');
+      expect(icon).not.toHaveClass('ignore-successor');
+      expect(icon).not.toHaveStyle({ opacity: '0.5' });
+    });
+
+    it('should use the gateway icon when the successor is a gateway and there is no condition', () => {
+      const step: ReplayStep = { type: 'add successor', id: 'n1', successorId: 'gw1' };
+      expect(stepIconMarkup(step, [gatewayNode])).toBe(refMarkup(FiGitBranch));
+    });
+
+    it('should prefer the condition icon over the successor icon when both resolve', () => {
+      // The row is LABELED with the condition name, so the icon must match it.
+      const step: ReplayStep = { type: 'add successor', id: 'n1', successorId: 'gw1', conditionId: 'cfg-1' };
+      expect(stepIconMarkup(step, [conditionNode, gatewayNode])).toBe(refMarkup(FiFilter));
+    });
+
+    it('should keep FiAlertTriangle / FiXCircle / FiClock for state-based steps', () => {
+      expect(stepIconMarkup({ type: 'access denied' })).toBe(refMarkup(FiAlertTriangle));
+      expect(stepIconMarkup({ type: 'exception' })).toBe(refMarkup(FiXCircle));
+      expect(stepIconMarkup({ type: 'totally unknown' })).toBe(refMarkup(FiClock));
+    });
+
+    it('should degrade gracefully when nodes are omitted or nothing resolves', () => {
+      // No nodes at all — must not throw, and must still produce an icon.
+      expect(() => getStepIcon({ type: 'execute', id: 'missing' })).not.toThrow();
+      expect(stepIconMarkup({ type: 'execute', id: 'missing' })).toBe(refMarkup(FiActivity));
+
+      // Successor step with nothing resolvable keeps the original chevron.
+      expect(stepIconMarkup({ type: 'add successor', id: 'n1', successorId: 'gone' })).toBe(
+        refMarkup(FiChevronRight)
+      );
+      expect(stepIconMarkup({ type: 'ignore successor', id: 'n1' })).toBe(refMarkup(FiChevronRight));
     });
   });
 
@@ -203,6 +329,192 @@ describe('replayStepUtils', () => {
       const label = getStepLabel(step, 0, [], []);
       expect(label).toBe('1: Component');
     });
+
+    // ---- Condition NODES (issues #3589093 / #3589108) ----------------------
+    // After promoteConditionEdges() no EDGE carries condition data any more, so
+    // the label MUST come from the condition NODE. Previously these fell
+    // through to the successor node's label.
+
+    const createConditionNode = (
+      id: string,
+      label: string,
+      identifiers: { conditionId?: string; plugin?: string }
+    ): Node => ({
+      id,
+      type: 'condition',
+      position: { x: 0, y: 0 },
+      data: {
+        label,
+        conditionId: identifiers.conditionId ?? '',
+        plugin: identifiers.plugin ?? '',
+        __isConditionNode: true,
+      },
+    });
+
+    it('should return the condition NODE label (not the successor label) for add successor', () => {
+      const step: ReplayStep = {
+        type: 'add successor',
+        id: 'node1',
+        successorId: 'node2',
+        // ECA condition CONFIG id — never an edge id, never a node id.
+        conditionId: 'eca-condition-uuid-1',
+      };
+      const nodes = [
+        createNode('node1', 'Start Event'),
+        createConditionNode('cond1', 'Field is empty', { conditionId: 'eca-condition-uuid-1', plugin: 'eca_scalar' }),
+        createNode('node2', 'Get next field'),
+      ];
+      // Plain, post-promotion edges: node1 -> cond1 -> node2, no condition data.
+      const edges: Edge[] = [
+        { id: 'e-in', source: 'node1', target: 'cond1', type: 'default', data: {} },
+        { id: 'e-out', source: 'cond1', target: 'node2', type: 'default', data: {} },
+      ];
+
+      const label = getStepLabel(step, 0, nodes, edges);
+      expect(label).toBe('1: Field is empty');
+      expect(label).not.toContain('Get next field');
+    });
+
+    it('should return the condition NODE label (not the successor label) for ignore successor', () => {
+      const step: ReplayStep = {
+        type: 'ignore successor',
+        id: 'node1',
+        successorId: 'node2',
+        conditionId: 'eca-condition-uuid-1',
+      };
+      const nodes = [
+        createNode('node1', 'Start Event'),
+        createConditionNode('cond1', 'Field is empty', { conditionId: 'eca-condition-uuid-1', plugin: 'eca_scalar' }),
+        createNode('node2', 'Get next field'),
+      ];
+      const edges: Edge[] = [
+        { id: 'e-in', source: 'node1', target: 'cond1', type: 'default', data: {} },
+        { id: 'e-out', source: 'cond1', target: 'node2', type: 'default', data: {} },
+      ];
+
+      const label = getStepLabel(step, 4, nodes, edges);
+      expect(label).toBe('5: Field is empty');
+      expect(label).not.toContain('Get next field');
+    });
+
+    it('should resolve the condition NODE label via the legacy data.plugin fallback', () => {
+      const step: ReplayStep = {
+        type: 'add successor',
+        id: 'node1',
+        successorId: 'node2',
+        conditionId: 'eca_scalar',
+      };
+      const nodes = [
+        createNode('node1', 'Start Event'),
+        // Only the plugin id matches — legacy replay recordings.
+        createConditionNode('cond1', 'Scalar comparison', { conditionId: '', plugin: 'eca_scalar' }),
+        createNode('node2', 'Get next field'),
+      ];
+
+      const label = getStepLabel(step, 0, nodes, []);
+      expect(label).toBe('1: Scalar comparison');
+    });
+
+    it('should still fall back to the successor label when no condition node matches', () => {
+      const step: ReplayStep = {
+        type: 'ignore successor',
+        id: 'node1',
+        successorId: 'node2',
+        conditionId: 'unknown-condition',
+      };
+      const nodes = [
+        createNode('node1', 'Start Event'),
+        createNode('node2', 'Get next field'),
+      ];
+
+      const label = getStepLabel(step, 0, nodes, []);
+      expect(label).toBe('1: Get next field');
+    });
+  });
+
+  // ============ Condition Node Helpers ============
+
+  describe('isConditionNode', () => {
+    it('should return true for a node typed "condition"', () => {
+      expect(isConditionNode({ id: 'c', type: 'condition' })).toBe(true);
+    });
+    it('should return true for a node flagged with __isConditionNode', () => {
+      expect(isConditionNode({ id: 'c', data: { __isConditionNode: true } })).toBe(true);
+    });
+    it('should return false for a regular node', () => {
+      expect(isConditionNode({ id: 'n', type: 'element', data: {} })).toBe(false);
+    });
+    it('should return false for null/undefined', () => {
+      expect(isConditionNode(null)).toBe(false);
+      expect(isConditionNode(undefined)).toBe(false);
+    });
+  });
+
+  describe('getConditionNodeIdentifiers', () => {
+    it('should return conditionId before plugin', () => {
+      expect(
+        getConditionNodeIdentifiers({ id: 'c', data: { conditionId: 'cfg-1', plugin: 'plug-1' } })
+      ).toEqual(['cfg-1', 'plug-1']);
+    });
+    it('should omit blank identifiers', () => {
+      expect(getConditionNodeIdentifiers({ id: 'c', data: { conditionId: '', plugin: 'plug-1' } })).toEqual(['plug-1']);
+      expect(getConditionNodeIdentifiers({ id: 'c', data: {} })).toEqual([]);
+    });
+  });
+
+  describe('findConditionNodeForStep', () => {
+    it('should prefer data.conditionId over data.plugin when they point at different nodes', () => {
+      const nodes: Node[] = [
+        {
+          id: 'by-plugin',
+          type: 'condition',
+          position: { x: 0, y: 0 },
+          data: { label: 'Wrong', plugin: 'shared-id', conditionId: 'other', __isConditionNode: true },
+        },
+        {
+          id: 'by-condition-id',
+          type: 'condition',
+          position: { x: 0, y: 0 },
+          data: { label: 'Right', plugin: 'something-else', conditionId: 'shared-id', __isConditionNode: true },
+        },
+      ];
+      const step: ReplayStep = { type: 'add successor', conditionId: 'shared-id' };
+
+      expect(findConditionNodeForStep(nodes, step)?.id).toBe('by-condition-id');
+    });
+
+    it('should fall back to data.plugin when no conditionId matches', () => {
+      const nodes: Node[] = [
+        {
+          id: 'cond',
+          type: 'condition',
+          position: { x: 0, y: 0 },
+          data: { label: 'Legacy', plugin: 'legacy-plugin', conditionId: '', __isConditionNode: true },
+        },
+      ];
+      const step: ReplayStep = { type: 'ignore successor', conditionId: 'legacy-plugin' };
+
+      expect(findConditionNodeForStep(nodes, step)?.id).toBe('cond');
+    });
+
+    it('should return undefined when the step has no conditionId', () => {
+      const nodes: Node[] = [
+        {
+          id: 'cond',
+          type: 'condition',
+          position: { x: 0, y: 0 },
+          data: { label: 'C', plugin: 'p', conditionId: 'c', __isConditionNode: true },
+        },
+      ];
+      expect(findConditionNodeForStep(nodes, { type: 'add successor' })).toBeUndefined();
+    });
+
+    it('should ignore non-condition nodes that happen to carry a matching id', () => {
+      const nodes: Node[] = [
+        { id: 'plain', type: 'element', position: { x: 0, y: 0 }, data: { conditionId: 'cfg-1' } },
+      ];
+      expect(findConditionNodeForStep(nodes, { type: 'add successor', conditionId: 'cfg-1' })).toBeUndefined();
+    });
   });
 
   // ============ Step Type Predicates ============
@@ -327,6 +639,81 @@ describe('replayStepUtils', () => {
         { id: 'n1', type: 'add successor', successorId: 'n2' },
       ];
       expect(findReplayStepForElement(data, edges, 'n1', 'node')).toBe(-1);
+    });
+
+    // ---- Condition-node awareness (issue #3589108) -------------------------
+    // A condition NODE is never a step's `id` (the step id is the predecessor),
+    // so it can only be resolved through its own condition identifiers. This is
+    // what stops Flow.tsx from mislabeling condition step data as "Predicted".
+
+    const conditionNodes: Node[] = [
+      { id: 'n1', type: 'start', position: { x: 0, y: 0 }, data: { label: 'N1' } },
+      {
+        id: 'cond1',
+        type: 'condition',
+        position: { x: 50, y: 0 },
+        data: { label: 'Field is empty', plugin: 'eca_scalar', conditionId: 'cfg-1', __isConditionNode: true },
+      },
+      { id: 'n2', type: 'element', position: { x: 100, y: 0 }, data: { label: 'N2' } },
+      {
+        id: 'cond-uncovered',
+        type: 'condition',
+        position: { x: 150, y: 0 },
+        data: { label: 'Never evaluated', plugin: 'eca_other', conditionId: 'cfg-2', __isConditionNode: true },
+      },
+    ];
+
+    const conditionReplayData: ReplayStep[] = [
+      { id: 'n1', type: 'started' },
+      { id: 'n1', type: 'add successor', successorId: 'n2', conditionId: 'cfg-1' },
+      { id: 'n2', type: 'execute' },
+    ];
+
+    it('should resolve a selected condition NODE to its covering step when nodes are supplied', () => {
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'cond1', 'node', conditionNodes)
+      ).toBe(1);
+    });
+
+    it('should resolve a condition NODE covered by an "ignore successor" step', () => {
+      const data: ReplayStep[] = [
+        { id: 'n1', type: 'started' },
+        { id: 'n1', type: 'ignore successor', successorId: 'n2', conditionId: 'cfg-1' },
+      ];
+      expect(findReplayStepForElement(data, [], 'cond1', 'node', conditionNodes)).toBe(1);
+    });
+
+    it('should return -1 for a condition NODE with no covering step (predicted-token fallback)', () => {
+      // Guards issue #3577207: an uncovered condition node must still fall
+      // through to resolvePredictedTokens() in Flow.tsx.
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'cond-uncovered', 'node', conditionNodes)
+      ).toBe(-1);
+    });
+
+    it('should stay condition-blind when nodes are not supplied (legacy callers)', () => {
+      expect(findReplayStepForElement(conditionReplayData, [], 'cond1', 'node')).toBe(-1);
+    });
+
+    it('should not change resolution for regular nodes when nodes are supplied', () => {
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'n1', 'node', conditionNodes)
+      ).toBe(0);
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'n2', 'node', conditionNodes)
+      ).toBe(2);
+    });
+
+    it('should resolve elementType "condition" through a condition NODE id', () => {
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'cond1', 'condition', conditionNodes)
+      ).toBe(1);
+    });
+
+    it('should still resolve elementType "condition" from a raw condition identifier', () => {
+      expect(
+        findReplayStepForElement(conditionReplayData, [], 'cfg-1', 'condition', conditionNodes)
+      ).toBe(1);
     });
   });
 

@@ -232,6 +232,13 @@ import {
 import { resolveNodeType } from '../../utils/componentUtils';
 import { generateNodeId, generateEdgeId } from '../../utils/clipboardUtils';
 import { findFreePosition } from '../../utils/positionUtils';
+// The real (unmocked) placement primitives, so the tests below can assert
+// that a plugin-added node lands on exactly the coordinates the modeler's
+// own UI paths would have chosen (issue #3589110).
+import {
+  computeNewEventPosition,
+  computeSuccessorPosition,
+} from '../../utils/incrementalLayout';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -1242,25 +1249,6 @@ describe('pluginApi', () => {
         );
       });
 
-      it('uses default position when no nodes exist', () => {
-        graphStore.setState({ nodes: [] });
-        (generateNodeId as jest.Mock).mockReturnValue('element_Test_123');
-
-        api.addNode({
-          plugin: 'example.test',
-          componentType: 4,
-          label: 'Test',
-        });
-
-        // findFreePosition is called with LAYOUT.DEFAULT_POSITION_X/Y
-        expect(findFreePosition).toHaveBeenCalledWith(
-          { x: 100, y: 100 }, // LAYOUT.DEFAULT_POSITION_X/Y
-          [],
-          expect.any(Number),
-          expect.any(Number),
-        );
-      });
-
       it('includes configuration, description, documentationUrl', () => {
         (generateNodeId as jest.Mock).mockReturnValue('element_Test_123');
 
@@ -1295,6 +1283,167 @@ describe('pluginApi', () => {
         expect(result).toBeNull();
         expect(graphStore.getState().addNode).not.toHaveBeenCalled();
         expect(saveHistory).not.toHaveBeenCalled();
+      });
+
+      // ── Shared placement primitives (issue #3589110) ─────────────────
+      //
+      // addNode used to hand-roll its own placement instead of calling the
+      // primitives in utils/incrementalLayout.ts, so a plugin-added node
+      // could land somewhere the UI would never have put it.  These tests
+      // pin the node to the SAME coordinates the equivalent UI path
+      // produces, which is the actual point of the issue.
+      describe('placement via shared layout primitives', () => {
+        /** Read the node handed to graphStore.addNode by the last call. */
+        function addedNode(): StoreNode {
+          const calls = (graphStore.getState().addNode as jest.Mock).mock.calls;
+          return calls[calls.length - 1][0] as StoreNode;
+        }
+
+        it('uses an explicit position verbatim, ignoring sourceNodeId', () => {
+          // Explicit caller intent always wins — unchanged contract.
+          api.addNode({
+            plugin: 'example.test',
+            componentType: 4,
+            label: 'Test',
+            position: { x: 50, y: 60 },
+            sourceNodeId: 'node-1',
+          });
+
+          expect(addedNode().position).toEqual({ x: 50, y: 60 });
+          // No successor placement ran, so no flow shifts were applied.
+          expect(graphStore.getState().setNodes).not.toHaveBeenCalled();
+        });
+
+        it('places the first node on an empty canvas where the UI would', () => {
+          // Regression: addNode used to return DEFAULT_POSITION (100,100)
+          // while every UI path anchors the first flow at LAYOUT_START
+          // (400,100).  Both must now agree.
+          graphStore.setState({ nodes: [], edges: [] });
+
+          api.addNode({ plugin: 'example.test', componentType: 1, label: 'Test' });
+
+          const expected = computeNewEventPosition({ nodes: [], width: 180, height: 120 });
+          expect(expected).toEqual({ x: 400, y: 100 });
+          expect(addedNode().position).toEqual(expected);
+        });
+
+        it('places a new event flow to the right of existing flows', () => {
+          api.addNode({ plugin: 'example.test', componentType: 4, label: 'Test' });
+
+          const expected = computeNewEventPosition({
+            nodes: [mockNode1, mockNode2],
+            width: 180,
+            height: 120,
+          });
+          expect(addedNode().position).toEqual(expected);
+        });
+
+        it('uses the compact gateway footprint for gateway nodes', () => {
+          // Gateways are 60px tall, not 120 — feeding the card height into
+          // the primitives would reserve room the node does not occupy.
+          const findFree = findFreePosition as jest.Mock;
+          api.addNode({ plugin: 'example.gateway', componentType: 6, label: 'GW' });
+
+          expect(findFree).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.any(Array),
+            180, // NODE_DIMENSIONS.CARD_WIDTH
+            60,  // NODE_DIMENSIONS.GATEWAY_HEIGHT
+          );
+        });
+
+        it('places a successor exactly where quick-add would place it', () => {
+          // useQuickAdd.addSuccessorNode calls computeSuccessorPosition with
+          // precisely these arguments, so matching it proves the two paths
+          // now agree coordinate-for-coordinate.
+          api.addNode({
+            plugin: 'example.test',
+            componentType: 4,
+            label: 'Test',
+            sourceNodeId: 'node-1',
+          });
+
+          const expected = computeSuccessorPosition({
+            nodes: [mockNode1, mockNode2],
+            edges: [mockEdge1],
+            sourceNodeId: 'node-1',
+          }).position;
+
+          expect(addedNode().position).toEqual(expected);
+          // Below the parent, and column-aligned with it.
+          expect(addedNode().position.y).toBeGreaterThan(mockNode1.position.y);
+          expect(addedNode().position.x).toBe(mockNode1.position.x);
+        });
+
+        it('returns null and does not mutate for an unknown sourceNodeId', () => {
+          // Consistent with addEdge(), which rejects unknown endpoints.
+          const result = api.addNode({
+            plugin: 'example.test',
+            componentType: 4,
+            label: 'Test',
+            sourceNodeId: 'does-not-exist',
+          });
+
+          expect(result).toBeNull();
+          expect(graphStore.getState().addNode).not.toHaveBeenCalled();
+          expect(graphStore.getState().setNodes).not.toHaveBeenCalled();
+          // Crucially: no history entry for an operation that never happened.
+          expect(saveHistory).not.toHaveBeenCalled();
+          expect(markUnsaved).not.toHaveBeenCalled();
+        });
+
+        it('applies flow shifts, without clobbering the selection', () => {
+          // Source flow at x=100; a second, unconnected flow sits directly in
+          // the successor slot and close enough on the right that the
+          // primitive must push it aside to make room.
+          const source: StoreNode = {
+            id: 'src',
+            type: 'element',
+            position: { x: 100, y: 100 },
+            data: { label: 'Src', plugin: 'p.src', componentType: 4 },
+          };
+          const neighbor: StoreNode = {
+            id: 'blk',
+            type: 'element',
+            position: { x: 150, y: 320 },
+            selected: true,
+            data: { label: 'Blk', plugin: 'p.blk', componentType: 4 },
+          };
+          graphStore.setState({ nodes: [source, neighbor], edges: [] });
+
+          const expected = computeSuccessorPosition({
+            nodes: [source, neighbor],
+            edges: [],
+            sourceNodeId: 'src',
+          });
+          // Guard the fixture: this scenario is only meaningful if the
+          // primitive actually asks for a shift.
+          expect(expected.shiftAmount).toBeGreaterThan(0);
+          expect(expected.shiftNodeIds.has('blk')).toBe(true);
+
+          api.addNode({
+            plugin: 'example.test',
+            componentType: 4,
+            label: 'Test',
+            sourceNodeId: 'src',
+          });
+
+          expect(addedNode().position).toEqual(expected.position);
+
+          // The shift is applied through setNodes, as an updater function.
+          const setNodes = graphStore.getState().setNodes as jest.Mock;
+          expect(setNodes).toHaveBeenCalledTimes(1);
+          const updater = setNodes.mock.calls[0][0] as (n: StoreNode[]) => StoreNode[];
+          const shifted = updater([source, neighbor]);
+
+          const movedNeighbor = shifted.find((n) => n.id === 'blk')!;
+          expect(movedNeighbor.position.x).toBe(150 + expected.shiftAmount);
+          // The source flow is untouched.
+          expect(shifted.find((n) => n.id === 'src')!.position).toEqual({ x: 100, y: 100 });
+          // A background plugin call must NOT deselect the user's selection
+          // (quick-add deselects because it selects the new node instead).
+          expect(movedNeighbor.selected).toBe(true);
+        });
       });
     });
 

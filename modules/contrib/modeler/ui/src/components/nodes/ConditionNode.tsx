@@ -1,7 +1,8 @@
 import React, { Profiler, memo, useCallback } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { FiFilter, FiTrash2, FiFileText } from 'react-icons/fi';
+import { FiTrash2, FiFileText } from 'react-icons/fi';
 import classNames from 'classnames';
+import { NODE_TYPE_ICONS } from '../../utils/nodeIcons';
 import { getComponentLabel } from '../../utils/componentUtils';
 import { t } from '../../utils/translation';
 import NodeWrapper from './NodeWrapper';
@@ -18,6 +19,9 @@ import type { BaseNodeData } from '../../types/settings';
  * is handled by the translation layer in `utils/modelUtils.ts`; this component
  * only renders the node and is draggable/selectable as a normal node.
  */
+/** Shared canvas icon — the replay step list resolves the same one. */
+const ConditionIcon = NODE_TYPE_ICONS.condition;
+
 const ConditionNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,7 +53,7 @@ const ConditionNode = memo<NodeProps<BaseNodeData>>(({ data, selected }) => {
       />
 
       <div className="node-header">
-        <FiFilter className="node-icon" />
+        <ConditionIcon className="node-icon" />
         <span className="node-type">{getComponentLabel('link')}</span>
         <div className="node-header-actions">
           {hasAnnotation && (

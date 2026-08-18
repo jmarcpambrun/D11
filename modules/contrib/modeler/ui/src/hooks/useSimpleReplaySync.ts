@@ -62,12 +62,15 @@ export const useSimpleReplaySync = ({
   const lastSyncedStep = useRef<number>(-1);
   const lastSyncedElement = useRef<string>('');
   
-  // Wrapper callbacks that use the extracted pure functions with current edges/nodes
+  // Wrapper callbacks that use the extracted pure functions with current edges/nodes.
+  // `nodes` is forwarded so that clicking a condition NODE on the canvas resolves
+  // to the successor step that evaluated it instead of clearing the replay
+  // selection (issue #3589108).
   const findReplayStepForElement = useCallback(
     (elementId: string, elementType: 'node' | 'edge' | 'condition'): number => {
-      return findStepForElement(replayData, edges, elementId, elementType);
+      return findStepForElement(replayData, edges, elementId, elementType, nodes);
     },
-    [replayData, edges]
+    [replayData, edges, nodes]
   );
   
   const findElementForReplayStep = useCallback(
