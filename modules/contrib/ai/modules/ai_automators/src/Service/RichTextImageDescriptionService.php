@@ -262,8 +262,8 @@ class RichTextImageDescriptionService {
       $uri = $candidate['file']->getFileUri();
       $size = @getimagesize($uri);
       if (is_array($size)) {
-        $metadata['width'] = $size[0] ?? NULL;
-        $metadata['height'] = $size[1] ?? NULL;
+        $metadata['width'] = $size[0];
+        $metadata['height'] = $size[1];
       }
     }
 

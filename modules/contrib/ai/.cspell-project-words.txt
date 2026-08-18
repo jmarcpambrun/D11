@@ -104,6 +104,7 @@ endverbatim
 erging
 etcdctl
 exfiltration
+expirable
 Euser
 evals
 Explainability
@@ -241,6 +242,8 @@ Recogniztion
 Renederer
 reparses
 replayable
+refinable
+Refinable
 Rerank
 reranked
 reranker
@@ -399,3 +402,9 @@ mple
 cript
 DKAN
 unconfigured
+autolinks
+markdownify
+markdownify's
+setext
+wsod
+fatals

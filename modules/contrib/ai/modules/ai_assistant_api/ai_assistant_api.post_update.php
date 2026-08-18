@@ -5,6 +5,9 @@
  * This file contains the post update function detailed below.
  */
 
+use Drupal\ai_assistant_api\AiAssistantInterface;
+use Drupal\Core\Config\Entity\ConfigEntityUpdater;
+
 /**
  * Move settings into new fields to handle future restructure on config.
  */
@@ -33,4 +36,30 @@ function ai_assistant_api_post_update_settings(): void {
     // Save the updated config.
     $assistant->save();
   }
+}
+
+/**
+ * Converts allow_history to a ChatMemory plugin selection.
+ */
+function ai_assistant_api_post_update_convert_allow_history(&$sandbox): void {
+  $config_entity_updater = \Drupal::classResolver(ConfigEntityUpdater::class);
+  $callback = function (AiAssistantInterface $assistant) {
+    $map = [
+      'session_one_thread' => 'private_tempstore',
+      'session' => 'private_tempstore_pool',
+    ];
+    $settings = [];
+    $new_id = $map[$assistant->get('allow_history')] ?? '';
+    $assistant->set('allow_history', $new_id);
+    if (!empty($new_id)) {
+      $settings += [
+        'expiry' => 604800,
+        'max_messages' => $assistant->get('history_context_length'),
+      ];
+    }
+    $assistant->set('chat_memory_settings', $settings);
+    return TRUE;
+  };
+
+  $config_entity_updater->update($sandbox, 'ai_assistant', $callback);
 }

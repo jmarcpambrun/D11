@@ -1,0 +1,14 @@
+{
+    "name": "drupal/ai_ckeditor",
+    "description": "Adds a plugin for CKEditor 5 to let editors prompt AI for text generation purposes.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/ai_ckeditor",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/ai_ckeditor",
+        "source": "https://git.drupalcode.org/project/ai_ckeditor"
+    },
+    "require": {
+        "drupal/ai": "^1.4"
+    }
+}

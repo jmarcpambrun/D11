@@ -20,8 +20,7 @@ The module includes two reference implementations:
 - **RAG Processor**: Simple RAG (Retrieval-Augmented Generation) implementation
 
 ## Deepchat
-In the backend it uses Deepchat by OvidijusParsiunas. To have the Chatbot
-responses display correctly you **MUST** install the league/commonmark library.
+In the backend it uses Deepchat by OvidijusParsiunas.
 
 ## Using the module
 For more information, please see:

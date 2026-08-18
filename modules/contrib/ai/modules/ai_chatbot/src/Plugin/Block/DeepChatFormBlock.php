@@ -19,6 +19,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\PluginManager\ChatProcessorPluginManager;
 use Drupal\ai_chatbot\Controller\DeepChatApi;
+use League\CommonMark\CommonMarkConverter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -186,17 +187,6 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   public function blockForm($form, FormStateInterface $form_state) {
     $form['#prefix'] = '<div id="ai-chatbot-form-wrapper">';
     $form['#suffix'] = '</div>';
-    // Warn people to install the CommonMark library.
-    if (!class_exists('League\CommonMark\CommonMarkConverter')) {
-      $form['notice'] = [
-        '#theme' => 'status_messages',
-        '#message_list' => [
-          'warning' => [
-            $this->t('To make the chat output look more formatted, we highly recommend that you install the Commonmark optional dependency from PHP League by running <code>composer require league/commonmark</code>.'),
-          ],
-        ],
-      ];
-    }
 
     $form['notice'] = [
       '#theme' => 'status_messages',
@@ -950,19 +940,12 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       return [];
     }
 
-    $converter = NULL;
-    if (class_exists('League\CommonMark\CommonMarkConverter')) {
-      // Ignore the non-use statement loading since this dependency may not
-      // exist. Raw HTML in the stored messages is escaped, not passed
-      // through.
-      // @codingStandardsIgnoreLine
-      $converter = new \League\CommonMark\CommonMarkConverter(['html_input' => 'escape']);
-    }
+    $converter = new CommonMarkConverter(['html_input' => 'escape']);
     $messages = [];
     foreach ($history as $message) {
       // Only show messages newer than one day.
       if (isset($message['timestamp']) && $message['timestamp'] > strtotime('-1 day')) {
-        $html = $converter ? $converter->convert($message['message'])->__toString() : $message['message'];
+        $html = $converter->convert($message['message'])->getContent();
         $messages[] = [
           'role' => $message['role'],
           // The stored messages contain user input and LLM output, so they

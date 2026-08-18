@@ -32,6 +32,35 @@ variables:
   # The Drupal CI template uses 'selenium' as the service alias.
   DRUPAL_TEST_WEBDRIVER_HOSTNAME: selenium
 
+# The `ai` submodules (ai_content_suggestions, ai_translate, ai_validations,
+# ai_search, ...) are required as standalone contrib packages in composer.json,
+# but they themselves require drupal/ai. When Composer resolves this in CI, the
+# checked-out code is the "root package" of the resolution, but on MR pipelines
+# it's checked out as a detached commit, so Composer can't match it against
+# version constraints like "^1.4" or "^1.3" declared by those submodules -
+# see https://www.drupal.org/project/gitlab_templates/issues/3390895.
+#
+# The fix is to tell Composer explicitly which version the root package
+# represents, via COMPOSER_ROOT_VERSION. We derive it from the MR's target
+# branch (or, outside of an MR pipeline, the current ref), converting our
+# branch names (1.2.x, 1.5.x, 1.x, 2.0.x, 2.x, ...) into the matching Composer
+# dev-version string (1.2.x-dev, 1.5.x-dev, 1.x-dev, 2.0.x-dev, 2.x-dev, ...).
+# Tag pipelines are left alone, since Composer can already resolve the version
+# from the tag itself.
+.composer-root-version: &composer-root-version
+  - |
+    if [ -n "$CI_COMMIT_TAG" ]; then
+      echo "Tag pipeline ($CI_COMMIT_TAG): leaving COMPOSER_ROOT_VERSION unset."
+    else
+      if [ -n "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ]; then
+        _root_branch="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      else
+        _root_branch="$CI_COMMIT_REF_NAME"
+      fi
+      export COMPOSER_ROOT_VERSION="${_root_branch}-dev"
+      echo "Resolved branch '$_root_branch' -> COMPOSER_ROOT_VERSION=$COMPOSER_ROOT_VERSION"
+    fi
+
 # Non-required visual regression tests for the built UI widgets (mdxeditor,
 # json-schema-editor, default-tools-editor). These bundles can compile while
 # still rendering a broken widget, which PHP unit tests cannot catch.
@@ -72,7 +101,6 @@ visual_regression:
       when: never
     - changes:
         - ui/**/*
-        - modules/ai_ckeditor/**/*
         - tests/visual-regression/**/*
         - tests/modules/ai_test/**/*
         - src/Element/**/*
@@ -178,7 +206,6 @@ js_build:
   # Provide artifacts for subsequent jobs.
   artifacts:
     paths:
-      - modules/ai_ckeditor/js/build
       - ui/mdxeditor/dist
       - ui/default-tools-editor/dist
       - ui/json-schema-editor
@@ -186,12 +213,6 @@ js_build:
   # Build artifacts.
   script:
     - |
-      # Build ai_ckeditor JS artifacts
-      cd modules/ai_ckeditor
-      npm install
-      npm run build
-      cd $CI_PROJECT_DIR
-
       # Build mdxeditor JS artifacts
       cd ui/mdxeditor
       npm install
@@ -281,6 +302,18 @@ phpcs:
 phpstan:
   allow_failure: false
 
+.phpstan-base:
+  before_script:
+    - |
+      echo "Removing deprecated submodules bundled in drupal/ai to avoid a namespace collision (https://www.drupal.org/node/3568339)."
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/field_widget_actions' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_content_suggestions' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_translate' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_search' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_logging' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_validations' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_ckeditor' -prune -exec rm -rf {} + || true
+
 .phpunit-base:
   needs:
     - composer
@@ -300,14 +333,27 @@ phpstan:
       else
         echo "No FunctionalJavascript tests to run, skipping ffmpeg installation."
       fi
+    - |
+      echo "Removing deprecated submodules bundled in drupal/ai to avoid a namespace collision (https://www.drupal.org/node/3568339)."
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/field_widget_actions' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_content_suggestions' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_translate' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_search' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_logging' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_validations' -prune -exec rm -rf {} + || true
+      find "$CI_PROJECT_DIR/modules" -type d -path '*/ai_ckeditor' -prune -exec rm -rf {} + || true
 
 composer:
   before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
     # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
     - composer require "google/protobuf:4.33.6 as 3.25.0" --no-update
 
 composer (previous major):
   before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
     # We need doctrine/instantiator to still be on 2.0 for previous major.
     - composer require doctrine/instantiator:"2.0.0" --no-update
     # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
@@ -315,16 +361,29 @@ composer (previous major):
 
 composer (previous minor):
   before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
     # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
     - composer require "google/protobuf:4.33.6 as 3.25.0" --no-update
 
 composer (next minor):
   before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
+    # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
+    - composer require "google/protobuf:4.33.6 as 3.25.0" --no-update
+
+composer (next major):
+  before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
     # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
     - composer require "google/protobuf:4.33.6 as 3.25.0" --no-update
 
 composer (max PHP version):
   before_script:
+    # Resolve the self-referencing ai/ai_* submodule dependency cycle.
+    - !reference [.composer-root-version]
     # Workaround for https://www.drupal.org/project/opentelemetry/issues/3581743
     - composer require "google/protobuf:4.33.6 as 3.25.0" --no-update
 

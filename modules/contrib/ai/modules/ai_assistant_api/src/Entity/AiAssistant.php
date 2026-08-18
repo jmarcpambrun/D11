@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\ai_assistant_api\Entity;
 
+use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\Core\Plugin\DefaultSingleLazyPluginCollection;
+use Drupal\ai\Plugin\ChatMemory\ChatMemoryInterface;
 use Drupal\ai_assistant_api\AiAssistantInterface;
 
 /**
@@ -46,7 +50,7 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
  *     "label",
  *     "description",
  *     "allow_history",
- *     "history_context_length",
+ *     "chat_memory_settings",
  *     "pre_action_prompt",
  *     "system_prompt",
  *     "instructions",
@@ -62,7 +66,7 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
  *   },
  * )
  */
-final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface {
+final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface, EntityWithPluginCollectionInterface {
 
   /**
    * The example ID.
@@ -80,14 +84,14 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
   protected string $description;
 
   /**
-   * Allow history.
+   * The chat memory plugin ID, or an empty string for no chat memory.
    */
   protected string $allow_history;
 
   /**
-   * History context length.
+   * The chat memory plugin settings.
    */
-  protected string $history_context_length = "2";
+  protected array $chat_memory_settings = [];
 
   /**
    * The system role.
@@ -165,5 +169,119 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    * An AI Agent.
    */
   protected ?string $ai_agent = NULL;
+
+  /**
+   * The chat memory plugin collection.
+   *
+   * Not part of config_export. ConfigEntityBase::__sleep() removes it from the
+   * serialized payload, which is what keeps the plugin instance — and any
+   * service it holds — out of the form cache.
+   *
+   * @var \Drupal\Core\Plugin\DefaultSingleLazyPluginCollection|null
+   */
+  protected ?DefaultSingleLazyPluginCollection $chatMemoryPluginCollection = NULL;
+
+  /**
+   * Encapsulates the creation of the chat memory plugin collection.
+   *
+   * @return \Drupal\Core\Plugin\DefaultSingleLazyPluginCollection|null
+   *   The plugin collection, or NULL when no chat memory plugin is selected.
+   */
+  protected function getChatMemoryPluginCollection(): ?DefaultSingleLazyPluginCollection {
+    if (empty($this->allow_history)) {
+      return NULL;
+    }
+
+    if ($this->chatMemoryPluginCollection === NULL) {
+      try {
+        $this->chatMemoryPluginCollection = new DefaultSingleLazyPluginCollection(
+          \Drupal::service('plugin.manager.ai.chat_memory'),
+          $this->allow_history,
+          $this->chat_memory_settings
+        );
+      }
+      catch (PluginException) {
+        // The configured plugin is gone: its module was uninstalled or the ID
+        // was renamed. Behave as if no chat memory plugin is selected.
+        // ConfigEntityBase calls getPluginCollections() from set(), __sleep()
+        // and calculateDependencies(), so letting this escape would fatal on
+        // every one of them and take the stored settings down with it.
+        return NULL;
+      }
+    }
+
+    return $this->chatMemoryPluginCollection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPluginCollections(): array {
+    $collection = $this->getChatMemoryPluginCollection();
+
+    return $collection === NULL ? [] : ['chat_memory_settings' => $collection];
+  }
+
+  /**
+   * Returns the chat memory plugin instance.
+   *
+   * @return \Drupal\ai\Plugin\ChatMemory\ChatMemoryInterface|null
+   *   The chat memory plugin instance, or NULL if none is selected.
+   */
+  public function getChatMemory(): ?ChatMemoryInterface {
+    $collection = $this->getChatMemoryPluginCollection();
+    if ($collection === NULL) {
+      return NULL;
+    }
+
+    try {
+      // Passing the current plugin ID rather than relying on the collection's
+      // own instance ID means a chat memory plugin that was swapped out by
+      // self::set() is instantiated fresh instead of handing back the
+      // previously selected one.
+      $plugin = $collection->get($this->allow_history);
+    }
+    catch (PluginException) {
+      return NULL;
+    }
+
+    return $plugin instanceof ChatMemoryInterface ? $plugin : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function set($property_name, $value) {
+    // The assistant form writes the newly selected plugin ID onto the entity
+    // on every AJAX rebuild. Drop the collection so it is rebuilt for the new
+    // selection, otherwise the settings subform stays on the old plugin.
+    // Both assignments happen before the parent call because
+    // ConfigEntityBase::set() itself calls getPluginCollections(), which
+    // would otherwise rebuild the collection on the plugin ID we are
+    // replacing.
+    if ($property_name === 'allow_history' && $value !== ($this->allow_history ?? NULL)) {
+      $this->chatMemoryPluginCollection = NULL;
+      $this->allow_history = $value;
+    }
+
+    return parent::set($property_name, $value);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toArray() {
+    $properties = parent::toArray();
+    // chat_memory_settings only has a schema for a non-empty allow_history
+    // (it is typed dynamically off it, see ai_assistant_api.schema.yml): a
+    // dynamic type keyed off an empty string does not resolve to any
+    // defined schema. Omit the key entirely when no chat memory plugin is
+    // selected, rather than exporting a value with no schema to validate
+    // it against.
+    if (empty($this->allow_history)) {
+      unset($properties['chat_memory_settings']);
+    }
+    return $properties;
+  }
 
 }

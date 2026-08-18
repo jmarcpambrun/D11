@@ -29,11 +29,6 @@ The module includes two reference implementations:
 1. The AI module must be installed and configured.
 2. At least one Provider module must be enabled and configured.
 
-The AI Deepchat Chatbot requires the
-[league/commonmark](https://github.com/thephpleague/commonmark) library. This
-must be downloaded and made available to the codebase: it is recommended to use
-composer to achieve this.
-
 ## How to configure the AI Chatbot module
 1. Enable the AI Chatbot module.
 2. Visit /admin/structure/block

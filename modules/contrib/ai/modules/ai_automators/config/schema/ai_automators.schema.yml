@@ -128,3 +128,35 @@ ckeditor5.plugin.ai_ckeditor_ai.ai_automators_ckeditor.workflows.*:
     output:
       type: string
       label: 'Output'
+
+field_widget_action_automator_chain_base:
+  type: field_widget_action_plugin_base
+  label: 'Automator chain field widget action'
+  mapping:
+    settings:
+      type: mapping
+      label: 'Automator chain settings'
+      mapping:
+        automator_chain_type:
+          type: string
+          label: 'Automator chain type'
+        chain_settings:
+          type: sequence
+          label: 'Per-chain settings'
+          sequence:
+            type: mapping
+            label: 'Chain settings'
+            mapping:
+              input_mapping:
+                type: sequence
+                label: 'Chain input field to source field mapping'
+                sequence:
+                  type: string
+                  label: 'Source field name'
+              output_field:
+                type: string
+                label: 'Chain output field'
+
+field_widget_action.plugin.automator_chain_text:
+  type: field_widget_action_automator_chain_base
+  label: 'Automator chain text field widget action'

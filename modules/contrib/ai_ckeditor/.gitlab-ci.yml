@@ -1,0 +1,42 @@
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+# Build JS artifacts. They are needed for tests.
+js_build:
+  stage: build
+  image: node:20.14.0-alpine
+  # Provide artifacts for subsequent jobs.
+  artifacts:
+    paths:
+      - js/build
+    expire_in: 1h
+  # Build artifacts.
+  script:
+    - |
+      # Build ai_ckeditor JS artifacts
+      npm install
+      npm run build
+
+.phpunit-base:
+  needs:
+    - composer
+    - js_build
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends ffmpeg
+
+variables:
+  _PHPUNIT_EXTRA: --verbose
+  _PHPUNIT_CONCURRENT: 1
+  _CSPELL_IGNORE_PATHS: "'.cspell-project-words.txt', 'js'"
+  # Selenium hostname for video recording in FunctionalJavascript tests.
+  # getVideoDisplay() in the AI base test class captures this host's X display
+  # ($host:99.0) with ffmpeg. The Drupal CI template uses 'selenium' as the
+  # service alias; without this ffmpeg targets the default 'selenium-chrome',
+  # which does not resolve, so ffmpeg dies and the graceful-stop write to its
+  # stdin fails with a broken pipe notice.
+  DRUPAL_TEST_WEBDRIVER_HOSTNAME: selenium

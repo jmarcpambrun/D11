@@ -1,0 +1,74 @@
+# Use the Drupal GitLab CI template.
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+variables:
+  # Give more verbose PHPUnit output.
+  _PHPUNIT_EXTRA: --verbose
+  # Opt into the relevant versions.
+  OPT_IN_TEST_PREVIOUS_MAJOR: 0
+  OPT_IN_TEST_PREVIOUS_MINOR: 1
+  OPT_IN_TEST_NEXT_MINOR: 1
+  OPT_IN_TEST_NEXT_MAJOR: 0
+  OPT_IN_TEST_MAX_PHP: 1
+  # Use runtests.sh which gives better output.
+  _PHPUNIT_CONCURRENT: 1
+  # Configured skipped tests.
+  SKIP_ESLINT: 1
+  SKIP_STYLELINT: 1   # Until fixed in gitlab templates.
+  _CSPELL_IGNORE_PATHS: "'.cspell-project-words.txt', 'grumphp.yml"
+  COMPOSER_IGNORE_PLATFORM_REQS: 'ext-ffi'
+
+phpunit:
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "disabled"
+
+phpunit (next minor):
+  extends: phpunit
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "disabled"
+
+phpunit (max PHP version):
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "disabled"
+
+phpunit (previous minor):
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "disabled"
+
+cspell:
+  allow_failure: false
+phpcs:
+  allow_failure: false
+phpstan:
+  allow_failure: false
+
+.phpunit-base:
+  before_script:
+    # Remove the old submodule to prevent namespace collisions
+    - rm -rf $_WEB_ROOT/modules/contrib/ai/modules/ai_search || true
+    # Enable the FFI module.
+    - echo "extension=ffi" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    # Show the configuration for debugging purposes.
+    - php --ri ffi
+  variables:
+    SYMFONY_DEPRECATIONS_HELPER: "disabled"
+
+.composer-base:
+  before_script:
+    # Force Composer to use the dev version of drupal/ai for all CI jobs.
+    - composer config repositories.drupal_ai vcs https://git.drupalcode.org/project/ai.git
+    - composer require drupal/ai:"1.x-dev" --no-update
+
+composer (previous major):
+  before_script:
+    # Inherit from the base composer job.
+    - !reference [ .composer-base, before_script ]
+    # We need doctrine/instantiator to still be on 2.0 for previous major.
+    - composer require doctrine/instantiator:"2.0.0" --no-update

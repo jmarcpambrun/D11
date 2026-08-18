@@ -73,7 +73,6 @@ build_dir() {
 
 printf "%s[2/5] Building UIs …%s\n" "$WHITE_ON_BLUE" "$NC"
 
-build_dir modules/ai_ckeditor
 build_dir ui/mdxeditor
 build_dir ui/default-tools-editor
 build_dir ui/json-schema-editor
@@ -81,9 +80,6 @@ build_dir ui/json-schema-editor
 printf "%s[3/5] Committing built UIs …%s\n" "$WHITE_ON_BLUE" "$NC"
 
 git add -f \
-  modules/ai_ckeditor/package.json \
-  modules/ai_ckeditor/package-lock.json \
-  modules/ai_ckeditor/js/build \
   ui/mdxeditor/package.json \
   ui/mdxeditor/package-lock.json \
   ui/mdxeditor/dist \
@@ -108,14 +104,11 @@ reset_version() {
   cd - >/dev/null 2>&1 || exit 1
 }
 
-reset_version modules/ai_ckeditor
 reset_version ui/mdxeditor
 reset_version ui/default-tools-editor
 reset_version ui/json-schema-editor
 
 git add -f \
-  modules/ai_ckeditor/package.json \
-  modules/ai_ckeditor/package-lock.json \
   ui/mdxeditor/package.json \
   ui/mdxeditor/package-lock.json \
   ui/default-tools-editor/package.json \
@@ -124,7 +117,6 @@ git add -f \
   ui/json-schema-editor/package-lock.json
 
 git rm -rf \
-  modules/ai_ckeditor/js/build \
   ui/mdxeditor/dist \
   ui/default-tools-editor/dist \
   ui/json-schema-editor/dist

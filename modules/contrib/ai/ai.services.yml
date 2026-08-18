@@ -94,11 +94,20 @@ services:
   ai.hostname_filter_service:
     class: Drupal\ai\Service\HostnameFilter
     arguments: ['@logger.factory', '@config.factory']
+  ai.html_to_markdown_converter:
+    class: Drupal\ai\Service\HtmlToMarkdown\HtmlToMarkdownConverter
+    arguments: ['@config.factory']
+  Drupal\ai\Service\HtmlToMarkdown\HtmlToMarkdownConverterInterface: '@ai.html_to_markdown_converter'
   plugin.manager.ai.chat_processor:
     class: Drupal\ai\PluginManager\ChatProcessorPluginManager
     parent: default_plugin_manager
     arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
   Drupal\ai\PluginManager\ChatProcessorPluginManager: '@plugin.manager.ai.chat_processor'
+  plugin.manager.ai.chat_memory:
+    class: Drupal\ai\PluginManager\ChatMemoryPluginManager
+    parent: default_plugin_manager
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
+  Drupal\ai\PluginManager\ChatMemoryPluginManager: '@plugin.manager.ai.chat_memory'
   ai.file_manager:
     class: Drupal\ai\Service\AiFileManager
     autowire: true
@@ -106,3 +115,6 @@ services:
     class: Drupal\ai\Service\AiValidator
   Drupal\ai\Service\AiValidator: "@ai.validator"
   Drupal\ai\Service\AiValidatorInterface: "@ai.validator"
+  Drupal\ai\Hook\HtmlToMarkdown:
+    class: Drupal\ai\Hook\HtmlToMarkdown
+    autowire: true

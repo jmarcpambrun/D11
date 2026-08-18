@@ -8,3 +8,7 @@ administer automator_chain types:
 
 administer automators_tool:
   title: 'Administer automators tool'
+
+use automator chain widget actions:
+  title: 'Use automator chain widget actions'
+  description: 'Trigger configured automator chains from field widget action buttons on entity forms. Running a chain may consume AI provider resources.'

@@ -98,11 +98,25 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   protected $reasoningTokenUsage = NULL;
 
   /**
-   * Cached token usage.
+   * Cached (read) token usage.
    *
    * @var int|null
    */
   protected $cachedTokenUsage = NULL;
+
+  /**
+   * Cached write (creation) token usage.
+   *
+   * @var int|null
+   */
+  protected $cachedWriteTokenUsage = NULL;
+
+  /**
+   * Tool use token usage.
+   *
+   * @var int|null
+   */
+  protected $toolUseTokenUsage = NULL;
 
   /**
    * The created chat output after iteration.
@@ -645,6 +659,12 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
     if ($message->getCachedTokenUsage() !== NULL) {
       $this->cachedTokenUsage = $message->getCachedTokenUsage();
     }
+    if ($message->getCachedWriteTokenUsage() !== NULL) {
+      $this->cachedWriteTokenUsage = $message->getCachedWriteTokenUsage();
+    }
+    if ($message->getToolUseTokenUsage() !== NULL) {
+      $this->toolUseTokenUsage = $message->getToolUseTokenUsage();
+    }
   }
 
   /**
@@ -662,7 +682,9 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
       input: $this->inputTokenUsage,
       output: $this->outputTokenUsage,
       reasoning: $this->reasoningTokenUsage,
-      cached: $this->cachedTokenUsage
+      cached: $this->cachedTokenUsage,
+      cachedWrite: $this->cachedWriteTokenUsage,
+      toolUse: $this->toolUseTokenUsage,
     ));
     return $output;
   }

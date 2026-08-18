@@ -47,7 +47,10 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    private readonly PromptJsonDecoderInterface $promptJsonDecoder,
+    // Must stay protected and non-readonly so DependencySerializationTrait on
+    // the base class can swap this service out for its ID when the guardrail
+    // form is written to the form cache.
+    protected PromptJsonDecoderInterface $promptJsonDecoder,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
@@ -130,7 +133,7 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
     $form['invalid_topics_present_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message to send if invalid topics are present'),
-      '#default_value' => $this->configuration['invalid_topics_present_message'] ?: 'The text contains invalid topics',
+      '#default_value' => ($this->configuration['invalid_topics_present_message'] ?? '') ?: 'The text contains invalid topics',
       // This property will land into core soon, see
       // https://www.drupal.org/project/drupal/issues/3202631. It can stay
       // after this is added to Drupal core.
@@ -149,7 +152,7 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
     $form['valid_topics_missing_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message to send if no valid topics are found'),
-      '#default_value' => $this->configuration['valid_topics_missing_message'] ?: 'The text does not contain any of the valid topics',
+      '#default_value' => ($this->configuration['valid_topics_missing_message'] ?? '') ?: 'The text does not contain any of the valid topics',
       // This property will land into core soon, see
       // https://www.drupal.org/project/drupal/issues/3202631. It can stay
       // after this is added to Drupal core.
@@ -312,7 +315,7 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
 
     if (\count($invalid_topics_found) > 0) {
       return new StopResult(
-        $this->configuration['invalid_topics_present_message'],
+        ($this->configuration['invalid_topics_present_message'] ?? '') ?: 'The text contains invalid topics',
         $this,
         [
           'valid_topics' => $valid_topics,
@@ -324,7 +327,7 @@ final class RestrictToTopic extends AiGuardrailPluginBase implements Configurabl
 
     if (\count($valid_topics) > 0 && \count($valid_topics_found) === 0) {
       return new StopResult(
-        $this->configuration['valid_topics_missing_message'],
+        ($this->configuration['valid_topics_missing_message'] ?? '') ?: 'The text does not contain any of the valid topics',
         $this,
         [
           'valid_topics' => $valid_topics,

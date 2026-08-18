@@ -5,6 +5,8 @@
  * Install, update and uninstall functions for the ai module.
  */
 
+use Drupal\Core\Config\FileStorage;
+
 /**
  * Implements hook_requirements().
  */
@@ -202,4 +204,28 @@ function ai_update_14001(): void {
     $definition = \Drupal::entityTypeManager()->getDefinition('ai_file');
     $update_manager->installEntityType($definition);
   }
+}
+
+/**
+ * Install default settings for the AI HTML to Markdown converter.
+ */
+function ai_update_15001(): void {
+  $config = \Drupal::configFactory()->getEditable('ai.html_to_markdown.settings');
+  if (!$config->isNew()) {
+    // Already installed or already updated; don't overwrite.
+    return;
+  }
+  $module_path = \Drupal::service('extension.list.module')->getPath('ai');
+  $storage = new FileStorage($module_path . '/config/install');
+  $data = $storage->read('ai.html_to_markdown.settings');
+  if ($data !== FALSE) {
+    $config->setData($data)->save();
+  }
+}
+
+/**
+ * Clear modules list to discover new locations of submodules.
+ */
+function ai_update_15002() {
+  \Drupal::service('extension.list.module')->reset();
 }

@@ -1,0 +1,34 @@
+site_name: AI CKEditor integration
+site_url: https://project.pages.drupalcode.org/ai_ckeditor
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration: configuration.md
+  - Usage:
+      - Overview: usage/index.md
+      - AI actions: usage/actions.md
+  - For Developers:
+      - Overview: developers/index.md
+      - Adding an AI action: developers/plugins.md
+  - Testing: testing.md
+  - Modules extending this: extending-modules.md

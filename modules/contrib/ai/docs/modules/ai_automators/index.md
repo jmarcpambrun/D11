@@ -156,12 +156,13 @@ Chains will appear in the listing at /admin/content/automator-chain, but this
 is only for debug purposes: under normal operation this list will be empty.)
 
 ##### Using AI Automator Chains
-Currently, AI Automator Chains are only supported through the AI CKEditor
-Integration module or by utilising custom code. As such, they will not be
-visible unless the AI CKEditor Integration module is enabled, or a developer has
-placed some code in the site's setting.php file (for situations where they are
-using Chains in custom code but do not have the AI CKEditor Integration module
-enabled).
+Currently, AI Automator Chains are supported through the AI CKEditor
+Integration module, through Field Widget Actions, or by utilising custom code.
+As such, the pages for administering Chains will not be visible unless the AI
+CKEditor Integration module (or the AI Agents module) is enabled, or a
+developer has placed some code in the site's settings.php file (for
+situations where they are using Chains through Field Widget Actions or in
+custom code but do not have the AI CKEditor Integration module enabled).
 
 ###### Add an AI Automator Chain
 1. Visit the Automator Chain settings page (/admin/structure/ai/automator_chain_types)
@@ -210,6 +211,48 @@ enabled).
    They will then have the option of inserting or discarding it.
 
 If you would like to see a video of this process, please [visit YouTube](https://www.youtube.com/watch?v=PmChGwzilck).
+
+###### Field Widget Actions
+AI Automator Chains can also be triggered from a content edit form using the
+[Field Widget Actions](https://www.drupal.org/project/field_widget_actions)
+(FWA) module, letting a chain run on-demand via AJAX and write its result into
+a field without saving or reloading the page. This is useful when a single
+button click should carry out several AI steps (for example: identify a
+topic, then research it, then write copy about it) that would otherwise need
+their own fields on the entity.
+
+1. Follow [the instructions for adding an AI Automator Chain](#add-an-ai-automator-chain).
+   If you don't have the AI CKEditor Integration or AI Agents module enabled,
+   you will need to add `$settings['ai_automator_advanced_mode_enabled'] = TRUE;`
+   to your site's settings.php file to access the Automator Chain
+   administration pages, as described in the [Custom code](#custom-code)
+   section below. This can be safely removed again once your chains have
+   been created.
+2. Ensure the Field Widget Actions module is enabled.
+3. Grant the **Use automator chain widget actions** permission
+   (`/admin/people/permissions`) to any roles that should be able to trigger
+   chains from content edit forms. This is kept separate from the permission
+   to edit the field itself, since running a chain consumes AI provider
+   resources.
+4. Go to the "Manage form display" tab of the entity type containing the
+   field you want to attach the button to, and click the Field Widget
+   Actions gear icon for that field.
+5. Add one of the "Automator Chain" actions provided by AI Automators, for
+   example "Automator Chain Text Suggestion" for plain or long text fields.
+   Only actions whose supported field types match at least one existing
+   chain's output field will be usable; see the
+   [developer documentation](../../developers/writing_an_ai_automators_plugin.md)
+   for how to add support for further field types.
+6. In the action's settings, select which Automator Chain to run, map each of
+   the chain's required input fields to a source field on this entity, and
+   select which field on the chain should provide the value written back
+   into this field.
+7. Save the form display. Users with the permission above will now see a
+   button next to the field that runs the chain and populates the field's
+   value via AJAX.
+
+See the [Field Widget Action Examples](#field-widget-action-examples) section
+for a full worked example.
 
 ###### Custom code
 1. If you do not have the AI CKEditor Integration module enabled, you will need
@@ -261,6 +304,7 @@ For step-by-step examples of configuring AI Automators with Field Widget Actions
 - [Text to Image Media Field](examples/text_to_image_media_automator.md) - Generate image from content using the `LLM: Media Image Generation` automator
 - [Text to Address Field](examples/address_automator.md) - Generate address from content using the `LLM: Address` automator
 - [Metatag](examples/metatag_automator.md) - Generate metatags for content using the `LLM: Metatag` automator
+- [Text field + `Automator Chain Text Suggestion` action](examples/automator_chain_text.md) - Run a multi-step AI Automator Chain from a text field using the `Automator Chain Text Suggestion` action
 
 ## Queue processing
 

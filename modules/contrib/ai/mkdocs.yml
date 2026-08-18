@@ -96,6 +96,7 @@ nav:
     - Plugins/Managers:
       - Function Call Plugins: developers/function_call.md
       - ChatProcessor Plugin: developers/writing_a_chat_processor_plugin.md
+      - ChatMemory Plugin: developers/writing_a_chat_memory_plugin.md
       - Function Call Schema: developers/function_call_schema.md
       - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
@@ -105,6 +106,7 @@ nav:
       - Text Chunker: developers/text_chunker.md
       - Tokenizer: developers/tokenizer.md
       - Response Helpers: developers/response_helpers.md
+      - HTML to Markdown Converter: developers/html_to_markdown_converter.md
     - Develop an AI Provider:
       - Getting Started: developers/writing_an_ai_provider.md
       - Testing a Provider: developers/testing_an_ai_provider.md
@@ -112,6 +114,7 @@ nav:
     - Guardrails:
       - Overview: developers/guardrails/index.md
       - Input Length Limit: developers/guardrails/input_length_limit.md
+      - Moderation: developers/guardrails/moderation.md
       - Regexp Guardrail: developers/guardrails/regexp_guardrail.md
       - Restrict to Topic: developers/guardrails/restrict_to_topic.md
       - Writing Custom Guardrails: developers/guardrails/custom_guardrail.md

@@ -868,6 +868,23 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
   }
 
   /**
+   * Decodes HTML entities in a label returned by the AI model.
+   *
+   * LLMs sometimes encode characters in their output (e.g. &amp; → &). Call
+   * this before comparing model output to allowed-values lists so that
+   * "Latin America &amp; Caribbean" still matches "Latin America & Caribbean".
+   *
+   * @param string $value
+   *   The raw value from the AI response.
+   *
+   * @return string
+   *   The value with all HTML entities decoded.
+   */
+  protected function decodeLabel(string $value): string {
+    return html_entity_decode($value, ENT_QUOTES | ENT_HTML5);
+  }
+
+  /**
    * Decode a value array.
    *
    * @param mixed $json
@@ -877,12 +894,26 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
    *   The decoded array.
    */
   public function decodeValueArray($json) {
+    // Models occasionally nest all values inside a single array-valued "value"
+    // key: [{"value": ["A","B","C"]}]. Flatten one level so downstream code
+    // always receives a list of scalars, not a list-of-lists.
+    $append = function (array &$out, $value): void {
+      if (is_array($value)) {
+        foreach ($value as $v) {
+          $out[] = $v;
+        }
+      }
+      else {
+        $out[] = $value;
+      }
+    };
+
     // Sometimes it doesn't become a valid JSON response, but many.
     if (isset($json[0]['value'])) {
       $values = [];
       foreach ($json as $val) {
         if (isset($val['value'])) {
-          $values[] = $val['value'];
+          $append($values, $val['value']);
         }
       }
       return $values;
@@ -892,7 +923,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
       $values = [];
       foreach ($json as $val) {
         if (is_array($val) && isset($val[key($val)])) {
-          $values[] = $val[key($val)];
+          $append($values, $val[key($val)]);
         }
       }
       return $values;
@@ -910,7 +941,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, AiAutomatorPostChec
       return $values;
     }
     elseif (isset($json['value'])) {
-      return [$json['value']];
+      $values = [];
+      $append($values, $json['value']);
+      return $values;
     }
     return [];
   }

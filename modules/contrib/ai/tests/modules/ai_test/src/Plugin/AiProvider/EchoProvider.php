@@ -335,6 +335,22 @@ class EchoProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function moderation(ModerationInput|string $input, ?string $model_id = NULL, array $tags = []): ModerationOutput {
+    // Normalize to a ModerationInput so registered mock results can be matched
+    // the same way chat() matches them. A mock response may set 'flagged' and
+    // optional 'information' to drive the moderation outcome from a test.
+    $moderation_input = $input instanceof ModerationInput ? $input : new ModerationInput((string) $input);
+    $matched_request = $this->getMatchingRequest('moderation', $moderation_input);
+    if ($matched_request) {
+      if (!empty($matched_request['wait'])) {
+        usleep($matched_request['wait'] * 1000);
+      }
+      $mock = $matched_request['response'];
+      $mod = new ModerationResponse((bool) ($mock['flagged'] ?? FALSE), $mock['information'] ?? []);
+      return new ModerationOutput($mod, $mock, []);
+    }
+
+    // Default behavior: flag everything so the "flagged" path is deterministic
+    // without having to register a mock.
     $response = [
       'input' => sprintf('Hello world! %s', (string) $input),
     ];
