@@ -62,24 +62,20 @@ final class Routes implements ContainerInjectionInterface {
           'model' => ['type' => $type, 'provider' => 'modeler_api'],
         ],
       ];
-	  
-	  $basePath = $owner->configEntityBasePath();
-      if ($basePath === NULL) {
-        continue;
-      } 
+
       $routes->add('entity.' . $type . '.save', new Route(
-         '/' . $basePath . '/modeler_api/' . $type . '/{modeler_id}/save',
+        '/admin/modeler_api/' . $type . '/{modeler_id}/save',
         [
           '_controller' => 'Drupal\modeler_api\Controller\ModelerApi::save',
           'model_owner_id' => $owner->getPluginId(),
         ],
         [
           '_permission' => ModelerApiPermissions::getPermissionKey('edit', $ownerId),
-          /*'_csrf_request_header_token' => 'TRUE',*/
+          '_csrf_request_header_token' => 'TRUE',
         ],
       ));
       $routes->add('entity.' . $type . '.config', new Route(
-        '/' . $basePath . '/modeler_api/' . $type . '/{modeler_id}/config',
+        '/admin/modeler_api/' . $type . '/{modeler_id}/config',
         [
           '_controller' => 'Drupal\modeler_api\Controller\ModelerApi::configForm',
           'model_owner_id' => $owner->getPluginId(),
@@ -90,7 +86,7 @@ final class Routes implements ContainerInjectionInterface {
       ));
       if ($owner->supportsReplayData()) {
         $routes->add('entity.' . $type . '.replay', new Route(
-          '/' . $basePath . '/modeler_api/' . $type . '/replay',
+          '/admin/modeler_api/' . $type . '/replay',
           [
             '_controller' => 'Drupal\modeler_api\Controller\ModelerApi::loadReplayData',
             'model_owner_id' => $owner->getPluginId(),
@@ -102,7 +98,7 @@ final class Routes implements ContainerInjectionInterface {
       }
       if ($owner->supportsTesting()) {
         $routes->add('entity.' . $type . '.test', new Route(
-          '/' . $basePath . '/modeler_api/' . $type . '/test',
+          '/admin/modeler_api/' . $type . '/test',
           [
             '_controller' => 'Drupal\modeler_api\Controller\ModelerApi::testModel',
             'model_owner_id' => $owner->getPluginId(),
@@ -113,7 +109,10 @@ final class Routes implements ContainerInjectionInterface {
         ));
       }
 
-
+      $basePath = $owner->configEntityBasePath();
+      if ($basePath === NULL) {
+        continue;
+      }
       $owners[$ownerId] = $owner;
 
       $routes->add('entity.' . $type . '.collection', new Route(

@@ -2,6 +2,7 @@
 
 namespace Drupal\modeler_api\Hook;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -35,6 +36,13 @@ class EntityHooks {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    */
+  public function __construct(
+    protected Api $modelerApiService,
+    protected ModelerPluginManager $modelerManager,
+    protected ModelOwnerPluginManager $modelOwnerPluginManager,
+    protected AccountInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+  ) {}
 
   /**
    * Implements hook_entity_type_build().
@@ -49,9 +57,7 @@ class EntityHooks {
       return;
     }
     $alreadyRunning = TRUE;
-
-    /*foreach ($this->modelOwnerPluginManager->getAllInstances(TRUE) as $owner) {*/
-    foreach (\Drupal::service('plugin.manager.modeler_api.model_owner')->getAllInstances(TRUE) as $owner) {
+    foreach ($this->modelOwnerPluginManager->getAllInstances(TRUE) as $owner) {
       $basePath = $owner->configEntityBasePath();
       if ($basePath === NULL) {
         continue;
@@ -78,14 +84,17 @@ class EntityHooks {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity.
+   * @param \Drupal\Core\Cache\CacheableMetadata $cacheability
+   *   The cacheable metadata to add to if operations vary by or depend on
+   *   something.
    *
    * @return array
    *   An array of operations.
    */
   #[Hook('entity_operation')]
-  public function entityOperation(EntityInterface $entity): array {
+  public function entityOperation(EntityInterface $entity, CacheableMetadata $cacheability): array {
     $operations = [];
-    $modelers = \Drupal::service('plugin.manager.modeler_api.modeler')->getAllInstances();
+    $modelers = $this->modelerManager->getAllInstances();
     $numberOfModelers = count($modelers);
     if ($numberOfModelers === 1) {
       // There is only the fallback modeler, no operation provided.
@@ -93,7 +102,7 @@ class EntityHooks {
     }
     if (
       $entity instanceof ConfigEntityInterface &&
-      ($owner = \Drupal::service('modeler_api.service')->findOwner($entity)) &&
+      ($owner = $this->modelerApiService->findOwner($entity)) &&
       $owner->configEntityBasePath()
     ) {
       $type = $entity->getEntityTypeId();
@@ -103,9 +112,9 @@ class EntityHooks {
         // The default edit form comes from the list builder. If we have both
         // routes, "edit_form" and "edit", let's add the second one here.
         $name = 'entity.' . $type . '.edit';
-        $defaultModeler = \Drupal::service('modeler_api.service')->getModeler();
+        $defaultModeler = $this->modelerApiService->getModeler();
         $modelerId = $defaultModeler->getPluginId();
-        if (\Drupal::service('modeler_api.service')->getRouteByName($name) && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $defaultModeler->getPluginId()))) {
+        if ($this->modelerApiService->getRouteByName($name) && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $defaultModeler->getPluginId()))) {
           $operations['edit_with_modeler'] = [
             'title' => t('Edit with modeler'),
             'url' => Url::fromRoute($name, [$type => $entity->id()]),
@@ -115,14 +124,14 @@ class EntityHooks {
       }
       else {
         foreach ($modelers as $id => $modeler) {
-          if ($modelerId !== $id && $modeler->isEditable() && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $id))) {
+          if ($modelerId !== $id && $modeler->isEditable() && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $id))) {
             $operations['open_with_' . $id] = [
               'title' => t('Edit with :label', [':label' => $modeler->label()]),
               'url' => Url::fromRoute('entity.' . $type . '.edit_with.' . $id, [$type => $entity->id()]),
               'weight' => 40,
             ];
           }
-          if ($id !== 'fallback' && $modelerId !== $id && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('view', $owner->getPluginId(), $id))) {
+          if ($id !== 'fallback' && $modelerId !== $id && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('view', $owner->getPluginId(), $id))) {
             $operations['view_with_' . $id] = [
               'title' => t('View with :label', [':label' => $modeler->label()]),
               'url' => Url::fromRoute('entity.' . $type . '.view_with.' . $id, [$type => $entity->id()]),
@@ -133,14 +142,14 @@ class EntityHooks {
       }
 
       $name = 'entity.' . $type . '.canonical';
-      if (\Drupal::service('modeler_api.service')->getRouteByName($name) && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('view', $owner->getPluginId()))) {
+      if ($this->modelerApiService->getRouteByName($name) && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('view', $owner->getPluginId()))) {
         $operations['view'] = [
           'title' => t('View'),
           'url' => Url::fromRoute($name, [$type => $entity->id()]),
           'weight' => 44,
         ];
       }
-      if ($owner->supportsStatus() && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $modelerId))) {
+      if ($owner->supportsStatus() && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $modelerId))) {
         if (!$entity->status()) {
           $operations['enable'] = [
             'title' => t('Enable'),
@@ -157,7 +166,7 @@ class EntityHooks {
         }
       }
       $name = 'entity.' . $type . '.clone';
-      if (\Drupal::service('modeler_api.service')->getRouteByName($name) && \Drupal::currentUser()->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $modelerId))) {
+      if ($this->modelerApiService->getRouteByName($name) && $this->currentUser->hasPermission(ModelerApiPermissions::getPermissionKey('edit', $owner->getPluginId(), $modelerId))) {
         if ($owner->isEditable($entity)) {
           $operations['clone'] = [
             'title' => t('Clone'),
@@ -168,7 +177,7 @@ class EntityHooks {
       }
       if ($owner->isExportable($entity)) {
         $name = 'entity.' . $type . '.export';
-        if (\Drupal::service('modeler_api.service')->getRouteByName($name)) {
+        if ($this->modelerApiService->getRouteByName($name)) {
           $operations['export'] = [
             'title' => t('Export'),
             'url' => Url::fromRoute($name, [$type => $entity->id()]),
@@ -176,7 +185,7 @@ class EntityHooks {
           ];
         }
         $name = 'entity.' . $type . '.export_recipe';
-        if (\Drupal::service('modeler_api.service')->getRouteByName($name)) {
+        if ($this->modelerApiService->getRouteByName($name)) {
           $operations['export_recipe'] = [
             'title' => t('Export as recipe'),
             'url' => Url::fromRoute($name, [$type => $entity->id()]),
@@ -200,19 +209,22 @@ class EntityHooks {
    *   The operations array.
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity.
+   * @param \Drupal\Core\Cache\CacheableMetadata $cacheability
+   *   The cacheable metadata to add to if operations vary by or depend on
+   *   something.
    */
   #[Hook('entity_operation_alter')]
-  public function entityOperationAlter(array &$operations, EntityInterface $entity): void {
+  public function entityOperationAlter(array &$operations, EntityInterface $entity, CacheableMetadata $cacheability): void {
     if (!isset($operations['edit'])) {
       return;
     }
-    $modelers = \Drupal::service('plugin.manager.modeler_api.modeler')->getAllInstances();
+    $modelers = $this->modelerManager->getAllInstances();
     if (count($modelers) <= 2) {
       return;
     }
     if (
       $entity instanceof ConfigEntityInterface &&
-      ($owner = \Drupal::service('modeler_api.service')->findOwner($entity)) &&
+      ($owner = $this->modelerApiService->findOwner($entity)) &&
       $owner->configEntityBasePath()
     ) {
       $modeler = $owner->getModeler($entity);
@@ -233,7 +245,7 @@ class EntityHooks {
     foreach ($this->modelOwnerPluginManager->getAllInstances(TRUE) as $owner) {
       $provider = $owner->getPluginDefinition()['provider'];
       if (in_array($provider, $modules)) {
-        \Drupal::entityTypeManager()->clearCachedDefinitions();
+        $this->entityTypeManager->clearCachedDefinitions();
         return;
       }
     }

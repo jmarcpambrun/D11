@@ -532,21 +532,31 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
    *       // the same target, every one of them must carry a non-empty
    *       // conditionId. Defaults to FALSE when omitted.
    *       'requireConditionWhenParallel' => TRUE,
+   *       // Opt-in: when TRUE, the modeler permits condition reuse — multiple
+   *       // successor edges that share the same non-empty conditionId and the
+   *       // same target are rendered as one shared condition node. Defaults to
+   *       // FALSE when omitted.
+   *       'allowConditionReuse' => TRUE,
    *     ],
    *   ],
    *   Api::COMPONENT_TYPE_GATEWAY => ['successors' => ['min' => 1, 'max' => 1]],
    * ]
    * @endcode
    *
-   * @return array<int, array{min?: int, max?: int, successors?: array{min?: int, max?: int, requireConditionWhenParallel?: bool}}>
+   * @return array<int, array{min?: int, max?: int, successors?: array{min?: int, max?: int, requireConditionWhenParallel?: bool, allowConditionReuse?: bool}}>
    *   An associative array keyed by component type constant. Each value is
    *   an array with optional 'min' and 'max' keys for component count, and
    *   an optional 'successors' key with its own 'min'/'max' for the number
    *   of outgoing connections per component of that type, plus an optional
    *   'requireConditionWhenParallel' flag (default FALSE). When the flag is
    *   TRUE, any group of two or more successors of the same component that
-   *   share the same target must each carry a non-empty conditionId. An
-   *   empty array means no constraints (the default).
+   *   share the same target must each carry a non-empty conditionId. The
+   *   'successors' key also accepts an optional 'allowConditionReuse' flag
+   *   (default FALSE). When TRUE, the modeler permits condition reuse —
+   *   multiple successor edges that share the same non-empty conditionId and
+   *   the same target are treated as a single reused condition (rendered as
+   *   one shared condition node in the modeler). Defaults to FALSE. An empty
+   *   array means no constraints (the default).
    */
   public function modelConstraints(): array;
 
@@ -858,6 +868,11 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
   /**
    * Provides replay data for a given hash.
    *
+   * The returned array MAY contain deduplication/reference markers (for
+   * example "@ref"/"@prev") that the modeler frontend expands lazily at
+   * display time. The marker format is owned by the model owner; the Modeler
+   * API passes the array through verbatim and never expands or transforms it.
+   *
    * @param string $hash
    *   The hash representing the replay data.
    *
@@ -868,6 +883,11 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
 
   /**
    * Provides replay data for a given component in a model.
+   *
+   * The returned array MAY contain deduplication/reference markers (for
+   * example "@ref"/"@prev") that the modeler frontend expands lazily at
+   * display time. The marker format is owned by the model owner; the Modeler
+   * API passes the array through verbatim and never expands or transforms it.
    *
    * @param string $modelId
    *   The model ID.
@@ -903,6 +923,12 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
 
   /**
    * Polls the status of a test job.
+   *
+   * When the job finished successfully, the returned replay-data array MAY
+   * contain deduplication/reference markers (for example "@ref"/"@prev") that
+   * the modeler frontend expands lazily at display time. The marker format is
+   * owned by the model owner; the Modeler API passes the array through
+   * verbatim and never expands or transforms it.
    *
    * @param string $jobId
    *   The job ID.
