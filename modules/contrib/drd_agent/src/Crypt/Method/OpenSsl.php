@@ -110,6 +110,7 @@ class OpenSsl extends BaseMethod {
    * {@inheritdoc}
    */
   public function encrypt(array $args): string {
+    $args = $this->removeUnserializable($args);
     return empty($this->password) ?
       '' :
       openssl_encrypt(

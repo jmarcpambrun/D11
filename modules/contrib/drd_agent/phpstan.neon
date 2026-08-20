@@ -1,4 +1,8 @@
 parameters:
   level: 6
+  reportUnmatchedIgnoredErrors: false
   ignoreErrors:
     - identifier: missingType.iterableValue
+    - '#^Path in include\(\) ".*/sites/sites.php" is not a file or it does not exist.#'
+    - '#^Path in require_once\(\) "temporary://drd_agent_php.inc" is not a file or it does not exist.#'
+    - '#^Call to deprecated function locale_translation_batch_update_build\(\):#'

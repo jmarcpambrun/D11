@@ -86,4 +86,40 @@ abstract class BaseMethod implements BaseMethodInterface {
     return $filename;
   }
 
+  /**
+   * Recursively removes values that cannot be serialized from a payload.
+   *
+   * Some Drupal bootstrap environments leave non-serializable objects in the
+   * global scope. Since Drupal 11.4 the default front controller boots via the
+   * symfony/runtime component, whose generated autoload_runtime.php assigns the
+   * application object to a global $app variable (hence $GLOBALS['app']). That
+   * object holds the service container and is intentionally not serializable
+   * (Settings::__sleep() throws). When such state leaks into the payload,
+   * serialize() aborts and the action fails with "Remote instance does not
+   * support DRD". Dropping non-serializable values keeps the transferable data
+   * intact while making encoding robust against this runtime state.
+   *
+   * @param array $data
+   *   The payload to clean.
+   *
+   * @return array
+   *   The payload without any values that cannot be serialized.
+   */
+  protected function removeUnserializable(array $data): array {
+    foreach ($data as $key => $value) {
+      if (is_array($value)) {
+        $data[$key] = $this->removeUnserializable($value);
+      }
+      elseif (is_object($value)) {
+        try {
+          serialize($value);
+        }
+        catch (\Throwable $e) {
+          unset($data[$key]);
+        }
+      }
+    }
+    return $data;
+  }
+
 }

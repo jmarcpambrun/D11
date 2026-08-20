@@ -102,7 +102,8 @@ final class Authorize extends FormBase {
       ];
     }
     else {
-      unset($_SESSION['drd_agent_authorization_values']);
+      $session = $this->getRequest()->getSession();
+      $session->remove('drd_agent_authorization_values');
       $form = $this->buildFormToken($form);
     }
 
@@ -113,7 +114,8 @@ final class Authorize extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $form = empty($_SESSION['drd_agent_authorization_values']) ?
+    $session = $this->getRequest()->getSession();
+    $form = !$session->has('drd_agent_authorization_values') ?
       $this->buildFormToken($form) :
       $this->buildFormConfirmation($form);
 
@@ -129,15 +131,16 @@ final class Authorize extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    if (empty($_SESSION['drd_agent_authorization_values'])) {
-      $_SESSION['drd_agent_authorization_values'] = $form_state->getValue('token');
+    $session = $this->getRequest()->getSession();
+    if (!$session->has('drd_agent_authorization_values')) {
+      $session->set('drd_agent_authorization_values', $form_state->getValue('token'));
     }
     else {
       if ($form_state->getValue('op') === $form['submit']['#value']) {
         $values = $this->setupService->execute();
         $form_state->setResponse(new TrustedRedirectResponse($values['redirect']));
       }
-      unset($_SESSION['drd_agent_authorization_values']);
+      $session->remove('drd_agent_authorization_values');
     }
   }
 

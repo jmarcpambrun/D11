@@ -26,9 +26,8 @@ class Base implements BaseInterface {
     $methods = [];
     foreach (['OpenSsl', 'Tls'] as $item) {
       $classname = "\\Drupal\\drd_agent\\Crypt\\Method\\$item";
-      /** @var BaseMethodInterface $method */
       $method = new $classname($container);
-      if ($method instanceof BaseMethodInterface && $method->isAvailable()) {
+      if ($method->isAvailable()) {
         if ($instances) {
           $methods[$method->getLabel()] = $method;
         }

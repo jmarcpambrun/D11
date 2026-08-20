@@ -2,15 +2,14 @@ name: DRD Agent
 type: module
 description: Agent on remote Drupal sites for the main DRD module.
 package: Administration
-core_version_requirement: ^10 || ^11
-# project: drd_agent
+core_version_requirement: ^10 || ^11 || ^12
 configure: drd_agent.settings.form
 recommends:
   - hacked:hacked
   - monitoring:monitoring
   - security_review:security_review
 
-# Information added by Drupal.org packaging script on 2025-05-28
-version: '4.1.4'
+# Information added by Drupal.org packaging script on 2026-08-19
+version: '4.1.5'
 project: 'drd_agent'
-datestamp: 1748436002
+datestamp: 1787130876

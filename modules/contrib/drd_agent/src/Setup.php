@@ -63,8 +63,11 @@ class Setup {
    * Checks and sets the remote setup token.
    */
   private function checkForRemoteSetupToken(): void {
-    if (isset($_SESSION['drd_agent_authorization_values'])) {
-      $this->setRemoteSetupToken($_SESSION['drd_agent_authorization_values']);
+    if ($this->request->hasSession()) {
+      $session = $this->request->getSession();
+      if ($session->has('drd_agent_authorization_values')) {
+        $this->setRemoteSetupToken($session->get('drd_agent_authorization_values'));
+      }
     }
   }
 

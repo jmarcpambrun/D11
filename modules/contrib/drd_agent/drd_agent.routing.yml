@@ -44,4 +44,3 @@ drd_agent.authorize.form:
     _permission: 'administer site configuration'
   options:
     _admin_route: TRUE
-

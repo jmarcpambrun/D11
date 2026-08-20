@@ -58,6 +58,7 @@ class Tls extends BaseMethod {
    * {@inheritdoc}
    */
   public function encrypt(array $args): string {
+    $args = $this->removeUnserializable($args);
     return serialize($args);
   }
 

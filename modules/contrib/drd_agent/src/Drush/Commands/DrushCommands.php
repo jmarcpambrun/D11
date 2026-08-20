@@ -9,6 +9,7 @@ use Drush\Attributes\Command;
 use Drush\Attributes\Usage;
 use Drush\Commands\DrushCommands as RootDrushCommands;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Class Base.
@@ -26,14 +27,24 @@ class DrushCommands extends RootDrushCommands {
   protected Setup $setupService;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected RequestStack $requestStack;
+
+  /**
    * Drush constructor.
    *
    * @param \Drupal\drd_agent\Setup $setup_service
    *   The setup service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
    */
-  public function __construct(Setup $setup_service) {
+  public function __construct(Setup $setup_service, RequestStack $request_stack) {
     parent::__construct();
     $this->setupService = $setup_service;
+    $this->requestStack = $request_stack;
   }
 
   /**
@@ -48,6 +59,7 @@ class DrushCommands extends RootDrushCommands {
   public static function create(ContainerInterface $container): DrushCommands {
     return new self(
       $container->get('drd_agent.setup'),
+      $container->get('request_stack'),
     );
   }
 
@@ -61,9 +73,26 @@ class DrushCommands extends RootDrushCommands {
   #[Argument(name: 'token', description: 'Base64 and json encoded array of all variables required such that DRD can communicate with this domain in the future.')]
   #[Usage(name: 'drd:agent:setup', description: 'Configure this domain for communication with a DRD instance.')]
   public function setup(string $token): void {
-    $_SESSION['drd_agent_authorization_values'] = $token;
+    $session = NULL;
+    $request = $this->requestStack->getCurrentRequest();
+    if ($request && $request->hasSession()) {
+      $session = $request->getSession();
+    }
+    if ($session) {
+      $session->set('drd_agent_authorization_values', $token);
+    }
+    else {
+      // Fallback for contexts without an HTTP session, e.g. when running via
+      // Drush without a fully bootstrapped request.
+      $_SESSION['drd_agent_authorization_values'] = $token;
+    }
     $values = $this->setupService->execute();
-    unset($_SESSION['drd_agent_authorization_values']);
+    if ($session) {
+      $session->remove('drd_agent_authorization_values');
+    }
+    else {
+      unset($_SESSION['drd_agent_authorization_values']);
+    }
     if (isset($values['redirect']) && !empty($values['redirect'])) {
       $this->logger()?->success($this->t("To finish configuring the agent, you must access (authenticated) the following URL of the DRD portal where it is being added: \n @url", ['@url' => $values['redirect']]));
     }

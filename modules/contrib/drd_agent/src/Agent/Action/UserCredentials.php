@@ -68,8 +68,9 @@ class UserCredentials extends Base {
       $this->messenger->addMessage($check->get(0)->getMessage(), 'error');
       return;
     }
-    /** @var \Drupal\user\Entity\User|null $user */
-    $user = user_load_by_name($args['username']);
+    $users = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $args['username']]);
+    /** @var \Drupal\user\Entity\User|false $user */
+    $user = reset($users);
     if ($user && $user->uid !== $args['uid']) {
       $this->messenger->addMessage('Username already taken.', 'error');
       return;

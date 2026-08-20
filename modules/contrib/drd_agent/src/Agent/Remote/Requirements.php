@@ -50,7 +50,7 @@ class Requirements extends Base {
         <tr><td>password</td><td>@password</td></tr>
         <tr><td>Prefix</td><td>@prefix</td></tr>
         </table>', $info),
-      'severity' => REQUIREMENT_INFO,
+      'severity' => RequirementSeverity::Info,
       'description' => t('These are the database settings that have been configured for this site in settings.php.'),
     ];
 
@@ -63,7 +63,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.analytics'] = [
       'title' => t('Analytics module installed'),
       'value' => $analytics ? t('Yes') : t('No'),
-      'severity' => $analytics ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $analytics ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $analytics ?
       t('This site uses an analytics tool, go here to configure
           <a href="@url1">Google Analytics</a>,
@@ -99,7 +99,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.devel'] = [
       'title' => t('Devel module disabled'),
       'value' => $devel ? t('Yes') : t('No'),
-      'severity' => $devel ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $devel ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => t('On production sites the <a href="@url">Devel module</a> should be disabled for security and performance reasons.', [
         '@url' => Url::fromUserInput('/admin/modules')
           ->toUriString(),
@@ -110,7 +110,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.metatag'] = [
       'title' => t('Module MetaTag installed'),
       'value' => $metatag ? t('Yes') : t('No'),
-      'severity' => $metatag ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $metatag ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $metatag ?
       t('The MetaTag module is enabled, its <a href="@url">settings can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/search/metatags')
@@ -126,7 +126,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.pathauto'] = [
       'title' => t('Module PathAuto installed'),
       'value' => $pathauto ? t('Yes') : t('No'),
-      'severity' => $pathauto ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $pathauto ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $pathauto ?
       t('The PathAuto module is enabled, it <a href="@url">can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/search/path/patterns')
@@ -142,7 +142,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.php'] = [
       'title' => t('Module PHP Filter disabled'),
       'value' => $php ? t('Yes') : t('No'),
-      'severity' => $php ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+      'severity' => $php ? RequirementSeverity::OK : RequirementSeverity::Error,
       'description' => $php ?
       t('For security reasons you should try to avoid using the <a href="@url">PHP Filter</a> module.', [
         '@url' => Url::fromUserInput('/admin/modules')
@@ -162,7 +162,7 @@ class Requirements extends Base {
     $requirements['drd_agent.module.xmlsitemap'] = [
       'title' => t('Sitemap module installed'),
       'value' => $sitemap ? t('Yes') : t('No'),
-      'severity' => $sitemap ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $sitemap ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $sitemap ?
       t('A sitemap module is enabled.') :
       t('For SEO improvements you should use one of these <a href="@url">sitemap</a> modules:
@@ -190,7 +190,7 @@ class Requirements extends Base {
       $requirements['drd_agent.user1'] = [
         'title' => t('Name of user 1'),
         'value' => $user1_ok ? t('Good') : t('Too obvious'),
-        'severity' => $user1_ok ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+        'severity' => $user1_ok ? RequirementSeverity::OK : RequirementSeverity::Warning,
         'description' => $user1_ok ?
         t('The name of user 1 is uncommon enough to not be a very obvious security risk') :
         t('For security reasons the name of user 1 should not be so obvious as it is now.'),
@@ -223,7 +223,7 @@ class Requirements extends Base {
     $requirements['drd_agent.admincount'] = [
       'title' => t('Number of admins'),
       'value' => ($count_admin <= 3) ? t('Good (@count)', ['@count' => $count_admin]) : t('Too many (@count)', ['@count' => $count_admin]),
-      'severity' => ($count_admin <= 3) ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => ($count_admin <= 3) ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => t('For security reasons you should only have a small amount of users with an administer role.'),
     ];
 
@@ -232,7 +232,7 @@ class Requirements extends Base {
     $requirements['drd_agent.compress.css'] = [
       'title' => t('Aggregate and compress CSS files'),
       'value' => $css ? t('Yes') : t('No'),
-      'severity' => $css ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $css ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $css ?
       t('The CSS is aggregated on this site. <a href="@url">Performance settings can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/development/performance')
@@ -248,7 +248,7 @@ class Requirements extends Base {
     $requirements['drd_agent.compress.js'] = [
       'title' => t('Aggregate JavaScript files'),
       'value' => $js ? t('Yes') : t('No'),
-      'severity' => $js ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $js ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => $js ?
       t('The JS is aggregated on this site. <a href="@url">Performance settings can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/development/performance')
@@ -264,7 +264,7 @@ class Requirements extends Base {
     $requirements['drd_agent.defined.403'] = [
       'title' => t('Default 403 (access denied) page'),
       'value' => empty($page403) ? t('Undefined') : $page403,
-      'severity' => empty($page403) ? REQUIREMENT_WARNING : REQUIREMENT_OK,
+      'severity' => empty($page403) ? RequirementSeverity::Warning : RequirementSeverity::OK,
       'description' => $page403 ?
       t('There is a 403 page defined. <a href="@url">The 403 page can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/system/site-information')
@@ -280,7 +280,7 @@ class Requirements extends Base {
     $requirements['drd_agent.defined.404'] = [
       'title' => t('Default 404 (not found) page'),
       'value' => empty($page404) ? t('Undefined') : $page404,
-      'severity' => empty($page404) ? REQUIREMENT_WARNING : REQUIREMENT_OK,
+      'severity' => empty($page404) ? RequirementSeverity::Warning : RequirementSeverity::OK,
       'description' => $page404 ?
       t('There is a 404 page defined. <a href="@url">The 404 page can be managed here</a>.', [
         '@url' => Url::fromUserInput('/admin/config/system/site-information')
@@ -304,17 +304,17 @@ class Requirements extends Base {
     switch ($warnings) {
       case ERROR_REPORTING_HIDE:
         $requirements['drd_agent.hidden.warnings']['value'] = t('None');
-        $requirements['drd_agent.hidden.warnings']['severity'] = REQUIREMENT_OK;
+        $requirements['drd_agent.hidden.warnings']['severity'] = RequirementSeverity::OK;
         break;
 
       case ERROR_REPORTING_DISPLAY_SOME:
         $requirements['drd_agent.hidden.warnings']['value'] = t('Errors and warnings');
-        $requirements['drd_agent.hidden.warnings']['severity'] = REQUIREMENT_WARNING;
+        $requirements['drd_agent.hidden.warnings']['severity'] = RequirementSeverity::Warning;
         break;
 
       default:
         $requirements['drd_agent.hidden.warnings']['value'] = t('All messages');
-        $requirements['drd_agent.hidden.warnings']['severity'] = REQUIREMENT_ERROR;
+        $requirements['drd_agent.hidden.warnings']['severity'] = RequirementSeverity::Error;
     }
 
     $txtfiles = [];
@@ -337,18 +337,18 @@ class Requirements extends Base {
     $requirements['drd_agent.removed.txtfiles'] = [
       'title' => t('Info files to be removed'),
       'value' => empty($txtfiles) ? t('All info files properly removed') : implode(', ', $txtfiles),
-      'severity' => empty($txtfiles) ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => empty($txtfiles) ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => t('The info files of Drupal Core are removed.'),
     ];
 
     if ($this->moduleHandler->moduleExists('robotstxt')) {
       $robots = file_exists(DRUPAL_ROOT . '/robots.txt');
       if ($robots) {
-        $severity = REQUIREMENT_WARNING;
+        $severity = RequirementSeverity::Warning;
         $description = t('The module robotstxt provides the robots.txt on this site. But there is still a physical file robots.txt in your root directory, which should be removed.');
       }
       else {
-        $severity = REQUIREMENT_OK;
+        $severity = RequirementSeverity::OK;
         $description = t('The module robotstxt provides the robots.txt on this site.');
       }
     }
@@ -371,14 +371,14 @@ class Requirements extends Base {
       }
       $robots = (isset($response) && $response->getStatusCode() === 200);
       if ($robots) {
-        $severity = REQUIREMENT_OK;
+        $severity = RequirementSeverity::OK;
         $description = t('This site contains a <a href="@url">robots.txt</a> file', [
           '@url' => Url::fromUserInput('/robots.txt')
             ->toUriString(),
         ]);
       }
       else {
-        $severity = REQUIREMENT_WARNING;
+        $severity = RequirementSeverity::Warning;
         $description = t('For SEO reasons this site should have a <a href="@url">robots.txt</a> file in the Drupal Core.', [
           '@url' => Url::fromUri('https://www.drupal.org/project/robotstxt', ['external' => TRUE])
             ->toUriString(),
@@ -397,7 +397,7 @@ class Requirements extends Base {
     $requirements['drd_agent.theme.registry'] = [
       'title' => t('Rebuild theme registry on each page load'),
       'value' => $themeregistry ? t('Yes') : t('No'),
-      'severity' => $themeregistry ? REQUIREMENT_WARNING : REQUIREMENT_OK,
+      'severity' => $themeregistry ? RequirementSeverity::Warning : RequirementSeverity::OK,
       'description' => $themeregistry ?
       t('Your site is not rebuilding the them registry on each page load. Thats good.') :
       t('For performance reasons this site should not <a href="@url">rebuild the theme registry</a> on each page load.', [
@@ -410,7 +410,7 @@ class Requirements extends Base {
     $requirements['drd_agent.trim.watchdog'] = [
       'title' => t('Database log messages to keep'),
       'value' => empty($watchdog) ? t('All') : $watchdog,
-      'severity' => ($watchdog <= 1000 && $watchdog > 0) ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => ($watchdog <= 1000 && $watchdog > 0) ? RequirementSeverity::OK : RequirementSeverity::Warning,
       'description' => t('For performance reasons the <a href="@url">database log</a> should not be bigger then 1000 messages.', [
         '@url' => Url::fromUserInput('/admin/config/development/logging')
           ->toUriString(),
