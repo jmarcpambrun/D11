@@ -26,6 +26,8 @@ export const PANEL_DIMENSIONS = {
     DEFAULT_WIDTH: 320,
     MIN_WIDTH: 200,
     MAX_WIDTH: 600,
+    /** Smallest useful manually constrained floating panel height (px). */
+    MIN_HEIGHT: 120,
     /**
      * Gap (px) kept between a floating panel and the edge of the modeler.
      * Doubles as the clamp margin, so a floating panel can never be dragged
@@ -37,6 +39,10 @@ export const PANEL_DIMENSIONS = {
     FLOATING_NUDGE_STEP: 10,
     /** Keyboard nudge step (px) when Shift is held. */
     FLOATING_NUDGE_STEP_LARGE: 50,
+    /** Keyboard resize step (px) for a floating panel's bottom handle. */
+    FLOATING_RESIZE_STEP: 10,
+    /** Keyboard resize step (px) when Shift is held. */
+    FLOATING_RESIZE_STEP_LARGE: 50,
   },
 } as const;
 

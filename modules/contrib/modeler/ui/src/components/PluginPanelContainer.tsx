@@ -18,7 +18,7 @@
  * their height to the room left below them.
  */
 
-import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { FiMove } from 'react-icons/fi';
 import PanelErrorBoundary from './PanelErrorBoundary';
 import { usePanelResize } from '../hooks/usePanelResize';
@@ -28,6 +28,11 @@ import {
   getFloatingBounds,
 } from '../hooks/useFloatingPanelDrag';
 import type { FloatingPosition } from '../hooks/useFloatingPanelDrag';
+import {
+  clampFloatingPanelHeight,
+  getMaximumFloatingPanelHeight,
+  useFloatingPanelHeightResize,
+} from '../hooks/useFloatingPanelHeightResize';
 import { PANEL_DIMENSIONS } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import type { RegisteredPanel, ModelerPluginApi, PanelPosition } from '../types/pluginApi';
@@ -121,8 +126,13 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(false);
+  const contentId = useId();
   const [panelWidth, setPanelWidth] = useState(panel.width);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+  const [automaticPanelHeight, setAutomaticPanelHeight] = useState<number | null>(null);
   const [isResizing, setIsResizing] = useState(false);
+  const [isHeightResizing, setIsHeightResizing] = useState(false);
+  const [heightResizeCompletions, setHeightResizeCompletions] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [floatingPosition, setFloatingPosition] = useState<FloatingPosition>(
     () => floatingPositions.get(panel.id) ?? { x: FLOATING_MARGIN, y: FLOATING_MARGIN },
@@ -159,6 +169,24 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     enabled: isFloating,
   });
 
+  const finishHeightResize = useCallback(() => {
+    setHeightResizeCompletions((count) => count + 1);
+  }, []);
+
+  const {
+    startResize: startHeightResize,
+    resizeByKeyboard,
+  } = useFloatingPanelHeightResize({
+    elementRef: panelRef,
+    panelY: floatingPosition.y,
+    setPanelHeight,
+    setPanelResizing: setIsHeightResizing,
+    onResizeEnd: finishHeightResize,
+    minHeight: PANEL_DIMENSIONS.PLUGIN_PANEL.MIN_HEIGHT,
+    margin: FLOATING_MARGIN,
+    enabled: isFloating,
+  });
+
   // Mount: call render() once; Unmount: call destroy()
   useEffect(() => {
     const el = containerRef.current;
@@ -186,6 +214,20 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel.id]);
 
+  // Keep the separator's accessible current value aligned with the panel's
+  // content-driven height until the first manual resize sets an explicit one.
+  useEffect(() => {
+    if (!isFloating || panelHeight !== null) return;
+    const element = panelRef.current;
+    if (!element) return;
+
+    const measure = () => setAutomaticPanelHeight(element.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [isFloating, panelHeight]);
+
   // Place a floating panel once it has been measured.  Runs before paint, so
   // the provisional top-left position used for the first render is never
   // visible.  A remembered position is re-clamped rather than replaced.
@@ -205,13 +247,24 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     const handleWindowResize = () => {
       setFloatingPosition((previous) => {
         const clamped = clampFloatingPosition(panelRef.current, previous, FLOATING_MARGIN);
+        if (panelHeight !== null) {
+          setPanelHeight(
+            clampFloatingPanelHeight(
+              panelRef.current,
+              panelHeight,
+              clamped.y,
+              PANEL_DIMENSIONS.PLUGIN_PANEL.MIN_HEIGHT,
+              FLOATING_MARGIN,
+            ),
+          );
+        }
         floatingPositions.set(panel.id, clamped);
         return clamped;
       });
     };
     window.addEventListener('resize', handleWindowResize);
     return () => window.removeEventListener('resize', handleWindowResize);
-  }, [isFloating, panel.id]);
+  }, [isFloating, panel.id, panelHeight]);
 
   // Notify plugin of resize events
   useEffect(() => {
@@ -224,6 +277,18 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
       }
     }
   }, [isResizing, panelWidth, panel]);
+
+  // A completion counter makes keyboard resizing observable even though React
+  // batches its start/end state changes into one render.
+  useEffect(() => {
+    if (heightResizeCompletions === 0 || !panel.onResize || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    try {
+      panel.onResize(rect.width, rect.height);
+    } catch (err) {
+      console.error(`Plugin panel "${panel.id}" onResize() failed:`, err);
+    }
+  }, [heightResizeCompletions, panel]);
 
   /** Keyboard alternative to dragging: arrow keys nudge, Shift moves faster. */
   const handleMoveKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -245,11 +310,41 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
     nudge(deltaX, deltaY);
   }, [nudge]);
 
+  const handleHeightResizeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const step = e.shiftKey
+      ? PANEL_DIMENSIONS.PLUGIN_PANEL.FLOATING_RESIZE_STEP_LARGE
+      : PANEL_DIMENSIONS.PLUGIN_PANEL.FLOATING_RESIZE_STEP;
+    resizeByKeyboard(e.key === 'ArrowDown' ? step : -step);
+  }, [resizeByKeyboard]);
+
+  const maximumPanelHeight = getMaximumFloatingPanelHeight(
+    panelRef.current,
+    floatingPosition.y,
+    FLOATING_MARGIN,
+  );
+  const minimumPanelHeight = Math.min(
+    PANEL_DIMENSIONS.PLUGIN_PANEL.MIN_HEIGHT,
+    maximumPanelHeight,
+  );
+  const measuredPanelHeight = panelHeight
+    ?? automaticPanelHeight
+    ?? panelRef.current?.offsetHeight
+    ?? minimumPanelHeight;
+  const accessiblePanelHeight = Math.min(
+    Math.max(measuredPanelHeight, minimumPanelHeight),
+    maximumPanelHeight,
+  );
+
   const className = [
     'plugin-panel',
     `plugin-panel--${panel.position}`,
     isFloating ? 'plugin-panel--floating' : '',
+    isFloating && panelHeight === null ? 'is-auto-height' : '',
+    isFloating && panelHeight !== null ? 'has-manual-height' : '',
     isResizing ? 'is-resizing' : '',
+    isHeightResizing ? 'is-height-resizing' : '',
     isDragging ? 'is-dragging' : '',
   ].filter(Boolean).join(' ');
 
@@ -258,6 +353,7 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
         width: panelWidth,
         left: floatingPosition.x,
         top: floatingPosition.y,
+        height: panelHeight ?? undefined,
         /*
          * Cap the height so the foot of the panel stays inside the modeler,
          * leaving the same margin below it as above.  This has to live here
@@ -287,6 +383,22 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
         tabIndex={0}
       />
 
+      {isFloating && (
+        <div
+          className="plugin-panel-height-resize-handle"
+          onPointerDown={startHeightResize}
+          onKeyDown={handleHeightResizeKeyDown}
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label={t('Resize @panel panel height', { '@panel': panel.label })}
+          aria-controls={contentId}
+          aria-valuemin={minimumPanelHeight}
+          aria-valuemax={maximumPanelHeight}
+          aria-valuenow={accessiblePanelHeight}
+          tabIndex={0}
+        />
+      )}
+
       {/*
         * Panel header.  Static text for a docked panel; for a floating panel
         * the whole strip is a drag surface, with the button below providing
@@ -313,6 +425,7 @@ function PluginPanel({ panel, api }: PluginPanelProps) {
       {/* Panel content — plugin owns this element */}
       <div
         ref={containerRef}
+        id={contentId}
         className="plugin-panel-content"
         role="region"
         aria-label={panel.label}

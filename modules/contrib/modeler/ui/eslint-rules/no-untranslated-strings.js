@@ -152,6 +152,7 @@ const rule = {
       'addEventListener',
       'removeEventListener',
       'dispatchEvent',
+      'matchMedia', // CSS media queries (technical, not user-facing)
       'JSON.parse',
       'JSON.stringify',
       'Object.keys',
@@ -226,6 +227,7 @@ const rule = {
       /^[a-z][a-zA-Z0-9]*$/, // camelCase
       /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/, // snake_case
       /^[a-z][a-z0-9]*(-[a-z0-9]+)+$/, // kebab-case
+      /^[a-z][a-z0-9]*((-|--)[a-z0-9]+)+$/, // BEM class modifiers (block__element--modifier, kebab segments)
       /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/, // SCREAMING_SNAKE_CASE
       // Keyboard key names (used in event handlers, not shown to users)
       /^(Escape|Enter|Tab|Backspace|Delete|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Home|End|PageUp|PageDown|Insert|Shift|Control|Alt|Meta|CapsLock|NumLock|ScrollLock|Pause|F\d+)$/,

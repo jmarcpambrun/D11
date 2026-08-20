@@ -181,6 +181,87 @@ describe('useDebouncedField', () => {
     });
   });
 
+  describe('handler identity across a component switch', () => {
+    // Issue #3589115. onDebouncedChange is bound to the component being
+    // edited - PropertyPanel rebuilds it whenever the selection changes. So
+    // every exit path has to commit a pending edit through the handler that
+    // was current when the user TYPED, not through whatever is current when
+    // the commit happens. Getting this wrong writes the typed text onto
+    // whichever component happens to be selected by then, and leaves the
+    // edited one unchanged.
+    //
+    // The timer path was always correct, because the setTimeout closure in
+    // onChange captures the handler from the keystroke's render. flush() and
+    // the unmount cleanup were not.
+
+    const typeThenSwitch = () => {
+      /** Belongs to the component the user actually edited. */
+      const editedHandler = jest.fn();
+      /** Belongs to the component selected while the edit was still pending. */
+      const nextHandler = jest.fn();
+
+      const view = renderHook(
+        ({ onDebouncedChange, initialValue }) =>
+          useDebouncedField({ initialValue, onDebouncedChange }),
+        { initialProps: { onDebouncedChange: editedHandler, initialValue: 'Alpha' } }
+      );
+
+      act(() => {
+        view.result.current.onChange({ target: { value: 'Alpha EDITED' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+
+      // The selection switches while the edit is still pending.
+      view.rerender({ onDebouncedChange: nextHandler, initialValue: 'Beta' });
+
+      return { editedHandler, nextHandler, ...view };
+    };
+
+    it('should commit through the edited handler when the timer fires', () => {
+      const { editedHandler, nextHandler } = typeThenSwitch();
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(editedHandler).toHaveBeenCalledWith('Alpha EDITED');
+      expect(nextHandler).not.toHaveBeenCalled();
+    });
+
+    it('should commit through the edited handler on flush', () => {
+      const { editedHandler, nextHandler, result } = typeThenSwitch();
+
+      act(() => {
+        result.current.flush();
+      });
+
+      expect(editedHandler).toHaveBeenCalledWith('Alpha EDITED');
+      expect(nextHandler).not.toHaveBeenCalled();
+    });
+
+    it('should commit through the edited handler on unmount', () => {
+      const { editedHandler, nextHandler, unmount } = typeThenSwitch();
+
+      unmount();
+
+      expect(editedHandler).toHaveBeenCalledWith('Alpha EDITED');
+      expect(nextHandler).not.toHaveBeenCalled();
+    });
+
+    it('should not commit twice when flush is followed by the timer', () => {
+      const { editedHandler, nextHandler, result } = typeThenSwitch();
+
+      act(() => {
+        result.current.flush();
+      });
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(editedHandler).toHaveBeenCalledTimes(1);
+      expect(nextHandler).not.toHaveBeenCalled();
+    });
+  });
+
   describe('onChange handling', () => {
     it('should update local value immediately on change', () => {
       const { result } = renderHook(() => useDebouncedField(defaultProps));

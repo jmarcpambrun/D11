@@ -43,14 +43,25 @@ export function useDebouncedField({
   const [value, setValue] = useState(initialValue);
   const debounceTimer = useRef<number | null>(null);
 
-  // Keep refs to the latest value and callback so the unmount cleanup
-  // (which has an empty dependency array) always accesses current values.
+  // Keep refs to the latest value and disabled flag so commitPending() below
+  // stays free of dependencies and still reads current values.
   const valueRef = useRef(value);
   valueRef.current = value;
-  const onDebouncedChangeRef = useRef(onDebouncedChange);
-  onDebouncedChangeRef.current = onDebouncedChange;
   const disabledRef = useRef(disabled);
   disabledRef.current = disabled;
+
+  // The onDebouncedChange that was current when the pending timer was armed.
+  //
+  // onDebouncedChange is bound to the component being edited - PropertyPanel
+  // rebuilds it whenever the selection changes - so a pending edit has to be
+  // committed through the handler from the render where the user typed, not
+  // through whatever is current when the commit happens. The timer path gets
+  // this right for free, because the setTimeout closure below captures that
+  // handler. flush() and the unmount cleanup used the current one, so a commit
+  // triggered after the selection had already moved would write the typed text
+  // onto the NEWLY selected component and leave the edited one unchanged
+  // (issue #3589115).
+  const pendingChangeRef = useRef<((value: string) => void) | null>(null);
 
   // Sync the local value when the source value changes.
   //
@@ -79,29 +90,32 @@ export function useDebouncedField({
     setValue(initialValue);
   }, [initialValue]);
 
-  // Flush pending changes and cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-        debounceTimer.current = null;
-        // Flush the pending value so no edits are lost.
-        if (!disabledRef.current) {
-          onDebouncedChangeRef.current(valueRef.current);
-        }
-      }
-    };
+  // Commit whatever edit is pending, through the handler the edit belongs to.
+  //
+  // Deliberately shared by flush() and the unmount cleanup rather than written
+  // out twice: letting those two exits differ is exactly what issue #3589115
+  // was. Stable (no dependencies) because everything it needs is held in refs.
+  const commitPending = useCallback(() => {
+    if (debounceTimer.current === null) {
+      return;
+    }
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = null;
+    const pendingChange = pendingChangeRef.current;
+    pendingChangeRef.current = null;
+    if (!disabledRef.current && pendingChange) {
+      pendingChange(valueRef.current);
+    }
   }, []);
 
-  const flush = useCallback(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-      debounceTimer.current = null;
-      if (!disabled) {
-        onDebouncedChange(value);
-      }
-    }
-  }, [disabled, onDebouncedChange, value]);
+  // Flush pending changes and cleanup timer on unmount, so no edits are lost.
+  useEffect(() => {
+    return () => {
+      commitPending();
+    };
+  }, [commitPending]);
+
+  const flush = commitPending;
 
   const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newValue = e.target.value;
@@ -113,19 +127,31 @@ export function useDebouncedField({
         clearTimeout(debounceTimer.current);
       }
 
+      // Remember which handler this edit belongs to, so flush() and the
+      // unmount cleanup commit it exactly where the timer below would have.
+      pendingChangeRef.current = onDebouncedChange;
+
       // Set new debounced update
       debounceTimer.current = setTimeout(() => {
         onDebouncedChange(newValue);
         debounceTimer.current = null;
+        pendingChangeRef.current = null;
       }, debounceDelay) as unknown as number;
     }
   }, [disabled, debounceDelay, onDebouncedChange]);
 
   const onBlur = useCallback((e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    // Ensure final value is saved on blur
+    // Ensure final value is saved on blur.
+    //
+    // This deliberately keeps using the CURRENT handler, unlike flush() and
+    // the unmount cleanup. Blur fires while the edited component is still the
+    // selected one - a native click blurs during mousedown, before the click
+    // handler that moves the selection - so the current handler is the right
+    // one here, and e.target.value is more recent than the debounced state.
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
       debounceTimer.current = null;
+      pendingChangeRef.current = null;
     }
     if (!disabled) {
       onDebouncedChange(e.target.value);

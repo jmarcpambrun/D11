@@ -7475,6 +7475,14 @@ g[style*="#ef4444"] path {
   transition: none;
 }
 
+/* Before the first height interaction, intrinsic plugin content determines the
+   panel height. Disable flex growth so max-height remains a cap rather than
+   becoming the panel's initial height. Flex shrinking still keeps oversized
+   automatic content inside the cap and scrollable. */
+.plugin-panel--floating.is-auto-height .plugin-panel-content {
+  flex: 0 1 auto;
+}
+
 .plugin-panel--floating.is-dragging {
   user-select: none;
 }
@@ -7502,6 +7510,47 @@ g[style*="#ef4444"] path {
 
 .plugin-panel-resize-handle--right {
   right: 0;
+}
+
+/* Bottom-edge height control for floating panels. The centered line remains
+   visible at rest; theme variables provide light and dark interaction states. */
+.plugin-panel-height-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 8px;
+  cursor: row-resize;
+  touch-action: none;
+  z-index: 11;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.plugin-panel-height-resize-handle::after {
+  content: '';
+  position: absolute;
+  right: 35%;
+  bottom: 2px;
+  left: 35%;
+  height: 2px;
+  border-radius: var(--modeler-radius-full);
+  background: var(--modeler-color-border-hover);
+}
+
+.plugin-panel-height-resize-handle:hover,
+.plugin-panel.is-height-resizing .plugin-panel-height-resize-handle {
+  background: var(--modeler-color-interactive-ring);
+}
+
+.plugin-panel-height-resize-handle:hover::after,
+.plugin-panel.is-height-resizing .plugin-panel-height-resize-handle::after {
+  background: var(--modeler-color-interactive);
+}
+
+.plugin-panel-height-resize-handle:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: -2px;
 }
 
 /* Panel header — names the panel, and is the drag surface when floating */

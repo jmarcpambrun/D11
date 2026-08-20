@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import fs from 'fs';
 import path from 'path';
 import PluginPanelSlot, { PluginPanel, resetFloatingPanelPositions } from '../PluginPanelContainer';
@@ -30,6 +30,22 @@ jest.mock('../../hooks/usePanelResize', () => ({
   usePanelResize: jest.fn((args: any) => {
     mockUsePanelResizeArgs = args;
     return { startResize: mockStartResize };
+  }),
+}));
+
+const mockStartHeightResize = jest.fn();
+const mockResizeByKeyboard = jest.fn();
+let mockUseHeightResizeArgs: any = null;
+let mockMaximumHeight = 552;
+jest.mock('../../hooks/useFloatingPanelHeightResize', () => ({
+  getMaximumFloatingPanelHeight: jest.fn(() => mockMaximumHeight),
+  clampFloatingPanelHeight: jest.fn((_el, height) => height),
+  useFloatingPanelHeightResize: jest.fn((args: any) => {
+    mockUseHeightResizeArgs = args;
+    return {
+      startResize: mockStartHeightResize,
+      resizeByKeyboard: mockResizeByKeyboard,
+    };
   }),
 }));
 
@@ -106,6 +122,8 @@ describe('PluginPanelContainer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUsePanelResizeArgs = null;
+    mockUseHeightResizeArgs = null;
+    mockMaximumHeight = 552;
     resetFloatingPanelPositions();
   });
 
@@ -218,6 +236,7 @@ describe('PluginPanelContainer', () => {
         );
         errorSpy.mockRestore();
       });
+
     });
 
     describe('unmount lifecycle', () => {
@@ -718,6 +737,77 @@ describe('PluginPanelContainer', () => {
           expect(container.querySelector('.plugin-panel-resize-handle--right')).toBeInTheDocument();
           expect(mockUsePanelResizeArgs.direction).toBe('right');
         });
+
+        it('starts with automatic height and renders a bottom handle', () => {
+          const { panelEl, container } = renderFloating({ label: 'Analytics' });
+
+          expect(panelEl.style.height).toBe('');
+          expect(panelEl).toHaveClass('is-auto-height');
+          expect(panelEl).not.toHaveClass('has-manual-height');
+          const handle = container.querySelector('.plugin-panel-height-resize-handle') as HTMLElement;
+          expect(handle).toBeInTheDocument();
+          expect(handle.getAttribute('role')).toBe('separator');
+          expect(handle.getAttribute('aria-orientation')).toBe('horizontal');
+          expect(handle.getAttribute('aria-label')).toBe('Resize Analytics panel height');
+          expect(handle.getAttribute('aria-valuemin')).toBe('120');
+          expect(handle.getAttribute('aria-valuenow')).toBe('200');
+          expect(handle.getAttribute('aria-valuemax')).toBe('552');
+          expect(handle.getAttribute('tabindex')).toBe('0');
+        });
+
+        it('keeps accessible height values coherent below the usable minimum', () => {
+          mockMaximumHeight = 80;
+          const { container } = renderFloating();
+          const handle = container.querySelector('.plugin-panel-height-resize-handle') as HTMLElement;
+
+          expect(handle.getAttribute('aria-valuemin')).toBe('80');
+          expect(handle.getAttribute('aria-valuenow')).toBe('80');
+          expect(handle.getAttribute('aria-valuemax')).toBe('80');
+        });
+
+        it('marks the panel as manually constrained after height interaction', () => {
+          const { panelEl } = renderFloating();
+
+          act(() => mockUseHeightResizeArgs.setPanelHeight(300));
+
+          expect(panelEl).toHaveClass('has-manual-height');
+          expect(panelEl).not.toHaveClass('is-auto-height');
+          expect(panelEl.style.height).toBe('300px');
+        });
+
+        it('does not render the vertical resize handle for docked panels', () => {
+          const { container } = render(
+            <PluginPanel panel={createMockPanel({ floating: false })} api={mockApi} />,
+          );
+          expect(container.querySelector('.plugin-panel-height-resize-handle')).toBeNull();
+          expect(mockUseHeightResizeArgs.enabled).toBe(false);
+        });
+
+        it('starts pointer resizing from the bottom handle', () => {
+          const { container } = renderFloating();
+          fireEvent.pointerDown(container.querySelector('.plugin-panel-height-resize-handle')!);
+          expect(mockStartHeightResize).toHaveBeenCalledTimes(1);
+        });
+
+        it('resizes with Up and Down, using a larger Shift step', () => {
+          const { container } = renderFloating();
+          const handle = container.querySelector('.plugin-panel-height-resize-handle')!;
+
+          fireEvent.keyDown(handle, { key: 'ArrowDown' });
+          fireEvent.keyDown(handle, { key: 'ArrowUp', shiftKey: true });
+
+          expect(mockResizeByKeyboard).toHaveBeenNthCalledWith(1, 10);
+          expect(mockResizeByKeyboard).toHaveBeenNthCalledWith(2, -50);
+        });
+
+        it('notifies the plugin after vertical resizing completes', () => {
+          renderFloating();
+          mockOnResize.mockClear();
+
+          act(() => mockUseHeightResizeArgs.onResizeEnd());
+
+          expect(mockOnResize).toHaveBeenCalledWith(expect.any(Number), expect.any(Number));
+        });
       });
 
       describe('position persistence', () => {
@@ -983,6 +1073,23 @@ describe('PluginPanelContainer', () => {
       // would silently fight the inline style. See PluginPanelContainer.
       const [rule] = rulesFor('.plugin-panel--floating');
       expect(rule.body).not.toMatch(/max-height/);
+    });
+
+    it('styles the floating bottom resize handle and its interaction states', () => {
+      const [rule] = rulesFor('.plugin-panel-height-resize-handle');
+      expect(rule.body).toMatch(/bottom:\s*0/);
+      expect(rule.body).toMatch(/cursor:\s*row-resize/);
+      expect(rule.body).toMatch(/touch-action:\s*none/);
+      expect(rulesFor('.plugin-panel-height-resize-handle:hover')).toHaveLength(1);
+      expect(rulesFor('.plugin-panel-height-resize-handle:focus-visible')).toHaveLength(1);
+      expect(rulesFor('.plugin-panel.is-height-resizing .plugin-panel-height-resize-handle'))
+        .toHaveLength(1);
+    });
+
+    it('prevents automatic floating content from flex-growing to max-height', () => {
+      const [rule] = rulesFor('.plugin-panel--floating.is-auto-height .plugin-panel-content');
+      expect(rule).toBeDefined();
+      expect(rule.body).toMatch(/flex:\s*0\s+1\s+auto/);
     });
 
     it('no longer styles the removed collapse controls', () => {

@@ -186,7 +186,10 @@ Each registered panel automatically receives:
 
 - **Header** -- a strip showing the panel label. For a floating panel it is
   also the drag surface.
-- **Resize handle** -- drag the panel edge to adjust its width.
+- **Resize handles** -- drag the side edge to adjust width. Floating panels
+  also have a bottom-edge handle for height; focus it and press Up or Down to
+  resize (hold Shift for a larger step). Docked panels remain automatically
+  sized vertically.
 - **Vertical scrolling** -- when the content is taller than the space
   available, the content area scrolls instead of being clipped. Your
   `render()` container is the scroll container, so you do not need to manage
@@ -202,6 +205,11 @@ Set `floating: true` to lift a panel out of the layout. A floating panel:
 - is drawn above the canvas with a drop shadow;
 - can be moved by dragging its header, or by focusing the move handle in the
   header and pressing the arrow keys (hold Shift for a larger step);
+- keeps its content-driven automatic height until the first bottom-edge resize,
+  then constrains height between 120 pixels and the space below the panel,
+  including a 16-pixel modeler margin;
+- scrolls the plugin content container when a manually constrained height is
+  smaller than its content;
 - is kept inside the modeler's bounds, including when the window is resized,
   so it can never be dragged out of reach;
 - remembers where the user put it for the rest of the page session, so hiding

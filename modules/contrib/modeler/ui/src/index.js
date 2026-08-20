@@ -106,10 +106,11 @@ import { registerPanel, unregisterPanel, registerWidget, unregisterWidget, onRea
   // When Drupal loads this script via HTMX + loadjs, the HTML container may
   // already be in the DOM *before* this script executes (because htmx:afterSettle
   // fires htmx:drupal:load and Drupal.attachBehaviors before the assets finish
-  // loading). In that case, the behavior's attach() was already called and missed
-  // us. Detect this situation and mount immediately.
+  // loading). In that case, the attach pass missed both this behavior and any
+  // behaviors provided by libraries that extend the modeler. Repeat the attach
+  // pass after the modeler bundle and all of its dependencies have loaded.
   const existingContainer = findContainer(document);
   if (existingContainer && !existingContainer.dataset.reactInitialized) {
-    mountApp(existingContainer, drupalSettings);
+    Drupal.attachBehaviors(document, drupalSettings);
   }
 })(Drupal, drupalSettings);
