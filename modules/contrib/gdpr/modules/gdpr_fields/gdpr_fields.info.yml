@@ -9,7 +9,7 @@ dependencies:
   - gdpr:gdpr
   - gdpr:anonymizer
 
-# Information added by Drupal.org packaging script on 2025-02-26
-version: '3.1.2'
+# Information added by Drupal.org packaging script on 2026-08-20
+version: '3.1.4'
 project: 'gdpr'
-datestamp: 1740573521
+datestamp: 1787219384

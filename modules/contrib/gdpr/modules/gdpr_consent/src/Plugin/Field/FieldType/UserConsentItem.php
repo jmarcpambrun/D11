@@ -17,7 +17,7 @@ use Drupal\message\Entity\Message;
  *   id = "gdpr_user_consent",
  *   label = @Translation("GDPR Consent"),
  *   description = @Translation("Stores user consent for a particular agreement"),
- *   category = @Translation("GDPR"),
+ *   category = "GDPR",
  *   default_widget = "gdpr_consent_widget",
  *   default_formatter = "gdpr_consent_formatter"
  * )

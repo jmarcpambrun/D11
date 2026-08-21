@@ -1,0 +1,4 @@
+GDPR:
+  label: 'GDPR'
+  description: 'GDPR module related fields'
+  weight: 15
