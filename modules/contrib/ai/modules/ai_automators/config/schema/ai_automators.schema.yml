@@ -160,3 +160,23 @@ field_widget_action_automator_chain_base:
 field_widget_action.plugin.automator_chain_text:
   type: field_widget_action_automator_chain_base
   label: 'Automator chain text field widget action'
+
+field_widget_action_automator_base:
+  type: field_widget_action_plugin_base
+  label: 'Automator field widget action'
+  mapping:
+    settings:
+      type: mapping
+      label: 'Automator settings'
+      mapping:
+        automator_id:
+          type: string
+          label: 'Automator'
+
+field_widget_action.plugin.automator_tagify_taxonomy:
+  type: field_widget_action_automator_base
+  label: 'Automator Tagify field widget action'
+
+field_widget_action.plugin.classification_options_select:
+  type: field_widget_action_automator_base
+  label: 'Automator select field widget action'

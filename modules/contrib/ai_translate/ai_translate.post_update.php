@@ -5,6 +5,8 @@
  * Post update file for AI translate module.
  */
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
 /**
  * Update logic to transform prompts to an AI prompt config entity.
  */
@@ -111,4 +113,26 @@ function ai_translate_post_update_convert_ai_prompt(): void {
 
   // Save the config.
   $config->save();
+}
+
+/**
+ * Leaves translation caching off; turn it on at the AI Translate settings form.
+ *
+ * New installs have caching enabled. Existing sites keep it switched off so
+ * that nothing changes underneath a running site. To opt in, tick "Cache
+ * translation results" under Configuration > AI > AI Translate. The module's
+ * configuration documentation describes what gets stored and when entries are
+ * dropped.
+ */
+function ai_translate_post_update_disable_translation_cache(): TranslatableMarkup {
+  // Keep slashes out of the docblock above. UpdateRegistry builds the pending
+  // update description with str_replace(["\n", '*', '/'], '', ...), so a path
+  // written there arrives at drush updatedb:status with every slash stripped
+  // out. The returned message below is an ordinary string and keeps its path.
+  \Drupal::configFactory()
+    ->getEditable('ai_translate.settings')
+    ->set('cache_translations', FALSE)
+    ->save();
+
+  return t('Translation result caching is switched off on this site. To reuse previous translations and cut the number of AI requests, enable "Cache translation results" at /admin/config/ai/ai-translate. See docs/configuration.md in the AI Translate module for details.');
 }

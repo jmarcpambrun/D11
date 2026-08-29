@@ -9,3 +9,4 @@ dependencies:
   - drupal:content_translation
 lifecycle: deprecated
 lifecycle_link: https://www.drupal.org/node/3570275
+hidden: true

@@ -219,7 +219,7 @@ class DeepChatApi extends ControllerBase {
       }
       catch (\Exception $e) {
         // Log the exception.
-        $this->loggerFactory->get('ai_chatbot')->error('DeepChat API error: @message', ['@message' => $e->getMessage()]);
+        $this->getLogger('ai_chatbot')->error('DeepChat API error: @message', ['@message' => $e->getMessage()]);
         // Otherwise use the default error message.
         return new JsonResponse([
           'error' => $this->t('An error occurred while processing the request. Please try again later.'),

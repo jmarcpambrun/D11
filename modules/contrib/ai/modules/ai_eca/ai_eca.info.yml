@@ -5,6 +5,7 @@ package: AI
 core_version_requirement: ^10.3 || ^11
 lifecycle: deprecated
 lifecycle_link: 'https://www.drupal.org/project/ai/issues/3503947'
+hidden: true
 dependencies:
   - ai:ai
   - drupal:file

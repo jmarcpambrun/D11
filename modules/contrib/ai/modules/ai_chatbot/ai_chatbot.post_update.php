@@ -7,6 +7,7 @@
 
 use Drupal\block\BlockInterface;
 use Drupal\Core\Config\Entity\ConfigEntityUpdater;
+use Drupal\ai_chatbot\Plugin\Block\DeepChatFormBlock;
 
 /**
  * Migrate DeepChat blocks to the ChatProcessor plugin approach.
@@ -32,7 +33,7 @@ function ai_chatbot_post_update_chat_processor(&$sandbox): void {
       $settings['plugin_configuration'] = [
         'assistant_id' => $settings['ai_assistant'] ?? '',
         'stream_output' => (bool) ($settings['stream'] ?? FALSE),
-        'verbose_mode' => (bool) ($settings['verbose_mode'] ?? FALSE),
+        'verbose_mode' => (bool) ($settings['verbose_mode'] ?? DeepChatFormBlock::LEGACY_VERBOSE_MODE),
         'show_structured_results' => (bool) ($settings['show_structured_results'] ?? FALSE),
       ];
       $changed = TRUE;

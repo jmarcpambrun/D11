@@ -62,3 +62,14 @@ block.settings.ai_deepchat_block:
     expansion_method:
       type: string
       label: Expansion Method
+    # Deprecated settings from before the ChatProcessor plugins existed. They
+    # are kept - and ignored - so that block config that predates
+    # ai_chatbot_post_update_chat_processor() still validates, and so that
+    # DeepChatFormBlock can rebuild the plugin configuration from it. The keys
+    # are dropped the next time the block is saved.
+    ai_assistant:
+      type: ignore
+    verbose_mode:
+      type: ignore
+    show_structured_results:
+      type: ignore

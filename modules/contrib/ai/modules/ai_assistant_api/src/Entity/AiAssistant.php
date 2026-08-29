@@ -69,6 +69,24 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
 final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface, EntityWithPluginCollectionInterface {
 
   /**
+   * Chat memory plugin IDs, keyed by the allow_history value they replaced.
+   */
+  const LEGACY_CHAT_MEMORY_PLUGINS = [
+    'session_one_thread' => 'private_tempstore',
+    'session' => 'private_tempstore_pool',
+    // 1.4.x offered "none" alongside the two session options. It has no chat
+    // memory plugin, so it converts to no plugin at all - which is what
+    // ai_assistant_api_post_update_convert_allow_history() did with any value
+    // it did not recognize.
+    'none' => '',
+  ];
+
+  /**
+   * The thread expiry given to chat memory converted from allow_history.
+   */
+  const LEGACY_CHAT_MEMORY_EXPIRY = 604800;
+
+  /**
    * The example ID.
    */
   protected string $id;
@@ -180,6 +198,61 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    * @var \Drupal\Core\Plugin\DefaultSingleLazyPluginCollection|null
    */
   protected ?DefaultSingleLazyPluginCollection $chatMemoryPluginCollection = NULL;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(array $values, $entity_type) {
+    parent::__construct(static::upgradeLegacyChatMemorySettings($values), $entity_type);
+  }
+
+  /**
+   * Rebuilds the chat memory settings from the pre-ChatMemory ones.
+   *
+   * Assistants configured before the ChatMemory plugins existed stored an
+   * enum in allow_history and the number of messages to keep in
+   * history_context_length. Those are migrated by
+   * ai_assistant_api_post_update_convert_allow_history(), but config that was
+   * exported before that update ran - or that is imported, or installed by a
+   * recipe, afterwards - still arrives in the old shape, where allow_history
+   * matches no chat memory plugin and the assistant would silently end up
+   * with no chat memory at all. Such an assistant gets the chat memory plugin
+   * that replaced its setting, configured from the settings it already has.
+   * The legacy setting is dropped here, so the assistant is stored in the new
+   * shape the next time it is saved.
+   *
+   * @param array $values
+   *   The assistant values, possibly in the legacy shape.
+   *
+   * @return array
+   *   The assistant values, in the ChatMemory shape.
+   */
+  protected static function upgradeLegacyChatMemorySettings(array $values): array {
+    $max_messages = $values['history_context_length'] ?? NULL;
+    unset($values['history_context_length']);
+
+    $plugin_id = static::LEGACY_CHAT_MEMORY_PLUGINS[$values['allow_history'] ?? ''] ?? NULL;
+    if ($plugin_id === NULL) {
+      return $values;
+    }
+
+    $values['allow_history'] = $plugin_id;
+    // "none" converts to no plugin at all, so there are no plugin settings to
+    // carry over to it.
+    if ($plugin_id === '') {
+      $values['chat_memory_settings'] = [];
+      return $values;
+    }
+    // Anything already set on the plugin wins over the legacy setting.
+    $values['chat_memory_settings'] = ($values['chat_memory_settings'] ?? []) + [
+      'expiry' => static::LEGACY_CHAT_MEMORY_EXPIRY,
+    ];
+    if ($max_messages !== NULL && !isset($values['chat_memory_settings']['max_messages'])) {
+      $values['chat_memory_settings']['max_messages'] = (int) $max_messages;
+    }
+
+    return $values;
+  }
 
   /**
    * Encapsulates the creation of the chat memory plugin collection.

@@ -184,7 +184,7 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     $aiConfig = $this->configFactory->get('ai_translate.settings')->get('language_settings') ?? [];
     $prompt = NULL;
     // Get target language-specific prompt, if it exists.
-    if ($aiConfig[$targetLanguage->getId()]['prompt']) {
+    if (!empty($aiConfig[$targetLanguage->getId()]['prompt'])) {
       $promptId = $aiConfig[$targetLanguage->getId()]['prompt'];
       if ($languageSpecificPrompt = $this->configFactory->get('ai.ai_prompt.' . $promptId)->get('prompt')) {
         $prompt = $languageSpecificPrompt;

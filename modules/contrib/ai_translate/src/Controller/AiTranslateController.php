@@ -6,11 +6,8 @@ use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\Core\Language\LanguageInterface;
-use Drupal\ai_translate\TextExtractorInterface;
-use Drupal\ai_translate\TextTranslatorInterface;
-use Drupal\ai_translate\TranslationException;
+use Drupal\ai_translate\EntityTranslationOrchestratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -22,18 +19,11 @@ class AiTranslateController extends ControllerBase {
   use DependencySerializationTrait;
 
   /**
-   * Text extractor service.
+   * Shared entity translation orchestrator.
    *
-   * @var \Drupal\ai_translate\TextExtractorInterface
+   * @var \Drupal\ai_translate\EntityTranslationOrchestratorInterface
    */
-  protected TextExtractorInterface $textExtractor;
-
-  /**
-   * Text translator service.
-   *
-   * @var \Drupal\ai_translate\TextTranslatorInterface
-   */
-  protected TextTranslatorInterface $aiTranslator;
+  protected EntityTranslationOrchestratorInterface $translationOrchestrator;
 
   /**
    * {@inheritdoc}
@@ -42,8 +32,7 @@ class AiTranslateController extends ControllerBase {
     $instance = new static();
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->languageManager = $container->get('language_manager');
-    $instance->textExtractor = $container->get('ai_translate.text_extractor');
-    $instance->aiTranslator = $container->get('ai_translate.text_translator');
+    $instance->translationOrchestrator = $container->get('ai_translate.translation_orchestrator');
     return $instance;
   }
 
@@ -70,12 +59,7 @@ class AiTranslateController extends ControllerBase {
     }
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
 
-    // From UI, translation is always request from default entity language,
-    // but nothing stops users from using different $lang_from.
-    if ($entity->language()->getId() !== $lang_from
-      && $entity->hasTranslation($lang_from)) {
-      $entity = $entity->getTranslation($lang_from);
-    }
+    $entity = $this->translationOrchestrator->resolveSourceEntity($entity, $lang_from);
 
     $redirectUrl = ('edit' === $this->config('ai_translate.settings')
       ->get('redirect_after_create'))
@@ -85,12 +69,12 @@ class AiTranslateController extends ControllerBase {
 
     // @todo support updating existing translations.
     if ($entity->hasTranslation($lang_to)) {
-      $this->messenger()->addMessage('Translation already exists.');
+      $this->messenger()->addMessage($this->t('Translation already exists.'));
       $response->send();
       return $response;
     }
 
-    $textMetadata = $this->textExtractor->extractTextMetadata($entity);
+    $textMetadata = $this->translationOrchestrator->extractTextMetadata($entity);
 
     // Creates a batch builder to translate text metadata.
     $batchBuilder = (new BatchBuilder())
@@ -138,30 +122,12 @@ class AiTranslateController extends ControllerBase {
     LanguageInterface $langTo,
     array &$context,
   ) {
-    // Get translations for each extracted field property.
-    $translated_text = [];
-    foreach ($singleField['_columns'] as $column) {
-      try {
-        $translated_text[$column] = '';
-        if (!empty($singleField[$column])) {
-          $translated_text[$column] = $this->aiTranslator->translateContent(
-            $singleField[$column], $langTo, $langFrom);
-        }
-      }
-      catch (TranslationException) {
-        $context['results']['failures'][] = $singleField[$column];
-        return;
-      }
+    $translatedField = $this->translationOrchestrator->translateTextMetadataItem($singleField, $langFrom, $langTo);
+    if ($translatedField === NULL) {
+      $context['results']['failures'][] = $singleField['field_name'] ?? (string) reset($singleField['parents']);
+      return;
     }
-
-    // Decodes HTML entities in translation.
-    // Because of sanitation in StringFormatter/Markup, this should be safe.
-    foreach ($translated_text as &$translated_text_item) {
-      $translated_text_item = html_entity_decode($translated_text_item);
-    }
-
-    $singleField['translated'] = $translated_text;
-    $context['results']['processedTranslations'][] = $singleField;
+    $context['results']['processedTranslations'][] = $translatedField;
   }
 
   /**
@@ -179,34 +145,18 @@ class AiTranslateController extends ControllerBase {
     string $lang_to,
     array &$context,
   ) {
-    $translation = $entity->addTranslation($lang_to, $entity->toArray());
+    $result = $this->translationOrchestrator->saveTranslatedEntity(
+      $entity,
+      $lang_to,
+      $context['results']['processedTranslations'] ?? [],
+      $context['results']['failures'] ?? [],
+    );
 
-    // Handle published status based on configuration setting.
-    if ($entity instanceof EntityPublishedInterface) {
-      $config = $this->config('ai_translate.settings');
-      $translation_status = $config->get('translation_status') ?? 'keep_original';
-      if ('create_draft' === $translation_status) {
-        if ($entity->getEntityType()->isRevisionable()) {
-          $translation->setRevisionTranslationAffected(NULL);
-        }
-        // Is there a better way to detect moderation state?
-        if ($entity->hasField('moderation_state')) {
-          $translation->set('moderation_state', 'draft');
-        }
-        // Content moderation module sets draft states to unpublish.
-        $translation->setUnpublished();
-      }
+    if ($result->isSuccess()) {
+      $this->messenger()->addStatus($result->getMessage());
     }
-
-    $this->textExtractor->insertTextMetadata($translation,
-      $context['results']['processedTranslations'] ?? []);
-    try {
-      $translation->save();
-      $this->messenger()->addStatus($this->t('Content translated successfully.'));
-    }
-    catch (\Throwable $exception) {
-      $this->getLogger('ai_translate')->warning($exception->getMessage());
-      $this->messenger()->addError($this->t('There was some issue with content translation.'));
+    else {
+      $this->messenger()->addError($result->getMessage());
     }
   }
 

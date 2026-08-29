@@ -34,6 +34,29 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
   /**
+   * The ChatProcessor plugin that replaced the block level assistant settings.
+   */
+  const ASSISTANT_PROCESSOR_PLUGIN_ID = 'ai_assistant_api_processor';
+
+  /**
+   * Block settings that predate the ChatProcessor plugins.
+   */
+  const LEGACY_SETTINGS = [
+    'ai_assistant',
+    'verbose_mode',
+    'show_structured_results',
+  ];
+
+  /**
+   * The verbosity a block that predates the ChatProcessor plugins ran with.
+   *
+   * 1.4.x defaulted verbose_mode to TRUE, so a legacy block that never saved
+   * the setting explicitly - including the one Drupal CMS installs from
+   * drupal_cms_ai/recipe.yml - was running verbose.
+   */
+  const LEGACY_VERBOSE_MODE = TRUE;
+
+  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -151,6 +174,50 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->currentPath = $container->get('path.current');
     $plugin->chatProcessorManager = $container->get(ChatProcessorPluginManager::class);
     return $plugin;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfiguration(array $configuration) {
+    parent::setConfiguration($configuration);
+    $this->configuration = $this->upgradeLegacySettings($this->configuration);
+  }
+
+  /**
+   * Rebuilds the ChatProcessor settings from the pre-ChatProcessor ones.
+   *
+   * Blocks configured before the ChatProcessor plugins existed talked to the
+   * AI Assistant API through block level settings. Those are migrated by
+   * ai_chatbot_post_update_chat_processor(), but config that was exported
+   * before that update ran - or that is imported, or installed by a recipe,
+   * afterwards - still arrives in the old shape. Such a block gets the
+   * ChatProcessor plugin that wraps the AI Assistant API, configured from the
+   * settings it already has, so that it keeps working. The legacy settings are
+   * dropped here, so the block is stored in the new shape the next time it is
+   * saved.
+   *
+   * @param array $configuration
+   *   The block configuration, possibly in the legacy shape.
+   *
+   * @return array
+   *   The block configuration, in the ChatProcessor shape.
+   */
+  protected function upgradeLegacySettings(array $configuration): array {
+    if (array_key_exists('ai_assistant', $configuration) && empty($configuration['chat_processor_plugin'])) {
+      $configuration['chat_processor_plugin'] = static::ASSISTANT_PROCESSOR_PLUGIN_ID;
+      // Anything already set on the plugin wins over the legacy settings.
+      $configuration['plugin_configuration'] = ($configuration['plugin_configuration'] ?? []) + [
+        'assistant_id' => (string) ($configuration['ai_assistant'] ?? ''),
+        'stream_output' => (bool) ($configuration['stream'] ?? FALSE),
+        'verbose_mode' => (bool) ($configuration['verbose_mode'] ?? static::LEGACY_VERBOSE_MODE),
+        'show_structured_results' => (bool) ($configuration['show_structured_results'] ?? FALSE),
+      ];
+    }
+    foreach (static::LEGACY_SETTINGS as $key) {
+      unset($configuration[$key]);
+    }
+    return $configuration;
   }
 
   /**
@@ -496,14 +563,6 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $trigger = $form_state->getTriggeringElement();
 
     $array_parents = array_slice($trigger['#array_parents'], 0, -1);
-    $input_parents = array_slice($trigger['#parents'], 0, -1);
-
-    // Get the settings input from the nested structure.
-    $user_input = $form_state->getUserInput();
-    $settings_input = NestedArray::getValue($user_input, $input_parents);
-
-    // Update configuration.
-    $this->configuration['ai_assistant'] = $settings_input['ai_assistant'] ?? $this->configuration['ai_assistant'];
 
     // Get and return the relevant form element.
     $element = NestedArray::getValue($form, $array_parents);

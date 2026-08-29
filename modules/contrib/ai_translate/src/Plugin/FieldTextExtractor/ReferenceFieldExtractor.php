@@ -269,19 +269,6 @@ class ReferenceFieldExtractor extends FieldExtractorBase implements Configurable
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function submitFieldSettingForm(FieldConfigInterface $entity, FormStateInterface $form_state, array &$completeForm = []): void {
-    $pluginValues = $form_state->getValue([
-      'third_party_settings',
-      'ai_translate',
-      'entity_reference',
-    ]);
-    $entity->setThirdPartySetting('ai_translate', 'translate_references',
-      $pluginValues['translate_references']);
-  }
-
-  /**
    * Get default AI translatability for an entity type.
    *
    * @param string $entityTypeId

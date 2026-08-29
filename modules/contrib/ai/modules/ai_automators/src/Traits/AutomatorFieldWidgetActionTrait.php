@@ -5,6 +5,7 @@ namespace Drupal\ai_automators\Traits;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsWidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\TypedData\ComplexDataInterface;
@@ -458,6 +459,7 @@ trait AutomatorFieldWidgetActionTrait {
     if (!$entity->get($form_key)->isEmpty()) {
       $this->setFormInput($entity, $form_state, $form_key);
       $this->updateItemsCount($form, $form_state, $form_key, $entity->get($form_key)->count());
+      $this->resetOptionsWidgetCache($form_state, $form_key);
       $form_state->setRebuild();
     }
     // Still call saveFormValues() so existing downstream overrides keep
@@ -512,6 +514,39 @@ trait AutomatorFieldWidgetActionTrait {
     $form_display = NestedArray::getValue($form_state->getStorage(), ['form_display']);
     $widget = $form_display?->getRenderer($form_key);
     return !empty($widget?->getPluginDefinition()['multiple_values']);
+  }
+
+  /**
+   * Clears a select-style widget's memoized option list, if any.
+   *
+   * OptionsWidgetBase::getOptions() (options_select, tagify_select_widget,
+   * …) memoizes its computed <select> options onto the widget instance the
+   * first time it runs. EntityFormDisplay::getRenderer() then caches that
+   * same widget object on the form display, and the form display itself
+   * lives in $form_state's storage, which survives the AJAX rebuild
+   * unchanged. Without this reset, an entity the automator just created
+   * (e.g. an auto-created taxonomy term) has no chance to appear as a
+   * <select> <option>: the widget reuses the option list it computed
+   * before that entity existed, and there is no public API to invalidate
+   * it.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state carrying the form display in its storage.
+   * @param string $form_key
+   *   The field name.
+   */
+  protected function resetOptionsWidgetCache(FormStateInterface $form_state, string $form_key): void {
+    $form_display = NestedArray::getValue($form_state->getStorage(), ['form_display']);
+    $widget = $form_display?->getRenderer($form_key);
+    if (!$widget instanceof OptionsWidgetBase) {
+      return;
+    }
+    // The cache is a protected, typed property with no reset method.
+    // Unsetting it restores it to "uninitialized", so the next isset()
+    // check in getOptions() is false again and it recomputes.
+    \Closure::bind(function (): void {
+      unset($this->options);
+    }, $widget, OptionsWidgetBase::class)();
   }
 
 }

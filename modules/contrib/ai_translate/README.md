@@ -6,3 +6,7 @@ allow passing content to an LLM to generate a translation.
 ## Using the module
 Check the [AI Translate module guide](https://project.pages.drupalcode.org/ai/latest/modules/ai_translate/) for
 information on using the module.
+
+## Documentation
+
+Full documentation is under [`docs/`](docs/) and published in the [AI Translate GitLab Pages](https://project.pages.drupalcode.org/ai_translate).

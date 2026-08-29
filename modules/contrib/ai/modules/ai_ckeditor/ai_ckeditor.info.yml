@@ -8,3 +8,4 @@ dependencies:
   - ai:ai
 lifecycle: deprecated
 lifecycle_link: https://www.drupal.org/node/3612175
+hidden: true

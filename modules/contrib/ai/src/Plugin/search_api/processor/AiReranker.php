@@ -38,6 +38,16 @@ class AiReranker extends ProcessorPluginBase implements PluginFormInterface, Con
   use StringTranslationTrait;
 
   /**
+   * Extra-data key for explicitly declared document text to rerank on.
+   *
+   * Backends (for example ai_search in chunk mode) should set this key on a
+   * result item when the configured indexed fields are not the text that
+   * should be sent to the reranker. AI core never reads backend-specific
+   * query options or generic keys such as "content".
+   */
+  public const DOCUMENT_TEXT_EXTRA_DATA_KEY = 'ai_document_text';
+
+  /**
    * The AI provider plugin manager.
    *
    * @var \Drupal\ai\AiProviderPluginManager
@@ -290,16 +300,22 @@ class AiReranker extends ProcessorPluginBase implements PluginFormInterface, Con
   /**
    * Extracts the document text for a single result item.
    *
-   * Concatenates the values of the configured source fields, unwrapping Search
-   * API fulltext value objects (which are not plain strings).
+   * Prefers text declared via ::DOCUMENT_TEXT_EXTRA_DATA_KEY when a backend has
+   * set it (for example per-chunk text). Otherwise concatenates the configured
+   * source fields, unwrapping fulltext value objects.
    *
    * @param \Drupal\search_api\Item\ItemInterface $item
    *   The result item.
    *
    * @return string
-   *   The concatenated document text, or an empty string if none was found.
+   *   The extracted text, or an empty string if there was none.
    */
   protected function extractItemText($item): string {
+    $declared_text = $this->fieldValueToString($item->getExtraData(self::DOCUMENT_TEXT_EXTRA_DATA_KEY));
+    if ($declared_text !== '') {
+      return $declared_text;
+    }
+
     $text_parts = [];
     foreach ($this->configuration['source_fields'] as $field_id) {
       $field = $item->getField($field_id);

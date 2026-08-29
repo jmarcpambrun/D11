@@ -43,23 +43,12 @@ function ai_assistant_api_post_update_settings(): void {
  */
 function ai_assistant_api_post_update_convert_allow_history(&$sandbox): void {
   $config_entity_updater = \Drupal::classResolver(ConfigEntityUpdater::class);
-  $callback = function (AiAssistantInterface $assistant) {
-    $map = [
-      'session_one_thread' => 'private_tempstore',
-      'session' => 'private_tempstore_pool',
-    ];
-    $settings = [];
-    $new_id = $map[$assistant->get('allow_history')] ?? '';
-    $assistant->set('allow_history', $new_id);
-    if (!empty($new_id)) {
-      $settings += [
-        'expiry' => 604800,
-        'max_messages' => $assistant->get('history_context_length'),
-      ];
-    }
-    $assistant->set('chat_memory_settings', $settings);
-    return TRUE;
-  };
+  // AiAssistant::upgradeLegacyChatMemorySettings() converts the legacy
+  // allow_history and history_context_length settings while the entity is
+  // built, so all that is left to do here is save the assistants to persist
+  // that conversion. Assistants that are already in the new shape are simply
+  // resaved unchanged.
+  $callback = fn (AiAssistantInterface $assistant): bool => TRUE;
 
   $config_entity_updater->update($sandbox, 'ai_assistant', $callback);
 }

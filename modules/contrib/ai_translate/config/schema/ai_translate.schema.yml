@@ -5,6 +5,10 @@ ai_translate.settings:
     use_ai_translate:
       type: boolean
       label: 'Use AI Translate as the default to translate content'
+    cache_translations:
+      type: boolean
+      label: 'Cache translation results'
+      description: 'Reuse a previously generated translation when the same text is translated between the same two languages again.'
     reference_defaults:
       type: sequence
       label: 'Referenced entity types that will be translated by default'
@@ -67,3 +71,16 @@ ai_translate.language_setting.*:
       constraints:
         ConfigExists:
           prefix: 'ai.ai_prompt.'
+
+field.field.*.*.*.third_party.ai_translate:
+  type: sequence
+  label: 'AI Translate third party settings'
+  sequence:
+    type: 'ai_translate.third_party.[%key]'
+
+# Defines AI Translate third party settings for ReferenceFieldExtractor plugin.
+ai_translate.third_party.translate_references:
+  type: string
+  label: 'Translate referenced entities'
+  constraints:
+    NotBlank: [ ]

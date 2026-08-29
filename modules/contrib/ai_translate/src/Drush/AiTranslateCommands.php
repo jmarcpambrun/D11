@@ -7,7 +7,7 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\ai_translate\TextExtractorInterface;
+use Drupal\ai_translate\EntityTranslationOrchestratorInterface;
 use Drupal\ai_translate\TextTranslatorInterface;
 use Drupal\ai_translate\TranslationException;
 use Drush\Attributes\Argument;
@@ -39,11 +39,11 @@ class AiTranslateCommands extends DrushCommands {
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
-   * Text extractor.
+   * Shared entity translation orchestrator.
    *
-   * @var \Drupal\ai_translate\TextExtractorInterface
+   * @var \Drupal\ai_translate\EntityTranslationOrchestratorInterface
    */
-  protected TextExtractorInterface $textExtractor;
+  protected EntityTranslationOrchestratorInterface $translationOrchestrator;
 
   /**
    * Text translation service.
@@ -59,7 +59,7 @@ class AiTranslateCommands extends DrushCommands {
     $instance = new static();
     $instance->languageManager = $container->get('language_manager');
     $instance->entityTypeManager = $container->get('entity_type.manager');
-    $instance->textExtractor = $container->get('ai_translate.text_extractor');
+    $instance->translationOrchestrator = $container->get('ai_translate.translation_orchestrator');
     $instance->textTranslator = $container->get('ai_translate.text_translator');
     return $instance;
   }
@@ -80,58 +80,23 @@ class AiTranslateCommands extends DrushCommands {
     string $langFrom,
     string $langTo,
   ) {
-    static $langNames;
-    if (empty($langNames)) {
-      $langNames = $this->languageManager->getNativeLanguages();
-    }
     $ids = array_filter(explode(',', $entityIds));
     $entityStorage = $this->entityTypeManager->getStorage($entityType);
     foreach ($entityStorage->loadMultiple($ids) as $entity) {
-      if ($entity->language()->getId() !== $langFrom
-        && $entity->hasTranslation($langFrom)) {
-        $entity = $entity->getTranslation($langFrom);
-      }
-      if ($entity->hasTranslation($langTo)) {
-        $this->messenger()->addMessage(
-          $this->t('Translation already exists.'));
+      $result = $this->translationOrchestrator->translateEntity($entity, $langFrom, $langTo);
+      if ($result->translationExists()) {
+        $this->messenger()->addMessage($result->getMessage());
         continue;
       }
-      $textMetadata = $this->textExtractor->extractTextMetadata($entity);
-      foreach ($textMetadata as &$singleField) {
-        // Get translations for each extracted field property.
-        foreach ($singleField['_columns'] as $column) {
-          try {
-            $singleField['translated'][$column] = '';
-            if (!empty($singleField[$column])) {
-              $singleField['translated'][$column] = $this->textTranslator->translateContent(
-                $singleField[$column], $langNames[$langTo], $langNames[$langFrom] ?? NULL);
-            }
-          }
-          catch (TranslationException) {
-            // Error already logged by text_translate service.
-            $this->messenger()->addError('Error translating content.');
-            continue;
-          }
-        }
 
-        // Decodes HTML entities in translation.
-        // Because of sanitation in StringFormatter/Markup, this should be safe.
-        foreach ($singleField['translated'] as &$translated_text_item) {
-          $translated_text_item = html_entity_decode($translated_text_item);
+      if ($result->isSuccess()) {
+        $this->messenger()->addStatus($result->getMessage());
+        if ($result->getFailures()) {
+          $this->messenger()->addWarning($this->t('Some fields could not be translated.'));
         }
       }
-      $translation = $entity->addTranslation($langTo, $entity->toArray());
-      $this->textExtractor->insertTextMetadata($translation,
-        $textMetadata);
-      try {
-        $entityStorage->save($translation);
-        $this->messenger()
-          ->addStatus($this->t('Content translated successfully.'));
-      }
-      catch (\Throwable $exception) {
-        $this->getLogger('ai_translate')->warning($exception->getMessage());
-        $this->messenger()
-          ->addError($this->t('There was some issue with content translation.'));
+      else {
+        $this->messenger()->addError($result->getMessage());
       }
     }
   }
@@ -160,7 +125,7 @@ class AiTranslateCommands extends DrushCommands {
     }
     catch (TranslationException) {
       // Error already logged by text_translate service.
-      $this->messenger()->addError('Error translating content.');
+      $this->messenger()->addError($this->t('Error translating content.'));
       return;
     }
   }

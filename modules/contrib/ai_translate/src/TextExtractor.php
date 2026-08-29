@@ -134,6 +134,7 @@ class TextExtractor implements TextExtractorInterface {
     static $supportedFieldNames = [
       'body',
       'info',
+      'description',
       '^field_',
       '^layout_builder_',
     ];

@@ -25,16 +25,4 @@ interface ConfigurableFieldTextExtractorInterface extends FieldTextExtractorInte
    */
   public function fieldSettingsForm(FieldConfigInterface $entity, FormStateInterface $form_state, array &$completeForm = []);
 
-  /**
-   * Submit callback for the settings form.
-   *
-   * @param \Drupal\Core\Field\FieldConfigInterface $entity
-   *   Field configuration entity.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   * @param array $completeForm
-   *   Complete form.
-   */
-  public function submitFieldSettingForm(FieldConfigInterface $entity, FormStateInterface $form_state, array &$completeForm = []);
-
 }

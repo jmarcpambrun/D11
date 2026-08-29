@@ -20,6 +20,7 @@ function ai_translate_form_field_config_form_alter(&$form, FormStateInterface $f
   /** @var \Drupal\ai_translate\FieldTextExtractorPluginManager $pluginManager */
   $pluginManager = \Drupal::service('plugin.manager.text_extractor');
   $fieldType = $fieldConfig->getType();
+  $subforms = [];
   foreach ($pluginManager->getDefinitions() as $pluginId => $definition) {
     if (!in_array($fieldType, $definition['field_types'])) {
       continue;
@@ -33,17 +34,22 @@ function ai_translate_form_field_config_form_alter(&$form, FormStateInterface $f
     if (!$subform) {
       continue;
     }
+    $subforms[] = $subform;
+  }
+  if (!empty($subforms)) {
     // Only create the fieldset if there is at least one plugin form.
+    $wrapper = [];
     if (empty($form['third_party_settings']['ai_translate'])) {
-      $form['third_party_settings']['ai_translate'] = [
+      $wrapper = [
         '#type' => 'fieldset',
         '#title' => t('AI Translate'),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
       ];
     }
-    $form['third_party_settings']['ai_translate'][$pluginId] = $subform;
-    $form['#entity_builders'][] = 'ai_translate_config_entity_builder';
+    // Add all field setting subform elements as a flattened array to the
+    // 'ai_translate' third party settings form.
+    $form['third_party_settings']['ai_translate'] = array_reduce($subforms, 'array_merge', $wrapper);
   }
 }
 
@@ -126,40 +132,6 @@ function ai_translate_form_locale_translate_edit_form_alter(&$form, FormStateInt
           ],
         ],
       ];
-    }
-  }
-}
-
-/**
- * Field config entity builder.
- *
- * Injects settings of configurable text extractors.
- *
- * @see \Drupal\Core\Entity\EntityForm::buildEntity()
- */
-function ai_translate_config_entity_builder(
-  string $entityTypeId,
-  $entity,
-  &$form,
-  FormStateInterface &$form_state,
-) {
-  if (!$form_state->isSubmitted()) {
-    return;
-  }
-  $thirdPartySettings = $form_state->getValue(['third_party_settings', 'ai_translate']);
-  if (!$thirdPartySettings) {
-    return;
-  }
-  $pluginManager = \Drupal::service('plugin.manager.text_extractor');
-  foreach ($thirdPartySettings as $pluginId => $values) {
-    try {
-      /** @var \Drupal\ai_translate\ConfigurableFieldTextExtractorInterface $plugin */
-      $plugin = $pluginManager->createInstance($pluginId);
-      $plugin->submitFieldSettingForm($entity, $form_state, $form);
-    }
-    catch (\Throwable $exception) {
-      \Drupal::logger('ai_translate')->error($exception->getMessage());
-      \Drupal::messenger()->addWarning(t('An error has occurred. Please try again later.'));
     }
   }
 }

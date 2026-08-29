@@ -113,6 +113,13 @@ class AiTranslateSettingsForm extends ConfigFormBase {
       '#description' => $this->t('When using this module on its own, keep this box checked. This allows AI Translate to take over the "Translate" tab when editing any entity. When this module is used as a translation framework for other translation mechanisms such as AI TMGMT; however, the default Drupal translation may be desired for the "Translate" tab.'),
     ];
 
+    $form['cache_translations'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Cache translation results'),
+      '#description' => $this->t('Reuse a previous translation when the same text is translated between the same two languages again. Cuts cost and avoids re-sending unchanged fields. Stored results record the AI provider and model that produced them, so switching model translates afresh, and switching back reuses what was stored before. Editing a translation prompt discards the results that used it.'),
+      '#config_target' => static::CONFIG_NAME . ':cache_translations',
+    ];
+
     // Add translation status setting.
     $form['translation_status'] = [
       '#type' => 'radios',
@@ -188,7 +195,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
       '#type' => 'checkboxes',
       '#title' => $this->t('These entity types will be translated by default when referencing entity is translated'),
       '#options' => self::getReferencingEntityTypes(TRUE),
-      '#description' => $this->t('This setting can be overriden in entity reference field settings.'),
+      '#description' => $this->t('This setting can be overridden in entity reference field settings.'),
       '#default_value' => $config->get('reference_defaults'),
     ];
     $form['reference_defaults']['entity_reference_depth'] = [

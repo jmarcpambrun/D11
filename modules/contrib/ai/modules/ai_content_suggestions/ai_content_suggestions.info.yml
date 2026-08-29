@@ -5,6 +5,7 @@ package: AI
 core_version_requirement: ^10.4 || ^11
 lifecycle: deprecated
 lifecycle_link: https://www.drupal.org/project/ai/issues/3552885
+hidden: true
 configure: ai_content_suggestions.settings
 dependencies:
   - ai:ai
