@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Entity\EntityConstraintViolationListInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\Entity\Storage\GroupRelationshipStorageInterface;
@@ -13,10 +15,10 @@ use Drupal\user\RoleInterface;
 /**
  * Tests for the GroupMembershipRoles constraint.
  *
- * @group group
- *
  * @coversDefaultClass \Drupal\group\Plugin\Validation\Constraint\GroupMembershipRoles
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupMembershipRolesTest extends GroupKernelTestBase {
 
   /**

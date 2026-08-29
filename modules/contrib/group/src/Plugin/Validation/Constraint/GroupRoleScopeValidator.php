@@ -31,7 +31,7 @@ class GroupRoleScopeValidator extends ConstraintValidator implements ContainerIn
   /**
    * {@inheritdoc}
    */
-  public function validate($group_role, Constraint $constraint): void {
+  public function validate(mixed $group_role, Constraint $constraint): void {
     assert($group_role instanceof GroupRoleInterface);
     assert($constraint instanceof GroupRoleScope);
 

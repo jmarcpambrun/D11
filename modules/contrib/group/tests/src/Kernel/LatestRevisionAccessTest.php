@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Routing\RouteObjectInterface;
 use Drupal\Core\Url;
 use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
@@ -14,9 +16,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
  * Tests the latest revision access for groups.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class LatestRevisionAccessTest extends GroupKernelTestBase {
 
   use ContentModerationTestTrait;

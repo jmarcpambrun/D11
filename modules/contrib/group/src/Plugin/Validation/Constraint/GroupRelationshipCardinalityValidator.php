@@ -34,7 +34,7 @@ class GroupRelationshipCardinalityValidator extends ConstraintValidator implemen
   /**
    * {@inheritdoc}
    */
-  public function validate($group_relationship, Constraint $constraint): void {
+  public function validate(mixed $group_relationship, Constraint $constraint): void {
     assert($group_relationship instanceof GroupRelationshipInterface);
     assert($constraint instanceof GroupRelationshipCardinality);
 

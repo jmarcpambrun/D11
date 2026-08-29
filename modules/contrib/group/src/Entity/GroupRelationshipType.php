@@ -52,7 +52,7 @@ use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
   config_export: [
     'id',
     'group_type',
-    'content_plugin',
+    'relation_type',
     'plugin_config',
   ],
 )]
@@ -78,9 +78,8 @@ class GroupRelationshipType extends ConfigEntityBundleBase implements GroupRelat
    * The group relation type ID for the relationship type.
    *
    * @var string
-   * @todo 2.0.x Replace with other name.
    */
-  protected $content_plugin;
+  protected $relation_type;
 
   /**
    * The group relation configuration for the relationship type.
@@ -153,7 +152,7 @@ class GroupRelationshipType extends ConfigEntityBundleBase implements GroupRelat
    * {@inheritdoc}
    */
   public function getPluginId() {
-    return $this->content_plugin;
+    return $this->relation_type;
   }
 
   /**

@@ -2,12 +2,12 @@ name: 'Group'
 description: 'Allows you to group users, content and other entities'
 package: 'Group'
 type: 'module'
-core_version_requirement: ^11.2
+core_version_requirement: ^11.4 || ^12
 configure: 'group.settings'
 dependencies:
   - 'drupal:options'
 
-# Information added by Drupal.org packaging script on 2026-04-24
-version: '4.0.0-alpha1'
+# Information added by Drupal.org packaging script on 2026-08-21
+version: '4.0.0-alpha2'
 project: 'group'
-datestamp: 1777055501
+datestamp: 1787317462

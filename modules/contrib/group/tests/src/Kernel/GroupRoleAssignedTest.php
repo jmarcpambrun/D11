@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
@@ -9,10 +12,10 @@ use Drupal\user\RoleInterface;
 /**
  * Tests for the GroupRoleAssigned constraint.
  *
- * @group group
- *
  * @coversDefaultClass \Drupal\group\Plugin\Validation\Constraint\GroupRoleAssignedValidator
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRoleAssignedTest extends GroupKernelTestBase {
 
   /**
@@ -51,8 +54,8 @@ class GroupRoleAssignedTest extends GroupKernelTestBase {
    *   The synchronized scope to create the group role in.
    *
    * @covers ::validate
-   * @dataProvider synchronizedRoleProvider
    */
+  #[DataProvider('synchronizedRoleProvider')]
   public function testSynchronizedRole(string $scope): void {
     $group_type_id_a = $this->createGroupType()->id();
     $group_type_id_b = $this->createGroupType()->id();

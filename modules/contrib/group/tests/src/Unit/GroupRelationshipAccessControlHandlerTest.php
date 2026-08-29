@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -23,8 +24,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the relationship access control handler.
  *
  * @coversDefaultClass \Drupal\group\Entity\Access\GroupRelationshipAccessControlHandler
- * @group group
  */
+#[Group('group')]
 class GroupRelationshipAccessControlHandlerTest extends UnitTestCase {
 
   /**

@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Render\RenderContext;
 use Drupal\Tests\group\Kernel\GroupKernelTestBase;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
@@ -11,8 +13,9 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
  * Tests grouped entities query access cacheability.
  *
  * @coversDefaultClass \Drupal\group\QueryAccess\EntityQueryAlter
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -21,13 +24,6 @@ class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['node'];
-
-  /**
-   * The grouped entity storage to use in testing.
-   *
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
-  protected $storage;
 
   /**
    * The group type to use in testing.
@@ -46,7 +42,6 @@ class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
     $this->installEntitySchema('node');
     $this->createNodeType(['type' => 'page']);
 
-    $this->storage = $this->entityTypeManager->getStorage('node');
     $this->groupType = $this->createGroupType();
   }
 
@@ -55,7 +50,7 @@ class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
    */
   public function testCacheableMetadataLeaks() {
     $renderer = $this->container->get('renderer');
-    $storage = $this->storage;
+    $storage = $this->entityTypeManager->getStorage('node');
 
     // Create an ungrouped node. This should not trigger the query access and
     // therefore not leak cacheable metadata.
@@ -105,11 +100,12 @@ class EntityQueryAlterCacheabilityTest extends GroupKernelTestBase {
    *   The created node entity.
    */
   protected function createNode(array $values = []) {
-    $node = $this->storage->create($values + [
+    $storage = $this->entityTypeManager->getStorage('node');
+    $node = $storage->create($values + [
       'title' => $this->randomString(),
     ]);
     $node->enforceIsNew();
-    $this->storage->save($node);
+    $storage->save($node);
     return $node;
   }
 

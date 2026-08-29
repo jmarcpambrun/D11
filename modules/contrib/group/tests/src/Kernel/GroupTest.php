@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\Entity\EntityViewMode;
 
@@ -9,8 +12,9 @@ use Drupal\Core\Entity\Entity\EntityViewMode;
  * Tests the general behavior of group entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\Group
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTest extends GroupKernelTestBase {
 
   /**
@@ -46,6 +50,7 @@ class GroupTest extends GroupKernelTestBase {
    * @covers ::removeMember
    * @depends testAddMember
    */
+  #[Depends('testAddMember')]
   public function testRemoveMember() {
     $account = $this->createUser();
     $this->group->addMember($account);

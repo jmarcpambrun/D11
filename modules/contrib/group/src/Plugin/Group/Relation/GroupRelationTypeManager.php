@@ -5,11 +5,13 @@ namespace Drupal\group\Plugin\Group\Relation;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Config\Entity\ConfigEntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\group\Entity\GroupRelationshipTypeInterface;
 use Drupal\group\Entity\GroupTypeInterface;
+use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group\Plugin\Attribute\GroupRelationType;
 use Psr\Container\ContainerInterface;
 
@@ -32,20 +34,6 @@ class GroupRelationTypeManager extends DefaultPluginManager implements GroupRela
    * @var array
    */
   protected $handlers = [];
-
-  /**
-   * The group type storage handler.
-   *
-   * @var \Drupal\Core\Config\Entity\ConfigEntityStorageInterface
-   */
-  protected $groupTypeStorage;
-
-  /**
-   * A relationship type storage handler.
-   *
-   * @var \Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface
-   */
-  protected $relationshipTypeStorage;
 
   /**
    * A collection of vanilla instances of all group relations.
@@ -213,11 +201,8 @@ class GroupRelationTypeManager extends DefaultPluginManager implements GroupRela
    * @return \Drupal\Core\Config\Entity\ConfigEntityStorageInterface
    *   The group type storage handler.
    */
-  protected function getGroupTypeStorage() {
-    if (!isset($this->groupTypeStorage)) {
-      $this->groupTypeStorage = $this->entityTypeManager->getStorage('group_type');
-    }
-    return $this->groupTypeStorage;
+  protected function getGroupTypeStorage(): ConfigEntityStorageInterface {
+    return $this->entityTypeManager->getStorage('group_type');
   }
 
   /**
@@ -226,11 +211,8 @@ class GroupRelationTypeManager extends DefaultPluginManager implements GroupRela
    * @return \Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface
    *   The relationship type storage handler.
    */
-  protected function getRelationshipTypeStorage() {
-    if (!isset($this->relationshipTypeStorage)) {
-      $this->relationshipTypeStorage = $this->entityTypeManager->getStorage('group_relationship_type');
-    }
-    return $this->relationshipTypeStorage;
+  protected function getRelationshipTypeStorage(): GroupRelationshipTypeStorageInterface {
+    return $this->entityTypeManager->getStorage('group_relationship_type');
   }
 
   /**

@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\Entity\Exception\ConfigEntityIdLengthException;
 use Drupal\group\Entity\GroupTypeInterface;
@@ -10,8 +12,9 @@ use Drupal\group\Entity\GroupTypeInterface;
  * Tests the general behavior of group type entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupType
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTypeTest extends GroupKernelTestBase {
 
   /**

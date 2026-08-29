@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
@@ -9,9 +12,9 @@ use Drupal\user\RoleInterface;
  * Tests that entity operations (do not) show up on the group overview.
  *
  * @see \Drupal\group\Entity\Controller\GroupListBuilder::getDefaultOperations()
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class EntityOperationsTest extends GroupBrowserTestBase {
 
   /**
@@ -33,9 +36,8 @@ class EntityOperationsTest extends GroupBrowserTestBase {
    *   A list of group permissions to assign to the user.
    * @param string[] $modules
    *   A list of modules to enable.
-   *
-   * @dataProvider provideEntityOperationScenarios
    */
+  #[DataProvider('provideEntityOperationScenarios')]
   public function testEntityOperations($visible, $invisible, $permissions = [], $modules = []) {
     $group = $this->createGroup(['type' => $this->createGroupType()->id()]);
     $group->addMember($this->groupCreator);

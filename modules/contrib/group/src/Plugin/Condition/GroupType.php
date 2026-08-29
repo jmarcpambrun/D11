@@ -4,7 +4,7 @@ namespace Drupal\group\Plugin\Condition;
 
 use Drupal\Core\Condition\Attribute\Condition;
 use Drupal\Core\Condition\ConditionPluginBase;
-use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GroupType extends ConditionPluginBase implements ContainerFactoryPluginInterface {
 
   public function __construct(
-    protected EntityStorageInterface $entityStorage,
+    protected EntityTypeManagerInterface $entityTypeManager,
     array $configuration,
     $plugin_id,
     $plugin_definition,
@@ -40,7 +40,7 @@ class GroupType extends ConditionPluginBase implements ContainerFactoryPluginInt
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
-      $container->get('entity_type.manager')->getStorage('group_type'),
+      $container->get('entity_type.manager'),
       $configuration,
       $plugin_id,
       $plugin_definition
@@ -54,7 +54,7 @@ class GroupType extends ConditionPluginBase implements ContainerFactoryPluginInt
     $options = [];
 
     // Build a list of group type labels.
-    $group_types = $this->entityStorage->loadMultiple();
+    $group_types = $this->entityTypeManager->getStorage('group_type')->loadMultiple();
     foreach ($group_types as $type) {
       $options[$type->id()] = $type->label();
     }

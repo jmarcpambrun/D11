@@ -80,7 +80,7 @@
         "drupal/gdpr": "^3.1",
         "drupal/gitlab_api": "^3.0-alpha1",
         "drupal/google_analytics": "4.0.3",
-        "drupal/group": "^4.0-alpha",
+        "drupal/group": "^4.0@alpha",
         "drupal/h5p": "2.0-beta1",
         "drupal/imce": "^3.1.5",
         "drupal/inline_entity_form": "^3.0.0",

@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
@@ -9,8 +12,9 @@ use Drupal\user\RoleInterface;
  * Tests the general behavior of group role entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupRole
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRoleTest extends GroupKernelTestBase {
 
   /**
@@ -55,6 +59,7 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @covers ::setWeight
    * @depends testGetWeight
    */
+  #[Depends('testGetWeight')]
   public function testSetWeight() {
     $this->groupRole->setWeight(1991);
     $this->assertEquals(1991, $this->groupRole->getWeight());
@@ -201,6 +206,7 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @covers ::grantPermission
    * @depends testHasPermission
    */
+  #[Depends('testHasPermission')]
   public function testGrantPermission() {
     $this->assertFalse($this->groupRole->hasPermission('view group'));
     $this->groupRole->grantPermission('view group');
@@ -213,6 +219,7 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @covers ::grantPermissions
    * @depends testHasPermission
    */
+  #[Depends('testHasPermission')]
   public function testGrantPermissions() {
     $this->assertFalse($this->groupRole->hasPermission('view group'));
     $this->assertFalse($this->groupRole->hasPermission('edit group'));
@@ -228,6 +235,8 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @depends testHasPermission
    * @depends testGrantPermission
    */
+  #[Depends('testHasPermission')]
+  #[Depends('testGrantPermission')]
   public function testRevokePermission() {
     $this->groupRole->grantPermission('view group');
     $this->groupRole->revokePermission('view group');
@@ -241,6 +250,8 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @depends testHasPermission
    * @depends testGrantPermissions
    */
+  #[Depends('testHasPermission')]
+  #[Depends('testGrantPermissions')]
   public function testRevokePermissions() {
     $this->groupRole->grantPermissions(['view group', 'edit group']);
     $this->groupRole->revokePermissions(['view group', 'edit group']);
@@ -255,6 +266,8 @@ class GroupRoleTest extends GroupKernelTestBase {
    * @depends testHasPermission
    * @depends testGrantPermissions
    */
+  #[Depends('testHasPermission')]
+  #[Depends('testGrantPermissions')]
   public function testChangePermissions() {
     $this->groupRole->grantPermissions(['view group', 'edit group']);
     $this->groupRole->changePermissions([

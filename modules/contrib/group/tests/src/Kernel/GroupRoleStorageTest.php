@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\group\Entity\GroupMembership;
 use Drupal\group\Entity\GroupMembershipInterface;
 use Drupal\group\Entity\Storage\GroupRoleStorageInterface;
@@ -12,8 +15,9 @@ use Drupal\user\RoleInterface;
  * Tests the behavior of group role storage handler.
  *
  * @coversDefaultClass \Drupal\group\Entity\Storage\GroupRoleStorage
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRoleStorageTest extends GroupKernelTestBase {
 
   /**
@@ -147,6 +151,7 @@ class GroupRoleStorageTest extends GroupKernelTestBase {
    * @covers ::deleteMembershipReferences
    * @depends testHasMembershipReferences
    */
+  #[Depends('testHasMembershipReferences')]
   public function testDeleteMembershipReferences() {
     $storage = $this->entityTypeManager->getStorage('group_role');
     assert($storage instanceof GroupRoleStorageInterface);

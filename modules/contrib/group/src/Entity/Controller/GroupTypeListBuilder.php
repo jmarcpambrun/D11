@@ -2,6 +2,7 @@
 
 namespace Drupal\group\Entity\Controller;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
@@ -41,9 +42,14 @@ class GroupTypeListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Make second parameter required when minimum supported Drupal is 12.
    */
-  public function getDefaultOperations(EntityInterface $entity) {
-    $operations = parent::getDefaultOperations($entity);
+  protected function getDefaultOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
+    $cacheability ??= new CacheableMetadata();
+
+    $operations = parent::getDefaultOperations($entity, $cacheability);
+
     // Place the group type specific operations after the operations added by
     // field_ui.module which have the weights 15, 20, 25.
     if (isset($operations['edit'])) {

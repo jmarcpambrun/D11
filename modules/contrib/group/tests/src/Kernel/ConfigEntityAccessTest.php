@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group\PermissionScopeInterface;
@@ -9,9 +11,9 @@ use Drupal\user\RoleInterface;
 
 /**
  * Tests that Group properly checks access for grouped entities.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ConfigEntityAccessTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -20,13 +22,6 @@ class ConfigEntityAccessTest extends GroupKernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['group_test_plugin', 'node'];
-
-  /**
-   * The test entity storage to use in testing.
-   *
-   * @var \Drupal\Core\Config\Entity\ConfigEntityStorageInterface
-   */
-  protected $storage;
 
   /**
    * The access control handler to use in testing.
@@ -70,7 +65,6 @@ class ConfigEntityAccessTest extends GroupKernelTestBase {
     // Create the authenticated role.
     $this->createRole([], RoleInterface::AUTHENTICATED_ID);
 
-    $this->storage = $this->entityTypeManager->getStorage('node_type');
     $this->accessControlHandler = $this->entityTypeManager->getAccessControlHandler('node_type');
 
     $this->groupTypeA = $this->createGroupType(['id' => 'foo']);

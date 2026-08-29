@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\group\Access\GroupPermissionsHashGeneratorInterface;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
@@ -12,8 +15,9 @@ use Drupal\user\RoleInterface;
  * @covers \Drupal\group\Access\GroupPermissionsHashGenerator
  * @covers \Drupal\group\Access\IndividualGroupRoleAccessPolicy
  * @covers \Drupal\group\Access\SynchronizedGroupRoleAccessPolicy
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
 
   /**
@@ -49,9 +53,8 @@ class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
    *
    * @param array $role_config
    *   The configuration for the group role.
-   *
-   * @dataProvider individualProvider
    */
+  #[DataProvider('individualProvider')]
   public function testIndividual(array $role_config): void {
     $account_a = $this->createUser();
     $account_b = $this->createUser();
@@ -97,9 +100,8 @@ class GroupPermissionsHashGeneratorTest extends GroupKernelTestBase {
    *
    * @param array $role_config
    *   The configuration for the group role.
-   *
-   * @dataProvider synchronizedProvider
    */
+  #[DataProvider('synchronizedProvider')]
   public function testSynchronized(array $role_config): void {
     $account_a = $this->createUser();
     $account_b = $this->createUser();

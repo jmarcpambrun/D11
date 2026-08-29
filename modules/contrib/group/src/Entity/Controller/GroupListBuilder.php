@@ -2,6 +2,7 @@
 
 namespace Drupal\group\Entity\Controller;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -23,6 +24,7 @@ class GroupListBuilder extends EntityListBuilder {
 
   public function __construct(
     EntityTypeInterface $entity_type,
+    // @phpstan-ignore-next-line drupal.entityStoragePropertyAssignment
     EntityStorageInterface $storage,
     RedirectDestinationInterface $redirect_destination,
     protected AccountInterface $currentUser,
@@ -124,13 +126,18 @@ class GroupListBuilder extends EntityListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Make second parameter required when minimum supported Drupal is 12.
    */
-  protected function getDefaultOperations(EntityInterface $entity) {
-    assert($entity instanceof GroupInterface);
-    $operations = parent::getDefaultOperations($entity);
+  protected function getDefaultOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
+    $cacheability ??= new CacheableMetadata();
 
-    if ($this->moduleHandler->moduleExists('views') && $entity->hasPermission('administer members', $this->currentUser)) {
-      if ($this->router->getRouteCollection()->get('view.group_members.page_1') !== NULL) {
+    assert($entity instanceof GroupInterface);
+    $operations = parent::getDefaultOperations($entity, $cacheability);
+
+    if ($this->moduleHandler->moduleExists('views') && $this->router->getRouteCollection()->get('view.group_members.page_1') !== NULL) {
+      $cacheability->addCacheContexts(['user.group_permissions']);
+      if ($entity->hasPermission('administer members', $this->currentUser)) {
         $operations['members'] = [
           'title' => $this->t('Members'),
           'weight' => 15,
@@ -139,12 +146,18 @@ class GroupListBuilder extends EntityListBuilder {
       }
     }
 
-    if ($entity->getGroupType()->shouldCreateNewRevision() && $entity->hasPermission('view group revisions', $this->currentUser)) {
-      $operations['revisions'] = [
-        'title' => $this->t('Revisions'),
-        'weight' => 20,
-        'url' => $entity->toUrl('version-history'),
-      ];
+    $group_type = $entity->getGroupType();
+
+    $cacheability->addCacheableDependency($group_type);
+    if ($group_type->shouldCreateNewRevision()) {
+      $cacheability->addCacheContexts(['user.group_permissions']);
+      if ($entity->hasPermission('view group revisions', $this->currentUser)) {
+        $operations['revisions'] = [
+          'title' => $this->t('Revisions'),
+          'weight' => 20,
+          'url' => $entity->toUrl('version-history'),
+        ];
+      }
     }
 
     // Add the current path or destination as a redirect to the operation links.

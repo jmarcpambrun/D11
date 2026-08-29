@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit {
 
+  use PHPUnit\Framework\Attributes\Group;
+  use PHPUnit\Framework\Attributes\DataProvider;
   use Drupal\Core\Entity\EntityTypeInterface;
   use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -25,6 +27,7 @@ namespace Drupal\Tests\group\Unit {
    * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\OperationProvider
    * @group group
    */
+  #[Group('group')]
   class OperationProviderTest extends UnitTestCase {
 
     /**
@@ -42,8 +45,8 @@ namespace Drupal\Tests\group\Unit {
      *   Whether Field UI is enabled.
      *
      * @covers ::getOperations
-     * @dataProvider getOperationsProvider
      */
+    #[DataProvider('getOperationsProvider')]
     public function testGetOperations($expected, $plugin_id, GroupRelationTypeInterface $definition, $installed, $field_ui) {
       $group_relationship_type = $this->prophesize(GroupRelationshipTypeInterface::class)->reveal();
 
@@ -129,8 +132,8 @@ namespace Drupal\Tests\group\Unit {
      *   Whether the user can create new grouped entities.
      *
      * @covers ::getGroupOperations
-     * @dataProvider getGroupOperationsProvider
      */
+    #[DataProvider('getGroupOperationsProvider')]
     public function testGetGroupOperations($expected, $plugin_id, GroupRelationTypeInterface $definition, $has_create_permission) {
       $create_permission = $this->randomMachineName();
       $permission_provider = $this->prophesize(PermissionProviderInterface::class);

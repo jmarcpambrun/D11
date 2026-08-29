@@ -2,6 +2,10 @@
 
 namespace Drupal\Tests\group_support_revisions\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Tests\group\Functional\GroupBrowserTestBase;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group\PermissionScopeInterface;
@@ -10,9 +14,9 @@ use Drupal\user\RoleInterface;
 
 /**
  * Tests that revision operations (do not) show up on a grouped entity.
- *
- * @group group_support_revisions
  */
+#[Group('group_support_revisions')]
+#[RunTestsInSeparateProcesses]
 class GroupSupportRevisionsTest extends GroupBrowserTestBase {
 
   /**
@@ -112,6 +116,7 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
    *
    * @depends testRevisionsTab
    */
+  #[Depends('testRevisionsTab')]
   public function testViewRevision(): void {
     $group_role_storage = $this->entityTypeManager->getStorage('group_role');
     $node_storage = $this->entityTypeManager->getStorage('node');
@@ -159,10 +164,9 @@ class GroupSupportRevisionsTest extends GroupBrowserTestBase {
    *   The permission of the same CRUD operation, required by core.
    * @param string $group_permission
    *   The group permission that should grant access when grouped and supported.
-   *
-   * @depends testRevisionsTab
-   * @dataProvider revisionsOperationsProvider
    */
+  #[DataProvider('revisionsOperationsProvider')]
+  #[Depends('testRevisionsTab')]
   public function testRevisionOperations(string $name, string $href, string $crud_permission, string $group_permission): void {
     $group_role_storage = $this->entityTypeManager->getStorage('group_role');
     $node_storage = $this->entityTypeManager->getStorage('node');

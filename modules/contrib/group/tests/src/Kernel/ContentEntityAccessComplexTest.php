@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
@@ -13,9 +15,9 @@ use Drupal\user\RoleInterface;
  *
  * By complex entities we mean entities that can be published or unpublished and
  * have a way of determining who owns the entity.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ContentEntityAccessComplexTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -24,13 +26,6 @@ class ContentEntityAccessComplexTest extends GroupKernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['group_test_plugin', 'node'];
-
-  /**
-   * The node storage to use in testing.
-   *
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
-  protected $storage;
 
   /**
    * The access control handler to use in testing.
@@ -77,7 +72,6 @@ class ContentEntityAccessComplexTest extends GroupKernelTestBase {
     $this->installSchema('node', ['node_access']);
     $this->installEntitySchema('node');
 
-    $this->storage = $this->entityTypeManager->getStorage('node');
     $this->accessControlHandler = $this->entityTypeManager->getAccessControlHandler('node');
     $this->createNodeType(['type' => 'page']);
     $this->createNodeType(['type' => 'article']);
@@ -1083,11 +1077,12 @@ class ContentEntityAccessComplexTest extends GroupKernelTestBase {
    *   The created node entity.
    */
   protected function createNode(array $values = []) {
-    $node = $this->storage->create($values + [
+    $storage = $this->entityTypeManager->getStorage('node');
+    $node = $storage->create($values + [
       'title' => $this->randomString(),
     ]);
     $node->enforceIsNew();
-    $this->storage->save($node);
+    $storage->save($node);
     return $node;
   }
 

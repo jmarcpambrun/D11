@@ -2,15 +2,18 @@
 
 namespace Drupal\Tests\group\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\group\Entity\GroupMembership;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
 /**
  * Tests the behavior of the group type form.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTypeFormTest extends GroupBrowserTestBase {
 
   /**
@@ -143,6 +146,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    *
    * @depends testCreatorMembership
    */
+  #[Depends('testCreatorMembership')]
   public function testCreatorMembershipRoles() {
     $this->createGroupTypeAndAssignCreatePermission(['The group creator automatically becomes a member' => 1]);
 
@@ -221,6 +225,8 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    * @depends testCreatorMembership
    * @depends testCreateAdminRole
    */
+  #[Depends('testCreatorMembership')]
+  #[Depends('testCreateAdminRole')]
   public function testNoAssignAdminRole() {
     $edit = [
       'The group creator automatically becomes a member' => 1,
@@ -242,6 +248,8 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    * @depends testCreatorMembership
    * @depends testCreateAdminRole
    */
+  #[Depends('testCreatorMembership')]
+  #[Depends('testCreateAdminRole')]
   public function testAssignAdminRole() {
     $edit = [
       'The group creator automatically becomes a member' => 1,
@@ -282,6 +290,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    *
    * @depends testGlobalAdminRoleDetection
    */
+  #[Depends('testGlobalAdminRoleDetection')]
   public function testNoOutsiderAdminRoleCreation() {
     $this->createAdminRole();
     $this->createGroupTypeAndAssignCreatePermission(['add_admin_outsider' => 0]);
@@ -295,6 +304,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    *
    * @depends testGlobalAdminRoleDetection
    */
+  #[Depends('testGlobalAdminRoleDetection')]
   public function testOutsiderAdminRoleCreation() {
     $this->createAdminRole();
     $this->createGroupTypeAndAssignCreatePermission(['add_admin_outsider' => 1]);
@@ -308,6 +318,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    *
    * @depends testGlobalAdminRoleDetection
    */
+  #[Depends('testGlobalAdminRoleDetection')]
   public function testNoInsiderAdminRoleCreation() {
     $this->createAdminRole();
     $this->createGroupTypeAndAssignCreatePermission(['add_admin_insider' => 0]);
@@ -321,6 +332,7 @@ class GroupTypeFormTest extends GroupBrowserTestBase {
    *
    * @depends testGlobalAdminRoleDetection
    */
+  #[Depends('testGlobalAdminRoleDetection')]
   public function testInsiderAdminRoleCreation() {
     $this->createAdminRole();
     $this->createGroupTypeAndAssignCreatePermission(['add_admin_insider' => 1]);

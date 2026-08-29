@@ -2,6 +2,7 @@
 
 namespace Drupal\group\Entity\Controller;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\DraggableListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -27,6 +28,7 @@ class GroupRoleListBuilder extends DraggableListBuilder {
    */
   protected $groupType;
 
+  // @phpstan-ignore-next-line drupal.entityStoragePropertyAssignment
   public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RouteMatchInterface $route_match) {
     parent::__construct($entity_type, $storage);
 
@@ -110,9 +112,13 @@ class GroupRoleListBuilder extends DraggableListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Make second parameter required when minimum supported Drupal is 12.
    */
-  public function getDefaultOperations(EntityInterface $entity) {
-    $operations = parent::getDefaultOperations($entity);
+  protected function getDefaultOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
+    $cacheability ??= new CacheableMetadata();
+
+    $operations = parent::getDefaultOperations($entity, $cacheability);
 
     if ($entity->hasLinkTemplate('permissions-form')) {
       $operations['permissions'] = [

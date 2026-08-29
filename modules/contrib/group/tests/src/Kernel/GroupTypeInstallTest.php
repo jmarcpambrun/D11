@@ -2,14 +2,17 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\group\Entity\GroupTypeInterface;
 
 /**
  * Tests the creation of group type entities during extension install.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupType
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTypeInstallTest extends GroupKernelTestBase {
 
   /**

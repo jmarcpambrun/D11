@@ -188,7 +188,7 @@ class GroupRoleForm extends EntityForm {
   public function exists($id) {
     assert($this->entity instanceof GroupRoleInterface);
     $group_role = $this->entity;
-    return (boolean) $this->entityTypeManager->getStorage('group_role')->load($group_role->getGroupTypeId() . '-' . $id);
+    return (bool) $this->entityTypeManager->getStorage('group_role')->load($group_role->getGroupTypeId() . '-' . $id);
   }
 
   /**

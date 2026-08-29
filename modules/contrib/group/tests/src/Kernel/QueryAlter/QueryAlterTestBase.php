@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Database\Query\ConditionInterface;
 use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Tests\group\Kernel\GroupKernelTestBase;
@@ -112,9 +113,8 @@ abstract class QueryAlterTestBase extends GroupKernelTestBase {
    *   Whether the insider simple unpublished permissions should be checked.
    * @param bool $insider_unpublished_owner_check
    *   Whether the insider owner unpublished permissions should be checked.
-   *
-   * @dataProvider queryAccessProvider
    */
+  #[DataProvider('queryAccessProvider')]
   public function testQueryAccess(
     string $operation,
     bool $operation_supported,

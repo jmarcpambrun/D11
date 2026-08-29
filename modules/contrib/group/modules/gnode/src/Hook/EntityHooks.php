@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\gnode\Hook;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Hook\Attribute\Hook;
@@ -42,22 +43,33 @@ final class EntityHooks {
   }
 
   /**
+   * Implements hook_ENTITY_TYPE_update().
+   */
+  #[Hook('node_type_update')]
+  public function nodeTypeUpdate(NodeTypeInterface $node_type): void {
+    $this->groupRelationTypeManager->clearCachedDefinitions();
+  }
+
+  /**
    * Implements hook_entity_operation().
    */
   #[Hook('entity_operation')]
-  public function entityOperation(EntityInterface $entity): array {
+  public function entityOperation(EntityInterface $entity, CacheableMetadata $cacheability): array {
     $operations = [];
 
-    if ($entity->getEntityTypeId() == 'group' && $this->moduleHandler->moduleExists('views')) {
+    if ($entity->getEntityTypeId() == 'group'
+      && $this->moduleHandler->moduleExists('views')
+      && $this->router->getRouteCollection()->get('view.group_nodes.page_1') !== NULL
+    ) {
       assert($entity instanceof GroupInterface);
+
+      $cacheability->addCacheContexts(['user.group_permissions']);
       if ($entity->hasPermission('access group_node overview', $this->currentUser)) {
-        if ($this->router->getRouteCollection()->get('view.group_nodes.page_1') !== NULL) {
-          $operations['nodes'] = [
-            'title' => $this->t('Nodes'),
-            'weight' => 20,
-            'url' => Url::fromRoute('view.group_nodes.page_1', ['group' => $entity->id()]),
-          ];
-        }
+        $operations['nodes'] = [
+          'title' => $this->t('Nodes'),
+          'weight' => 20,
+          'url' => Url::fromRoute('view.group_nodes.page_1', ['group' => $entity->id()]),
+        ];
       }
     }
 

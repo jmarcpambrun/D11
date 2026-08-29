@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Database\Query\ConditionInterface;
 use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\group\Entity\GroupTypeInterface;
@@ -13,8 +15,9 @@ use Drupal\user\RoleInterface;
  * Tests the behavior of group query alter.
  *
  * @coversDefaultClass \Drupal\group\QueryAccess\GroupQueryAlter
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupQueryAlterTest extends QueryAlterTestBase {
 
   /**

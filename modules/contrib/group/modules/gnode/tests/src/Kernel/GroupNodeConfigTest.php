@@ -2,13 +2,15 @@
 
 namespace Drupal\Tests\gnode\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 
 /**
  * Tests that all config provided by this module passes validation.
- *
- * @group gnode
  */
+#[Group('gnode')]
+#[RunTestsInSeparateProcesses]
 class GroupNodeConfigTest extends EntityKernelTestBase {
 
   /**

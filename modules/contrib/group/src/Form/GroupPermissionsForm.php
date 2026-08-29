@@ -286,7 +286,7 @@ abstract class GroupPermissionsForm extends FormBase {
         continue;
       }
       $permissions = $form_state->getValue($role_name);
-      $group_role->changePermissions($permissions)->trustData()->save();
+      $group_role->changePermissions($permissions)->save();
     }
 
     $this->messenger()->addStatus($this->t('The changes have been saved.'));

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -15,8 +16,8 @@ use Drupal\group\Entity\GroupTypeInterface;
  * Tests the route.group cache context.
  *
  * @coversDefaultClass \Drupal\group\Cache\Context\RouteGroupCacheContext
- * @group group
  */
+#[Group('group')]
 class RouteGroupCacheContextTest extends UnitTestCase {
 
   /**

@@ -79,17 +79,10 @@ final class EntityHooks {
     // Find all of the group relations that define access.
     $plugin_manager = $this->groupRelationTypeManager;
     $plugin_ids = $plugin_manager->getPluginIdsByEntityTypeAccess($entity->getEntityTypeId());
+    $access = AccessResult::neutral();
     if (empty($plugin_ids)) {
-      return AccessResult::neutral();
+      return $access;
     }
-
-    // If any new relationship entity is added using any of the retrieved
-    // plugins, it might change access.
-    $plugin_cache_tags = [];
-    foreach ($plugin_ids as $plugin_id) {
-      $plugin_cache_tags[] = "group_relationship_list:plugin:$plugin_id";
-    }
-    $access = AccessResult::neutral()->addCacheTags($plugin_cache_tags);
 
     // If the entity is config, we need to find the wrapper for it.
     if ($entity instanceof ConfigEntityInterface) {

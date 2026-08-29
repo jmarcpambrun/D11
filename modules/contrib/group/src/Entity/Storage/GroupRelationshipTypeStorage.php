@@ -74,7 +74,7 @@ class GroupRelationshipTypeStorage extends ConfigEntityStorage implements GroupR
    * {@inheritdoc}
    */
   public function loadByPluginId($plugin_id) {
-    return $this->loadByProperties(['content_plugin' => $plugin_id]);
+    return $this->loadByProperties(['relation_type' => $plugin_id]);
   }
 
   /**
@@ -111,7 +111,7 @@ class GroupRelationshipTypeStorage extends ConfigEntityStorage implements GroupR
     $values = [
       'id' => $this->getRelationshipTypeId($group_type->id(), $plugin_id),
       'group_type' => $group_type->id(),
-      'content_plugin' => $plugin_id,
+      'relation_type' => $plugin_id,
       'plugin_config' => $plugin->getConfiguration(),
     ];
 
@@ -132,7 +132,7 @@ class GroupRelationshipTypeStorage extends ConfigEntityStorage implements GroupR
     if ($this->state->get('group_update_10300_detected_legacy_version', FALSE)) {
       $ids = $this->getQuery()
         ->condition('group_type', $group_type_id)
-        ->condition('content_plugin', $plugin_id)
+        ->condition('relation_type', $plugin_id)
         ->execute();
 
       if (!empty($ids)) {

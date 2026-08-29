@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Component\Discovery\YamlDiscovery;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group_test\GroupTestPermissions;
@@ -10,8 +12,9 @@ use Drupal\group_test\GroupTestPermissions;
  * Tests the gathering and processing of group permissions.
  *
  * @coversDefaultClass \Drupal\group\Access\GroupPermissionHandler
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupPermissionHandlerTest extends GroupKernelTestBase {
 
   /**

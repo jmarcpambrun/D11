@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Tests\UnitTestCase;
 use Drupal\group\Plugin\Group\Relation\GroupRelationType;
 use Drupal\group\Plugin\Group\RelationHandlerDefault\PostInstall;
@@ -10,8 +11,8 @@ use Drupal\group\Plugin\Group\RelationHandlerDefault\PostInstall;
  * Tests the default group relation post_install handler.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\PostInstall
- * @group group
  */
+#[Group('group')]
 class PostInstallTest extends UnitTestCase {
 
   /**

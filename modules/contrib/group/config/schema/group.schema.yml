@@ -91,7 +91,7 @@ group_relationship_type:
     group_type:
       type: 'string'
       label: 'Group type ID'
-    content_plugin:
+    relation_type:
       type: 'string'
       label: 'Group relation plugin ID'
     plugin_config:

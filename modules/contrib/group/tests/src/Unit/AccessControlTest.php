@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\Context\CacheContextsManager;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -29,8 +31,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the default group relation access_control handler.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\AccessControl
- * @group group
  */
+#[Group('group')]
 class AccessControlTest extends UnitTestCase {
 
   /**
@@ -70,8 +72,8 @@ class AccessControlTest extends UnitTestCase {
    *   Whether the entity can be (un)published.
    *
    * @covers ::supportsOperation
-   * @dataProvider supportsOperationProvider
    */
+  #[DataProvider('supportsOperationProvider')]
   public function testSupportsOperation($expected, $plugin_id, GroupRelationTypeInterface $definition, $operation, $target, $permission, $own_permission, $is_ownable, $is_publishable) {
     $entity_type = $this->prophesize(EntityTypeInterface::class);
     $entity_type->entityClassImplements(EntityPublishedInterface::class)->willReturn($is_publishable);
@@ -180,8 +182,8 @@ class AccessControlTest extends UnitTestCase {
    *   Whether to check the override that supports all operations.
    *
    * @covers ::relationshipAccess
-   * @dataProvider relationshipAccessProvider
    */
+  #[DataProvider('relationshipAccessProvider')]
   public function testRelationshipAccess(\Closure $expected, $plugin_id, GroupRelationTypeInterface $definition, $has_admin_permission, $has_permission, $has_own_permission, $permission, $own_permission, $is_owner, $check_chain) {
     $operation = $this->randomMachineName();
 
@@ -328,8 +330,8 @@ class AccessControlTest extends UnitTestCase {
    *   Whether to check the override that supports all operations.
    *
    * @covers ::relationshipCreateAccess
-   * @dataProvider relationshipCreateAccessProvider
    */
+  #[DataProvider('relationshipCreateAccessProvider')]
   public function testRelationshipCreateAccess(\Closure $expected, $plugin_id, GroupRelationTypeInterface $definition, $has_admin_permission, $has_permission, $permission, $check_chain) {
     $permission_provider = $this->prophesize(PermissionProviderInterface::class);
     $permission_provider->getAdminPermission()->willReturn($definition->getAdminPermission());
@@ -444,8 +446,8 @@ class AccessControlTest extends UnitTestCase {
    *   Whether to check the override that supports all operations.
    *
    * @covers ::entityAccess
-   * @dataProvider entityAccessProvider
    */
+  #[DataProvider('entityAccessProvider')]
   public function testEntityAccess(\Closure $expected, $plugin_id, GroupRelationTypeInterface $definition, $has_admin_permission, $has_permission, $has_own_permission, $permission, $own_permission, $is_grouped, $is_ownable, $is_owner, $is_publishable, $is_published, $operation, $check_chain) {
     $storage = $this->prophesize(GroupRelationshipStorageInterface::class);
     $entity_type = $this->prophesize(EntityTypeInterface::class);
@@ -696,8 +698,8 @@ class AccessControlTest extends UnitTestCase {
    *   Whether to check the override that supports all operations.
    *
    * @covers ::entityCreateAccess
-   * @dataProvider entityCreateAccessProvider
    */
+  #[DataProvider('entityCreateAccessProvider')]
   public function testEntityCreateAccess(\Closure $expected, $plugin_id, GroupRelationTypeInterface $definition, $has_admin_permission, $has_permission, $permission, $check_chain) {
     $permission_provider = $this->prophesize(PermissionProviderInterface::class);
     $permission_provider->getAdminPermission()->willReturn($definition->getAdminPermission());

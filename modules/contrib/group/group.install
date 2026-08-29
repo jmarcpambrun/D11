@@ -22,7 +22,7 @@ function group_update_11400() {
   foreach ($config_factory->listAll('group.type.') as $config_name) {
     $group_type = $config_factory->getEditable($config_name);
     $group_type->clear('creator_wizard');
-    $group_type->save(TRUE);
+    $group_type->save();
   }
 
   // Drop use_creation_wizard key from group relationship types.
@@ -33,6 +33,22 @@ function group_update_11400() {
     unset($plugin_config['use_creation_wizard']);
     $relationship_type->set('plugin_config', $plugin_config);
 
-    $relationship_type->save(TRUE);
+    $relationship_type->save();
+  }
+}
+
+/**
+ * Rename "content_plugin" to "relation_type" on group relationship types.
+ */
+function group_update_11401() {
+  $config_factory = \Drupal::configFactory();
+  foreach ($config_factory->listAll('group.relationship_type.') as $config_name) {
+    $relationship_type = $config_factory->getEditable($config_name);
+
+    $plugin_id = $relationship_type->get('content_plugin');
+    $relationship_type->clear('content_plugin');
+    $relationship_type->set('relation_type', $plugin_id);
+
+    $relationship_type->save();
   }
 }

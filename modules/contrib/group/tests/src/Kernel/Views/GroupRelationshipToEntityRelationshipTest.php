@@ -2,15 +2,18 @@
 
 namespace Drupal\Tests\group\Kernel\Views;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 
 /**
  * Tests the group_relationship_to_entity relationship handler.
  *
  * @see \Drupal\group\Plugin\views\relationship\GroupRelationshipToEntity
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase {
 
   /**
@@ -59,6 +62,7 @@ class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase
    *
    * @depends testGroupOwnerIsListed
    */
+  #[Depends('testGroupOwnerIsListed')]
   public function testAddedMemberIsListed() {
     $group = $this->createGroup();
     $group->addMember(\Drupal::currentUser()->getAccount());
@@ -71,6 +75,7 @@ class GroupRelationshipToEntityRelationshipTest extends GroupViewsKernelTestBase
    *
    * @depends testGroupOwnerIsListed
    */
+  #[Depends('testGroupOwnerIsListed')]
   public function testOtherContentIsNotListed() {
     $group = $this->createGroup();
     $group->addMember(\Drupal::currentUser()->getAccount());

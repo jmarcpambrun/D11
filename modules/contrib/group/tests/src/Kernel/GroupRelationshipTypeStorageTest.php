@@ -2,14 +2,18 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 
 /**
  * Tests the behavior of group relationship type storage handler.
  *
  * @coversDefaultClass \Drupal\group\Entity\Storage\GroupRelationshipTypeStorage
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipTypeStorageTest extends GroupKernelTestBase {
 
   /**
@@ -43,6 +47,7 @@ class GroupRelationshipTypeStorageTest extends GroupKernelTestBase {
    * @covers ::getRelationshipTypeId
    * @depends testGetRelationshipTypeId
    */
+  #[Depends('testGetRelationshipTypeId')]
   public function testGetRelationshipTypeIdLegacy() {
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
@@ -53,7 +58,7 @@ class GroupRelationshipTypeStorageTest extends GroupKernelTestBase {
     $storage->save($storage->create([
       'id' => 'old_id_pattern',
       'group_type' => 'some_short_id',
-      'content_plugin' => 'group_relation',
+      'relation_type' => 'group_relation',
       'plugin_config' => [],
     ]));
     $this->assertSame('some_short_id-group_relation', $storage->getRelationshipTypeId('some_short_id', 'group_relation'), 'New pattern was returned even if an entity existed with old pattern, because legacy version was not detected.');

@@ -3,7 +3,7 @@
 namespace Drupal\group\Form;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\group\Access\GroupPermissionHandlerInterface;
 use Drupal\group\Entity\GroupTypeInterface;
@@ -24,7 +24,7 @@ class GroupPermissionsTypeSpecificForm extends GroupPermissionsForm {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     GroupPermissionHandlerInterface $permission_handler,
-    ModuleHandlerInterface $module_handler,
+    ModuleExtensionList $module_handler,
   ) {
     parent::__construct($permission_handler, $module_handler);
   }
@@ -36,7 +36,7 @@ class GroupPermissionsTypeSpecificForm extends GroupPermissionsForm {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('group.permissions'),
-      $container->get('module_handler')
+      $container->get('extension.list.module'),
     );
   }
 

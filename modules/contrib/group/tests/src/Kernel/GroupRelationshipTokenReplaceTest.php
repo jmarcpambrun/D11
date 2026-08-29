@@ -2,14 +2,16 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Render\BubbleableMetadata;
 
 /**
  * Generates text using placeholders to check relationship token replacement.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipTokenReplaceTest extends GroupTokenReplaceKernelTestBase {
 
   /**

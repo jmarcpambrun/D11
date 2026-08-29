@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -19,8 +21,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the group permission checker service.
  *
  * @coversDefaultClass \Drupal\group\Access\GroupPermissionChecker
- * @group group
  */
+#[Group('group')]
 class GroupPermissionCheckerTest extends UnitTestCase {
 
   /**
@@ -92,8 +94,8 @@ class GroupPermissionCheckerTest extends UnitTestCase {
    *   The message to use in the assertion.
    *
    * @covers ::hasPermissionInGroup
-   * @dataProvider provideHasPermissionInGroupScenarios
    */
+  #[DataProvider('provideHasPermissionInGroupScenarios')]
   public function testHasPermissionInGroup($is_member, $outsider_permissions, $outsider_admin, $insider_permissions, $insider_admin, $individual_permissions, $individual_admin, $permission, $has_permission, $message): void {
     $account = $this->prophesize(AccountInterface::class);
     $account->id()->willReturn(1337);

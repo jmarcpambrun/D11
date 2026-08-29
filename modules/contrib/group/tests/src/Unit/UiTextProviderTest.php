@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -18,8 +20,8 @@ use Drupal\group\Plugin\Group\RelationHandlerDefault\UiTextProvider;
  * Tests the default group relation ui_text_provider handler.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\UiTextProvider
- * @group group
  */
+#[Group('group')]
 class UiTextProviderTest extends UnitTestCase {
 
   use StringTranslationTrait;
@@ -114,8 +116,8 @@ class UiTextProviderTest extends UnitTestCase {
    *   (optional) Whether the relation type supports bundles. Defaults to FALSE.
    *
    * @covers ::getAddPageDescription
-   * @dataProvider getAddPageDescriptionProvider
    */
+  #[DataProvider('getAddPageDescriptionProvider')]
   public function testGetAddPageDescription($description, $create_mode, $bundle = FALSE) {
     $params['%entity_type'] = new TranslatableMarkup('Some singular label');
 

@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -17,8 +19,8 @@ use Drupal\user\EntityOwnerInterface;
  * Tests the default group relation permission_provider handler.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\PermissionProvider
- * @group group
  */
+#[Group('group')]
 class PermissionProviderTest extends UnitTestCase {
 
   /**
@@ -36,8 +38,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   Whether the plugin's entity type deals with publishing of entities.
    *
    * @covers ::getAdminPermission
-   * @dataProvider adminPermissionProvider
    */
+  #[DataProvider('adminPermissionProvider')]
   public function testGetAdminPermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getAdminPermission());
@@ -76,8 +78,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider relationViewPermissionProvider
    */
+  #[DataProvider('relationViewPermissionProvider')]
   public function testGetRelationViewPermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('view', 'relationship', $scope));
@@ -124,8 +126,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider relationUpdatePermissionProvider
    */
+  #[DataProvider('relationUpdatePermissionProvider')]
   public function testGetRelationUpdatePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('update', 'relationship', $scope));
@@ -167,8 +169,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider relationDeletePermissionProvider
    */
+  #[DataProvider('relationDeletePermissionProvider')]
   public function testGetRelationDeletePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('delete', 'relationship', $scope));
@@ -208,8 +210,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   Whether the plugin's entity type deals with publishing of entities.
    *
    * @covers ::getPermission
-   * @dataProvider relationCreatePermissionProvider
    */
+  #[DataProvider('relationCreatePermissionProvider')]
   public function testGetRelationCreatePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('create', 'relationship'));
@@ -248,8 +250,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider entityViewPermissionProvider
    */
+  #[DataProvider('entityViewPermissionProvider')]
   public function testGetEntityViewPermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('view', 'entity', $scope));
@@ -297,8 +299,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider entityViewUnpublishedPermissionProvider
    */
+  #[DataProvider('entityViewUnpublishedPermissionProvider')]
   public function testGetEntityViewUnpublishedPermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('view unpublished', 'entity', $scope));
@@ -345,8 +347,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider entityUpdatePermissionProvider
    */
+  #[DataProvider('entityUpdatePermissionProvider')]
   public function testGetEntityUpdatePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('update', 'entity', $scope));
@@ -393,8 +395,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   The $scope parameter for the tested method.
    *
    * @covers ::getPermission
-   * @dataProvider entityDeletePermissionProvider
    */
+  #[DataProvider('entityDeletePermissionProvider')]
   public function testGetEntityDeletePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published, $scope) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('delete', 'entity', $scope));
@@ -439,8 +441,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   Whether the plugin's entity type deals with publishing of entities.
    *
    * @covers ::getPermission
-   * @dataProvider entityCreatePermissionProvider
    */
+  #[DataProvider('entityCreatePermissionProvider')]
   public function testGetEntityCreatePermission($expected, $plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published);
     $this->assertEquals($expected, $permission_provider->getPermission('create', 'entity'));
@@ -478,8 +480,8 @@ class PermissionProviderTest extends UnitTestCase {
    *   Whether the plugin's entity type deals with publishing of entities.
    *
    * @covers ::buildPermissions
-   * @dataProvider buildPermissionsProvider
    */
+  #[DataProvider('buildPermissionsProvider')]
   public function testBuildPermissions($plugin_id, GroupRelationTypeInterface $definition, $implements_owner, $implements_published) {
     $permission_provider = $this->createPermissionProvider($plugin_id, $definition, $implements_owner, $implements_published, TRUE);
     $permissions = $permission_provider->buildPermissions();

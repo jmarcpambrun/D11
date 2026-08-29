@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Access\GroupPermissionCheckerInterface;
 use Drupal\group\Entity\GroupInterface;
@@ -16,8 +19,9 @@ use Drupal\user\RoleInterface;
  * Tests the behavior of the GroupMembership shared bundle class.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupMembership
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupMembershipTest extends GroupKernelTestBase {
 
   /**
@@ -121,6 +125,7 @@ class GroupMembershipTest extends GroupKernelTestBase {
    * @covers ::addRole
    * @depends testGetRoles
    */
+  #[Depends('testGetRoles')]
   public function testAddRole() {
     $group_role = $this->createGroupRole([
       'group_type' => $this->groupType->id(),
@@ -142,6 +147,7 @@ class GroupMembershipTest extends GroupKernelTestBase {
    * @covers ::removeRole
    * @depends testGetRoles
    */
+  #[Depends('testGetRoles')]
   public function testRemoveRole() {
     $this->groupMembership->removeRole($this->groupRoleIndividual->id());
     $this->assertEquals([$this->groupRoleInsider->id()], array_keys($this->groupMembership->getRoles()));

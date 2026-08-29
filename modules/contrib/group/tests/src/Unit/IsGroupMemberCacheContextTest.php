@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
@@ -17,8 +18,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the user.is_group_member:%group_id cache context.
  *
  * @coversDefaultClass \Drupal\group\Cache\Context\IsGroupMemberCacheContext
- * @group group
  */
+#[Group('group')]
 class IsGroupMemberCacheContextTest extends UnitTestCase {
 
   /**

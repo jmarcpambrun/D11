@@ -2,15 +2,17 @@
 
 namespace Drupal\Tests\gnode\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Functional\EntityOperationsTest as GroupEntityOperationsTest;
 
 /**
  * Tests that entity operations (do not) show up on the group overview.
  *
  * @see gnode_entity_operation()
- *
- * @group gnode
  */
+#[Group('gnode')]
+#[RunTestsInSeparateProcesses]
 class EntityOperationsTest extends GroupEntityOperationsTest {
 
   /**

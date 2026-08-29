@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
 
@@ -10,9 +12,9 @@ use Drupal\group\Plugin\Group\Relation\GroupRelationTypeManagerInterface;
  *
  * The services being tested come from group_test_plugin and
  * group_test_plugin_alter. Check their services files to get an idea.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class RelationHandlerTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;

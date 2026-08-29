@@ -2,7 +2,7 @@
 
 namespace Drupal\group\Plugin\views\argument;
 
-use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\views\Attribute\ViewsArgument;
 use Drupal\views\Plugin\views\argument\NumericArgument;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -17,7 +17,7 @@ class GroupId extends NumericArgument {
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected ContentEntityStorageInterface $groupStorage,
+    protected EntityTypeManagerInterface $entityTypeManager,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
@@ -30,7 +30,7 @@ class GroupId extends NumericArgument {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')->getStorage('group')
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -40,7 +40,7 @@ class GroupId extends NumericArgument {
   public function titleQuery() {
     $titles = [];
 
-    $groups = $this->groupStorage->loadMultiple($this->value);
+    $groups = $this->entityTypeManager->getStorage('group')->loadMultiple($this->value);
     foreach ($groups as $group) {
       $titles[] = $group->label();
     }

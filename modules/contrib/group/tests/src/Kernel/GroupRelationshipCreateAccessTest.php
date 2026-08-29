@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Routing\RouteObjectInterface;
 use Drupal\Core\Url;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
@@ -16,9 +19,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
  * Tests the relationship create access for groups.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -86,9 +89,8 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
 
   /**
    * Tests access to the create/add overview page.
-   *
-   * @dataProvider pageAccessProvider
    */
+  #[DataProvider('pageAccessProvider')]
   public function testPageAccess($route, $outsider_permissions, $member_permissions, $outsider_access, $member_access, $admin_access, $message) {
     $outsider = $this->createUser();
     $member = $this->createUser();
@@ -191,9 +193,8 @@ class GroupRelationshipCreateAccessTest extends GroupKernelTestBase {
 
   /**
    * Tests access to the create/add form.
-   *
-   * @dataProvider formAccessProvider
    */
+  #[DataProvider('formAccessProvider')]
   public function testFormAccess($route, $outsider_permissions, $member_permissions, $outsider_access, $member_access, $admin_access, $message) {
     $outsider = $this->createUser();
     $member = $this->createUser();

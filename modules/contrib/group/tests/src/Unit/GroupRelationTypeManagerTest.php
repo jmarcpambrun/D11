@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\Component\Plugin\Discovery\DiscoveryInterface;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
@@ -25,8 +27,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the group relation type manager.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\Relation\GroupRelationTypeManager
- * @group group
  */
+#[Group('group')]
 class GroupRelationTypeManagerTest extends UnitTestCase {
 
   /**
@@ -269,6 +271,7 @@ class GroupRelationTypeManagerTest extends UnitTestCase {
    * @covers ::getHandler
    * @depends testCreateHandlerInstance
    */
+  #[Depends('testCreateHandlerInstance')]
   public function testGetHandler() {
     $this->setUpPluginDefinitions(
       ['apple' => (new GroupRelationType(['id' => 'apple']))->setClass(GroupRelationTypeInterface::class)],
@@ -304,6 +307,7 @@ class GroupRelationTypeManagerTest extends UnitTestCase {
    * @covers ::getHandler
    * @depends testGetHandler
    */
+  #[Depends('testGetHandler')]
   public function testGetHandlerWithDerivatives() {
     $this->setUpPluginDefinitions(
       ['apple:red' => (new GroupRelationType(['id' => 'apple']))->setClass(GroupRelationTypeInterface::class)],

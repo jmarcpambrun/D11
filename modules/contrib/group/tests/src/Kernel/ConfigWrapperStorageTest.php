@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
@@ -10,8 +13,9 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
  * Tests the behavior of group config wrapper storage handler.
  *
  * @coversDefaultClass \Drupal\group\Entity\Storage\ConfigWrapperStorage
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ConfigWrapperStorageTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -34,6 +38,7 @@ class ConfigWrapperStorageTest extends GroupKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installEntitySchema('node');
+    // @phpstan-ignore drupal.entityStoragePropertyAssignment
     $this->storage = $this->entityTypeManager->getStorage('group_config_wrapper');
 
     // Install the node type handling plugin on a group type.
@@ -91,6 +96,7 @@ class ConfigWrapperStorageTest extends GroupKernelTestBase {
    * @covers ::wrapEntityId
    * @depends testWrapEntityId
    */
+  #[Depends('testWrapEntityId')]
   public function testWrapEntityIdNoCreate() {
     $node_type = $this->createNodeType();
     $this->assertFalse($this->storage->wrapEntityId('node_type', $node_type->id(), FALSE));
@@ -104,6 +110,7 @@ class ConfigWrapperStorageTest extends GroupKernelTestBase {
    * @covers ::wrapEntityId
    * @depends testWrapEntityId
    */
+  #[Depends('testWrapEntityId')]
   public function testWrapWrappedEntityId() {
     $node_type = $this->createNodeType();
     $wrapper_a = $this->storage->wrapEntityId('node_type', $node_type->id());
@@ -139,6 +146,7 @@ class ConfigWrapperStorageTest extends GroupKernelTestBase {
    * @covers ::wrapEntity
    * @depends testWrapEntity
    */
+  #[Depends('testWrapEntity')]
   public function testWrapEntityNoCreate() {
     $node_type = $this->createNodeType();
     $this->assertFalse($this->storage->wrapEntity($node_type, FALSE));
@@ -152,6 +160,7 @@ class ConfigWrapperStorageTest extends GroupKernelTestBase {
    * @covers ::wrapEntity
    * @depends testWrapEntity
    */
+  #[Depends('testWrapEntity')]
   public function testWrapWrappedEntity() {
     $node_type = $this->createNodeType();
     $wrapper_a = $this->storage->wrapEntity($node_type);

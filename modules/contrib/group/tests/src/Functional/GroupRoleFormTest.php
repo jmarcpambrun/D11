@@ -2,14 +2,16 @@
 
 namespace Drupal\Tests\group\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\group\Plugin\Validation\Constraint\GroupRoleScope;
 
 /**
  * Tests the behavior of the group role form.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRoleFormTest extends GroupBrowserTestBase {
 
   /**
@@ -20,20 +22,11 @@ class GroupRoleFormTest extends GroupBrowserTestBase {
   protected $groupType;
 
   /**
-   * Group role storage.
-   *
-   * @var \Drupal\group\Entity\Storage\GroupRoleStorageInterface
-   */
-  protected $groupRoleStorage;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
     $this->setUpAccount();
-
-    $this->groupRoleStorage = $this->entityTypeManager->getStorage('group_role');
     $this->groupType = $this->createGroupType(['id' => 'gt', 'label' => 'community']);
   }
 
@@ -70,7 +63,7 @@ class GroupRoleFormTest extends GroupBrowserTestBase {
 
     // Check that a newly created role has a correct id
     // (group_type_id-role_name)
-    $group_role = $this->groupRoleStorage->load($role_id);
+    $group_role = $this->entityTypeManager->getStorage('group_role')->load($role_id);
     $this->assertIsObject($group_role);
 
     // We want to be sure that we can edit role.
@@ -105,17 +98,19 @@ class GroupRoleFormTest extends GroupBrowserTestBase {
   public function testCodeRoleCreation() {
     $role_id = 'my_role';
     $role_name = 'My role';
-    $group_role = $this->groupRoleStorage->create([
+
+    $group_role_storage = $this->entityTypeManager->getStorage('group_role');
+    $group_role = $group_role_storage->create([
       'id' => $role_id,
       'label' => $role_name,
       'scope' => 'outsider',
       'global_role' => 'anonymous',
       'group_type' => $this->groupType->id(),
     ]);
-    $group_role->save();
+    $group_role_storage->save($group_role);
 
     // Load role to be sure, we don't have problems with entity API.
-    $group_role = $this->groupRoleStorage->load($role_id);
+    $group_role = $group_role_storage->load($role_id);
     $this->assertIsObject($group_role);
 
     $this->drupalGet("/admin/group/types/manage/{$this->groupType->id()}/roles/{$role_id}");

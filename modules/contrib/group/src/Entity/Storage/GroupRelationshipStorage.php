@@ -134,13 +134,6 @@ class GroupRelationshipStorage extends SqlContentEntityStorage implements GroupR
       }
     }
 
-    // If the entity is config, we need to use the wrapper for it.
-    if ($group_relation_type->handlesConfigEntityType()) {
-      $storage = $this->entityTypeManager->getStorage('group_config_wrapper');
-      assert($storage instanceof ConfigWrapperStorageInterface);
-      $entity = $storage->wrapEntity($entity);
-    }
-
     $storage = $this->entityTypeManager->getStorage('group_relationship_type');
     assert($storage instanceof GroupRelationshipTypeStorageInterface);
     $relationship_type_id = $storage->getRelationshipTypeId($group->bundle(), $plugin_id);

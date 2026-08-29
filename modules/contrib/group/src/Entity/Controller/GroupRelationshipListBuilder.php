@@ -2,6 +2,7 @@
 
 namespace Drupal\group\Entity\Controller;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -108,10 +109,14 @@ class GroupRelationshipListBuilder extends EntityListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Make second parameter required when minimum supported Drupal is 12.
    */
-  protected function getDefaultOperations(EntityInterface $entity) {
+  protected function getDefaultOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
+    $cacheability ??= new CacheableMetadata();
+
     assert($entity instanceof GroupRelationshipInterface);
-    $operations = parent::getDefaultOperations($entity);
+    $operations = parent::getDefaultOperations($entity, $cacheability);
 
     // Improve the edit and delete operation labels.
     if (isset($operations['edit'])) {
@@ -128,12 +133,18 @@ class GroupRelationshipListBuilder extends EntityListBuilder {
     }
 
     // Add an operation to view the actual entity.
-    if ($entity->getEntity()->access('view') && $entity->getEntity()->hasLinkTemplate('canonical')) {
-      $operations['view'] = [
-        'title' => $this->t('View entity'),
-        'weight' => 101,
-        'url' => $entity->getEntity()->toUrl('canonical'),
-      ];
+    $target_entity = $entity->getEntity();
+    if ($target_entity->hasLinkTemplate('canonical')) {
+      $target_view_access = $target_entity->access('view', return_as_object: TRUE);
+      $cacheability->addCacheableDependency($target_view_access);
+
+      if ($target_view_access->isAllowed()) {
+        $operations['view'] = [
+          'title' => $this->t('View entity'),
+          'weight' => 101,
+          'url' => $entity->getEntity()->toUrl('canonical'),
+        ];
+      }
     }
 
     return $operations;

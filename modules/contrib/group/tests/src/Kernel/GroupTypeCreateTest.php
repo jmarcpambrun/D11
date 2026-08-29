@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\group\Entity\GroupTypeInterface;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 
@@ -9,8 +11,9 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
  * Tests the creation of group type entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupType
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTypeCreateTest extends GroupKernelTestBase {
 
   /**

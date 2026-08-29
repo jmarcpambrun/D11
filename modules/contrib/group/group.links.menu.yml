@@ -4,6 +4,10 @@ system.admin_group:
   route_name: 'entity.group.collection'
   parent: 'system.admin'
   weight: 3
+  options:
+    icon:
+      pack_id: 'group'
+      icon_id: 'black'
 
 entity.group.collection:
   title: 'List'

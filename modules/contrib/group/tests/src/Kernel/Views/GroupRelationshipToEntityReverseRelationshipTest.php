@@ -2,13 +2,16 @@
 
 namespace Drupal\Tests\group\Kernel\Views;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+
 /**
  * Tests the group_relationship_to_entity_reverse relationship handler.
  *
  * @see \Drupal\group\Plugin\views\relationship\GroupRelationshipToEntityReverse
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipToEntityReverseRelationshipTest extends GroupRelationshipToEntityRelationshipTest {
 
   /**

@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\GroupTypeInterface;
 
@@ -13,8 +15,9 @@ use Drupal\group\Entity\GroupTypeInterface;
  * query alters as we need to take ownership and publication state into account.
  *
  * @coversDefaultClass \Drupal\group\QueryAccess\EntityQueryAlter
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class EntityQueryAlterComplexTest extends EntityQueryAlterTestBase {
 
   use NodeTypeCreationTrait;

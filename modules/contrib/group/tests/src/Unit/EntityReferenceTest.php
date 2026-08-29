@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldTypePluginManager;
 use Drupal\Tests\UnitTestCase;
@@ -13,8 +14,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Tests the default group relation entity_reference handler.
  *
  * @coversDefaultClass \Drupal\group\Plugin\Group\RelationHandlerDefault\EntityReference
- * @group group
  */
+#[Group('group')]
 class EntityReferenceTest extends UnitTestCase {
 
   /**

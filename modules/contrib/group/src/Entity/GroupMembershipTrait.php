@@ -6,6 +6,7 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityMalformedException;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\Storage\GroupRoleStorageInterface;
 use Drupal\group\Plugin\Validation\Constraint\GroupMembershipRoles;
@@ -47,6 +48,7 @@ trait GroupMembershipTrait {
   public function addRole(string $role_id): void {
     // Do nothing if the role is already present.
     foreach ($this->group_roles as $group_role_ref) {
+      assert($group_role_ref instanceof EntityReferenceItem);
       if ($group_role_ref->target_id === $role_id) {
         return;
       }
@@ -61,6 +63,7 @@ trait GroupMembershipTrait {
    */
   public function removeRole(string $role_id): void {
     foreach ($this->group_roles as $key => $group_role_ref) {
+      assert($group_role_ref instanceof EntityReferenceItem);
       if ($group_role_ref->target_id === $role_id) {
         $this->group_roles->removeItem($key);
       }

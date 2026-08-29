@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Kernel\GroupKernelTestBase;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
@@ -10,9 +12,9 @@ use Drupal\user\RoleInterface;
 
 /**
  * Class for testing query alters in a non-abstract manner.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class QueryAlterTangibleTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -37,13 +39,6 @@ class QueryAlterTangibleTest extends GroupKernelTestBase {
   protected $groupTypeB;
 
   /**
-   * The node storage.
-   *
-   * @var \Drupal\node\NodeStorage
-   */
-  protected $storage;
-
-  /**
    * The node access control handler.
    *
    * @var \Drupal\node\NodeAccessControlHandler
@@ -60,7 +55,6 @@ class QueryAlterTangibleTest extends GroupKernelTestBase {
     $this->installSchema('node', ['node_access']);
     $this->installEntitySchema('node');
 
-    $this->storage = $this->entityTypeManager->getStorage('node');
     $this->accessControlHandler = $this->entityTypeManager->getAccessControlHandler('node');
     $this->createNodeType(['type' => 'page']);
     $this->createNodeType(['type' => 'article']);
@@ -244,11 +238,12 @@ class QueryAlterTangibleTest extends GroupKernelTestBase {
    *   The created node entity.
    */
   protected function createNode(array $values = []) {
-    $node = $this->storage->create($values + [
+    $storage = $this->entityTypeManager->getStorage('node');
+    $node = $storage->create($values + [
       'title' => $this->randomString(),
     ]);
     $node->enforceIsNew();
-    $this->storage->save($node);
+    $storage->save($node);
     return $node;
   }
 

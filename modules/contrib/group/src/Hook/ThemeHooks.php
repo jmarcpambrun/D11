@@ -116,17 +116,6 @@ final class ThemeHooks {
   }
 
   /**
-   * Implements hook_element_info_alter().
-   */
-  #[Hook('element_info_alter')]
-  public function elementInfoAlter(array &$types): void {
-    // Attach our extra CSS for toolbar icons.
-    if (isset($types['toolbar'])) {
-      $types['toolbar']['#attached']['library'][] = 'group/toolbar';
-    }
-  }
-
-  /**
    * Implements hook_theme_suggestions_HOOK().
    */
   #[Hook('theme_suggestions_group')]

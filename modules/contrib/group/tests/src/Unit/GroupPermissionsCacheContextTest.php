@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\group\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Tests\UnitTestCase;
@@ -12,8 +13,8 @@ use Drupal\group\Cache\Context\GroupPermissionsCacheContext;
  * Tests the user.group_permissions cache context.
  *
  * @coversDefaultClass \Drupal\group\Cache\Context\GroupPermissionsCacheContext
- * @group group
  */
+#[Group('group')]
 class GroupPermissionsCacheContextTest extends UnitTestCase {
 
   /**

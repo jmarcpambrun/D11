@@ -7297,21 +7297,21 @@
         },
         {
             "name": "drupal/group",
-            "version": "4.0.0-alpha1",
-            "version_normalized": "4.0.0.0-alpha1",
+            "version": "4.0.0-alpha2",
+            "version_normalized": "4.0.0.0-alpha2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/group.git",
-                "reference": "4.0.0-alpha1"
+                "reference": "4.0.0-alpha2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/group-4.0.0-alpha1.zip",
-                "reference": "4.0.0-alpha1",
-                "shasum": "d318d5054b97f4eaa30404474ed7feab9edf49b3"
+                "url": "https://ftp.drupal.org/files/projects/group-4.0.0-alpha2.zip",
+                "reference": "4.0.0-alpha2",
+                "shasum": "431d29987201ac0d0f213622f50eb0273a0e9b5f"
             },
             "require": {
-                "drupal/core": "^11.2"
+                "drupal/core": "^11.4 || ^12"
             },
             "require-dev": {
                 "jangregor/phpstan-prophecy": "^2.0"
@@ -7319,8 +7319,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.0.0-alpha1",
-                    "datestamp": "1777055498",
+                    "version": "4.0.0-alpha2",
+                    "datestamp": "1787317458",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."

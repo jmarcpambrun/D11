@@ -2,16 +2,18 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 
 /**
  * Tests for the ConfigWrapper entity.
  *
- * @group group
- *
  * @coversDefaultClass \Drupal\group\Entity\ConfigWrapper
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ConfigWrapperTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -34,6 +36,7 @@ class ConfigWrapperTest extends GroupKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installEntitySchema('node');
+    // @phpstan-ignore drupal.entityStoragePropertyAssignment
     $this->storage = $this->entityTypeManager->getStorage('group_config_wrapper');
   }
 

@@ -156,7 +156,7 @@ class GroupRelationshipTypeForm extends EntityForm {
     if ($route_match->getRawParameter('group_type') !== NULL && $route_match->getRawParameter('plugin_id') !== NULL) {
       $values = [
         'group_type' => $route_match->getRawParameter('group_type'),
-        'content_plugin' => $route_match->getRawParameter('plugin_id'),
+        'relation_type' => $route_match->getRawParameter('plugin_id'),
       ];
     }
     return $this->entityTypeManager->getStorage($entity_type_id)->create($values);

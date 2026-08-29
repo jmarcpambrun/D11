@@ -2,15 +2,17 @@
 
 namespace Drupal\Tests\group\Kernel\Views;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\views\Views;
 
 /**
  * Tests the group_id argument handler.
  *
  * @see \Drupal\group\Plugin\views\argument\GroupId
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupIdArgumentTest extends GroupViewsKernelTestBase {
 
   /**

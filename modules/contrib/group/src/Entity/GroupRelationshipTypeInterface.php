@@ -10,34 +10,34 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
 interface GroupRelationshipTypeInterface extends ConfigEntityInterface {
 
   /**
-   * Gets the group type the content type was created for.
+   * Gets the group type the relationship type was created for.
    *
    * @return \Drupal\group\Entity\GroupTypeInterface
-   *   The group type for which the content type was created.
+   *   The group type for which the relationship type was created.
    */
   public function getGroupType();
 
   /**
-   * Gets the group type ID the content type was created for.
+   * Gets the group type ID the relationship type was created for.
    *
    * @return string
-   *   The group type ID for which the content type was created.
+   *   The group type ID for which the relationship type was created.
    */
   public function getGroupTypeId();
 
   /**
-   * Gets the group relation the content type uses.
+   * Gets the group relation the relationship type uses.
    *
    * @return \Drupal\group\Plugin\Group\Relation\GroupRelationInterface
-   *   The group relation the content type uses.
+   *   The group relation the relationship type uses.
    */
   public function getPlugin();
 
   /**
-   * Gets the group relation type ID the content type uses.
+   * Gets the group relation type ID the relationship type uses.
    *
    * @return string
-   *   The group relation type ID the content type uses.
+   *   The group relation type ID the relationship type uses.
    */
   public function getPluginId();
 

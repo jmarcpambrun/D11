@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 
@@ -9,8 +12,9 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
  * Tests the general access behavior of config wrapper entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\Access\ConfigWrapperAccessControlHandler
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ConfigWrapperAccessControlHandlerTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -40,8 +44,8 @@ class ConfigWrapperAccessControlHandlerTest extends GroupKernelTestBase {
    *   The operation to test.
    *
    * @covers ::checkAccess
-   * @dataProvider operationAccessProvider
    */
+  #[DataProvider('operationAccessProvider')]
   public function testOperationAccess($operation) {
     $access_control_handler = $this->entityTypeManager->getAccessControlHandler('group_config_wrapper');
     $storage = $this->entityTypeManager->getStorage('group_config_wrapper');

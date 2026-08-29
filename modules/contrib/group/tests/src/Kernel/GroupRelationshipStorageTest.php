@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\Storage\ConfigWrapperStorageInterface;
@@ -11,8 +13,9 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
  * Tests the behavior of relationship storage handler.
  *
  * @coversDefaultClass \Drupal\group\Entity\Storage\GroupRelationshipStorage
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipStorageTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -42,6 +45,7 @@ class GroupRelationshipStorageTest extends GroupKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
+    // @phpstan-ignore drupal.entityStoragePropertyAssignment
     $this->storage = $this->entityTypeManager->getStorage('group_relationship');
     $this->groupType = $this->createGroupType();
 

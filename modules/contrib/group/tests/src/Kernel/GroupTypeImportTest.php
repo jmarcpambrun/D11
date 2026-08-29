@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Site\Settings;
 use Drupal\group\Entity\GroupTypeInterface;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
@@ -11,8 +13,9 @@ use Drupal\group\Plugin\Group\Relation\GroupRelationInterface;
  * Tests the import or synchronization of group type entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\GroupType
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupTypeImportTest extends GroupKernelTestBase {
 
   /**

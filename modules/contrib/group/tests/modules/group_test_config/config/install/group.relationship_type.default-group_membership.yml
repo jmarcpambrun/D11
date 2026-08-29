@@ -7,7 +7,7 @@ dependencies:
     - user
 id: default-group_membership
 group_type: default
-content_plugin: group_membership
+relation_type: group_membership
 plugin_config:
   group_cardinality: 99
   entity_cardinality: 1

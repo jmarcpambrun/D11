@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
@@ -9,10 +11,10 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 /**
  * Tests for the GroupRelationshipType entity.
  *
- * @group group
- *
  * @coversDefaultClass \Drupal\group\Entity\GroupRelationshipType
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipTypeTest extends GroupKernelTestBase {
 
   /**

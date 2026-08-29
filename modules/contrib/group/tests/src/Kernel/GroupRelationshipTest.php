@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\Depends;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Tests\group\Traits\NodeTypeCreationTrait;
 use Drupal\group\Entity\GroupRelationship;
@@ -10,10 +13,10 @@ use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 /**
  * Tests for the GroupRelationship entity.
  *
- * @group group
- *
  * @coversDefaultClass \Drupal\group\Entity\GroupRelationship
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupRelationshipTest extends GroupKernelTestBase {
 
   use NodeTypeCreationTrait;
@@ -219,6 +222,7 @@ class GroupRelationshipTest extends GroupKernelTestBase {
    * @covers ::getListCacheTagsToInvalidate
    * @depends testListCacheTagInvalidation
    */
+  #[Depends('testListCacheTagInvalidation')]
   public function testGetListCacheTagsToInvalidateForConfig() {
     // Create a group type and enable relating node types.
     $group_type = $this->createGroupType();

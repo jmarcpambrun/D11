@@ -2,15 +2,17 @@
 
 namespace Drupal\Tests\group\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\system\Functional\Cache\AssertPageCacheContextsAndTagsTrait;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
 /**
  * Tests the page cache in conjunction with Group-specific features.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class PageCacheTest extends GroupBrowserTestBase {
 
   use AssertPageCacheContextsAndTagsTrait;

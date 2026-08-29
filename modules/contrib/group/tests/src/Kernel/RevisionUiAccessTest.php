@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Routing\RouteObjectInterface;
@@ -21,9 +24,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  * entity. Those days have passed, but it doesn't hurt to leave the test cases
  * in for extra hardening. This is why you'll notice some test cases being
  * specific about there being one revision.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class RevisionUiAccessTest extends GroupKernelTestBase {
 
   /**
@@ -73,9 +76,8 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
 
   /**
    * Tests access to the overview page.
-   *
-   * @dataProvider overviewAccessProvider
    */
+  #[DataProvider('overviewAccessProvider')]
   public function testOverviewAccess($outsider_permissions, $member_permissions, $outsider_access, $member_access, $admin_access, $new_revision, $extra_revision, $message) {
     $outsider = $this->createUser();
     $member = $this->createUser();
@@ -194,9 +196,8 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
 
   /**
    * Tests access to the view page.
-   *
-   * @dataProvider viewAccessProvider
    */
+  #[DataProvider('viewAccessProvider')]
   public function testViewAccess($outsider_permissions, $member_permissions, $outsider_access, $member_access, $admin_access, $new_revision, $extra_revision, $pass_default_revision, $revision_published, $extra_revision_published, $message) {
     $outsider = $this->createUser();
     $member = $this->createUser();
@@ -627,9 +628,8 @@ class RevisionUiAccessTest extends GroupKernelTestBase {
 
   /**
    * Tests access to the update (revert) or delete form.
-   *
-   * @dataProvider updateDeleteAccessProvider
    */
+  #[DataProvider('updateDeleteAccessProvider')]
   public function testUpdateDeleteAccess($route_name, $outsider_permissions, $member_permissions, $outsider_access, $member_access, $admin_access, $pass_default_revision, $message) {
     $outsider = $this->createUser();
     $member = $this->createUser();

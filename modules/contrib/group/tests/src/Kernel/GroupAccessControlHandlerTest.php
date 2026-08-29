@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
@@ -9,8 +12,9 @@ use Drupal\user\RoleInterface;
  * Tests the general access behavior of group entities.
  *
  * @coversDefaultClass \Drupal\group\Entity\Access\GroupAccessControlHandler
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class GroupAccessControlHandlerTest extends GroupKernelTestBase {
 
   /**
@@ -46,8 +50,8 @@ class GroupAccessControlHandlerTest extends GroupKernelTestBase {
    *   The permission name for the operation.
    *
    * @covers ::checkAccess
-   * @dataProvider updateOrDeleteAccessProvider
    */
+  #[DataProvider('updateOrDeleteAccessProvider')]
   public function testUpdateOrDeleteAccess($operation, $permission) {
     $access_control_handler = $this->entityTypeManager->getAccessControlHandler('group');
 

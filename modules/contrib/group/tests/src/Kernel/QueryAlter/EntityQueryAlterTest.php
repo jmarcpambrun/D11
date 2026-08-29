@@ -2,14 +2,17 @@
 
 namespace Drupal\Tests\group\Kernel\QueryAlter;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\group\Entity\GroupTypeInterface;
 
 /**
  * Tests that Group properly checks access for grouped entities.
  *
  * @coversDefaultClass \Drupal\group\QueryAccess\EntityQueryAlter
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class EntityQueryAlterTest extends EntityQueryAlterTestBase {
 
   /**

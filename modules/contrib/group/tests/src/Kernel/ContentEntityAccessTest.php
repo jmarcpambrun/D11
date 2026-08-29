@@ -2,28 +2,23 @@
 
 namespace Drupal\Tests\group\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\group\Entity\Storage\GroupRelationshipTypeStorageInterface;
 use Drupal\group\PermissionScopeInterface;
 use Drupal\user\RoleInterface;
 
 /**
  * Tests that Group properly checks access for grouped entities.
- *
- * @group group
  */
+#[Group('group')]
+#[RunTestsInSeparateProcesses]
 class ContentEntityAccessTest extends GroupKernelTestBase {
 
   /**
    * {@inheritdoc}
    */
   protected static $modules = ['group_test_plugin', 'node'];
-
-  /**
-   * The test entity storage to use in testing.
-   *
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
-  protected $storage;
 
   /**
    * The access control handler to use in testing.
@@ -57,7 +52,6 @@ class ContentEntityAccessTest extends GroupKernelTestBase {
     // Create the authenticated role.
     $this->createRole([], RoleInterface::AUTHENTICATED_ID);
 
-    $this->storage = $this->entityTypeManager->getStorage('entity_test_with_owner');
     $this->accessControlHandler = $this->entityTypeManager->getAccessControlHandler('entity_test_with_owner');
 
     $this->groupTypeA = $this->createGroupType(['id' => 'foo']);
@@ -669,11 +663,12 @@ class ContentEntityAccessTest extends GroupKernelTestBase {
    *   The created test entity entity.
    */
   protected function createTestEntity(array $values = []) {
-    $test_entity = $this->storage->create($values + [
+    $storage = $this->entityTypeManager->getStorage('entity_test_with_owner');
+    $test_entity = $storage->create($values + [
       'name' => $this->randomString(),
     ]);
     $test_entity->enforceIsNew();
-    $this->storage->save($test_entity);
+    $storage->save($test_entity);
     return $test_entity;
   }
 
