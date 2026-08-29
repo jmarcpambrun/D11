@@ -25,6 +25,13 @@ class ExportRecipe {
   public const string DEFAULT_DESTINATION = 'temporary://recipe';
 
   /**
+   * The provider key of this module's third-party settings on a model.
+   *
+   * @see \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerBase::setThirdPartySetting()
+   */
+  protected const string THIRD_PARTY_PROVIDER = 'modeler_api';
+
+  /**
    * Constructs the recipe export service.
    */
   public function __construct(
@@ -55,6 +62,16 @@ class ExportRecipe {
     $composerJson = $destination . '/composer.json';
     $recipeYml = $destination . '/recipe.yml';
     $readmeMd = $destination . '/README.md';
+    try {
+      $existingComposer = $this->readExistingJson($composerJson);
+      $existingRecipe = $this->readExistingYaml($recipeYml);
+    }
+    catch (\Throwable $exception) {
+      $this->messenger->addError($this->t('The existing recipe metadata can not be read: @message', [
+        '@message' => $exception->getMessage(),
+      ]));
+      return;
+    }
     if (file_exists($configDestination) && !$this->fileSystem->deleteRecursive($configDestination)) {
       $this->messenger->addError($this->t('A config directory already exists in the given destination and can not be removed.'));
       return;
@@ -86,15 +103,16 @@ class ExportRecipe {
       $name = $this->defaultName($entity);
     }
     $description = $owner->getDocumentation($entity);
+    $modelConfigName = $owner->configEntityProviderId() . '.' . $owner->configEntityTypeId() . '.' . $entity->id();
     $dependencies = [
       'config' => [
-        $owner->configEntityProviderId() . '.' . $owner->configEntityTypeId() . '.' . $entity->id(),
+        $modelConfigName,
       ],
       'module' => [],
     ];
-    if ($owner->storageMethod($entity) === Settings::STORAGE_OPTION_SEPARATE) {
-      $dependencies['config'][] = 'modeler_api.data_model.' . $owner->storageId($entity);
-    }
+    // The separately stored raw model data is deliberately not added here: a
+    // recipe ships the model, not the diagram of the modeler that authored it.
+    // @see self::stripModelerData()
     $this->api->getNestedDependencies($dependencies, $entity->getDependencies());
 
     $actions = [];
@@ -105,6 +123,9 @@ class ExportRecipe {
         continue;
       }
       unset($config['uuid'], $config['_core']);
+      if ($configName === $modelConfigName) {
+        $config = $this->stripModelerData($config);
+      }
       if (str_starts_with($configName, 'user.role.')) {
         $actions[$configName] = [
           'ensure_exists' => [
@@ -128,9 +149,180 @@ class ExportRecipe {
       }
     }
 
-    $this->fileSystem->saveData(json_encode($this->getComposer($entity->id(), $namespace, $name, $dependencies['module']), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) . PHP_EOL, $composerJson, FileExists::Replace);
-    $this->fileSystem->saveData(Yaml::encode($this->getRecipe($name, $description, $dependencies['module'], $actions, $imports)), $recipeYml, FileExists::Replace);
+    $composer = $this->mergeComposer($existingComposer, $this->getComposer($entity->id(), $namespace, $name, $dependencies['module']));
+    $recipe = $this->mergeRecipe($existingRecipe, $this->getRecipe($name, $description, $dependencies['module'], $actions, $imports));
+    $this->fileSystem->saveData(json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) . PHP_EOL, $composerJson, FileExists::Replace);
+    $this->fileSystem->saveData(Yaml::encode($recipe), $recipeYml, FileExists::Replace);
     $this->fileSystem->saveData($this->getReadme($entity->id(), $name, $description, $namespace, $owner->docBaseUrl()), $readmeMd, FileExists::Replace);
+  }
+
+  /**
+   * Removes the modeler specific payload from the model's own config.
+   *
+   * A recipe is a distribution artifact, and the consuming site needs the
+   * model rather than the diagram of whichever modeler the author happened to
+   * use. The raw data is redundant, because the model is fully described by
+   * its own config, it is by far the largest part of the exported file, and it
+   * binds the recipe to a modeler the consuming site may not have installed.
+   * Storage is forced to none for the same reason, so that a re-save on the
+   * consuming site does not reinstate a payload the recipe never carried.
+   *
+   * Everything else in the map is portable model metadata and is preserved,
+   * most notably the label, which is the model's only human-readable name.
+   *
+   * @param array $config
+   *   The config data of the model's own config entity.
+   *
+   * @return array
+   *   The config data without the modeler specific payload.
+   */
+  protected function stripModelerData(array $config): array {
+    $settings = $config['third_party_settings'][self::THIRD_PARTY_PROVIDER] ?? NULL;
+    if (!is_array($settings)) {
+      return $config;
+    }
+    unset($settings['data'], $settings['modeler_id']);
+    $settings['storage'] = Settings::STORAGE_OPTION_NONE;
+    $config['third_party_settings'][self::THIRD_PARTY_PROVIDER] = $settings;
+    return $config;
+  }
+
+  /**
+   * Reads an existing JSON metadata file.
+   *
+   * @param string $filename
+   *   The filename to read.
+   *
+   * @return array
+   *   The decoded data, or an empty array when the file does not exist.
+   */
+  private function readExistingJson(string $filename): array {
+    if (!file_exists($filename)) {
+      return [];
+    }
+    $data = json_decode((string) file_get_contents($filename), TRUE, 512, JSON_THROW_ON_ERROR);
+    if (!is_array($data)) {
+      throw new \UnexpectedValueException(sprintf('%s does not contain a JSON object.', $filename));
+    }
+    return $data;
+  }
+
+  /**
+   * Reads an existing YAML metadata file.
+   *
+   * @param string $filename
+   *   The filename to read.
+   *
+   * @return array
+   *   The decoded data, or an empty array when the file does not exist.
+   */
+  private function readExistingYaml(string $filename): array {
+    if (!file_exists($filename)) {
+      return [];
+    }
+    $data = Yaml::decode((string) file_get_contents($filename));
+    if (!is_array($data)) {
+      throw new \UnexpectedValueException(sprintf('%s does not contain a YAML mapping.', $filename));
+    }
+    return $data;
+  }
+
+  /**
+   * Merges generated composer metadata into an existing file.
+   *
+   * Dependency information and package identity are refreshed. A curated
+   * description and additional package metadata are preserved.
+   *
+   * @param array $existing
+   *   The existing composer metadata.
+   * @param array $generated
+   *   The newly generated composer metadata.
+   *
+   * @return array
+   *   The merged composer metadata.
+   */
+  protected function mergeComposer(array $existing, array $generated): array {
+    if (!$existing) {
+      return $generated;
+    }
+
+    $result = $existing;
+    foreach (['name', 'type', 'license', 'require'] as $key) {
+      if (array_key_exists($key, $generated)) {
+        $result[$key] = $generated[$key];
+      }
+      else {
+        unset($result[$key]);
+      }
+    }
+    if (!array_key_exists('description', $result)) {
+      $result['description'] = $generated['description'];
+    }
+    return $result;
+  }
+
+  /**
+   * Merges generated recipe metadata into an existing file.
+   *
+   * Model-derived values are refreshed while recipe composition, curated
+   * descriptions, and config actions not owned by the exporter are preserved.
+   *
+   * @param array $existing
+   *   The existing recipe metadata.
+   * @param array $generated
+   *   The newly generated recipe metadata.
+   *
+   * @return array
+   *   The merged recipe metadata.
+   */
+  protected function mergeRecipe(array $existing, array $generated): array {
+    if (!$existing) {
+      return $generated;
+    }
+
+    $result = $existing;
+    foreach (['name', 'type', 'install'] as $key) {
+      if (array_key_exists($key, $generated)) {
+        $result[$key] = $generated[$key];
+      }
+      else {
+        unset($result[$key]);
+      }
+    }
+    if (!array_key_exists('description', $result)) {
+      $result['description'] = $generated['description'];
+    }
+
+    $config = is_array($result['config'] ?? NULL) ? $result['config'] : [];
+    $generatedConfig = $generated['config'] ?? [];
+    if (array_key_exists('import', $generatedConfig)) {
+      $config['import'] = $generatedConfig['import'];
+    }
+    else {
+      unset($config['import']);
+    }
+    if (!array_key_exists('strict', $config)) {
+      $config['strict'] = $generatedConfig['strict'] ?? FALSE;
+    }
+
+    $actions = [];
+    foreach ($config['actions'] ?? [] as $configName => $action) {
+      if (!str_starts_with($configName, 'user.role.')) {
+        $actions[$configName] = $action;
+      }
+    }
+    foreach ($generatedConfig['actions'] ?? [] as $configName => $action) {
+      $actions[$configName] = $action;
+    }
+    if ($actions) {
+      $config['actions'] = $actions;
+    }
+    else {
+      unset($config['actions']);
+    }
+    $result['config'] = $config;
+
+    return $result;
   }
 
   /**
@@ -190,9 +382,6 @@ class ExportRecipe {
       'license' => 'GPL-2.0-or-later',
     ];
     if ($modules) {
-      $composer['require'] = [
-        'drupal/core' => '>=11.2',
-      ];
       $list = $this->moduleExtensionList->getList();
       foreach ($modules as $module) {
         $path = $this->moduleExtensionList->getPath($module);

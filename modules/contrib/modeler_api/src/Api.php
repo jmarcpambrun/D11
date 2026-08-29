@@ -27,6 +27,7 @@ use Drupal\modeler_api\Plugin\DependencyPluginManager;
 use Drupal\modeler_api\Plugin\ModelerPluginManager;
 use Drupal\modeler_api\Plugin\ModelOwnerPluginManager;
 use Drupal\modeler_api\Plugin\TemplateTokenPluginManager;
+use Drupal\modeler_api\Plugin\ThemePluginManager;
 use Symfony\Component\DependencyInjection\Attribute\AutowireServiceClosure;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\Route;
@@ -115,6 +116,8 @@ class Api {
    *   Factory for the dependency plugin manager.
    * @param \Closure(): \Drupal\modeler_api\Plugin\TemplateTokenPluginManager $templateTokenPluginManagerFactory
    *   Factory for the template token plugin manager.
+   * @param \Closure(): \Drupal\modeler_api\Plugin\ThemePluginManager $themePluginManagerFactory
+   *   Factory for the theme plugin manager.
    * @param \Closure(): \Drupal\modeler_api\ContextListBuilder $contextListBuilderFactory
    *   Factory for the context list builder.
    * @param \Closure(): \Drupal\modeler_api\DependencyListBuilder $dependencyListBuilderFactory
@@ -154,6 +157,8 @@ class Api {
     protected readonly \Closure $dependencyPluginManagerFactory,
     #[AutowireServiceClosure('plugin.manager.modeler_api.template_token')]
     protected readonly \Closure $templateTokenPluginManagerFactory,
+    #[AutowireServiceClosure('plugin.manager.modeler_api.theme')]
+    protected readonly \Closure $themePluginManagerFactory,
     #[AutowireServiceClosure('modeler_api.context_list_builder')]
     protected readonly \Closure $contextListBuilderFactory,
     #[AutowireServiceClosure('modeler_api.dependency_list_builder')]
@@ -269,6 +274,16 @@ class Api {
    */
   protected function getTemplateTokenPluginManager(): TemplateTokenPluginManager {
     return ($this->templateTokenPluginManagerFactory)();
+  }
+
+  /**
+   * Get the theme plugin manager.
+   *
+   * @return \Drupal\modeler_api\Plugin\ThemePluginManager
+   *   The theme plugin manager.
+   */
+  protected function getThemePluginManager(): ThemePluginManager {
+    return ($this->themePluginManagerFactory)();
   }
 
   /**
@@ -583,6 +598,7 @@ class Api {
         $modelType => $model->id(),
       ])->toString();
     }
+    $settings['theme'] = $this->attachTheme($build, $owner, $modeler);
     $build['#attached']['drupalSettings']['modeler_api'] = $settings;
     $build['#title'] = $this->t(':type Model: :label', [':type' => $owner->label(), ':label' => $model->label()]);
     $build['config_form'] = [
@@ -607,6 +623,57 @@ class Api {
     $build = $this->edit($model, $modelerId, TRUE);
     $build['#attached']['drupalSettings']['modeler_api']['mode'] = 'view';
     return $build;
+  }
+
+  /**
+   * Attaches the theme configured for an owner-modeler combination.
+   *
+   * The asset libraries of the theme are appended to the libraries the modeler
+   * attached itself, so that the CSS of the theme is loaded after the CSS of
+   * the modeler. A theme that can not be resolved, either because no module
+   * provides it anymore or because it no longer applies to this combination,
+   * is silently ignored and the modeler keeps its own look and feel.
+   *
+   * The setting carries three kinds of value: 'auto' lets the theme plugin
+   * manager pick an applicable theme, 'default' keeps the look and feel of the
+   * modeler itself, and anything else is a theme ID pinned by an
+   * administrator. A missing setting is treated as 'auto', so that a theme
+   * built for this combination takes effect as soon as its module is
+   * installed.
+   *
+   * @param array $build
+   *   The render array of the modeler, altered by reference.
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner.
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModeler\ModelerInterface $modeler
+   *   The modeler.
+   *
+   * @return string
+   *   The ID of the theme that got attached, or 'default' if none did. This
+   *   value is handed to the client, so it is always a theme that is really
+   *   applied: 'auto' never appears here, it is resolved first.
+   */
+  protected function attachTheme(array &$build, ModelOwnerInterface $owner, ModelerInterface $modeler): string {
+    $themeId = (string) Settings::value($owner, $modeler, 'theme', Settings::THEME_OPTION_AUTO);
+    if ($themeId === Settings::THEME_OPTION_DEFAULT) {
+      return Settings::THEME_OPTION_DEFAULT;
+    }
+    if ($themeId === Settings::THEME_OPTION_AUTO) {
+      $theme = $this->getThemePluginManager()->resolveTheme($owner->getPluginId(), $modeler->getPluginId());
+    }
+    else {
+      $theme = $this->getThemePluginManager()->getTheme($themeId);
+      if ($theme !== NULL && !$theme->appliesTo($owner->getPluginId(), $modeler->getPluginId())) {
+        $theme = NULL;
+      }
+    }
+    if ($theme === NULL) {
+      return Settings::THEME_OPTION_DEFAULT;
+    }
+    foreach ($theme->getLibraries() as $library) {
+      $build['#attached']['library'][] = $library;
+    }
+    return $theme->getId();
   }
 
   /**
@@ -939,6 +1006,22 @@ class Api {
       }
     }
     return $dependencies;
+  }
+
+  /**
+   * Exports a model as a standalone graph artifact.
+   *
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner.
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model to export.
+   *
+   * @return string|null
+   *   The serialized graph artifact, or NULL when the modeler's export format
+   *   does not support a standalone graph artifact.
+   */
+  public function exportModelGraph(ModelOwnerInterface $owner, ConfigEntityInterface $model): ?string {
+    return $owner->getModeler($model)?->export($owner, $model);
   }
 
   /**

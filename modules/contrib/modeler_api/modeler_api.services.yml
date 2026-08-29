@@ -59,6 +59,12 @@ services:
       - '@module_handler'
       - '@cache.discovery'
 
+  plugin.manager.modeler_api.theme:
+    class: Drupal\modeler_api\Plugin\ThemePluginManager
+    arguments:
+      - '@module_handler'
+      - '@cache.discovery'
+
   modeler_api.context_list_builder:
     class: Drupal\modeler_api\ContextListBuilder
     arguments:
@@ -97,6 +103,7 @@ services:
   Drupal\modeler_api\Plugin\ContextPluginManager: '@plugin.manager.modeler_api.context'
   Drupal\modeler_api\Plugin\DependencyPluginManager: '@plugin.manager.modeler_api.dependency'
   Drupal\modeler_api\Plugin\TemplateTokenPluginManager: '@plugin.manager.modeler_api.template_token'
+  Drupal\modeler_api\Plugin\ThemePluginManager: '@plugin.manager.modeler_api.theme'
   Drupal\modeler_api\ContextListBuilder: '@modeler_api.context_list_builder'
   Drupal\modeler_api\DependencyListBuilder: '@modeler_api.dependency_list_builder'
   Drupal\modeler_api\TemplateTokenListBuilder: '@modeler_api.template_token_list_builder'

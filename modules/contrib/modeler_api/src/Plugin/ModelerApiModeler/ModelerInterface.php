@@ -137,6 +137,24 @@ interface ModelerInterface extends PluginInspectionInterface, ContainerFactoryPl
   public function convert(ModelOwnerInterface $owner, ConfigEntityInterface $model, bool $readOnly = FALSE): array;
 
   /**
+   * Exports a model as a standalone graph artifact.
+   *
+   * The artifact format is owned by the modeler plugin. It should contain
+   * everything a standalone consumer needs to display the model without
+   * requiring the modeler's browser-based export flow.
+   *
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner plugin.
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model to export.
+   *
+   * @return string|null
+   *   The serialized graph artifact, or NULL when the modeler does not support
+   *   standalone graph exports.
+   */
+  public function export(ModelOwnerInterface $owner, ConfigEntityInterface $model): ?string;
+
+  /**
    * Get the model ID.
    *
    * @return string
