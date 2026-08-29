@@ -8288,17 +8288,17 @@
         },
         {
             "name": "drupal/modeler",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/modeler.git",
-                "reference": "1.0.6"
+                "reference": "1.0.7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.6.zip",
-                "reference": "1.0.6",
-                "shasum": "85088dea2e35c6f0c6ec083c4bb97f1e09196254"
+                "url": "https://ftp.drupal.org/files/projects/modeler-1.0.7.zip",
+                "reference": "1.0.7",
+                "shasum": "4a7d7b2dc43a986571e4e4f155e2e2bb27cbf635"
             },
             "require": {
                 "drupal/core": "^11.3 || ^12.0",
@@ -8308,8 +8308,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.0.6",
-                    "datestamp": "1787076104",
+                    "version": "1.0.7",
+                    "datestamp": "1787567130",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
