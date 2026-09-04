@@ -4,7 +4,13 @@ auto_translation.settings:
   mapping:
     auto_translation_content_types:
       type: sequence
-      label: 'Stats type'
+      label: 'Enabled content types'
+      sequence:
+        type: string
+        label: 'Content type'
+    interval:
+      type: integer
+      label: 'Translation interval'
     auto_translation_api_enabled:
       type: boolean
       label: 'Enable API'
@@ -14,6 +20,38 @@ auto_translation.settings:
     auto_translation_api_secret:
       type: string
       label: 'API Secret'
+    auto_translation_api_deepl_pro_mode:
+      type: boolean
+      label: 'Use DeepL Pro API'
+    auto_translation_excluded_fields:
+      type: string
+      label: 'Excluded fields'
     auto_translation_provider:
       type: string
       label: 'Auto Translator Provider'
+    auto_translation_bulk_publish:
+      type: string
+      label: 'Bulk translation publish mode'
+    enable_debug:
+      type: boolean
+      label: 'Enable debugging'
+    amazon_access_key:
+      type: string
+      label: 'Amazon access key'
+    amazon_secret_key:
+      type: string
+      label: 'Amazon secret key'
+    amazon_region:
+      type: string
+      label: 'Amazon region'
+    custom_secret:
+      type: string
+      label: 'Encryption secret'
+
+action.configuration.auto_translation_bulk_auto_translate_draft_action:
+  type: action_configuration_default
+  label: 'Auto Translate and Save as Draft configuration'
+
+action.configuration.auto_translation_bulk_auto_translate_publish_action:
+  type: action_configuration_default
+  label: 'Auto Translate and Publish configuration'

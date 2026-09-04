@@ -802,6 +802,14 @@ class Utility {
           $field_name = $field->getName();
           $field_type = $field->getType();
 
+          if ($entity_type === 'media' && $field_name === 'thumbnail') {
+            $batch->addOperation(
+              [self::class, 'batchCopyExcludedField'],
+              [$entity->id(), $entity_type, $field_name, $d_lang, $t_lang]
+            );
+            continue;
+          }
+
           // Check if field is in user-defined excluded fields
           $isUserExcluded = isset($excludedFields['user_settings']) &&
                            is_array($excludedFields['user_settings']) &&
@@ -2422,7 +2430,6 @@ class Utility {
     $patterns = [
       // Fix spacing around punctuation (but preserve inside HTML tags)
       '/\s+([,.!?;:])/' => '$1',  // Remove space before punctuation
-      '/([,.!?;:])\s*([A-Za-z])/' => '$1 $2',  // Ensure space after punctuation
 
       // Fix spacing around inline HTML tags
       '/([,.!?;:])</' => '$1 <',  // Space between punctuation and closing tag

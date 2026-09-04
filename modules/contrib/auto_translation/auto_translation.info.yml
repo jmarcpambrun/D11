@@ -7,7 +7,7 @@ core_version_requirement: ^9 || ^10 || ^11
 dependencies:
   - drupal:content_translation
   
-# Information added by Drupal.org packaging script on 2026-02-13
-version: '1.5.0-beta9'
+# Information added by Drupal.org packaging script on 2026-09-04
+version: '1.5.0-beta10'
 project: 'auto_translation'
-datestamp: 1770990505
+datestamp: 1788513331
