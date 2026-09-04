@@ -106,8 +106,25 @@ ai_agents.ai_agent.*:
       label: Hostname Filter Disabled
       description: 'Whether to disable hostname whitelisting for the AI agent. If this is set to true, the AI agent will not filter tool usage based on hostnames. This can be useful for agents that need to access a wide range of tools without restrictions.'
       default: false
+    short_term_memory_plugin:
+      type: string
+      label: Short Term Memory Plugin
+      description: 'The id of the short term memory plugin that the AI agent uses to shorten or rewrite the conversation before each request. Short term memory helps the agent to stay within its context window without losing the important parts of the conversation. If left empty, the whole conversation is sent as is.'
+      default: ''
+    short_term_memory_config:
+      # The typed schema for the short term memory plugins lives in the AI
+      # module (ai.short_term_memory.settings.*) and can not be depended on
+      # until that is available in all supported versions.
+      # @todo Use ai.short_term_memory.settings.[%parent.short_term_memory_plugin] in 2.0.
+      type: ignore
+      label: Short Term Memory Configuration
+      description: 'The configuration of the selected short term memory plugin, such as how many messages to keep or how to summarize them.'
     guardrail_set:
       type: string
       label: Guardrail Set
       description: 'The guardrail set that the AI agent should use. This is the machine name of the guardrail set that the AI agent should use to filter its responses. If left empty, no guardrails will be applied.'
       default: ''
+    provider_config:
+      type: ai.provider_config
+      label: AI Provider Configuration
+      description: 'The AI provider, model and model configuration that this AI agent runs with. If this is not set, or is set to use the default, the agent uses the provider it inherits from the agent or assistant calling it, and otherwise the site default for the chat_with_tools operation type.'

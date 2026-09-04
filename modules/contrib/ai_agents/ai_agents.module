@@ -93,6 +93,10 @@ function ai_agents_token_info() {
           'name' => new TranslatableMarkup('Agent instructions'),
           'description' => new TranslatableMarkup('Specific instructions that define how the AI agent should behave and respond to tasks for a particular interaction.'),
         ],
+        'original_user_message' => [
+          'name' => new TranslatableMarkup('Original user message'),
+          'description' => new TranslatableMarkup('The message the user actually wrote, unaltered by any calling agent. Set this as a forced value on the prompt property of a sub agent tool to forward the request as is. Stays unreplaced when the message can not be determined.'),
+        ],
       ],
     ],
   ];
@@ -111,6 +115,13 @@ function ai_agents_tokens($type, $tokens, array $data = [], array $options = [])
       switch ($name) {
         case 'agent_instructions':
           $replacements[$original] = $ai_agent->get('system_prompt');
+          break;
+
+        case 'original_user_message':
+          // Left unreplaced where no run time data is passed.
+          if (isset($data['ai_agent_runtime']['original_user_message'])) {
+            $replacements[$original] = $data['ai_agent_runtime']['original_user_message'];
+          }
           break;
       }
     }

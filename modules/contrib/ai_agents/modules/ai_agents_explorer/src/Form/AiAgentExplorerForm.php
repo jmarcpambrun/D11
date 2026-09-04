@@ -123,7 +123,7 @@ class AiAgentExplorerForm extends FormBase {
     $form['wrapper']['model'] = [
       '#type' => 'select',
       '#title' => $this->t('Model'),
-      '#description' => $this->t('Choose the model to use.'),
+      '#description' => $this->t('Choose the model to use. Agents that pin their own provider under Advanced settings > Request settings run with that one instead.'),
       '#required' => TRUE,
       '#options' => $this->providerManager->getSimpleProviderModelOptions('chat', TRUE, TRUE, [AiModelCapability::ChatJsonOutput]),
       '#default_value' => $provider_id && $model_id ? $provider_id . '__' . $model_id : '',

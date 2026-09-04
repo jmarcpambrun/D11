@@ -60,6 +60,12 @@ as follows:
 
 ```
 
+Note that an AI Agent configured through the UI can pin its own AI provider,
+model and model configuration under *Advanced settings > Request settings*. An
+agent configured that way keeps using what it was configured with, and ignores
+the provider, model and configuration you set here. Leave an agent on the
+*Default* provider if you want your own code to decide what it runs with.
+
 Once these steps have been completed, the AI Agent is ready to use. However, it
 is also possible to set extra identifying information against the AI Agent's
 communications with the AI in case you need to identify them later:

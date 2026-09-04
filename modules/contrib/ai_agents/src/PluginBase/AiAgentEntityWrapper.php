@@ -26,6 +26,7 @@ use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
 use Drupal\ai\OperationType\GenericType\AbstractFileBase;
 use Drupal\ai\OperationType\GenericType\FileBaseInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
+use Drupal\ai\PluginManager\AiShortTermMemoryPluginManager;
 use Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
@@ -99,6 +100,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The chat input.
    */
   protected $chatInput;
+
+  /**
+   * The original, unaltered user message of the whole agent chain.
+   *
+   * @var string|null
+   */
+  protected ?string $originalUserMessage = NULL;
 
   /**
    * Create directly.
@@ -241,6 +249,55 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected array $providerTags = [];
 
   /**
+   * The chat history as the short term memory left it on the previous loop.
+   *
+   * The agent itself always keeps the complete conversation in $chatHistory,
+   * since it needs it to keep track of tool calls and their results. The
+   * short term memory instead works on a copy that is only used for the
+   * actual request, and that copy is kept here between the loops so that a
+   * plugin can build on what it decided the last time around - for example to
+   * append to a summary that it wrote earlier.
+   *
+   * @var \Drupal\ai\OperationType\Chat\ChatMessage[]
+   */
+  protected array $memoryChatHistory = [];
+
+  /**
+   * How much of the agents own conversation the memory has already seen.
+   *
+   * The messages that the agent appended after the previous call - the tool
+   * calls and their results of the loop that just ran - are added to whatever
+   * the plugin produced back then. Otherwise a plugin that does not rewrite
+   * the history on a given loop would keep sending the conversation as it
+   * looked when it last did. NULL means that the memory has not run yet.
+   *
+   * @var int|null
+   */
+  protected ?int $memoryChatHistoryOffset = NULL;
+
+  /**
+   * The system prompt as the short term memory left it on the previous loop.
+   *
+   * Only set when the plugin actually rewrote the system prompt, since the
+   * agent rebuilds it on every loop and a stale one would keep telling the
+   * LLM that this is the first loop.
+   *
+   * @var string|null
+   */
+  protected ?string $memorySystemPrompt = NULL;
+
+  /**
+   * The names of the tools that the short term memory kept on the last loop.
+   *
+   * The tools are rebuilt from the agent configuration on every loop, so only
+   * the names are kept and the tools are filtered down again on the next
+   * loop. NULL means that the short term memory did not rewrite the tools.
+   *
+   * @var string[]|null
+   */
+  protected ?array $memoryToolNames = NULL;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\ai_agents\AiAgentInterface $aiAgent
@@ -269,6 +326,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The logger channel interface.
    * @param \Drupal\ai\Service\HostnameFilter $hostnameFilter
    *   The hostname filter service.
+   * @param \Drupal\ai\PluginManager\AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager
+   *   The AI short term memory plugin manager.
    */
   public function __construct(
     protected AiAgentInterface $aiAgent,
@@ -284,6 +343,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     protected AiGuardrailHelper $aiGuardrailHelper,
     protected LoggerChannelInterface $logger,
     protected HostnameFilter $hostnameFilter,
+    protected AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager,
   ) {
   }
 
@@ -316,6 +376,43 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function getAiProvider() {
     return $this->aiProvider;
+  }
+
+  /**
+   * Resolves the AI provider, model and configuration to run the agent with.
+   *
+   * The agent's own configuration always wins, so that an agent deliberately
+   * pinned to a cheap or specialized model keeps using it even when it runs
+   * as a sub-agent of an agent configured with another provider. When the
+   * agent has no provider of its own, it keeps the provider handed to it by
+   * its caller, and falls back to the site default for chat_with_tools when
+   * there is none.
+   *
+   * A pinned provider whose plugin is no longer available, for instance
+   * because the agent was imported before its provider module was installed,
+   * is ignored rather than fatal.
+   */
+  protected function resolveAiProvider(): void {
+    $provider_config = $this->aiAgent->get('provider_config') ?? [];
+
+    if (empty($provider_config['use_default']) && !empty($provider_config['provider'])) {
+      if ($this->aiProviderPluginManager->hasDefinition($provider_config['provider'])) {
+        $this->aiProvider = $this->aiProviderPluginManager->createInstance($provider_config['provider']);
+        $this->modelName = $provider_config['model'] ?? '';
+        $this->aiConfiguration = $provider_config['config'] ?? [];
+        return;
+      }
+      $this->logger->warning('The AI agent @agent is configured to use the AI provider @provider, which is not available. Falling back to the default provider.', [
+        '@agent' => $this->aiAgent->id(),
+        '@provider' => $provider_config['provider'],
+      ]);
+    }
+
+    if (!$this->aiProvider) {
+      $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType('chat_with_tools');
+      $this->aiProvider = $this->aiProviderPluginManager->createInstance($defaults['provider_id']);
+      $this->modelName = $defaults['model_id'];
+    }
   }
 
   /**
@@ -372,6 +469,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function setChatInput(ChatInput $chatInput) {
     $this->chatInput = $chatInput;
+    $this->captureOriginalUserMessage($chatInput->getMessages());
     if ($chatInput->isStreamedOutput()) {
       $this->streaming = TRUE;
     }
@@ -389,6 +487,42 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function setTask($task) {
     $this->task = $task;
+    // Falls back to the task description when no message was handed down.
+    if ($this->originalUserMessage === NULL && $task !== NULL) {
+      $this->originalUserMessage = $task->getDescription();
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setOriginalUserMessage(string $message): void {
+    $this->originalUserMessage = $message;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getOriginalUserMessage(): string {
+    return $this->originalUserMessage ?? '';
+  }
+
+  /**
+   * Store the last user message as the original, keeping any already set.
+   *
+   * @param array $messages
+   *   The chat messages the agent was started with.
+   */
+  protected function captureOriginalUserMessage(array $messages): void {
+    if ($this->originalUserMessage !== NULL) {
+      return;
+    }
+    foreach (array_reverse($messages) as $message) {
+      if ($message instanceof ChatMessage && $message->getRole() === 'user') {
+        $this->originalUserMessage = $message->getText();
+        return;
+      }
+    }
   }
 
   /**
@@ -491,12 +625,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     if (!$this->runnerId) {
       $this->runnerId = $this->uuid->generate();
     }
-    // We need to set the default AI Provider if not set.
-    if (!$this->aiProvider) {
-      $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType('chat_with_tools');
-      $this->aiProvider = $this->aiProviderPluginManager->createInstance($defaults['provider_id']);
-      $this->modelName = $defaults['model_id'];
-    }
+    // Work out which provider, model and configuration to run with.
+    $this->resolveAiProvider();
     // Check max loops before dispatching the started event. Otherwise the
     // started event creates tracking state that never gets a corresponding
     // finished event.
@@ -567,6 +697,16 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         catch (AiFunctionCallingExecutionError $exception) {
           $output = strip_tags($exception->getMessage());
         }
+        catch (\Throwable $exception) {
+          if (!$this->toolShouldCatchErrors($tool)) {
+            throw $exception;
+          }
+          $output = sprintf(
+            "Error executing tool '%s': %s",
+            $tool->getPluginId(),
+            strip_tags($exception->getMessage())
+          );
+        }
         $this->toolResults[] = $tool;
         // We need to check so its should not be returned.
         if ($this->toolShouldReturnDirectly($tool)) {
@@ -635,6 +775,11 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $this->pendingToolImages = [];
     }
 
+    // Apply the model configuration, if the agent or its caller set any.
+    if (!empty($this->aiConfiguration)) {
+      $this->aiProvider->setConfiguration($this->aiConfiguration);
+    }
+
     // Empty the system prompt, until this is fixed
     // https://www.drupal.org/project/ai/issues/3573100
     $this->aiProvider->setChatSystemRole('');
@@ -644,16 +789,25 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $tags = array_merge($tags, $this->providerTags);
     }
 
-    $input = new ChatInput($this->chatHistory);
-    $input->setSystemPrompt($system_prompt);
+    // Let a possible short term memory plugin shorten or rewrite what is
+    // actually sent to the LLM. The agent keeps its own complete conversation,
+    // so this only affects this one request.
+    [
+      $request_history,
+      $request_system_prompt,
+      $request_tools,
+    ] = $this->applyShortTermMemory($system_prompt, $functions['normalized'] ?? []);
+
+    $input = new ChatInput($request_history);
+    $input->setSystemPrompt($request_system_prompt);
     // Only set if it exists a guardrail set.
     if ($this->aiAgent->get('guardrail_set')) {
       $guardrail_set_id = $this->aiAgent->get('guardrail_set');
       $input = $this->aiGuardrailHelper->applyGuardrailSetToChatInput($guardrail_set_id, $input);
     }
 
-    if (count($functions) && count($functions['normalized'])) {
-      $input->setChatTools(new ToolsInput($functions['normalized']));
+    if (count($request_tools)) {
+      $input->setChatTools(new ToolsInput($request_tools));
     }
     $input->setStreamedOutput($this->streaming);
     // Check if we want structured output.
@@ -661,14 +815,15 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $input->setChatStructuredJsonSchema(Json::decode($this->aiAgent->get('structured_output_schema')));
     }
 
-    // Trigger the response event.
+    // Trigger the response event. The system prompt and the chat history are
+    // the ones that are actually sent, so that they match the chat input.
     $request_event = new AgentRequestEvent(
       $this,
       $input,
-      $system_prompt,
+      $request_system_prompt,
       $this->aiAgent->id(),
       $user_prompt,
-      $this->chatHistory,
+      $request_history,
       $this->looped,
       $this->runnerId,
       $this->threadId,
@@ -1242,6 +1397,135 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   }
 
   /**
+   * Applies the configured short term memory plugin, if there is one.
+   *
+   * The plugin gets the untouched conversation as the original values and
+   * whatever it produced on the previous loop as the current values, and it
+   * may then shorten, summarize or otherwise rewrite them. Since the agent
+   * keeps its own complete conversation in $chatHistory, nothing that the
+   * plugin does can break the agents own tool call bookkeeping.
+   *
+   * A plugin that does not manage one of the three values hands it straight
+   * back, since that is what the base class getters return. Taking such an
+   * echo for a decision would freeze that value on the loop where the memory
+   * first ran, so what is carried over is only what the plugin changed:
+   *
+   * - The system prompt and the tools are rebuilt by the agent on every loop,
+   *   so they fall back to this loops values until a plugin rewrites them.
+   *   That is where the loop counter and the tools and information tools that
+   *   are only available on certain loops come from.
+   * - The chat history is the plugins own working copy, so it is always
+   *   carried over, but the messages that the agent appended since the plugin
+   *   last saw it are added to it. A plugin that keeps its previous shortened
+   *   history therefore still sees the newest tool results.
+   *
+   * A plugin that starts rewriting the system prompt or the tools takes them
+   * over from there on, and has to keep rewriting them from the original
+   * values it is handed for the values to stay up to date.
+   *
+   * @param string $system_prompt
+   *   The system prompt as the agent built it for this loop.
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInputInterface[] $tools
+   *   The normalized tools as the agent built them for this loop.
+   *
+   * @return array
+   *   The chat history, system prompt and tools to send in this request.
+   */
+  protected function applyShortTermMemory(string $system_prompt, array $tools): array {
+    $untouched = [$this->chatHistory, $system_prompt, $tools];
+    $plugin_id = $this->aiAgent->get('short_term_memory_plugin');
+    if (empty($plugin_id)) {
+      return $untouched;
+    }
+
+    // What the plugin left behind on the previous loop, brought up to date
+    // with this loop.
+    $current_chat_history = $this->memoryChatHistoryOffset === NULL
+      ? $this->chatHistory
+      : array_merge($this->memoryChatHistory, array_slice($this->chatHistory, $this->memoryChatHistoryOffset));
+    $current_system_prompt = $this->memorySystemPrompt ?? $system_prompt;
+    $current_tools = $this->filterToolsByMemory($tools);
+
+    try {
+      /** @var \Drupal\ai\Plugin\AiShortTermMemory\AiShortTermMemoryInterface $memory */
+      $memory = $this->aiShortTermMemoryPluginManager->createInstance($plugin_id);
+      // The plugin manager hands the stored configuration to the constructor
+      // as is, and only setConfiguration() merges in the plugins own
+      // defaults. An agent that was configured before a plugin gained a
+      // setting would otherwise run it without that setting.
+      $memory->setConfiguration($this->aiAgent->get('short_term_memory_config') ?? []);
+      $memory->process(
+        // The thread id groups a whole conversation together, so plugins that
+        // keep their own storage can find their earlier work. Agents only
+        // have a thread id when progress tracking is on, so fall back to the
+        // runner id, which is unique for this agent run.
+        thread_id: $this->threadId ?: $this->runnerId,
+        consumer: 'ai_agents',
+        chat_history: $current_chat_history,
+        system_prompt: $current_system_prompt,
+        tools: $current_tools,
+        original_chat_history: $this->chatHistory,
+        original_system_prompt: $system_prompt,
+        original_tools: $tools,
+        // The runner id is the same for the whole agent run, so the loop
+        // count is what makes this identify one single request.
+        request_id: $this->runnerId . ':' . $this->looped,
+      );
+    }
+    catch (\Throwable $exception) {
+      // A short term memory is an optimization, so a broken one should not
+      // take the whole agent run down with it. Log it and send the complete
+      // conversation instead.
+      $this->logger->error('The short term memory plugin %plugin failed for the agent %agent and was skipped: @message', [
+        '%plugin' => $plugin_id,
+        '%agent' => $this->aiAgent->id(),
+        '@message' => $exception->getMessage(),
+      ]);
+      return $untouched;
+    }
+
+    // Remember what the plugin decided, so that it can build on it in the
+    // next loop. The system prompt and the tools are only remembered when the
+    // plugin changed them, since handing something back unchanged is what a
+    // plugin that does not manage that value does.
+    $this->memoryChatHistory = $memory->getChatHistory();
+    $this->memoryChatHistoryOffset = count($this->chatHistory);
+    $memory_system_prompt = $memory->getSystemPrompt();
+    if ($memory_system_prompt !== $current_system_prompt) {
+      $this->memorySystemPrompt = $memory_system_prompt;
+    }
+    $memory_tools = $memory->getTools();
+    if ($memory_tools !== $current_tools) {
+      $this->memoryToolNames = array_map(static fn ($tool) => $tool->getName(), array_values($memory_tools));
+    }
+
+    return [
+      $this->memoryChatHistory,
+      $this->memorySystemPrompt ?? $system_prompt,
+      $this->memoryToolNames === NULL ? $tools : $memory_tools,
+    ];
+  }
+
+  /**
+   * Filters this loops tools down to the ones the memory kept last loop.
+   *
+   * A plugin that did not rewrite the tools gets all of them, so that tools
+   * that only become available on a later loop are not hidden from it.
+   *
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInputInterface[] $tools
+   *   The normalized tools as the agent built them for this loop.
+   *
+   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInputInterface[]
+   *   The tools that the short term memory kept, keyed as they came in.
+   */
+  protected function filterToolsByMemory(array $tools): array {
+    if ($this->memoryToolNames === NULL) {
+      return $tools;
+    }
+    return array_filter($tools, fn ($tool) => in_array($tool->getName(), $this->memoryToolNames, TRUE));
+  }
+
+  /**
    * Set function overrides.
    *
    * @param array{tools: array<string, bool>, tool_usage_limits: array<string, array<string, array{action: string, hide_property: bool, values: scalar[]}>>, tool_settings: array<string, array{return_directly: bool, restrict_multiple_calls: bool, multiple_call_error_message: string}>} $functions
@@ -1316,6 +1600,18 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     // Use overridden functions, if set.
     $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
     return $settings[$tool->getPluginId()]['use_artifacts'] ?? FALSE;
+  }
+
+  /**
+   * Helper function for checking if a tool should catch all errors.
+   *
+   * @return bool
+   *   True if unexpected errors should be caught and returned to the agent.
+   */
+  public function toolShouldCatchErrors(ExecutableFunctionCallInterface $tool): bool {
+    // Use overridden functions, if set.
+    $settings = $this->functionsOverride['tool_settings'] ?? $this->aiAgent->get('tool_settings');
+    return $settings[$tool->getPluginId()]['catch_errors'] ?? FALSE;
   }
 
   /**
@@ -1438,10 +1734,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       // instances using the same function call plugin.
       $context_definition = clone $function_call->getContextDefinition($property_name);
 
-      // Apply token in values if an action is set.
+      // Apply token in values if an action is set. Tool usage limit values are
+      // the only strings the original user message resolves in.
       if ($limit['action']) {
         $values = array_map(
-          fn ($value) => $this->applyTokens($value),
+          fn ($value) => $this->applyTokens($value, [
+            'original_user_message' => $this->getOriginalUserMessage(),
+          ]),
           array_filter(
             $limit['values'] ?? [],
             fn ($value) => $value !== NULL && $value !== '',
@@ -1537,17 +1836,21 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *
    * @param string $prompt
    *   The prompt to apply the tokens to.
+   * @param array $runtime_tokens
+   *   Values for the ai_agent_runtime token data, keyed by token name.
    *
    * @return string
    *   The prompt with the tokens applied.
    */
-  public function applyTokens(string $prompt): string {
+  public function applyTokens(string $prompt, array $runtime_tokens = []): string {
     $tokens = [
       'user' => $this->currentUser,
       'ai_agent' => $this->aiAgent,
     ];
     // Add dynamical tokens.
     $tokens = array_merge($tokens, $this->tokens);
+    // Overwrites any ai_agent_runtime key set through setTokenContexts().
+    $tokens['ai_agent_runtime'] = $runtime_tokens;
     return $this->token->replacePlain($prompt, $tokens);
   }
 
@@ -1558,6 +1861,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    *   The tool to execute.
    * @param bool $agent_decision
    *   If the agent should choose the tool or if we should run directly.
+   *
+   * @throws \Exception
+   *   Thrown when tool execution fails and catch_errors is disabled.
    */
   public function executeTool(ExecutableFunctionCallInterface $tool, $agent_decision = FALSE) {
     // We set extra data if its an AiAgentWrapper.
@@ -1565,6 +1871,11 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $tool->setTokens($this->tokens);
       $calling_agent = $tool->getAgent();
       if ($calling_agent instanceof ConfigAiAgentInterface) {
+        // Hand the original user message down to the sub agent, if there is
+        // one. The sub agent keeps its own otherwise.
+        if ($this->getOriginalUserMessage() !== '') {
+          $calling_agent->setOriginalUserMessage($this->getOriginalUserMessage());
+        }
         // If thread id exists, set it.
         if ($this->threadId) {
           $tool->getAgent()->setProgressThreadId($this->threadId);
@@ -1695,6 +2006,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function setChatHistory(array $history): void {
     $this->chatHistory = $history;
+    // Captures the request a chat processor hands over, before the loop
+    // appends tool results to the history as user messages.
+    $this->captureOriginalUserMessage($history);
   }
 
   /**
@@ -1769,8 +2083,18 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         $chat_history[] = $message->toArray();
       }
     }
+    $memory_chat_history = [];
+    foreach ($this->memoryChatHistory as $message) {
+      if ($message instanceof ChatMessage) {
+        $memory_chat_history[] = $message->toArray();
+      }
+    }
     return [
       'chat_history' => $chat_history,
+      'memory_chat_history' => $memory_chat_history,
+      'memory_chat_history_offset' => $this->memoryChatHistoryOffset,
+      'memory_system_prompt' => $this->memorySystemPrompt,
+      'memory_tool_names' => $this->memoryToolNames,
       'tool_results' => $tool_results,
       'agent_results' => $agent_results,
       'context_tools' => $context_tools,
@@ -1789,6 +2113,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       'progress_tracking' => $this->progressTracking,
       'progress_tracking_items' => $this->progressTrackingItems,
       'provider_tags' => $this->providerTags,
+      'original_user_message' => $this->originalUserMessage,
     ];
   }
 
@@ -1851,6 +2176,11 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     $this->progressTracking = $data['progress_tracking'] ?? FALSE;
     $this->progressTrackingItems = $data['progress_tracking_items'] ?? [];
     $this->providerTags = $data['provider_tags'] ?? [];
+    $this->originalUserMessage = $data['original_user_message'] ?? NULL;
+    $this->memoryChatHistory = $this->rebuildChatHistory($data['memory_chat_history'] ?? []);
+    $this->memoryChatHistoryOffset = $data['memory_chat_history_offset'] ?? NULL;
+    $this->memorySystemPrompt = $data['memory_system_prompt'] ?? NULL;
+    $this->memoryToolNames = $data['memory_tool_names'] ?? NULL;
   }
 
   /**

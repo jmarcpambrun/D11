@@ -9,6 +9,6 @@ dependencies:
   - modeler_api:modeler_api
 
 # Information added by Drupal.org packaging script on 2026-09-02
-version: '1.3.5'
+version: '1.4.0-beta1'
 project: 'ai_agents'
-datestamp: 1788346875
+datestamp: 1788349289

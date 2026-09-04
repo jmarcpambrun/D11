@@ -11,6 +11,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\PluginManager\AiShortTermMemoryPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai\Service\HostnameFilter;
 use Drupal\ai_agents\Attribute\AiAgent;
@@ -67,6 +68,8 @@ class AiAgentManager extends DefaultPluginManager {
    *   The logger channel.
    * @param \Drupal\ai\Service\HostnameFilter $hostnameFilter
    *   The hostname filter service.
+   * @param \Drupal\ai\PluginManager\AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager
+   *   The AI short term memory plugin manager.
    */
   public function __construct(
     \Traversable $namespaces,
@@ -85,6 +88,7 @@ class AiAgentManager extends DefaultPluginManager {
     protected AiGuardrailHelper $aiGuardrailHelper,
     protected LoggerChannelInterface $logger,
     protected HostnameFilter $hostnameFilter,
+    protected AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager,
   ) {
     parent::__construct(
       'Plugin/AiAgent',
@@ -138,7 +142,8 @@ class AiAgentManager extends DefaultPluginManager {
         $this->uuid,
         $this->aiGuardrailHelper,
         $this->logger,
-        $this->hostnameFilter
+        $this->hostnameFilter,
+        $this->aiShortTermMemoryPluginManager,
       );
       return $instance;
     }

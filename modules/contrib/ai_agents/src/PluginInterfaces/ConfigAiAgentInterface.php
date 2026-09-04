@@ -156,6 +156,26 @@ interface ConfigAiAgentInterface extends AiAgentInterface {
   public function getProviderTags(): array;
 
   /**
+   * Set the original, unaltered user message of the whole agent chain.
+   *
+   * A calling agent sets this on each of its sub agents.
+   *
+   * @param string $message
+   *   The original user message.
+   */
+  public function setOriginalUserMessage(string $message): void;
+
+  /**
+   * Get the original, unaltered user message of the whole agent chain.
+   *
+   * Falls back to this agent's own input when no calling agent has set one.
+   *
+   * @return string
+   *   The original user message, empty if it can not be determined.
+   */
+  public function getOriginalUserMessage(): string;
+
+  /**
    * Sets the streaming mode.
    *
    * @param bool $streaming

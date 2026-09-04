@@ -69,16 +69,26 @@ function ai_agents_post_update_10002() {
 }
 
 /**
- * Set max_loops_message to an empty string on existing agents where it is NULL.
- *
- * @see https://git.drupalcode.org/project/ai_agents/-/work_items/3547457
+ * Sets defaults for the new short term memory properties on existing agents.
  */
 function ai_agents_post_update_10003() {
-  $storage = \Drupal::entityTypeManager()->getStorage('ai_agent');
-  foreach ($storage->loadMultiple() as $agent) {
-    if ($agent->get('max_loops_message') === NULL) {
-      $agent->set('max_loops_message', '');
-      $agent->save();
+  $config_factory = \Drupal::configFactory();
+
+  foreach ($config_factory->listAll('ai_agents.ai_agent.') as $config_name) {
+    $config = $config_factory->getEditable($config_name);
+    $changed = FALSE;
+
+    if ($config->get('short_term_memory_plugin') === NULL) {
+      $config->set('short_term_memory_plugin', '');
+      $changed = TRUE;
+    }
+    if ($config->get('short_term_memory_config') === NULL) {
+      $config->set('short_term_memory_config', []);
+      $changed = TRUE;
+    }
+
+    if ($changed) {
+      $config->save();
     }
   }
 }

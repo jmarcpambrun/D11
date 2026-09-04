@@ -7,12 +7,15 @@ namespace Drupal\ai_agents\Form;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\SubformState;
 use Drupal\Core\Link;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\Guardrail\AiGuardrailHelper;
 use Drupal\ai\Guardrail\AiGuardrailSetInterface;
+use Drupal\ai\Plugin\AiShortTermMemory\AiShortTermMemoryInterface;
+use Drupal\ai\PluginManager\AiShortTermMemoryPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionGroupPluginManager;
@@ -46,12 +49,15 @@ final class AiAgentForm extends EntityForm {
    *   The token service.
    * @param \Drupal\ai\Guardrail\AiGuardrailHelper $aiGuardrailHelper
    *   The AI guardrail helper.
+   * @param \Drupal\ai\PluginManager\AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager
+   *   The AI short term memory plugin manager.
    */
   public function __construct(
     protected FunctionCallPluginManager $functionCallPluginManager,
     protected FunctionGroupPluginManager $functionGroupPluginManager,
     protected Token $token,
     protected AiGuardrailHelper $aiGuardrailHelper,
+    protected AiShortTermMemoryPluginManager $aiShortTermMemoryPluginManager,
   ) {
   }
 
@@ -64,6 +70,7 @@ final class AiAgentForm extends EntityForm {
       $container->get('plugin.manager.ai.function_groups'),
       $container->get('token'),
       $container->get('ai.guardrail_helper'),
+      $container->get('plugin.manager.ai.short_term_memory'),
     );
   }
 
@@ -292,6 +299,7 @@ final class AiAgentForm extends EntityForm {
       '#title' => $this->t('Classification settings'),
       '#description' => $this->t('These settings will help the AI agent to classify the tasks and decide which tools to use.'),
       '#open' => FALSE,
+      '#weight' => 20,
     ];
 
     $form['prompt_detail']['advanced']['classification']['orchestration_agent'] = [
@@ -314,6 +322,7 @@ final class AiAgentForm extends EntityForm {
       '#title' => $this->t('Structured output'),
       '#description' => $this->t('Settings for providing structured (JSON) output from the AI agent.'),
       '#open' => $config['structured_output_enabled'],
+      '#weight' => 30,
     ];
 
     $form['prompt_detail']['advanced']['structured_output_detail']['structured_output_enabled'] = [
@@ -346,6 +355,7 @@ final class AiAgentForm extends EntityForm {
       '#title' => $this->t('Security settings'),
       '#description' => $this->t('These settings will help the AI agent to handle security-related tasks.'),
       '#open' => FALSE,
+      '#weight' => 40,
     ];
 
     $guardrail_set_options = array_map(function (AiGuardrailSetInterface $guardrail_set) {
@@ -406,6 +416,31 @@ final class AiAgentForm extends EntityForm {
       $this->entity->isNew(),
       $this->moduleHandler->moduleExists('token'),
     );
+
+    // Which provider, model and model configuration this agent runs with. This
+    // lives on the entity form only, since the Modeler API round-trips its
+    // component configuration as scalars.
+    $provider_config = $this->entity->get('provider_config');
+    $form['prompt_detail']['advanced']['request_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Request settings'),
+      '#description' => $this->t('The AI provider and model this agent sends its requests to.'),
+      '#open' => !empty($provider_config['provider']) && empty($provider_config['use_default']),
+      '#weight' => 10,
+    ];
+
+    $form['prompt_detail']['advanced']['request_settings']['provider_config'] = [
+      '#type' => 'ai_provider_configuration',
+      '#title' => $this->t('AI provider'),
+      '#operation_type' => 'chat_with_tools',
+      '#advanced_config' => TRUE,
+      '#default_provider_allowed' => TRUE,
+      '#default_value' => $provider_config,
+      '#inline_description' => $this->t('Only models that are able to call tools are listed, since agents rely on tool calling. Choose <em>Default</em> to let this agent use the provider it inherits from the agent or assistant calling it, falling back to the site default.'),
+      '#description' => $this->t('A provider chosen here always wins: this agent keeps using it even when it is called as a sub-agent of an agent configured with a different provider.'),
+    ];
+
+    $form = $this->buildShortTermMemoryForm($form, $form_state);
 
     $form['prompt_detail']['tools_box'] = [
       '#type' => 'details',
@@ -578,6 +613,140 @@ final class AiAgentForm extends EntityForm {
   }
 
   /**
+   * Builds the short term memory part of the form.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The form including the short term memory part.
+   */
+  protected function buildShortTermMemoryForm(array $form, FormStateInterface $form_state): array {
+    $selected = $this->getSelectedShortTermMemoryPluginId($form_state);
+
+    $form['prompt_detail']['short_term_memory'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Short term memory'),
+      '#description' => $this->t('A short term memory decides what of the conversation that is actually sent to the LLM on each request. It can summarize, truncate or otherwise rewrite the history, so that a long running agent does not run out of context. The agent itself always keeps the whole conversation.'),
+      '#open' => (bool) $selected,
+    ];
+
+    $options = [];
+    foreach ($this->aiShortTermMemoryPluginManager->getDefinitions() as $plugin_id => $definition) {
+      $options[$plugin_id] = $definition['label'];
+    }
+
+    $form['prompt_detail']['short_term_memory']['short_term_memory_plugin'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Short term memory plugin'),
+      '#description' => $this->t('The short term memory that this agent should use. If none is selected, the whole conversation is sent on every request.'),
+      '#options' => $options,
+      '#empty_option' => $this->t('- None -'),
+      '#default_value' => $selected,
+      '#ajax' => [
+        'callback' => '::updateShortTermMemorySettings',
+        'wrapper' => 'ai-agents-short-term-memory-settings',
+        'event' => 'change',
+      ],
+    ];
+
+    $form['prompt_detail']['short_term_memory']['short_term_memory_config'] = [
+      '#type' => 'container',
+      '#tree' => TRUE,
+      '#prefix' => '<div id="ai-agents-short-term-memory-settings">',
+      '#suffix' => '</div>',
+    ];
+
+    $plugin = $this->getShortTermMemoryPlugin($selected);
+    if ($plugin) {
+      $subform_state = SubformState::createForSubform(
+        $form['prompt_detail']['short_term_memory']['short_term_memory_config'],
+        $form,
+        $form_state,
+      );
+      $form['prompt_detail']['short_term_memory']['short_term_memory_config'] += $plugin->buildConfigurationForm([], $subform_state);
+    }
+
+    return $form;
+  }
+
+  /**
+   * Ajax callback to update the short term memory settings.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The short term memory configuration part of the form.
+   */
+  public function updateShortTermMemorySettings(array &$form, FormStateInterface $form_state): array {
+    return $form['prompt_detail']['short_term_memory']['short_term_memory_config'];
+  }
+
+  /**
+   * Gets the short term memory plugin id that the form is working with.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return string
+   *   The plugin id, or an empty string if none is selected.
+   */
+  protected function getSelectedShortTermMemoryPluginId(FormStateInterface $form_state): string {
+    // On a rebuild - for instance when the plugin was just picked - the form
+    // state holds the truth, otherwise the saved agent does.
+    $selected = $form_state->getValue('short_term_memory_plugin')
+      ?? $this->entity->get('short_term_memory_plugin');
+
+    return (string) ($selected ?? '');
+  }
+
+  /**
+   * Checks if the short term memory configuration subform was submitted.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return bool
+   *   TRUE if there are submitted values for the plugin configuration.
+   */
+  protected function shortTermMemoryConfigWasSubmitted(FormStateInterface $form_state): bool {
+    return !empty($form_state->getValue('short_term_memory_config'));
+  }
+
+  /**
+   * Creates the short term memory plugin with the configuration to show.
+   *
+   * @param string $plugin_id
+   *   The plugin id, or an empty string if none is selected.
+   * @param array|null $configuration
+   *   The configuration to create the plugin with, or NULL to use the saved
+   *   configuration of the agent.
+   *
+   * @return \Drupal\ai\Plugin\AiShortTermMemory\AiShortTermMemoryInterface|null
+   *   The plugin, or NULL if there is nothing to configure.
+   */
+  protected function getShortTermMemoryPlugin(string $plugin_id, ?array $configuration = NULL): ?AiShortTermMemoryInterface {
+    if ($plugin_id === '' || !$this->aiShortTermMemoryPluginManager->hasDefinition($plugin_id)) {
+      return NULL;
+    }
+    if ($configuration === NULL) {
+      // Only reuse the saved configuration when it belongs to the plugin that
+      // is actually selected, so that switching plugin starts from its
+      // defaults.
+      $configuration = $plugin_id === $this->entity->get('short_term_memory_plugin')
+        ? ($this->entity->get('short_term_memory_config') ?? [])
+        : [];
+    }
+
+    return $this->aiShortTermMemoryPluginManager->createInstance($plugin_id, $configuration);
+  }
+
+  /**
    * Helper method to create the tool usage form.
    *
    * @param \Drupal\ai\Service\FunctionCalling\FunctionCallInterface $tool_instance
@@ -662,6 +831,13 @@ final class AiAgentForm extends EntityForm {
           ],
         ],
       ],
+    ];
+
+    $form['prompt_detail']['tool_usage'][$tool_definition['id']]['tool_settings']['catch_errors'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Catch all errors'),
+      '#description' => $this->t('Check this box to catch all errors from this tool and return them to the agent instead of stopping execution. This allows the agent to handle tool failures gracefully.'),
+      '#default_value' => $this->entity->get('tool_settings')[$tool_definition['id']]['catch_errors'] ?? FALSE,
     ];
 
     // Allow to override description.
@@ -855,7 +1031,9 @@ final class AiAgentForm extends EntityForm {
           '#type' => 'textarea',
           '#title' => $this->t('Values'),
           '#title_display' => 'invisible',
-          '#description' => $this->t('Allowed values (newline separated) or forced value.'),
+          '#description' => $this->t('Allowed values (newline separated) or forced value. A forced value resolves tokens, so %token forwards the message the user actually wrote to a sub agent, unchanged. Tokens are not resolved in values the LLM writes itself.', [
+            '%token' => '[ai_agent:original_user_message]',
+          ]),
           '#default_value' => $default_values,
           '#rows' => 2,
           '#states' => [
@@ -1046,6 +1224,14 @@ final class AiAgentForm extends EntityForm {
         $form_state->setErrorByName('structured_output_schema', $this->t('The JSON schema is required if structured output is enabled.'));
       }
     }
+    // Let the short term memory plugin validate its own configuration.
+    $plugin = $this->shortTermMemoryConfigWasSubmitted($form_state)
+      ? $this->getShortTermMemoryPlugin($this->getSelectedShortTermMemoryPluginId($form_state))
+      : NULL;
+    if ($plugin) {
+      $subform = &$form['prompt_detail']['short_term_memory']['short_term_memory_config'];
+      $plugin->validateConfigurationForm($subform, SubformState::createForSubform($subform, $form, $form_state));
+    }
   }
 
   /**
@@ -1088,6 +1274,7 @@ final class AiAgentForm extends EntityForm {
         else {
           $tool_settings[$tool_id]['multiple_call_error_message'] = '';
         }
+        $tool_settings[$tool_id]['catch_errors'] = $tool_usage['tool_settings']['catch_errors'] ?? FALSE;
         // Check if description override is enabled.
         if (!empty($tool_usage['tool_settings']['description_enabled'])) {
           $tool_settings[$tool_id]['description_override'] = $tool_usage['tool_settings']['description_override'] ?? '';
@@ -1151,6 +1338,30 @@ final class AiAgentForm extends EntityForm {
     $this->entity->set('structured_output_enabled', $form_state->getValue('structured_output_enabled'));
     $this->entity->set('tool_settings', $tool_settings);
     $this->entity->set('tools', $tools);
+    // Store the provider, model and model configuration to run the agent with.
+    $this->entity->set('provider_config', $form_state->getValue('provider_config'));
+
+    // Store the short term memory and let the plugin store its own settings.
+    // The plugin starts from its defaults here, so that only what the plugin
+    // itself puts back ends up in the saved configuration.
+    $short_term_memory_plugin = $this->getSelectedShortTermMemoryPluginId($form_state);
+    $plugin = $this->getShortTermMemoryPlugin($short_term_memory_plugin, []);
+    $this->entity->set('short_term_memory_plugin', $short_term_memory_plugin);
+    if ($plugin) {
+      // Without JavaScript the configuration subform is not rendered on the
+      // same request as the plugin gets picked, so let the plugin keep its
+      // defaults until there is something submitted for it.
+      if ($this->shortTermMemoryConfigWasSubmitted($form_state)) {
+        $subform = &$form['prompt_detail']['short_term_memory']['short_term_memory_config'];
+        $plugin->submitConfigurationForm($subform, SubformState::createForSubform($subform, $form, $form_state));
+      }
+      // The plugin manager hands the configuration to the plugin as is, so
+      // fill in whatever the plugin did not set itself with its defaults.
+      $this->entity->set('short_term_memory_config', $plugin->getConfiguration() + $plugin->defaultConfiguration());
+    }
+    else {
+      $this->entity->set('short_term_memory_config', []);
+    }
 
     // Make sure to remove \r characters from the yaml fields for nice YAML.
     // See: https://www.drupal.org/project/drupal/issues/3202796.
