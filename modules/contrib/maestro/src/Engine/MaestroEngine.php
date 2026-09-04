@@ -1705,12 +1705,14 @@ class MaestroEngine {
         $task = $this->getPluginTask($taskClassName, $processID, $queueID);
         // Its a task and not an interactive task.
         if ($task && !$task->isInteractive()) {
+          \Drupal::moduleHandler()->invokeAll('maestro_pre_task_execute', [$queueID, $processID, $taskID]);
           $result = $task->execute();
           if ($result === TRUE) {
             // We now set the task's status and create the next task instance!
             $queueRecord->set('status', $task->getExecutionStatus());
             $queueRecord->set('completed', time());
             $queueRecord->save();
+            \Drupal::moduleHandler()->invokeAll('maestro_post_task_execute', [$queueID, $processID, $taskID]);
             $archive_status = $this->nextStep($templateMachineName, $taskID, $processID, $queueID, $task->getCompletionStatus());
             $this->archiveTask($queueID, $archive_status);
           }
@@ -1718,6 +1720,7 @@ class MaestroEngine {
         else {
           // If it IS an interactive task.
           if ($task && $task->isInteractive()) {
+            \Drupal::moduleHandler()->invokeAll('maestro_post_task_execute', [$queueID, $processID, $taskID]);
             $archive_status = $this->nextStep($templateMachineName, $taskID, $processID, $queueID, $task->getCompletionStatus());
             $this->archiveTask($queueID, $archive_status);
           }

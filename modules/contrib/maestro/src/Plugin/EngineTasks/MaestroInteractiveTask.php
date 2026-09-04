@@ -84,6 +84,7 @@ class MaestroInteractiveTask extends PluginBase implements MaestroEngineTaskInte
     // Need to set the run_once flag here
     // as interactive tasks are executed and completed by the user using the Maestro API.
     $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($this->queueID);
+    \Drupal::moduleHandler()->invokeAll('maestro_pre_task_execute', [$this->queueID, $this->processID, MaestroEngine::getTaskIdFromQueueId($this->queueID)]);
     $queueRecord->set('run_once', 1);
     $queueRecord->save();
 

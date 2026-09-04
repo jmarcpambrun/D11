@@ -53,6 +53,7 @@ class MaestroEngineTest extends KernelTestBase {
     'field',
     'user',
     'text',
+    'filter',
     'node',
     'system',
     'views',
@@ -79,6 +80,7 @@ class MaestroEngineTest extends KernelTestBase {
       'field',
       'node',
       'user',
+      'filter',
       'views', 
       'views_ui',
       'maestro'

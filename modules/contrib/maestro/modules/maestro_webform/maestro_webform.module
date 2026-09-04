@@ -259,27 +259,27 @@ function maestro_webform_menu_local_tasks_alter(&$data, $route_name) {
 /**
  * Implements hook_token_info().
  *
- * Declares the 'maestro-webform' token type — a global type with no 'needs-data'
+ * Declares the 'maestro-webform' token type ï¿½ a global type with no 'needs-data'
  * requirement so it appears in the Webform element editor token browser.
  *
  * Tokens resolve entity identifier field values by reading the Maestro sitewide
  * token from the current request URL, so no $data context is needed at render time.
  *
  * Token format: [maestro-webform:entity-field:unique_id:field_name]
- *   entity-field — fixed token name (literal, always present)
- *   unique_id    — the Entity Identifier machine name configured on the Maestro task
- *   field_name   — the node field machine name or webform submission element key
+ *   entity-field fixed token name (literal, always present)
+ *   unique_id    the Entity Identifier machine name configured on the Maestro task
+ *   field_name   the node field machine name or webform submission element key
  */
 function maestro_webform_token_info() {
   $type = [
     'name' => t('Maestro (Webform task)'),
-    'description' => t('Tokens resolved from Maestro entity identifiers when a webform is rendered via a Maestro task URL. These tokens read the sitewide Maestro token from the URL query string — no extra context required. Use format: [maestro-webform:entity-field:unique_id:field_name].'),
-    // No 'needs-data' — context is derived from the request URL at runtime.
+    'description' => t('Tokens resolved from Maestro entity identifiers when a webform is rendered via a Maestro task URL. These tokens read the sitewide Maestro token from the URL query string ï¿½ no extra context required. Use format: [maestro-webform:entity-field:unique_id:field_name].'),
+    // No 'needs-data' context is derived from the request URL at runtime.
   ];
 
   $tokens['entity-field'] = [
     'name' => t('Entity Identifier field value'),
-    'description' => t('Returns a field value from the entity tracked by a Maestro entity identifier. Format: [maestro-webform:entity-field:unique_id:field_name] — replace unique_id with the identifier machine name configured on the Maestro task, and field_name with the node field or webform element key (e.g. title, field_first_name). Example: [maestro-webform:entity-field:new_article:title].'),
+    'description' => t('Returns a field value from the entity tracked by a Maestro entity identifier. Format: [maestro-webform:entity-field:unique_id:field_name] ï¿½ replace unique_id with the identifier machine name configured on the Maestro task, and field_name with the node field or webform element key (e.g. title, field_first_name). Example: [maestro-webform:entity-field:new_article:title].'),
     'dynamic' => TRUE,
   ];
 
