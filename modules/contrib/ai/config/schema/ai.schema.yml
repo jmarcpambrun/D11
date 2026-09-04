@@ -157,20 +157,20 @@ ai.guardrail.settings.input_length_limit:
     tokenizer_model:
       type: string
       label: Tokenizer model
-    check_all_messages:
+    scan_all_user_messages:
       type: boolean
-      label: Check total conversation length
+      label: Scan all user messages
     violation_message:
       type: string
       label: Violation message
 
 ai.guardrail.settings.regexp_guardrail:
   type: mapping
-  label: Regexp Guardrail settings
+  label: RegEx settings
   mapping:
     regexp_pattern:
       type: string
-      label: Regexp pattern
+      label: RegEx Pattern
     scan_all_user_messages:
       type: boolean
       label: Scan all user messages

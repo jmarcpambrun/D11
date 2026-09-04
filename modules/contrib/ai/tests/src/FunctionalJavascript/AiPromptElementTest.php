@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
  *
  * @group ai_prompt
  * @group 3586459
+ * @group 3582633
  */
 #[RunTestsInSeparateProcesses]
 class AiPromptElementTest extends BaseClassFunctionalJavascriptTests {

@@ -16,7 +16,7 @@ use Drupal\ai\Base\ChatProcessorBase;
 use Drupal\ai_assistant_api\AiAssistantApiRunner;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_chatbot\Service\MessagesButtons;
-use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -299,7 +299,7 @@ class AiAssistantApiProcessor extends ChatProcessorBase implements ContainerFact
     ];
     $markup = $this->messagesButtons->getRenderedButtons($buttons, $this->configuration['assistant_id'] ?? '', $this->getThreadId() ?? '');
     // The dump may embed model and user provided content, so escape it.
-    $markup .= '<div class="structured-results-dump"><pre>' . Html::escape(Yaml::dump($structured, 10)) . '</pre></div>';
+    $markup .= '<div class="structured-results-dump"><pre>' . Xss::filter(Yaml::dump($structured, 10)) . '</pre></div>';
     return $markup;
   }
 

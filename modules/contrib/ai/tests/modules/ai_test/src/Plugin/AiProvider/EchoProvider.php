@@ -265,10 +265,12 @@ class EchoProvider extends AiProviderClientBase implements
           }
         }
 
+        // Resolve the function against its input, then give back the function
+        // itself, since ChatMessage stores ToolsFunctionOutputInterface.
         $output_tools = new ToolsOutput($input_tools);
         $output_tools->setFunction($output_function);
         if ($message instanceof ChatMessage) {
-          $message->setTools([$output_tools]);
+          $message->setTools($output_tools->getFunctions());
         }
       }
     }

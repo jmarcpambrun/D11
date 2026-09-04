@@ -229,3 +229,10 @@ function ai_update_15001(): void {
 function ai_update_15002() {
   \Drupal::service('extension.list.module')->reset();
 }
+
+/**
+ * Clear modules list to discover the reinstated submodules.
+ */
+function ai_update_15003() {
+  \Drupal::service('extension.list.module')->reset();
+}

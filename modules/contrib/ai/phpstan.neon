@@ -77,5 +77,6 @@ parameters:
 
   reportUnmatchedIgnoredErrors: false
   excludePaths:
+    - modules/ai_search/tests/modules/test_ai_vdb_provider_mysql/src/TestVectorTable.php
     - modules/ai_assistant_api/src/Service/AgentRunner.php
     - modules/ai_assistant_api/src/Event/AiAssistantPassContextToAgentEvent.php

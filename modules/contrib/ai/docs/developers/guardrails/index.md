@@ -12,7 +12,7 @@ The AI module includes the following built-in guardrails:
 
 *   **[Input Length Limit](input_length_limit.md)**: Blocks input that exceeds a configurable character or token count limit.
 *   **[Moderation](moderation.md)**: Non-deterministic check that sends user messages to a provider's moderation endpoint and blocks flagged content (fail-closed).
-*   **[Regexp Guardrail](regexp_guardrail.md)**: Deterministic check that matches the last chat message against a configurable regular expression pattern.
+*   **[RegEx](regex.md)**: Deterministic check that matches the last chat message against a configurable regular expression pattern.
 *   **[Restrict to Topic](restrict_to_topic.md)**: Non-deterministic check using an LLM to verify whether the input matches allowed or disallowed topics.
 *   **[Sensitive Content Stream Filter](sensitive_content_stream.md)**: Streaming guardrail that suppresses content enclosed between configurable plain-text markers in real time, replacing it with a safe message before it reaches the consumer.
 
@@ -79,7 +79,7 @@ All result types extend `AbstractResult` and take three constructor arguments:
 
 ```php
 new StopResult(
-  message: 'This content violates the regexp pattern.',
+  message: 'This content violates the RegEx Pattern.',
   guardrail: $this,          // The guardrail plugin instance.
   context: [],               // Optional context array.
   score: 1.0,                // StopResult only: the severity score.

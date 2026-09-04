@@ -88,12 +88,15 @@ class DeepChatApi extends ControllerBase {
    *   The function call plugin manager.
    * @param \Drupal\ai\PluginManager\ChatProcessorPluginManager $chatProcessorPluginManager
    *   The chat processor plugin manager.
+   * @param \League\CommonMark\CommonMarkConverter $commonMarkConverter
+   *   The CommonMark converter.
    */
   public function __construct(
     protected MessagesButtons $messagesButtons,
     protected CsrfTokenGenerator $csrfTokenGenerator,
     protected FunctionCallPluginManager $functionCallPluginManager,
     protected ChatProcessorPluginManager $chatProcessorPluginManager,
+    protected CommonMarkConverter $commonMarkConverter,
   ) {
   }
 
@@ -106,6 +109,7 @@ class DeepChatApi extends ControllerBase {
       $container->get('csrf_token'),
       $container->get('plugin.manager.ai.function_calls'),
       $container->get(ChatProcessorPluginManager::class),
+      $container->get('ai.commonmark_converter'),
     );
   }
 
@@ -427,13 +431,13 @@ class DeepChatApi extends ControllerBase {
   }
 
   /**
-   * Gets the common mark converter if available.
+   * Gets the CommonMark converter.
    *
-   * @return object
-   *   The common mark converter.
+   * @return \League\CommonMark\CommonMarkConverter
+   *   The CommonMark converter.
    */
   public function getCommonMarkConverter(): object {
-    return new CommonMarkConverter();
+    return $this->commonMarkConverter;
   }
 
 }

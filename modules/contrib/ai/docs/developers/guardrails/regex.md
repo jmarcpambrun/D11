@@ -1,6 +1,6 @@
-# Regexp Guardrail
+# RegEx
 
-The **Regexp Guardrail** (`regexp_rail`) is a deterministic guardrail that checks whether the text matches a specified regular expression pattern. It can run in pre-generation (checking user input) and post-generation (checking AI responses and tool call arguments).
+The **RegEx Guardrail** (`regexp_guardrail`) is a deterministic guardrail that checks whether the text matches a specified regular expression pattern. It can run in pre-generation (checking user input) and post-generation (checking AI responses and tool call arguments).
 
 ## When to Use
 
@@ -13,7 +13,7 @@ Use this guardrail to:
 
 | Field | Key | Type | Default | Description |
 |-------|-----|------|---------|-------------|
-| **Regexp Pattern** | `regexp_pattern` | Textfield | *None* | The regular expression pattern to match against, including delimiters. Example: `/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i` (matches emails). |
+| **RegEx Pattern** | `regexp_pattern` | Textfield | *None* | The regular expression pattern to match against, including delimiters. Example: `/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i` (matches emails). |
 | **Violation Message** | `violation_message` | Textarea | `The text contains invalid content matching the pattern: @pattern` | The message returned when a match is found. Supports the `@pattern` placeholder to display the matched pattern. |
 
 ## How it Evaluates Outputs

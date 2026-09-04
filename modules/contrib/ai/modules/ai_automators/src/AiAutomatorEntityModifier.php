@@ -196,6 +196,7 @@ class AiAutomatorEntityModifier {
     $fields = $storage->loadByProperties([
       'entity_type' => $entity->getEntityTypeId(),
       'bundle' => $entity->bundle(),
+      'status' => TRUE,
     ]);
     $fieldDefinitions = $this->fieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
 
@@ -206,7 +207,7 @@ class AiAutomatorEntityModifier {
       if (empty($fieldName) || !isset($fieldDefinitions[$fieldName])) {
         continue;
       }
-      // Check if enabled and return the config.
+      // Return the config.
       $fieldConfigs[$field->id()]['fieldDefinition'] = $fieldDefinitions[$fieldName];
       $automatorConfig = [
         'field_name' => $fieldName,

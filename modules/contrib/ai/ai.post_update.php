@@ -85,3 +85,25 @@ function ai_post_update_15001(&$sandbox): void {
 
   $config_entity_updater->update($sandbox, 'ai_guardrail', $callback);
 }
+
+/**
+ * Rename check_all_messages to scan_all_user_messages for InputLengthLimit.
+ */
+function ai_post_update_15002(&$sandbox): void {
+  $config_entity_updater = \Drupal::classResolver(ConfigEntityUpdater::class);
+  $callback = function (AiGuardrailEntityInterface $guardrail) {
+    if ($guardrail->get('guardrail') !== 'input_length_limit') {
+      return FALSE;
+    }
+    $settings = $guardrail->get('guardrail_settings') ?? [];
+    if (!array_key_exists('check_all_messages', $settings)) {
+      return FALSE;
+    }
+    $settings['scan_all_user_messages'] = $settings['check_all_messages'];
+    unset($settings['check_all_messages']);
+    $guardrail->set('guardrail_settings', $settings);
+    return TRUE;
+  };
+
+  $config_entity_updater->update($sandbox, 'ai_guardrail', $callback);
+}

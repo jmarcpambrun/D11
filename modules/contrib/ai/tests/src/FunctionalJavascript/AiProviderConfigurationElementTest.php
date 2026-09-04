@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
  * Tests the AI Provider Configuration form element.
  *
  * @group ai
+ * @group 3582633
  * @group 3580935
  * @group 3586636
  */

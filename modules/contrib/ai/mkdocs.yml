@@ -12,7 +12,11 @@ theme:
     - header.autohide
     - navigation.footer
     - content.action.edit
+    - content.action.view
 plugins:
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
   - glightbox
   # Include Markdown: Allows embedding markdown files in one another with {% include-markdown "file.md" %}
   # https://github.com/mondeja/mkdocs-include-markdown-plugin
@@ -107,6 +111,7 @@ nav:
       - Tokenizer: developers/tokenizer.md
       - Response Helpers: developers/response_helpers.md
       - HTML to Markdown Converter: developers/html_to_markdown_converter.md
+      - Markdown to HTML Converter: developers/markdown_to_html_converter.md
     - Develop an AI Provider:
       - Getting Started: developers/writing_an_ai_provider.md
       - Testing a Provider: developers/testing_an_ai_provider.md
@@ -115,7 +120,7 @@ nav:
       - Overview: developers/guardrails/index.md
       - Input Length Limit: developers/guardrails/input_length_limit.md
       - Moderation: developers/guardrails/moderation.md
-      - Regexp Guardrail: developers/guardrails/regexp_guardrail.md
+      - RegEx: developers/guardrails/regex.md
       - Restrict to Topic: developers/guardrails/restrict_to_topic.md
       - Writing Custom Guardrails: developers/guardrails/custom_guardrail.md
     - Events: developers/events.md
@@ -143,6 +148,7 @@ nav:
     - Contribute Bug Reports: contribute/bug_finding.md
     - Contribute Testings:
       - Getting Started: contribute/testing.md
+      - Functional JavaScript Conventions: contribute/testing/functional_javascript.md
       - Full Patch Test: contribute/testing/full_patch_test.md
       - Mock Provider Calls: contribute/testing/spoof_provider.md
     - Contribute Features: contribute/features.md

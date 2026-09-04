@@ -18,8 +18,8 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Token;
 use Drupal\ai\PluginManager\ChatProcessorPluginManager;
+use Drupal\ai\Service\CommonMarkConverterFactoryInterface;
 use Drupal\ai_chatbot\Controller\DeepChatApi;
-use League\CommonMark\CommonMarkConverter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -148,6 +148,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected $requestStack;
 
   /**
+   * The CommonMark converter factory.
+   *
+   * @var \Drupal\ai\Service\CommonMarkConverterFactoryInterface
+   */
+  protected CommonMarkConverterFactoryInterface $commonMarkConverterFactory;
+
+  /**
    * The current path.
    *
    * @var \Drupal\Core\Path\CurrentPathStack
@@ -173,6 +180,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->requestStack = $container->get('request_stack');
     $plugin->currentPath = $container->get('path.current');
     $plugin->chatProcessorManager = $container->get(ChatProcessorPluginManager::class);
+    $plugin->commonMarkConverterFactory = $container->get(CommonMarkConverterFactoryInterface::class);
     return $plugin;
   }
 
@@ -233,6 +241,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'default_avatar' => '',
       'first_message' => '',
       'loading_message' => '',
+      'agent_delegation_message' => '',
       'stream' => FALSE,
       'toggle_state' => 'remember',
       'width' => '500px',
@@ -355,6 +364,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#title' => $this->t('Loading Message'),
       '#description' => $this->t('The message shown while generating a response. Leave blank to use the default animated ellipsis. <br> Only shown when Verbose Mode is disabled.'),
       '#default_value' => $this->configuration['loading_message'] ?? '',
+    ];
+
+    $form['messages']['agent_delegation_message'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Agent Delegation Message'),
+      '#description' => $this->t('The message shown while the chatbot is processing agent steps. Leave blank to use the default "Contacting agents...".'),
+      '#default_value' => $this->configuration['agent_delegation_message'] ?? '',
     ];
 
     $form['messages']['bot_name'] = [
@@ -585,6 +601,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['default_avatar'] = $form_state->getValue('messages')['default_avatar'];
     $this->configuration['first_message'] = $form_state->getValue('messages')['first_message'];
     $this->configuration['loading_message'] = $form_state->getValue('messages')['loading_message'] ?? '';
+    $this->configuration['agent_delegation_message'] = $form_state->getValue('messages')['agent_delegation_message'] ?? '';
     $this->configuration['style_file'] = $form_state->getValue('styling')['style_file'];
     $this->configuration['width'] = $form_state->getValue('styling')['width'];
     $this->configuration['height'] = $form_state->getValue('styling')['height'];
@@ -646,6 +663,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['session_exists'] = $this->requestStack->getCurrentRequest()->getSession()->isStarted();
     $block['#attached']['drupalSettings']['ai_deepchat']['verbose_mode'] = (bool) ($this->configuration['plugin_configuration']['verbose_mode'] ?? FALSE);
     $block['#attached']['drupalSettings']['ai_deepchat']['loading_message'] = $this->configuration['loading_message'] ?? '';
+    $block['#attached']['drupalSettings']['ai_deepchat']['agent_delegation_message'] = $this->configuration['agent_delegation_message'] ?? '';
     $block['#cache']['contexts'][] = 'session.exists';
     return $block;
   }
@@ -999,7 +1017,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       return [];
     }
 
-    $converter = new CommonMarkConverter(['html_input' => 'escape']);
+    $converter = $this->commonMarkConverterFactory->fromOptions(['html_input' => 'escape']);
     $messages = [];
     foreach ($history as $message) {
       // Only show messages newer than one day.

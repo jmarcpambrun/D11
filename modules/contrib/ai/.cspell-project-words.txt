@@ -225,6 +225,7 @@ precode
 precodenum
 prenum
 preprompt
+preuninstall
 Probots
 programmatical
 Providerid
@@ -408,5 +409,10 @@ markdownify's
 setext
 wsod
 fatals
+functionaljavascript
+simpletest
 tagify
+fataling
 unmigrated
+Inno
+nojs

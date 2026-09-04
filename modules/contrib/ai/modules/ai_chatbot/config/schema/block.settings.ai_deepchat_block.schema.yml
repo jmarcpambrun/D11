@@ -26,6 +26,9 @@ block.settings.ai_deepchat_block:
     loading_message:
       type: text
       label: Loading Message
+    agent_delegation_message:
+      type: text
+      label: Agent Delegation Message
     stream:
       type: integer
       label: Stream

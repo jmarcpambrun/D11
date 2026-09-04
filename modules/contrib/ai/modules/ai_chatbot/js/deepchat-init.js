@@ -285,7 +285,7 @@
   function buildStepHtml(html) {
     Drupal.behaviors.deepChatToggle.stepMessages.push(html);
     let open = Drupal.behaviors.deepChatToggle.agentUsageIsOpen ? 'open' : '';
-    let wrapped = `<div class="loading-wrapper"><span class="loading-span">${Drupal.t('Contacting agents..')}</span>`;
+    let wrapped = `<div class="loading-wrapper"><span class="loading-span">${drupalSettings.ai_deepchat.agent_delegation_message || Drupal.t('Contacting agents...')}</span>`;
     wrapped += `<details class="step-messages loading-text" ${open}><summary class="step-messages-summary">`;
     wrapped += `${Drupal.t('Details')}</summary>${html}</details></div>`;
     return wrapped;

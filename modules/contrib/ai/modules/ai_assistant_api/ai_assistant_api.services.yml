@@ -47,3 +47,7 @@ services:
       - '@ai_assistant_api.tempstore.private'
       - '@event_dispatcher'
       - '@?plugin.manager.ai_agents'
+  ai_assistant_api.pass_context_to_agent_subscriber:
+    class: Drupal\ai_assistant_api\EventSubscriber\PassContextToAgentSubscriber
+    tags:
+      - { name: event_subscriber }
