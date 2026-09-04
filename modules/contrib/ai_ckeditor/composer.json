@@ -9,6 +9,6 @@
         "source": "https://git.drupalcode.org/project/ai_ckeditor"
     },
     "require": {
-        "drupal/ai": "^1.4"
+        "drupal/ai": "^1.5"
     }
 }

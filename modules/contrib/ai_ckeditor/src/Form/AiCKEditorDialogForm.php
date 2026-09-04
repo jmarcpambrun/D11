@@ -60,6 +60,9 @@ class AiCKEditorDialogForm extends FormBase {
     $request = $this->getRequest();
     $payload = $request->getPayload();
 
+    // Extract entity context from the payload. The bundle is intentionally
+    // omitted: the AiRequest controller derives it from the loaded entity
+    // in validateEntityContext(), so passing it from the client is redundant.
     $entity_type = $payload->get('entity_type') ?? '';
     $entity_id = $payload->get('entity_id') ?? '';
 

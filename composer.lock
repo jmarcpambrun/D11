@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "104c9400d72fdbaf6d5b12289558129b",
+    "content-hash": "7f8cd10678912d28eaa2f58a8fb6f145",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2895,30 +2895,30 @@
         },
         {
             "name": "drupal/ai_ckeditor",
-            "version": "1.4.2",
+            "version": "1.5.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_ckeditor.git",
-                "reference": "1.4.2"
+                "reference": "1.5.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.4.2.zip",
-                "reference": "1.4.2",
-                "shasum": "948caeccf84c5fc054faf0f5d9cf3d1f329754b8"
+                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.5.0-beta1.zip",
+                "reference": "1.5.0-beta1",
+                "shasum": "756857cb7ddc2a4ddb0a5440642e840a56e11bdc"
             },
             "require": {
-                "drupal/ai": "^1.4",
+                "drupal/ai": "^1.5",
                 "drupal/core": "^10.4 || ^11"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.4.2",
-                    "datestamp": "1784708314",
+                    "version": "1.5.0-beta1",
+                    "datestamp": "1788380550",
                     "security-coverage": {
-                        "status": "covered",
-                        "message": "Covered by Drupal's security advisory policy"
+                        "status": "not-covered",
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -22512,6 +22512,7 @@
     "minimum-stability": "RC",
     "stability-flags": {
         "drupal/ai": 5,
+        "drupal/ai_ckeditor": 10,
         "drupal/ai_media_image": 15,
         "drupal/ai_provider_openai": 10,
         "drupal/ai_search": 15,
