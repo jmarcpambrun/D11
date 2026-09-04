@@ -2,12 +2,17 @@
 
 namespace Drupal\ai_translate;
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityPublishedInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
@@ -30,6 +35,8 @@ class EntityTranslationOrchestrator implements EntityTranslationOrchestratorInte
    *   The config factory.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
    *   The logger channel factory.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(
     protected TextExtractorInterface $textExtractor,
@@ -37,7 +44,38 @@ class EntityTranslationOrchestrator implements EntityTranslationOrchestratorInte
     protected LanguageManagerInterface $languageManager,
     protected ConfigFactoryInterface $configFactory,
     protected LoggerChannelFactoryInterface $loggerFactory,
+    protected EntityTypeManagerInterface $entityTypeManager,
   ) {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public function checkTranslateAccess(
+    ContentEntityInterface $entity,
+    AccountInterface $account,
+    string $langTo,
+  ): AccessResultInterface {
+    $access = AccessResult::allowedIfHasPermission($account, 'create ai content translation');
+    if (!$access->isAllowed()) {
+      return $access;
+    }
+
+    if (!$entity->isTranslatable()) {
+      return $access->andIf(AccessResult::forbidden('The entity is not translatable.'));
+    }
+
+    try {
+      $translationHandler = $this->entityTypeManager
+        ->getHandler($entity->getEntityTypeId(), 'translation');
+    }
+    catch (InvalidPluginDefinitionException) {
+      return $access->andIf(AccessResult::forbidden('The entity type has no translation handler.'));
+    }
+
+    return $access
+      ->andIf($entity->access('update', $account, TRUE))
+      ->andIf($translationHandler->getTranslationAccess($entity, 'create'));
+  }
 
   /**
    * {@inheritdoc}

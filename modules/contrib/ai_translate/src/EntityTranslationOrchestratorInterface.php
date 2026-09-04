@@ -2,13 +2,42 @@
 
 namespace Drupal\ai_translate;
 
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 
 /**
  * Defines an interface for the shared entity translation orchestration service.
  */
 interface EntityTranslationOrchestratorInterface {
+
+  /**
+   * Checks whether an account may AI-translate an entity into a language.
+   *
+   * This is the single gate shared by every request-context entry point.
+   * Callers must invoke it before translating on behalf of a user.
+   * Method translateEntity() deliberately does not, so that trusted contexts
+   * such as Drush can translate without an access-bearing account.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity to translate.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check.
+   * @param string $langTo
+   *   The target language code. Note that an already existing translation is
+   *   not an access failure: callers that must reject it (such as the translate
+   *   route) check for it themselves, so that programmatic callers can still
+   *   report it as a skipped translation rather than as denied access.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function checkTranslateAccess(
+    ContentEntityInterface $entity,
+    AccountInterface $account,
+    string $langTo,
+  ): AccessResultInterface;
 
   /**
    * Resolves the source translation for an entity.

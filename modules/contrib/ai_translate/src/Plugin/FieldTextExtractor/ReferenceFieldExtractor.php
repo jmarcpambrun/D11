@@ -113,7 +113,7 @@ class ReferenceFieldExtractor extends FieldExtractorBase implements Configurable
     $depth++;
     $textMeta = [];
     foreach ($entity->get($fieldName)->referencedEntities() as $delta => $subEntity) {
-      if ($subEntity instanceof ContentEntityInterface) {
+      if ($subEntity instanceof ContentEntityInterface && $subEntity->access('view')) {
         foreach ($this->textExtractor->extractTextMetadata($subEntity) as $subMeta) {
           $textMeta[] = ['delta' => $delta] + $subMeta;
         }
@@ -155,7 +155,7 @@ class ReferenceFieldExtractor extends FieldExtractorBase implements Configurable
       $referencedEntity = $referencedEntities[$delta];
 
       // Translate referenced entity.
-      if ($referencedEntity->isTranslatable()) {
+      if ($referencedEntity->isTranslatable() && $referencedEntity->access('update')) {
         try {
           // Save the updated referenced entity.
           $this->translateReferencedEntity($referencedEntity, $singleValue, $translationLanguage);

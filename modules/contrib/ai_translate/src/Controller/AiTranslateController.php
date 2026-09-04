@@ -2,11 +2,16 @@
 
 namespace Drupal\ai_translate\Controller;
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\ai_translate\EntityTranslationOrchestratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -158,6 +163,50 @@ class AiTranslateController extends ControllerBase {
     else {
       $this->messenger()->addError($result->getMessage());
     }
+  }
+
+  /**
+   * Controller access callback.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The current user account.
+   * @param string $entity_type
+   *   Entity type machine name.
+   * @param string $entity_id
+   *   Entity ID.
+   * @param string $lang_to
+   *   Language to translate to.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function checkAccess(
+    AccountInterface $account,
+    string $entity_type,
+    string $entity_id,
+    string $lang_to,
+  ): AccessResultInterface {
+    try {
+      $storage = $this->entityTypeManager()->getStorage($entity_type);
+    }
+    catch (PluginNotFoundException | InvalidPluginDefinitionException) {
+      return AccessResult::forbidden('Unknown entity type.');
+    }
+
+    $entity = $storage->load($entity_id);
+    if (!$entity instanceof ContentEntityInterface) {
+      return AccessResult::forbidden('Unknown entity.');
+    }
+
+    // @todo Allow update of existing translations. For now, only new
+    // translations are allowed, so the link is not offered for a language the
+    // entity already has.
+    if ($entity->hasTranslation($lang_to)) {
+      return AccessResult::forbidden('The translation already exists.');
+    }
+
+    return $this->translationOrchestrator
+      ->checkTranslateAccess($entity, $account, $lang_to);
   }
 
 }

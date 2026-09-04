@@ -216,7 +216,6 @@ class TranslateEntityTool extends ToolBase {
     $entityTypeId = $values['entity_type_id'] ?? '';
     $entityId = $values['entity_id'] ?? NULL;
 
-    $permissionAccess = AccessResult::allowedIfHasPermission($account, 'create ai content translation');
     if (!$this->entityTypeManager->hasDefinition($entityTypeId)) {
       return $return_as_object ? AccessResult::forbidden('Unknown entity type.') : FALSE;
     }
@@ -226,7 +225,11 @@ class TranslateEntityTool extends ToolBase {
       return $return_as_object ? AccessResult::forbidden('Unknown entity.') : FALSE;
     }
 
-    $access = $permissionAccess->andIf($entity->access('update', $account, TRUE));
+    $access = $this->translationOrchestrator->checkTranslateAccess(
+      $entity,
+      $account,
+      $values['target_language'] ?? '',
+    );
     return $return_as_object ? $access : $access->isAllowed();
   }
 

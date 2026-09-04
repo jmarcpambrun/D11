@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_translate\Plugin\AiFunctionCall;
 
-use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -221,8 +220,11 @@ class TranslateEntity extends FunctionCallBase implements StructuredExecutableFu
    *   The combined access result.
    */
   protected function access(ContentEntityInterface $entity): AccessResultInterface {
-    $permissionAccess = AccessResult::allowedIfHasPermission($this->currentUser, 'create ai content translation');
-    return $permissionAccess->andIf($entity->access('update', $this->currentUser, TRUE));
+    return $this->translationOrchestrator->checkTranslateAccess(
+      $entity,
+      $this->currentUser,
+      $this->getContextValue('target_language'),
+    );
   }
 
 }
