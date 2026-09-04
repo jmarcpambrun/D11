@@ -247,7 +247,7 @@ class Agent extends ModelOwnerBase {
    * {@inheritdoc}
    */
   public function availableOwnerComponents(int $type): array {
-    return match($type) {
+    return match ($type) {
       Api::COMPONENT_TYPE_START => [new ComponentWrapperPlugin(Api::COMPONENT_TYPE_START, 'New_Subagent')],
       Api::COMPONENT_TYPE_ELEMENT => $this->createAllInstances(),
       Api::COMPONENT_TYPE_SUBPROCESS => $this->getAllAgents(),
@@ -310,7 +310,7 @@ class Agent extends ModelOwnerBase {
    * {@inheritdoc}
    */
   public function ownerComponent(int $type, string $id, array $config = []): ?PluginInspectionInterface {
-    return match($type) {
+    return match ($type) {
       Api::COMPONENT_TYPE_START => new ComponentWrapperPlugin(Api::COMPONENT_TYPE_START, $id, $config),
       Api::COMPONENT_TYPE_ELEMENT => $this->functionCallPluginManager()->createInstance($id, $config),
       Api::COMPONENT_TYPE_SUBPROCESS => new ComponentWrapperPlugin(Api::COMPONENT_TYPE_SUBPROCESS, $id, $config),
@@ -488,7 +488,7 @@ class Agent extends ModelOwnerBase {
         }
         break;
 
-      case API::COMPONENT_TYPE_ELEMENT:
+      case Api::COMPONENT_TYPE_ELEMENT:
         $id = $component->getPluginId();
         $config = $component->getConfiguration();
         $elements = $model->get('tools');

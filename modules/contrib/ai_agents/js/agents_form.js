@@ -9,8 +9,8 @@
   Drupal.behaviors.openToolsModal = {
     attach(context) {
       MicroModal.init();
-      once("open-tools-modal", ".dynamic-tool-modal", context).forEach((el) => {
-        el.addEventListener("click", (e) => {
+      once('open-tools-modal', '.dynamic-tool-modal', context).forEach((el) => {
+        el.addEventListener('click', (e) => {
           e.preventDefault();
           const { tool } = e.currentTarget.dataset;
           const id = `tool-${tool}`;
@@ -28,16 +28,16 @@
       if (context !== document) {
         return;
       }
-      once("ai-agents-tool-refresh", "body", context).forEach(() => {
+      once('ai-agents-tool-refresh', 'body', context).forEach(() => {
         let dialogWasOpen = false;
         const observer = new MutationObserver(() => {
-          const dialogExists = !!document.querySelector(".ui-dialog");
+          const dialogExists = !!document.querySelector('.ui-dialog');
           if (dialogWasOpen && !dialogExists) {
             const updateWidget = document.querySelector(
-              "[data-ai-tools-library-form-element-update]",
+              '[data-ai-tools-library-form-element-update]',
             );
             if (updateWidget) {
-              updateWidget.dispatchEvent(new Event("mousedown"));
+              updateWidget.dispatchEvent(new Event('mousedown'));
             }
           }
           dialogWasOpen = dialogExists;

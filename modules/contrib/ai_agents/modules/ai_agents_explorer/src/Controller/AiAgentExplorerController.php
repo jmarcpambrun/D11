@@ -10,6 +10,7 @@ use Drupal\ai_agents\PluginInterfaces\AiAgentInterface;
 use Drupal\ai_agents\PluginInterfaces\ConfigAiAgentInterface;
 use Drupal\ai_agents\PluginManager\AiAgentManager;
 use Drupal\ai_agents\Task\Task;
+use League\CommonMark\CommonMarkConverter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -217,10 +218,7 @@ class AiAgentExplorerController extends ControllerBase {
       ], 500);
     }
     if ($markdown && class_exists('League\CommonMark\CommonMarkConverter')) {
-      // Ignore the non-use statement loading since this dependency may not
-      // exist.
-      // @codingStandardsIgnoreLine
-      $converter = new \League\CommonMark\CommonMarkConverter();
+      $converter = new CommonMarkConverter();
       $response = $converter->convert($response)->__toString();
     }
 

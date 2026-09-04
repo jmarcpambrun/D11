@@ -133,7 +133,7 @@ class CreateContentType extends FunctionCallBase implements ExecutableFunctionCa
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute(?object $object = NULL) {
     // Collect the context values.
     $data_name = $this->getContextValue('data_name');
     $label = $this->getContextValue('label');

@@ -77,7 +77,7 @@ class GetCurrentContentEntityValues extends FunctionCallBase implements Executab
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute(?object $object = NULL) {
     // Collect the context values.
     $entity_type = $this->getContextValue('entity_type');
     $entity_id = $this->getContextValue('entity_id');

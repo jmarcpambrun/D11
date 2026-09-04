@@ -97,7 +97,7 @@ class ModifyVocabulary extends FunctionCallBase implements ExecutableFunctionCal
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute(?object $object = NULL) {
     // Check so the user has access to create/edit vocabularies.
     if (!$this->currentUser->hasPermission('administer taxonomy')) {
       throw new \Exception('The current user does not have the right permissions to create/edit vocabularies.');

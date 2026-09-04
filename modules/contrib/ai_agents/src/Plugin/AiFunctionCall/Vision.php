@@ -82,7 +82,7 @@ class Vision extends FunctionCallBase implements ExecutableFunctionCallInterface
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute(?object $object = NULL) {
     // Collect the context values.
     $prompt = $this->getContextValue('prompt');
     $image_id = $this->getContextValue('image_id');

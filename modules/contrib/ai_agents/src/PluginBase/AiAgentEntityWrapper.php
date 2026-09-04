@@ -19,6 +19,8 @@ use Drupal\ai\Exception\AiFunctionCallingExecutionError;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\OperationType\Chat\ReplayedChatMessageIterator;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
 use Drupal\ai\OperationType\GenericType\AbstractFileBase;
@@ -106,6 +108,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected $createDirectly;
 
   /**
+   * The last exception message when agent execution fails.
+   *
+   * @var string|null
+   */
+  protected $lastError = NULL;
+
+  /**
    * The runner ID.
    *
    * @var string
@@ -127,9 +136,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected $contextTools = [];
 
   /**
-   * The question answered.
+   * The question answered or the output streamed.
    *
-   * @var string
+   * @var string|StreamedChatMessageIteratorInterface
    */
   protected $question;
 
@@ -176,6 +185,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   protected $finished = FALSE;
 
   /**
+   * Set if the agent is being streamed.
+   *
+   * @var bool
+   */
+  protected $streaming = FALSE;
+
+  /**
    * An overridden set of function definitions.
    *
    * @var array|null
@@ -216,6 +232,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    * @var \Drupal\ai\OperationType\GenericType\ImageFile[]
    */
   protected array $pendingToolImages = [];
+
+  /**
+   * Extra tags to add to AI provider calls.
+   *
+   * @var array
+   */
+  protected array $providerTags = [];
 
   /**
    * The constructor.
@@ -349,6 +372,9 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function setChatInput(ChatInput $chatInput) {
     $this->chatInput = $chatInput;
+    if ($chatInput->isStreamedOutput()) {
+      $this->streaming = TRUE;
+    }
   }
 
   /**
@@ -455,6 +481,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    * {@inheritDoc}
    */
   public function determineSolvability() {
+    // Reset error state for this new execution attempt.
+    $this->lastError = NULL;
     // We check if a thread id exists or if we should generate one.
     if ($this->progressTracking && !$this->threadId) {
       $this->threadId = $this->uuid->generate();
@@ -478,6 +506,14 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $this->finished = TRUE;
       $message = new ChatMessage('assistant', $this->getMaxLoopsMessage());
       $this->chatHistory[] = $message;
+      // Update $this->question so a streaming re-entry via
+      // postStreamingCallback() returns this message's text instead of
+      // falling through to whatever streaming iterator $this->question was
+      // last set to (which, mid-chain, is this very round's own iterator —
+      // returning it back into its own callback loop causes infinite
+      // self-recursion and a stack overflow).
+      // @see https://www.drupal.org/i/3538174
+      $this->question = $message->getText();
       return PluginInterfacesAiAgentInterface::JOB_NOT_SOLVABLE;
     }
     // Trigger the agent runner event.
@@ -603,6 +639,11 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     // https://www.drupal.org/project/ai/issues/3573100
     $this->aiProvider->setChatSystemRole('');
 
+    // Merge in any custom provider tags.
+    if (!empty($this->providerTags)) {
+      $tags = array_merge($tags, $this->providerTags);
+    }
+
     $input = new ChatInput($this->chatHistory);
     $input->setSystemPrompt($system_prompt);
     // Only set if it exists a guardrail set.
@@ -614,6 +655,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     if (count($functions) && count($functions['normalized'])) {
       $input->setChatTools(new ToolsInput($functions['normalized']));
     }
+    $input->setStreamedOutput($this->streaming);
     // Check if we want structured output.
     if ($this->aiAgent->get('structured_output_enabled') && $this->aiAgent->get('structured_output_schema')) {
       $input->setChatStructuredJsonSchema(Json::decode($this->aiAgent->get('structured_output_schema')));
@@ -644,6 +686,8 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       $return = $this->aiProvider->chat($input, $this->modelName, $tags);
     }
     catch (\Exception $e) {
+      // Store the exception message for later retrieval.
+      $this->lastError = $e->getMessage();
       // If the chat call fails (e.g. no budget/quota left), dispatch a
       // finished event so tracking does not get stuck in "started" state.
       // @see https://www.drupal.org/i/3553458
@@ -669,65 +713,10 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       return PluginInterfacesAiAgentInterface::JOB_NOT_SOLVABLE;
     }
     $response = $return->getNormalized();
-    // Trigger the response event.
-    $response_event = new AgentResponseEvent(
-      $this,
-      $system_prompt,
-      $this->aiAgent->id(),
-      $user_prompt,
-      $this->chatHistory,
-      $return,
-      $this->looped,
-      $this->runnerId,
-      $this->threadId,
-      $this->callerAgentRunnerId,
-    );
-    $this->eventDispatcher->dispatch($response_event, AgentResponseEvent::EVENT_NAME);
-
-    $this->chatHistory[] = $response;
-
-    $tools = $response->getTools();
-
-    if (!empty($tools)) {
-      // Convert all tool responses to function call objects first, so that
-      // multiple-call restrictions can be checked per plugin id before
-      // anything is queued for execution.
-      $functions = [];
-      foreach ($tools as $tool) {
-
-        // Replace any artifact placeholders actual values.
-        $this->artifactHelper->replaceArtifactArguments($tool);
-
-        $functions[] = $this->functionCallPluginManager->convertToolResponseToObject($tool);
-      }
-
-      // Reject the whole response when a single-call tool was called more
-      // than once; otherwise queue every call for execution.
-      $rejections = $this->getSingleCallViolationMessages($functions);
-      if ($rejections !== NULL) {
-        array_push($this->chatHistory, ...$rejections);
-      }
-      else {
-        $this->contextTools = array_merge($this->contextTools, $functions);
-      }
-
-      // Run again either way, so the agent acts on the updated history.
-      if ($this->loopedEnabled) {
-        return $this->determineSolvability();
-      }
-    }
-    elseif (!empty($this->allRequiredToolsRan())) {
-      // Add to the chat history that we did not use the required tools.
-      $required_tools = $this->allRequiredToolsRan();
-      $tool_list = implode(', ', $required_tools);
-      $this->chatHistory[] = new ChatMessage('system', "Reminder: The following tools should be used based on the instructions, but were not used: $tool_list. Please make sure to use them in your next response.");
-      if ($this->loopedEnabled) {
-        return $this->determineSolvability();
-      }
-    }
-    else {
-      $this->finished = TRUE;
-      $event = new AgentFinishedExecutionEvent(
+    // Only continue if we have a none-streaming response.
+    if ($response instanceof ChatMessage) {
+      // Trigger the response event.
+      $response_event = new AgentResponseEvent(
         $this,
         $system_prompt,
         $this->aiAgent->id(),
@@ -739,11 +728,113 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
         $this->threadId,
         $this->callerAgentRunnerId,
       );
+      $this->eventDispatcher->dispatch($response_event, AgentResponseEvent::EVENT_NAME);
 
-      $this->eventDispatcher->dispatch($event, AgentFinishedExecutionEvent::EVENT_NAME);
+      $this->chatHistory[] = $response;
+
+      $tools = $response->getTools();
+
+      if (!empty($tools)) {
+        // Convert all tool responses to function call objects first, so that
+        // multiple-call restrictions can be checked per plugin id before
+        // anything is queued for execution.
+        $functions = [];
+        foreach ($tools as $tool) {
+
+          // Replace any artifact placeholders actual values.
+          $this->artifactHelper->replaceArtifactArguments($tool);
+
+          $functions[] = $this->functionCallPluginManager->convertToolResponseToObject($tool);
+        }
+
+        // Reject the whole response when a single-call tool was called more
+        // than once; otherwise queue every call for execution.
+        $rejections = $this->getSingleCallViolationMessages($functions);
+        if ($rejections !== NULL) {
+          array_push($this->chatHistory, ...$rejections);
+        }
+        else {
+          $this->contextTools = array_merge($this->contextTools, $functions);
+        }
+
+        // Run again either way, so the agent acts on the updated history.
+        if ($this->loopedEnabled) {
+          return $this->determineSolvability();
+        }
+      }
+      elseif (!empty($this->allRequiredToolsRan())) {
+        // Add to the chat history that we did not use the required tools.
+        $required_tools = $this->allRequiredToolsRan();
+        $tool_list = implode(', ', $required_tools);
+        $this->chatHistory[] = new ChatMessage('system', "Reminder: The following tools should be used based on the instructions, but were not used: $tool_list. Please make sure to use them in your next response.");
+        if ($this->loopedEnabled) {
+          return $this->determineSolvability();
+        }
+      }
+      else {
+        $this->finished = TRUE;
+        $event = new AgentFinishedExecutionEvent(
+          $this,
+          $system_prompt,
+          $this->aiAgent->id(),
+          $user_prompt,
+          $this->chatHistory,
+          $return,
+          $this->looped,
+          $this->runnerId,
+          $this->threadId,
+          $this->callerAgentRunnerId,
+        );
+        $this->eventDispatcher->dispatch($event, AgentFinishedExecutionEvent::EVENT_NAME);
+      }
+      $this->question = $response->getText();
+      return PluginInterfacesAiAgentInterface::JOB_SOLVABLE;
     }
-    $this->question = $response->getText();
-    return PluginInterfacesAiAgentInterface::JOB_SOLVABLE;
+    else {
+      $response->addCallback([$this, 'postStreamingCallback']);
+      // We just return the streaming iterator.
+      $this->question = $response;
+      return PluginInterfacesAiAgentInterface::JOB_SOLVABLE;
+    }
+  }
+
+  /**
+   * The function to run when the streaming is finished.
+   *
+   * Unlike the non-streamed completion path in determineSolvability(), this
+   * method does not dispatch AgentResponseEvent or AgentFinishedExecutionEvent.
+   */
+  public function postStreamingCallback(ChatMessage $message) {
+    $this->chatHistory[] = $message;
+
+    $tools = $message->getTools();
+
+    if (!empty($tools)) {
+      foreach ($tools as $tool) {
+        $function = $this->functionCallPluginManager->convertToolResponseToObject($tool);
+        $this->contextTools[] = $function;
+      }
+      // If tools are available, we should run this again filled out.
+      if ($this->loopedEnabled) {
+        $this->determineSolvability();
+        // determineSolvability() may resolve to a plain string instead of
+        // another stream (e.g. max_loops was hit and it fell back to a
+        // final message). ai core's callback loop only re-yields a
+        // StreamedChatMessageIteratorInterface, so anything else here would
+        // be silently dropped. Wrap it so the fallback message still
+        // reaches the client.
+        if (!$this->question instanceof StreamedChatMessageIteratorInterface) {
+          $iterator = new ReplayedChatMessageIterator(new \ArrayObject());
+          $iterator->setFirstMessage((string) $this->question);
+          return $iterator;
+        }
+        return $this->question;
+      }
+    }
+    else {
+      $this->finished = TRUE;
+    }
+    $this->question = $message->getText();
   }
 
   /**
@@ -795,6 +886,20 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function setCallerAgentRunnerId(?string $runner_id): void {
     $this->callerAgentRunnerId = $runner_id;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setProviderTags(array $tags): void {
+    $this->providerTags = $tags;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getProviderTags(): array {
+    return $this->providerTags;
   }
 
   /**
@@ -925,6 +1030,13 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
    */
   public function answerQuestion() {
     return $this->question;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setStreaming(bool $streaming) {
+    $this->streaming = $streaming;
   }
 
   /**
@@ -1468,6 +1580,10 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
           $tool->getAgent()->setModelName($this->modelName);
           $tool->getAgent()->setAiConfiguration($this->aiConfiguration);
         }
+        // Propagate provider tags to subagents.
+        if (!empty($this->providerTags)) {
+          $tool->getAgent()->setProviderTags($this->providerTags);
+        }
       }
     }
     // Apply the configured tool usage limits, including any forced values, to
@@ -1589,6 +1705,16 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
   }
 
   /**
+   * Gets the last error message if agent execution failed.
+   *
+   * @return string|null
+   *   The exception message from the last failed LLM call, or NULL if no error.
+   */
+  public function getLastError(): ?string {
+    return $this->lastError;
+  }
+
+  /**
    * Gets the message to display when max loops is exceeded.
    *
    * @return string
@@ -1662,6 +1788,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
       'progress_thread_id' => $this->threadId,
       'progress_tracking' => $this->progressTracking,
       'progress_tracking_items' => $this->progressTrackingItems,
+      'provider_tags' => $this->providerTags,
     ];
   }
 
@@ -1723,6 +1850,7 @@ class AiAgentEntityWrapper implements PluginInterfacesAiAgentInterface, ConfigAi
     $this->threadId = $data['progress_thread_id'] ?? NULL;
     $this->progressTracking = $data['progress_tracking'] ?? FALSE;
     $this->progressTrackingItems = $data['progress_tracking_items'] ?? [];
+    $this->providerTags = $data['provider_tags'] ?? [];
   }
 
   /**

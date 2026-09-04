@@ -110,7 +110,7 @@ class ListContentEntities extends FunctionCallBase implements ExecutableFunction
   /**
    * {@inheritdoc}
    */
-  public function execute() {
+  public function execute(?object $object = NULL) {
     // Collect the context values.
     $entity_type = $this->getContextValue('entity_type');
     $bundle = $this->getContextValue('bundle');
