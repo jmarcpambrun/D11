@@ -15,6 +15,21 @@ This is a policy, not a how-to: the supported mechanism for scoping a run
 documented in the `l3d` skill. Use that mechanism - do not invent your own
 phpunit invocation.
 
+## The shared Drupal module skill still applies
+
+This file is module-specific and additive: it does not replace the shared
+`drupal-module-development` skill. That skill applies to every Drupal module,
+ECA included, and must be followed here as well.
+
+The rule missed most often is the choice of test double - `createMock()`
+versus `createStub()`. Do not guess it: the decision is documented in the
+`drupal-module-development` skill, and it is the one to check before opening
+an MR that adds or changes tests.
+
+Note also that a green scoped run does not clear a change for the
+`phpunit (next major)` lane. Current-major PHPUnit does not raise the notices
+that lane fails on, so passing locally proves nothing about that job.
+
 ## Provide a recipe for manual MR reviews
 
 Most bug fixes and new features in ECA are best verified by a reviewer manually

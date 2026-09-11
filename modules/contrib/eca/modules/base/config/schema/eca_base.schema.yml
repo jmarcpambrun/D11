@@ -24,7 +24,7 @@ eca.event.plugin.eca_base:eca_token_generate:
 
 eca.condition.plugin.eca_state:
   type: eca.condition.plugin
-  label: 'State condition'
+  label: 'ECA state condition'
   mapping:
     key:
       type: string
@@ -420,7 +420,7 @@ action.configuration.eca_lock_acquire:
 
 action.configuration.eca_state_read:
   type: mapping
-  label: 'Configuration for the "State Read" action'
+  label: 'Configuration for the "ECA state: read" action'
   mapping:
     key:
       type: string
@@ -431,7 +431,7 @@ action.configuration.eca_state_read:
 
 action.configuration.eca_state_write:
   type: mapping
-  label: 'Configuration for the "State Write" action'
+  label: 'Configuration for the "ECA state: write" action'
   mapping:
     key:
       type: string

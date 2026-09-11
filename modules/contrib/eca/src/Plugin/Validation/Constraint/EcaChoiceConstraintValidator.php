@@ -2,7 +2,7 @@
 
 namespace Drupal\eca\Plugin\Validation\Constraint;
 
-use Drupal\Core\TypedData\Validation\TypedDataAwareValidatorTrait;
+use Drupal\Core\TypedData\TypedDataInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\ChoiceValidator;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
@@ -14,8 +14,6 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * @see \Drupal\eca\Plugin\Validation\Constraint\EcaChoiceConstraint
  */
 final class EcaChoiceConstraintValidator extends ChoiceValidator {
-
-  use TypedDataAwareValidatorTrait;
 
   /**
    * {@inheritdoc}
@@ -97,12 +95,21 @@ final class EcaChoiceConstraintValidator extends ChoiceValidator {
    * the very same key. Reusing that instead of introducing a second place to
    * declare that a value is required keeps the two from drifting apart.
    *
+   * Nothing restricts this constraint to configuration schema though, so the
+   * validated value is not necessarily backed by typed data. There is no
+   * sibling constraint to consult in that case, so the more permissive answer
+   * is given: the value counts as not required, which keeps the "undefined"
+   * option a valid choice and leaves the choice check itself untouched.
+   *
    * @return bool
    *   TRUE if the validated key must not be empty, FALSE otherwise.
    */
   private function isRequired(): bool {
-    $constraints = $this->getTypedData()->getDataDefinition()->getConstraints();
-    return array_key_exists('NotBlank', $constraints);
+    $data = $this->context->getObject();
+    if (!($data instanceof TypedDataInterface)) {
+      return FALSE;
+    }
+    return array_key_exists('NotBlank', $data->getDataDefinition()->getConstraints());
   }
 
 }

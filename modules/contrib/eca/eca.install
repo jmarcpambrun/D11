@@ -26,7 +26,7 @@ function eca_update_last_removed(): int {
  * a dependency of a fresh ECA 3 install or on the way through ECA 3.0.
  *
  * @see eca_post_update_migrate_to_v3()
- * @see https://www.drupal.org/project/eca/issues/3590389
+ * @see https://git.drupalcode.org/project/eca/-/work_items/3590389
  */
 function eca_update_8012(): void {
   \Drupal::service('module_installer')->install(['modeler_api']);

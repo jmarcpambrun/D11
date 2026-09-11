@@ -89,7 +89,14 @@ class ConfigurableLoggerChannel extends LoggerChannel {
     $this->configFactory = $configFactory;
     $this->loggerChannel = $loggerChannel;
     $this->moduleHandler = $moduleHandler;
-    $this->updateLogLevel((int) $configFactory->get('eca.settings')->get('log_level'));
+    // Fall back to the error level when the setting is absent, which is what
+    // "eca.settings" ships as its default and what the other reader of this
+    // setting already does. Casting a missing value directly would yield 0,
+    // RfcLogLevel::EMERGENCY, silently discarding every error ECA logs. An
+    // explicitly configured 0 is preserved, because get() only returns NULL
+    // when the value is genuinely absent.
+    // @see \Drupal\eca_base\Plugin\Action\SetEcaLogLevel::create()
+    $this->updateLogLevel((int) ($configFactory->get('eca.settings')->get('log_level') ?? RfcLogLevel::ERROR));
   }
 
   /**

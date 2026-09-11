@@ -1,11 +1,8 @@
----
-title: "{{ label|raw }}"
-tags:
-- {{ type }}
-- {{ provider }}
-- {% if extension_info.standalone %}{{ provider }}{% else %}{{ extension_info.module }}{% endif %} {{ type }}{% if version_introduced != 'unknown' %} {{ version_introduced }}{% endif %}
-
----
+{# The front matter is serialized by DocsCommands::frontMatter(). Never write
+   YAML by hand here: plugin labels, descriptions and option labels contain
+   quotes, ": " sequences and significant leading whitespace, none of which
+   survive hand-written interpolation. -#}
+{{ front_matter|raw }}
 # {{ label|raw }}
 
 Plugin ID: `{{ plugin_id }}`

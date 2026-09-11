@@ -36,6 +36,7 @@ idmap
 idplaceholder
 ifnotexists
 issuu
+jsonurl
 keyvalueexpirablestore
 keyvaluestore
 lessthan

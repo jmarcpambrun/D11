@@ -120,7 +120,7 @@ function eca_post_update_clear_process_debugger_tempstore(): void {
  *   once the reported cause has been resolved.
  *
  * @see eca_update_8012()
- * @see https://www.drupal.org/project/eca/issues/3590389
+ * @see https://git.drupalcode.org/project/eca/-/work_items/3590389
  */
 function eca_post_update_migrate_to_v3(): string {
   $configFactory = \Drupal::configFactory();

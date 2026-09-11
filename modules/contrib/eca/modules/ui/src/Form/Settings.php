@@ -140,7 +140,7 @@ class Settings extends ConfigFormBase {
     $form['service_user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Service account user'),
-      '#description' => $this->t('The service account is a Drupal user that ECA will switch to when the action "Switch to service user" will be executed in a model. <br />Can be a numeric user ID (UID) or a valid UUID that identifies the user.'),
+      '#description' => $this->t('The service account is a Drupal user that ECA will switch to when the action "Switch to service user" will be executed in a model. <br />Can be a numeric user ID (UID) or a valid UUID that identifies the user.<br />Everything after that action runs with the permissions of this account, so grant it only what your models actually need. ECA does not check any permission before the switch, because elevating to the service account is the very purpose of that action. Each model using it is responsible for making sure that its triggering event and the conditions in front of the action cannot be reached by an account that should not be able to cause the switch.'),
       '#default_value' => $config->get('service_user'),
       '#weight' => 5,
     ];

@@ -20,6 +20,7 @@ use Drupal\eca\Plugin\ECA\Event\EventInterface;
 use Drupal\eca\Service\Actions;
 use Drupal\eca\Service\Conditions;
 use Drupal\eca\Service\Events;
+use Drupal\eca_development\LibraryModelArtifacts;
 use Drupal\modeler_api\Api;
 use Drupal\modeler_api\ExportRecipe;
 use Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface;
@@ -29,6 +30,8 @@ use Drush\Attributes\Usage;
 use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Yaml\Dumper as YamlDumper;
+use Symfony\Component\Yaml\Yaml as SymfonyYaml;
 use Twig\Environment as TwigEnvironment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
@@ -45,17 +48,44 @@ final class DocsCommands extends DrushCommands {
   public const string NAMESPACE = 'drupal-eca-recipe';
 
   /**
-   * Format version of the generated machine-readable plugin catalog.
+   * Format version of the machine-readable plugin metadata.
    *
-   * Consumers use this to detect breaking changes. The shape is specified in
-   * the documentation repository under mcp/CONTRACT.md and must not change
-   * without bumping this number and updating that file.
+   * Published as "contract_version" inside the "eca_plugin" front matter block
+   * of every generated plugin page. Consumers use it to detect breaking
+   * changes. The shape is specified in the documentation repository under
+   * mcp/CONTRACT.md and must not change without bumping this number and
+   * updating that file.
+   *
+   * This is deliberately a constant and not a timestamp: every page carries
+   * it, so anything that changes per run would rewrite all pages on every run.
    *
    * Version 2 added "fields[].source", "key_sources" and config keys that have
    * no form element at all, so that "fields" describes the plugin's true
    * configuration contract rather than only its configuration form.
    */
   private const int CATALOG_VERSION = 2;
+
+  /**
+   * Serializer flags for the generated YAML front matter.
+   *
+   * Do not replace the dumper call in ::serializeFrontMatter() with
+   * \Drupal\Component\Serialization\Yaml::encode(). That facade wraps the very
+   * same Symfony dumper, but it hardcodes its flags, and one of the three
+   * needed here is not among them:
+   *
+   * - DUMP_EXCEPTION_ON_INVALID_TYPE and DUMP_MULTI_LINE_LITERAL_BLOCK are the
+   *   two the facade applies, together with an indentation of 2. They are
+   *   repeated here so the output stays Drupal-standard YAML.
+   * - DUMP_EMPTY_ARRAY_AS_SEQUENCE is the one it cannot express, and it is not
+   *   cosmetic. PHP has a single array type, so the dumper cannot tell an
+   *   empty list from an empty map and defaults to the map form "{  }".
+   *   Applied to this contract that silently rewrites every empty "options",
+   *   "aliases", "properties" and "default" - 5796 of them across the current
+   *   825 plugins - into an object for every consumer outside PHP, where the
+   *   contract promises an array. PHP round-trips both forms identically, so
+   *   nothing on this side of the fence would ever report the breakage.
+   */
+  private const int YAML_DUMP_FLAGS = SymfonyYaml::DUMP_EXCEPTION_ON_INVALID_TYPE | SymfonyYaml::DUMP_MULTI_LINE_LITERAL_BLOCK | SymfonyYaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE;
 
   /**
    * Field source: the key has a form element in buildConfigurationForm().
@@ -232,22 +262,6 @@ final class DocsCommands extends DrushCommands {
   protected array $toc = [];
 
   /**
-   * Machine-readable catalog entries, one per documented plugin.
-   *
-   * Accumulated while ::pluginDoc() runs and flushed once by ::writeCatalog().
-   *
-   * @var array
-   */
-  protected array $catalog = [];
-
-  /**
-   * List of all processed modules.
-   *
-   * @var array
-   */
-  protected array $modules = [];
-
-  /**
    * List of extensions.
    *
    * @var \Drupal\Core\Extension\Extension[]
@@ -289,6 +303,7 @@ final class DocsCommands extends DrushCommands {
     protected ModuleHandlerInterface $moduleHandler,
     protected ModuleExtensionList $moduleExtensionList,
     protected Api $modelerApi,
+    protected LibraryModelArtifacts $libraryModelArtifacts,
     #[Autowire(service: 'modeler_api.export.recipe')]
     protected ExportRecipe $exportRecipe,
     #[Autowire(service: 'plugin.manager.modeler_api.model_owner')]
@@ -329,7 +344,6 @@ final class DocsCommands extends DrushCommands {
       $this->pluginDoc($action);
     }
     $this->updateToc('plugins');
-    $this->writeCatalog();
     $this->writeEventDependencies();
   }
 
@@ -346,6 +360,9 @@ final class DocsCommands extends DrushCommands {
     foreach ($this->entityTypeManager
       ->getStorage('eca')
       ->loadMultiple() as $eca) {
+      if (!$this->libraryModelArtifacts->isExportable($eca)) {
+        continue;
+      }
       $this->modelDoc($eca);
       $owner = $this->modelerApi->findOwner($eca);
       $this->exportRecipe->doExport($owner, $eca, $this->exportRecipe->defaultName($eca), self::NAMESPACE, '../recipes/' . $eca->id());
@@ -385,6 +402,34 @@ final class DocsCommands extends DrushCommands {
     }
 
     $this->sortNestedArrayAssoc($this->toc);
+    file_put_contents($filename, $this->serializeToc($key));
+  }
+
+  /**
+   * Serializes a TOC in the format expected by its MkDocs consumer.
+   *
+   * The library fragment predates the generated plugin navigation and uses an
+   * associative mapping. Keep that established contract while the plugin TOC
+   * continues to use MkDocs' nested navigation lists.
+   *
+   * @param string $key
+   *   The key for the TOC to serialize.
+   *
+   * @return string
+   *   The serialized TOC.
+   */
+  private function serializeToc(string $key): string {
+    if ($key === 'library') {
+      $toc = $this->toc;
+      // The weighted ECA section is an implementation detail of the plugin
+      // navigation. Do not carry a legacy empty placeholder into the library
+      // mapping when converting previously generated navigation.
+      if (($toc['0-ECA'] ?? NULL) === NULL) {
+        unset($toc['0-ECA']);
+      }
+      return Yaml::encode([0 => $key . '/index.md'] + $toc);
+    }
+
     $content = Yaml::encode($this->toc);
     $content = '- ' . $key . '/index.md' . PHP_EOL . str_replace(
       ['0-ECA:', '  0-placeholder: ', '  1-', '  2-', '  3-'],
@@ -393,7 +438,7 @@ final class DocsCommands extends DrushCommands {
     $content = preg_replace_callback('/\n\s*/', static function (array $matches) {
       return $matches[0] . '- ';
     }, $content);
-    file_put_contents($filename, substr($content, 0, -2));
+    return substr($content, 0, -2);
   }
 
   /**
@@ -416,6 +461,26 @@ final class DocsCommands extends DrushCommands {
    */
   private function navToToc(array $nav, bool $top): array {
     $out = [];
+    // Older generated library TOCs use an associative map instead of the
+    // nested navigation lists generated today. Preserve the map keys while
+    // converting that format; iterating over values alone would discard the
+    // category names and prevent the append-only merge from finding them.
+    if (!array_is_list($nav)) {
+      foreach ($nav as $navKey => $val) {
+        if ($top && (string) $navKey === '0' && !is_array($val)) {
+          continue;
+        }
+        $weightedKey = match ($navKey) {
+          'Events' => '1-Events',
+          'Conditions' => '2-Conditions',
+          'Actions' => '3-Actions',
+          'ECA' => $top ? '0-ECA' : $navKey,
+          default => $navKey,
+        };
+        $out[$weightedKey] = is_array($val) ? $this->navToToc($val, FALSE) : $val;
+      }
+      return $out;
+    }
     foreach ($nav as $item) {
       if (!is_array($item)) {
         // Scalar string entries are index links. At the top level this is the
@@ -497,7 +562,6 @@ final class DocsCommands extends DrushCommands {
     }
     $id = str_replace(':', '_', $plugin->getPluginId());
     $values['id_fs'] = $id;
-    $this->modules[$values['provider']] = $values;
 
     $provider = $values['provider'];
     $values['extension_info'] = [
@@ -527,10 +591,9 @@ final class DocsCommands extends DrushCommands {
 
     $path = $values['path'];
     $filename = $path . '/' . $id . '.md';
+    $values['front_matter'] = $this->frontMatter($plugin, $values, $filename);
     @$this->fileSystem->mkdir('../mkdocs/docs/' . $path, NULL, TRUE);
     file_put_contents('../mkdocs/docs/' . $filename, $this->render(__DIR__ . '/../../../templates/docs/plugin.md.twig', $values));
-
-    $this->catalog[] = $this->catalogEntry($plugin, $values, $filename);
 
     $path = '../mkdocs/include/plugins/' . $values['provider'] . '/' . $values['type'] . '/';
     @$this->fileSystem->mkdir($path, NULL, TRUE);
@@ -549,7 +612,18 @@ final class DocsCommands extends DrushCommands {
       // Initialize TOC for a new provider.
       $values['toc'][$values['provider_name']]['0-placeholder'] = $values['provider_path'] . '/index.md';
 
-      file_put_contents('../mkdocs/docs/' . $values['provider_path'] . '/index.md', $this->render(__DIR__ . '/../../../templates/docs/provider.md.twig', $values));
+      // The provider page is deliberately rendered from a value set built here
+      // from scratch, never from $values. That array describes the plugin
+      // handled above and still carries its "front_matter", so handing it to
+      // provider.md.twig would stamp one arbitrary plugin's machine-readable
+      // "eca_plugin" contract block onto the module's index page. Pass only
+      // the keys the template actually reads, and keep it that way.
+      file_put_contents('../mkdocs/docs/' . $values['provider_path'] . '/index.md', $this->render(__DIR__ . '/../../../templates/docs/provider.md.twig', [
+        'front_matter' => $this->providerFrontMatter($values['provider_name']),
+        'provider' => $provider,
+        'provider_name' => $values['provider_name'],
+        'extension_info' => $values['extension_info'],
+      ]));
       if (!file_exists('../mkdocs/include/modules/' . $provider . '.md')) {
         file_put_contents('../mkdocs/include/modules/' . $provider . '.md', '');
       }
@@ -859,7 +933,7 @@ final class DocsCommands extends DrushCommands {
       'name' => $key,
       'label' => $label,
       'description' => $this->toMarkupString($def['#description'] ?? ''),
-      // Machine-readable metadata, published in api/plugins.json.
+      // Machine-readable metadata, published in the page's front matter.
       'form_type' => $def['#type'] ?? 'markup',
       'required' => (bool) ($def['#required'] ?? FALSE),
       'default' => $default,
@@ -871,7 +945,7 @@ final class DocsCommands extends DrushCommands {
       'source' => self::SOURCE_FORM,
       // Presentation-only rendering of the values above, so that the Markdown
       // template does not have to deal with escaping and type juggling. These
-      // keys are not part of the published JSON contract.
+      // keys are not part of the published metadata contract.
       'label_display' => $label === '' ? '' : $this->toInlineCode($label),
       'default_display' => $this->defaultValueDisplay($default),
       'options_display' => $optionsDisplay,
@@ -1024,7 +1098,7 @@ final class DocsCommands extends DrushCommands {
   }
 
   /**
-   * Normalizes a #default_value into a JSON serializable value.
+   * Normalizes a #default_value into a serializable value.
    *
    * Stringable objects such as TranslatableMarkup become strings, arrays are
    * normalized recursively and NULL stays NULL.
@@ -1106,10 +1180,112 @@ final class DocsCommands extends DrushCommands {
   }
 
   /**
-   * Builds the machine-readable catalog entry for a single plugin.
+   * Builds the complete YAML front matter block of a plugin page.
+   *
+   * Every generated page carries its own machine-readable metadata here, so
+   * that a run only ever rewrites the pages of the plugins it actually knows.
+   * A consumer assembles the full catalog from the pages on disk instead of
+   * relying on one file that a single generating site rewrites wholesale.
+   *
+   * @param \Drupal\Component\Plugin\PluginInspectionInterface $plugin
+   *   The plugin to describe.
+   * @param array $values
+   *   The values extracted by ::getPluginValues(), plus "id_fs" and
+   *   "extension_info" as added by ::pluginDoc().
+   * @param string $docPath
+   *   The path of the generated Markdown page, relative to the docs root.
+   *
+   * @return string
+   *   The front matter, opening and closing delimiter included, but without a
+   *   trailing newline after the closing delimiter. The template supplies it.
+   */
+  private function frontMatter(PluginInspectionInterface $plugin, array $values, string $docPath): string {
+    // The third tag names the extension a reader installs to get this plugin,
+    // which is the parent module for a submodule, plus the version it appeared
+    // in when that is known.
+    $extensionTag = ($values['extension_info']['standalone'] ? $values['provider'] : $values['extension_info']['module']) . ' ' . $values['type'];
+    if ($values['version_introduced'] !== 'unknown') {
+      $extensionTag .= ' ' . $values['version_introduced'];
+    }
+
+    return $this->serializeFrontMatter([
+      'title' => $this->toMarkupString($values['label'] ?? ''),
+      'tags' => [
+        $values['type'],
+        $values['provider'],
+        $extensionTag,
+      ],
+      'eca_plugin' => ['contract_version' => self::CATALOG_VERSION] + $this->catalogEntry($plugin, $values, $docPath),
+    ]);
+  }
+
+  /**
+   * Builds the complete YAML front matter block of a provider index page.
+   *
+   * A provider index page describes a module, not a plugin, so its block holds
+   * nothing but the two keys the MkDocs theme consumes. In particular it never
+   * carries an "eca_plugin" block: that contract describes exactly one plugin,
+   * and ::pluginDoc() renders the provider template from a scope in which one
+   * such block is still in reach.
+   *
+   * The name goes through the YAML serializer for the same reason the plugin
+   * label does. It is the "name" line of a module's info.yml, so it is free
+   * text that ECA neither controls nor sanitizes, and MkDocs discards a page's
+   * metadata without a word when the block does not parse.
+   *
+   * @param mixed $providerName
+   *   The human-readable name of the module. Taken from an untyped value set,
+   *   so it may be any stringable value.
+   *
+   * @return string
+   *   The front matter, opening and closing delimiter included, but without a
+   *   trailing newline after the closing delimiter. The template supplies it.
+   */
+  private function providerFrontMatter(mixed $providerName): string {
+    return $this->serializeFrontMatter([
+      'title' => $this->toMarkupString($providerName),
+      'tags' => ['module'],
+    ]);
+  }
+
+  /**
+   * Serializes front matter values into a YAML front matter block.
+   *
+   * The entire block goes through the YAML serializer, "title" and "tags"
+   * included. Hand-written interpolation in the Twig template cannot be made
+   * safe: labels, descriptions and option labels contain double quotes, ": "
+   * sequences and significant leading or trailing whitespace, and a single
+   * corrupt block is likely to make the consumer skip the page silently.
+   *
+   * @param array $data
+   *   The front matter values.
+   *
+   * @return string
+   *   The front matter, opening and closing delimiter included, but without a
+   *   trailing newline after the closing delimiter.
+   */
+  private function serializeFrontMatter(array $data): string {
+    // Symfony's dumper is called directly, and deliberately not through
+    // \Drupal\Component\Serialization\Yaml::encode(): that facade cannot
+    // express DUMP_EMPTY_ARRAY_AS_SEQUENCE, without which every empty list in
+    // this contract is emitted as the map "{  }". See ::YAML_DUMP_FLAGS for
+    // the full reasoning before changing this back.
+    $yaml = (new YamlDumper(2))->dump($data, PHP_INT_MAX, 0, self::YAML_DUMP_FLAGS);
+    // The dumper emits no trailing newline when the last value it wrote is a
+    // literal block scalar. Without this the closing delimiter would land on
+    // that block's last line and corrupt the whole document.
+    if (!str_ends_with($yaml, "\n")) {
+      $yaml .= "\n";
+    }
+    return "---\n" . $yaml . '---';
+  }
+
+  /**
+   * Builds the machine-readable metadata for a single plugin.
    *
    * The shape is specified in the documentation repository under
-   * mcp/CONTRACT.md.
+   * mcp/CONTRACT.md. It is published in the "eca_plugin" front matter block of
+   * the plugin's own generated page, see ::frontMatter().
    *
    * @param \Drupal\Component\Plugin\PluginInspectionInterface $plugin
    *   The plugin to describe.
@@ -1119,7 +1295,7 @@ final class DocsCommands extends DrushCommands {
    *   The path of the generated Markdown page, relative to the docs root.
    *
    * @return array
-   *   The catalog entry.
+   *   The metadata entry.
    */
   private function catalogEntry(PluginInspectionInterface $plugin, array $values, string $docPath): array {
     $pluginId = $plugin->getPluginId();
@@ -1208,36 +1384,6 @@ final class DocsCommands extends DrushCommands {
   }
 
   /**
-   * Writes the accumulated plugin catalog to api/plugins.json.
-   */
-  private function writeCatalog(): void {
-    @$this->fileSystem->mkdir(self::API_PATH, NULL, TRUE);
-
-    // Sort by type, then by plugin ID, so that the file diffs cleanly.
-    usort($this->catalog, static fn(array $a, array $b): int => [$a['type'], $a['id']] <=> [$b['type'], $b['id']]);
-
-    $counts = [];
-    foreach ($this->catalog as $entry) {
-      $counts[$entry['type']] = ($counts[$entry['type']] ?? 0) + 1;
-    }
-    ksort($counts);
-
-    // @phpstan-ignore-next-line
-    $ecaVersion = $this->moduleExtensions['eca']->info['version'] ?? 'unknown';
-    $catalog = [
-      'version' => self::CATALOG_VERSION,
-      'generated' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
-      'eca_version' => $ecaVersion,
-      'counts' => $counts,
-      'plugins' => $this->catalog,
-    ];
-    file_put_contents(
-      self::API_PATH . '/plugins.json',
-      json_encode($catalog, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL,
-    );
-  }
-
-  /**
    * Copies the ECA event compatibility map into the API directory.
    *
    * The map lists the start events each component is valid under. It is static
@@ -1315,7 +1461,7 @@ final class DocsCommands extends DrushCommands {
       'rawid' => $eca->id(),
       'id' => str_replace([':', ' '], '_', mb_strtolower($eca->label())),
       'label' => $eca->label(),
-      'version' => $eca->get('version'),
+      'version' => $this->owner->getVersion($eca),
       'changelog' => $modeler->getChangelog($eca),
       'main_tag' => $tags[0],
       'tags' => $tags,
@@ -1365,15 +1511,47 @@ final class DocsCommands extends DrushCommands {
 
     @$this->fileSystem->mkdir('../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'], NULL, TRUE);
 
-    $archiveFileName = '../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/' . $values['model_filename'] . '.tar.gz';
     $values['dependencies'] = $this->modelerApi->exportArchive($this->owner, $eca);
 
+    // Both viewer artifacts are optional, and the page has to know which of
+    // them it actually got: the standalone viewer waits for the file it was
+    // bound to and never finishes loading when that file is not there, so a
+    // binding is only ever emitted for an artifact written below.
+    //
+    // Models stored with "storage: none" keep no raw modeler graph, so
+    // getModelData() returns an empty string for them and there is no .xml to
+    // publish. The .json is produced by a fixed modeler that ships in its own
+    // project, so a publishing site without it produces no graph either.
+    $modelData = $modeler->getModelData($eca);
+    $modelDataFile = '../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/' . $values['model_filename'] . '.xml';
+    $values['has_bpmn'] = $modelData !== '';
+    $graph = $this->libraryModelArtifacts->graph($eca, $this->owner);
+    $graphFile = '../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/' . $eca->id() . '.json';
+    $values['has_json'] = $graph !== NULL;
+
     file_put_contents('../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '.md', $this->render(__DIR__ . '/../../../templates/docs/library.md.twig', $values));
-    file_put_contents('../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/' . $values['model_filename'] . '.xml', $modeler->getModeldata($eca));
+    if ($values['has_bpmn']) {
+      file_put_contents($modelDataFile, $modelData);
+    }
+    elseif (file_exists($modelDataFile)) {
+      // A zero-byte or stale file from an earlier run would keep contradicting
+      // a page that no longer references it, so regeneration removes it rather
+      // than leaving it orphaned.
+      unlink($modelDataFile);
+    }
+    if ($values['has_json']) {
+      file_put_contents($graphFile, $graph);
+    }
+    elseif (file_exists($graphFile)) {
+      // Same reasoning as the .xml above. Keeping the file would be worse
+      // here, because a stale graph renders a diagram that no longer matches
+      // the model on a page that otherwise looks perfectly healthy.
+      unlink($graphFile);
+    }
     // The .xml above is a modeler graph format. Additionally export the config
     // entity itself, which is the canonical authoring target and can be
     // imported as-is.
-    file_put_contents('../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/eca.eca.' . $eca->id() . '.yml', Yaml::encode($eca->toArray()));
+    file_put_contents('../mkdocs/docs/' . $values['library_path'] . '/' . $values['id'] . '/eca.eca.' . $eca->id() . '.yml', $this->libraryModelArtifacts->config($eca));
 
     $this->toc[$values['main_tag']][$values['label']] = $values['library_path'] . '/' . $values['id'] . '.md';
   }

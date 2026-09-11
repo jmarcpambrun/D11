@@ -29,16 +29,70 @@ trait ConfigSchemaHooksTrait {
   protected function alterSchemaFieldType(array &$definitions, string $key): void {
     foreach ($this->schemaTypeAncestry($definitions, $key) as $type) {
       foreach ($definitions[$type]['mapping'] ?? [] as $field => $schema) {
-        $definitions[$type]['mapping'][$field]['type'] = match ($schema['type']) {
+        $originalType = $schema['type'];
+        $tokenizedType = match ($originalType) {
           'float' => 'eca_float_or_token',
-          // Rewriting the "weight" type also drops the "Range" constraint that
-          // type carries. That is intentional and currently inert: ECA
-          // configuration is not constraint validated.
           'integer', 'weight' => 'eca_integer_or_token',
-          default => $schema['type'],
+          default => NULL,
         };
+        if ($tokenizedType === NULL) {
+          continue;
+        }
+        $definitions[$type]['mapping'][$field]['type'] = $tokenizedType;
+        // Rewriting the type also leaves behind whatever constraints the
+        // abandoned type carried. For core's "weight" that includes a "Range"
+        // bounding the value, and losing it means an out-of-range weight is no
+        // longer reported by anything that validates typed configuration. The
+        // bounds are therefore handed to the replacement type, which applies
+        // them to genuine integers only.
+        // The "Range" constraint cannot be kept as it is, because its validator
+        // reports every non-numeric value as an invalid number and would reject
+        // exactly the token values the replacement type exists to allow.
+        if ($tokenizedType === 'eca_integer_or_token' && ($bounds = $this->inheritedBounds($definitions, $originalType)) !== []) {
+          $definitions[$type]['mapping'][$field]['constraints']['EcaIntegerOrToken'] = $bounds;
+        }
       }
     }
+  }
+
+  /**
+   * Reads the value bounds a schema type declares for itself.
+   *
+   * Only the type is looked at, not the key that declares it. A key is free to
+   * carry constraints of its own, and one of them being a "Range" would be a
+   * problem this cannot solve by copying it: that "Range" is not lost by the
+   * retyping, it stays on the key and rejects every token on it. No ECA schema
+   * declares one, and none should.
+   *
+   * @param array $definitions
+   *   Associative array of configuration type definitions keyed by schema type
+   *   names.
+   * @param string $type
+   *   The name of the schema type to read the bounds of.
+   *
+   * @return array
+   *   The "min" and "max" bounds, as far as the type declares them as integers,
+   *   in the option names the "EcaIntegerOrToken" constraint expects. An empty
+   *   array when the type bounds its value in no way this can carry over.
+   *
+   * @see \Drupal\eca\Plugin\Validation\Constraint\EcaIntegerOrTokenConstraint
+   */
+  private function inheritedBounds(array $definitions, string $type): array {
+    $range = $definitions[$type]['constraints']['Range'] ?? [];
+    if (!is_array($range)) {
+      return [];
+    }
+    // Only plain integer bounds are carried over. A "Range" can also express
+    // its limits as a property path, which has no meaning for a single
+    // configuration value, and reading one as a bound would invent a limit the
+    // type never declared.
+    $bounds = [];
+    foreach (['min', 'max'] as $option) {
+      if (isset($range[$option]) && is_int($range[$option])) {
+        $bounds[$option] = $range[$option];
+      }
+    }
+    return $bounds;
   }
 
   /**

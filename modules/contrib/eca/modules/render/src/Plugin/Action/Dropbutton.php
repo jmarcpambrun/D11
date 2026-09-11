@@ -56,7 +56,7 @@ class Dropbutton extends RenderElementActionBase {
     $result = parent::access($object, $account, TRUE);
     if ($result->isAllowed() && $this->configuration['use_yaml'] && $this->configuration['validate_yaml']) {
       try {
-        $this->yamlParser->parse($this->configuration['value']);
+        $this->yamlParser->parse($this->configuration['links']);
       }
       catch (ParseException) {
         $result = AccessResult::forbidden('YAML data is not valid.');

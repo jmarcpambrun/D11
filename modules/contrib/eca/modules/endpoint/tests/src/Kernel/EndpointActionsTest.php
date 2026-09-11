@@ -408,6 +408,45 @@ class EndpointActionsTest extends KernelTestBase {
   }
 
   /**
+   * Tests YAML validation in "eca_endpoint_set_response_headers" access check.
+   *
+   * The access check must evaluate the "headers" configuration key, which is
+   * the key this plugin actually stores. Reading a non-existent "value" key
+   * passes NULL into the string-typed YamlParser::parse() and throws a
+   * TypeError instead of returning an access result.
+   *
+   * @see https://git.drupalcode.org/project/eca/-/work_items/3590420
+   */
+  public function testSetResponseHeadersYamlValidation(): void {
+    /** @var \Drupal\eca_endpoint\Plugin\Action\SetResponseHeaders $valid */
+    $valid = $this->actionManager->createInstance('eca_endpoint_set_response_headers', [
+      'headers' => "Content-Type: 'text/plain'",
+      'use_yaml' => TRUE,
+      'validate_yaml' => TRUE,
+    ]);
+    /** @var \Drupal\eca_endpoint\Plugin\Action\SetResponseHeaders $invalid */
+    $invalid = $this->actionManager->createInstance('eca_endpoint_set_response_headers', [
+      'headers' => 'Content-Type: "unclosed',
+      'use_yaml' => TRUE,
+      'validate_yaml' => TRUE,
+    ]);
+
+    $valid_access = NULL;
+    $invalid_access = NULL;
+    $this->eventDispatcher->addListener(EndpointEvents::RESPONSE, function (EndpointResponseEvent $event) use ($valid, $invalid, &$valid_access, &$invalid_access) {
+      $valid->setEvent($event);
+      $invalid->setEvent($event);
+      $valid_access = $valid->access(NULL);
+      $invalid_access = $invalid->access(NULL);
+    });
+
+    $this->dispatchEndpointResponseEvent();
+
+    $this->assertTrue($valid_access, 'Valid YAML is allowed.');
+    $this->assertFalse($invalid_access, 'Malformed YAML is forbidden.');
+  }
+
+  /**
    * Dispatches an endpoint response event.
    */
   protected function dispatchEndpointResponseEvent(): void {
