@@ -1,0 +1,11 @@
+name: Contact
+type: module
+description: 'Provides site-wide contact forms and forms to contact individual users.'
+package: Core
+core_version_requirement: '>11.3'
+configure: entity.contact_form.collection
+
+# Information added by Drupal.org packaging script on 2026-01-24
+version: '1.0.0'
+project: 'contact'
+datestamp: 1769226330

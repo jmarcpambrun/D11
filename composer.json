@@ -45,6 +45,7 @@
         "drupal/composer_deploy": "1.10",
         "drupal/computed_field": "4.0.0",
         "drupal/computed_field_ui": "4.0.0",
+        "drupal/contact": "^1.0",
         "drupal/content_access": "^2.1-rc3",
         "drupal/content_planner": "^1.1",
         "drupal/core-composer-scaffold": "11.4.6",

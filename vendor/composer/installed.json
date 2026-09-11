@@ -4499,6 +4499,61 @@
             "install-path": null
         },
         {
+            "name": "drupal/contact",
+            "version": "1.0.0",
+            "version_normalized": "1.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/contact.git",
+                "reference": "1.0.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/contact-1.0.0.zip",
+                "reference": "1.0.0",
+                "shasum": "baf3c8f1cc56c5ecca513f646fd9aaa5c6db5295"
+            },
+            "require": {
+                "drupal/core": ">11.3"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.0",
+                    "datestamp": "1769226328",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Project has not opted into security advisory coverage!"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "andypost",
+                    "homepage": "https://www.drupal.org/user/118908"
+                },
+                {
+                    "name": "dave reid",
+                    "homepage": "https://www.drupal.org/user/53892"
+                },
+                {
+                    "name": "larowlan",
+                    "homepage": "https://www.drupal.org/user/395439"
+                }
+            ],
+            "description": "Provides site-wide contact forms and forms to contact individual users.",
+            "homepage": "https://www.drupal.org/project/contact",
+            "support": {
+                "source": "https://git.drupalcode.org/project/contact"
+            },
+            "install-path": "../../modules/contrib/contact"
+        },
+        {
             "name": "drupal/content_access",
             "version": "2.1.0",
             "version_normalized": "2.1.0.0",
