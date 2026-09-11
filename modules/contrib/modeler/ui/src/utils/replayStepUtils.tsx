@@ -207,6 +207,76 @@ export function findReplayStepForElement(
 }
 
 /**
+ * Resolve which replay step's token data a SELECTED node should display.
+ *
+ * {@link findReplayStepForElement} answers with the FIRST step a node executed
+ * at, which is the right answer for a manual canvas click but the wrong one
+ * while stepping through a model that LOOPS (issue #3589126): a node inside a
+ * loop executes once per iteration, and `selectCanvasFromReplay()` selects that
+ * node on every one of those steps. Anchoring on the first occurrence therefore
+ * made every iteration display iteration 1's token data.
+ *
+ * The rule is a narrow preference on top of the existing lookup: when the
+ * replay is parked on a step that belongs to the selected node itself, that
+ * step wins. Everything else keeps the previous behavior. A manual canvas
+ * click still lands on the node's first execution, though by a different
+ * route: `selectReplayFromCanvas()` has already synced the current step to
+ * that same first occurrence, so the preference returns it unchanged.
+ *
+ * "Belongs to the selected node" is evaluated with exactly the matching rules
+ * {@link findReplayStepForElement} uses for `elementType: 'node'`, so the two
+ * stay symmetric:
+ * - A regular node matches a node-execution step carrying its id.
+ * - A condition node is never a step's `id` (the step id is the predecessor),
+ *   so it matches the successor step whose `conditionId` is one of the node's
+ *   own condition identifiers (see {@link getConditionNodeIdentifiers}).
+ *   Conditions inside a loop are re-evaluated per iteration, so they need the
+ *   same preference.
+ *
+ * @param replayData
+ *   The ordered replay steps.
+ * @param edges
+ *   The canvas edges, forwarded to the fallback lookup.
+ * @param nodeId
+ *   The id of the currently selected node.
+ * @param nodes
+ *   The canvas nodes; required for condition-node matching (issue #3589108).
+ *   Omitting them keeps the previous condition-blind behavior.
+ * @param currentStep
+ *   The step the replay is currently parked on, or a negative/out-of-range
+ *   value when there is none.
+ *
+ * @returns The index of the step to display, or -1 when the node is not
+ *   covered by the replay at all.
+ */
+export function resolveStepForSelectedNode(
+  replayData: ReplayStep[],
+  edges: Edge[],
+  nodeId: string,
+  nodes: Node[] = [],
+  currentStep = -1
+): number {
+  if (!replayData || replayData.length === 0) return -1;
+
+  if (currentStep >= 0 && currentStep < replayData.length) {
+    const step = replayData[currentStep];
+    const selectedNode = nodes.find(n => n.id === nodeId);
+
+    if (selectedNode && isConditionNode(selectedNode)) {
+      const identifiers = getConditionNodeIdentifiers(selectedNode);
+      if (step.conditionId && isConditionStep(step) && identifiers.includes(step.conditionId)) {
+        return currentStep;
+      }
+    } else if (step.id === nodeId && isNodeExecutionStep(step)) {
+      return currentStep;
+    }
+  }
+
+  // No usable current step: fall back to the node's first covering step.
+  return findReplayStepForElement(replayData, edges, nodeId, 'node', nodes);
+}
+
+/**
  * Find the canvas element (node or edge) that corresponds to a replay step.
  * Used for replay-to-canvas synchronization.
  */

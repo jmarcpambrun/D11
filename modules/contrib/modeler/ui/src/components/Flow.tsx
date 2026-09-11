@@ -36,7 +36,7 @@ import { t } from '../utils/translation';
 import { showDrupalMessage } from '../utils/drupalMessage';
 import { validateModelConstraints, validateNoAdjacentConditions, validateConditionOutdegree } from '../utils/constraintValidation';
 import { expandReplayStep } from '../utils/replayExpansion';
-import { findElementForReplayStep, findReplayStepForElement } from '../utils/replayStepUtils';
+import { findElementForReplayStep, resolveStepForSelectedNode } from '../utils/replayStepUtils';
 import { resolvePredictedTokens } from '../utils/predecessorTokens';
 import { useReplayLoader, LISTEN_ITEM_INDEX } from '../hooks/useReplayLoader';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
@@ -447,14 +447,23 @@ function FlowInner({ settings, drupal }: FlowProps) {
   //       through replay), predicted=false.
   // Recomputed when the selection, graph, replay data, or current step changes.
   //
-  // `nodes` is passed to findReplayStepForElement so that a selected condition
-  // NODE resolves to the successor step that evaluated it (issue #3589108).
-  // Condition nodes are never a step's `id`, so without this they always fell
-  // through to the predicted-token branch and were mislabeled "Predicted".
+  // Within (a), WHICH of the node's steps is shown follows resolveStepForSelectedNode():
+  // the current step wins when it is the selected node's own step, otherwise the
+  // node's FIRST covering step is used. In a model that LOOPS the same node
+  // executes once per iteration, and stepping selects it every time, so
+  // anchoring on the first occurrence made every iteration display iteration
+  // 1's token data (issue #3589126). Manual canvas clicks are unaffected:
+  // selectReplayFromCanvas() syncs the current step to the node's first
+  // occurrence, so both paths agree on that step.
+  //
+  // `nodes` is passed so that a selected condition NODE resolves to the
+  // successor step that evaluated it (issue #3589108). Condition nodes are
+  // never a step's `id`, so without this they always fell through to the
+  // predicted-token branch and were mislabeled "Predicted".
   const expandedStepData = useMemo<{ data: Record<string, unknown> | null; predicted: boolean }>(() => {
     const selId = selectedNode?.id;
     if (selId) {
-      const ownIdx = findReplayStepForElement(replayData, edges, selId, 'node', nodes);
+      const ownIdx = resolveStepForSelectedNode(replayData, edges, selId, nodes, currentReplayStep);
       if (ownIdx >= 0) {
         return { data: expandReplayStep(replayData, ownIdx), predicted: false };
       }

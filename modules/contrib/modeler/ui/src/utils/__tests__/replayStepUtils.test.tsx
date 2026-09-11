@@ -25,12 +25,15 @@ import {
   isAccessDeniedStep,
   isConditionStep,
   findReplayStepForElement,
+  resolveStepForSelectedNode,
   findElementForReplayStep,
   findMatchingReplayStepForSelection,
   isConditionNode,
   getConditionNodeIdentifiers,
   findConditionNodeForStep,
 } from '../replayStepUtils';
+import { expandReplayStep } from '../replayExpansion';
+import type { ReplayStepData } from '../replayExpansion';
 import type { StoreNode as Node, StoreEdge as Edge } from '../../types/settings';
 
 describe('replayStepUtils', () => {
@@ -714,6 +717,247 @@ describe('replayStepUtils', () => {
       expect(
         findReplayStepForElement(conditionReplayData, [], 'cfg-1', 'condition', conditionNodes)
       ).toBe(1);
+    });
+  });
+
+  // ---- Looping models (issue #3589126) ------------------------------------
+  // `findReplayStepForElement` always answers with the FIRST step a node
+  // executed at. In a model that loops, the same node executes once per
+  // iteration, so every iteration displayed the FIRST iteration's token data.
+  // `resolveStepForSelectedNode` fixes that by preferring the step the replay
+  // is actually parked on whenever that step belongs to the selected node.
+
+  describe('resolveStepForSelectedNode', () => {
+    /** Compact marker: this step's token data equals the previous step's. */
+    const PREV = '@prev';
+
+    /**
+     * Build one step's normalized token data.
+     *
+     * `remaining` becomes the indexed child entries of the list token; an empty
+     * list is recorded as an empty scalar value, exactly as ECA records it.
+     * `current` is the item consumed by the iteration, when there is one.
+     *
+     * @param remaining
+     *   The field names still left in the list at this step.
+     * @param current
+     *   The field name the current iteration is working on, if any.
+     *
+     * @returns The normalized token data object for the step.
+     */
+    const tokenData = (remaining: readonly string[], current?: string): ReplayStepData => {
+      const items: ReplayStepData = {};
+      remaining.forEach((name, index) => {
+        items[String(index)] = { label: String(index), token: `fieldNames:${index}`, value: name };
+      });
+      const data: ReplayStepData = {
+        fieldNames: {
+          label: 'Field names',
+          token: 'fieldNames',
+          ...(remaining.length > 0 ? { data: items } : { value: '' }),
+        },
+      };
+      if (current !== undefined) {
+        data.fieldName = { label: 'Field name', token: 'fieldName', value: current };
+      }
+      return data;
+    };
+
+    const ALL = ['notify', 'signature', 'timezone'];
+
+    /**
+     * A three-iteration loop: `explode` builds the list, then the gateway loops
+     * `remove` -> `hide` until the list is empty. `remove`, `hide` and
+     * `gateway` therefore each execute three times (steps 6/12/18, 8/14/20 and
+     * 4/10/16/22), and the list shrinks 3 -> 2 -> 1 -> empty as it goes.
+     */
+    const loopReplayData: ReplayStep[] = [
+      /*  0 */ { type: 'started', id: 'event', data: tokenData(ALL) },
+      /*  1 */ { type: 'add successor', id: 'event', successorId: 'explode', data: PREV },
+      /*  2 */ { type: 'execute', id: 'explode', data: PREV },
+      /*  3 */ { type: 'add successor', id: 'explode', successorId: 'gateway', data: tokenData(ALL) },
+      /*  4 */ { type: 'execute', id: 'gateway', data: PREV },
+      /*  5 */ { type: 'add successor', id: 'gateway', successorId: 'remove', data: PREV },
+      /*  6 */ { type: 'execute', id: 'remove', data: PREV },
+      /*  7 */ { type: 'add successor', id: 'remove', successorId: 'hide', data: tokenData(['signature', 'timezone'], 'notify') },
+      /*  8 */ { type: 'execute', id: 'hide', data: PREV },
+      /*  9 */ { type: 'add successor', id: 'hide', successorId: 'gateway', data: PREV },
+      /* 10 */ { type: 'execute', id: 'gateway', data: PREV },
+      /* 11 */ { type: 'add successor', id: 'gateway', successorId: 'remove', data: PREV },
+      /* 12 */ { type: 'execute', id: 'remove', data: PREV },
+      /* 13 */ { type: 'add successor', id: 'remove', successorId: 'hide', data: tokenData(['timezone'], 'signature') },
+      /* 14 */ { type: 'execute', id: 'hide', data: PREV },
+      /* 15 */ { type: 'add successor', id: 'hide', successorId: 'gateway', data: PREV },
+      /* 16 */ { type: 'execute', id: 'gateway', data: PREV },
+      /* 17 */ { type: 'add successor', id: 'gateway', successorId: 'remove', data: PREV },
+      /* 18 */ { type: 'execute', id: 'remove', data: PREV },
+      /* 19 */ { type: 'add successor', id: 'remove', successorId: 'hide', data: tokenData([], 'timezone') },
+      /* 20 */ { type: 'execute', id: 'hide', data: PREV },
+      /* 21 */ { type: 'add successor', id: 'hide', successorId: 'gateway', data: PREV },
+      /* 22 */ { type: 'execute', id: 'gateway', data: PREV },
+      /* 23 */ { type: 'ignore successor', id: 'gateway', successorId: 'remove', data: PREV },
+    ];
+
+    const loopNodes: Node[] = [
+      { id: 'event', type: 'start', position: { x: 0, y: 0 }, data: { label: 'Event' } },
+      { id: 'explode', type: 'element', position: { x: 100, y: 0 }, data: { label: 'Explode list' } },
+      { id: 'gateway', type: 'gateway', position: { x: 200, y: 0 }, data: { label: 'Loop gateway' } },
+      { id: 'remove', type: 'element', position: { x: 300, y: 0 }, data: { label: 'Remove first item' } },
+      { id: 'hide', type: 'element', position: { x: 400, y: 0 }, data: { label: 'Hide field' } },
+    ];
+
+    const loopEdges: Edge[] = [
+      { id: 'e1', source: 'event', target: 'explode', data: {} },
+      { id: 'e2', source: 'explode', target: 'gateway', data: {} },
+      { id: 'e3', source: 'gateway', target: 'remove', data: {} },
+      { id: 'e4', source: 'remove', target: 'hide', data: {} },
+      { id: 'e5', source: 'hide', target: 'gateway', data: {} },
+    ];
+
+    /**
+     * Deep-freeze a value so any in-place write throws in strict mode.
+     *
+     * The compact `replayData` is serialized verbatim by the JSON export, so
+     * nothing in the display path may ever mutate it.
+     *
+     * @param value
+     *   The value to freeze recursively.
+     */
+    const deepFreeze = (value: unknown): void => {
+      if (value && typeof value === 'object') {
+        Object.values(value as Record<string, unknown>).forEach(deepFreeze);
+        Object.freeze(value);
+      }
+    };
+    deepFreeze(loopReplayData);
+
+    /**
+     * Count the entries of the expanded list token for a step.
+     *
+     * @param stepIndex
+     *   The replay step to expand.
+     *
+     * @returns The number of field names the step's list token carries.
+     */
+    const expandedListSize = (stepIndex: number): number => {
+      const entry = expandReplayStep(loopReplayData, stepIndex)?.fieldNames;
+      const items = entry?.data;
+      return items && typeof items === 'object' ? Object.keys(items).length : 0;
+    };
+
+    it('should prefer the current step for the FIRST iteration of a looping node', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 6)).toBe(6);
+    });
+
+    it('should prefer the current step for the SECOND iteration of a looping node', () => {
+      // Before the fix this returned 6 — the first occurrence — so iteration 2
+      // displayed iteration 1's token data.
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 12)).toBe(12);
+    });
+
+    it('should prefer the current step for the THIRD iteration of a looping node', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 18)).toBe(18);
+    });
+
+    it('should prefer the current step for a repeatedly executed gateway', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'gateway', loopNodes, 16)).toBe(16);
+    });
+
+    it('should prefer the current step for the last iteration of a looping node', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'hide', loopNodes, 20)).toBe(20);
+    });
+
+    it('should fall back to the first occurrence when the current step is a successor step of that node', () => {
+      // Step 13 is an "add successor" step of 'remove', not an execution step.
+      // Edge steps keep the manual-click semantics: show the node's own first
+      // execution.
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 13)).toBe(6);
+    });
+
+    it('should fall back to the first occurrence when there is no current step', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, -1)).toBe(6);
+    });
+
+    it('should fall back to the first occurrence when the current step belongs to another node', () => {
+      // Step 8 executes 'hide', not 'remove'.
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 8)).toBe(6);
+    });
+
+    it('should fall back to the first occurrence when the current step is out of range', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 99)).toBe(6);
+    });
+
+    it('should return -1 for a node that never executed', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'explode', loopNodes, 6)).toBe(2);
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'nonexistent', loopNodes, 6)).toBe(-1);
+    });
+
+    it('should return -1 for empty replay data', () => {
+      expect(resolveStepForSelectedNode([], loopEdges, 'remove', loopNodes, 6)).toBe(-1);
+    });
+
+    it('should behave like findReplayStepForElement when no current step is supplied', () => {
+      expect(resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes)).toBe(
+        findReplayStepForElement(loopReplayData, loopEdges, 'remove', 'node', loopNodes)
+      );
+    });
+
+    it('should not mutate the compact replay data while resolving', () => {
+      // The fixture is deep-frozen; a write would throw in strict mode.
+      expect(() => {
+        resolveStepForSelectedNode(loopReplayData, loopEdges, 'remove', loopNodes, 12);
+      }).not.toThrow();
+    });
+
+    // Marker expansion itself is correct — the bug was purely step SELECTION.
+    // These assertions document what each iteration's step really carries, so a
+    // regression in either layer is attributable.
+    it('should expand each iteration to its own shrinking list (expansion is correct)', () => {
+      expect(expandedListSize(6)).toBe(3);
+      expect(expandedListSize(12)).toBe(2);
+      expect(expandedListSize(18)).toBe(1);
+      expect(expandedListSize(20)).toBe(0);
+    });
+
+    // ---- Condition-node symmetry ------------------------------------------
+    // A condition node is matched through `step.conditionId`, never through
+    // `step.id`. A condition inside a loop is evaluated once per iteration, so
+    // it needs the same current-step preference as a regular node.
+
+    const conditionLoopNodes: Node[] = [
+      { id: 'gateway', type: 'gateway', position: { x: 0, y: 0 }, data: { label: 'Loop gateway' } },
+      {
+        id: 'cond-more',
+        type: 'condition',
+        position: { x: 50, y: 0 },
+        data: { label: 'List is not empty', conditionId: 'cfg-more', plugin: 'eca_scalar', __isConditionNode: true },
+      },
+      { id: 'remove', type: 'element', position: { x: 100, y: 0 }, data: { label: 'Remove first item' } },
+    ];
+
+    const conditionLoopData: ReplayStep[] = [
+      /* 0 */ { type: 'execute', id: 'gateway' },
+      /* 1 */ { type: 'add successor', id: 'gateway', successorId: 'remove', conditionId: 'cfg-more' },
+      /* 2 */ { type: 'execute', id: 'remove' },
+      /* 3 */ { type: 'execute', id: 'gateway' },
+      /* 4 */ { type: 'add successor', id: 'gateway', successorId: 'remove', conditionId: 'cfg-more' },
+      /* 5 */ { type: 'execute', id: 'remove' },
+      /* 6 */ { type: 'execute', id: 'gateway' },
+      /* 7 */ { type: 'ignore successor', id: 'gateway', successorId: 'remove', conditionId: 'cfg-more' },
+    ];
+
+    it('should prefer the current step for a condition node evaluated once per iteration', () => {
+      expect(resolveStepForSelectedNode(conditionLoopData, [], 'cond-more', conditionLoopNodes, 4)).toBe(4);
+      expect(resolveStepForSelectedNode(conditionLoopData, [], 'cond-more', conditionLoopNodes, 7)).toBe(7);
+    });
+
+    it('should fall back to the first covering step for a condition node when the current step is not its own', () => {
+      expect(resolveStepForSelectedNode(conditionLoopData, [], 'cond-more', conditionLoopNodes, 5)).toBe(1);
+      expect(resolveStepForSelectedNode(conditionLoopData, [], 'cond-more', conditionLoopNodes, -1)).toBe(1);
+    });
+
+    it('should stay condition-blind when nodes are not supplied (legacy callers)', () => {
+      expect(resolveStepForSelectedNode(conditionLoopData, [], 'cond-more', [], 4)).toBe(-1);
     });
   });
 
