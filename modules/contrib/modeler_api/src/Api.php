@@ -541,6 +541,11 @@ class Api {
         'version' => $owner->getVersion($model),
         'label' => $owner->getLabel($model),
         'documentation' => $owner->getDocumentation($model),
+        'summary' => $owner->getSummary($model),
+        'recipes' => $owner->getRecipes($model),
+        'config_actions' => $owner->getConfigActions($model),
+        'export_config' => $owner->getExportConfig($model),
+        'modules' => $owner->getModules($model),
         'storage' => $owner->getStorage($model),
         'executable' => $owner->getStatus($model),
         'template' => $owner->getTemplate($model),
@@ -750,6 +755,25 @@ class Api {
       ->setDocumentation($model, $modeler->getDocumentation())
       ->setTags($model, $modeler->getTags())
       ->setVersion($model, $modeler->getVersion());
+    // The recipe metadata is optional for a modeler to carry in its raw model
+    // data. A modeler that does not returns NULL rather than an empty value,
+    // so that saving a model in it leaves settings alone that it has no way of
+    // knowing about, instead of silently dropping them.
+    if (($summary = $modeler->getSummary()) !== NULL) {
+      $owner->setSummary($model, $summary);
+    }
+    if (($recipes = $modeler->getRecipes()) !== NULL) {
+      $owner->setRecipes($model, $recipes);
+    }
+    if (($configActions = $modeler->getConfigActions()) !== NULL) {
+      $owner->setConfigActions($model, $configActions);
+    }
+    if (($exportConfig = $modeler->getExportConfig()) !== NULL) {
+      $owner->setExportConfig($model, $exportConfig);
+    }
+    if (($modules = $modeler->getModules()) !== NULL) {
+      $owner->setModules($model, $modules);
+    }
     $annotations = [];
     $colors = [];
     $swimlanes = [];

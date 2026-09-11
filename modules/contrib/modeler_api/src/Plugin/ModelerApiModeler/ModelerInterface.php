@@ -211,6 +211,52 @@ interface ModelerInterface extends PluginInspectionInterface, ContainerFactoryPl
   public function getDocumentation(): string;
 
   /**
+   * Get the model's summary.
+   *
+   * @return string|null
+   *   The summary, or NULL if this modeler does not carry the summary in its
+   *   raw model data, in which case the stored value is left untouched.
+   */
+  public function getSummary(): ?string;
+
+  /**
+   * Get the recipes that a recipe exported from the model includes.
+   *
+   * @return array|null
+   *   The list of recipe names or paths, or NULL if this modeler does not
+   *   carry them in its raw model data.
+   */
+  public function getRecipes(): ?array;
+
+  /**
+   * Get the config actions that a recipe exported from the model applies.
+   *
+   * @return array|null
+   *   The config actions as a list of maps, each with a "config" key holding
+   *   the config name and an "actions" key holding the actions for it, or
+   *   NULL if this modeler does not carry them in its raw model data.
+   */
+  public function getConfigActions(): ?array;
+
+  /**
+   * Get additional config object names to export with the model.
+   *
+   * @return array|null
+   *   The list of config object names, or NULL if this modeler does not carry
+   *   them in its raw model data.
+   */
+  public function getExportConfig(): ?array;
+
+  /**
+   * Get additional modules that a recipe exported from the model requires.
+   *
+   * @return array|null
+   *   The list of module names, or NULL if this modeler does not carry them
+   *   in its raw model data.
+   */
+  public function getModules(): ?array;
+
+  /**
    * Get the model's status.
    *
    * @return bool

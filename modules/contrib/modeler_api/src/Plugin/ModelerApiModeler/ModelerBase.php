@@ -2,6 +2,7 @@
 
 namespace Drupal\modeler_api\Plugin\ModelerApiModeler;
 
+use Drupal\Component\Serialization\Yaml;
 use Drupal\Component\Utility\Random;
 use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -222,6 +223,41 @@ abstract class ModelerBase extends PluginBase implements ModelerInterface {
   /**
    * {@inheritdoc}
    */
+  public function getSummary(): ?string {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRecipes(): ?array {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfigActions(): ?array {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getExportConfig(): ?array {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getModules(): ?array {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStatus(): bool {
     return TRUE;
   }
@@ -320,6 +356,37 @@ abstract class ModelerBase extends PluginBase implements ModelerInterface {
       '#type' => 'textarea',
       '#title' => $this->t('Documentation'),
       '#default_value' => $config['documentation'],
+    ];
+    $form['summary'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Summary'),
+      '#default_value' => $config['summary'] ?? '',
+      '#maxlength' => 255,
+      '#description' => $this->t('A one-line description of this model, used as the description of a recipe exported from it. Leave empty to derive it from the leading paragraph of the documentation.'),
+    ];
+    $form['recipes'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Included recipes'),
+      '#default_value' => implode("\n", $config['recipes'] ?? []),
+      '#description' => $this->t('Recipes that an exported recipe includes, one per line, for example core/recipes/article_tags.'),
+    ];
+    $form['export_config'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Additional config to export'),
+      '#default_value' => implode("\n", $config['export_config'] ?? []),
+      '#description' => $this->t('Names of config objects to ship with an exported recipe in addition to those the model depends on, one per line. The config data itself is always read from the active configuration.'),
+    ];
+    $form['modules'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Additional required modules'),
+      '#default_value' => implode("\n", $config['modules'] ?? []),
+      '#description' => $this->t('Machine names of modules an exported recipe requires in addition to those the model depends on, one per line. Use this for a module the model needs but Drupal cannot derive, such as one that only contributes a YAML file another module discovers.'),
+    ];
+    $form['config_actions'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Config actions'),
+      '#default_value' => $config['config_actions'] ? Yaml::encode($config['config_actions']) : '',
+      '#description' => $this->t('Config actions for an exported recipe as YAML: a list of entries, each with a "config" key holding the config name and an "actions" key holding the actions for it. They are applied in addition to the user role actions that the export derives from the model.'),
     ];
     $form['tags'] = [
       '#type' => 'textfield',

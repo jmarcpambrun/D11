@@ -5,7 +5,7 @@ package: Modeler API
 core_version_requirement: ^11.3 || ^12.0
 configure: modeler_api.settings
 
-# Information added by Drupal.org packaging script on 2026-08-24
-version: '1.1.5'
+# Information added by Drupal.org packaging script on 2026-09-07
+version: '1.1.6'
 project: 'modeler_api'
-datestamp: 1787564024
+datestamp: 1788781747

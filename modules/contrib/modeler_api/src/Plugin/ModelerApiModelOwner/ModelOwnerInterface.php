@@ -309,6 +309,161 @@ interface ModelOwnerInterface extends PluginInspectionInterface, ContainerFactor
   public function getDocumentation(ConfigEntityInterface $model): string;
 
   /**
+   * Set the summary of the model.
+   *
+   * The summary is the one-line description of the model, as opposed to the
+   * long-form documentation. It is what a recipe exported from this model
+   * uses as its description.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   * @param string $summary
+   *   The summary.
+   *
+   * @return $this
+   */
+  public function setSummary(ConfigEntityInterface $model, string $summary): ModelOwnerInterface;
+
+  /**
+   * Get the summary from the model.
+   *
+   * An empty string means that the model does not express a summary. Consumers
+   * that need one anyway derive it from the documentation.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   *
+   * @return string
+   *   The summary, or an empty string if the model does not express one.
+   *
+   * @see \Drupal\modeler_api\ExportRecipe::summaryFromDocumentation()
+   */
+  public function getSummary(ConfigEntityInterface $model): string;
+
+  /**
+   * Set the recipes that a recipe exported from the model includes.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   * @param array $recipes
+   *   The list of recipe names or paths, e.g. "core/recipes/article_tags".
+   *
+   * @return $this
+   */
+  public function setRecipes(ConfigEntityInterface $model, array $recipes): ModelOwnerInterface;
+
+  /**
+   * Get the recipes that a recipe exported from the model includes.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   *
+   * @return array
+   *   The list of recipe names or paths.
+   */
+  public function getRecipes(ConfigEntityInterface $model): array;
+
+  /**
+   * Set the config actions that a recipe exported from the model applies.
+   *
+   * These are merged beside the config actions that the export derives from
+   * the model's own dependencies, which are the user role actions.
+   *
+   * This is a list rather than a map keyed by config name, because a config
+   * name always contains dots and Drupal rejects a dot in any config array
+   * key, at any depth. The exporter turns the list back into the name-keyed
+   * map that the recipe file format uses. For the same reason, the actions
+   * themselves must not use a dotted key anywhere inside their payload.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   * @param array $configActions
+   *   The config actions as a list of maps, each with a "config" key holding
+   *   the config name and an "actions" key holding the actions for it.
+   *
+   * @return $this
+   *
+   * @see \Drupal\Core\Config\ConfigBase::validateKeys()
+   * @see \Drupal\modeler_api\ExportRecipe::configActionsByName()
+   */
+  public function setConfigActions(ConfigEntityInterface $model, array $configActions): ModelOwnerInterface;
+
+  /**
+   * Get the config actions that a recipe exported from the model applies.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   *
+   * @return array
+   *   The config actions as a list of maps, each with a "config" key holding
+   *   the config name and an "actions" key holding the actions for it.
+   */
+  public function getConfigActions(ConfigEntityInterface $model): array;
+
+  /**
+   * Set additional config object names to export with the model.
+   *
+   * These are names only, never config data: the export reads each object out
+   * of active configuration, exactly as it does for the model's own
+   * dependencies. Storing the data instead would duplicate foreign
+   * configuration into the model with nothing to keep the copy in sync.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   * @param array $exportConfig
+   *   The list of config object names.
+   *
+   * @return $this
+   */
+  public function setExportConfig(ConfigEntityInterface $model, array $exportConfig): ModelOwnerInterface;
+
+  /**
+   * Get additional config object names to export with the model.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   *
+   * @return array
+   *   The list of config object names.
+   */
+  public function getExportConfig(ConfigEntityInterface $model): array;
+
+  /**
+   * Set additional modules that a recipe exported from the model requires.
+   *
+   * These are modules the model genuinely needs but that Drupal's dependency
+   * calculation cannot see, because the module contributes something
+   * discoverable rather than something referenced. A module shipping a YAML
+   * file that another module's deriver reads is the typical case: the plugin
+   * is provided by the reading module, so only that module is computed, while
+   * the model is inert without the module that supplied the file.
+   *
+   * They are merged with the computed dependencies rather than replacing
+   * them, and reach both the composer requirements and the recipe's install
+   * list, because getting the code onto the site and enabling it are two
+   * different things.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   * @param array $modules
+   *   The list of module names.
+   *
+   * @return $this
+   */
+  public function setModules(ConfigEntityInterface $model, array $modules): ModelOwnerInterface;
+
+  /**
+   * Get additional modules that a recipe exported from the model requires.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
+   *   The model.
+   *
+   * @return array
+   *   The list of module names.
+   */
+  public function getModules(ConfigEntityInterface $model): array;
+
+  /**
    * Set Tags of the model.
    *
    * @param \Drupal\Core\Config\Entity\ConfigEntityInterface $model
