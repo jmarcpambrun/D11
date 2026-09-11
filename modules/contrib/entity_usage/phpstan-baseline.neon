@@ -1,6 +1,90 @@
 parameters:
 	ignoreErrors:
 		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::delete() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::deleteAll() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::deleteMultiple() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::garbageCollection() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::get() has parameter $allow_invalid with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::get() has parameter $cid with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::getMultiple() has parameter $allow_invalid with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::invalidate() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::invalidateAll() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::invalidateMultiple() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::invalidateTags() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::removeBin() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::set() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
+			rawMessage: 'Method Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator::setMultiple() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: src/Cache/BulkLoadCacheBackendDecorator.php
+
+		-
 			rawMessage: 'Method Drupal\entity_usage\EntityUsageTrackMultipleLoadInterface::getTargetEntitiesFromField() has parameter $field with generic interface Drupal\Core\Field\FieldItemListInterface but does not specify its types: T'
 			identifier: missingType.generics
 			count: 1

@@ -6,6 +6,7 @@ namespace Drupal\entity_usage;
 
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Database\Statement\FetchAs;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\RevisionableStorageInterface;
@@ -14,6 +15,7 @@ use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Utility\Error;
+use Drupal\entity_usage\Cache\BulkLoadCacheBackendDecorator;
 use Drupal\entity_usage\Events\EntityUsageEvent;
 use Drupal\entity_usage\Events\Events;
 use Psr\Log\LoggerAwareInterface;
@@ -75,6 +77,13 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   ];
 
   /**
+   * The original cache backends of storages disabled by entity type id.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface[]
+   */
+  private static array $originalStorageCacheBackends = [];
+
+  /**
    * Creates a EntityUsageBatchManager object.
    */
   final public function __construct(
@@ -97,9 +106,17 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    * @param bool $keep_existing_records
    *   (optional) If TRUE, existing usage records won't be deleted. Defaults to
    *   FALSE.
+   * @param string[]|null $entity_types
+   *   (optional) A list of entity type IDs to recreate statistics for. If
+   *   NULL (the default), all entity types enabled for tracking are
+   *   recreated. If provided, only usage records for these entity types are
+   *   deleted and rebuilt; other entity types are left untouched.
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if any of the given entity types is not enabled for tracking.
    */
-  public function recreate(bool $keep_existing_records = FALSE): void {
-    $batch = $this->generateBatch($keep_existing_records);
+  public function recreate(bool $keep_existing_records = FALSE, ?array $entity_types = NULL): void {
+    $batch = $this->generateBatch($keep_existing_records, $entity_types);
     batch_set($batch);
   }
 
@@ -109,11 +126,32 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
    * @param bool $keep_existing_records
    *   (optional) If TRUE existing usage records won't be deleted. Defaults to
    *   FALSE.
+   * @param string[]|null $entity_types
+   *   (optional) A list of entity type IDs to recreate statistics for. If
+   *   NULL (the default), all entity types enabled for tracking are
+   *   recreated. If provided, only usage records for these entity types are
+   *   deleted and rebuilt; other entity types are left untouched.
    *
    * @return array
    *   The batch array.
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if any of the given entity types is not enabled for tracking.
    */
-  public function generateBatch(bool $keep_existing_records = FALSE): array {
+  public function generateBatch(bool $keep_existing_records = FALSE, ?array $entity_types = NULL): array {
+    $trackable_entity_types = $this->trackManager->getSourceEntityTypeIds();
+
+    if ($entity_types !== NULL) {
+      $invalid_entity_types = array_diff($entity_types, $trackable_entity_types);
+      if ($invalid_entity_types) {
+        throw new \InvalidArgumentException(sprintf('The following entity types are not enabled for tracking by Entity Usage: %s', implode(', ', $invalid_entity_types)));
+      }
+      $entity_types_to_process = array_values(array_unique($entity_types));
+    }
+    else {
+      $entity_types_to_process = $trackable_entity_types;
+    }
+
     $batch = new BatchBuilder();
     $batch
       ->setTitle($this->t('Updating entity usage statistics.'))
@@ -122,7 +160,17 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       ->setFinishCallback('\Drupal\entity_usage\EntityUsageBatchManager::batchFinished');
 
     if (!$keep_existing_records) {
-      $batch->addOperation('\Drupal\entity_usage\EntityUsageBatchManager::truncateTable');
+      if ($entity_types === NULL) {
+        $batch->addOperation('\Drupal\entity_usage\EntityUsageBatchManager::truncateTable');
+      }
+      else {
+        foreach ($entity_types_to_process as $entity_type_id) {
+          $batch->addOperation(
+            '\Drupal\entity_usage\EntityUsageBatchManager::deleteSourcesForEntityType',
+            [$entity_type_id],
+          );
+        }
+      }
     }
 
     $bulk_mode = !$keep_existing_records && $this->entityUsage instanceof EntityUsageBulkInterface;
@@ -131,7 +179,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       $batch->addOperation('\Drupal\entity_usage\EntityUsageBatchManager::createBulkTable');
     }
 
-    foreach ($this->trackManager->getSourceEntityTypeIds() as $entity_type_id) {
+    foreach ($entity_types_to_process as $entity_type_id) {
       $batch->addOperation(
         '\Drupal\entity_usage\EntityUsageBatchManager::updateSourcesBatchWorker',
         [$entity_type_id, $keep_existing_records],
@@ -287,6 +335,23 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   }
 
   /**
+   * Batch operation worker to delete existing records for one entity type.
+   *
+   * Used instead of truncateTable() when recreating usage statistics for a
+   * subset of entity types, so that usage records for entity types not
+   * being processed are left untouched.
+   *
+   * @param string $entity_type_id
+   *   The source entity type id to delete existing usage records for.
+   * @param BatchContext $context
+   *   Batch context.
+   */
+  public static function deleteSourcesForEntityType(string $entity_type_id, array &$context): void {
+    \Drupal::service('entity_usage.usage')->bulkDeleteSources($entity_type_id);
+    $context['message'] = t('Deleted existing entity usage records for @entity_type', ['@entity_type' => $entity_type_id]);
+  }
+
+  /**
    * Batch operation worker to truncate the table.
    */
   public static function truncateTable(array &$context): void {
@@ -384,6 +449,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       /** @var \Drupal\entity_usage\EntityUsageBulkInterface $entity_usage */
       $entity_usage->enableBulkInsert('entity_usage_bulk');
 
+      self::disableEntityPersistentCache();
       try {
         foreach ($entity_storage->loadMultipleRevisions($revision_ids) as $entity_revision) {
           $revision_id = (int) $entity_revision->getRevisionId();
@@ -394,6 +460,9 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       }
       catch (\Exception $e) {
         Error::logException(\Drupal::service('logger.channel.entity_usage'), $e);
+      }
+      finally {
+        self::restoreEntityPersistentCache();
       }
     }
     $context['sandbox']['progress'] += count($revision_ids);
@@ -599,6 +668,62 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       }
       $context['sandbox']['current_id'] = $entity_id;
     }
+  }
+
+  /**
+   * Temporarily disables the entity persistent cache.
+   *
+   * Bulk loading source entities also loads any entities referenced from
+   * them, such as paragraphs. None of these are needed again once tracked,
+   * so persistently caching them is pure overhead.
+   *
+   * @see \Drupal\entity_usage\EntityUsageBatchManager::restoreEntityPersistentCache()
+   */
+  private static function disableEntityPersistentCache(): void {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    foreach ($entity_type_manager->getDefinitions() as $entity_type_id => $entity_type) {
+      if ($entity_type->isRevisionable() && $entity_type->entityClassImplements(ContentEntityInterface::class)) {
+        self::disableStorageCacheBackend($entity_type_id, $entity_type_manager->getStorage($entity_type_id));
+      }
+    }
+  }
+
+  /**
+   * Wraps the cache backend of a single entity storage to stop it caching.
+   *
+   * The storage's current cache backend is decorated rather than replaced,
+   * so that any decoration already applied to it by other modules (for
+   * example Trash's filtering of deleted entities) keeps working for the
+   * delete and invalidate operations that still reach it.
+   *
+   * @param string $entity_type_id
+   *   The entity type id.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
+   *   The entity storage to disable persistent caching for.
+   */
+  private static function disableStorageCacheBackend(string $entity_type_id, EntityStorageInterface $entity_storage): void {
+    $reflection = new \ReflectionClass($entity_storage);
+    if (!$reflection->hasProperty('cacheBackend')) {
+      return;
+    }
+    $cache_backend_property = $reflection->getProperty('cacheBackend');
+    $original_cache_backend = $cache_backend_property->getValue($entity_storage);
+    self::$originalStorageCacheBackends[$entity_type_id] = $original_cache_backend;
+    $cache_backend_property->setValue($entity_storage, new BulkLoadCacheBackendDecorator($original_cache_backend));
+  }
+
+  /**
+   * Restores the entity persistent cache.
+   *
+   * @see \Drupal\entity_usage\EntityUsageBatchManager::disableEntityPersistentCache()
+   */
+  private static function restoreEntityPersistentCache(): void {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    foreach (self::$originalStorageCacheBackends as $entity_type_id => $original_cache_backend) {
+      $entity_storage = $entity_type_manager->getStorage($entity_type_id);
+      (new \ReflectionClass($entity_storage))->getProperty('cacheBackend')->setValue($entity_storage, $original_cache_backend);
+    }
+    self::$originalStorageCacheBackends = [];
   }
 
   /**

@@ -718,10 +718,10 @@ class ListUsageController extends ControllerBase {
    */
   public function checkAccess(string $entity_type, int|string $entity_id): AccessResultInterface {
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
-    if (!$entity || !$entity->access('view')) {
+    if (!$entity) {
       return AccessResult::forbidden();
     }
-    return AccessResult::allowed();
+    return $entity->access('view', NULL, TRUE);
   }
 
 }

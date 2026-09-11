@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\entity_usage\Hook;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\entity_usage\EntityUpdateManagerInterface;
 use Drupal\entity_usage\PreSaveUrlRecorder;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 
 /**
  * Entity hook implementations for entity_usage.
@@ -84,6 +86,34 @@ class EntityUsageEntityHooks {
   #[Hook('entity_revision_delete')]
   public function entityRevisionDelete(EntityInterface $entity): void {
     $this->entityUsageUpdateManager->trackUpdateOnDeletion($entity, 'revision');
+  }
+
+  /**
+   * Implements hook_entity_operation().
+   */
+  #[Hook('entity_operation')]
+  public function entityOperation(EntityInterface $entity, CacheableMetadata $cacheability): array {
+    $config = $this->configFactory->get('entity_usage.settings');
+    $cacheability->addCacheableDependency($config);
+    $entity_type_id = $entity->getEntityTypeId();
+    if (!in_array($entity_type_id, $config->get('local_task_enabled_entity_types') ?? [], TRUE)) {
+      return [];
+    }
+
+    $url = Url::fromRoute("entity.$entity_type_id.entity_usage", [$entity_type_id => $entity->id()]);
+    $access = $url->access(NULL, TRUE);
+    $cacheability->addCacheableDependency($access);
+    if (!$access->isAllowed()) {
+      return [];
+    }
+
+    return [
+      'entity-usage' => [
+        'title' => $this->t('Usage'),
+        'weight' => 50,
+        'url' => $url,
+      ],
+    ];
   }
 
 }
