@@ -10,5 +10,11 @@
     },
     "require": {
         "drupal/ai": "^1.5"
+    },
+    "require-dev": {
+        "drupal/ai_context": "1.0.x-dev"
+    },
+    "suggest": {
+        "drupal/ai_context": "1.0.0-beta5 or later. Push site context into CKEditor AI tools via the Context Control Center consumer type."
     }
 }

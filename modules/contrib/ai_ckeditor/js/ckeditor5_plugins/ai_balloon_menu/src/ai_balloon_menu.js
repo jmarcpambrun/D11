@@ -3,10 +3,15 @@
  */
 
 import { Plugin } from 'ckeditor5/src/core';
-import { addListToDropdown, createDropdown } from 'ckeditor5/src/ui';
-import { ContextualBalloon, clickOutsideHandler } from 'ckeditor5/src/ui';
-import icon from '../../../../icons/sparkles.svg';
+import {
+  addListToDropdown,
+  clickOutsideHandler,
+  ContextualBalloon,
+  createDropdown,
+} from 'ckeditor5/src/ui';
 import { Collection } from 'ckeditor5/src/utils';
+
+import icon from '../../../../icons/sparkles.svg';
 
 export default class AiBalloonMenu extends Plugin {
   static get requires() {
@@ -14,8 +19,7 @@ export default class AiBalloonMenu extends Plugin {
   }
 
   init() {
-    const config = this.editor.config;
-    const options = config.get('ai_ckeditor_ai');
+    const options = this.editor.config.get('ai_ckeditor_ai');
 
     if (!options) {
       return;
@@ -35,28 +39,27 @@ export default class AiBalloonMenu extends Plugin {
    * Creates a menu view inside the balloon.
    */
   _createMenuView() {
-    const editor = this.editor;
-    const config = this.editor.config;
-    const options = config.get('ai_ckeditor_ai');
-    const locale = editor.locale;
+    const { editor } = this;
+    const options = editor.config.get('ai_ckeditor_ai');
+    const { locale } = editor;
 
     // Create a collection for menu items.
     const items = new Collection();
 
     // Add all enabled plugins to the collection.
     if (typeof options.plugins !== 'undefined') {
-      Object.keys(options.plugins).forEach(function (plugin_id) {
-        if (options.plugins[plugin_id].enabled) {
+      Object.keys(options.plugins).forEach((pluginId) => {
+        if (options.plugins[pluginId].enabled) {
           items.add({
             type: 'button',
             model: {
-              isEnabled: options.plugins[plugin_id].enabled,
-              label: options.plugins[plugin_id].meta.label,
+              isEnabled: options.plugins[pluginId].enabled,
+              label: options.plugins[pluginId].meta.label,
               withText: true,
               command: 'AiDrupalDialog',
               group: 'ai_ckeditor_ai',
-              plugin_id: plugin_id
-            }
+              plugin_id: pluginId,
+            },
           });
         }
       });
@@ -70,7 +73,7 @@ export default class AiBalloonMenu extends Plugin {
       label: 'AI Assistant',
       withText: true,
       tooltip: false,
-      icon
+      icon,
     });
 
     // Add menu items to the dropdown.
@@ -78,7 +81,12 @@ export default class AiBalloonMenu extends Plugin {
 
     // Handle clicks on dropdown items.
     this.listenTo(this.menuView, 'execute', (event) => {
-      this.editor.execute(event.source.command, event.source.group, event.source.plugin_id, event.source.label);
+      this.editor.execute(
+        event.source.command,
+        event.source.group,
+        event.source.plugin_id,
+        event.source.label,
+      );
 
       // Hide the balloon menu after executing a command.
       this._hideMenu();
@@ -89,7 +97,7 @@ export default class AiBalloonMenu extends Plugin {
       emitter: this.menuView,
       activator: () => this._balloon.visibleView === this.menuView,
       contextElements: [this._balloon.view.element],
-      callback: () => this._hideMenu()
+      callback: () => this._hideMenu(),
     });
   }
 
@@ -97,8 +105,8 @@ export default class AiBalloonMenu extends Plugin {
    * Enables the balloon menu to appear when text is selected.
    */
   _enableBalloonMenuOnSelection() {
-    const editor = this.editor;
-    const selection = editor.model.document.selection;
+    const { editor } = this;
+    const { selection } = editor.model.document;
 
     // Update on selection change.
     this.listenTo(selection, 'change:range', () => {
@@ -106,8 +114,13 @@ export default class AiBalloonMenu extends Plugin {
       const aiDialogCommand = editor.commands.get('AiDrupalDialog');
 
       // Only show if we have a non-empty selection and the command is enabled.
-      if (selection.hasOwnRange && !selection.isCollapsed && aiDialogCommand.isEnabled) {
-        // Small delay to avoid showing the balloon during rapid selection changes.
+      if (
+        selection.hasOwnRange &&
+        !selection.isCollapsed &&
+        aiDialogCommand.isEnabled
+      ) {
+        // Small delay to avoid showing the balloon during rapid selection
+        // changes.
         setTimeout(() => {
           if (selection.hasOwnRange && !selection.isCollapsed) {
             this._showMenu();
@@ -128,7 +141,7 @@ export default class AiBalloonMenu extends Plugin {
       return;
     }
 
-    const selection = this.editor.model.document.selection;
+    const { selection } = this.editor.model.document;
 
     // If there's no selection or it's collapsed, don't show the menu.
     if (!selection.hasOwnRange || selection.isCollapsed) {
@@ -138,7 +151,7 @@ export default class AiBalloonMenu extends Plugin {
     // Add the menu to the balloon.
     this._balloon.add({
       view: this.menuView,
-      position: this._getBalloonPositionData()
+      position: this._getBalloonPositionData(),
     });
   }
 
@@ -155,13 +168,15 @@ export default class AiBalloonMenu extends Plugin {
    * Gets the position for the balloon relative to the selection.
    */
   _getBalloonPositionData() {
-    const editor = this.editor;
-    const view = editor.editing.view;
+    const { editor } = this;
+    const { view } = editor.editing;
     const viewDocument = view.document;
-    const targetSelection = view.domConverter.viewRangeToDom(viewDocument.selection.getFirstRange());
+    const targetSelection = view.domConverter.viewRangeToDom(
+      viewDocument.selection.getFirstRange(),
+    );
 
     return {
-      target: targetSelection
+      target: targetSelection,
     };
   }
 }

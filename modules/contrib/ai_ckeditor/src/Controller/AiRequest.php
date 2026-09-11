@@ -15,6 +15,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\Response\AiStreamedResponse;
+use Drupal\ai_ckeditor\AiCKEditorRequestTags;
 use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\editor\EditorInterface;
@@ -167,7 +168,11 @@ class AiRequest implements ContainerInjectionInterface {
       }
 
       /** @var \Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface $response */
-      $response = $ai_provider->chat($messages, $ai_model, ['ai_ckeditor'])->getNormalized();
+      $response = $ai_provider->chat(
+        $messages,
+        $ai_model,
+        AiCKEditorRequestTags::forPlugin($ai_ckeditor_plugin->getPluginId()),
+      )->getNormalized();
 
       if ($response instanceof StreamedChatMessageIteratorInterface) {
         return new AiStreamedResponse(function () use ($response) {

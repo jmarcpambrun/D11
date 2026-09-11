@@ -1,5 +1,7 @@
 aickeditor
+ckeditor
 aiui
+automator
 autoresize
 cefr
 echoai
@@ -8,6 +10,7 @@ listify
 pymdownx
 retag
 spellfix
+stylelintignore
 summarise
 superfences
 updb

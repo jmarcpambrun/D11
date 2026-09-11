@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "extends": ["../../../core/.eslintrc.passing.json"],
+  "rules": {
+    "camelcase": [
+      "error",
+      {
+        "properties": "never",
+        "ignoreDestructuring": true
+      }
+    ],
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": [
+          "^ckeditor5/",
+          "^@ckeditor/",
+          "webpack",
+          "terser-webpack-plugin"
+        ]
+      }
+    ]
+  }
+}

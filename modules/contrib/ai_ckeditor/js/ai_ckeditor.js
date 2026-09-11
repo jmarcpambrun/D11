@@ -3,17 +3,25 @@
  * Extends functionality for supporting CKEditor 5 AI plugins.
  */
 
-((Drupal, debounce, CKEditor5, $, once) => {
-
+/**
+ * @param {object} Drupal
+ *   Drupal core JavaScript object.
+ * @param {Function} $
+ *   jQuery.
+ */
+((Drupal, $) => {
   /**
-   * Function to handle background requests for editor streaming.
+   * Handles background requests for editor streaming.
    *
-   * @param ajax
-   *   The AJAX object.
-   * @param parameters
+   * @param {object} _ajax
+   *   The AJAX object from Drupal.AjaxCommands (unused).
+   * @param {object} parameters
    *   The parameters from AiRequestCommand.
    */
-  Drupal.AjaxCommands.prototype.aiRequest = function (ajax, parameters) {
+  Drupal.AjaxCommands.prototype.aiRequest = function aiRequest(
+    _ajax,
+    parameters,
+  ) {
     // Read entity context from the dialog's hidden form fields so the
     // AiWriter command can forward it to the server-side controller.
     const form = document.querySelector('.ckeditor5-ai-ckeditor-dialog-form');
@@ -28,8 +36,10 @@
       }
     }
 
-    const editor_id = $('#ai-ckeditor-response textarea').attr('data-ckeditor5-id');
-    const editor = Drupal.CKEditor5Instances.get(editor_id);
+    const editorId = $('#ai-ckeditor-response textarea').attr(
+      'data-ckeditor5-id',
+    );
+    const editor = Drupal.CKEditor5Instances.get(editorId);
     editor.execute('AiWriter', parameters);
   };
 
@@ -47,7 +57,7 @@
      *
      * @param {string} url
      *   The URL that contains the contents of the dialog.
-     * @param {function} saveCallback
+     * @param {Function} saveCallback
      *   A function to be called upon saving the dialog.
      * @param {object} dialogSettings
      *   An object containing settings to be passed to the jQuery UI.
@@ -64,7 +74,9 @@
 
       if (typeof dialogSettings.autoResize !== 'undefined') {
         if (typeof dialogSettings.autoResize === 'string') {
-          dialogSettings.autoResize = window.matchMedia('(' + dialogSettings.autoResize + ')').matches;
+          dialogSettings.autoResize = window.matchMedia(
+            `(${dialogSettings.autoResize})`,
+          ).matches;
         }
       }
 
@@ -81,7 +93,7 @@
         dialogType: 'modal',
         selector: '.ckeditor5-dialog-loading-link',
         url,
-        progress: {type: 'fullscreen'},
+        progress: { type: 'fullscreen' },
         submit: {
           editor_object: {},
           ...additionalData,
@@ -93,4 +105,4 @@
       Drupal.ckeditor5.saveCallback = saveCallback;
     },
   };
-})(Drupal, Drupal.debounce, CKEditor5, jQuery, once);
+})(Drupal, jQuery);

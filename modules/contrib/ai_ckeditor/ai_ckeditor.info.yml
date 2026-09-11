@@ -7,7 +7,7 @@ dependencies:
   - drupal:ckeditor5
   - ai:ai
 
-# Information added by Drupal.org packaging script on 2026-09-02
-version: '1.5.0-beta1'
+# Information added by Drupal.org packaging script on 2026-09-11
+version: '1.5.0-beta3'
 project: 'ai_ckeditor'
-datestamp: 1788380553
+datestamp: 1789106974

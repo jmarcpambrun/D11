@@ -37,3 +37,15 @@ drush updb
 ```
 
 You can also run the updates at `/update.php`. The update moves you to this standalone module and keeps your existing text format and plugin configuration.
+
+## Optional: Context Control Center
+
+To push site context into CKEditor AI tools, enable [AI Context](https://www.drupal.org/project/ai_context) **1.0.0-beta5 or later** alongside this module:
+
+1. Enable AI Context and this module.
+2. Enable the **CKEditor** consumer type. Open **Consumer Types** under **Context Control Center**. Depending on the AI module version, that sits under **Configuration → AI → Tools & Automation** or **Configuration → AI Setup and Configuration**.
+3. Open **Context consumers** and edit a tool such as `ckeditor:ai_ckeditor_completion`.
+4. Turn on **Push context automatically**.
+5. Subscribe to scopes (for example Use Case = Working with Text) and optionally Always / Never include.
+
+Automatic push stays off until you update the configuration for that tool. Generate, Tone, Translate, and the other tools each have their own settings.

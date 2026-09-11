@@ -3014,28 +3014,34 @@
         },
         {
             "name": "drupal/ai_ckeditor",
-            "version": "1.5.0-beta1",
-            "version_normalized": "1.5.0.0-beta1",
+            "version": "1.5.0-beta3",
+            "version_normalized": "1.5.0.0-beta3",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_ckeditor.git",
-                "reference": "1.5.0-beta1"
+                "reference": "1.5.0-beta3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.5.0-beta1.zip",
-                "reference": "1.5.0-beta1",
-                "shasum": "756857cb7ddc2a4ddb0a5440642e840a56e11bdc"
+                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.5.0-beta3.zip",
+                "reference": "1.5.0-beta3",
+                "shasum": "d15b581e225a69d0371d97e01efb74baf7ff3733"
             },
             "require": {
                 "drupal/ai": "^1.5",
                 "drupal/core": "^10.4 || ^11"
             },
+            "require-dev": {
+                "drupal/ai_context": "1.0.x-dev"
+            },
+            "suggest": {
+                "drupal/ai_context": "1.0.0-beta5 or later. Push site context into CKEditor AI tools via the Context Control Center consumer type."
+            },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.0-beta1",
-                    "datestamp": "1788380550",
+                    "version": "1.5.0-beta3",
+                    "datestamp": "1789106971",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
