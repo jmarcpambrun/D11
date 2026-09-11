@@ -47,9 +47,10 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $task = $event->task;
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
-      $created_by = $task->getOwnerName();
-      $owner = $task->getOwner();
-      $created_by_email = $owner ? $owner->getEmail() : '';
+      // Attribute the notification to whoever performed the action.
+      $account = $event->account;
+      $created_by = $account->getDisplayName();
+      $created_by_email = $account->getEmail();
       $created = $task->getCreatedTime();
       $created = date('r', $created);
       $task_link = Link::createFromRoute($ticket_id,
@@ -138,11 +139,12 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $task = $event->task;
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
-      $created_by = $task->getOwnerName();
-      $owner = $task->getOwner();
-      $created_by_email = $owner ? $owner->getEmail() : '';
-      $created = $task->getCreatedTime();
-      $created = date('r', $created);
+      // Attribute the notification to whoever performed the action.
+      $account = $event->account;
+      $changed_by = $account->getDisplayName();
+      $changed_by_email = $account->getEmail();
+      $changed = $task->getCreatedTime();
+      $changed = date('r', $changed);
       $task_link = Link::createFromRoute($ticket_id,
         'entity.burndown_task.edit_form',
         ['burndown_task' => $task->id()],
@@ -186,9 +188,9 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
 
         $task_action = $this->t('edited a task');
         $what_changed = $this->t('What changed');
-        $message = "{$created_by} {$task_action}.<br><br>";
+        $message = "{$changed_by} {$task_action}.<br><br>";
         $message .= "{$project_link} / {$task_link}: {$title} <br>";
-        $message .= "{$created} <br>";
+        $message .= "{$changed} <br>";
         $message .= "{$what_changed}: <br>";
         $message .= $change_list;
 
@@ -200,7 +202,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $langcode = $watcher->getPreferredLangcode();
 
           // Do not send to the person who edited the task.
-          if ($to === $created_by_email) {
+          if ($to === $changed_by_email) {
             continue;
           }
 
@@ -208,7 +210,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $params = [
             'ticket_id' => $ticket_id,
             'title' => $title,
-            'created_by' => $created_by,
+            'created_by' => $changed_by,
             'username' => $username,
             'message' => $message,
           ];
@@ -241,10 +243,12 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
       $task = $event->task;
       $ticket_id = $task->getTicketId();
       $title = $task->getName();
-      $created_by = $task->getOwnerName();
-      $created_by_email = $task->getOwner()->getEmail();
-      $created = $task->getCreatedTime();
-      $created = date('r', $created);
+      // Attribute the notification to whoever performed the action.
+      $account = $event->account;
+      $commented_by = $account->getDisplayName();
+      $commented_by_email = $account->getEmail();
+      $commented_date = $task->getCreatedTime();
+      $commented_date = date('r', $commented_date);
       $task_link = Link::createFromRoute($ticket_id,
         'entity.burndown_task.edit_form',
         ['burndown_task' => $task->id()],
@@ -278,9 +282,9 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
 
         $task_action = $this->t('commented on a task');
         $comment_label = $this->t('Comment');
-        $message = "{$created_by} {$task_action}.<br><br>";
+        $message = "{$commented_by} {$task_action}.<br><br>";
         $message .= "{$project_link} / {$task_link}: {$title} <br>";
-        $message .= "{$created} <br>";
+        $message .= "{$commented_date} <br>";
         $message .= "{$comment_label}: <br>";
         $message .= $comment;
 
@@ -292,7 +296,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $langcode = $watcher->getPreferredLangcode();
 
           // Do not send to the person who commented on the task.
-          if ($to === $created_by_email) {
+          if ($to === $commented_by_email) {
             continue;
           }
 
@@ -300,7 +304,7 @@ class TaskNotificationsSubscriber implements EventSubscriberInterface {
           $params = [
             'ticket_id' => $ticket_id,
             'title' => $title,
-            'created_by' => $created_by,
+            'created_by' => $commented_by,
             'username' => $username,
             'message' => $message,
           ];

@@ -63,7 +63,7 @@ final class BurndownTimeTrackerViewsHooks {
         'id' => 'numeric',
       ],
       'filter' => [
-        'id' => 'numeric',
+        'id' => 'date',
         'allow empty' => TRUE,
       ],
       'sort' => [
@@ -163,6 +163,13 @@ final class BurndownTimeTrackerViewsHooks {
       ],
     ];
 
+    $data['burndown_task__log']['log_uid']['relationship'] = [
+      'base' => 'users_field_data',
+      'base field' => 'uid',
+      'id' => 'standard',
+      'label' => t('User'),
+    ];
+
     $data['burndown_task__log']['entity_id']['relationship'] = [
       'base' => 'burndown_task_field_data',
       'base field' => 'id',
@@ -193,13 +200,16 @@ final class BurndownTimeTrackerViewsHooks {
    */
   #[Hook('views_pre_view')]
   public function viewsPreView(ViewExecutable $view, $display_id, array &$args): void {
+    $request = \Drupal::request();
+    $query = $request->query->all();
+
     if ($view->id() !== 'burndown_hours' || $display_id !== 'hours') {
       return;
     }
 
     $account = \Drupal::currentUser();
     $is_admin = $account->hasPermission('manage user work hours');
-    $input = \Drupal::request()->query->all();
+    $input = $query;
     $selected_uid = BurndownTimeTrackerUtils::resolveSelectedUserId($input, $is_admin, (int) $account->id());
 
     $toolbar = [

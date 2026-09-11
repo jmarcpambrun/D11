@@ -508,7 +508,7 @@ class TaskController extends ControllerBase implements ContainerInjectionInterfa
       ->save();
 
     // Instantiate our event.
-    $event = new TaskCommentEvent($task, $filtered_comment);
+    $event = new TaskCommentEvent($task, $filtered_comment, $this->account);
 
     // Dispatch the event.
     $this->eventDispatcher->dispatch($event, TaskCommentEvent::COMMENTED);

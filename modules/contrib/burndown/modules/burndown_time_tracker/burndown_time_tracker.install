@@ -9,13 +9,6 @@ use Drupal\views\Entity\View;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Implements hook_install().
- */
-function burndown_time_tracker_install() {
-  burndown_time_tracker_sync_hours_view();
-}
-
-/**
  * Implements hook_schema().
  */
 function burndown_time_tracker_schema() {
@@ -52,21 +45,24 @@ function burndown_time_tracker_schema() {
 }
 
 /**
- * Sync the Burndown hours view definition into active configuration.
+ * Install a Burndown View definition into active configuration.
+ *
+ * @param string $view_machine_name
+ *   The machine name of the View to install.
  */
-function burndown_time_tracker_sync_hours_view() {
-  $config_path = __DIR__ . '/config/install/views.view.burndown_hours.yml';
+function burndown_time_tracker_install_view($view_machine_name): bool {
+  $config_path = __DIR__ . '/config/install/views.view.' . $view_machine_name . '.yml';
   if (!file_exists($config_path)) {
-    return;
+    return FALSE;
   }
 
   $definition = Yaml::parseFile($config_path);
   if (!is_array($definition) || empty($definition['id'])) {
-    return;
+    return FALSE;
   }
 
   // Normalize the Date field to schema-valid keys for the Views date handler.
-  if (isset($definition['display']['default']['display_options']['fields']['log_created'])) {
+  if ($view_machine_name === 'burndown_hours' && isset($definition['display']['default']['display_options']['fields']['log_created'])) {
     $log_created = &$definition['display']['default']['display_options']['fields']['log_created'];
     $log_created['plugin_id'] = 'date';
     $stale_keys = [
@@ -92,11 +88,10 @@ function burndown_time_tracker_sync_hours_view() {
   unset($definition['uuid']);
   unset($definition['_core']);
 
-  $view = View::load('burndown_hours');
+  $view = View::load($view_machine_name);
   if (!$view) {
     $view = View::create($definition);
-    $view->save();
-    return;
+    return (bool) $view->save();
   }
 
   $view->set('label', $definition['label'] ?? $view->label());
@@ -104,14 +99,17 @@ function burndown_time_tracker_sync_hours_view() {
   $view->set('base_table', $definition['base_table'] ?? $view->get('base_table'));
   $view->set('base_field', $definition['base_field'] ?? $view->get('base_field'));
   $view->set('display', $definition['display']);
-  $view->save();
+  return (bool) $view->save();
 }
 
 /**
  * Update the Burndown hours view to use the page display.
  */
 function burndown_time_tracker_update_9001() {
-  burndown_time_tracker_sync_hours_view();
+  $success = burndown_time_tracker_install_view('burndown_hours');
+  if (!$success) {
+    return t('Failed to update the Burndown hours View to match module configuration.');
+  }
   return t("Updated the Burndown hours View to match module's config.");
 }
 
@@ -126,4 +124,15 @@ function burndown_time_tracker_update_9002() {
   }
 
   return t('No need to create the Burndown time tracker timer table, it exists.');
+}
+
+/**
+ * Ensure the Burndown summary view exists and is current.
+ */
+function burndown_time_tracker_update_9003() {
+  $success = burndown_time_tracker_install_view('burndown_hours_summary');
+  if (!$success) {
+    return t('Failed to install the Burndown hours summary View to match the module configuration.');
+  }
+  return t('Installed the Burndown hours summary View to match the module configuration. Be sure to assign the new perm "view work hours reports" to the appropriate roles to allow access to the summary report.');
 }

@@ -61,6 +61,17 @@ final class BurndownTimeTrackerUtils {
       return (int) $matches[1];
     }
 
+    if (is_string($input['tracked_user'])) {
+      $user_ids = \Drupal::entityQuery('user')
+        ->condition('name', $input['tracked_user'])
+        ->accessCheck(TRUE)
+        ->range(0, 1)
+        ->execute();
+      if (!empty($user_ids)) {
+        return (int) reset($user_ids);
+      }
+    }
+
     return $default_uid;
   }
 

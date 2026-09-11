@@ -1,0 +1,17 @@
+burndown_time_tracker.hours_tab:
+  route_name: view.burndown_hours.hours
+  base_route: view.burndown_hours.hours
+  title: 'Hours'
+  weight: 0
+
+burndown_time_tracker.hours_summary_tab:
+  route_name: view.burndown_hours_summary.page_1
+  base_route: view.burndown_hours.hours
+  title: 'Summary'
+  weight: 1
+
+burndown_time_tracker.manage_work_timers_tab:
+  route_name: burndown_time_tracker.manage_work_timers
+  base_route: view.burndown_hours.hours
+  title: 'Manage Work Timers'
+  weight: 2

@@ -3,6 +3,7 @@
 namespace Drupal\burndown\Event;
 
 use Drupal\Component\EventDispatcher\Event;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\burndown\Entity\Task;
 
 /**
@@ -20,13 +21,23 @@ class TaskChangedEvent extends Event {
   public $task;
 
   /**
+   * The user who edited the task.
+   *
+   * @var \Drupal\Core\Session\AccountInterface|null
+   */
+  public $account;
+
+  /**
    * Constructs the object.
    *
    * @param \Drupal\burndown\Entity\Task $task
    *   The modified task.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The user who edited the task.
    */
-  public function __construct(Task $task) {
+  public function __construct(Task $task, AccountInterface $account) {
     $this->task = $task;
+    $this->account = $account;
   }
 
 }

@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\burndown\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
@@ -10,6 +12,8 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group burndown
  */
+#[Group('burndown')]
+#[RunTestsInSeparateProcesses]
 class LoadTest extends BrowserTestBase {
 
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\burndown_time_tracker\Service;
 
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\Core\Database\Statement\FetchAs;
 use Drupal\burndown\Entity\Task;
 use Drupal\Core\Database\Connection;
 
@@ -50,11 +52,15 @@ final class TaskTimerService {
    *   Active timer rows keyed numerically.
    */
   public function getActiveTimers(): array {
-    $rows = $this->database->select(self::TABLE, 't')
+    $rows = DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.2.0', fn() => $this->database->select(self::TABLE, 't')
       ->fields('t', ['uid', 'task_id', 'started'])
       ->orderBy('started', 'ASC')
       ->execute()
-      ->fetchAll(\PDO::FETCH_ASSOC);
+      ->fetchAll(FetchAs::Associative), fn() => $this->database->select(self::TABLE, 't')
+      ->fields('t', ['uid', 'task_id', 'started'])
+      ->orderBy('started', 'ASC')
+      ->execute()
+      ->fetchAll(\PDO::FETCH_ASSOC));
 
     return is_array($rows) ? $rows : [];
   }

@@ -63,7 +63,7 @@ function burndown_update_8001() {
   $config_factory = \Drupal::configFactory();
   $config = $config_factory->getEditable('burndown.config_settings');
   $config->set('relationship_opposites', "Blocked by|Blocks\r\nBlocks|Blocked by\r\nRelated to|Related to\r\nFollowed up by|Follows up\r\nFollows up|Followed up by");
-  $config->save(TRUE);
+  $config->save();
 }
 
 /**
@@ -145,7 +145,7 @@ function burndown_update_8003() {
     $source_data['uuid'] = $existing_uuid;
   }
 
-  $active_config->setData($source_data)->save(TRUE);
+  $active_config->setData($source_data)->save();
   return t('Imported the My Tasks View from burndown config/install.');
 }
 

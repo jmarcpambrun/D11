@@ -2,6 +2,8 @@
 
 namespace Drupal\burndown\Services;
 
+use Drupal\Component\Utility\DeprecationHelper;
+use Drupal\Core\Database\Statement\FetchAs;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Utility\Error;
 
@@ -62,7 +64,7 @@ class TaskIdService {
         ->condition('b.id', $project_id)
         ->execute();
 
-      $results = $data->fetchAll(\PDO::FETCH_OBJ);
+      $results = DeprecationHelper::backwardsCompatibleCall(\Drupal::VERSION, '11.2.0', fn() => $data->fetchAll(FetchAs::Object), fn() => $data->fetchAll(\PDO::FETCH_OBJ));
 
       if (empty($results)) {
         throw new \Exception('Project ID ' . $project_id . ' does not exist.');

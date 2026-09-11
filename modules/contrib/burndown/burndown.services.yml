@@ -20,3 +20,7 @@ services:
     class: Drupal\burndown\EventSubscriber\MyTasksRouteSubscriber
     tags:
       - { name: 'event_subscriber' }
+
+  Drupal\burndown\Hook\BurndownHooks1:
+    class: Drupal\burndown\Hook\BurndownHooks1
+    autowire: true

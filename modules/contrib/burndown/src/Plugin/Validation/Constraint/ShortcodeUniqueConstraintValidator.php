@@ -13,7 +13,7 @@ class ShortcodeUniqueConstraintValidator extends ConstraintValidator {
   /**
    * {@inheritdoc}
    */
-  public function validate($entity, Constraint $constraint) {
+  public function validate(mixed $entity, Constraint $constraint): void {
     if (!isset($entity) || !$constraint instanceof ShortcodeUniqueConstraint) {
       return;
     }
