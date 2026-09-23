@@ -27,6 +27,7 @@ field type and calls it.
 ```php
 public function getColumns(): array;
 public function shouldExtract(ContentEntityInterface $entity, FieldConfigInterface $fieldDefinition): bool;
+public function skipFieldAccessCheck(): bool;
 public function extract(ContentEntityInterface $entity, string $fieldName): array;
 public function setValue(ContentEntityInterface $entity, string $fieldName, array $textMeta): void;
 ```
@@ -38,7 +39,33 @@ public function setValue(ContentEntityInterface $entity, string $fieldName, arra
 - `extract()` returns an array of text metadata, one entry per field delta. Each
   entry carries a `_columns` key naming the parts to translate. The default
   `_columns` value is `['value']`.
+- `skipFieldAccessCheck()` opts the field out of the view access check. The
+  base class returns `FALSE`; see below before changing that.
 - `setValue()` merges the translated text back into the entity's field.
+
+### Skipping the field access check
+
+`TextExtractor::shouldExtract()` checks that the acting account may view the
+field before consulting the plugin. `skipFieldAccessCheck()` turns that check
+off for every field a plugin handles; the base class returns `FALSE`:
+
+```php
+public function skipFieldAccessCheck(): bool {
+  return TRUE;
+}
+```
+
+Only return `TRUE` when the field carries no text of its own and the plugin
+only recurses into entities whose fields are checked separately — anywhere else
+it leaks content the account is not allowed to see.
+
+`LbFieldExtractor` is the one case in this module: core denies view access to
+the `layout_section` field for every account
+(`LayoutSectionItemList::defaultAccess()`,
+[#2942975](https://www.drupal.org/node/2942975)), so without the opt-out the
+layout field is dropped and inline block content is silently left untranslated.
+`ReferenceFieldExtractor` recurses too but keeps the check: view access on an
+entity reference field is a real permission decision a site can make.
 
 ### Text metadata shape
 

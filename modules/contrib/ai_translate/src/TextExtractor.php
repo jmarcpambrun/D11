@@ -127,8 +127,11 @@ class TextExtractor implements TextExtractorInterface {
     }
     $fieldName = $fieldDefinition->getName();
     $fieldType = $fieldDefinition->getType();
-    // Fields the acting account cannot view must not be sent for translation.
-    if (!$entity->get($fieldName)->access('view')) {
+    // Fields the acting account cannot view must not be sent for translation,
+    // unless the plugin explicitly opts out.
+    // @see \Drupal\ai_translate\FieldTextExtractorInterface::skipFieldAccessCheck()
+    if (!$this->plugins[$fieldType]->skipFieldAccessCheck()
+      && !$entity->get($fieldName)->access('view')) {
       return FALSE;
     }
     if ($fieldDefinition->getName() === $entity->getEntityType()->getKey('label')) {

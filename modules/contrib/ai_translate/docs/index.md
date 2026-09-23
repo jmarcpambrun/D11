@@ -27,6 +27,8 @@ translation in the target language.
   new translation as a draft for review.
 - **Interface translation.** Translate UI strings through the same AI provider.
 - **Drush support.** Trigger translations from the command line.
+- **Agent-ready.** Translation is exposed as an AI function call and, optionally,
+  as a Tool API plugin, so AI agents can translate content directly.
 - **Framework mode.** Hand the Translate tab back to Drupal and use AI Translate
   as the translation engine behind other tools, such as AI TMGMT.
 

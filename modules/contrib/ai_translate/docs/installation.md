@@ -40,6 +40,20 @@ drush en ai_translate content_translation
     2.0.0 and move to `drupal/ai_translate:^2.0`. See the change record
     [Moving AI Translate Module out of AI project](https://www.drupal.org/node/3570275).
 
+## Optional: expose translation as a Tool API plugin
+
+To let AI agents translate content through the [Tool](https://www.drupal.org/project/tool)
+module, install Tool and enable the `ai_translate_tool` submodule:
+
+```bash
+composer require drupal/tool
+drush en ai_translate_tool
+```
+
+This is not needed for the AI function call plugin, which ships with
+AI Translate itself. See
+[Agentic integrations](developers/agentic-integrations.md).
+
 ## Set up translation
 
 1. Enable a second language at `Administration > Configuration > Regional and

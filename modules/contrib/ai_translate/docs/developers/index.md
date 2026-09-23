@@ -1,6 +1,6 @@
 # For developers
 
-AI Translate is built around a small plugin type and two services.
+AI Translate is built around a small plugin type and a handful of services.
 
 ## Field text extractor plugins
 
@@ -14,13 +14,28 @@ fields. Add your own to support a custom field type. See
 
 | Service ID | Class | Purpose |
 |---|---|---|
+| `ai_translate.translation_orchestrator` | `Drupal\ai_translate\EntityTranslationOrchestrator` | Runs the entity translation workflow end to end, or step by step. |
 | `ai_translate.text_extractor` | `Drupal\ai_translate\TextExtractor` | Collects text metadata from an entity's fields and writes translations back. |
 | `ai_translate.text_translator` | `Drupal\ai_translate\TextTranslator` | Sends text to the AI provider and returns the translation. |
 | `plugin.manager.text_extractor` | `Drupal\ai_translate\FieldTextExtractorPluginManager` | Discovers and loads field text extractor plugins. |
 
-The public entry points are `TextExtractorInterface` and
-`TextTranslatorInterface`. The Drush commands and the Translate tab controller
-both use these services, so calling them directly gives the same behavior.
+To translate an entity, start with
+`EntityTranslationOrchestratorInterface`. The Drush commands and the Translate
+tab controller both go through it, so calling it gives you exactly the same
+behavior as the built-in translation paths. See
+[Entity translation orchestrator](entity-translation-orchestrator.md).
+
+`TextExtractorInterface` and `TextTranslatorInterface` remain available for
+lower-level work, such as translating a single string without touching an
+entity.
+
+## Agent and tool integrations
+
+The orchestrator is wrapped in an AI function call plugin
+(`ai_translate:translate_entity`) and, through the optional `ai_translate_tool`
+submodule, a Tool API plugin (`ai_translate_tool:translate_entity`). Both let an
+AI agent translate a content entity without custom code. See
+[Agentic integrations](agentic-integrations.md).
 
 ## AI provider plugin
 

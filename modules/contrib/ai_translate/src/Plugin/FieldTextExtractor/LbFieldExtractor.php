@@ -16,6 +16,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_translate\Attribute\FieldTextExtractor;
 use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\Core\Entity\RevisionableStorageInterface;
+use Drupal\layout_builder\InlineBlockUsageInterface;
 use Drupal\layout_builder\Plugin\Block\InlineBlock;
 use Drupal\layout_builder\SectionStorage\SectionStorageManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -106,6 +107,13 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
   protected UuidInterface $uuid;
 
   /**
+   * The inline block usage service.
+   *
+   * @var \Drupal\layout_builder\InlineBlockUsageInterface
+   */
+  protected InlineBlockUsageInterface $inlineBlockUsage;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -118,6 +126,7 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
     $instance->moduleHandler = $container->get('module_handler');
     $instance->logger = $container->get('logger.factory')?->get('ai_translate');
     $instance->uuid = $container->get('uuid');
+    $instance->inlineBlockUsage = $container->get('inline_block.usage');
     try {
       $instance->blockStorage = $instance->entityTypeManager
         ->getStorage('block_content');
@@ -195,6 +204,20 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
    */
   public function shouldExtract(ContentEntityInterface $entity, FieldConfigInterface $fieldDefinition): bool {
     return isset($this->blockStorage);
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Core denies view access to the layout_section field for every account, so
+   * the check has to be skipped here. It says nothing about the text being
+   * translated anyway: that lives in the inline blocks, whose own fields are
+   * checked separately.
+   *
+   * @see \Drupal\layout_builder\Field\LayoutSectionItemList::defaultAccess()
+   */
+  public function skipFieldAccessCheck(): bool {
+    return TRUE;
   }
 
   /**
@@ -291,6 +314,9 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
 
           try {
             $clonedBlock->save();
+            if ($clonedBlock->id()) {
+              $this->inlineBlockUsage->addUsage($clonedBlock->id(), $entity);
+            }
           }
           catch (\Exception $e) {
             $this->logger->error('Failed to save cloned block: @message', ['@message' => $e->getMessage()]);

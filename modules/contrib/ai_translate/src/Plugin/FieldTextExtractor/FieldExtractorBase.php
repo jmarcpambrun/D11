@@ -24,6 +24,13 @@ abstract class FieldExtractorBase extends PluginBase implements FieldTextExtract
   /**
    * {@inheritdoc}
    */
+  public function skipFieldAccessCheck(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function extract(ContentEntityInterface $entity, string $fieldName): array {
     if ($entity->get($fieldName)->isEmpty() || empty($this->getColumns())) {
       return [];

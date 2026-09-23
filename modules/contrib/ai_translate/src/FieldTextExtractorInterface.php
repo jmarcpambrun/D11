@@ -32,6 +32,20 @@ interface FieldTextExtractorInterface {
   public function shouldExtract(ContentEntityInterface $entity, FieldConfigInterface $fieldDefinition) : bool;
 
   /**
+   * Whether to skip the view access check on the field itself.
+   *
+   * TextExtractor::shouldExtract() checks that the acting account may view the
+   * field before consulting the plugin. Returning TRUE removes that safeguard
+   * for every field this plugin handles, and leaks content the account is not
+   * allowed to see unless the field carries no text of its own and the plugin
+   * only recurses into entities whose fields are checked separately.
+   *
+   * @return bool
+   *   TRUE to extract from the field even when the account cannot view it.
+   */
+  public function skipFieldAccessCheck(): bool;
+
+  /**
    * Extract text metadata from an entity field.
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
