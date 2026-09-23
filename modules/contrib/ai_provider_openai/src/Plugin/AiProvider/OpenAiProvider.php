@@ -10,6 +10,7 @@ use Drupal\Core\File\FileExists;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\OpenAiBasedProviderClientBase;
+use Drupal\ai\Dto\ChatProviderLimitsDto;
 use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiQuotaException;
@@ -316,7 +317,10 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
         $message = $reconstructed->getNormalized();
       }
       else {
-        $response = $this->client->responses()->create($payload)->toArray();
+        // Keep the response object around, its meta() carries the rate limit
+        // headers that are lost as soon as it is cast to an array.
+        $raw_response = $this->client->responses()->create($payload);
+        $response = $raw_response->toArray();
         $message = $this->extractResponsesChatMessage($response, $input);
       }
     }
@@ -346,6 +350,10 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
     }
     elseif (!$this->streamed) {
       $this->setResponsesTokenUsage($chat_output, $response);
+    }
+
+    if (isset($raw_response)) {
+      $this->setResponsesRateLimits($chat_output, $raw_response);
     }
 
     return $chat_output;
@@ -652,6 +660,67 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       reasoning: $usage['output_tokens_details']['reasoning_tokens'] ?? NULL,
       cached: $usage['input_tokens_details']['cached_tokens'] ?? NULL,
     ));
+  }
+
+  /**
+   * Sets the rate limits from the response headers.
+   *
+   * OpenAI reports the remaining quota on every response via the
+   * x-ratelimit-* headers, which the SDK exposes on the response meta.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatOutput $chat_output
+   *   The chat output to set the limits on.
+   * @param object $response
+   *   The raw SDK response object.
+   */
+  protected function setResponsesRateLimits(ChatOutput $chat_output, object $response): void {
+    if (!method_exists($response, 'meta')) {
+      return;
+    }
+    $meta = $response->meta();
+    // Both limits are NULL when the account or endpoint reports no headers.
+    if (empty($meta->requestLimit) && empty($meta->tokenLimit)) {
+      return;
+    }
+
+    $chat_output->setRateLimits(new ChatProviderLimitsDto(
+      rateLimitMaxRequests: $meta->requestLimit->limit ?? NULL,
+      rateLimitMaxTokens: $meta->tokenLimit->limit ?? NULL,
+      rateLimitRemainingRequests: $meta->requestLimit->remaining ?? NULL,
+      rateLimitRemainingTokens: $meta->tokenLimit->remaining ?? NULL,
+      rateLimitResetRequests: $this->parseResetDuration($meta->requestLimit->reset ?? NULL),
+      rateLimitResetTokens: $this->parseResetDuration($meta->tokenLimit->reset ?? NULL),
+    ));
+  }
+
+  /**
+   * Converts an OpenAI reset header into seconds.
+   *
+   * The headers use Go style durations such as "1s", "6m0s" or "1h20m30s",
+   * while the DTO expects a number of seconds.
+   *
+   * @param string|null $duration
+   *   The raw header value.
+   *
+   * @return int|null
+   *   The duration in seconds, or NULL if there was nothing to parse.
+   */
+  protected function parseResetDuration(?string $duration): ?int {
+    if ($duration === NULL || $duration === '') {
+      return NULL;
+    }
+    // Match every value/unit pair, longest unit first so "ms" is not read as
+    // "m". Anything unparseable is ignored rather than guessed at.
+    if (!preg_match_all('/(\d+(?:\.\d+)?)(ms|h|m|s)/', $duration, $matches, PREG_SET_ORDER)) {
+      return NULL;
+    }
+    $multipliers = ['ms' => 0.001, 's' => 1, 'm' => 60, 'h' => 3600];
+    $seconds = 0;
+    foreach ($matches as $match) {
+      $seconds += (float) $match[1] * $multipliers[$match[2]];
+    }
+    // Round up, so a reset is never reported as sooner than it is.
+    return (int) ceil($seconds);
   }
 
   /**
@@ -975,6 +1044,17 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
 
   /**
    * {@inheritdoc}
+   *
+   * Moderates the whole collection in a single moderation request (the OpenAI
+   * moderation endpoint accepts an array of inputs) rather than one call per
+   * chunk, so multi embeddings does not reintroduce per-chunk API calls.
+   */
+  protected function moderateEmbeddingsCollectionInput(array $prompts, array $tags): void {
+    $this->moderationEndpoints($prompts, $tags);
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function embeddings(string|EmbeddingsInput $input, string $model_id, array $tags = []): EmbeddingsOutput {
     $this->loadClient();
@@ -1009,6 +1089,10 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       }
     }
 
+    // Single embedding response.
+    if (!isset($response['data'][0]['embedding'])) {
+      throw new \RuntimeException('Embeddings response missing embedding data');
+    }
     return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
   }
 
@@ -1064,13 +1148,15 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
    *
    * @throws \Drupal\ai\Exception\AiUnsafePromptException
    */
-  public function moderationEndpoints(string $prompt, array $tags = []): void {
+  public function moderationEndpoints(string|array $prompt, array $tags = []): void {
     $this->getClient();
     // If moderation is disabled globally or the caller has tagged this call to
     // skip moderation, bypass the check.
     if (!$this->moderation || in_array('skip_moderation', $tags)) {
       return;
     }
+    // The moderation endpoint accepts either a single string or a list of
+    // strings, so a batch can be moderated in one request.
     $payload = [
       'model' => 'omni-moderation-latest',
       'input' => $prompt,
@@ -1095,8 +1181,11 @@ class OpenAiProvider extends OpenAiBasedProviderClientBase implements ImageToIma
       }
     }
 
-    if (!empty($response['results'][0]['flagged'])) {
-      throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');
+    // Check every result so batched inputs are all validated.
+    foreach ($response['results'] ?? [] as $result) {
+      if (!empty($result['flagged'])) {
+        throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');
+      }
     }
   }
 

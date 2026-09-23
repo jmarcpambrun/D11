@@ -28,3 +28,6 @@ phpstan:
   before_script:
     - composer require --dev drush/drush
 
+.composer-base:
+  before_script:
+    - composer require 'drupal/ai:1.5.x-dev@dev' --no-update
