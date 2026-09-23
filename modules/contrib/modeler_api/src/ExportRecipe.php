@@ -103,7 +103,10 @@ class ExportRecipe {
     // The separately stored raw model data is deliberately not added here: a
     // recipe ships the model, not the diagram of the modeler that authored it.
     // @see self::stripModelerData()
-    $this->api->getNestedDependencies($dependencies, $entity->getDependencies());
+    // A role in the closure is only ensured to exist below, without the
+    // permissions it carries on this site, so nothing those permissions depend
+    // on belongs to the recipe either.
+    $this->api->getNestedDependencies($dependencies, $entity->getDependencies(), FALSE);
 
     // Config objects that the model declares in addition to the ones it
     // depends on. They join the very same list, so that a declared object goes
@@ -164,11 +167,13 @@ class ExportRecipe {
         $config = $this->stripModelerData($config);
       }
       if (str_starts_with($configName, 'user.role.')) {
+        // A recipe only makes sure the role exists. Its permissions are what
+        // this site happens to grant, not something the model authored, so a
+        // model grants what it needs through its own config actions instead.
         $actions[$configName] = [
           'ensure_exists' => [
             'label' => $config['label'],
           ],
-          'grantPermissions' => $config['permissions'],
         ];
       }
       else {
@@ -185,11 +190,12 @@ class ExportRecipe {
         }
       }
     }
-    // Config actions the model expresses win over the generated role actions
-    // on the rare occasion that both address the same config object, because
-    // the model states them explicitly while the role actions are derived.
+    // Config actions the model expresses join the generated role actions. For
+    // the same config object the model's actions win key by key, while a
+    // derived action the model does not state itself stays in place, so that
+    // a role the model grants permissions to is still created first.
     foreach ($this->configActionsByName($owner->getConfigActions($entity)) as $configName => $action) {
-      $actions[$configName] = $action;
+      $actions[$configName] = array_merge($actions[$configName] ?? [], $action);
     }
 
     $this->warnAboutUnexpectedConfigFiles($configDestination, array_keys($configFiles));
@@ -248,7 +254,9 @@ class ExportRecipe {
    * the conversion belongs here, at the boundary between them.
    *
    * Entries without a config name are skipped rather than producing an action
-   * under an empty key, which a recipe could not apply.
+   * under an empty key, which a recipe could not apply. An "actions" value
+   * that is not a map yields an empty map, since a recipe cannot apply it
+   * either and the value has to merge with the derived actions.
    *
    * @param array $configActions
    *   The config actions as a list of maps, each with a "config" key holding
@@ -269,7 +277,7 @@ class ExportRecipe {
       if (!is_string($configName) || $configName === '') {
         continue;
       }
-      $actions[$configName] = $configAction['actions'] ?? [];
+      $actions[$configName] = is_array($configAction['actions'] ?? NULL) ? $configAction['actions'] : [];
     }
     return $actions;
   }

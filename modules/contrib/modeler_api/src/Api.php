@@ -1055,8 +1055,13 @@ class Api {
    *   The list of all dependencies.
    * @param array $dependencies
    *   The list of dependencies to be added.
+   * @param bool $followRoles
+   *   Whether to descend into the dependencies of a role. A role depends on
+   *   whatever the permissions it carries on this site target, so a caller
+   *   that ships the role without its permissions passes FALSE to keep those
+   *   objects and modules out of the closure.
    */
-  public function getNestedDependencies(array &$allDependencies, array $dependencies): void {
+  public function getNestedDependencies(array &$allDependencies, array $dependencies, bool $followRoles = TRUE): void {
     foreach ($dependencies['module'] ?? [] as $module) {
       if (!in_array($module, $allDependencies['module'], TRUE)) {
         $allDependencies['module'][] = $module;
@@ -1068,9 +1073,12 @@ class Api {
     foreach ($dependencies['config'] as $dependency) {
       if (!in_array($dependency, $allDependencies['config'], TRUE)) {
         $allDependencies['config'][] = $dependency;
+        if (!$followRoles && str_starts_with($dependency, 'user.role.')) {
+          continue;
+        }
         $depConfig = $this->getConfigFactory()->get($dependency)->getStorage()->read($dependency);
         if ($depConfig && isset($depConfig['dependencies'])) {
-          $this->getNestedDependencies($allDependencies, $depConfig['dependencies']);
+          $this->getNestedDependencies($allDependencies, $depConfig['dependencies'], $followRoles);
         }
       }
     }
