@@ -628,6 +628,156 @@ describe('Flow', () => {
 
       document.body.removeChild(searchInput);
     });
+
+    describe('review mode toggle (Alt+Shift+R)', () => {
+      const mockSetPropertyPanelCollapsed = jest.fn();
+
+      // The panel store mock is module-global, so every override must be undone
+      // (back to the default 'event' mode) or it leaks into later tests.
+      function mockPanelStore(panelMode: 'event' | 'review', propertyPanelCollapsed = false) {
+        const { usePanelStore } = require('../../store/usePanelStore');
+        usePanelStore.mockImplementation((selector: any) => {
+          const state = {
+            replayPanelCollapsed: false,
+            toggleReplayPanelCollapse: jest.fn(),
+            setReplayPanelCollapsed: jest.fn(),
+            setPropertyPanelCollapsed: mockSetPropertyPanelCollapsed,
+            propertyPanelCollapsed,
+            panelMode,
+            setPanelMode: mockSetPanelMode,
+          };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+      }
+
+      function captureShortcutOptions() {
+        const { useKeyboardShortcuts } = require('../../hooks/useKeyboardShortcuts');
+        let captured: any;
+        useKeyboardShortcuts.mockImplementation((opts: any) => { captured = opts; });
+        return () => captured;
+      }
+
+      afterEach(() => {
+        mockPanelStore('event');
+        mockSetPropertyPanelCollapsed.mockClear();
+        const { useGraphStore } = require('../../store/useGraphStore');
+        useGraphStore.mockImplementation((selector: any) => {
+          const state = { nodes: [], edges: [], setNodes: jest.fn(), setEdges: jest.fn() };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+        const { useSelectionStore } = require('../../store/useSelectionStore');
+        useSelectionStore.mockImplementation((selector: any) => {
+          const state = {
+            selectedNode: null,
+            setSelectedNode: jest.fn(),
+            selectedEdge: null, setSelectedEdge: jest.fn(),
+            selectedNodes: [], selectedEdges: [],
+            setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+          };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+      });
+
+      it('should LEAVE review mode (back to the event view) when already reviewing', () => {
+        const options = captureShortcutOptions();
+        mockPanelStore('review');
+        render(<Flow {...defaultProps} />);
+        mockSetPanelMode.mockClear();
+
+        act(() => { options().callbacks.onToggleReviewMode(); });
+
+        expect(mockSetPanelMode).toHaveBeenCalledWith('event');
+      });
+
+      // Select a start/event node so review entry is scoped to it. The store
+      // mocks are module-global, so the afterEach above restores the defaults.
+      function selectEventNode(id: string) {
+        const node = { id, type: 'start', data: {}, position: { x: 0, y: 0 } };
+        const { useGraphStore } = require('../../store/useGraphStore');
+        useGraphStore.mockImplementation((selector: any) => {
+          const state = { nodes: [node], edges: [], setNodes: jest.fn(), setEdges: jest.fn() };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+        const { useSelectionStore } = require('../../store/useSelectionStore');
+        useSelectionStore.mockImplementation((selector: any) => {
+          const state = {
+            selectedNode: node,
+            setSelectedNode: jest.fn(),
+            selectedEdge: null, setSelectedEdge: jest.fn(),
+            selectedNodes: [], selectedEdges: [],
+            setSelectedNodes: jest.fn(), setSelectedEdges: jest.fn(),
+          };
+          return typeof selector === 'function' ? selector(state) : state;
+        });
+      }
+
+      it('should ENTER review mode through the guarded per-event path (requestReviewMode)', () => {
+        const options = captureShortcutOptions();
+        mockPanelStore('event');
+        selectEventNode('event_1');
+        render(
+          <Flow
+            {...defaultProps}
+            settings={{
+              modeler: { modelId: 'test-1' },
+              modeler_api: {
+                isNew: false,
+                replay_url: '/api/replay',
+                test_url: '/api/test',
+                permissions: { replay: true, test: true },
+              },
+            }}
+          />,
+        );
+        mockSetPanelMode.mockClear();
+
+        act(() => { options().callbacks.onToggleReviewMode(); });
+
+        // Entering goes through requestReviewMode → enterReviewForNode, so the
+        // session is started for the selected event (listener + history load),
+        // not merely flipped to the review view.
+        expect(mockSetPanelMode).toHaveBeenCalledWith('review');
+        expect(mockStartTest).toHaveBeenCalledWith('event_1');
+        expect(mockLoadReplayData).toHaveBeenCalledWith('event_1');
+      });
+
+      it('should expand a collapsed property panel before toggling', () => {
+        const options = captureShortcutOptions();
+        mockPanelStore('review', true);
+        render(<Flow {...defaultProps} />);
+
+        act(() => { options().callbacks.onToggleReviewMode(); });
+
+        expect(mockSetPropertyPanelCollapsed).toHaveBeenCalledWith(false);
+        expect(mockSetPanelMode).toHaveBeenCalledWith('event');
+      });
+
+      it('should NOT offer the toggle for a new model with no replay capability', () => {
+        const options = captureShortcutOptions();
+        mockPanelStore('event');
+        render(
+          <Flow
+            {...defaultProps}
+            settings={{ modeler: { modelId: 'test-1' }, modeler_api: { isNew: true } }}
+          />,
+        );
+
+        expect(options().capabilities.canToggleReviewMode).toBe(false);
+      });
+
+      it('should ALWAYS offer the toggle while in review mode, so the user can get out', () => {
+        const options = captureShortcutOptions();
+        mockPanelStore('review');
+        render(
+          <Flow
+            {...defaultProps}
+            settings={{ modeler: { modelId: 'test-1' }, modeler_api: { isNew: true } }}
+          />,
+        );
+
+        expect(options().capabilities.canToggleReviewMode).toBe(true);
+      });
+    });
   });
 
   describe('replay panel rendering', () => {

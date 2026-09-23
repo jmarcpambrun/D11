@@ -20,6 +20,7 @@ const keyboardShortcuts = {
   'Ctrl+Y': 'redo',                    // Redo (alternative)
   'Ctrl+F': 'toggleSearch',            // Toggle search interface
   'Cmd+F': 'toggleSearch',             // Toggle search on Mac
+  'Alt+Shift+R': 'toggleReviewMode',   // Toggle property/review panel mode
   'Escape': 'clearSearchAndHighlights'   // Clear search/selections
 };
 ```
@@ -104,6 +105,16 @@ const useKeyboardShortcuts = ({
 | `Ctrl+Shift+Z` (`Cmd+Shift+Z`) / `Ctrl+Y` | Redo last undone action | Global      |
 | `Ctrl+F` (`Cmd+F` on Mac) | Toggle search interface     | Global (overrides browser) |
 | `Escape`                  | Clear search/highlights     | Global                     |
+| `Alt+Shift+R` (`Option+Shift+R` on Mac) | Toggle property/review panel mode | Replay/test capability or review mode |
+
+`Alt+Shift+R` is matched on `event.code === 'KeyR'` with
+`altKey && shiftKey && !ctrlKey && !metaKey`, never on `event.key`: macOS turns
+`Option+Shift+R` into a different character, while the physical key position
+stays the same on every layout. No browser reserves the combination, and
+`Ctrl+Shift+R` is deliberately not matched so the browser's hard reload keeps
+working. The toggle goes through the same `isInputContext()` suppression as
+every other shortcut, so it is ignored while focus is in an input, textarea or
+contenteditable element.
 
 ## Mouse + Modifier Combinations
 
@@ -125,6 +136,7 @@ interface KeyboardShortcutCallbacks {
   onUndo?: () => void;             // Ctrl+Z handler
   onRedo?: () => void;             // Ctrl+Shift+Z / Ctrl+Y handler
   onToggleSearch?: () => void;     // Ctrl+F handler
+  onToggleReviewMode?: () => void; // Alt+Shift+R handler
   onEscape?: () => void;           // Escape handler
 }
 
@@ -143,6 +155,7 @@ interface KeyboardCapabilities {
   canPaste: boolean;         // Whether paste action is available
   canSearch: boolean;        // Whether search toggle is available
   canEscape: boolean;        // Whether escape action is available
+  canToggleReviewMode: boolean; // Whether the property/review toggle is available
 }
 ```
 

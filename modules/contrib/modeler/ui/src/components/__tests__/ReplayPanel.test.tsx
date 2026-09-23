@@ -21,12 +21,10 @@ jest.mock('react-icons/fi', () => ({
   FiSkipBack: () => <span data-testid="fi-skip-back" />,
   FiSkipForward: () => <span data-testid="fi-skip-forward" />,
   FiActivity: () => <span data-testid="fi-activity" />,
-  FiDatabase: () => <span data-testid="fi-database" />,
   FiChevronLeft: () => <span data-testid="fi-chevron-left" />,
   FiChevronRight: () => <span data-testid="fi-chevron-right" />,
   FiCopy: () => <span data-testid="fi-copy" />,
   FiZap: () => <span data-testid="fi-zap" />,
-  FiInfo: () => <span data-testid="fi-info" />,
   FiChevronDown: () => <span data-testid="fi-chevron-down" />,
   FiClock: () => <span data-testid="fi-clock" />,
   FiUser: () => <span data-testid="fi-user" />,
@@ -34,7 +32,6 @@ jest.mock('react-icons/fi', () => ({
   FiLink: () => <span data-testid="fi-link" />,
   FiRefreshCw: () => <span data-testid="fi-refresh-cw" />,
   FiXCircle: () => <span data-testid="fi-x-circle" />,
-  FiFileText: () => <span data-testid="fi-file-text" />,
 }));
 
 const mockToggleReplayPanelCollapse = jest.fn();
@@ -73,9 +70,7 @@ jest.mock('../../hooks/usePanelResize', () => ({
 }));
 
 jest.mock('../ReplayDataRenderer', () => ({
-  StepDataContainer: ({ stepData: _stepData }: any) => <div data-testid="step-data-container" />,
-  GlobalTokensContainer: ({ globalTokens: _globalTokens }: any) => <div data-testid="global-tokens-container" />,
-  TemplateTokensContainer: ({ templateTokens: _templateTokens }: any) => <div data-testid="template-tokens-container" />,
+  StepDataContainer: (_props: { stepData: Record<string, unknown>; predicted?: boolean }) => <div data-testid="step-data-container" />,
 }));
 
 jest.mock('../InfoPopup', () => {
@@ -224,15 +219,35 @@ describe('ReplayPanel', () => {
     });
   });
 
-  describe('step data', () => {
-    it('should show select prompt when no step active', () => {
-      render(<ReplayPanel {...defaultProps} />);
-      expect(screen.getByText('Select a step to view its data')).toBeTruthy();
+  describe('inline step data', () => {
+    it('should render the selected step data inline inside the step list', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={1} stepData={{ token: 'val' }} />);
+      const inline = document.querySelector('.replay-steps .replay-step-data');
+      expect(inline).toBeTruthy();
+      expect(inline!.querySelector('[data-testid="step-data-container"]')).toBeTruthy();
     });
 
-    it('should show StepDataContainer when data exists', () => {
+    it('should render the inline block under the SELECTED step row only', () => {
       render(<ReplayPanel {...defaultProps} currentStep={1} stepData={{ token: 'val' }} />);
-      expect(screen.getByTestId('step-data-container')).toBeTruthy();
+      const items = document.querySelectorAll('.replay-steps .replay-step-item');
+      expect(items).toHaveLength(2);
+      expect(items[0].querySelector('.replay-step-data')).toBeNull();
+      expect(items[1].querySelector('.replay-step-data')).toBeTruthy();
+    });
+
+    it('should expose the inline block as a labeled region the selected row controls', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepData={{ token: 'val' }} />);
+      const region = screen.getByRole('region', { name: 'Step data' });
+      const row = screen.getByText('Step 0').closest('.replay-step')!;
+      expect(row).toHaveAttribute('aria-expanded', 'true');
+      expect(row).toHaveAttribute('aria-controls', region.id);
+    });
+
+    it('should not mark an unselected step row as expanded', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={1} stepData={{ token: 'val' }} />);
+      const row = screen.getByText('Step 0').closest('.replay-step')!;
+      expect(row).toHaveAttribute('aria-expanded', 'false');
+      expect(row).not.toHaveAttribute('aria-controls');
     });
 
     it('should show no data message when step selected but stepData is empty', () => {
@@ -243,6 +258,30 @@ describe('ReplayPanel', () => {
     it('should show no data message when step selected but stepData is null', () => {
       render(<ReplayPanel {...defaultProps} currentStep={0} stepData={null} />);
       expect(screen.getByText('No token data available for this step')).toBeTruthy();
+    });
+
+    it('should render no inline block at all while no step is selected', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={-1} stepData={{ token: 'val' }} />);
+      expect(document.querySelector('.replay-step-data')).toBeNull();
+    });
+
+    it('should NOT render a step count on a step row', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepData={{ token: 'val' }} />);
+      const row = screen.getByText('Step 0').closest('.replay-step')!;
+      expect(row.querySelector('.token-count')).toBeNull();
+      expect(row.textContent).not.toMatch(/\(\d+\)/);
+    });
+
+    it('should NOT render the removed "Step Data" section header', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepData={{ token: 'val' }} />);
+      expect(screen.queryByText('Step Data')).toBeNull();
+      expect(document.querySelector('.step-data-section')).toBeNull();
+    });
+
+    it('should NOT render draggable section separators any more', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepData={{ token: 'val' }} />);
+      expect(document.querySelector('.section-separator')).toBeNull();
+      expect(document.querySelector('.resizable-sections')).toBeNull();
     });
   });
 
@@ -260,13 +299,13 @@ describe('ReplayPanel', () => {
       expect(screen.getByTitle('Copy all data')).toBeTruthy();
     });
 
-    it('should render copy button when stepInfo is provided', () => {
-      render(<ReplayPanel {...defaultProps} stepInfo={{ type: 'action' }} />);
+    it('should render copy button when only stepInfo is provided for the selected step', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepInfo={{ type: 'action' }} />);
       expect(screen.getByTitle('Copy all data')).toBeTruthy();
     });
 
     it('should not render copy button when neither stepData nor stepInfo', () => {
-      render(<ReplayPanel {...defaultProps} />);
+      render(<ReplayPanel {...defaultProps} currentStep={0} />);
       expect(screen.queryByTitle('Copy all data')).toBeNull();
     });
 
@@ -874,119 +913,46 @@ describe('ReplayPanel', () => {
     });
   });
 
-  describe('global tokens', () => {
-    const sampleGlobalTokens = {
-      '[site:name]': {
-        name: 'Site name',
-        'raw token': '[site:name]',
-        token: 'name',
-        value: 'My Site',
-      },
-      '[current-date:custom:?]': {
-        name: 'Custom format',
-        'raw token': '[current-date:custom:?]',
-        token: 'custom:?',
-        value: '2026-02-13',
-      },
-    } as any;
+  // The global and template token trees were removed from the review panel
+  // (issue project/modeler#3589103); those tokens are reachable only through
+  // the `[` token picker now.
+  describe('token sections (removed)', () => {
+    const settingsHolder = window as unknown as {
+      drupalSettings?: {
+        modeler_api?: {
+          global_tokens?: Record<string, unknown>;
+          template_tokens?: Record<string, unknown>;
+        };
+      };
+    };
 
-    it('should render Global Tokens section in empty state when globalTokens provided', () => {
-      render(<ReplayPanel {...defaultProps} replayData={[]} globalTokens={sampleGlobalTokens} />);
-      expect(screen.getByText('Global Tokens')).toBeTruthy();
-      expect(screen.getByTestId('global-tokens-container')).toBeTruthy();
-    });
-
-    it('should render Global Tokens section in replay state when globalTokens provided', () => {
-      render(<ReplayPanel {...defaultProps} globalTokens={sampleGlobalTokens} />);
-      expect(screen.getByText('Global Tokens')).toBeTruthy();
-      expect(screen.getByTestId('global-tokens-container')).toBeTruthy();
-    });
-
-    it('should not render Global Tokens section when globalTokens is undefined', () => {
-      render(<ReplayPanel {...defaultProps} />);
-      expect(screen.queryByText('Global Tokens')).toBeNull();
-      expect(screen.queryByTestId('global-tokens-container')).toBeNull();
-    });
-
-    it('should not render Global Tokens section when globalTokens is empty', () => {
-      render(<ReplayPanel {...defaultProps} globalTokens={{} as any} />);
-      expect(screen.queryByText('Global Tokens')).toBeNull();
-      expect(screen.queryByTestId('global-tokens-container')).toBeNull();
-    });
-
-    it('should render Global Tokens section with global-tokens-section class', () => {
-      render(<ReplayPanel {...defaultProps} globalTokens={sampleGlobalTokens} />);
-      const section = document.querySelector('.global-tokens-section');
-      expect(section).toBeTruthy();
-    });
-  });
-
-  describe('template tokens', () => {
-    const sampleTemplateTokens = {
-      '[template:author]': {
-        name: 'Author',
-        'raw token': '[template:author]',
-        token: 'author',
-        value: 'Jane Doe',
-      },
-      '[template:version]': {
-        name: 'Version',
-        'raw token': '[template:version]',
-        token: 'version',
-        value: '1.0.0',
-      },
-    } as any;
-
-    it('should render Template Tokens section in empty state when isTemplate and templateTokens provided', () => {
-      render(<ReplayPanel {...defaultProps} replayData={[]} isTemplate templateTokens={sampleTemplateTokens} />);
-      expect(screen.getByText('Template Tokens')).toBeTruthy();
-      expect(screen.getByTestId('template-tokens-container')).toBeTruthy();
-    });
-
-    it('should render Template Tokens section in replay state when isTemplate and templateTokens provided', () => {
-      render(<ReplayPanel {...defaultProps} isTemplate templateTokens={sampleTemplateTokens} />);
-      expect(screen.getByText('Template Tokens')).toBeTruthy();
-      expect(screen.getByTestId('template-tokens-container')).toBeTruthy();
-    });
-
-    it('should not render Template Tokens section when isTemplate is false', () => {
-      render(<ReplayPanel {...defaultProps} isTemplate={false} templateTokens={sampleTemplateTokens} />);
-      expect(screen.queryByText('Template Tokens')).toBeNull();
-      expect(screen.queryByTestId('template-tokens-container')).toBeNull();
-    });
-
-    it('should not render Template Tokens section when isTemplate is true but templateTokens is undefined', () => {
-      render(<ReplayPanel {...defaultProps} isTemplate />);
-      expect(screen.queryByText('Template Tokens')).toBeNull();
-      expect(screen.queryByTestId('template-tokens-container')).toBeNull();
-    });
-
-    it('should not render Template Tokens section when isTemplate is true but templateTokens is empty', () => {
-      render(<ReplayPanel {...defaultProps} isTemplate templateTokens={{} as any} />);
-      expect(screen.queryByText('Template Tokens')).toBeNull();
-      expect(screen.queryByTestId('template-tokens-container')).toBeNull();
-    });
-
-    it('should render Template Tokens section with template-tokens-section class', () => {
-      render(<ReplayPanel {...defaultProps} isTemplate templateTokens={sampleTemplateTokens} />);
-      const section = document.querySelector('.template-tokens-section');
-      expect(section).toBeTruthy();
-    });
-
-    it('should render both Global and Template Tokens sections when both are available', () => {
-      const sampleGlobalTokens = {
-        '[site:name]': {
-          name: 'Site name',
-          'raw token': '[site:name]',
-          token: 'name',
-          value: 'My Site',
+    beforeEach(() => {
+      settingsHolder.drupalSettings = {
+        modeler_api: {
+          global_tokens: {
+            '[site:name]': { name: 'Site name', 'raw token': '[site:name]', token: 'name', value: 'My Site' },
+          },
+          template_tokens: {
+            '[template:author]': { name: 'Author', 'raw token': '[template:author]', token: 'author', value: 'Jane Doe' },
+          },
         },
-      } as any;
-      render(<ReplayPanel {...defaultProps} globalTokens={sampleGlobalTokens} isTemplate templateTokens={sampleTemplateTokens} />);
-      expect(screen.getByText('Global Tokens')).toBeTruthy();
-      expect(screen.getByText('Template Tokens')).toBeTruthy();
-      expect(screen.getByTestId('global-tokens-container')).toBeTruthy();
-      expect(screen.getByTestId('template-tokens-container')).toBeTruthy();
+      };
+    });
+
+    afterEach(() => {
+      delete settingsHolder.drupalSettings;
+    });
+
+    it('should render no token sections in the steps view even when tokens are configured', () => {
+      render(<ReplayPanel {...defaultProps} currentStep={0} stepData={{ token: 'val' }} />);
+      expect(screen.queryByText('Global Tokens')).toBeNull();
+      expect(screen.queryByText('Template Tokens')).toBeNull();
+    });
+
+    it('should render no token sections in the empty state even when tokens are configured', () => {
+      render(<ReplayPanel {...defaultProps} replayData={[]} />);
+      expect(screen.queryByText('Global Tokens')).toBeNull();
+      expect(screen.queryByText('Template Tokens')).toBeNull();
     });
   });
 });

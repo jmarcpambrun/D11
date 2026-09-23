@@ -42,7 +42,8 @@ action in the workflow execution:
 ### Manual navigation
 
 - **Click a step**: Jump to that step. The corresponding node or edge is
-  highlighted on the canvas.
+  highlighted on the canvas, and the step's data expands inline underneath the
+  step row.
 - **Forward/Back buttons**: Move one step at a time.
 
 ### Auto-playback
@@ -78,14 +79,12 @@ The replay system syncs in both directions:
     starts listening for execution data and loads any available history
     automatically -- no extra clicks needed.
 
-## Resizing sections
+## Step data
 
-The Review flow sections (execution controls, step data, global tokens,
-template tokens) are vertically resizable. Drag the horizontal separator
-between sections to adjust their height. Your preferred proportions are saved
-to local storage and restored on the next visit. See
-[Review flow > Resizable sections](../interface/replay-panel.md#resizable-sections)
-for details.
+Review flow mode shows a single list: the execution steps. The data captured at
+the selected step appears inline, directly underneath that step row, so there
+are no stacked sub-sections to resize. See
+[Review flow > Step data](../interface/replay-panel.md#step-data) for details.
 
 ## Empty state
 

@@ -703,7 +703,7 @@ useEffect(() => {
 - **Condition ID support**: Correctly highlights specific edges with multiple connections
 - **Edge selection**: Uses conditionId to identify exact edge in multi-edge scenarios
 - **Step filtering**: Shows relevant steps based on conditions and gateways
-- **Step data display**: Shows conditionId and token data in dedicated step data section
+- **Step data display**: Shows conditionId and token data inline under the selected step row
 - **Metadata info popup**: Step metadata (Type, Component ID, Successor ID, Condition ID, Error) shown in header info popup via "i" icon
 - **Entry selector**: Dropdown to switch between multiple execution entries — only shown when there are 2+ entries (hidden for single test results)
 - **Implementation**: `ReplayPanel.tsx` component with enhanced replay controls, data visualization, and `InfoPopup.tsx` for metadata
@@ -798,7 +798,7 @@ The replay system has comprehensive E2E test coverage via Playwright, testing th
 | Replay Panel UI | 8 | Step list, progress label, playback controls, speed selector, stop button |
 | Replay Step Navigation | 7 | Next/previous step, first/last boundaries, step highlighting, step selection |
 | Replay Playback | 4 | Auto-play start/pause, speed changes, playback progression |
-| Step Data Display | 3 | Token data rendering, condition results, step metadata |
+| Inline Step Data | 3 | Token data rendering, condition results, step metadata |
 | Replay Panel Info Popup | 2 | Info popup display, metadata content |
 | Test Button Visibility | 2 | Test button shown with test_url + event selected, hidden without test_url |
 | Test Execution | 4 | Click test starts polling, waiting state with cancel, successful result display, cancel stops test |

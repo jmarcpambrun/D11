@@ -30,7 +30,7 @@ jest.mock('react-icons/fi', () => ({
   FiGitBranch: () => <span data-testid="fi-git-branch" />,
   FiBox: () => <span data-testid="fi-box" />,
   FiInfo: () => <span data-testid="fi-info" />,
-  FiSliders: () => <span data-testid="fi-sliders" />,
+  FiArrowLeft: () => <span data-testid="fi-arrow-left" />,
   FiRefreshCw: (props: any) => <span data-testid="fi-refresh" className={props.className} />,
 }));
 
@@ -271,18 +271,29 @@ describe('PropertyPanel', () => {
       expect(btn?.getAttribute('aria-label')).toBe('Review flow');
     });
 
-    it('should place the view-switch button in the SAME middle zone in Review view', () => {
+    it('should keep the icons and switch zones present but EMPTY in Review view', () => {
       mockPanelState.panelMode = 'review';
       const { container } = render(
         <PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />,
       );
-      const btn = container.querySelector('.panel-header-switch .header-review-btn');
-      expect(btn).toBeTruthy();
-      expect(btn?.getAttribute('aria-label')).toBe('Show properties');
-      // Icons zone stays present but empty in Review view.
+      // Both trailing cells stay in the grid so the geometry does not shift…
       const iconsZone = container.querySelector('.panel-header-icons');
+      const switchZone = container.querySelector('.panel-header-switch');
       expect(iconsZone).toBeTruthy();
-      expect(iconsZone?.querySelector('.header-info-btn')).toBeNull();
+      expect(switchZone).toBeTruthy();
+      // …but they hold no controls: Review has only the back control (zone 1).
+      expect(iconsZone?.children.length).toBe(0);
+      expect(switchZone?.children.length).toBe(0);
+    });
+
+    it('should render the back control in the label zone in Review view', () => {
+      mockPanelState.panelMode = 'review';
+      const { container } = render(
+        <PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />,
+      );
+      const back = container.querySelector('.panel-header-label .panel-header-back');
+      expect(back).toBeTruthy();
+      expect(back?.getAttribute('aria-label')).toBe('Back to properties');
     });
 
     it('should render the icons only in zone 3 in Properties view', () => {
@@ -531,7 +542,8 @@ describe('PropertyPanel', () => {
       const btn = screen.getByRole('button', { name: 'Review flow' }) as HTMLButtonElement;
       expect(btn).toBeTruthy();
       expect(btn.disabled).toBe(false);
-      expect(btn.getAttribute('title')).toBe('Review flow');
+      // The tooltip advertises the equivalent keyboard shortcut.
+      expect(btn.getAttribute('title')).toBe('Review flow (Alt+Shift+R)');
     });
 
     it('should render the Review flow button DISABLED (with tooltip) for a non-event node (no session)', () => {
@@ -634,7 +646,7 @@ describe('PropertyPanel', () => {
       expect(btn).toBeTruthy();
       expect(btn.disabled).toBe(false);
       expect(btn.getAttribute('aria-disabled')).toBe('false');
-      expect(btn.getAttribute('title')).toBe('Review flow');
+      expect(btn.getAttribute('title')).toBe('Review flow (Alt+Shift+R)');
     });
 
     // ── BUG 2: non-event node OUTSIDE every reviewed flow → DISABLED ──────────
@@ -713,33 +725,50 @@ describe('PropertyPanel', () => {
     });
   });
 
-  describe('Replay view (header switch + body)', () => {
+  describe('Replay view (header back control + body)', () => {
     const eventNode = { id: 'event-1', type: 'start', data: { label: 'Event', plugin: 'evt' }, position: { x: 0, y: 0 } };
     const actionNode = { id: 'node-1', type: 'element', data: { label: 'Action', plugin: 'act' }, position: { x: 0, y: 0 } };
     const savedReviewSettings = { modeler_api: { isNew: false, replay_url: '/api/replay', permissions: ['replay'] } };
 
     // Review view requires an active session (effectiveMode gates on it).
-    it('should NOT render the removed back-bar (.panel-review-back)', () => {
+    it('should render exactly ONE interactive header control: the back control', () => {
       mockPanelState.panelMode = 'review';
-      render(<PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />);
-      expect(document.querySelector('.panel-review-back')).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Back to properties' })).toBeNull();
+      const { container } = render(
+        <PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />,
+      );
+      const header = container.querySelector('.panel-header') as HTMLElement;
+      const controls = header.querySelectorAll('button, a, input, select, [role="button"]');
+      expect(controls.length).toBe(1);
+      const back = controls[0];
+      expect(back.getAttribute('aria-label')).toBe('Back to properties');
+      expect(back.tagName).toBe('BUTTON');
+      expect(back.getAttribute('type')).toBe('button');
+      expect(back.getAttribute('class')).toBe('panel-header-back');
+      expect(back.getAttribute('title')).toBe('Back to properties (Alt+Shift+R)');
+      expect(back.textContent).toBe('Back');
+      // The old context label and Properties switch button are gone.
+      expect(header.querySelector('.component-type')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Show properties' })).toBeNull();
     });
 
-    it('should show a "Review flow" context label and a "Properties" switch button', () => {
+    it('should return to the node properties when the back control is clicked', () => {
       mockPanelState.panelMode = 'review';
-      render(<PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />);
-      // Context label on the left.
-      expect(document.querySelector('.component-type')?.textContent).toBe('Review flow');
-      // Opposite-view switch button on the right.
-      expect(screen.getByRole('button', { name: 'Show properties' })).toBeTruthy();
-    });
+      const panel = () => (
+        <PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />
+      );
+      const { rerender } = render(panel());
+      expect(screen.getByTestId('replay-panel-content')).toBeTruthy();
 
-    it('should switch to Properties (setPanelMode event) when the Properties button is clicked', () => {
-      mockPanelState.panelMode = 'review';
-      render(<PropertyPanel node={eventNode as any} hasAnyReplayCapability settings={savedReviewSettings as any} replaySessionActive />);
-      fireEvent.click(screen.getByRole('button', { name: 'Show properties' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Back to properties' }));
       expect(mockSetPanelMode).toHaveBeenCalledWith('event');
+
+      // The store is mocked (not reactive), so apply the mode the click asked
+      // for and re-render to observe the resulting view. A fresh element is
+      // required: React bails out of re-rendering an identical element.
+      mockPanelState.panelMode = 'event';
+      rerender(panel());
+      expect(screen.getByTestId('node-properties-panel')).toBeTruthy();
+      expect(screen.queryByTestId('replay-panel-content')).toBeNull();
     });
 
     it('should stay in Replay view even when a non-event node is the current selection', () => {
@@ -807,6 +836,25 @@ describe('PropertyPanel', () => {
     const actionNode = { id: 'node-1', type: 'element', data: { label: 'Action', plugin: 'act' }, position: { x: 0, y: 0 } };
 
     beforeEach(() => { capturedTokenSources = {}; });
+
+    it('publishes the global and template tokens to the picker context (their only consumer now)', () => {
+      // The review panel no longer lists tokens (#3589103), so the "[" picker
+      // is the sole consumer of these props - they must still arrive there.
+      const globalTokens = { '[site:name]': { name: 'Site name', token: 'name', value: 'My Site' } };
+      const templateTokens = { '[tpl:id]': { name: 'Template id', token: 'id', value: '7' } };
+      render(
+        <PropertyPanel
+          node={actionNode as any}
+          settings={savedReviewSettings as any}
+          globalTokens={globalTokens as any}
+          templateTokens={templateTokens as any}
+          isTemplate
+        />,
+      );
+      expect(capturedTokenSources.globalTokens).toBe(globalTokens);
+      expect(capturedTokenSources.templateTokens).toBe(templateTokens);
+      expect(capturedTokenSources.isTemplate).toBe(true);
+    });
 
     it('uses Flow\'s structural pickerOwningEventId prop (works with NO session) when provided', () => {
       // Action node, no session, but Flow resolved the owning event structurally.

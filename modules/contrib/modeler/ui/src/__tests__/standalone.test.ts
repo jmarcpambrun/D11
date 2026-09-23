@@ -47,6 +47,17 @@ global.fetch = mockFetch;
 // Import under test (after mocks)
 // ---------------------------------------------------------------------------
 import { init } from '../standalone';
+import type { ReactElement } from 'react';
+import type { Settings } from '../types/settings';
+
+/**
+ * The settings `init()` handed to `<App>`: it renders `<App>` wrapped in
+ * `<StrictMode>`, so the App element is the wrapper's only child.
+ */
+function renderedSettings(): Settings {
+  const tree = mockRender.mock.calls[0][0] as ReactElement<{ children: ReactElement<{ settings: Settings }> }>;
+  return tree.props.children.props.settings;
+}
 
 describe('standalone viewer', () => {
   let container: HTMLElement;
@@ -93,6 +104,7 @@ describe('standalone viewer', () => {
         edges: [],
         replayData: [{ type: 'started', id: 'n1', data: {} }],
         configForms: { 'form:form_build': [{ key: 'form_ids', type: 'textfield', title: 'Form IDs' }] },
+        metadataForm: [{ key: 'label', type: 'textfield', title: 'Label' }],
         components: [{ plugin: 'form:form_build', label: 'Form Build', type: 'start', provider: 'example_form' }],
       };
 
@@ -100,11 +112,20 @@ describe('standalone viewer', () => {
 
       expect(mockCreateRoot).toHaveBeenCalledWith(container);
       expect(mockRender).toHaveBeenCalled();
+      // The metadata dialog reads the form from the settings, so the export's
+      // own form has to arrive there.
+      expect(renderedSettings().modeler?.metadataForm).toEqual(model.metadataForm);
 
       // Verify destroy function works
       expect(typeof result.destroy).toBe('function');
       result.destroy();
       expect(mockUnmount).toHaveBeenCalled();
+    });
+
+    it('should mount App without a metadata form when the export has none', async () => {
+      await init('#workflow-viewer', { model: { id: 'test', nodes: [], edges: [] } });
+
+      expect(renderedSettings().modeler?.metadataForm).toBeUndefined();
     });
 
     it('should fetch model from URL when modelUrl is provided', async () => {

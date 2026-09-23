@@ -8,16 +8,21 @@ switch into **Review flow** mode to inspect past executions and run live tests.
 
 ## Properties and Review flow: two coexisting views
 
-The panel has two views that share the same header layout — a context label on
-the left and a single button on the right that jumps to the *other* view:
+The panel has two views:
 
 - **Properties view** shows the configuration of the **currently-selected**
-  canvas component (any node or edge). Its header button is **Review flow**.
-- **Review flow view** shows execution replay, live testing, and token data
-  for the event the session is linked to. Its header button is **Properties**.
+  canvas component (any node or edge). Its header shows a context label on the
+  left and a **Review flow** button on the right.
+- **Review flow view** shows execution replay and live testing for the event
+  the session is linked to. Its header holds exactly one control: a **Back**
+  button (a left arrow with the label *Back*) that returns to the Properties
+  view.
 
 You can switch back and forth freely **without losing the replay session** — the
 current step, selected execution entry, and the running listener are all kept.
+
+`Alt+Shift+R` (`Option+Shift+R` on macOS) toggles between the two views from
+the keyboard. See [Keyboard Shortcuts](../features/keyboard-shortcuts.md).
 
 ### Starting a review session
 
@@ -31,7 +36,7 @@ executions **and loads its history** at the same time (a live session). See
 
 Once a session is active, the **Review flow** button is available from **any**
 selected component — so you can inspect a different node's properties and jump
-back to the running replay at any time. From the Review view, the **Properties**
+back to the running replay at any time. From the Review view, the **Back**
 button returns to the currently-selected component's properties while the
 session keeps running.
 
@@ -69,8 +74,8 @@ plugin. Form fields vary depending on the component type and may include:
 !!! tip "Token support"
     Some configuration fields accept **tokens** -- dynamic values from the
     workflow execution context. In a token-supporting field you can **type
-    `[`** to open a categorized token picker and insert a token from the Step
-    Data, Global, and Template sources. See
+    `[`** to open a categorized token picker and insert a token from its step
+    data, global, and template categories. See
     [Replay & Testing > Tokens](../replay/tokens.md) for details.
 
 ### Annotation

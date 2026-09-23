@@ -59,6 +59,12 @@ interface ContentEditableFieldProps {
   multiline?: boolean;
   /** Whether this field accepts token drops. Defaults to true. */
   acceptsTokens?: boolean;
+  /**
+   * Id of an element that names this field. A contenteditable div is not a
+   * labelable element, so a surrounding `<label htmlFor>` never reaches it;
+   * callers that render their own label wire it up through this instead.
+   */
+  ariaLabelledBy?: string;
 }
 
 /**
@@ -111,141 +117,339 @@ function getFallbackInsertPosition(container: HTMLElement): Range {
   return range;
 }
 
-/** Zero-width space used purely as a caret landing spot after a trailing token. */
+/** Presentation-only caret boundary around non-editable token pills. */
 const ZERO_WIDTH_SPACE = '\u200B';
 
-/**
- * Issue B: a `contenteditable="false"` `.config-token` pill that is the LAST
- * node in the field has no caret position AFTER it, so the user cannot click /
- * type past a trailing token. Ensure a trailing text node exists after such a
- * token by appending a single zero-width space (U+200B). The ZWSP is stripped in
- * the serialize path (convertHTMLToTokens) so it never reaches the saved value.
- *
- * Idempotent: only appends when the last child is a token element (so we never
- * accumulate multiple ZWSPs, and never touch a field that already ends in text).
- */
-function ensureTrailingCaretSpace(container: HTMLElement): void {
-  const last = container.lastChild;
-  if (last && isTokenElement(last)) {
-    container.appendChild(document.createTextNode(ZERO_WIDTH_SPACE));
+interface LogicalSelection {
+  start: number;
+  end: number;
+}
+
+interface DomPoint {
+  node: Node;
+  offset: number;
+}
+
+interface SerializedMetrics {
+  length: number;
+  endsWithNewline: boolean;
+  meaningful: boolean;
+}
+
+const CONTENTEDITABLE_BLOCK_TAGS: Record<string, true> = {
+  DIV: true,
+  P: true,
+};
+
+function isContenteditableBlock(node: Node): node is Element {
+  return node instanceof Element && CONTENTEDITABLE_BLOCK_TAGS[node.tagName] === true;
+}
+
+function serializedChildrenMetrics(node: Node, limit = node.childNodes.length): SerializedMetrics {
+  let length = 0;
+  let started = false;
+  let endsWithNewline = false;
+  let lastWasEmptyBlock = false;
+
+  for (let index = 0; index < limit && index < node.childNodes.length; index++) {
+    const child = node.childNodes[index];
+    const childMetrics = serializedNodeMetrics(child);
+    const isBlock = isContenteditableBlock(child);
+    if (isBlock && started && (!endsWithNewline || lastWasEmptyBlock)) {
+      length++;
+      endsWithNewline = true;
+    }
+    length += childMetrics.length;
+    if (childMetrics.length > 0) endsWithNewline = childMetrics.endsWithNewline;
+    if (isBlock || childMetrics.meaningful) started = true;
+    lastWasEmptyBlock = isBlock && childMetrics.length === 0;
   }
+
+  return { length, endsWithNewline, meaningful: started };
 }
 
 /**
- * Issue C: capture the caret as an ABSOLUTE character offset from the start of
- * the container, counting text-node characters AND each `.config-token` pill as
- * the length of its own textContent. This survives React re-renders that
- * re-create the field's text nodes (a saved node reference would dangle), so the
- * caret can be re-resolved against the LIVE DOM on restore. Returns null when
- * the selection is not inside the container.
+ * Length and line-boundary state in the serialized field value. Pills count as
+ * their opaque raw token string; native contenteditable blocks count the same
+ * implicit newlines emitted by convertHTMLToTokens.
  */
-function captureAbsoluteCaretOffset(container: HTMLElement): number | null {
+function serializedNodeMetrics(node: Node): SerializedMetrics {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = (node.textContent || '').replace(/\u200B/g, '');
+    return {
+      length: text.length,
+      endsWithNewline: text.endsWith('\n'),
+      meaningful: text.length > 0,
+    };
+  }
+  if (isTokenElement(node)) {
+    const token = node.getAttribute('data-token') || node.textContent || '';
+    return {
+      length: token.length,
+      endsWithNewline: token.endsWith('\n'),
+      meaningful: token.length > 0,
+    };
+  }
+  if (node instanceof HTMLBRElement) {
+    const parent = node.parentNode;
+    const isPlaceholder =
+      !!parent &&
+      isContenteditableBlock(parent) &&
+      parent.childNodes.length === 1;
+    return isPlaceholder
+      ? { length: 0, endsWithNewline: false, meaningful: false }
+      : { length: 1, endsWithNewline: true, meaningful: true };
+  }
+
+  const children = serializedChildrenMetrics(node);
+  return {
+    ...children,
+    meaningful: isContenteditableBlock(node) || children.meaningful,
+  };
+}
+
+function serializedNodeLength(node: Node): number {
+  return serializedNodeMetrics(node).length;
+}
+
+function captureLogicalOffset(
+  container: HTMLElement,
+  targetNode: Node,
+  targetOffset: number,
+): number | null {
+  if (targetNode !== container && !container.contains(targetNode)) return null;
+
+  let offset = 0;
+  let found = false;
+  const walk = (node: Node): void => {
+    if (found) return;
+    if (node === targetNode) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        offset += (node.textContent || '').slice(0, targetOffset).replace(/\u200B/g, '').length;
+      } else if (isTokenElement(node)) {
+        if (targetOffset > 0) offset += serializedNodeLength(node);
+      } else {
+        offset += serializedChildrenMetrics(node, targetOffset).length;
+      }
+      found = true;
+      return;
+    }
+    if (
+      node.nodeType === Node.TEXT_NODE ||
+      isTokenElement(node) ||
+      node instanceof HTMLBRElement
+    ) {
+      offset += serializedNodeLength(node);
+      return;
+    }
+
+    let started = false;
+    let endsWithNewline = false;
+    let lastWasEmptyBlock = false;
+    for (const child of Array.from(node.childNodes)) {
+      const childMetrics = serializedNodeMetrics(child);
+      const isBlock = isContenteditableBlock(child);
+      if (isBlock && started && (!endsWithNewline || lastWasEmptyBlock)) {
+        offset++;
+        endsWithNewline = true;
+      }
+      walk(child);
+      if (found) return;
+      if (childMetrics.length > 0) endsWithNewline = childMetrics.endsWithNewline;
+      if (isBlock || childMetrics.meaningful) started = true;
+      lastWasEmptyBlock = isBlock && childMetrics.length === 0;
+    }
+  };
+
+  walk(container);
+  return found ? offset : null;
+}
+
+function captureLogicalSelection(container: HTMLElement): LogicalSelection | null {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return null;
   const range = selection.getRangeAt(0);
-  if (!container.contains(range.startContainer)) return null;
-
-  let offset = 0;
-  let done = false;
-  const walk = (node: Node): void => {
-    if (done) return;
-    if (node === range.startContainer) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        offset += range.startOffset;
-      } else {
-        // Element container: count the lengths of children before startOffset.
-        for (let i = 0; i < range.startOffset && i < node.childNodes.length; i++) {
-          offset += nodeTextLength(node.childNodes[i]);
-        }
-      }
-      done = true;
-      return;
-    }
-    if (node.nodeType === Node.TEXT_NODE) {
-      offset += (node.textContent || '').length;
-      return;
-    }
-    if (isTokenElement(node)) {
-      // A token pill is opaque: count its full textContent length as one block.
-      offset += nodeTextLength(node);
-      return;
-    }
-    node.childNodes.forEach(walk);
-  };
-  container.childNodes.forEach(walk);
-  return done ? offset : null;
+  const start = captureLogicalOffset(container, range.startContainer, range.startOffset);
+  const end = captureLogicalOffset(container, range.endContainer, range.endOffset);
+  return start === null || end === null ? null : { start, end };
 }
 
-/** Total visible character length of a node's text (ZWSPs excluded). */
-function nodeTextLength(node: Node): number {
-  return (node.textContent || '').replace(/\u200B/g, '').length;
+function rawTextOffset(text: string, visibleOffset: number): number {
+  let rawOffset = 0;
+  let visible = 0;
+  while (rawOffset < text.length && visible < visibleOffset) {
+    if (text[rawOffset] !== ZERO_WIDTH_SPACE) visible++;
+    rawOffset++;
+  }
+  return rawOffset;
+}
+
+function resolveLogicalOffset(container: HTMLElement, target: number): DomPoint {
+  let remaining = Math.max(0, target);
+  let result: DomPoint | null = null;
+  let last: DomPoint = { node: container, offset: 0 };
+
+  const walk = (node: Node): void => {
+    if (result) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || '';
+      const length = serializedNodeLength(node);
+      last = { node, offset: rawTextOffset(text, length) };
+      if (remaining <= length) {
+        result = { node, offset: rawTextOffset(text, remaining) };
+      } else {
+        remaining -= length;
+      }
+      return;
+    }
+    if (isTokenElement(node) || node instanceof HTMLBRElement) {
+      const parent = node.parentNode;
+      if (!parent) return;
+      const nodeIndex = Array.from(parent.childNodes).findIndex(child => child === node);
+      const length = serializedNodeLength(node);
+      if (remaining === 0) {
+        result = { node: parent, offset: nodeIndex };
+      } else if (remaining <= length) {
+        result = { node: parent, offset: nodeIndex + 1 };
+      } else {
+        remaining -= length;
+        last = { node: parent, offset: nodeIndex + 1 };
+      }
+      return;
+    }
+
+    let started = false;
+    let endsWithNewline = false;
+    let lastWasEmptyBlock = false;
+    const children = Array.from(node.childNodes);
+    for (let index = 0; index < children.length; index++) {
+      const child = children[index];
+      const childMetrics = serializedNodeMetrics(child);
+      const isBlock = isContenteditableBlock(child);
+      if (isBlock && started && (!endsWithNewline || lastWasEmptyBlock)) {
+        if (remaining === 0) {
+          result = { node, offset: index };
+          return;
+        }
+        remaining--;
+        endsWithNewline = true;
+      }
+      walk(child);
+      if (result) return;
+      if (childMetrics.length > 0) endsWithNewline = childMetrics.endsWithNewline;
+      if (isBlock || childMetrics.meaningful) started = true;
+      lastWasEmptyBlock = isBlock && childMetrics.length === 0;
+    }
+
+    if (remaining === 0) {
+      result = { node, offset: node.childNodes.length };
+    }
+  };
+
+  walk(container);
+  return result ?? last;
 }
 
 /**
- * Issue C: re-resolve an absolute character offset (from
- * captureAbsoluteCaretOffset) to a concrete `{ node, offset }` against the LIVE
- * DOM, then return a collapsed Range there. Token pills are treated as opaque
- * blocks (the caret lands just before or just after a pill, never inside).
- * Clamps to the visible end so it never lands inside a trailing ZWSP.
+ * Give every token a native text caret position on both sides. One shared
+ * boundary node is sufficient between adjacent pills. These sentinels are
+ * presentation-only and are removed by convertHTMLToTokens.
  */
-function resolveCaretFromAbsoluteOffset(container: HTMLElement, target: number): Range | null {
-  type CaretPos = { node: Node; offset: number };
-  let remaining = target;
-  const found: { result: CaretPos | null; last: CaretPos | null } = { result: null, last: null };
-
-  const walk = (node: Node): void => {
-    if (found.result) return;
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = (node.textContent || '');
-      const visibleLen = text.replace(/\u200B/g, '').length;
-      // Track the furthest visible text position so we can clamp to it.
-      found.last = { node, offset: Math.min(text.length, visibleLen) };
-      if (remaining <= visibleLen) {
-        // Map the visible offset back to a raw offset (skip leading ZWSPs).
-        let raw = 0;
-        let seen = 0;
-        while (raw < text.length && seen < remaining) {
-          if (text[raw] !== ZERO_WIDTH_SPACE) seen++;
-          raw++;
-        }
-        found.result = { node, offset: raw };
-        return;
-      }
-      remaining -= visibleLen;
-      return;
-    }
-    if (isTokenElement(node)) {
-      const len = nodeTextLength(node);
-      if (remaining <= len) {
-        // Land just AFTER the token pill (caret before it would feel wrong when
-        // restoring next to a freshly-typed "[").
-        found.result = { node: container, offset: indexOfChild(container, node) + 1 };
-        return;
-      }
-      remaining -= len;
-      return;
-    }
-    node.childNodes.forEach(walk);
-  };
-  container.childNodes.forEach(walk);
-
-  const pos: CaretPos | null = found.result ?? found.last;
-  if (!pos) {
-    // Empty field: collapse at the start of the container.
-    const range = document.createRange();
-    range.selectNodeContents(container);
-    range.collapse(true);
-    return range;
+function normalizeTokenCaretBoundaries(container: HTMLElement): void {
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    textNodes.push(current as Text);
+    current = walker.nextNode();
   }
-  const range = document.createRange();
-  range.setStart(pos.node, pos.offset);
-  range.collapse(true);
-  return range;
+  textNodes.forEach(textNode => {
+    if (textNode.data.includes(ZERO_WIDTH_SPACE)) {
+      textNode.data = textNode.data.replace(/\u200B/g, '');
+    }
+  });
+
+  const tokens = Array.from(container.querySelectorAll('.config-token'));
+  tokens.forEach(token => {
+    const parent = token.parentNode;
+    if (!parent) return;
+
+    const previous = token.previousSibling;
+    if (previous?.nodeType === Node.TEXT_NODE) {
+      const text = previous as Text;
+      if (!text.data.endsWith(ZERO_WIDTH_SPACE)) text.appendData(ZERO_WIDTH_SPACE);
+    } else {
+      parent.insertBefore(document.createTextNode(ZERO_WIDTH_SPACE), token);
+    }
+
+    const next = token.nextSibling;
+    if (next?.nodeType === Node.TEXT_NODE) {
+      const text = next as Text;
+      if (!text.data.startsWith(ZERO_WIDTH_SPACE)) text.insertData(0, ZERO_WIDTH_SPACE);
+    } else {
+      parent.insertBefore(document.createTextNode(ZERO_WIDTH_SPACE), token.nextSibling);
+    }
+  });
 }
 
-/** Index of a direct child within its parent's childNodes (or -1). */
-function indexOfChild(parent: Node, child: Node): number {
-  return Array.prototype.indexOf.call(parent.childNodes, child);
+function adjacentTokenAtCaret(
+  container: HTMLElement,
+  range: Range,
+  direction: 'backward' | 'forward',
+): Element | null {
+  if (!range.collapsed ||
+      (range.startContainer !== container && !container.contains(range.startContainer))) {
+    return null;
+  }
+
+  const node = range.startContainer;
+  let sibling: Node | null;
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent || '';
+    const presentationOnly = direction === 'backward'
+      ? text.slice(0, range.startOffset)
+      : text.slice(range.startOffset);
+    if (presentationOnly.replace(/\u200B/g, '') !== '') return null;
+    sibling = direction === 'backward' ? node.previousSibling : node.nextSibling;
+  } else {
+    sibling = (direction === 'backward'
+      ? node.childNodes[range.startOffset - 1]
+      : node.childNodes[range.startOffset]) ?? null;
+  }
+
+  // Range insertion and token deletion can leave multiple empty text nodes
+  // around the one presentation boundary. They are the same caret boundary,
+  // not content that should block navigation to the next pill.
+  while (
+    sibling?.nodeType === Node.TEXT_NODE &&
+    (sibling.textContent || '').replace(/\u200B/g, '') === ''
+  ) {
+    sibling = direction === 'backward' ? sibling.previousSibling : sibling.nextSibling;
+  }
+  return isTokenElement(sibling) ? sibling : null;
+}
+
+function placeCaretAdjacentToToken(token: Element, direction: 'before' | 'after'): void {
+  const parent = token.parentNode;
+  const selection = window.getSelection();
+  if (!parent || !selection) return;
+
+  const range = document.createRange();
+  const boundary = direction === 'before' ? token.previousSibling : token.nextSibling;
+  if (boundary?.nodeType === Node.TEXT_NODE) {
+    const text = boundary.textContent || '';
+    const offset = direction === 'before'
+      ? Math.max(0, text.length - (text.endsWith(ZERO_WIDTH_SPACE) ? 1 : 0))
+      : (text.startsWith(ZERO_WIDTH_SPACE) ? 1 : 0);
+    range.setStart(boundary, offset);
+  } else if (direction === 'before') {
+    range.setStartBefore(token);
+  } else {
+    range.setStartAfter(token);
+  }
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
@@ -256,6 +460,7 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
   disabled = false,
   multiline = false,
   acceptsTokens = true,
+  ariaLabelledBy,
 }) => {
   const divRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -270,21 +475,11 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
   const [editingToken, setEditingToken] = useState<TokenEditState | null>(null);
   // "[" token-picker popup state (null when closed).
   const [tokenPicker, setTokenPicker] = useState<TokenPickerState | null>(null);
-  // Ref to the text node + offset where the triggering "[" was typed, so we can
-  // remove the "[" + any partial query when a token is selected.
-  const atAnchorRef = useRef<{ node: Node; offset: number } | null>(null);
-  // The "[" that has already been HANDLED (opened then closed/dismissed). While
-  // the caret's nearest preceding "[" matches this anchor, the picker must NOT
-  // re-open — typing more characters after a dismissed "[" does nothing
-  // (DECISION A: filtering lives in the picker's own search box, not field
-  // text). Cleared on insert and when the "[" itself disappears, so a NEW "["
-  // (different node/offset) still opens.
-  const consumedBracketRef = useRef<{ node: Node; offset: number } | null>(null);
-  // The field caret captured when the picker OPENS, stored as an ABSOLUTE
-  // character offset from the start of the field (Issue C) — NOT a node
-  // reference, which would dangle when React re-creates the field's text nodes
-  // between open and close. Restored (re-resolved against the live DOM) on any
-  // user dismiss (DECISION B: Escape, ×, backdrop).
+  // Picker insertion is tracked in serialized-value offsets rather than DOM
+  // node identity. Text nodes are routinely split/re-created by contenteditable
+  // and React, while token labels have a different length from raw token strings.
+  const triggerRangeRef = useRef<LogicalSelection | null>(null);
+  const consumedBracketRef = useRef<number | null>(null);
   const restoreCaretRef = useRef<number | null>(null);
 
   // The picker reads its data from this shared context (provided by
@@ -340,9 +535,7 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
 
       if (currentContent !== htmlContent) {
         divRef.current.innerHTML = htmlContent;
-        // Issue B: if the rendered value ends in a token pill, append a caret
-        // landing spot so the user can place the cursor / type after it.
-        if (acceptsTokens) ensureTrailingCaretSpace(divRef.current);
+        if (acceptsTokens) normalizeTokenCaretBoundaries(divRef.current);
         setLocalValue(htmlContent);
       }
     }
@@ -564,49 +757,31 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
     }
   }, [saveTokenEdit, cancelTokenEdit]);
 
-  // Close the "[" token picker and clear the anchor. This is the SINGLE genuine
-  // close path (insert / × / Escape / backdrop / caret moved past "[") — the
-  // only place that reports the freeze release.
-  //
-  // `restoreFocus` (DECISION B): on a USER dismiss (Escape / × / backdrop) we
-  // return focus + caret to the field. The internal auto-close paths (caret
-  // moved away, field disabled, etc.) pass `false` so they never fight the
-  // user's cursor.
-  //
-  // The dismissed "[" is recorded as CONSUMED (DECISION A / Caveat 3) so that
-  // typing more characters after it — or the caret-restore landing right next
-  // to it — does not re-open the picker.
   const closeTokenPicker = useCallback((restoreFocus = false) => {
     reportPickerOpen(false);
     setTokenPicker(null);
-    // Mark the just-closed "[" as consumed so it cannot re-trigger.
-    if (atAnchorRef.current) {
-      consumedBracketRef.current = atAnchorRef.current;
+    if (triggerRangeRef.current) {
+      consumedBracketRef.current = triggerRangeRef.current.start;
     }
-    atAnchorRef.current = null;
+    triggerRangeRef.current = null;
 
     if (restoreFocus) {
       const container = divRef.current;
-      const absoluteOffset = restoreCaretRef.current;
+      const logicalOffset = restoreCaretRef.current;
       if (container) {
         container.focus();
-        // Restore the caret to where it was when the picker opened by
-        // RE-RESOLVING the saved absolute offset against the LIVE DOM (Issue C):
-        // text nodes may have been re-created since open, so a node reference
-        // would dangle and silently no-op (leaving the caret at field start).
-        // Range APIs may be limited under jsdom — guard so unit tests never
-        // throw.
         try {
           const selection = window.getSelection();
-          if (selection && absoluteOffset !== null) {
-            const range = resolveCaretFromAbsoluteOffset(container, absoluteOffset);
-            if (range) {
-              selection.removeAllRanges();
-              selection.addRange(range);
-            }
+          if (selection && logicalOffset !== null) {
+            const point = resolveLogicalOffset(container, logicalOffset);
+            const range = document.createRange();
+            range.setStart(point.node, point.offset);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
           }
         } catch {
-          // jsdom / unsupported range API — focus alone is sufficient.
+          // Some test/browser Range implementations only support focus.
         }
       }
     }
@@ -614,15 +789,9 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
   }, [reportPickerOpen]);
 
   /**
-   * Inspect the caret to decide whether the "[" token picker should OPEN. Walks
-   * back from the caret within the current text node to the most recent "[" —
-   * which may appear anywhere in the string, including mid-word. The picker
-   * OPENS once for a freshly-typed "[" trigger; thereafter filtering happens in
-   * the picker's own search box (DECISION A), NOT in the field. So once the
-   * picker is open — or has been dismissed — typing more characters after that
-   * SAME "[" must NOT re-open or re-filter it (the bracket is "consumed").
-   * Closes the picker if no active "[" trigger is found (e.g. the user
-   * backspaced past it, or typed whitespace immediately after it).
+   * Open the picker for the nearest "[" before a collapsed field caret. The
+   * trigger and caret are stored as serialized offsets so later focus changes
+   * and DOM node replacement cannot change what will be replaced.
    */
   const updateTokenPickerFromCaret = useCallback(() => {
     const container = divRef.current;
@@ -640,7 +809,6 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
 
     const range = selection.getRangeAt(0);
     const node = range.startContainer;
-    // Only operate inside a text node within this field.
     if (node.nodeType !== Node.TEXT_NODE || !container.contains(node)) {
       if (tokenPicker) closeTokenPicker();
       return;
@@ -648,54 +816,35 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
 
     const text = node.textContent || '';
     const caret = range.startOffset;
-    // Find the last "[" before the caret in this text node. The trigger may
-    // appear anywhere in the string (including mid-word) — no preceding
-    // whitespace or start-of-node is required.
     const bracketIndex = text.lastIndexOf('[', caret - 1);
     if (bracketIndex === -1) {
-      // No "[" before the caret: nothing can be consumed here anymore, so clear
-      // the consumed marker (a later "[" must be free to open) and close.
       consumedBracketRef.current = null;
       if (tokenPicker) closeTokenPicker();
       return;
     }
 
-    // Identify this bracket. If it matches the consumed anchor, the picker was
-    // already opened+dismissed for it — do NOT re-open and do NOT close (a close
-    // here would just churn the already-closed picker).
-    const consumed = consumedBracketRef.current;
-    const isConsumed = !!consumed && consumed.node === node && consumed.offset === bracketIndex;
-    if (isConsumed) {
+    const bracketOffset = captureLogicalOffset(container, node, bracketIndex);
+    const logicalSelection = captureLogicalSelection(container);
+    if (bracketOffset === null || !logicalSelection) {
+      if (tokenPicker) closeTokenPicker();
       return;
     }
+    if (consumedBracketRef.current === bracketOffset) return;
 
     const query = text.slice(bracketIndex + 1, caret);
-    // A whitespace immediately inside the query ends the token trigger.
     if (/\s/.test(query)) {
       if (tokenPicker) closeTokenPicker();
       return;
     }
 
-    // The picker is already open for this (un-consumed) bracket — keep it open;
-    // further typing in the field neither re-opens nor re-filters it.
-    if (tokenPicker) {
-      atAnchorRef.current = { node, offset: bracketIndex };
-      return;
-    }
+    triggerRangeRef.current = {
+      start: bracketOffset,
+      end: logicalSelection.end,
+    };
+    if (tokenPicker) return;
 
-    // Fresh "[" trigger: open the picker. Remember where the "[" lives so we can
-    // remove it on insert, and remember the caret as an ABSOLUTE offset (Issue
-    // C) so we can restore it on a user dismiss (DECISION B) even after a
-    // re-render re-creates the field's text nodes.
-    atAnchorRef.current = { node, offset: bracketIndex };
-    restoreCaretRef.current = captureAbsoluteCaretOffset(container);
+    restoreCaretRef.current = logicalSelection.end;
 
-    // Anchor the popup just below the caret in VIEWPORT coordinates. The picker
-    // is rendered through a portal to document.body (a modal dialog), so it is
-    // positioned with `position: fixed` using these viewport-relative values —
-    // independent of the field/panel layout that may re-render beneath it.
-    // Range.getBoundingClientRect may be unavailable (jsdom) — guard so the
-    // picker still opens; positioning just falls back to the viewport origin.
     let x = 0;
     let y = 0;
     if (typeof range.getBoundingClientRect === 'function') {
@@ -704,7 +853,6 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
       y = caretRect.bottom;
     }
 
-    // Report the genuine OPEN transition (deduped inside reportPickerOpen).
     reportPickerOpen(true);
     setTokenPicker({ x: Math.max(0, x), y: Math.max(0, y) });
   }, [disabled, acceptsTokens, tokenPicker, closeTokenPicker, reportPickerOpen]);
@@ -712,147 +860,52 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
   const handleInput = useCallback(() => {
     if (divRef.current) {
       const htmlContent = divRef.current.innerHTML || '';
-      const hasTokens = htmlContent.includes('config-token');
-      const newValue = hasTokens ? htmlContent : (divRef.current.textContent || '');
-      setLocalValue(newValue);
-      debouncedOnChange(newValue);
+      setLocalValue(htmlContent);
+      // Always pass the edited DOM through convertHTMLToTokens. Plain text is
+      // unchanged, while native multiline block boundaries become newlines.
+      debouncedOnChange(htmlContent);
     }
     // After the DOM updates, re-evaluate whether the "[" picker should show.
     updateTokenPickerFromCaret();
   }, [debouncedOnChange, updateTokenPickerFromCaret]);
 
   /**
-   * Insert a token chosen from the "[" picker. Removes the triggering "[" and
-   * any partial query the user typed, then inserts the token pill at that spot
-   * using the SAME createTokenElement path as the drop handler.
+   * Replace the saved trigger/query range with a token. The saved range uses
+   * serialized offsets, so picker focus and text-node replacement are irrelevant
+   * and text after the trigger remains untouched.
    */
   const handleTokenPickerSelect = useCallback((label: string, token: string) => {
     const container = divRef.current;
-    const anchor = atAnchorRef.current;
-    if (!container) {
+    const trigger = triggerRangeRef.current;
+    if (!container || !trigger) {
       closeTokenPicker();
       return;
     }
 
+    const start = resolveLogicalOffset(container, trigger.start);
+    const end = resolveLogicalOffset(container, trigger.end);
+    const insertRange = document.createRange();
+    insertRange.setStart(start.node, start.offset);
+    insertRange.setEnd(end.node, end.offset);
+
+    // If the field changed while the modal was open, do not guess at another
+    // bracket. Inserting at a guessed position risks deleting unrelated suffixes.
+    const triggerText = insertRange.toString().replace(/\u200B/g, '');
+    if (!triggerText.startsWith('[')) {
+      closeTokenPicker(true);
+      return;
+    }
+
+    insertRange.deleteContents();
+    insertRange.collapse(true);
     const tokenElement = createTokenElement(label, token);
-
-    const selection = window.getSelection();
-    const liveRange =
-      selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-    // BUG 1 fix: removing the triggering "[" must NOT depend on the live caret
-    // remaining inside the field. When the user clicks "Use" in the portaled
-    // picker dialog, focus/selection moves INTO that dialog, and a prior React
-    // re-render may have re-created (detached) the recorded anchor text node.
-    // So we try, in order: (1) the recorded anchor when still live with a real
-    // "[" at its offset; (2) re-locate from the live caret IF it is still in the
-    // field; (3) scan the field's OWN DOM for the last "[" (the open picker is
-    // tied to exactly one trigger bracket, so the last "[" in the field IS the
-    // trigger); (4) only if no "[" exists anywhere, fall back to the caret/end.
-    // In every located case the new pill is inserted WHERE the "[" was, never at
-    // the field end.
-    let insertRange: Range | null = null;
-
-    // Path 1: the recorded anchor is still live AND a "[" sits at that offset.
-    if (anchor && container.contains(anchor.node)) {
-      const anchorText = anchor.node.textContent || '';
-      if (anchorText.charAt(anchor.offset) === '[') {
-        const caretOffset =
-          liveRange && liveRange.startContainer === anchor.node
-            ? liveRange.startOffset
-            : anchorText.length;
-        insertRange = document.createRange();
-        insertRange.setStart(anchor.node, Math.min(anchor.offset, anchorText.length));
-        insertRange.setEnd(
-          anchor.node,
-          Math.max(anchor.offset, Math.min(caretOffset, anchorText.length)),
-        );
-        insertRange.deleteContents();
-      }
-    }
-
-    // Path 2: anchor is stale/detached — re-locate the "[" from the live caret,
-    // but ONLY when that caret is genuinely still inside the field.
-    if (!insertRange && liveRange) {
-      const caretNode = liveRange.startContainer;
-      if (
-        caretNode.nodeType === Node.TEXT_NODE &&
-        container.contains(caretNode)
-      ) {
-        const text = caretNode.textContent || '';
-        const caret = liveRange.startOffset;
-        const bracketIndex = text.lastIndexOf('[', caret - 1);
-        if (bracketIndex !== -1) {
-          insertRange = document.createRange();
-          insertRange.setStart(caretNode, bracketIndex);
-          insertRange.setEnd(caretNode, caret);
-          insertRange.deleteContents();
-        }
-      }
-    }
-
-    // Path 2.5 (the real fix): the live caret is NOT in the field (focus is in
-    // the picker dialog) and the anchor is gone. Scan the field's own text nodes
-    // for the LAST "[" anywhere and delete just that bracket, then insert the
-    // pill exactly there. Token pills are opaque (their visible text never
-    // contains "["), so a plain SHOW_TEXT walk is sufficient and safe.
-    if (!insertRange) {
-      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-      let lastBracketNode: Text | null = null;
-      let lastBracketIndex = -1;
-      let current = walker.nextNode();
-      while (current) {
-        const idx = (current.textContent || '').lastIndexOf('[');
-        if (idx !== -1) {
-          lastBracketNode = current as Text;
-          lastBracketIndex = idx;
-        }
-        current = walker.nextNode();
-      }
-      if (lastBracketNode && lastBracketIndex !== -1) {
-        // Delete the single trigger "[" (the picker owns query filtering, so the
-        // field text holds only the bare bracket), leaving a collapsed range at
-        // that spot so the new pill lands WHERE the "[" was.
-        insertRange = document.createRange();
-        insertRange.setStart(lastBracketNode, lastBracketIndex);
-        insertRange.setEnd(lastBracketNode, lastBracketIndex + 1);
-        insertRange.deleteContents();
-        insertRange.collapse(true);
-      }
-    }
-
-    // Path 3: no "[" exists anywhere in the field — insert at the caret/end.
-    if (!insertRange) {
-      insertRange = getFallbackInsertPosition(container);
-    }
-
     insertRange.insertNode(tokenElement);
-    // Issue B: ensure there is a caret landing spot AFTER the (possibly
-    // trailing) inserted token, then place the caret there so the user can type
-    // immediately after the pill.
-    ensureTrailingCaretSpace(container);
-    const afterToken = tokenElement.nextSibling;
-    if (afterToken && afterToken.nodeType === Node.TEXT_NODE) {
-      insertRange.setStart(afterToken, Math.min(1, (afterToken.textContent || '').length));
-      insertRange.collapse(true);
-    } else {
-      // A following non-text node exists (e.g. more content) → caret after pill.
-      insertRange.setStartAfter(tokenElement);
-      insertRange.collapse(true);
-    }
-    if (selection) {
-      selection.removeAllRanges();
-      selection.addRange(insertRange);
-    }
+    normalizeTokenCaretBoundaries(container);
+    placeCaretAdjacentToToken(tokenElement, 'after');
 
-    // Close WITHOUT restoring the old caret (we just placed it after the new
-    // pill). A successful insert removes the triggering "[" entirely, so clear
-    // the consumed marker AFTER closing (close records the anchor as consumed) —
-    // a later "[" at a new position must then open freely.
     closeTokenPicker();
     consumedBracketRef.current = null;
 
-    // Persist using the same serialize path as drag-and-drop.
     const htmlContent = container.innerHTML || '';
     setLocalValue(htmlContent);
     debouncedOnChange(htmlContent);
@@ -893,8 +946,16 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
     }
 
     if (divRef.current) {
-      // Issue B: a paste that ends in a token pill needs a trailing caret spot.
-      ensureTrailingCaretSpace(divRef.current);
+      const caret = captureLogicalSelection(divRef.current);
+      normalizeTokenCaretBoundaries(divRef.current);
+      if (selection && caret) {
+        const point = resolveLogicalOffset(divRef.current, caret.end);
+        const range = document.createRange();
+        range.setStart(point.node, point.offset);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
       const htmlContent = divRef.current.innerHTML || '';
       setLocalValue(htmlContent);
       debouncedOnChange(htmlContent);
@@ -931,12 +992,16 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
   }, [onChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // While the "[" token picker is open, let it handle navigation/selection
-    // keys (the picker listens at the document level). Swallow them here so the
-    // field's own handlers (e.g. single-line Enter → blur) don't interfere.
+    const hasNavigationModifier = e.shiftKey || e.ctrlKey || e.metaKey || e.altKey;
+
+    // The picker owns plain navigation keys. Modified arrows retain the
+    // browser's selection and word/line navigation behavior.
     if (tokenPicker) {
-      if (e.key === 'Enter' || e.key === 'Escape' ||
-          e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      const plainPickerArrow =
+        !hasNavigationModifier &&
+        (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+          e.key === 'ArrowLeft' || e.key === 'ArrowRight');
+      if (e.key === 'Enter' || e.key === 'Escape' || plainPickerArrow) {
         e.preventDefault();
         return;
       }
@@ -947,6 +1012,21 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
       e.preventDefault();
       divRef.current?.blur();
       return;
+    }
+
+    if (!hasNavigationModifier && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const container = divRef.current;
+      const selection = window.getSelection();
+      if (container && selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const direction = e.key === 'ArrowLeft' ? 'backward' : 'forward';
+        const token = adjacentTokenAtCaret(container, range, direction);
+        if (token) {
+          e.preventDefault();
+          placeCaretAdjacentToToken(token, direction === 'backward' ? 'before' : 'after');
+          return;
+        }
+      }
     }
 
     // Ctrl+E to edit the selected or adjacent token
@@ -962,19 +1042,12 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
         return;
       }
 
-      // Check if cursor is adjacent to a token
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        const nextNode = range.endContainer.nodeType === Node.TEXT_NODE
-          ? range.endContainer.nextSibling
-          : range.endContainer.childNodes[range.endOffset];
-        const prevNode = range.startContainer.nodeType === Node.TEXT_NODE
-          ? range.startContainer.previousSibling
-          : range.startContainer.childNodes[range.startOffset - 1];
-
-        const adjacentToken = (isTokenElement(nextNode) ? nextNode : null) ||
-          (isTokenElement(prevNode) ? prevNode : null);
+        const adjacentToken =
+          adjacentTokenAtCaret(container, range, 'forward') ||
+          adjacentTokenAtCaret(container, range, 'backward');
         if (adjacentToken) {
           e.preventDefault();
           openTokenEdit(adjacentToken as HTMLElement);
@@ -983,63 +1056,37 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
       }
     }
 
-    // Handle Delete and Backspace for token deletion
     if (e.key === 'Delete' || e.key === 'Backspace') {
+      const container = divRef.current;
       const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
+      if (container && selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-
-        let tokenToDelete: Element | null = null;
-
-        if (e.key === 'Delete') {
-          const nextNode = range.endContainer.nodeType === Node.TEXT_NODE
-            ? range.endContainer.nextSibling
-            : range.endContainer.childNodes[range.endOffset];
-
-          if (isTokenElement(nextNode)) {
-            tokenToDelete = nextNode;
-          }
-        } else if (e.key === 'Backspace') {
-          const startNode = range.startContainer;
-
-          if (startNode.nodeType === Node.TEXT_NODE) {
-            // BUG 2 fix: when the caret is inside a TEXT node, only treat
-            // Backspace as a token deletion if there is NOTHING visible between
-            // the caret and a preceding token — i.e. the substring before the
-            // caret is empty or consists solely of zero-width spaces (the Issue
-            // B caret-landing spot). If ANY real character precedes the caret
-            // (e.g. text node "\u200Babc" with the caret after "c"), fall
-            // through to the browser's native Backspace so it deletes that
-            // character, NOT the token to its left.
-            const beforeCaret = (startNode.textContent || '').slice(0, range.startOffset);
-            if (
-              /^\u200B*$/.test(beforeCaret) &&
-              isTokenElement(startNode.previousSibling)
-            ) {
-              tokenToDelete = startNode.previousSibling as Element;
-              // Remove the now-orphaned ZWSP spacer (if any) so nothing lingers.
-              if (beforeCaret.length > 0) {
-                (startNode as Text).remove();
-              }
-            }
-          } else {
-            // Caret sits between elements in the container: a directly-preceding
-            // token (childNodes[startOffset - 1]) is genuinely at the boundary.
-            const prevNode = startNode.childNodes[range.startOffset - 1];
-            if (isTokenElement(prevNode)) {
-              tokenToDelete = prevNode;
-            }
-          }
-        }
-
+        const direction = e.key === 'Backspace' ? 'backward' : 'forward';
+        const tokenToDelete = adjacentTokenAtCaret(container, range, direction);
         if (tokenToDelete) {
           e.preventDefault();
+          const parent = tokenToDelete.parentNode;
+          if (!parent) return;
+
+          // A logical offset at a block boundary is ambiguous: the same number
+          // can be the end of the previous line or the start of this one. Keep
+          // an exact DOM marker through normalization, then replace it with a
+          // concrete presentation character. Chromium does not keep typing on
+          // an empty final line when the selection only targets an empty node.
+          const anchorMarker = document.createComment('token-caret');
+          parent.insertBefore(anchorMarker, tokenToDelete);
           tokenToDelete.remove();
+          normalizeTokenCaretBoundaries(container);
+          const caretAnchor = document.createTextNode(ZERO_WIDTH_SPACE);
+          parent.replaceChild(caretAnchor, anchorMarker);
 
-          // Issue B: keep a trailing caret spot if a token is STILL last.
-          if (divRef.current) ensureTrailingCaretSpace(divRef.current);
+          const nextRange = document.createRange();
+          nextRange.setStart(caretAnchor, 1);
+          nextRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(nextRange);
 
-          const htmlContent = divRef.current?.innerHTML || '';
+          const htmlContent = container.innerHTML || '';
           setLocalValue(htmlContent);
           debouncedOnChange(htmlContent);
           return;
@@ -1155,19 +1202,8 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
     insertPosition.deleteContents();
     insertPosition.insertNode(tokenElement);
 
-    // Position cursor right after the token
-    insertPosition.setStartAfter(tokenElement);
-    insertPosition.setEndAfter(tokenElement);
-
-    // Issue B: a drop that leaves the token as the LAST node needs a trailing
-    // caret spot after it.
-    ensureTrailingCaretSpace(divRef.current);
-
-    const selection = window.getSelection();
-    if (selection) {
-      selection.removeAllRanges();
-      selection.addRange(insertPosition);
-    }
+    normalizeTokenCaretBoundaries(divRef.current);
+    placeCaretAdjacentToToken(tokenElement, 'after');
 
     // Trigger change event
     const htmlContent = divRef.current.innerHTML || '';
@@ -1195,7 +1231,8 @@ const ContentEditableField: React.FC<ContentEditableFieldProps> = ({
         data-placeholder={placeholder}
         role="textbox"
         aria-multiline={multiline}
-        aria-label={placeholder || t('Text input')}
+        aria-labelledby={ariaLabelledBy}
+        aria-label={ariaLabelledBy ? undefined : (placeholder || t('Text input'))}
         suppressContentEditableWarning={true}
       />
       {dropCursor && (

@@ -3,32 +3,18 @@ import MetadataModal from './MetadataModal';
 import ConfirmDialog from './ConfirmDialog';
 import ExportDialog from './ExportDialog';
 import type { ExportFormat } from '../hooks/useExport';
+import type { MetadataFormData } from '../utils/metadataCodec';
+import type { FormField } from '../types/forms';
+import type { ModelData } from '../types/settings';
 
 interface ModalsProps {
   // Metadata Modal
   showMetadataModal: boolean;
   onCloseMetadataModal: () => void;
-  onMetadataSubmit: (metadata: {
-    id?: string;
-    label: string;
-    version?: string;
-    executable?: boolean;
-    template?: boolean;
-    storage?: string;
-    documentation?: string;
-    tags: string[];
-    changelog?: string;
-  }) => void;
-  modelMetadata: {
-    label?: string;
-    version?: string;
-    executable?: boolean;
-    template?: boolean;
-    storage?: string;
-    documentation?: string;
-    tags?: string[];
-    changelog?: string;
-  };
+  onMetadataSubmit: (metadata: MetadataFormData) => void;
+  modelMetadata: ModelData['metadata'];
+  /** The converted model metadata form, as delivered by the backend. */
+  metadataForm?: FormField[];
   modelId?: string;
   isNewModel?: boolean;
   /** Whether the user may edit metadata fields. */
@@ -67,6 +53,7 @@ const Modals: React.FC<ModalsProps> = ({
   onCloseMetadataModal,
   onMetadataSubmit,
   modelMetadata,
+  metadataForm,
   modelId,
   isNewModel = false,
   canEditMetadata = true,
@@ -104,6 +91,7 @@ const Modals: React.FC<ModalsProps> = ({
           isOpen={showMetadataModal}
           onClose={onCloseMetadataModal}
           onSave={onMetadataSubmit}
+          form={metadataForm}
           metadata={modelMetadata}
           modelId={modelId}
           isNew={isNewModel}

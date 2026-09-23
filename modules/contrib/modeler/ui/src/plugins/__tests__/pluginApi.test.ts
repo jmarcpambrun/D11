@@ -67,6 +67,14 @@ const mockEdge1: StoreEdge = {
   data: { condition: null },
 };
 
+const mockEdge2: StoreEdge = {
+  id: 'edge-2',
+  source: 'node-2',
+  target: 'node-1',
+  type: 'default',
+  data: { condition: null },
+};
+
 const graphStore = createStoreMock({
   nodes: [mockNode1, mockNode2] as StoreNode[],
   edges: [mockEdge1] as StoreEdge[],
@@ -83,6 +91,8 @@ const graphStore = createStoreMock({
 const selectionStore = createStoreMock({
   selectedNode: null as StoreNode | null,
   selectedEdge: null as StoreEdge | null,
+  selectedNodes: [] as string[],
+  selectedEdges: [] as string[],
   selectNode: jest.fn(),
   selectEdge: jest.fn(),
   clearSelection: jest.fn(),
@@ -260,6 +270,8 @@ function resetStores() {
   selectionStore.setState({
     selectedNode: null,
     selectedEdge: null,
+    selectedNodes: [],
+    selectedEdges: [],
   });
   (selectionStore.getState().selectNode as jest.Mock).mockClear();
   (selectionStore.getState().selectEdge as jest.Mock).mockClear();
@@ -422,6 +434,40 @@ describe('pluginApi', () => {
       });
     });
 
+    describe('getSelectedNodes', () => {
+      it('returns an empty array when nothing is selected', () => {
+        expect(api.getSelectedNodes()).toEqual([]);
+      });
+
+      it('returns one node for a single selection', () => {
+        selectionStore.setState({ selectedNodes: ['node-1'] });
+
+        expect(api.getSelectedNodes()).toEqual([
+          expect.objectContaining({ id: 'node-1' }),
+        ]);
+      });
+
+      it('returns all selected nodes in selection-store order', () => {
+        selectionStore.setState({ selectedNodes: ['node-2', 'node-1'] });
+
+        expect(api.getSelectedNodes().map((node) => node.id)).toEqual([
+          'node-2',
+          'node-1',
+        ]);
+      });
+
+      it('skips selected node IDs missing from the graph store', () => {
+        selectionStore.setState({
+          selectedNodes: ['node-2', 'missing-node', 'node-1'],
+        });
+
+        expect(api.getSelectedNodes().map((node) => node.id)).toEqual([
+          'node-2',
+          'node-1',
+        ]);
+      });
+    });
+
     describe('getSelectedEdge', () => {
       it('returns null when nothing selected', () => {
         expect(api.getSelectedEdge()).toBeNull();
@@ -432,6 +478,44 @@ describe('pluginApi', () => {
         const edge = api.getSelectedEdge();
         expect(edge).not.toBeNull();
         expect(edge!.id).toBe('edge-1');
+      });
+    });
+
+    describe('getSelectedEdges', () => {
+      beforeEach(() => {
+        graphStore.setState({ edges: [mockEdge1, mockEdge2] });
+      });
+
+      it('returns an empty array when nothing is selected', () => {
+        expect(api.getSelectedEdges()).toEqual([]);
+      });
+
+      it('returns one edge for a single selection', () => {
+        selectionStore.setState({ selectedEdges: ['edge-1'] });
+
+        expect(api.getSelectedEdges()).toEqual([
+          expect.objectContaining({ id: 'edge-1' }),
+        ]);
+      });
+
+      it('returns all selected edges in selection-store order', () => {
+        selectionStore.setState({ selectedEdges: ['edge-2', 'edge-1'] });
+
+        expect(api.getSelectedEdges().map((edge) => edge.id)).toEqual([
+          'edge-2',
+          'edge-1',
+        ]);
+      });
+
+      it('skips selected edge IDs missing from the graph store', () => {
+        selectionStore.setState({
+          selectedEdges: ['edge-2', 'missing-edge', 'edge-1'],
+        });
+
+        expect(api.getSelectedEdges().map((edge) => edge.id)).toEqual([
+          'edge-2',
+          'edge-1',
+        ]);
       });
     });
 
@@ -699,6 +783,27 @@ describe('pluginApi', () => {
         // Same node again - no change
         selectionStore._notify();
         expect(cb).toHaveBeenCalledTimes(1);
+      });
+
+      it('fires when the multi-selection grows without changing the primary node', () => {
+        const cb = jest.fn();
+        api.onSelectionChange(cb);
+
+        selectionStore.setState({
+          selectedNode: mockNode1,
+          selectedNodes: ['node-1'],
+        });
+        selectionStore._notify();
+        cb.mockClear();
+
+        selectionStore.setState({ selectedNodes: ['node-1', 'node-2'] });
+        selectionStore._notify();
+
+        expect(cb).toHaveBeenCalledTimes(1);
+        expect(cb).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'node-1' }),
+          null,
+        );
       });
 
       it('unsubscribe stops future callbacks', () => {
@@ -2149,7 +2254,8 @@ describe('pluginApi', () => {
     it('createPluginApi returns an object with all expected methods', () => {
       const methodNames = [
         'getNodes', 'getEdges', 'getNodeById', 'getEdgeById',
-        'getSelectedNode', 'getSelectedEdge', 'getModelData',
+        'getSelectedNode', 'getSelectedEdge', 'getSelectedNodes',
+        'getSelectedEdges', 'getModelData',
         'isReadOnly', 'isDarkMode', 'getComponents', 'getComponentLabels',
         'getContexts', 'getSelectedContextId', 'getFilteredNodeIds',
         'getHistoryState', 'getErrors',

@@ -19,6 +19,20 @@ accessibility standards.
 | `Ctrl+Shift+Z` (`Cmd+Shift+Z` on Mac) | Redo previously undone action | When future history is available |
 | `Ctrl+Y` (`Cmd+Y` on Mac) | Redo previously undone action | When future history is available |
 
+### Panel shortcuts
+
+| Shortcut | Action | Context |
+|----------|--------|---------|
+| `Alt+Shift+R` (`Option+Shift+R` on Mac) | Toggle between properties and review mode | When the model has replay or test capability, or while in review mode |
+
+!!! note "Why this combination"
+    The shortcut is matched by **physical key position** (the `R` key), not by
+    the character the keyboard produces. It therefore works on every keyboard
+    layout, including macOS, where holding Option turns the `R` key into a
+    different character. No browser reserves `Alt+Shift+R`, so nothing has to
+    be overridden - and `Ctrl+Shift+R` is deliberately left alone, so the
+    browser's hard reload keeps working.
+
 ### Mouse + modifier combinations
 
 | Combination | Effect | Visual feedback |

@@ -133,6 +133,12 @@ export interface YamlEditorProps {
    * mode (schema mode is always YAML).
    */
   format?: 'yaml' | 'json';
+  /**
+   * DOM id for the raw textarea in schema-less mode, so a surrounding
+   * `<label htmlFor=...>` can name it. Ignored in schema mode, which renders a
+   * tree of individually labeled inputs rather than one control.
+   */
+  id?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -1093,7 +1099,7 @@ const FieldEditor: React.FC<FieldEditorProps> = (props) => {
 // Main component
 // ---------------------------------------------------------------------------
 
-const YamlEditor: React.FC<YamlEditorProps> = React.memo(({ value, onChange, schema, disabled = false, validate = false, format = 'yaml' }) => {
+const YamlEditor: React.FC<YamlEditorProps> = React.memo(({ value, onChange, schema, disabled = false, validate = false, format = 'yaml', id }) => {
   // -----------------------------------------------------------------------
   // Schema-less mode: plain YAML (or JSON) textarea with optional syntax
   // validation.  No structured editor, no schema validation — just raw text.
@@ -1106,6 +1112,7 @@ const YamlEditor: React.FC<YamlEditorProps> = React.memo(({ value, onChange, sch
         disabled={disabled}
         validate={validate}
         format={format}
+        id={id}
       />
     );
   }
@@ -1161,7 +1168,8 @@ const SchemalessYamlEditor: React.FC<{
   disabled: boolean;
   validate: boolean;
   format?: 'yaml' | 'json';
-}> = ({ value, onChange, disabled, validate, format = 'yaml' }) => {
+  id?: string;
+}> = ({ value, onChange, disabled, validate, format = 'yaml', id }) => {
   const isJson = format === 'json';
 
   if (isJson) {
@@ -1171,6 +1179,7 @@ const SchemalessYamlEditor: React.FC<{
         onChange={onChange}
         disabled={disabled}
         validate={validate}
+        id={id}
       />
     );
   }
@@ -1181,6 +1190,7 @@ const SchemalessYamlEditor: React.FC<{
       onChange={onChange}
       disabled={disabled}
       validate={validate}
+      id={id}
     />
   );
 };
@@ -1195,7 +1205,8 @@ const YamlSchemalessEditor: React.FC<{
   onChange: (yamlString: string) => void;
   disabled: boolean;
   validate: boolean;
-}> = ({ value, onChange, disabled, validate }) => {
+  id?: string;
+}> = ({ value, onChange, disabled, validate, id }) => {
   const computeError = useCallback((raw: string): string | null => {
     if (!validate || !raw || !raw.trim()) {
       return null;
@@ -1247,6 +1258,7 @@ const YamlSchemalessEditor: React.FC<{
         </div>
       )}
       <textarea
+        id={id}
         className="form-control yaml-editor-raw"
         value={value || ''}
         onChange={handleChange}
@@ -1282,7 +1294,8 @@ const JsonSchemalessEditor: React.FC<{
   onChange: (jsonString: string) => void;
   disabled: boolean;
   validate: boolean;
-}> = ({ value, onChange, disabled, validate }) => {
+  id?: string;
+}> = ({ value, onChange, disabled, validate, id }) => {
   const [activeTab, setActiveTab] = useState<'json' | 'yaml'>('json');
 
   // Local YAML draft for the YAML tab.  The JSON tab always renders `value`
@@ -1474,6 +1487,7 @@ const JsonSchemalessEditor: React.FC<{
 
       {isYamlTab ? (
         <textarea
+          id={id}
           className="form-control yaml-editor-raw"
           value={yamlText}
           onChange={handleYamlChange}
@@ -1484,6 +1498,7 @@ const JsonSchemalessEditor: React.FC<{
         />
       ) : (
         <textarea
+          id={id}
           className="form-control yaml-editor-raw"
           value={value || ''}
           onChange={handleJsonChange}

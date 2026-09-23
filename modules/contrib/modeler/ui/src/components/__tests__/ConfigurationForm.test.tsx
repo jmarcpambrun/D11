@@ -2,8 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ConfigurationForm from '../ConfigurationForm';
 
-// Mock the timing constant for faster tests
+// Shorten the debounce for faster tests but keep every other dimension real:
+// the form reaches the layout constants through modelUtils.
 jest.mock('../../constants/dimensions', () => ({
+  ...jest.requireActual('../../constants/dimensions'),
   TIMING: {
     DEBOUNCE_DELAY: 10, // Short delay for testing
   },

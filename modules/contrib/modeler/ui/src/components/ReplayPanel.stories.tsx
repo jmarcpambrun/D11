@@ -306,43 +306,23 @@ export const TestError: Story = {
 };
 
 /**
- * Panel with global tokens displayed
+ * A selected step whose data renders INLINE underneath its row in the single
+ * step list (issue project/modeler#3589103).
  */
-export const WithGlobalTokens: Story = {
+export const StepSelectedWithInlineData: Story = {
   args: {
-    globalTokens: {
-      'current-user': {
-        name: 'Current user',
-        token: 'current-user',
-        'raw token': '[current-user:account-name]',
-        value: 'admin',
-        children: {
-          'account-name': {
-            name: 'Account name',
-            token: 'account-name',
-            'raw token': '[current-user:account-name]',
-            value: 'admin',
-          },
-          'mail': {
-            name: 'Email',
-            token: 'mail',
-            'raw token': '[current-user:mail]',
-            value: 'admin@example.com',
-          },
-        },
-      },
-      'site': {
-        name: 'Site information',
-        token: 'site',
-        'raw token': '[site:name]',
-        value: 'My Drupal Site',
-        children: {
-          'name': {
-            name: 'Name',
-            token: 'name',
-            'raw token': '[site:name]',
-            value: 'My Drupal Site',
-          },
+    replayEntries: sampleReplayEntries,
+    selectedEntryIndex: 0,
+    onSelectReplayEntry: fn(),
+    currentStep: 1,
+    stepInfo: { type: 'action', id: 'action_1' },
+    stepData: {
+      entity: {
+        label: 'Entity',
+        token: '[node]',
+        data: {
+          title: { label: 'Title', token: '[node:title]', value: 'Test Article' },
+          type: { label: 'Type', token: '[node:type]', value: 'article' },
         },
       },
     },
@@ -350,56 +330,16 @@ export const WithGlobalTokens: Story = {
 };
 
 /**
- * Panel with template tokens displayed (template model)
+ * A selected step that carries no token data: the inline block shows the
+ * "no token data" notice instead of a token tree.
  */
-export const WithTemplateTokens: Story = {
+export const StepSelectedWithoutData: Story = {
   args: {
-    isTemplate: true,
-    templateTokens: {
-      'template-author': {
-        name: 'Author',
-        token: 'author',
-        'raw token': '[template:author]',
-        value: 'Jane Doe',
-      },
-      'template-config': {
-        name: 'Configuration',
-        token: 'config',
-        'raw token': '[template:config]',
-        children: {
-          'timeout': {
-            name: 'Timeout',
-            token: 'config:timeout',
-            'raw token': '[template:config:timeout]',
-            value: '30',
-          },
-        },
-      },
-    },
-  },
-};
-
-/**
- * Panel with both global and template tokens
- */
-export const WithGlobalAndTemplateTokens: Story = {
-  args: {
-    globalTokens: {
-      'site': {
-        name: 'Site information',
-        token: 'site',
-        'raw token': '[site:name]',
-        value: 'My Drupal Site',
-      },
-    },
-    isTemplate: true,
-    templateTokens: {
-      'template-author': {
-        name: 'Author',
-        token: 'author',
-        'raw token': '[template:author]',
-        value: 'Jane Doe',
-      },
-    },
+    replayEntries: sampleReplayEntries,
+    selectedEntryIndex: 0,
+    onSelectReplayEntry: fn(),
+    currentStep: 2,
+    stepData: null,
+    stepInfo: null,
   },
 };

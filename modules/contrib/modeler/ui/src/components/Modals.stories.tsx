@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import Modals from './Modals';
+import { metadataForm, newModelMetadataForm } from './__fixtures__/metadataForm';
 
 const meta: Meta<typeof Modals> = {
   title: 'Components/Modals',
@@ -20,6 +21,7 @@ const meta: Meta<typeof Modals> = {
       template: false,
       tags: ['email', 'notification'],
     },
+    metadataForm,
     modelId: 'email_notification_workflow',
     isNewModel: false,
 
@@ -134,6 +136,8 @@ export const NewModelMetadata: Story = {
   args: {
     showMetadataModal: true,
     isNewModel: true,
+    metadataForm: newModelMetadataForm,
+    modelId: undefined,
     modelMetadata: {
       label: '',
       version: '1.0.0',

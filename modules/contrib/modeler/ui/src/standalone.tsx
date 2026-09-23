@@ -28,6 +28,7 @@ import App from './App';
 import './styles/modeler.css';
 import 'reactflow/dist/style.css';
 import type { Settings, DrupalAjax, ModelData, ReplayDataEntry, StoreComponent } from './types/settings';
+import type { FormField } from './types/forms';
 
 /** Shape of the exported JSON model (matches useExport JSON output). */
 interface ExportedModel {
@@ -39,6 +40,7 @@ interface ExportedModel {
   requiredModules?: string[];
   replayData?: ReplayDataEntry[];
   configForms?: Record<string, Record<string, unknown>[]>;
+  metadataForm?: FormField[];
   components?: StoreComponent[];
 }
 
@@ -81,6 +83,7 @@ function buildSettings(data: ExportedModel, options: ViewerOptions): Settings {
       replayData: data.replayData || [],
       components: data.components || [],
       configForms: data.configForms || {},
+      metadataForm: data.metadataForm,
     },
     modeler_api: {
       readOnly: true,

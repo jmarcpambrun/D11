@@ -57,11 +57,15 @@ import { usePluginPanels, usePluginWidgets } from '../hooks/usePluginPanels';
 import { createPluginApi, setApiReadOnly, setMutationHooks, clearMutationHooks, setViewportHooks, clearViewportHooks } from '../plugins/pluginApi';
 import { markReady, markUnready } from '../plugins/pluginRegistry';
 import type { ModelerPluginApi } from '../types/pluginApi';
-import type { ModelerContext } from '../types/settings';
+import type { ModelerContext, ModelData } from '../types/settings';
 
 /** Stable empty arrays used as default prop values to avoid creating new
  *  references on every render (which would defeat React.memo). */
 const EMPTY_CONTEXTS: ModelerContext[] = [];
+
+/** Stable placeholder while no model data has been loaded yet. A fresh object
+ *  literal here would re-seed the metadata dialog on every render. */
+const EMPTY_METADATA: ModelData['metadata'] = {};
 
 interface FlowProps {
   settings: Settings;
@@ -160,6 +164,7 @@ function FlowInner({ settings, drupal }: FlowProps) {
   const modelData = useModelStore(state => state.modelData);
   const setReplayPanelCollapsed = usePanelStore(state => state.setReplayPanelCollapsed);
   const setPropertyPanelCollapsed = usePanelStore(state => state.setPropertyPanelCollapsed);
+  const propertyPanelCollapsed = usePanelStore(state => state.propertyPanelCollapsed);
   const panelMode = usePanelStore(state => state.panelMode);
   const setPanelMode = usePanelStore(state => state.setPanelMode);
 
@@ -819,52 +824,6 @@ function FlowInner({ settings, drupal }: FlowProps) {
     );
   }, [selectedNodes.length, selectedEdges.length, showConfirmationDialog, handleDeleteSelected]);
 
-  // Keyboard shortcuts (copy/paste/delete disabled in read-only mode)
-  useKeyboardShortcuts({
-    callbacks: {
-      onDelete: handleDeleteSelected,
-      onCopy: handleCopy,
-      onPaste: handlePaste,
-      onToggleSearch: () => {
-        // The search bar is always visible inline; Ctrl+F focuses the input.
-        // WCAG 2.2 SC 2.1.1 — keyboard-accessible search.
-        const searchInput = document.querySelector<HTMLInputElement>('.search-input');
-        if (searchInput) {
-          searchInput.focus();
-        }
-      },
-      onEscape: () => {
-        clearSearch();
-        // Blur the search input so focus returns to the canvas
-        const searchInput = document.querySelector<HTMLInputElement>('.search-input');
-        if (searchInput && document.activeElement === searchInput) {
-          searchInput.blur();
-        }
-      },
-      onUndo: undo,
-      onRedo: redo,
-    },
-    modifiers: {
-      isShiftPressed,
-      setIsShiftPressed,
-      isCtrlPressed,
-      setIsCtrlPressed,
-      isAltPressed,
-      setIsAltPressed,
-    },
-    capabilities: {
-      canDelete: !isReadOnly && canDeleteSelected(),
-      canCopy: !isReadOnly && canCopy,
-      canPaste: !isReadOnly && canPaste,
-      canSearch: true,
-      canEscape: true,
-      canUndo: !isReadOnly && canUndo(),
-      canRedo: !isReadOnly && canRedo(),
-    },
-    isModelerFocused: true,
-    enabled: true,
-  });
-
   // Save the current live session view into the snapshot map under the given
   // event id (so it can be restored later). Called before switching events.
   const snapshotActiveSession = useCallback((eventId: string | null) => {
@@ -1367,6 +1326,74 @@ function FlowInner({ settings, drupal }: FlowProps) {
     enterReviewForNode(selectedEventId);
   }, [validateBeforeSave, selectedStartNodeId, reviewableEventId, pickerOwningEventId, enterReviewForNode, resumeReviewForNode]);
 
+  // Alt+Shift+R toggles the side panel between Properties and Review.
+  // LEAVING review is unguarded - the session stays active and resumes on
+  // return - while ENTERING routes through requestReviewMode so structural
+  // validation and the per-event session logic (start / resume / return to the
+  // owning event) still apply exactly as for the header button. A collapsed
+  // panel is expanded first, otherwise the toggle would have no visible effect.
+  const handleToggleReviewMode = useCallback(() => {
+    if (propertyPanelCollapsed) {
+      setPropertyPanelCollapsed(false);
+    }
+    if (panelMode === 'review') {
+      setPanelMode('event');
+      return;
+    }
+    requestReviewMode();
+  }, [propertyPanelCollapsed, setPropertyPanelCollapsed, panelMode, setPanelMode, requestReviewMode]);
+
+  // Keyboard shortcuts (copy/paste/delete disabled in read-only mode).
+  // Registered here - after requestReviewMode / handleToggleReviewMode - so the
+  // review-toggle callback is in scope for the capability wiring below.
+  useKeyboardShortcuts({
+    callbacks: {
+      onDelete: handleDeleteSelected,
+      onCopy: handleCopy,
+      onPaste: handlePaste,
+      onToggleSearch: () => {
+        // The search bar is always visible inline; Ctrl+F focuses the input.
+        // WCAG 2.2 SC 2.1.1 - keyboard-accessible search.
+        const searchInput = document.querySelector<HTMLInputElement>('.search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      },
+      onEscape: () => {
+        clearSearch();
+        // Blur the search input so focus returns to the canvas
+        const searchInput = document.querySelector<HTMLInputElement>('.search-input');
+        if (searchInput && document.activeElement === searchInput) {
+          searchInput.blur();
+        }
+      },
+      onUndo: undo,
+      onRedo: redo,
+      onToggleReviewMode: handleToggleReviewMode,
+    },
+    modifiers: {
+      isShiftPressed,
+      setIsShiftPressed,
+      isCtrlPressed,
+      setIsCtrlPressed,
+      isAltPressed,
+      setIsAltPressed,
+    },
+    capabilities: {
+      canDelete: !isReadOnly && canDeleteSelected(),
+      canCopy: !isReadOnly && canCopy,
+      canPaste: !isReadOnly && canPaste,
+      canSearch: true,
+      canEscape: true,
+      canUndo: !isReadOnly && canUndo(),
+      canRedo: !isReadOnly && canRedo(),
+      // Leaving review is always allowed; entering needs a reviewable model.
+      canToggleReviewMode: panelMode === 'review' || (hasAnyReplayCapability && !isNewModel),
+    },
+    isModelerFocused: true,
+    enabled: true,
+  });
+
   // Auto-enter Review mode when a model OPENS already carrying saved replay data
   // (settings.modeler.replayData → initialReplayData). The embedded data is shown
   // as-is (no live listener, no history reload — like resuming), so the user lands
@@ -1809,7 +1836,8 @@ function FlowInner({ settings, drupal }: FlowProps) {
           showMetadataModal={showMetadataModal}
           onCloseMetadataModal={handleCloseMetadataModal}
           onMetadataSubmit={onMetadataSubmit}
-          modelMetadata={modelData?.metadata || { label: '', documentation: '', tags: [], changelog: '' }}
+          modelMetadata={modelData?.metadata || EMPTY_METADATA}
+          metadataForm={settings?.modeler?.metadataForm}
           modelId={modelData?.id}
           isNewModel={settings?.modeler_api?.isNew || false}
           canEditMetadata={canEditMetadata && !isReadOnly}

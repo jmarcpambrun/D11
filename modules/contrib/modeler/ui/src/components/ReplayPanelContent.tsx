@@ -1,16 +1,14 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { FiPlay, FiPause, FiSquare, FiSkipBack, FiSkipForward, FiActivity, FiDatabase, FiFileText, FiCopy, FiZap, FiChevronDown, FiClock, FiUser, FiGlobe, FiLink, FiRefreshCw, FiXCircle } from 'react-icons/fi';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { FiPlay, FiPause, FiSquare, FiSkipBack, FiSkipForward, FiActivity, FiCopy, FiZap, FiChevronDown, FiClock, FiUser, FiGlobe, FiLink, FiRefreshCw, FiXCircle } from 'react-icons/fi';
 import type { StoreNode as Node, StoreEdge as Edge } from '../types/settings';
-import { TIMING, STORAGE_KEYS } from '../constants/dimensions';
+import { TIMING } from '../constants/dimensions';
 import { t } from '../utils/translation';
 import { useReplayStepFilter } from '../hooks/useReplayStepFilter';
 import { useReplayPlayback } from '../hooks/useReplayPlayback';
-import { useVerticalPanelResize } from '../hooks/useVerticalPanelResize';
-import { StepDataContainer, GlobalTokensContainer, TemplateTokensContainer } from './ReplayDataRenderer';
+import { StepDataContainer } from './ReplayDataRenderer';
 import { getStepIcon, getStepLabel, ReplayStep } from '../utils/replayStepUtils';
 import type { ReplayEntry } from '../hooks/useReplayLoader';
 import { LISTEN_ITEM_INDEX } from '../hooks/useReplayLoader';
-import type { GlobalToken } from '../types/settings';
 
 /** Format a timestamp string into a localized date/time */
 export function formatTimestamp(ts: string | number | undefined): string {
@@ -118,22 +116,16 @@ export interface ReplayPanelContentProps {
   onStartTest?: (componentId: string) => void;
   /** Cancel the running test */
   onCancelTest?: () => void;
-  /** Global tokens from drupalSettings.modeler_api.global_tokens */
-  globalTokens?: Record<string, GlobalToken>;
-  /** Template tokens from drupalSettings.modeler_api.template_tokens */
-  templateTokens?: Record<string, GlobalToken>;
-  /** Whether the current model is a template */
-  isTemplate?: boolean;
 }
 
 /**
  * Presentational body of the review / replay panel.
  *
- * This component renders ONLY the inner content of the replay view — the
- * header, entry selector, test waiting state, step list, step data, and token
- * trees. It deliberately omits the outer panel chrome (resize handle, collapse
- * widget, fixed-width wrapper) so it can be embedded inside the unified
- * right-hand panel (`PropertyPanel`) when in "Review flow" mode.
+ * This component renders ONLY the inner content of the review view: the entry
+ * selector, the waiting state and a single step list whose selected row shows
+ * its step data inline. It deliberately omits the outer panel chrome (resize
+ * handle, collapse widget, fixed-width wrapper) so it can be embedded inside
+ * the unified right-hand panel (`PropertyPanel`) when in "Review flow" mode.
  *
  * All replay/test state is lifted to `Flow.tsx` and threaded down as props.
  */
@@ -168,9 +160,6 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
   testError: _testError,
   onStartTest: _onStartTest,
   onCancelTest,
-  globalTokens,
-  templateTokens,
-  isTemplate = false,
 }) => {
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [entryDropdownOpen, setEntryDropdownOpen] = useState(false);
@@ -241,41 +230,18 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
   };
 
   const hasReplaySteps = filteredReplayData && filteredReplayData.length > 0;
-  const hasGlobalTokens = globalTokens && Object.keys(globalTokens).length > 0;
-  const hasTemplateTokens = isTemplate && templateTokens && Object.keys(templateTokens).length > 0;
 
   // ── Review body state machine (A38/A47/A48) ──────────────────────────────
   // The body reflects the SELECTED dropdown item:
   //   • listen item selected → waiting/spinner body (covers initiating, running,
   //     and the brief post-cancel window while history is still loading — A48).
-  //   • a data entry selected → the replay steps / step-data / token sections.
+  //   • a data entry selected → the step list with the selected step's data
+  //     rendered inline underneath its row.
   //   • neither (no entry) → the backend empty/warning message if one is stored
   //     (A47), else the generic "no execution data yet" notice.
   const showWaiting = listenItemSelected;
   const showSteps = dataEntrySelected && hasReplaySteps;
   const showEmptyMessage = !listenItemSelected && !dataEntrySelected && !!backendMessage;
-
-  // Count how many resizable sections are visible so we can distribute
-  // the available vertical space among them via draggable separators.
-  const isActiveReplay = showSteps;
-  const resizableSectionCount = useMemo(() => {
-    if (isActiveReplay) {
-      // control + step-data + optional global + optional template
-      return 2 + (hasGlobalTokens ? 1 : 0) + (hasTemplateTokens ? 1 : 0);
-    }
-    // Empty state: only global + template token sections (if any)
-    return (hasGlobalTokens ? 1 : 0) + (hasTemplateTokens ? 1 : 0);
-  }, [isActiveReplay, hasGlobalTokens, hasTemplateTokens]);
-
-  const {
-    sectionRatios,
-    isResizing: _isVerticalResizing,
-    startSeparatorDrag,
-    containerRef: resizableContainerRef,
-  } = useVerticalPanelResize({
-    sectionCount: resizableSectionCount,
-    storageKey: STORAGE_KEYS.REPLAY_SECTION_RATIOS,
-  });
 
   // The toggle label reflects the selected item: a listening label when the
   // listen item is selected, otherwise the selected entry's timestamp + user.
@@ -393,308 +359,151 @@ const ReplayPanelContent: React.FC<ReplayPanelContentProps> = ({
   // Empty/non-step state: render the dropdown + the appropriate body (waiting
   // when the listen item is selected, otherwise the empty/backend-message body).
   if (!showSteps) {
-    let emptySectionIdx = 0;
     return (
       <>
         {entryDropdown}
         {showWaiting ? waitingBody : emptyBody}
-        {(hasGlobalTokens || hasTemplateTokens) && (
-          <div className="resizable-sections" ref={resizableContainerRef}>
-            {hasGlobalTokens && (() => {
-              const idx = emptySectionIdx++;
-              return (
-                <React.Fragment key="global-tokens">
-                  {idx > 0 && (
-                    <div
-                      className="section-separator"
-                      onMouseDown={startSeparatorDrag(idx - 1)}
-                      title={t('Drag to resize sections')}
-                      role="separator"
-                      aria-orientation="horizontal"
-                    />
-                  )}
-                  <div
-                    className="step-data-section global-tokens-section resizable-section"
-                    style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
-                  >
-                    <div className="data-header">
-                      <h4>
-                        <FiDatabase />
-                        {t('Global Tokens')}
-                      </h4>
-                    </div>
-                    <div className="data-content" tabIndex={0} role="region" aria-label={t('Global Tokens')}>
-                      <GlobalTokensContainer globalTokens={globalTokens} />
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })()}
-            {hasTemplateTokens && (() => {
-              const idx = emptySectionIdx++;
-              return (
-                <React.Fragment key="template-tokens">
-                  {idx > 0 && (
-                    <div
-                      className="section-separator"
-                      onMouseDown={startSeparatorDrag(idx - 1)}
-                      title={t('Drag to resize sections')}
-                      role="separator"
-                      aria-orientation="horizontal"
-                    />
-                  )}
-                  <div
-                    className="step-data-section template-tokens-section resizable-section"
-                    style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
-                  >
-                    <div className="data-header">
-                      <h4>
-                        <FiFileText />
-                        {t('Template Tokens')}
-                      </h4>
-                    </div>
-                    <div className="data-content" tabIndex={0} role="region" aria-label={t('Template Tokens')}>
-                      <TemplateTokensContainer templateTokens={templateTokens} />
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })()}
-          </div>
-        )}
       </>
     );
   }
 
-  // Track section index for the active replay view.
-  let sectionIdx = 0;
-
   return (
     <>
-      {/* Persistent entry dropdown (listen item + data entries) — always shown
+      {/* Persistent entry dropdown (listen item + data entries) - always shown
           in review (A34/A35/A36). */}
       {entryDropdown}
 
-      {/* Resizable sections: control, step data, global tokens, template tokens.
-          Reached only when a data entry with steps is selected (showSteps). */}
-      {showSteps && (
-      <div className="resizable-sections" ref={resizableContainerRef}>
-        {/* Execution Control Section */}
-        {(() => {
-          const idx = sectionIdx++;
-          return (
-            <div
-              className="replay-control-section resizable-section"
-              style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
+      {/* The single review body: playback controls, progress bar and the step
+          list. The selected step's data renders inline under its own row, so
+          there is no separate step-data sub-panel any more (#3589103). */}
+      <div className="replay-control-section">
+        <div className="replay-controls">
+          <div className="playback-controls">
+            <button
+              className="control-btn"
+              onClick={handlePrevious}
+              disabled={filteredCurrentStep <= -1}
+              title={t('Previous Step')}
+              aria-label={t('Previous Step')}
             >
-              <div className="replay-controls">
-                <div className="playback-controls">
-                  <button
-                    className="control-btn"
-                    onClick={handlePrevious}
-                    disabled={filteredCurrentStep <= -1}
-                    title={t('Previous Step')}
-                    aria-label={t('Previous Step')}
-                  >
-                    <FiSkipBack />
-                  </button>
-                  <button
-                    className={`control-btn play-btn ${isPlaying ? 'playing' : ''}`}
-                    onClick={handlePlay}
-                    title={isPlaying ? t('Pause') : t('Play')}
-                    aria-label={isPlaying ? t('Pause') : t('Play')}
-                  >
-                    {isPlaying ? <FiPause /> : <FiPlay />}
-                  </button>
-                  <button
-                    className="control-btn"
-                    onClick={handleStop}
-                    title={t('Stop & Reset')}
-                    aria-label={t('Stop & Reset')}
-                  >
-                    <FiSquare />
-                  </button>
-                  <button
-                    className="control-btn"
-                    onClick={handleNext}
-                    disabled={filteredCurrentStep >= filteredReplayData.length - 1}
-                    title={t('Next Step')}
-                    aria-label={t('Next Step')}
-                  >
-                    <FiSkipForward />
-                  </button>
-                </div>
+              <FiSkipBack />
+            </button>
+            <button
+              className={`control-btn play-btn ${isPlaying ? 'playing' : ''}`}
+              onClick={handlePlay}
+              title={isPlaying ? t('Pause') : t('Play')}
+              aria-label={isPlaying ? t('Pause') : t('Play')}
+            >
+              {isPlaying ? <FiPause /> : <FiPlay />}
+            </button>
+            <button
+              className="control-btn"
+              onClick={handleStop}
+              title={t('Stop & Reset')}
+              aria-label={t('Stop & Reset')}
+            >
+              <FiSquare />
+            </button>
+            <button
+              className="control-btn"
+              onClick={handleNext}
+              disabled={filteredCurrentStep >= filteredReplayData.length - 1}
+              title={t('Next Step')}
+              aria-label={t('Next Step')}
+            >
+              <FiSkipForward />
+            </button>
+          </div>
 
-                <div className="speed-control">
-                  <FiZap className="speed-icon" title={t('Playback Speed')} />
-                  <select
-                    value={playbackSpeed}
-                    onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
-                    title={t('Playback Speed')}
-                    aria-label={t('Playback Speed')}
-                  >
-                    <option value={0.5}>0.5x</option>
-                    <option value={1}>1x</option>
-                    <option value={2}>2x</option>
-                    <option value={4}>4x</option>
-                  </select>
-                </div>
-              </div>
+          <div className="speed-control">
+            <FiZap className="speed-icon" title={t('Playback Speed')} />
+            <select
+              value={playbackSpeed}
+              onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
+              title={t('Playback Speed')}
+              aria-label={t('Playback Speed')}
+            >
+              <option value={0.5}>0.5x</option>
+              <option value={1}>1x</option>
+              <option value={2}>2x</option>
+              <option value={4}>4x</option>
+            </select>
+          </div>
+        </div>
 
-              <div className="replay-progress">
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${filteredCurrentStep >= 0 ? ((filteredCurrentStep + 1) / filteredReplayData.length) * 100 : 0}%`
-                    }}
-                  />
-                </div>
-                <div className="progress-label">
-                  {filteredCurrentStep >= 0 ? t('Step @current of @total', { '@current': filteredCurrentStep + 1, '@total': filteredReplayData.length }) : t('Ready')}
-                </div>
-              </div>
+        <div className="replay-progress">
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{
+                width: `${filteredCurrentStep >= 0 ? ((filteredCurrentStep + 1) / filteredReplayData.length) * 100 : 0}%`
+              }}
+            />
+          </div>
+          <div className="progress-label">
+            {filteredCurrentStep >= 0 ? t('Step @current of @total', { '@current': filteredCurrentStep + 1, '@total': filteredReplayData.length }) : t('Ready')}
+          </div>
+        </div>
 
-              <div className="replay-steps" ref={stepsContainerRef}>
-                {filteredReplayData.map((step, index) => (
-                  <div
-                    key={index}
-                    ref={el => { stepRefs.current[index] = el; }}
-                    className={`replay-step ${index === filteredCurrentStep ? 'current' : ''} ${index < filteredCurrentStep ? 'completed' : ''}`}
-                    onClick={() => handleStepClick(index)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStepClick(index); } }}
-                  >
-                    <div className="step-indicator">
-                      {getStepIcon(step, nodes)}
-                    </div>
-                    <div className="step-label">{getStepLabel(step, index, nodes, edges)}</div>
+        <div className="replay-steps" ref={stepsContainerRef}>
+          {filteredReplayData.map((step, index) => {
+            const isSelected = index === filteredCurrentStep;
+            const stepDataId = `replay-step-data-${index}`;
+            return (
+              // The per-step wrapper is what `stepRefs` points at, so the
+              // playback auto-scroll keeps the row AND its inline data in view.
+              <div
+                key={index}
+                ref={el => { stepRefs.current[index] = el; }}
+                className="replay-step-item"
+              >
+                <div
+                  className={`replay-step ${isSelected ? 'current' : ''} ${index < filteredCurrentStep ? 'completed' : ''}`}
+                  onClick={() => handleStepClick(index)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isSelected}
+                  // Only reference the inline region while it exists: a dangling
+                  // aria-controls id would be an invalid ARIA attribute value.
+                  aria-controls={isSelected ? stepDataId : undefined}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStepClick(index); } }}
+                >
+                  <div className="step-indicator">
+                    {getStepIcon(step, nodes)}
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Separator: control <-> step data */}
-        <div
-          className="section-separator"
-          onMouseDown={startSeparatorDrag(sectionIdx - 1)}
-          title={t('Drag to resize sections')}
-          role="separator"
-          aria-orientation="horizontal"
-        />
-
-        {/* Step Data Section */}
-        {(() => {
-          const idx = sectionIdx++;
-          return (
-            <div
-              className="step-data-section resizable-section"
-              style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
-            >
-              <div className="data-header">
-                <h4>
-                  <FiDatabase />
-                  {t('Step Data')}
-                </h4>
-                {(stepData || stepInfo) && (
-                  <button
-                    className="copy-btn"
-                    onClick={() => copyToClipboard({ info: stepInfo, data: stepData }, 'all')}
-                    title={t('Copy all data')}
-                    aria-label={t('Copy all data')}
+                  <div className="step-label">{getStepLabel(step, index, nodes, edges)}</div>
+                </div>
+                {isSelected && (
+                  <div
+                    id={stepDataId}
+                    className="replay-step-data"
+                    role="region"
+                    aria-label={t('Step data')}
+                    tabIndex={0}
                   >
-                    <FiCopy />
-                    {copiedPath === 'all' && <span className="copied">{t('Copied!')}</span>}
-                  </button>
+                    {(stepData || stepInfo) && (
+                      <button
+                        className="copy-btn"
+                        onClick={() => copyToClipboard({ info: stepInfo, data: stepData }, 'all')}
+                        title={t('Copy all data')}
+                        aria-label={t('Copy all data')}
+                      >
+                        <FiCopy />
+                        {copiedPath === 'all' && <span className="copied">{t('Copied!')}</span>}
+                      </button>
+                    )}
+                    {stepData && Object.keys(stepData).length > 0 ? (
+                      <StepDataContainer stepData={stepData} predicted={stepDataPredicted} />
+                    ) : (
+                      <p className="no-data">{t('No token data available for this step')}</p>
+                    )}
+                  </div>
                 )}
               </div>
-
-              <div className="data-content" tabIndex={0} role="region" aria-label={t('Step Data')}>
-                {stepData && Object.keys(stepData).length > 0 ? (
-                  <>
-                    <StepDataContainer stepData={stepData} predicted={stepDataPredicted} />
-                  </>
-                ) : (
-                  <>
-                    {(!stepData || Object.keys(stepData).length === 0) && filteredCurrentStep >= 0 && (
-                      <div className="no-data">
-                        <p>{t('No token data available for this step')}</p>
-                      </div>
-                    )}
-                    {filteredCurrentStep < 0 && (
-                      <div className="no-data">
-                        <p>{t('Select a step to view its data')}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-        {hasGlobalTokens && (() => {
-          const idx = sectionIdx++;
-          return (
-            <React.Fragment key="global-tokens">
-              <div
-                className="section-separator"
-                onMouseDown={startSeparatorDrag(idx - 1)}
-                title={t('Drag to resize sections')}
-                role="separator"
-                aria-orientation="horizontal"
-              />
-              <div
-                className="step-data-section global-tokens-section resizable-section"
-                style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
-              >
-                <div className="data-header">
-                  <h4>
-                    <FiDatabase />
-                    {t('Global Tokens')}
-                  </h4>
-                </div>
-                <div className="data-content" tabIndex={0} role="region" aria-label={t('Global Tokens')}>
-                  <GlobalTokensContainer globalTokens={globalTokens} />
-                </div>
-              </div>
-            </React.Fragment>
-          );
-        })()}
-
-        {hasTemplateTokens && (() => {
-          const idx = sectionIdx++;
-          return (
-            <React.Fragment key="template-tokens">
-              <div
-                className="section-separator"
-                onMouseDown={startSeparatorDrag(idx - 1)}
-                title={t('Drag to resize sections')}
-                role="separator"
-                aria-orientation="horizontal"
-              />
-              <div
-                className="step-data-section template-tokens-section resizable-section"
-                style={{ flexBasis: `${sectionRatios[idx] * 100}%` }}
-              >
-                <div className="data-header">
-                  <h4>
-                    <FiFileText />
-                    {t('Template Tokens')}
-                  </h4>
-                </div>
-                <div className="data-content" tabIndex={0} role="region" aria-label={t('Template Tokens')}>
-                  <TemplateTokensContainer templateTokens={templateTokens} />
-                </div>
-              </div>
-            </React.Fragment>
-          );
-        })()}
+            );
+          })}
+        </div>
       </div>
-      )}
     </>
   );
 };

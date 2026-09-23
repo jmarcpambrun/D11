@@ -4,10 +4,10 @@
 [Property Panel](property-panel.md). Start it from a selected **event node** by
 clicking the **Review flow** button in the panel header to visualize past
 workflow executions and run live tests directly from the modeler -- all in the
-same right-hand panel (there is no separate replay column). The Review header
-uses the same layout as the Properties header: a **Review flow** context label
-on the left and a **Properties** button on the right that switches back to the
-selected component's properties (the replay session stays active).
+same right-hand panel (there is no separate replay column). In Review flow mode
+the panel header holds a single control: a **Back** button (a left arrow with
+the label *Back*) that returns to the selected component's properties. The
+replay session stays active while you are in the Properties view.
 
 ![The unified panel in Review flow mode showing execution steps with playback controls](../assets/screenshots/replay-panel.jpg){ .screenshot }
 
@@ -37,14 +37,25 @@ Properties view and back never restarts the listener or reloads history.
 If multiple executions exist, an **entry selector** dropdown lets you switch
 between them. Each entry shows a timestamp and metadata about the execution.
 
+## Switching back to properties
+
+The Review flow header contains exactly one control: the **Back** button. Click
+it to return to the properties of the currently-selected component - the replay
+session, the selected entry, and the current step are all kept.
+
+You can also toggle between the two views from the keyboard with
+`Alt+Shift+R` (`Option+Shift+R` on macOS). See
+[Keyboard Shortcuts](../features/keyboard-shortcuts.md) for the full list.
+
 ## Navigating execution steps
 
-Once replay data is loaded:
+Once replay data is loaded, Review flow mode shows a **single list**: the
+execution steps. Nothing is stacked below it.
 
 - **Step list**: Each execution step is listed with an icon indicating its type
   (started, execute, condition passed, condition failed).
-- **Click a step**: The corresponding node or edge is highlighted on the canvas,
-  and the Property Panel shows its configuration.
+- **Click a step**: The step expands to reveal its step data inline, and the
+  corresponding node or edge is highlighted on the canvas.
 - **Forward/Back buttons**: Navigate sequentially through steps.
 
 ### Playback controls
@@ -65,46 +76,26 @@ During replay, the canvas shows:
 
 ## Step data
 
-When a step is selected, the panel shows the **Step Data** section with token
-values available at that point in the execution. Token data is displayed in a
-collapsible tree structure.
+Selecting a step reveals the token values available at that point in the
+execution **inline, directly underneath that step row**. The values are
+displayed in the same collapsible tree as before, and only one step is expanded
+at a time. The panel body is no longer split into vertically resizable
+sections.
 
 !!! tip "Insert tokens into forms"
     Type **`[`** in a token-supporting configuration field to browse and insert
-    tokens from the Step Data, Global, and Template sources. See
+    tokens from the step data, global, and template sources. See
     [Tokens & Data](../replay/tokens.md) for details.
 
-## Global tokens
+## Global and template tokens
 
-If the site provides global tokens (like `[site:name]` or
-`[current-date:long]`), they appear in a **Global Tokens** section at the
-bottom of Review flow mode. These are always visible, regardless of whether
-replay data is loaded.
-
-Global tokens can be inserted into configuration form fields with the `[`
-picker.
-
-## Template tokens
-
-When the model is marked as a **template**, a **Template Tokens** section
-appears alongside the global tokens. These tokens are specific to the
-template's context and are provided by the backend. They behave the same as
-global tokens -- always visible and insertable into configuration form fields
-with the `[` picker.
+Site-wide global tokens (like `[site:name]` or `[current-date:long]`) and the
+tokens of a model marked as a **template** are not listed in Review flow mode.
+They are offered where you actually need them: type **`[`** in a
+token-supporting configuration field and pick them from the picker's
+**Global tokens** and **Template tokens** categories.
 
 See [Tokens & Data](../replay/tokens.md) for details on using tokens.
-
-## Resizable sections
-
-The Review flow sections (execution controls, step data, global tokens,
-template tokens) are **vertically resizable**. Drag the horizontal separator
-between any two sections to give more space to the section you need.
-
-- **Minimum height**: Each section has a minimum height of 60 pixels.
-- **Persistence**: Section proportions are saved to local storage and
-  restored on the next visit.
-- **Dynamic sections**: The number of sections adapts to context -- for
-  example, template tokens only appear when the model is a template.
 
 ## Empty state message
 

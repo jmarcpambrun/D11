@@ -101,6 +101,11 @@ class WorkflowModeler extends ModelerBase {
     $metadata = [
       'label' => $owner->getLabel($model),
       'documentation' => $owner->getDocumentation($model),
+      'summary' => $owner->getSummary($model),
+      'recipes' => $owner->getRecipes($model),
+      'config_actions' => $owner->getConfigActions($model),
+      'export_config' => $owner->getExportConfig($model),
+      'modules' => $owner->getModules($model),
       'executable' => $owner->getStatus($model),
       'tags' => $owner->getTags($model),
       'changelog' => $owner->getChangelog($model),
@@ -112,6 +117,11 @@ class WorkflowModeler extends ModelerBase {
 
     $configForms = $this->buildConfigForms($owner, $owner->getUsedComponents($model), $id, $model->isNew());
 
+    // The model configuration form speaks its own vocabulary: the machine
+    // name lives in model_id, and tags are a single comma-separated string.
+    $config = $metadata + ['model_id' => $id];
+    $config['tags'] = implode(', ', $metadata['tags']);
+
     return json_encode([
       'id' => $id,
       'version' => $version,
@@ -120,6 +130,7 @@ class WorkflowModeler extends ModelerBase {
       // Cast to an object so that a model with no config forms at all still
       // serializes the map as `{}` instead of as an empty JSON list.
       'configForms' => (object) $configForms,
+      'metadataForm' => $this->buildMetadataForm($owner, $config, FALSE),
     ], JSON_THROW_ON_ERROR);
   }
 
@@ -246,6 +257,60 @@ class WorkflowModeler extends ModelerBase {
     $schemaKey = $owner->getPluginSchemaKey($plugin);
     // Convert form to JSON-serializable format.
     return $this->getFormToJsonConverter()->convert($form, $schemaKey);
+  }
+
+  /**
+   * Builds the model's own configuration form in its JSON representation.
+   *
+   * The React metadata dialog renders this array with the very same component
+   * that renders a plugin's configuration form. Whatever a model owner adds,
+   * relabels or hides in the shared modeler_api form therefore reaches the UI
+   * without this modeler knowing the individual fields.
+   *
+   * The YAML hint on the config actions field is applied here rather than in
+   * the converter, because the converter derives a widget format from config
+   * schema constraints and this form has no config schema behind it. The
+   * modeler is the layer that knows its raw JSON keeps config actions as
+   * structured data that the user edits as YAML.
+   *
+   * @param \Drupal\modeler_api\Plugin\ModelerApiModelOwner\ModelOwnerInterface $owner
+   *   The model owner.
+   * @param array $config
+   *   The values the form fields are built with.
+   * @param bool $isNew
+   *   Whether the model the form is built for is new.
+   *
+   * @return array
+   *   The converted model configuration form.
+   */
+  protected function buildMetadataForm(ModelOwnerInterface $owner, array $config, bool $isNew): array {
+    $form = $this->defaultModelConfigForm($owner, $config, $isNew);
+    // This form carries no plugin, hence no config schema key.
+    $fields = $this->getFormToJsonConverter()->convert($form, '');
+    $this->markConfigActionsAsYaml($fields);
+    return $fields;
+  }
+
+  /**
+   * Marks the config actions field of a converted form as YAML.
+   *
+   * The field may sit in any group, so the whole tree is walked.
+   *
+   * @param array $fields
+   *   The converted form fields, modified in place.
+   */
+  protected function markConfigActionsAsYaml(array &$fields): void {
+    foreach ($fields as &$field) {
+      if (!is_array($field)) {
+        continue;
+      }
+      if (($field['key'] ?? '') === 'config_actions') {
+        $field['format'] = 'yaml';
+      }
+      if (isset($field['children'])) {
+        $this->markConfigActionsAsYaml($field['children']);
+      }
+    }
   }
 
   /**
@@ -376,11 +441,31 @@ class WorkflowModeler extends ModelerBase {
         }
       }
     }
+    // The metadata dialog gets its structure from the form and its values
+    // from the React store, which holds the model data the API assembled.
+    // The defaults below therefore only have to be of the right type.
+    $metadataConfig = [
+      'label' => '',
+      'model_id' => $id,
+      'version' => '',
+      'executable' => TRUE,
+      'template' => FALSE,
+      'storage' => '',
+      'documentation' => '',
+      'summary' => '',
+      'recipes' => [],
+      'export_config' => [],
+      'modules' => [],
+      'config_actions' => [],
+      'tags' => '',
+      'changelog' => '',
+    ];
     $settings = [
       'modelId' => $id,
       'modelData' => $data,
       'components' => $components,
       'typeMap' => Api::COMPONENT_TYPE_NAMES,
+      'metadataForm' => $this->buildMetadataForm($owner, $metadataConfig, $isNew),
     ];
     if ($this->request->query->has('select')) {
       $settings['selectComponentId'] = $this->request->query->get('select');
@@ -724,6 +809,70 @@ class WorkflowModeler extends ModelerBase {
    */
   public function getDocumentation(): string {
     return $this->metadata['documentation'] ?? '';
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Unlike the getters above, an absent key yields NULL rather than an empty
+   * value. NULL tells the API that this model's raw data does not express the
+   * setting at all, so the owner's current value is left alone; an empty string
+   * is the user deliberately clearing the field and does overwrite it.
+   */
+  public function getSummary(): ?string {
+    return array_key_exists('summary', $this->metadata) ? (string) $this->metadata['summary'] : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Returns NULL for an absent key, for the reason given on getSummary().
+   */
+  public function getRecipes(): ?array {
+    if (!array_key_exists('recipes', $this->metadata)) {
+      return NULL;
+    }
+    $recipes = $this->metadata['recipes'];
+    return is_array($recipes) ? $recipes : [];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Returns NULL for an absent key, for the reason given on getSummary().
+   */
+  public function getConfigActions(): ?array {
+    if (!array_key_exists('config_actions', $this->metadata)) {
+      return NULL;
+    }
+    $configActions = $this->metadata['config_actions'];
+    return is_array($configActions) ? $configActions : [];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Returns NULL for an absent key, for the reason given on getSummary().
+   */
+  public function getExportConfig(): ?array {
+    if (!array_key_exists('export_config', $this->metadata)) {
+      return NULL;
+    }
+    $exportConfig = $this->metadata['export_config'];
+    return is_array($exportConfig) ? $exportConfig : [];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Returns NULL for an absent key, for the reason given on getSummary().
+   */
+  public function getModules(): ?array {
+    if (!array_key_exists('modules', $this->metadata)) {
+      return NULL;
+    }
+    $modules = $this->metadata['modules'];
+    return is_array($modules) ? $modules : [];
   }
 
   /**

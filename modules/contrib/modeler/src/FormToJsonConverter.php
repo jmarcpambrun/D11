@@ -109,6 +109,13 @@ class FormToJsonConverter {
    *   The JSON-serializable field, or NULL when the element produces no field.
    */
   protected function convertElement(string $key, array $element, string $plugin_schema_key, string &$last_textarea_key): ?array {
+    // A model owner hides fields it manages itself by denying access to them.
+    // Dropping the element here covers groups and leaf elements alike, so a
+    // hidden group takes its children with it.
+    if (($element['#access'] ?? TRUE) === FALSE) {
+      return NULL;
+    }
+
     if ($key === 'eca_token_info') {
       $element['#markup'] = $this->t('This component supports tokens. Type [ in a configuration field to browse and insert tokens from step data, global, and template sources.');
     }
@@ -168,12 +175,29 @@ class FormToJsonConverter {
       $field = [
         'key' => $key,
         'type' => $element['#type'],
-        'title' => $element['#title'] ?? $key,
+        // Core's machine_name element carries its label in #machine_name
+        // rather than in #title.
+        'title' => $element['#title'] ?? ($element['#type'] === 'machine_name' ? ($element['#machine_name']['label'] ?? $key) : $key),
         'description' => $element['#description'] ?? '',
         'required' => $element['#required'] ?? FALSE,
         'default_value' => $element['#default_value'] ?? '',
         'token_support' => $element['#eca_token_replacement'] ?? FALSE,
       ];
+
+      // Only emit the flag when the element is actually disabled, so the UI
+      // never has to tell FALSE apart from absent.
+      if (!empty($element['#disabled'])) {
+        $field['disabled'] = TRUE;
+      }
+      if (isset($element['#maxlength'])) {
+        $field['maxlength'] = (int) $element['#maxlength'];
+      }
+      // The machine_name widget derives its value from another field while
+      // the user types. Drupal stores that field as an array path; the UI
+      // only knows flat field keys, so the last segment is what it needs.
+      if ($element['#type'] === 'machine_name' && !empty($element['#machine_name']['source']) && is_array($element['#machine_name']['source'])) {
+        $field['source'] = (string) end($element['#machine_name']['source']);
+      }
 
       // For textarea fields, attempt to discover a YAML schema from
       // the Drupal config schema system. Convention: a schema at

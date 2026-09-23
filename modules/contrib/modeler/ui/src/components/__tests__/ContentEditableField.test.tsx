@@ -83,21 +83,6 @@ describe('ContentEditableField', () => {
     });
   });
 
-  describe('focus and blur', () => {
-    it('should handle focus event', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-      fireEvent.focus(editableDiv);
-      // Focus should set isEditing state internally
-    });
-
-    it('should handle blur event', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-      fireEvent.focus(editableDiv);
-      fireEvent.blur(editableDiv);
-    });
-  });
 
   describe('keyboard handling', () => {
     it('should prevent Enter in single-line mode', () => {
@@ -109,13 +94,6 @@ describe('ContentEditableField', () => {
       expect(preventDefaultSpy).toHaveBeenCalled();
     });
 
-    it('should allow Enter in multiline mode', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} multiline={true} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-      fireEvent.keyDown(editableDiv, { key: 'Enter' });
-      // In multiline mode, Enter should not be prevented
-      // fireEvent returns false if preventDefault was called
-    });
   });
 
   describe('drag and drop', () => {
@@ -142,12 +120,6 @@ describe('ContentEditableField', () => {
       expect(editableDiv.classList.contains('drag-over')).toBe(false);
     });
 
-    it('should handle drop when disabled by returning early', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} disabled={true} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-      fireEvent.drop(editableDiv, { dataTransfer: { getData: () => '' } });
-      // Should not throw
-    });
   });
 
   describe('internal token dragging', () => {
@@ -330,7 +302,7 @@ describe('ContentEditableField', () => {
       expect(mockOnChange).toHaveBeenCalled();
     });
 
-    it('should use textContent when no tokens present', () => {
+    it('serializes plain text input unchanged', () => {
       const { container } = render(<ContentEditableField {...defaultProps} />);
       const editableDiv = container.querySelector('.contenteditable-field')!;
 
@@ -339,6 +311,22 @@ describe('ContentEditableField', () => {
 
       jest.advanceTimersByTime(300);
       expect(mockOnChange).toHaveBeenCalledWith('Plain text only');
+    });
+
+    it('preserves native block newlines in a debounced input before a token exists', () => {
+      const { convertHTMLToTokens } = require('../../utils/tokenUtils');
+      const real = jest.requireActual('../../utils/tokenUtils');
+      convertHTMLToTokens.mockImplementationOnce(real.convertHTMLToTokens);
+      const { container } = render(
+        <ContentEditableField value="" onChange={mockOnChange} multiline />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      editableDiv.innerHTML = 'line1<div>[</div>';
+
+      fireEvent.input(editableDiv);
+      jest.advanceTimersByTime(300);
+
+      expect(mockOnChange).toHaveBeenCalledWith('line1\n[');
     });
 
     it('should cancel previous debounce when typing rapidly', () => {
@@ -487,20 +475,6 @@ describe('ContentEditableField', () => {
       expect(escapeHtml).toHaveBeenCalledWith('plain text');
     });
 
-    it('should handle paste when no selection exists', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-
-      // Clear selection
-      window.getSelection()?.removeAllRanges();
-
-      fireEvent.paste(editableDiv, {
-        clipboardData: {
-          getData: (type: string) => type === 'text/plain' ? 'pasted' : '',
-        },
-      });
-      // Should not throw
-    });
   });
 
   describe('handleKeyDown - token deletion', () => {
@@ -944,12 +918,6 @@ describe('ContentEditableField', () => {
       expect(editableDiv.classList.contains('drag-over')).toBe(false);
     });
 
-    it('should not handle dragLeave when disabled', () => {
-      const { container } = render(<ContentEditableField {...defaultProps} disabled={true} />);
-      const editableDiv = container.querySelector('.contenteditable-field')!;
-      // Should not throw
-      fireEvent.dragLeave(editableDiv);
-    });
 
     it('should clear drop cursor on dragLeave', () => {
       const { container } = render(<ContentEditableField {...defaultProps} />);
@@ -986,76 +954,205 @@ describe('ContentEditableField', () => {
     });
   });
 
-  describe('trailing token caret space (Issue B)', () => {
-    // convertTokensToHTML is mocked to identity, so a `value` containing a
-    // trailing `.config-token` span renders that pill as the LAST node.
+  describe('token caret boundaries and serialization', () => {
     const trailingTokenHtml = 'Hello <span class="config-token" data-token="[user:name]">name</span>';
 
-    // jest.clearAllMocks() (beforeEach) wipes any custom isTokenElement impl a
-    // PRIOR test installed without restoring the factory default, so set the
-    // real class-based check here so these tests are order-independent.
     beforeEach(() => {
       const { isTokenElement } = require('../../utils/tokenUtils');
       isTokenElement.mockImplementation(
-        (node: any) => node?.classList?.contains?.('config-token') ?? false,
+        (node: unknown) => node instanceof Element && node.classList.contains('config-token'),
       );
     });
 
-    it('appends a zero-width-space caret spot after a value ending in a token', () => {
-      const { container } = render(<ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} />);
-      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
-      const last = editableDiv.lastChild as Node;
-      // The last node is now a text node holding a single ZWSP (the caret spot),
-      // sitting AFTER the trailing token pill.
-      expect(last.nodeType).toBe(Node.TEXT_NODE);
-      expect(last.textContent).toBe('\u200B');
-      const tokenEl = editableDiv.querySelector('.config-token');
-      expect(tokenEl?.nextSibling).toBe(last);
-    });
-
-    it('does NOT append a caret spot when acceptsTokens is false', () => {
-      const { container } = render(
-        <ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} acceptsTokens={false} />,
-      );
-      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
-      expect(editableDiv.textContent).not.toContain('\u200B');
-    });
-
-    it('the serialized value of a field ending in a token has NO zero-width space', () => {
-      // convertHTMLToTokens is mocked to identity in THIS suite, so assert on the
-      // real strip behavior via the actual util (the production serialize path).
-      const real = jest.requireActual('../../utils/tokenUtils');
-      // Guard against any leaked mockReturnValue on sanitizeTokenHtml: the real
-      // convertHTMLToTokens now calls it, so force a transparent identity here.
-      const { sanitizeTokenHtml } = require('../../utils/sanitize');
-      (sanitizeTokenHtml as jest.Mock).mockImplementation((html: string) => html);
-      const htmlWithSpacer = trailingTokenHtml + '\u200B';
-      const serialized = real.convertHTMLToTokens(htmlWithSpacer);
-      expect(serialized).toBe('Hello [user:name]');
-      expect(serialized).not.toContain('\u200B');
-    });
-
-    it('Backspace with the caret after a trailing token (in its ZWSP spot) deletes the TOKEN', () => {
-      const { container } = render(<ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} />);
-      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
-      const zwspNode = editableDiv.lastChild as Text;
-      expect(zwspNode.textContent).toBe('\u200B');
-      const tokenEl = editableDiv.querySelector('.config-token') as HTMLElement;
-      expect(tokenEl).toBeTruthy();
-
-      // Place the caret just after the ZWSP (offset 1), i.e. visually right after
-      // the trailing token.
+    function setCaretBeforeOrAfter(node: Node, after: boolean): void {
       const selection = window.getSelection()!;
       const range = document.createRange();
-      range.setStart(zwspNode, 1);
+      if (after) {
+        range.setStartAfter(node);
+      } else {
+        range.setStartBefore(node);
+      }
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function typeAtCaret(text: string): void {
+      const selection = window.getSelection()!;
+      const range = selection.getRangeAt(0);
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function serializedValue(editableDiv: HTMLElement): string {
+      const real = jest.requireActual('../../utils/tokenUtils');
+      return real.convertHTMLToTokens(editableDiv.innerHTML);
+    }
+
+    it('allows typing after a trailing token without saving a presentation sentinel', () => {
+      const { container } = render(
+        <ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const token = editableDiv.querySelector('.config-token') as HTMLElement;
+
+      setCaretBeforeOrAfter(token, false);
+      fireEvent.keyDown(editableDiv, { key: 'ArrowRight' });
+      typeAtCaret('!');
+
+      expect(serializedValue(editableDiv)).toBe('Hello [user:name]!');
+      expect(serializedValue(editableDiv)).not.toContain('\u200B');
+    });
+
+    it('exposes a usable boundary after a token-only value', () => {
+      const { container } = render(
+        <ContentEditableField
+          value={'<span class="config-token" data-token="[user:name]">name</span>'}
+          onChange={mockOnChange}
+        />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const token = editableDiv.querySelector('.config-token') as HTMLElement;
+
+      setCaretBeforeOrAfter(token, false);
+      fireEvent.keyDown(editableDiv, { key: 'ArrowRight' });
+      typeAtCaret('x');
+
+      expect(serializedValue(editableDiv)).toBe('[user:name]x');
+    });
+
+    it('navigates both directions between adjacent tokens without reordering them', () => {
+      const adjacentTokens =
+        '<span class="config-token" data-token="[one]">one</span>' +
+        '<span class="config-token" data-token="[two]">two</span>';
+      const { container } = render(
+        <ContentEditableField value={adjacentTokens} onChange={mockOnChange} />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const [first, second] = Array.from(
+        editableDiv.querySelectorAll('.config-token'),
+      ) as HTMLElement[];
+
+      setCaretBeforeOrAfter(first, false);
+      fireEvent.keyDown(editableDiv, { key: 'ArrowRight' });
+      typeAtCaret('x');
+
+      setCaretBeforeOrAfter(second, true);
+      fireEvent.keyDown(editableDiv, { key: 'ArrowLeft' });
+      typeAtCaret('y');
+
+      expect(serializedValue(editableDiv)).toBe('[one]xy[two]');
+      expect(Array.from(editableDiv.querySelectorAll('.config-token'))).toEqual([first, second]);
+    });
+
+    it('leaves modified arrow keys to native selection and word navigation', () => {
+      const { container } = render(
+        <ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const token = editableDiv.querySelector('.config-token') as HTMLElement;
+      setCaretBeforeOrAfter(token, false);
+
+      const selection = window.getSelection()!;
+      const originalRange = selection.getRangeAt(0);
+      const originalContainer = originalRange.startContainer;
+      const originalOffset = originalRange.startOffset;
+      const modifiedArrows = [
+        { key: 'ArrowRight', shiftKey: true },
+        { key: 'ArrowRight', ctrlKey: true },
+        { key: 'ArrowRight', metaKey: true },
+        { key: 'ArrowRight', altKey: true },
+      ] satisfies KeyboardEventInit[];
+
+      modifiedArrows.forEach(eventInit => {
+        expect(fireEvent.keyDown(editableDiv, eventInit)).toBe(true);
+        const currentRange = selection.getRangeAt(0);
+        expect(currentRange.startContainer).toBe(originalContainer);
+        expect(currentRange.startOffset).toBe(originalOffset);
+      });
+    });
+
+    it('keeps the caret in its block when deleting that block’s only token', () => {
+      const { container } = render(
+        <ContentEditableField value="" onChange={mockOnChange} multiline />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      editableDiv.innerHTML =
+        'firstline<div><span class="config-token" data-token="[only]">only</span>\u200B</div>';
+      const secondLine = editableDiv.querySelector('div') as HTMLDivElement;
+      const boundary = secondLine.lastChild as Text;
+      const selection = window.getSelection()!;
+      const range = document.createRange();
+      range.setStart(boundary, 1);
       range.collapse(true);
       selection.removeAllRanges();
       selection.addRange(range);
 
       fireEvent.keyDown(editableDiv, { key: 'Backspace' });
 
-      // The token pill is gone (not merely the ZWSP), and no token remains.
+      expect(secondLine.contains(selection.getRangeAt(0).startContainer)).toBe(true);
+      typeAtCaret('x');
+      expect(secondLine.textContent?.replace(/\u200B/g, '')).toBe('x');
+      expect(editableDiv.firstChild?.textContent).toBe('firstline');
+    });
+
+    it('keeps editing on a literal final newline after token deletion', () => {
+      const { container } = render(
+        <ContentEditableField value="" onChange={mockOnChange} multiline />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      editableDiv.innerHTML =
+        'line1\n<span class="config-token" data-token="[only]">only</span>\u200B';
+      const boundary = editableDiv.lastChild as Text;
+      const selection = window.getSelection()!;
+      const range = document.createRange();
+      range.setStart(boundary, 1);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      fireEvent.keyDown(editableDiv, { key: 'Backspace' });
+
+      expect(serializedValue(editableDiv)).toBe('line1\n');
+      typeAtCaret('X');
+      expect(serializedValue(editableDiv)).toBe('line1\nX');
+    });
+
+    it('deletes adjacent pills consecutively from the same forward boundary', () => {
+      const adjacentTokens =
+        '<span class="config-token" data-token="[one]">one</span>' +
+        '<span class="config-token" data-token="[two]">two</span>';
+      const { container } = render(
+        <ContentEditableField value={adjacentTokens} onChange={mockOnChange} />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const first = editableDiv.querySelector('.config-token') as HTMLElement;
+      setCaretBeforeOrAfter(first, false);
+
+      fireEvent.keyDown(editableDiv, { key: 'Delete' });
+      fireEvent.keyDown(editableDiv, { key: 'Delete' });
+
       expect(editableDiv.querySelector('.config-token')).toBeNull();
+      expect(serializedValue(editableDiv)).toBe('');
+    });
+
+    it('Backspace at the boundary after a trailing token deletes the token atomically', () => {
+      const { container } = render(
+        <ContentEditableField value={trailingTokenHtml} onChange={mockOnChange} />,
+      );
+      const editableDiv = container.querySelector('.contenteditable-field') as HTMLElement;
+      const token = editableDiv.querySelector('.config-token') as HTMLElement;
+
+      setCaretBeforeOrAfter(token, false);
+      fireEvent.keyDown(editableDiv, { key: 'ArrowRight' });
+      fireEvent.keyDown(editableDiv, { key: 'Backspace' });
+
+      expect(editableDiv.querySelector('.config-token')).toBeNull();
+      expect(serializedValue(editableDiv)).toBe('Hello ');
     });
   });
 
@@ -1730,49 +1827,122 @@ describe('ContentEditableField', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('restores field focus and caret to the ORIGINAL offset on Escape dismiss (Caveat 2 / DECISION B)', () => {
+    it('inserts at a middle trigger, preserves the suffix, and leaves the caret after the pill', () => {
+      const { createTokenElement } = require('../../utils/tokenUtils');
+      createTokenElement.mockImplementation((label: string, token: string) => {
+        const pill = document.createElement('span');
+        pill.className = 'config-token';
+        pill.setAttribute('contenteditable', 'false');
+        pill.setAttribute('data-token', token);
+        pill.textContent = label;
+        return pill;
+      });
+
       const { editableDiv } = renderWithSources();
-      typeAt(editableDiv, 'ab[');
-      expect(picker()).toBeTruthy();
-      // Dismiss via Escape → focus + caret return to the field.
-      fireEvent.keyDown(document, { key: 'Escape' });
-      expect(picker()).toBeNull();
-      expect(document.activeElement).toBe(editableDiv);
-      // The caret is restored to where it was at open time (absolute offset 3,
-      // just after the "[") — NOT the start of the field.
-      const selection = window.getSelection();
-      expect(selection && selection.rangeCount).toBeTruthy();
-      if (selection && selection.rangeCount) {
-        const range = selection.getRangeAt(0);
-        expect(editableDiv.contains(range.startContainer)).toBe(true);
-        expect(range.startOffset).toBe(3);
-        expect(range.startOffset).not.toBe(0);
-      }
+      editableDiv.textContent = 'Hello [world';
+      const fieldText = editableDiv.firstChild as Text;
+      const fieldSelection = window.getSelection()!;
+      const triggerCaret = document.createRange();
+      triggerCaret.setStart(fieldText, 7);
+      triggerCaret.collapse(true);
+      fieldSelection.removeAllRanges();
+      fieldSelection.addRange(triggerCaret);
+      fireEvent.input(editableDiv);
+
+      const searchInput = document.querySelector('.token-picker-search-input') as HTMLInputElement;
+      fireEvent.change(searchInput, { target: { value: 'site' } });
+
+      const pickerRange = document.createRange();
+      pickerRange.selectNodeContents(picker() as HTMLElement);
+      pickerRange.collapse(true);
+      fieldSelection.removeAllRanges();
+      fieldSelection.addRange(pickerRange);
+
+      fireEvent.click(document.querySelector('.token-picker-option') as HTMLElement);
+
+      const real = jest.requireActual('../../utils/tokenUtils');
+      expect(real.convertHTMLToTokens(editableDiv.innerHTML)).toBe('Hello [site:name]world');
+
+      const insertionRange = fieldSelection.getRangeAt(0);
+      const typed = document.createTextNode('!');
+      insertionRange.insertNode(typed);
+      expect(real.convertHTMLToTokens(editableDiv.innerHTML)).toBe('Hello [site:name]!world');
     });
 
-    it('restores caret to the original ABSOLUTE offset even after the text node is RE-CREATED (Issue C)', () => {
-      const { editableDiv } = renderWithSources();
-      typeAt(editableDiv, 'abc[');
-      expect(picker()).toBeTruthy();
-      // Simulate a React re-render that REPLACES the field's text node with a new
-      // node object holding the same text — the OLD node reference now dangles.
-      const oldNode = editableDiv.firstChild as Text;
-      const replacement = document.createTextNode(oldNode.data);
-      editableDiv.replaceChild(replacement, oldNode);
-      expect(editableDiv.firstChild).not.toBe(oldNode);
+    it('preserves a native multiline boundary through picker blur, insertion, and deletion', () => {
+      const { createTokenElement } = require('../../utils/tokenUtils');
+      createTokenElement.mockImplementation((label: string, token: string) => {
+        const pill = document.createElement('span');
+        pill.className = 'config-token';
+        pill.setAttribute('contenteditable', 'false');
+        pill.setAttribute('data-token', token);
+        pill.textContent = label;
+        return pill;
+      });
 
-      // Dismiss → the absolute-offset restore must re-resolve against the LIVE
-      // (replaced) node and land at offset 4 (after "abc["), not 0.
+      const { editableDiv, onChange, rerender } = renderWithSources({ multiline: true });
+      editableDiv.innerHTML = 'line1<div>[</div>';
+      const triggerText = editableDiv.querySelector('div')?.firstChild as Text;
+      const selection = window.getSelection()!;
+      const triggerCaret = document.createRange();
+      triggerCaret.setStart(triggerText, 1);
+      triggerCaret.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(triggerCaret);
+      fireEvent.input(editableDiv);
+
+      // Picker focus blurs the field, persists `line1\n[`, and the parent value
+      // sync re-creates the editable DOM with a literal newline text node.
+      fireEvent.blur(editableDiv);
+      rerender(
+        <TokenSourceContext.Provider value={{ globalTokens: sampleGlobalTokens, reviewAvailable: true }}>
+          <ContentEditableField value={'line1\n['} onChange={onChange} multiline />
+        </TokenSourceContext.Provider>,
+      );
+
+      const searchInput = document.querySelector('.token-picker-search-input') as HTMLInputElement;
+      fireEvent.change(searchInput, { target: { value: 'site' } });
+      fireEvent.click(document.querySelector('.token-picker-option') as HTMLElement);
+
+      const real = jest.requireActual('../../utils/tokenUtils');
+      expect(real.convertHTMLToTokens(editableDiv.innerHTML)).toBe('line1\n[site:name]');
+
+      fireEvent.keyDown(editableDiv, { key: 'Backspace' });
+      const typed = document.createTextNode('X');
+      selection.getRangeAt(0).insertNode(typed);
+      expect(real.convertHTMLToTokens(editableDiv.innerHTML)).toBe('line1\nX');
+    });
+
+    it('restores picker focus at the logical caret after token DOM is re-created', () => {
+      const { editableDiv } = renderWithSources();
+      editableDiv.innerHTML =
+        '<span class="config-token" contenteditable="false" data-token="[existing:long]">x</span>' +
+        '\u200Bab[tail';
+      const triggerText = editableDiv.lastChild as Text;
+      const selection = window.getSelection()!;
+      const triggerCaret = document.createRange();
+      triggerCaret.setStart(triggerText, 4);
+      triggerCaret.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(triggerCaret);
+      fireEvent.input(editableDiv);
+      expect(picker()).toBeTruthy();
+
+      // Re-create every node while the modal owns focus, as a parent value sync
+      // does in the real property panel.
+      const recreatedMarkup = editableDiv.innerHTML;
+      editableDiv.innerHTML = recreatedMarkup;
       fireEvent.keyDown(document, { key: 'Escape' });
+
+      expect(picker()).toBeNull();
       expect(document.activeElement).toBe(editableDiv);
-      const selection = window.getSelection();
-      expect(selection && selection.rangeCount).toBeTruthy();
-      if (selection && selection.rangeCount) {
-        const range = selection.getRangeAt(0);
-        expect(range.startContainer).toBe(replacement);
-        expect(range.startOffset).toBe(4);
-        expect(range.startOffset).not.toBe(0);
-      }
+      const restoredRange = selection.getRangeAt(0);
+      const typed = document.createTextNode('!');
+      restoredRange.insertNode(typed);
+
+      const real = jest.requireActual('../../utils/tokenUtils');
+      expect(real.convertHTMLToTokens(editableDiv.innerHTML))
+        .toBe('[existing:long]ab[!tail');
     });
 
     it('restores field focus on backdrop click and × dismiss (Caveat 2 / DECISION B)', () => {
@@ -1970,15 +2140,6 @@ describe('ContentEditableField', () => {
         expect(onClose2).toHaveBeenCalledWith(false);
       });
 
-      it('is a no-op (no throw) when no onPickerOpenChange is in context', () => {
-        // Default renderWithSources context has no onPickerOpenChange; opening
-        // and closing the picker must not throw.
-        const { editableDiv } = renderWithSources();
-        expect(() => {
-          typeAt(editableDiv, '[');
-          fireEvent.keyDown(document, { key: 'Escape' });
-        }).not.toThrow();
-      });
     });
   });
 

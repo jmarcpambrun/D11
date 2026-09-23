@@ -68,6 +68,11 @@ export interface PluginModelData {
     executable?: boolean;
     tags?: string[];
     changelog?: string;
+    summary?: string;
+    recipes?: string[];
+    config_actions?: Array<{ config: string; actions: unknown }>;
+    export_config?: string[];
+    modules?: string[];
   };
 }
 
@@ -210,7 +215,10 @@ export interface SetConditionDescriptor {
 }
 
 /**
- * Callback signatures for plugin event subscriptions.
+ * Called when the primary selection or any multi-selection member changes.
+ *
+ * The callback receives only the first selected node and edge. Use the
+ * multi-selection getters when the complete selection is needed.
  */
 export type SelectionChangeCallback = (
   node: PluginNode | null,
@@ -252,10 +260,19 @@ export interface ModelerPluginApi {
   getNodeById: (nodeId: string) => PluginNode | null;
   /** Returns a single edge by ID, or null if not found. */
   getEdgeById: (edgeId: string) => PluginEdge | null;
-  /** Returns the currently selected node, or null. */
+  /** Returns the first selected node (the primary selection), or null. */
   getSelectedNode: () => PluginNode | null;
-  /** Returns the currently selected edge, or null. */
+  /** Returns the first selected edge (the primary selection), or null. */
   getSelectedEdge: () => PluginEdge | null;
+  /**
+   * Returns every selected node, in selection order.
+   *
+   * A single selection yields a one-element array, so a plugin never needs
+   * `getSelectedNode()` as well.
+   */
+  getSelectedNodes: () => PluginNode[];
+  /** Returns every selected edge, in selection order. */
+  getSelectedEdges: () => PluginEdge[];
   /** Returns a deep-cloned snapshot of the model data. */
   getModelData: () => PluginModelData | null;
   /** Returns whether the modeler is in read-only mode. */
@@ -281,7 +298,11 @@ export interface ModelerPluginApi {
   getErrors: () => PluginError[];
 
   // ── Event subscriptions ─────────────────────────────────────────────
-  /** Subscribe to selection changes (node or edge selected/deselected). */
+  /**
+   * Subscribe to primary and multi-selection changes.
+   *
+   * The callback receives only the first selected node and edge.
+   */
   onSelectionChange: (callback: SelectionChangeCallback) => Unsubscribe;
   /** Subscribe to node list changes (add, remove, update, reorder). */
   onNodesChange: (callback: NodesChangeCallback) => Unsubscribe;

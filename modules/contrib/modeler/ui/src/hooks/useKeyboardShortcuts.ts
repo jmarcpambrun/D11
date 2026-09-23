@@ -8,6 +8,8 @@ interface KeyboardShortcutCallbacks {
   onEscape?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  /** Toggle between the property and review panel modes (Alt+Shift+R). */
+  onToggleReviewMode?: () => void;
 }
 
 interface ModifierStates {
@@ -27,6 +29,7 @@ interface KeyboardCapabilities {
   canEscape: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  canToggleReviewMode: boolean;
 }
 
 interface UseKeyboardShortcutsProps {
@@ -71,6 +74,21 @@ function isInputContext(event: KeyboardEvent): boolean {
 }
 
 /**
+ * Match the property/review mode toggle: Alt+Shift+R (Option+Shift+R on macOS).
+ *
+ * Matched on `event.code` (the physical key) rather than `event.key`, because
+ * macOS rewrites `event.key` for Option combinations (Option+R reports the
+ * registered-trademark sign, not "R"), which would make the shortcut
+ * unreachable there. `Alt+Shift+R` itself is unreserved in Chrome, Firefox,
+ * Safari and Edge on Linux, macOS and Windows, so it never collides with a
+ * browser or OS binding. Ctrl/Meta must be absent so the browser's own
+ * Ctrl+Shift+R (hard reload) stays untouched.
+ */
+function isReviewToggle(event: KeyboardEvent): boolean {
+  return event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyR';
+}
+
+/**
  * Check whether the keyboard event matches a registered shortcut.
  * Returns true if the event corresponds to a known shortcut key combination.
  */
@@ -87,6 +105,7 @@ function isShortcutKey(
   if (ctrlOrMeta && event.key === 'z' && capabilities.canUndo && !event.shiftKey) return true;
   if (ctrlOrMeta && event.key === 'z' && capabilities.canRedo && event.shiftKey) return true;
   if (ctrlOrMeta && event.key === 'y' && capabilities.canRedo) return true;
+  if (isReviewToggle(event) && capabilities.canToggleReviewMode) return true;
   return false;
 }
 
@@ -113,8 +132,8 @@ function createShortcutHandler(
       return;
     }
 
-    const { canDelete, canCopy, canPaste, canSearch, canEscape, canUndo, canRedo } = capabilities;
-    const { onDelete, onCopy, onPaste, onToggleSearch, onEscape, onUndo, onRedo } = callbacks;
+    const { canDelete, canCopy, canPaste, canSearch, canEscape, canUndo, canRedo, canToggleReviewMode } = capabilities;
+    const { onDelete, onCopy, onPaste, onToggleSearch, onEscape, onUndo, onRedo, onToggleReviewMode } = callbacks;
     const ctrlOrMeta = event.ctrlKey || event.metaKey;
     
     if ((event.key === 'Delete' || event.key === 'Backspace') && canDelete && onDelete) {
@@ -172,6 +191,13 @@ function createShortcutHandler(
       onRedo();
       return false;
     }
+
+    if (isReviewToggle(event) && canToggleReviewMode && onToggleReviewMode) {
+      event.preventDefault();
+      event.stopPropagation();
+      onToggleReviewMode();
+      return false;
+    }
   };
 }
 
@@ -181,7 +207,7 @@ function createShortcutHandler(
  * Custom hook for managing keyboard shortcuts and modifiers in the modeler
  * 
  * Handles:
- * - Keyboard shortcuts (Ctrl+C, Ctrl+V, Ctrl+F, Delete, Escape)
+ * - Keyboard shortcuts (Ctrl+C, Ctrl+V, Ctrl+F, Delete, Escape, Alt+Shift+R)
  * - Modifier key tracking (Shift, Ctrl, Alt)
  * - Context-aware event handling (avoid conflicts with form inputs)
  * - Firefox-specific event handling

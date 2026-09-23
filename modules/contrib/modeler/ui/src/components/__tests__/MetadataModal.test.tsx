@@ -1,15 +1,61 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MetadataModal from '../MetadataModal';
+import { metadataForm, newModelMetadataForm } from '../__fixtures__/metadataForm';
+
+/**
+ * The dialog renders the shared configuration form, where text fields are
+ * contenteditable widgets rather than native inputs. Typing is therefore
+ * "set the text, fire input, blur" - blur is what flushes the value
+ * synchronously, exactly as it does for a user who tabs away.
+ */
+function type(element: HTMLElement, value: string): void {
+  element.textContent = value;
+  fireEvent.input(element);
+  fireEvent.blur(element);
+}
 
 describe('MetadataModal', () => {
+  const configActions = [
+    { config: 'system.site', actions: { simple_config_update: { slogan: 'Hi' } } },
+  ];
+
+  const metadata = {
+    label: 'Test Model',
+    version: '2.0.0',
+    executable: true,
+    template: false,
+    storage: 'separate',
+    documentation: 'Some docs',
+    tags: ['one', 'two'],
+    changelog: 'Initial',
+    summary: 'A one-line description.',
+    recipes: ['core/recipes/article_tags', 'core/recipes/page_content_type'],
+    export_config: ['system.site'],
+    modules: ['node'],
+    config_actions: configActions,
+  };
+
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
     onSave: jest.fn(),
-    metadata: {},
+    form: metadataForm,
+    metadata,
+    modelId: 'test_model',
     isNew: false,
   };
+
+  const newModelProps = {
+    ...defaultProps,
+    form: newModelMetadataForm,
+    metadata: { label: 'New Workflow', version: '1.0.0', executable: true, tags: [] },
+    modelId: undefined,
+    isNew: true,
+  };
+
+  /** The dialog's Save always submits the whole payload; this is what it sent. */
+  const saved = (onSave: jest.Mock) => onSave.mock.calls[0][0];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,202 +67,304 @@ describe('MetadataModal', () => {
       expect(screen.queryByText('Model Information')).not.toBeInTheDocument();
     });
 
-    it('should render modal when isOpen is true', () => {
+    it('should render every field of the delivered form', () => {
       render(<MetadataModal {...defaultProps} />);
+
       expect(screen.getByText('Model Information')).toBeInTheDocument();
-    });
-
-    it('should render label input', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByLabelText('Label *')).toBeInTheDocument();
-    });
-
-    it('should render version input', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByLabelText('Version')).toBeInTheDocument();
-    });
-
-    it('should render enabled checkbox', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByText('Enabled')).toBeInTheDocument();
-    });
-
-    it('should render template checkbox', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByText('Template')).toBeInTheDocument();
-    });
-
-    it('should render storage select', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('combobox', { name: /storage of raw data/i })).toBeInTheDocument();
-    });
-
-    it('should render documentation textarea', () => {
-      render(<MetadataModal {...defaultProps} />);
+      expect(screen.getByLabelText('Label')).toBeInTheDocument();
+      expect(screen.getByLabelText('Model ID')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'Template' })).toBeInTheDocument();
       expect(screen.getByLabelText('Documentation')).toBeInTheDocument();
-    });
-
-    it('should render tags input', () => {
-      render(<MetadataModal {...defaultProps} />);
       expect(screen.getByLabelText('Tags')).toBeInTheDocument();
-    });
-
-    it('should render changelog textarea for existing models', () => {
-      render(<MetadataModal {...defaultProps} isNew={false} />);
+      expect(screen.getByLabelText('Summary')).toBeInTheDocument();
+      expect(screen.getByLabelText('Included recipes')).toBeInTheDocument();
+      expect(screen.getByLabelText('Additional config to export')).toBeInTheDocument();
+      expect(screen.getByLabelText('Additional required modules')).toBeInTheDocument();
+      expect(screen.getByLabelText('Config actions')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Storage of raw data' })).toBeInTheDocument();
       expect(screen.getByLabelText('Changelog')).toBeInTheDocument();
     });
 
-    it('should not render changelog textarea for new models', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
+    it('should render both groups collapsed', () => {
+      const { container } = render(<MetadataModal {...defaultProps} />);
+
+      const groups = Array.from(container.querySelectorAll('details'));
+      expect(groups.map((group) => group.querySelector('summary')?.textContent))
+        .toEqual(['Recipe export', 'Advanced']);
+      expect(groups.every((group) => group.hasAttribute('open'))).toBe(false);
+    });
+
+    it('should show the storage description the backend delivered', () => {
+      render(<MetadataModal {...defaultProps} />);
+      expect(screen.getByText('Controls if and how the raw modeler data is stored.')).toBeInTheDocument();
+    });
+
+    it('should render the storage options', () => {
+      render(<MetadataModal {...defaultProps} />);
+
+      expect(screen.getByRole('option', { name: 'Default' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Do not store raw model data' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Store raw data in separate config entity' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Store raw data with config as third-party setting' })).toBeInTheDocument();
+    });
+
+    it('should not render the changelog for a new model', () => {
+      render(<MetadataModal {...newModelProps} />);
       expect(screen.queryByLabelText('Changelog')).not.toBeInTheDocument();
     });
 
-    it('should render close button', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(document.querySelector('.close-btn')).toBeInTheDocument();
+    it('should render no label control when the backend withheld the label field', () => {
+      const withoutLabel = metadataForm.filter((field) => field.key !== 'label');
+      render(<MetadataModal {...defaultProps} form={withoutLabel} />);
+
+      expect(screen.queryByLabelText('Label')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Model ID')).toBeInTheDocument();
     });
 
-    it('should render cancel button', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
-    });
+    it('should fall back to the empty state when no form was delivered', () => {
+      render(<MetadataModal {...defaultProps} form={undefined} />);
 
-    it('should render save button', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByText('Save')).toBeInTheDocument();
+      expect(screen.getByText('No configuration available')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Label')).not.toBeInTheDocument();
     });
   });
 
   describe('initial values', () => {
-    it('should populate label from metadata', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ label: 'Test Label' }} />);
-      expect(screen.getByLabelText('Label *')).toHaveValue('Test Label');
-    });
-
-    it('should populate version from metadata', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ version: '2.0.0' }} />);
-      expect(screen.getByLabelText('Version')).toHaveValue('2.0.0');
-    });
-
-    it('should use default version when not provided', () => {
+    it('should populate the plain fields from metadata', () => {
       render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByLabelText('Version')).toHaveValue('1.0.0');
+
+      expect(screen.getByLabelText('Label')).toHaveTextContent('Test Model');
+      expect(screen.getByLabelText('Version')).toHaveTextContent('2.0.0');
+      expect(screen.getByLabelText('Documentation')).toHaveTextContent('Some docs');
+      expect(screen.getByLabelText('Summary')).toHaveTextContent('A one-line description.');
+      expect(screen.getByRole('combobox', { name: 'Storage of raw data' })).toHaveValue('separate');
+      expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Template' })).not.toBeChecked();
     });
 
-    it('should check enabled by default', () => {
+    it('should show tags comma separated and lists one per line', () => {
       render(<MetadataModal {...defaultProps} />);
-      const checkbox = screen.getByRole('checkbox', { name: /enabled/i });
-      expect(checkbox).toBeChecked();
+
+      expect(screen.getByLabelText('Tags')).toHaveTextContent('one, two');
+      expect(screen.getByLabelText('Included recipes').textContent)
+        .toBe('core/recipes/article_tags\ncore/recipes/page_content_type');
+      expect(screen.getByLabelText('Additional config to export')).toHaveTextContent('system.site');
+      expect(screen.getByLabelText('Additional required modules')).toHaveTextContent('node');
     });
 
-    it('should not check enabled when executable is false', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ executable: false }} />);
-      const checkbox = screen.getByRole('checkbox', { name: /enabled/i });
-      expect(checkbox).not.toBeChecked();
+    it('should show config actions as YAML', () => {
+      render(<MetadataModal {...defaultProps} />);
+
+      const editor = screen.getByLabelText('Config actions') as HTMLTextAreaElement;
+      expect(editor.value).toContain('- config: system.site');
+      expect(editor.value).toContain('slogan: Hi');
     });
 
-    it('should populate storage from metadata', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ storage: 'separate' }} />);
-      expect(screen.getByRole('combobox', { name: /storage of raw data/i })).toHaveValue('separate');
-    });
+    it('should show the new values when reopened on different metadata', () => {
+      const { rerender } = render(<MetadataModal {...defaultProps} />);
+      expect(screen.getByLabelText('Label')).toHaveTextContent('Test Model');
 
-    it('should populate documentation from metadata', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ documentation: 'Some docs' }} />);
-      expect(screen.getByLabelText('Documentation')).toHaveValue('Some docs');
-    });
+      rerender(<MetadataModal {...defaultProps} metadata={{ ...metadata, label: 'Other Model' }} />);
 
-    it('should populate tags from metadata array', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ tags: ['tag1', 'tag2'] }} />);
-      expect(screen.getByLabelText('Tags')).toHaveValue('tag1, tag2');
-    });
-
-    it('should handle tags as string', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ tags: 'single-tag' as any }} />);
-      expect(screen.getByLabelText('Tags')).toHaveValue('single-tag');
-    });
-
-    it('should populate changelog from metadata', () => {
-      render(<MetadataModal {...defaultProps} metadata={{ changelog: 'Change log text' }} />);
-      expect(screen.getByLabelText('Changelog')).toHaveValue('Change log text');
+      expect(screen.getByLabelText('Label')).toHaveTextContent('Other Model');
     });
   });
 
-  describe('form interactions', () => {
-    it('should update label on change', () => {
+  describe('focus on open', () => {
+    it('should focus the label control, not the close button', () => {
       render(<MetadataModal {...defaultProps} />);
-      const input = screen.getByLabelText('Label *');
 
-      fireEvent.change(input, { target: { value: 'New Label' } });
-
-      expect(input).toHaveValue('New Label');
+      expect(screen.getByLabelText('Label')).toHaveFocus();
     });
 
-    it('should update version on change', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const input = screen.getByLabelText('Version');
+    it('should select the default label of a new model so it can be typed over', () => {
+      render(<MetadataModal {...newModelProps} />);
 
-      fireEvent.change(input, { target: { value: '3.0.0' } });
+      expect(screen.getByLabelText('Label')).toHaveFocus();
+      expect(window.getSelection()?.toString()).toBe('New Workflow');
+    });
+  });
 
-      expect(input).toHaveValue('3.0.0');
+  describe('machine name', () => {
+    it('should derive the machine name from the label of a new model', () => {
+      render(<MetadataModal {...newModelProps} />);
+
+      type(screen.getByLabelText('Label'), 'My Test Model');
+
+      expect(screen.getByLabelText('Model ID')).toHaveValue('my_test_model');
     });
 
-    it('should toggle enabled checkbox', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const checkbox = screen.getByRole('checkbox', { name: /enabled/i });
+    it('should keep a typed machine name when the label changes', () => {
+      render(<MetadataModal {...newModelProps} />);
 
-      fireEvent.click(checkbox);
+      fireEvent.change(screen.getByLabelText('Model ID'), { target: { value: 'custom_id' } });
+      type(screen.getByLabelText('Label'), 'My Test Model');
 
-      expect(checkbox).not.toBeChecked();
+      expect(screen.getByLabelText('Model ID')).toHaveValue('custom_id');
     });
 
-    it('should toggle template checkbox', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const checkbox = screen.getByRole('checkbox', { name: /template/i });
+    it('should derive again after the machine name is cleared', () => {
+      render(<MetadataModal {...newModelProps} />);
 
-      fireEvent.click(checkbox);
+      fireEvent.change(screen.getByLabelText('Model ID'), { target: { value: 'custom_id' } });
+      fireEvent.change(screen.getByLabelText('Model ID'), { target: { value: '' } });
+      type(screen.getByLabelText('Label'), 'Second Label');
 
-      expect(checkbox).toBeChecked();
+      expect(screen.getByLabelText('Model ID')).toHaveValue('second_label');
     });
 
-    it('should update storage on change', () => {
+    it('should show the fixed machine name of an existing model, disabled', () => {
       render(<MetadataModal {...defaultProps} />);
-      const select = screen.getByRole('combobox', { name: /storage of raw data/i });
 
-      fireEvent.change(select, { target: { value: 'separate' } });
-
-      expect(select).toHaveValue('separate');
+      const machineName = screen.getByLabelText('Model ID');
+      expect(machineName).toHaveValue('test_model');
+      expect(machineName).toBeDisabled();
     });
 
-    it('should update documentation on change', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const textarea = screen.getByLabelText('Documentation');
+    it('should send the machine name as the id of a new model', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...newModelProps} onSave={onSave} />);
 
-      fireEvent.change(textarea, { target: { value: 'New docs' } });
+      type(screen.getByLabelText('Label'), 'My Test Model');
+      fireEvent.click(screen.getByText('Save'));
 
-      expect(textarea).toHaveValue('New docs');
+      expect(saved(onSave).id).toBe('my_test_model');
     });
 
-    it('should update tags on change', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const input = screen.getByLabelText('Tags');
+    it('should send no id for an existing model', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
 
-      fireEvent.change(input, { target: { value: 'new, tags, here' } });
+      fireEvent.click(screen.getByText('Save'));
 
-      expect(input).toHaveValue('new, tags, here');
+      expect('id' in saved(onSave)).toBe(false);
+    });
+  });
+
+  describe('save behavior', () => {
+    it('should send the edited values with lists as arrays', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
+
+      type(screen.getByLabelText('Label'), 'Edited Model');
+      type(screen.getByLabelText('Tags'), '  three , four , ');
+      type(screen.getByLabelText('Included recipes'), 'core/recipes/article_tags\n\n  core/recipes/tags  \n');
+      type(screen.getByLabelText('Additional required modules'), 'node\nuser\n');
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(saved(onSave)).toEqual(expect.objectContaining({
+        label: 'Edited Model',
+        tags: ['three', 'four'],
+        recipes: ['core/recipes/article_tags', 'core/recipes/tags'],
+        modules: ['node', 'user'],
+        export_config: ['system.site'],
+        config_actions: configActions,
+      }));
     });
 
-    it('should update changelog on change', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const textarea = screen.getByLabelText('Changelog');
+    it('should round-trip untouched metadata', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
 
-      fireEvent.change(textarea, { target: { value: 'New changelog' } });
+      fireEvent.click(screen.getByText('Save'));
 
-      expect(textarea).toHaveValue('New changelog');
+      expect(saved(onSave)).toEqual(metadata);
+    });
+
+    it('should send an explicit empty for cleared fields', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
+
+      type(screen.getByLabelText('Summary'), '');
+      type(screen.getByLabelText('Included recipes'), '');
+      type(screen.getByLabelText('Additional config to export'), '');
+      fireEvent.change(screen.getByLabelText('Config actions'), { target: { value: '' } });
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(saved(onSave)).toEqual(expect.objectContaining({
+        summary: '',
+        recipes: [],
+        export_config: [],
+        config_actions: [],
+      }));
+    });
+
+    it('should save config actions parsed from the YAML editor', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
+
+      fireEvent.change(screen.getByLabelText('Config actions'), {
+        target: { value: '- config: user.settings\n  actions:\n    simple_config_update:\n      notify: true\n' },
+      });
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(saved(onSave).config_actions).toEqual([
+        { config: 'user.settings', actions: { simple_config_update: { notify: true } } },
+      ]);
+    });
+
+    it('should keep the previous config actions while the YAML is invalid', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
+
+      fireEvent.change(screen.getByLabelText('Config actions'), { target: { value: '- config: [unclosed' } });
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(saved(onSave).config_actions).toEqual(configActions);
+    });
+
+    it('should toggle the checkboxes', () => {
+      const onSave = jest.fn();
+      render(<MetadataModal {...defaultProps} onSave={onSave} />);
+
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enabled' }));
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Template' }));
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(saved(onSave)).toEqual(expect.objectContaining({ executable: false, template: true }));
+    });
+
+    it('should close after save', () => {
+      const onClose = jest.fn();
+      render(<MetadataModal {...defaultProps} onClose={onClose} />);
+
+      fireEvent.click(screen.getByText('Save'));
+
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('permissions', () => {
+    it('should disable the template checkbox without the permission', () => {
+      render(<MetadataModal {...defaultProps} canCreateTemplate={false} />);
+
+      expect(screen.getByRole('checkbox', { name: 'Template' })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeEnabled();
+    });
+
+    it('should hide Save and lock every control in read-only mode', () => {
+      render(<MetadataModal {...defaultProps} canEditMetadata={false} />);
+
+      expect(screen.queryByText('Save')).not.toBeInTheDocument();
+      expect(screen.getByText('Close')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeDisabled();
+      expect(screen.getByRole('combobox', { name: 'Storage of raw data' })).toBeDisabled();
+      expect(screen.getByLabelText('Label')).toHaveAttribute('contenteditable', 'false');
+      expect(screen.getByLabelText('Config actions')).toBeDisabled();
+    });
+
+    it('should stay editable for a new model without the edit permission', () => {
+      render(<MetadataModal {...newModelProps} canEditMetadata={false} />);
+
+      expect(screen.getByText('Save')).toBeInTheDocument();
+      expect(screen.getByLabelText('Label')).toHaveAttribute('contenteditable', 'true');
     });
   });
 
   describe('close behavior', () => {
-    it('should call onClose when close button clicked', () => {
+    it('should call onClose when the close button is clicked', () => {
       const onClose = jest.fn();
       render(<MetadataModal {...defaultProps} onClose={onClose} />);
 
@@ -225,7 +373,7 @@ describe('MetadataModal', () => {
       expect(onClose).toHaveBeenCalled();
     });
 
-    it('should call onClose when cancel button clicked', () => {
+    it('should call onClose when Cancel is clicked', () => {
       const onClose = jest.fn();
       render(<MetadataModal {...defaultProps} onClose={onClose} />);
 
@@ -234,296 +382,13 @@ describe('MetadataModal', () => {
       expect(onClose).toHaveBeenCalled();
     });
 
-    it('should call onClose when Escape key pressed', () => {
+    it('should call onClose when Escape is pressed', () => {
       const onClose = jest.fn();
       render(<MetadataModal {...defaultProps} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 
       expect(onClose).toHaveBeenCalled();
-    });
-  });
-
-  describe('save behavior', () => {
-    it('should call onSave with form data on submit', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} />);
-
-      const labelInput = screen.getByLabelText('Label *');
-      fireEvent.change(labelInput, { target: { value: 'Test Model' } });
-
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          label: 'Test Model',
-        })
-      );
-    });
-
-    it('should include all form fields in save data', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'My Model' } });
-      fireEvent.change(screen.getByLabelText('Version'), { target: { value: '2.0.0' } });
-      fireEvent.change(screen.getByRole('combobox', { name: /storage of raw data/i }), { target: { value: 'separate' } });
-      fireEvent.change(screen.getByLabelText('Documentation'), { target: { value: 'Docs' } });
-      fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'tag1, tag2' } });
-      fireEvent.change(screen.getByLabelText('Changelog'), { target: { value: 'Changes' } });
-
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith({
-        label: 'My Model',
-        version: '2.0.0',
-        executable: true,
-        template: false,
-        storage: 'separate',
-        documentation: 'Docs',
-        tags: ['tag1', 'tag2'],
-        changelog: 'Changes',
-      });
-    });
-
-    it('should close modal after save', () => {
-      const onClose = jest.fn();
-      render(<MetadataModal {...defaultProps} onClose={onClose} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onClose).toHaveBeenCalled();
-    });
-
-    it('should parse tags into array', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test' } });
-      fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'one, two, three' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tags: ['one', 'two', 'three'],
-        })
-      );
-    });
-
-    it('should trim tag values', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test' } });
-      fireEvent.change(screen.getByLabelText('Tags'), { target: { value: '  one  ,  two  ' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tags: ['one', 'two'],
-        })
-      );
-    });
-
-    it('should filter empty tags', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test' } });
-      fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'one, , two, , ' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tags: ['one', 'two'],
-        })
-      );
-    });
-  });
-
-  describe('form validation', () => {
-    it('should require label field', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const labelInput = screen.getByLabelText('Label *');
-      expect(labelInput).toHaveAttribute('required');
-    });
-  });
-
-  describe('form reset on metadata change', () => {
-    it('should update form when metadata changes', () => {
-      const { rerender } = render(<MetadataModal {...defaultProps} metadata={{ label: 'Old' }} />);
-
-      expect(screen.getByLabelText('Label *')).toHaveValue('Old');
-
-      rerender(<MetadataModal {...defaultProps} metadata={{ label: 'New' }} />);
-
-      expect(screen.getByLabelText('Label *')).toHaveValue('New');
-    });
-
-    it('should update form when isOpen changes to true', () => {
-      const { rerender } = render(
-        <MetadataModal {...defaultProps} isOpen={false} metadata={{ label: 'Test' }} />
-      );
-
-      rerender(<MetadataModal {...defaultProps} isOpen={true} metadata={{ label: 'Test' }} />);
-
-      expect(screen.getByLabelText('Label *')).toHaveValue('Test');
-    });
-  });
-
-  describe('storage options', () => {
-    it('should have default option', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('option', { name: 'Default' })).toBeInTheDocument();
-    });
-
-    it('should have "do not store" option', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('option', { name: 'Do not store raw model data' })).toBeInTheDocument();
-    });
-
-    it('should have "separate config" option', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('option', { name: 'Store raw data in separate config entity' })).toBeInTheDocument();
-    });
-
-    it('should have "third-party" option', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('option', { name: 'Store raw data with config as third-party setting' })).toBeInTheDocument();
-    });
-
-    it('should display a help icon next to the storage label', () => {
-      render(<MetadataModal {...defaultProps} />);
-      expect(screen.getByRole('button', { name: 'More information' })).toBeInTheDocument();
-    });
-
-    it('should show tooltip text when help icon is clicked', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const helpBtn = screen.getByRole('button', { name: 'More information' });
-
-      fireEvent.click(helpBtn);
-
-      expect(screen.getByRole('tooltip')).toBeInTheDocument();
-      expect(screen.getByText(/Controls if and how the modeler/)).toBeInTheDocument();
-    });
-
-    it('should hide tooltip when help icon is clicked again', () => {
-      render(<MetadataModal {...defaultProps} />);
-      const helpBtn = screen.getByRole('button', { name: 'More information' });
-
-      fireEvent.click(helpBtn);
-      expect(screen.getByRole('tooltip')).toBeInTheDocument();
-
-      fireEvent.click(helpBtn);
-      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('model ID field for new models', () => {
-    it('should not show ID field when isNew is false', () => {
-      render(<MetadataModal {...defaultProps} isNew={false} />);
-      expect(screen.queryByLabelText(/machine name/i)).not.toBeInTheDocument();
-    });
-
-    it('should show ID field when isNew is true', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-      expect(screen.getByLabelText(/machine name/i)).toBeInTheDocument();
-    });
-
-    it('should auto-derive ID from label', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'My Test Model' } });
-
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('my_test_model');
-    });
-
-    it('should convert special characters to underscores', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test-Model With Spaces' } });
-
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('test_model_with_spaces');
-    });
-
-    it('should allow manual ID editing', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-
-      const idInput = screen.getByLabelText(/machine name/i);
-      fireEvent.change(idInput, { target: { value: 'custom_id' } });
-
-      expect(idInput).toHaveValue('custom_id');
-    });
-
-    it('should not override manually edited ID when label changes', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-
-      // First manually edit the ID
-      const idInput = screen.getByLabelText(/machine name/i);
-      fireEvent.change(idInput, { target: { value: 'custom_id' } });
-
-      // Then change the label
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'New Label' } });
-
-      // ID should remain custom (not overwritten because it's not empty)
-      expect(idInput).toHaveValue('custom_id');
-    });
-
-    it('should include ID in save data for new models', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} isNew={true} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test Model' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'test_model',
-        })
-      );
-    });
-
-    it('should not include ID in save data for existing models', () => {
-      const onSave = jest.fn();
-      render(<MetadataModal {...defaultProps} onSave={onSave} isNew={false} />);
-
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Test Model' } });
-      fireEvent.click(screen.getByText('Save'));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.not.objectContaining({
-          id: expect.anything(),
-        })
-      );
-    });
-
-    it('should empty ID field when label is default (New Model)', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} modelId="some_id" metadata={{ label: 'New Model' }} />);
-
-      // ID should be empty because label is the default
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('');
-    });
-
-    it('should populate ID field from modelId when label is not default', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} modelId="existing_id" metadata={{ label: 'Custom Label' }} />);
-
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('existing_id');
-    });
-
-    it('should auto-update ID only when ID field is empty', () => {
-      render(<MetadataModal {...defaultProps} isNew={true} />);
-
-      // Type in label - ID should auto-update since it's empty
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'First' } });
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('first');
-
-      // Clear the ID manually
-      fireEvent.change(screen.getByLabelText(/machine name/i), { target: { value: '' } });
-
-      // Type new label - ID should auto-update again since it's empty
-      fireEvent.change(screen.getByLabelText('Label *'), { target: { value: 'Second' } });
-      expect(screen.getByLabelText(/machine name/i)).toHaveValue('second');
     });
   });
 });

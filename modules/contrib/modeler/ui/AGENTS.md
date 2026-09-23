@@ -208,20 +208,27 @@ try {
 
 The mkdocs documentation at `docs/` references screenshots in `docs/assets/screenshots/`. These are generated automatically by a Playwright spec that drives the modeler through each UI state and captures a PNG.
 
-To regenerate all screenshots after UI changes:
+To refresh screenshots after UI changes:
 
 ```bash
 # 1. Build the modeler (the E2E test server serves from dist/)
 npm run build
 
-# 2. Run the screenshot spec
+# 2. Run the screenshot spec, which writes PNG files to tests/screenshots/
 npx playwright test --config tests/playwright.config.ts tests/e2e/screenshots.spec.ts
 
-# 3. Copy the results to the docs directory
-cp tests/screenshots/*.jpg ../docs/assets/screenshots/
+# 3. Convert only the screenshots whose UI changed to the docs' JPEG format
+python3 - <<'PY'
+from PIL import Image
+
+changed = ("review-model", "step-data", "replay-panel", "replay-load")
+for name in changed:
+    with Image.open(f"tests/screenshots/{name}.png") as image:
+        image.convert("RGB").save(f"../docs/assets/screenshots/{name}.jpg", "JPEG", quality=85, optimize=True)
+PY
 ```
 
-The spec lives at `tests/e2e/screenshots.spec.ts`. It uses the same mock server and Page Object (`ModelerPage`) as the regular E2E tests, so no real Drupal backend is needed. If you change the UI in a way that affects a documented screenshot, re-run the steps above so the docs stay in sync.
+The spec lives at `tests/e2e/screenshots.spec.ts`. It uses the same mock server and Page Object (`ModelerPage`) as the regular E2E tests, so no real Drupal backend is needed. Only overwrite the documentation screenshots whose UI changed.
 
 ### Security Requirements
 - **XSS Prevention**: All HTML through `sanitizeHtml()` or `sanitizeTokenHtml()`

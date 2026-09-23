@@ -8,10 +8,12 @@ experience.
 !!! note "Unified right-hand panel"
     The right-hand panel hosts two coexisting views — **Properties** (the
     selected component's configuration) and **Review flow** (past executions,
-    live testing, and token data). Both share one header layout: a context
-    label plus a button that jumps to the other view (**Review flow** from
-    Properties, **Properties** from Review). Switching between them keeps the
-    replay session running. There is no longer a separate replay column.
+    live testing, and step data). The Properties header shows a context label
+    plus a **Review flow** button; the Review header holds a single **Back**
+    button that returns to Properties. `Alt+Shift+R` (`Option+Shift+R` on
+    macOS) toggles the two views from the keyboard. Switching between them
+    keeps the replay session running. There is no longer a separate replay
+    column.
 
 ## Layout
 
@@ -54,10 +56,11 @@ column):
 - **Start from an event node**: Click **Review flow**; the live listener starts
   and history loads automatically.
 - **Step through**: Navigate execution steps one by one to see which path was taken.
-- **Token inspection**: View the data (tokens) available at each step.
+- **Token inspection**: Select a step to see the data (tokens) available at
+  that point, expanded inline underneath the step.
 - **Live testing**: Observe a triggered execution and see results immediately.
-- **Switch views**: The **Properties** button returns to the selected
-  component's properties while the replay session keeps running.
+- **Switch views**: The **Back** button returns to the selected component's
+  properties while the replay session keeps running.
 
 [Learn more about the Property Panel](property-panel.md) ·
 [Review flow mode](replay-panel.md)

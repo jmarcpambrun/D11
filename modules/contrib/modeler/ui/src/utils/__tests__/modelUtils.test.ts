@@ -638,6 +638,87 @@ describe('modelUtils', () => {
       expect(exportedConfig._internalState).toBeUndefined();
     });
 
+    it('should strip internal condition properties when re-saving a promoted condition', () => {
+      const affectedModel = {
+        id: 'affected-model',
+        nodes: [
+          { id: 'event', componentType: 1, position: { x: 0, y: 0 }, plugin: 'event', label: 'Event', configuration: {} },
+          { id: 'action', componentType: 4, position: { x: 200, y: 0 }, plugin: 'action', label: 'Action', configuration: {} },
+        ],
+        edges: [{
+          id: 'event_action',
+          source: 'event',
+          target: 'action',
+          condition: 'test_condition',
+          conditionId: 'condition-id',
+          conditionLabel: 'Renamed condition',
+          conditionConfiguration: {
+            negate: false,
+            selection: '',
+            _componentLabel: 'Stale internal label',
+            _editorState: 'expanded',
+          },
+        }],
+      };
+      const parsed = parseModelData(JSON.stringify(affectedModel));
+      const conditionNode = parsed.nodes.find(node => node.type === 'condition');
+
+      expect(conditionNode).toBeDefined();
+      if (!conditionNode) {
+        throw new Error('Expected the condition edge to be promoted');
+      }
+      const inMemoryConfiguration = conditionNode.data.configuration;
+
+      const result = exportModelData(parsed.nodes, parsed.edges, { id: affectedModel.id });
+
+      expect(result.edges).toHaveLength(1);
+      expect(result.edges[0].conditionLabel).toBe('Renamed condition');
+      expect(result.edges[0].conditionConfiguration).toEqual({
+        negate: false,
+        selection: '',
+      });
+      expect(conditionNode.data.configuration).toBe(inMemoryConfiguration);
+      expect(inMemoryConfiguration).toEqual({
+        negate: false,
+        selection: '',
+        _componentLabel: 'Stale internal label',
+        _editorState: 'expanded',
+      });
+    });
+
+    it('should strip internal condition properties from direct edge exports', () => {
+      const conditionConfiguration = {
+        enabled: false,
+        selection: '',
+        _componentLabel: 'Internal label',
+        _editorState: 'expanded',
+      };
+      const directEdge: Edge = {
+        id: 'legacy-edge',
+        source: 'event',
+        target: 'action',
+        data: {
+          condition: 'test_condition',
+          conditionLabel: 'Condition',
+          conditionConfiguration,
+        },
+      };
+
+      const result = exportModelData([], [directEdge]);
+
+      expect(result.edges[0].conditionConfiguration).toEqual({
+        enabled: false,
+        selection: '',
+      });
+      expect(directEdge.data?.conditionConfiguration).toBe(conditionConfiguration);
+      expect(conditionConfiguration).toEqual({
+        enabled: false,
+        selection: '',
+        _componentLabel: 'Internal label',
+        _editorState: 'expanded',
+      });
+    });
+
     it('should handle undefined configuration when filtering', () => {
       const nodesWithoutConfig: Node[] = [
         {

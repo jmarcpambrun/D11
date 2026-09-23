@@ -2028,6 +2028,18 @@ g.replay-transition-highlighted path {
   box-sizing: border-box;
 }
 
+/* The metadata dialog renders the shared configuration form as its body. The
+   form's own panel chrome (border, surface fill, inner padding) belongs in the
+   property panel, not inside a dialog that already provides the frame. */
+.metadata-form .configuration-form {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 0;
+  overflow: visible;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -2264,6 +2276,14 @@ g.replay-transition-highlighted path {
   box-shadow: 0 0 0 1px var(--modeler-color-selection);
 }
 
+/* The scoped `background`/`color` above outrank the browser's own disabled
+   styling, so a disabled control needs to say so itself. */
+.form-control:disabled {
+  background: var(--modeler-color-bg-muted);
+  color: var(--modeler-color-text-secondary);
+  cursor: not-allowed;
+}
+
 .checkbox-wrapper,
 .radio-wrapper {
   display: flex;
@@ -2466,14 +2486,11 @@ g.replay-transition-highlighted path {
   align-items: center;
 }
 
-/* Header view-switch button. Used by BOTH the "Review flow" (go-to-replay)
-   button in the Properties header and the "Properties" (go-to-properties)
-   button in the Replay header — both views share the same header structure.
-   min-width is fixed so the button does not change width when its label
-   switches between "Review flow" and "Properties": padding (10px + 10px) +
-   icon (14px) + gap (6px) + the "Review flow" text at 12px/600 weight
-   (longer of the two labels, ~7px/char average for 11 characters ≈ 78px) =
-   ~118px, rounded up to 120px for a safe buffer. */
+/* Header view-switch button. Used by the "Review flow" (go-to-replay) button
+   in the Properties header. Its fixed min-width keeps the button footprint
+   stable in that view: padding (10px + 10px) + icon (14px) + gap (6px) + the
+   "Review flow" text at 12px/600 weight (the longest label, ~7px/char average
+   for 11 characters ≈ 78px) = ~118px, rounded up to 120px for a safe buffer. */
 .header-review-btn {
   display: inline-flex;
   align-items: center;
@@ -2522,6 +2539,43 @@ g.replay-transition-highlighted path {
 .header-review-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* Review-mode back control: a left-anchored text action in the label zone. */
+.panel-header-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 5px 0;
+  border: none;
+  border-radius: var(--modeler-radius-sm);
+  background: none;
+  box-shadow: none;
+  color: var(--modeler-color-primary-text);
+  font-size: var(--modeler-font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--modeler-transition-default);
+}
+
+.panel-header-back:hover {
+  color: var(--modeler-color-primary-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.panel-header-back:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: 1px;
+}
+
+.panel-header-back svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* Context label content (icon + type name) within zone 1. */
@@ -4596,11 +4650,14 @@ g[style*="#ef4444"] path {
   height: 14px;
 }
 
+/* The single review body: playback controls, progress bar and the step list.
+   It fills the remaining panel height so the step list is what scrolls. */
 .replay-control-section {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Replay Panel overrides (standalone side panel differences from base styles) */
@@ -4662,132 +4719,48 @@ g[style*="#ef4444"] path {
   white-space: nowrap;
 }
 
-/* Step Data Section in Replay Panel */
-.step-data-section {
-  border-top: 1px solid var(--modeler-color-border-light);
-  display: flex;
-  flex-direction: column;
+/* The step list fills the remaining height of the review body, so it - and not
+   the panel - is the scrolling element the playback auto-scroll drives. */
+.replay-control-section .replay-steps {
+  max-height: none;
   flex: 1;
-  overflow: hidden;
   min-height: 0;
+}
+
+/* Inline step data: rendered directly underneath the selected step row inside
+   the single step list (issue project/modeler#3589103). Indented and bordered
+   so it reads as a detail block belonging to the row above it. */
+.replay-step-data {
   position: relative;
-}
-
-.step-data-section .data-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--modeler-color-bg-surface);
-  border-bottom: 1px solid var(--modeler-color-border-light);
-  flex-shrink: 0;
-}
-
-.step-data-section .data-header h4 {
-  margin: 0;
-  font-size: var(--modeler-font-size-base);
-  font-weight: 600;
-  color: var(--modeler-color-text-emphasis);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-data-section .data-header h4 svg {
-  width: 14px;
-  height: 14px;
-}
-
-.step-data-section .data-content {
-  flex: 1;
+  margin: 0 8px 6px 24px;
+  padding: 8px 10px;
+  max-height: 320px;
   overflow-y: auto;
-  padding: 16px;
   background: var(--modeler-color-bg-primary);
-  min-height: 0;
+  border: 1px solid var(--modeler-color-border-light);
+  border-left: 3px solid var(--modeler-color-primary);
+  border-radius: var(--modeler-radius-md);
 }
 
-/* Global Tokens Section - smaller than step data */
-.global-tokens-section {
-  flex: 0 1 auto;
-  max-height: 30%;
+.replay-step-data:focus-visible {
+  outline: 2px solid var(--modeler-color-interactive);
+  outline-offset: -2px;
 }
 
-/* ========== Resizable vertical sections ========== */
-
-/* Container that distributes remaining height among its children */
-.resizable-sections {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+/* The inline block is the scroll container, so the nested token tree must not
+   introduce a second one (it also gets its padding from the block above). */
+.replay-step-data .token-data-container {
+  overflow-y: visible;
+  padding: 0 28px 0 0;
 }
 
-/* Each resizable child: flex-basis is set via inline style from the hook */
-.resizable-section {
-  flex: 0 0 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* Override fixed flex/max-height rules for sections inside the resizable container */
-.resizable-sections .step-data-section.resizable-section {
-  flex: 0 0 auto;
-  max-height: none;
-}
-
-.resizable-sections .global-tokens-section.resizable-section {
-  flex: 0 0 auto;
-  max-height: none;
-}
-
-.resizable-sections .replay-control-section.resizable-section {
-  flex: 0 0 auto;
-  overflow: hidden;
-}
-
-/* Inside a resizable control section the step list fills remaining space */
-.resizable-sections .replay-control-section.resizable-section .replay-steps {
-  max-height: none;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Step data section border when inside resizable container */
-.resizable-sections .step-data-section.resizable-section {
-  border-top: none;
-}
-
-/* Draggable horizontal separator between vertical sections */
-.section-separator {
-  flex-shrink: 0;
-  height: 5px;
-  background: var(--modeler-color-border-light);
-  cursor: ns-resize;
-  position: relative;
-  z-index: 2;
-  transition: background 0.15s ease;
-}
-
-.section-separator:hover,
-.section-separator:active {
-  background: var(--modeler-color-selection);
-}
-
-/* During vertical resize, disable pointer events on section content and transitions */
-.replay-panel.vertical-resizing .resizable-section {
-  pointer-events: none;
-}
-
-.replay-panel.vertical-resizing .section-separator {
-  pointer-events: auto;
-  background: var(--modeler-color-selection);
-}
-
-.replay-panel.vertical-resizing .panel-content {
-  transition: none;
+/* Icon-only copy-all control, kept visible at the top right while scrolling. */
+.replay-step-data .copy-btn {
+  position: sticky;
+  top: 4px;
+  float: right;
+  z-index: 1;
+  margin-left: 8px;
 }
 
 /* Data Panel Styles */

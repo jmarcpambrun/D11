@@ -17,6 +17,9 @@ const FOCUSABLE_SELECTOR = [
   'input:not([disabled])',
   'select:not([disabled])',
   'textarea:not([disabled])',
+  // ContentEditableField renders contenteditable="false" when disabled, so
+  // matching the enabled state only keeps disabled fields out of the cycle.
+  '[contenteditable="true"]',
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 

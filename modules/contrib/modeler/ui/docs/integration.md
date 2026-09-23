@@ -950,7 +950,7 @@ Context data conforms to the JSON schema at `modeler_api/config/schema/context_l
 
 ## Global Tokens
 
-The backend can provide a set of site-wide tokens via `drupalSettings.modeler_api.global_tokens`. These are displayed in the replay panel (at the bottom, always visible) so users can drag them into configuration fields.
+The backend can provide a set of site-wide tokens via `drupalSettings.modeler_api.global_tokens`. They are consumed by the `[` token picker: `utils/tokenPickerData.ts` turns them into the picker's `global` category, so users insert them straight into the field they are editing. The review panel does not list them.
 
 ### Data Structure
 
@@ -992,7 +992,7 @@ The backend can provide a set of site-wide tokens via `drupalSettings.modeler_ap
 | `description` | string? | Optional description (not displayed, available for future tooltips) |
 | `dynamic` | boolean? | Whether the token accepts a dynamic parameter |
 | `type` | string? | Token type classification |
-| `raw token` | string | Full bracket-wrapped token string (e.g., `[site:name]`), used as the draggable value |
+| `raw token` | string | Full bracket-wrapped token string (e.g., `[site:name]`), inserted into the field when the token is used |
 | `token` | string | Token path without the prefix (e.g., `name`) |
 | `value` | any? | Current resolved value |
 | `parent` | string? | Raw token of the parent (present on child tokens) |
@@ -1000,11 +1000,11 @@ The backend can provide a set of site-wide tokens via `drupalSettings.modeler_ap
 
 ### Frontend Behavior
 
-- The `GlobalTokensContainer` component in `ReplayDataRenderer.tsx` transforms the Drupal structure into the standard `ReplayDataRenderer` format (`label`/`token`/`value`/`data`)
-- Tokens are rendered as a collapsible tree, identical to step data tokens
-- Each leaf token is draggable into configuration fields that accept tokens
-- The section appears at the bottom of the replay panel in both the empty state and the replay state
-- The `raw token` value is used as the drop payload (the bracket-wrapped token string)
+- The `transformGlobalToken` helper in `ReplayDataRenderer.tsx` converts the Drupal structure into the normalized token-node format (`label`/`token`/`value`/`data`)
+- `buildGlobalNodes()` in `utils/tokenPickerData.ts` maps those nodes into the `[` token picker's `global` category (and the template tokens into its `template` category)
+- Nested `children` become drill-down levels inside the picker
+- Choosing a token with **Use →** inserts its `raw token` value (the bracket-wrapped token string) at the cursor
+- Global tokens are not rendered in the review panel - the picker is the only place they appear
 
 ## Replay Data Endpoint
 

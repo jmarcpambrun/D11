@@ -5,7 +5,7 @@ import PropertyPanel from './PropertyPanel';
 import { withStore } from '../../.storybook/decorators';
 import { usePanelStore } from '../store/usePanelStore';
 
-/** Sample tokens for the Review-mode token tree / @-picker (Drupal shape). */
+/** Sample tokens for the in-field "[" token picker (Drupal shape). */
 const sampleGlobalTokens = {
   '[site:name]': { name: 'Site name', 'raw token': '[site:name]', token: 'name', value: 'My Site' },
   '[current-user]': {
@@ -291,10 +291,10 @@ export const EventNodeReviewButton: Story = {
 };
 
 /**
- * Replay view — same header structure as Properties: a "Review flow" context
- * label on the left and a "Properties" switch button on the right (no back-bar).
- * Clicking "Properties" returns to the selected node's properties while the
- * replay session stays active. Requires an active session.
+ * Replay view - the header is emptied down to a SINGLE control: a left-arrow
+ * "Back" button in the label zone. Clicking it (or pressing Alt+Shift+R)
+ * returns to the selected node's properties while the replay session stays
+ * active. Requires an active session.
  */
 export const ReviewModelView: Story = {
   tags: ['!test'],

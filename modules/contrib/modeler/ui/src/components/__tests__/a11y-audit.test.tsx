@@ -241,6 +241,7 @@ import ConfigurationForm from '../ConfigurationForm';
 import ContentEditableField from '../ContentEditableField';
 import ConfirmDialog from '../ConfirmDialog';
 import MetadataModal from '../MetadataModal';
+import { metadataForm } from '../__fixtures__/metadataForm';
 
 describe('A11y Audit: Form & Input Components', () => {
   test('ConfigurationForm with text fields has no a11y violations', async () => {
@@ -320,12 +321,14 @@ describe('A11y Audit: Form & Input Components', () => {
         isOpen={true}
         onClose={jest.fn()}
         onSave={jest.fn()}
+        form={metadataForm}
+        modelId="test_workflow"
         metadata={{
           label: 'Test Workflow',
           version: '1.0.0',
           executable: true,
           template: false,
-          storage: 'default',
+          storage: '',
           documentation: '',
           tags: ['test'],
           changelog: '',

@@ -6,6 +6,8 @@
  * components and hooks.
  */
 
+import type { FormField } from './forms';
+
 /**
  * Component type names used in context definitions.
  */
@@ -224,6 +226,12 @@ interface ModelerSettings {
    */
   configForms?: Record<string, Record<string, unknown>[]>;
   /**
+   * The model metadata form, converted from the shared Drupal form array the
+   * model owner defines. Rendered by the metadata dialog through the same
+   * `ConfigurationForm` component as any plugin configuration form.
+   */
+  metadataForm?: FormField[];
+  /**
    * When true, all panels start collapsed.  Panels auto-expand when they
    * receive content (e.g. when a node is selected the property panel opens)
    * and auto-collapse when the content is cleared (e.g. selection is removed).
@@ -344,6 +352,11 @@ interface ModelerApiSettings {
     template?: boolean;
     tags?: string[];
     changelog?: string;
+    summary?: string;
+    recipes?: string[];
+    config_actions?: Array<{ config: string; actions: unknown }>;
+    export_config?: string[];
+    modules?: string[];
   };
   /**
    * Model-owner-provided labels for the core component types.
@@ -635,11 +648,22 @@ export interface ModelData {
   version?: string;
   metadata?: {
     label?: string;
+    /**
+     * The model's own version. Also lives on the top level of a serialized
+     * model, but the store keeps it in the metadata it merges from
+     * `modeler_api.metadata`, which is where the dialog reads it.
+     */
+    version?: string;
     documentation?: string;
     executable?: boolean;
     template?: boolean;
     tags?: string[];
     changelog?: string;
+    summary?: string;
+    recipes?: string[];
+    config_actions?: Array<{ config: string; actions: unknown }>;
+    export_config?: string[];
+    modules?: string[];
     storage?: string;
   };
   nodes?: StoreNode[];

@@ -6,16 +6,28 @@
 import { useState, useCallback } from 'react';
 import { useModelStore } from '../store/useModelStore';
 
+/**
+ * Metadata as the dialog submits it.
+ *
+ * Every member is optional: the metadata form comes from the model owner, and
+ * a field the owner hides is neither rendered nor submitted, so its stored
+ * value has to survive the merge below untouched.
+ */
 interface ModelMetadata {
   id?: string;
-  label: string;
+  label?: string;
   version?: string;
   executable?: boolean;
   template?: boolean;
   storage?: string;
   documentation?: string;
-  tags: string[];
+  tags?: string[];
   changelog?: string;
+  summary?: string;
+  recipes?: string[];
+  config_actions?: Array<{ config: string; actions: unknown }>;
+  export_config?: string[];
+  modules?: string[];
 }
 
 interface UseModalStateProps {

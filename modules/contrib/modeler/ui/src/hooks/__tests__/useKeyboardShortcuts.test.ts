@@ -9,6 +9,7 @@ interface KeyboardShortcutCallbacks {
   onEscape?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  onToggleReviewMode?: () => void;
 }
 
 interface ModifierStates {
@@ -28,6 +29,7 @@ interface KeyboardCapabilities {
   canEscape: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  canToggleReviewMode: boolean;
 }
 
 interface UseKeyboardShortcutsProps {
@@ -50,6 +52,7 @@ describe('useKeyboardShortcuts', () => {
       onPaste: jest.fn(),
       onToggleSearch: jest.fn(),
       onEscape: jest.fn(),
+      onToggleReviewMode: jest.fn(),
     };
 
     mockModifiers = {
@@ -69,6 +72,7 @@ describe('useKeyboardShortcuts', () => {
       canEscape: true,
       canUndo: true,
       canRedo: true,
+      canToggleReviewMode: true,
     };
 
   });
@@ -302,6 +306,74 @@ describe('useKeyboardShortcuts', () => {
 
       expect(mockCallbacks.onCopy).not.toHaveBeenCalled();
     });
+
+    it('should call onToggleReviewMode when Alt+Shift+R pressed', () => {
+      renderUseKeyboardShortcuts();
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          code: 'KeyR',
+          key: 'R',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }));
+      });
+
+      expect(mockCallbacks.onToggleReviewMode).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onToggleReviewMode on macOS, where Option+Shift+R rewrites event.key', () => {
+      // macOS reports Option+R as "\u00ae" instead of "R", so the shortcut must
+      // match on the physical key (event.code) to work there at all.
+      renderUseKeyboardShortcuts();
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          code: 'KeyR',
+          key: '\u00ae',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }));
+      });
+
+      expect(mockCallbacks.onToggleReviewMode).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onToggleReviewMode when canToggleReviewMode is false', () => {
+      renderUseKeyboardShortcuts({ capabilities: { ...mockCapabilities, canToggleReviewMode: false } });
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          code: 'KeyR',
+          key: 'R',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+        }));
+      });
+
+      expect(mockCallbacks.onToggleReviewMode).not.toHaveBeenCalled();
+    });
+
+    it('should not call onToggleReviewMode on Ctrl+Shift+R (browser hard reload stays intact)', () => {
+      renderUseKeyboardShortcuts();
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          code: 'KeyR',
+          key: 'R',
+          ctrlKey: true,
+          shiftKey: true,
+          bubbles: true,
+        }));
+      });
+
+      expect(mockCallbacks.onToggleReviewMode).not.toHaveBeenCalled();
+    });
   });
 
   describe('input context detection', () => {
@@ -332,6 +404,29 @@ describe('useKeyboardShortcuts', () => {
       });
 
       expect(mockCallbacks.onDelete).not.toHaveBeenCalled();
+      document.body.removeChild(input);
+    });
+
+    it('should not trigger the review toggle while typing in an input', () => {
+      renderUseKeyboardShortcuts();
+
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      input.focus();
+
+      act(() => {
+        const event = new KeyboardEvent('keydown', {
+          code: 'KeyR',
+          key: 'R',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+        });
+        Object.defineProperty(event, 'target', { value: input, writable: false });
+        document.dispatchEvent(event);
+      });
+
+      expect(mockCallbacks.onToggleReviewMode).not.toHaveBeenCalled();
       document.body.removeChild(input);
     });
 

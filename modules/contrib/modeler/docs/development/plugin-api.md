@@ -270,8 +270,10 @@ mounts. It is also passed as the second argument to every `render()` callback.
 | `getEdges()` | `PluginEdge[]` | All current edges (id, source, target, type, data). |
 | `getNodeById(nodeId)` | `PluginNode \| null` | A single node by ID, or `null` if not found. |
 | `getEdgeById(edgeId)` | `PluginEdge \| null` | A single edge by ID, or `null` if not found. |
-| `getSelectedNode()` | `PluginNode \| null` | The currently selected node, or `null`. |
-| `getSelectedEdge()` | `PluginEdge \| null` | The currently selected edge, or `null`. |
+| `getSelectedNode()` | `PluginNode \| null` | The first selected node (the primary selection), or `null`. |
+| `getSelectedEdge()` | `PluginEdge \| null` | The first selected edge (the primary selection), or `null`. |
+| `getSelectedNodes()` | `PluginNode[]` | Every selected node, in selection order. A single selection returns a one-element array. |
+| `getSelectedEdges()` | `PluginEdge[]` | Every selected edge, in selection order. A single selection returns a one-element array. |
 | `getModelData()` | `PluginModelData \| null` | Model metadata (id, version, label, description, tags). |
 
 #### State information
@@ -302,7 +304,7 @@ receiving updates.
 
 | Method | Callback signature | Description |
 |--------|-------------------|-------------|
-| `onSelectionChange(cb)` | `(node, edge) => void` | Fires when the selected node or edge changes. |
+| `onSelectionChange(cb)` | `(node, edge) => void` | Fires when the primary selection or any multi-selection member changes. The callback receives only the first selected node and edge. |
 | `onNodesChange(cb)` | `(nodes) => void` | Fires when nodes are added, removed, or reordered. |
 | `onEdgesChange(cb)` | `(edges) => void` | Fires when edges are added, removed, or reordered. |
 | `onModelDataChange(cb)` | `(data) => void` | Fires when model metadata changes. |
@@ -851,12 +853,12 @@ and lets the user click to add them with a default configuration.
 
           container.appendChild(list);
 
-          // Add a "Connect selected" button
+          // Add a "Connect primary selection" button
           var connectBtn = document.createElement('button');
           connectBtn.className = 'toolbar-btn';
           connectBtn.style.width = '100%';
           connectBtn.style.marginTop = '12px';
-          connectBtn.textContent = 'Connect selected to last added';
+          connectBtn.textContent = 'Connect primary selection to last added';
           connectBtn.disabled = true;
 
           var lastAddedId = null;

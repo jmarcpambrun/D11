@@ -42,14 +42,13 @@ export const sanitizeHtml = (dirty: string | null | undefined): string => {
 };
 
 /**
- * Sanitize HTML specifically for token fields.
- * Allows config-token spans with their specific attributes.
+ * Allows config-token spans and native contenteditable line containers.
  */
 export const sanitizeTokenHtml = (dirty: string | null | undefined): string => {
   if (!dirty || typeof dirty !== 'string') return '';
 
   return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: ['span', 'br'],
+    ALLOWED_TAGS: ['span', 'br', 'div', 'p'],
     ALLOWED_ATTR: ['class', 'data-token', 'contenteditable', 'title', 'draggable'],
     ALLOW_DATA_ATTR: true, // Allow data-token attribute
     SANITIZE_DOM: true,

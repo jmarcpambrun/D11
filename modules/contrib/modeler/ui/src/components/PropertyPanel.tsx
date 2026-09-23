@@ -1,5 +1,5 @@
 import React, { Profiler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FiChevronRight, FiChevronLeft, FiGitBranch, FiInfo, FiActivity, FiSliders } from 'react-icons/fi';
+import { FiChevronRight, FiChevronLeft, FiGitBranch, FiInfo, FiActivity, FiArrowLeft } from 'react-icons/fi';
 import DocumentationButton from './DocumentationButton';
 import InfoPopup from './InfoPopup';
 import type { InfoItem } from './InfoPopup';
@@ -28,8 +28,10 @@ import type { TokenSourceValue } from './TokenSourceContext';
 
 /**
  * Props that thread the lifted replay/test state from `Flow.tsx` down to the
- * embedded {@link ReplayPanelContent} when the panel is in "Review flow" mode.
- * All of this state stays lifted in `Flow.tsx`; PropertyPanel is a pass-through.
+ * embedded {@link ReplayPanelContent} when the panel is in "Review flow" mode,
+ * plus the token sources the in-field "[" picker reads through
+ * {@link TokenSourceContext}. All of this state stays lifted in `Flow.tsx`;
+ * PropertyPanel is a pass-through.
  */
 interface ReviewModeProps {
   /** Replay steps for the currently selected execution entry. */
@@ -79,11 +81,17 @@ interface ReviewModeProps {
   onStartTest?: (componentId: string) => void;
   /** Cancel the running test. */
   onCancelTest?: () => void;
-  /** Global tokens. */
+  /**
+   * Global tokens - published to the "[" token picker only (the review panel
+   * lists steps, not tokens).
+   */
   globalTokens?: Record<string, GlobalToken>;
-  /** Template tokens. */
+  /**
+   * Template tokens - published to the "[" token picker only, and only for a
+   * template model.
+   */
   templateTokens?: Record<string, GlobalToken>;
-  /** Whether the current model is a template. */
+  /** Whether the current model is a template (gates the template tokens). */
   isTemplate?: boolean;
   /**
    * Feature J: whether the owning event's history load is in flight (drives the
@@ -604,19 +612,33 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           Every state renders all three zones (label flexes via 1fr; icons and
           switch are auto-width), so elements never jump horizontally between
           states. The switch is the LAST grid column, so it is always pinned to
-          the true right edge in both Properties and Review views — even when
-          the icons zone (the middle column) is empty, since an empty middle
-          `auto` column simply collapses without affecting the last column's
-          position. The "Loading..." throbber is NOT in the header — it renders
-          in the body below (see .panel-loading). */}
+          the true right edge - even when the icons zone (the middle column) is
+          empty, since an empty middle `auto` column simply collapses without
+          affecting the last column's position.
+
+          Properties view: the component icon/type label, the documentation and
+          metadata icons, and the "Review flow" button.
+          Review view: the label zone holds the SINGLE back control (left arrow
+          + "Back"); the icons and switch zones render empty (their cells stay
+          so the grid geometry is identical in both views).
+
+          The "Loading..." throbber is NOT in the header - it renders in the
+          body below (see .panel-loading). */}
       <div className="panel-header">
-        {/* Zone 1 — label (left-anchored) */}
+        {/* Zone 1 - label (left-anchored). In Review view this is the ONLY
+            interactive header element: the back control to Properties. */}
         <div className="panel-header-label">
           {isReviewMode ? (
-            <span className="component-info">
-              <FiActivity aria-hidden="true" />
-              <span className="component-type">{t('Review flow')}</span>
-            </span>
+            <button
+              type="button"
+              className="panel-header-back"
+              onClick={goToProperties}
+              aria-label={t('Back to properties')}
+              title={t('Back to properties (Alt+Shift+R)')}
+            >
+              <FiArrowLeft aria-hidden="true" />
+              <span>{t('Back')}</span>
+            </button>
           ) : hasMultipleSelection ? (
             <h3>{t('Multiple Selection')}</h3>
           ) : node || edge ? (
@@ -656,23 +678,14 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           )}
         </div>
 
-        {/* Zone 3 — view-switch button (fixed LAST slot, both modes).
-            The cell is ALWAYS rendered so it is always pinned to the true
-            right edge — regardless of whether the icons zone has content —
-            fixing the "button jumps left/right between views" bug. */}
+        {/* Zone 3 - "Review flow" button (fixed LAST slot, Properties view).
+            The cell is ALWAYS rendered so its content is always pinned to the
+            true right edge - regardless of whether the icons zone has content -
+            fixing the "button jumps left/right between views" bug. It stays an
+            empty reserved cell in the Review view, whose only control is the
+            back button in zone 1. */}
         <div className="panel-header-switch">
-          {isReviewMode ? (
-            <button
-              type="button"
-              className="header-review-btn"
-              onClick={goToProperties}
-              aria-label={t('Show properties')}
-              title={t('Show properties')}
-            >
-              <FiSliders aria-hidden="true" />
-              <span>{t('Properties')}</span>
-            </button>
-          ) : (!hasMultipleSelection && !!node && reviewAvailable) ? (
+          {!isReviewMode && !hasMultipleSelection && !!node && reviewAvailable ? (
             /* "Review flow" (go-to-replay) button — rendered ONLY when EXACTLY
                ONE NODE is selected (not on empty, multi-select, or a single
                EDGE — `node` is null in those cases) AND the model has replay/
@@ -691,7 +704,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
               aria-label={t('Review flow')}
               title={
                 reviewButtonEnabled
-                  ? t('Review flow')
+                  ? t('Review flow (Alt+Shift+R)')
                   : t('Review is available once this step belongs to an executable event flow.')
               }
             >
@@ -731,9 +744,6 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           testError={testError}
           onStartTest={onStartTest}
           onCancelTest={onCancelTest}
-          globalTokens={globalTokens}
-          templateTokens={templateTokens}
-          isTemplate={isTemplate}
         />
       ) : hasMultipleSelection ? (
         <MultiSelectionPanel

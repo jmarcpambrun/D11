@@ -10,108 +10,32 @@
  * YAML editor widget instead of a plain content-editable area.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import yaml from 'js-yaml';
 import { sanitizeHtml } from '../utils/sanitize';
 import { t } from '../utils/translation';
+import { labelToSnakeCase } from '../utils/modelUtils';
 import ContentEditableField from './ContentEditableField';
 import YamlEditor from './YamlEditor';
-import type { YamlSchema } from './YamlEditor';
+import type { FormField, StateCondition, StateGroup } from '../types/forms';
 
 /**
- * A single normalized Drupal #states condition.
- *
- * Mirrors the structure emitted by the backend FormToJsonConverter: the
- * selector ":input[name=\"KEY\"]" is simplified to the bare field key, and the
- * common Drupal condition keys (value / checked / empty) are carried verbatim.
+ * Coerce a non-string value into a YAML string so the YAML editors can always
+ * work on text, whatever the backend put into `default_value`.
  */
-interface StateCondition {
-  /** The (flat) field key this condition observes. */
-  field: string;
-  /**
-   * Match when the observed field equals this value. When an array is given,
-   * match when the observed field equals ANY listed value (Drupal's
-   * "equals any" semantics). The backend normally expands array values into
-   * OR groups, but the array form is accepted here for robustness.
-   */
-  value?: (string | number | boolean) | (string | number | boolean)[];
-  /** Match when the observed field's checked state equals this. */
-  checked?: boolean;
-  /** Match when the observed field's empty state equals this. */
-  empty?: boolean;
-}
-
-/**
- * A group of conditions combined with logical AND. All conditions in a group
- * must hold for the group to match.
- */
-type StateGroup = StateCondition[];
-
-/**
- * Normalized Drupal #states, keyed by state type. Each value is a list of
- * OR groups: conditions within a group combine with logical AND, and groups
- * combine with logical OR (the state holds when ANY group fully matches).
- */
-interface FieldStates {
-  visible?: StateGroup[];
-  invisible?: StateGroup[];
-  required?: StateGroup[];
-  optional?: StateGroup[];
-}
-
-interface FormField {
-  key: string;
-  type: string;
-  /**
-   * Widget format derived from the field's config-schema contract (e.g. a Json
-   * constraint → 'json'), independent of the Drupal form element type. Lets the
-   * modeler pick a specialized editor without hard-coding vendor type names.
-   */
-  format?: string;
-  title?: string;
-  description?: string;
-  placeholder?: string;
-  required?: boolean;
-  default_value?: unknown;
-  min?: number;
-  max?: number;
-  step?: number;
-  options?: Record<string, string>;
-  markup?: string;
-  token_support?: boolean;
-  /**
-   * Inline YAML schema discovered from Drupal config schema.
-   * When present on a textarea field, the structured YAML editor is rendered.
-   * The backend auto-discovers this from a config schema definition at
-   * "yaml.{plugin_schema_key}.{field_key}".
-   */
-  yaml_schema?: YamlSchema;
-  /**
-   * For use_yaml / validate_yaml checkboxes: the key of the textarea field
-   * they control.  Set by the backend when it detects ECA's
-   * FormFieldYamlTrait pattern.
-   */
-  yaml_field?: string;
-  /**
-   * Normalized Drupal #states driving conditional visibility / required
-   * behavior. Evaluated against the flat `values` map by the states engine.
-   */
-  states?: FieldStates;
-  /**
-   * Child fields for a `group` (details / fieldset / container) field. Child
-   * values flow through the SAME flat `values` map keyed by their own field
-   * key, mirroring Drupal's flat form-value structure.
-   */
-  children?: FormField[];
-  /** For `details` groups: whether the group starts expanded (default true). */
-  open?: boolean;
-  /**
-   * Empty/placeholder option for a `select`, decided and labeled server-side
-   * (PHP owns the empty-option rule). When present, the UI renders it as the
-   * first option; when absent, no empty option is rendered. The label is
-   * already translated server-side and is rendered verbatim.
-   */
-  empty_option?: { value: string; label: string };
+function coerceToYaml(val: unknown): string {
+  if (typeof val === 'string') return val;
+  if (val === null || val === undefined) return '';
+  try {
+    return yaml.dump(val, {
+      indent: 2,
+      lineWidth: -1,
+      noRefs: true,
+      sortKeys: false,
+    }).replace(/\n$/, '');
+  } catch {
+    return String(val);
+  }
 }
 
 interface ConfigurationFormProps {
@@ -210,25 +134,90 @@ function resolveFieldState(field: FormField, values: Record<string, unknown>): R
 }
 
 /**
+ * Drupal's `machine_name` element: a text input that mirrors its source field
+ * (usually the label) until the user types an ID of their own.
+ *
+ * Derivation is deliberately a component-local concern: the derived value is
+ * pushed up through `onChange` so the flat form values - and therefore the
+ * submitted payload - always carry what the user sees.
+ */
+const MachineNameField: React.FC<{
+  field: FormField;
+  value: string;
+  /** Current value of the field named by `field.source`, when there is one. */
+  sourceValue?: unknown;
+  onChange: (value: unknown) => void;
+  disabled: boolean;
+  required: boolean;
+}> = ({ field, value, sourceValue, onChange, disabled, required }) => {
+  // Set once the user types a value; cleared again when they empty the input,
+  // which hands control back to the source field.
+  const [userEdited, setUserEdited] = useState(false);
+  const derive = !!field.source && !disabled && !userEdited;
+  const derived = derive ? labelToSnakeCase(typeof sourceValue === 'string' ? sourceValue : '') : '';
+
+  useEffect(() => {
+    if (derive && derived !== value) {
+      onChange(derived);
+    }
+  }, [derive, derived, value, onChange]);
+
+  return (
+    <input
+      id={`config-field-${field.key}`}
+      type="text"
+      value={value}
+      onChange={(e) => {
+        setUserEdited(e.target.value !== '');
+        onChange(e.target.value);
+      }}
+      className="form-control"
+      placeholder={field.placeholder}
+      pattern="[a-z0-9_]+"
+      title={t('Only lowercase letters, numbers, and underscores allowed')}
+      maxLength={field.maxlength}
+      required={required}
+      disabled={disabled}
+    />
+  );
+};
+
+/**
  * Render a single form field based on its type
  */
 const FormFieldRenderer: React.FC<{
   field: FormField;
   value: unknown;
+  /** Current value of the field named by `field.source` (machine_name only). */
+  sourceValue?: unknown;
   onChange: (value: unknown) => void;
   disabled: boolean;
   acceptsTokens: boolean;
   /** Resolved required state (after applying #states). Drives the input's required attribute. */
   required: boolean;
+  /** Id of the rendered field label, for widgets that are not labelable elements. */
+  labelId?: string;
   /** When true, the textarea should switch to the YAML editor (no schema). */
   useYaml?: boolean;
   /** When true (and useYaml is true), validate YAML syntax while typing. */
   validateYaml?: boolean;
-}> = ({ field, value, onChange, disabled, acceptsTokens, required, useYaml, validateYaml }) => {
+}> = ({ field, value, sourceValue, onChange, disabled, acceptsTokens, required, labelId, useYaml, validateYaml }) => {
   const currentValue = value ?? field.default_value ?? '';
   // String-coerced view of the current value for string-based widgets
   // (ContentEditableField, native text/number/select inputs).
   const stringValue = typeof currentValue === 'string' ? currentValue : String(currentValue ?? '');
+
+  // Drupal enforces #maxlength natively on real inputs, which get the
+  // attribute below. ContentEditableField has no such attribute, so the limit
+  // is applied to the value on its way out instead - the submitted value is
+  // what matters, and an over-long paste is truncated the same way.
+  const emitChange = (next: unknown): void => {
+    if (field.maxlength && typeof next === 'string' && next.length > field.maxlength) {
+      onChange(next.slice(0, field.maxlength));
+      return;
+    }
+    onChange(next);
+  };
 
   // Schema-derived format wins over the raw element type: a field whose config
   // schema declares a Json constraint gets the JSON editor regardless of which
@@ -237,6 +226,7 @@ const FormFieldRenderer: React.FC<{
   if (field.format === 'json') {
     return (
       <YamlEditor
+        id={`config-field-${field.key}`}
         value={typeof currentValue === 'string' ? currentValue : ''}
         onChange={onChange}
         disabled={disabled}
@@ -246,39 +236,51 @@ const FormFieldRenderer: React.FC<{
     );
   }
 
+  // Same contract for YAML: the field's format, not its element type, picks
+  // the schema-less YAML editor with inline syntax validation.
+  if (field.format === 'yaml') {
+    return (
+      <YamlEditor
+        id={`config-field-${field.key}`}
+        value={coerceToYaml(currentValue)}
+        onChange={onChange}
+        disabled={disabled}
+        format="yaml"
+        validate
+      />
+    );
+  }
+
   switch (field.type) {
+    case 'machine_name':
+      return (
+        <MachineNameField
+          field={field}
+          value={stringValue}
+          sourceValue={sourceValue}
+          onChange={onChange}
+          disabled={disabled}
+          required={required}
+        />
+      );
+
     case 'textfield':
     case 'email':
     case 'url':
       return (
         <ContentEditableField
           value={stringValue}
-          onChange={onChange}
+          onChange={emitChange}
           className="form-control"
           placeholder={field.placeholder || t('Enter @field...', { '@field': field.title || field.type })}
           disabled={disabled}
           multiline={false}
           acceptsTokens={acceptsTokens}
+          ariaLabelledBy={labelId}
         />
       );
 
     case 'textarea': {
-      // Coerce non-string values to YAML strings for the YAML editor.
-      const coerceToYaml = (val: unknown): string => {
-        if (typeof val === 'string') return val;
-        if (val === null || val === undefined) return '';
-        try {
-          return yaml.dump(val, {
-            indent: 2,
-            lineWidth: -1,
-            noRefs: true,
-            sortKeys: false,
-          }).replace(/\n$/, '');
-        } catch {
-          return String(val);
-        }
-      };
-
       // If the backend provided an inline YAML schema, render the
       // structured editor. The schema is discovered automatically from
       // Drupal config schema at "yaml.{plugin_schema_key}.{field_key}".
@@ -299,6 +301,7 @@ const FormFieldRenderer: React.FC<{
       if (useYaml) {
         return (
           <YamlEditor
+            id={`config-field-${field.key}`}
             value={coerceToYaml(currentValue)}
             onChange={onChange}
             disabled={disabled}
@@ -310,12 +313,13 @@ const FormFieldRenderer: React.FC<{
       return (
         <ContentEditableField
           value={stringValue}
-          onChange={onChange}
+          onChange={emitChange}
           className="form-control"
           placeholder={field.placeholder || t('Enter @field...', { '@field': field.title || t('text') })}
           disabled={disabled}
           multiline={true}
           acceptsTokens={acceptsTokens}
+          ariaLabelledBy={labelId}
         />
       );
     }
@@ -329,12 +333,13 @@ const FormFieldRenderer: React.FC<{
         return (
           <ContentEditableField
             value={stringValue}
-            onChange={onChange}
+            onChange={emitChange}
             className="form-control"
             placeholder={field.placeholder || t('Enter @field...', { '@field': field.title || field.type })}
             disabled={disabled}
             multiline={false}
             acceptsTokens={acceptsTokens}
+            ariaLabelledBy={labelId}
           />
         );
       }
@@ -447,6 +452,7 @@ const FormFieldRenderer: React.FC<{
           value={stringValue}
           onChange={(e) => onChange(e.target.value)}
           className="form-control"
+          maxLength={field.maxlength}
           required={required}
           disabled={disabled}
         />
@@ -581,14 +587,21 @@ const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     const useYaml = yamlLink ? !!values[yamlLink.useYamlKey] : false;
     const validateYaml = yamlLink ? !!values[yamlLink.validateYamlKey] : false;
 
+    // The label is only rendered for field types that have a separate title.
+    // Widgets that are not labelable elements (the contenteditable fields) are
+    // named through this id instead of htmlFor, which browsers and the
+    // accessibility tree only honor for real form controls.
+    const hasLabel = field.type !== 'checkbox' && field.type !== 'markup' && !!field.title;
+    const labelId = `config-field-${field.key}-label`;
+
     return (
       <div
         key={field.key}
         className="form-field"
         style={hideField ? { display: 'none' } : undefined}
       >
-        {field.type !== 'checkbox' && field.type !== 'markup' && field.title && (
-          <label className="field-label" htmlFor={`config-field-${field.key}`}>
+        {hasLabel && (
+          <label className="field-label" id={labelId} htmlFor={`config-field-${field.key}`}>
             {field.title}
             {required && <span className="required">*</span>}
           </label>
@@ -602,10 +615,12 @@ const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
           <FormFieldRenderer
             field={field}
             value={values[field.key]}
+            sourceValue={field.source ? values[field.source] : undefined}
             onChange={(value) => handleFieldChange(field.key, value)}
-            disabled={disabled}
+            disabled={disabled || !!field.disabled}
             acceptsTokens={fieldAcceptsTokens}
             required={required}
+            labelId={hasLabel ? labelId : undefined}
             useYaml={useYaml}
             validateYaml={validateYaml}
           />

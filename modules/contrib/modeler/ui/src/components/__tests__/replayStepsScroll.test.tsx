@@ -58,7 +58,7 @@ describe('replay step list scrolling', () => {
       const base = selectorsFor('.replay-steps')[0];
       expect(base.body).toMatch(/overflow-y:\s*auto/);
       // Without min-height:0 a flex child refuses to shrink below its content,
-      // so overflow-y would never engage inside the resizable section.
+      // so overflow-y would never engage inside the review body.
       expect(base.body).toMatch(/min-height:\s*0/);
     });
 
@@ -69,15 +69,25 @@ describe('replay step list scrolling', () => {
       expect(scoped!.body).toMatch(/overflow-y:\s*auto/);
     });
 
-    it('lets the resizable-section override fill remaining height without re-declaring overflow', () => {
-      const resizable = rules.find(
-        r => r.selector === '.resizable-sections .replay-control-section.resizable-section .replay-steps'
-      );
-      expect(resizable).toBeDefined();
-      expect(resizable!.body).toMatch(/max-height:\s*none/);
-      expect(resizable!.body).toMatch(/flex:\s*1/);
+    it('lets the review-body override fill remaining height without re-declaring overflow', () => {
+      const body = rules.find(r => r.selector === '.replay-control-section .replay-steps');
+      expect(body).toBeDefined();
+      expect(body!.body).toMatch(/max-height:\s*none/);
+      expect(body!.body).toMatch(/flex:\s*1/);
       // It must NOT reset overflow — it inherits `auto` from the base rule.
-      expect(resizable!.body).not.toMatch(/overflow-y:\s*(hidden|visible|clip)/);
+      expect(body!.body).not.toMatch(/overflow-y:\s*(hidden|visible|clip)/);
+    });
+
+    it('keeps the step list as the scroll container even though inline step data scrolls too', () => {
+      // The inline step-data block under the selected row is its own scroll
+      // container, but it must not take scrolling away from the list, which is
+      // what the playback auto-scroll drives.
+      const inline = rules.find(r => r.selector === '.replay-step-data');
+      expect(inline).toBeDefined();
+      expect(inline!.body).toMatch(/overflow-y:\s*auto/);
+      expect(inline!.body).toMatch(/max-height:/);
+      const base = selectorsFor('.replay-steps')[0];
+      expect(base.body).toMatch(/overflow-y:\s*auto/);
     });
 
     it('uses only --modeler-* custom properties in the base rule (no hardcoded colors)', () => {

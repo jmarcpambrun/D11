@@ -418,9 +418,15 @@ Scrollable containers must be keyboard-accessible per the axe `scrollable-region
 - `role="region"` — gives it a landmark role for screen readers
 - `aria-label` — provides a descriptive name
 
-This pattern is used on `.data-content` divs in `ReplayPanel.tsx`:
+This pattern is used on the inline step data region in `ReplayPanelContent.tsx`:
 ```tsx
-<div className="data-content" tabIndex={0} role="region" aria-label={t('Step Data')}>
+<div
+  id={`replay-step-data-${index}`}
+  className="replay-step-data"
+  role="region"
+  aria-label={t('Step data')}
+  tabIndex={0}
+>
   {/* scrollable content */}
 </div>
 ```

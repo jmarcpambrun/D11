@@ -171,6 +171,31 @@ describe('useModalState', () => {
 
       expect(mockSetHasUnsavedChanges).toHaveBeenCalledWith(true);
     });
+
+    it('should merge recipe metadata the modal did carry', () => {
+      const { result } = renderHook(() => useModalState(defaultProps));
+      const configActions = [{ config: 'system.site', actions: { simple_config_update: { slogan: 'Hi' } } }];
+
+      act(() => {
+        result.current.onMetadataSubmit({
+          label: 'Test Model',
+          tags: [],
+          summary: 'A one-line description.',
+          recipes: ['core/recipes/article_tags'],
+          config_actions: configActions,
+          export_config: ['system.site'],
+          modules: ['node', 'user'],
+        });
+      });
+
+      const updateFn = mockSetModelData.mock.calls[0][0];
+      const merged = updateFn({ metadata: { label: 'Old Label', summary: 'Stale.' } });
+      expect(merged.metadata.summary).toBe('A one-line description.');
+      expect(merged.metadata.recipes).toEqual(['core/recipes/article_tags']);
+      expect(merged.metadata.config_actions).toEqual(configActions);
+      expect(merged.metadata.export_config).toEqual(['system.site']);
+      expect(merged.metadata.modules).toEqual(['node', 'user']);
+    });
   });
 
   describe('showConfirmationDialog', () => {

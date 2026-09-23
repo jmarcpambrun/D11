@@ -201,12 +201,11 @@ describe('sanitize utilities', () => {
         expect(result).toContain('<br');
       });
 
-      it('should strip other tags', () => {
-        const input = '<div><p>Text</p></div>';
+      it('should preserve native contenteditable line containers', () => {
+        const input = '<div>Line 1</div><p>Line 2</p>';
         const result = sanitizeTokenHtml(input);
-        expect(result).not.toContain('<div');
-        expect(result).not.toContain('<p');
-        expect(result).toContain('Text');
+        expect(result).toContain('<div>Line 1</div>');
+        expect(result).toContain('<p>Line 2</p>');
       });
     });
 

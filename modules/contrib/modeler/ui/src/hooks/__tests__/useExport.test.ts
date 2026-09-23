@@ -124,6 +124,33 @@ function defaultProps() {
   };
 }
 
+/**
+ * Run an export and return the exact string it wrote to the downloaded Blob.
+ * jsdom does not implement Blob.text(), so the constructor parts are
+ * intercepted instead.
+ */
+async function captureExportedJson(run: () => Promise<void>): Promise<string> {
+  const blobParts: string[] = [];
+  const RealBlob = globalThis.Blob;
+  const blobSpy = jest
+    .spyOn(globalThis, 'Blob')
+    .mockImplementation((parts?: BlobPart[]) => {
+      if (parts) {
+        for (const part of parts) {
+          blobParts.push(String(part));
+        }
+      }
+      return new RealBlob(parts ?? []);
+    });
+
+  await act(async () => {
+    await run();
+  });
+
+  blobSpy.mockRestore();
+  return blobParts.join('');
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -661,6 +688,26 @@ describe('useExport', () => {
       expect(createObjectURL).toHaveBeenCalled();
       expect(props.announce).toHaveBeenCalledWith('JSON exported successfully');
     });
+
+    it('should ship the metadata form so the standalone viewer can render it', async () => {
+      const metadataForm = [{ key: 'label', type: 'textfield', title: 'Label' }];
+      const settings = makeSettings({ config_url: undefined });
+      settings.modeler = { metadataForm };
+      const { result } = renderHook(() => useExport({ ...defaultProps(), settings }));
+
+      const json = await captureExportedJson(() => result.current.executeExport('json'));
+
+      expect(JSON.parse(json).metadataForm).toEqual(metadataForm);
+    });
+
+    it('should omit the metadata form when the backend delivered none', async () => {
+      const props = { ...defaultProps(), settings: makeSettings({ config_url: undefined }) };
+      const { result } = renderHook(() => useExport(props));
+
+      const json = await captureExportedJson(() => result.current.executeExport('json'));
+
+      expect(JSON.parse(json)).not.toHaveProperty('metadataForm');
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -692,33 +739,12 @@ describe('useExport', () => {
       const props = { ...defaultProps(), replayData };
       const { result } = renderHook(() => useExport(props));
 
-      // Capture the exact string written to the downloaded Blob. jsdom does
-      // not implement Blob.text(), so intercept the constructor parts.
-      const blobParts: string[] = [];
-      const RealBlob = globalThis.Blob;
-      const blobSpy = jest
-        .spyOn(globalThis, 'Blob')
-        .mockImplementation((parts?: BlobPart[]) => {
-          if (parts) {
-            for (const part of parts) {
-              blobParts.push(String(part));
-            }
-          }
-          return new RealBlob(parts ?? []);
-        });
-
       // Simulate the display path viewing each step. This is the exact
       // expansion the ReplayPanel triggers; it must not mutate replayData.
       expandReplayStep(replayData, 0);
       expandReplayStep(replayData, 1);
 
-      await act(async () => {
-        await result.current.executeExport('json', true);
-      });
-
-      blobSpy.mockRestore();
-
-      const json = blobParts.join('');
+      const json = await captureExportedJson(() => result.current.executeExport('json', true));
       const parsed = JSON.parse(json) as { replayData: ReplayStep[] };
 
       // The step-level @prev marker survives.
@@ -770,32 +796,12 @@ describe('useExport', () => {
       const props = { ...defaultProps(), replayData };
       const { result } = renderHook(() => useExport(props));
 
-      // Capture the exact string written to the downloaded Blob.
-      const blobParts: string[] = [];
-      const RealBlob = globalThis.Blob;
-      const blobSpy = jest
-        .spyOn(globalThis, 'Blob')
-        .mockImplementation((parts?: BlobPart[]) => {
-          if (parts) {
-            for (const part of parts) {
-              blobParts.push(String(part));
-            }
-          }
-          return new RealBlob(parts ?? []);
-        });
-
       // Simulate the display path viewing each step. This is the exact
       // expansion the ReplayPanel triggers; it must not mutate replayData.
       expandReplayStep(replayData, 0);
       expandReplayStep(replayData, 1);
 
-      await act(async () => {
-        await result.current.executeExport('json', true);
-      });
-
-      blobSpy.mockRestore();
-
-      const json = blobParts.join('');
+      const json = await captureExportedJson(() => result.current.executeExport('json', true));
       const parsed = JSON.parse(json) as { replayData: ReplayStep[] };
 
       // The cross-step @same marker survives, and no expanded `data` was

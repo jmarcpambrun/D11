@@ -9,9 +9,9 @@ tokens and use them in configuration forms.
 
 ### Step data
 
-When you select a replay step in **Review flow** mode, the **Step Data**
-section expands to show the token values available at that point in the
-execution.
+When you select a replay step in **Review flow** mode, the step expands and the
+token values available at that point in the execution are rendered **inline
+underneath that step row**.
 
 Token data is displayed as a **collapsible tree**:
 
@@ -22,28 +22,14 @@ Token data is displayed as a **collapsible tree**:
 
 ![Step data showing token values in a collapsible tree](../assets/screenshots/step-data.jpg){ .screenshot }
 
-### Global tokens
+### Global and template tokens
 
-The **Global Tokens** section appears at the bottom of Review flow mode and
-shows site-wide tokens that are always available, regardless of the workflow
-execution context. Examples include:
-
-- `[site:name]` -- the site name.
-- `[current-date:long]` -- the current date.
-- `[current-user:name]` -- the logged-in user's name.
-
-Global tokens are always visible in Review flow mode, even when no replay data
-is loaded.
-
-### Template tokens
-
-When the model is marked as a **template**, an additional set of
-**template tokens** appears alongside the global tokens. These are tokens
-specific to the template's context and are provided by the backend.
-
-Template tokens work exactly like global tokens -- they are always visible in
-Review flow mode, can be expanded to view nested properties, and can be
-inserted into configuration form fields.
+Site-wide tokens that do not depend on the workflow execution - such as
+`[site:name]`, `[current-date:long]` or `[current-user:name]` - are not listed
+in Review flow mode. Neither are the extra tokens that a model marked as a
+**template** provides. Both sets appear only in the `[` token picker, under its
+**Global tokens** and **Template tokens** categories, so they are offered
+exactly where you insert them.
 
 ## Inserting tokens with the `[` picker
 

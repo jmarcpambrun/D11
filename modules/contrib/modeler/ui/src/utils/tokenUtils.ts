@@ -33,6 +33,62 @@ export function convertTokensToHTML(text: string | null): string {
   });
 }
 
+const CONTENTEDITABLE_BLOCK_TAGS: Record<string, true> = {
+  DIV: true,
+  P: true,
+};
+
+interface SerializedFragment {
+  text: string;
+  meaningful: boolean;
+}
+
+function isContenteditableBlock(node: Node): node is Element {
+  return node instanceof Element && CONTENTEDITABLE_BLOCK_TAGS[node.tagName] === true;
+}
+
+function serializeTokenNode(node: Node): SerializedFragment {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = (node.textContent || '').replace(/\u200B/g, '');
+    return { text, meaningful: text.length > 0 };
+  }
+
+  if (node instanceof Element && node.classList.contains('config-token')) {
+    const token = node.getAttribute('data-token');
+    if (token) return { text: token, meaningful: true };
+  }
+
+  if (node instanceof HTMLBRElement) {
+    const parent = node.parentNode;
+    const isPlaceholder =
+      !!parent &&
+      isContenteditableBlock(parent) &&
+      parent.childNodes.length === 1;
+    return isPlaceholder
+      ? { text: '', meaningful: false }
+      : { text: '\n', meaningful: true };
+  }
+
+  let text = '';
+  let started = false;
+  let lastWasEmptyBlock = false;
+  node.childNodes.forEach(child => {
+    const childFragment = serializeTokenNode(child);
+    const isBlock = isContenteditableBlock(child);
+    if (isBlock && started && (!text.endsWith('\n') || lastWasEmptyBlock)) {
+      text += '\n';
+    }
+    text += childFragment.text;
+    if (isBlock || childFragment.meaningful) started = true;
+    lastWasEmptyBlock = isBlock && childFragment.text.length === 0;
+  });
+
+  return {
+    text,
+    meaningful: isContenteditableBlock(node) || started,
+  };
+}
+
 /**
  * Convert HTML with token elements back to token strings
  * 
@@ -46,27 +102,12 @@ export function convertTokensToHTML(text: string | null): string {
 export function convertHTMLToTokens(html: string | null): string {
   if (!html || typeof html !== 'string') return html || '';
 
-  // Create a temporary div to parse the HTML. Sanitize first to strip any
-  // scripts or unsafe markup; sanitizeTokenHtml preserves the .config-token
-  // spans and their data-token attribute that the loop below reads.
+  // Parse sanitized HTML and serialize the same structure users edit. Native
+  // contenteditable inserts block elements for line breaks; textContent alone
+  // flattens those blocks and silently joins lines.
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = sanitizeTokenHtml(html);
-
-  // Find all token elements and replace them with their token strings
-  const tokenElements = tempDiv.querySelectorAll('.config-token');
-  tokenElements.forEach(tokenEl => {
-    const tokenString = tokenEl.getAttribute('data-token');
-    if (tokenString) {
-      tokenEl.replaceWith(document.createTextNode(tokenString));
-    }
-  });
-
-  // Strip any zero-width space (U+200B). These are inserted into the DOM ONLY as
-  // a caret landing spot after a trailing token (see ensureTrailingCaretSpace in
-  // ContentEditableField); they must never appear in the saved value, so the
-  // serialized output stays exactly the user's text + `[token]` strings.
-  const serialized = tempDiv.textContent || tempDiv.innerText || '';
-  return serialized.replace(/\u200B/g, '');
+  return serializeTokenNode(tempDiv).text;
 }
 
 /**

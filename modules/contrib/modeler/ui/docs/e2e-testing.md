@@ -786,7 +786,7 @@ const edgeCount = await modeler.getEdgeCount();
 - Replay Panel UI (8): Step list display, progress label, playback controls, speed selector, stop button
 - Replay Step Navigation (7): Next/previous step, first/last step boundaries, step highlighting, step selection
 - Replay Playback (4): Auto-play start/pause, speed changes, playback progression
-- Step Data Display (3): Token data rendering, condition results, step metadata
+- Inline Step Data (3): Token data rendering, condition results, step metadata
 - Replay Panel Info Popup (2): Info popup display, metadata content
 - Test Button Visibility (2): Test button shown with test_url + event selected, hidden without test_url
 - Test Execution (4): Click test starts polling, waiting state with cancel, successful result display, cancel stops test

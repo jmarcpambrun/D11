@@ -151,6 +151,7 @@ When exporting to JSON, the hook automatically:
 
 1. **Fetches all configuration form schemas** from the backend (parallel requests for all unique plugins) and includes them as `configForms` — a map from plugin ID to form field array. This covers both node plugins and edge condition plugins.
 2. **Includes a `components` array** with metadata (plugin, label, category, provider, componentType, description, documentationUrl) for every plugin used in the model.
+3. **Includes the `metadataForm` array** — the model metadata form the backend converted from the model owner's Drupal form array, so the viewer can render the model information dialog. The standalone entry point maps it back to `settings.modeler.metadataForm`.
 
 Example of the additional fields in the exported JSON:
 
@@ -172,6 +173,11 @@ Example of the additional fields in the exported JSON:
       { "key": "operator", "type": "select", "title": "Operator", "options": { "equals": "Equals", "contains": "Contains" }, ... }
     ]
   },
+  "metadataForm": [
+    { "key": "label", "type": "textfield", "title": "Label", ... },
+    { "key": "model_id", "type": "machine_name", "title": "Model ID", "source": "label", "disabled": true, ... },
+    { "key": "recipe_export", "type": "group", "title": "Recipe export", "open": false, "children": [...] }
+  ],
   "components": [
     { "plugin": "form:form_build", "label": "Form Build", "category": "Events", "provider": "workflow_form", ... },
     { "plugin": "scalar_comparison", "label": "Compare two scalar values", "category": "Conditions", "provider": "workflow_base", ... }
@@ -181,12 +187,12 @@ Example of the additional fields in the exported JSON:
 
 #### Config Form Field Format
 
-Each form field in `configForms` follows the `FormField` interface used by `ConfigurationForm.tsx`:
+Every form field - in `configForms` as well as in `metadataForm` - follows the `FormField` interface in `src/types/forms.ts`, which `ConfigurationForm.tsx` renders:
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `key` | `string` | Machine name (matches configuration keys) |
-| `type` | `string` | `textfield`, `textarea`, `select`, `checkbox`, `number`, `radios`, `checkboxes`, `markup` |
+| `type` | `string` | `textfield`, `textarea`, `select`, `checkbox`, `number`, `radios`, `checkboxes`, `markup`, `machine_name`, `group` |
 | `title` | `string` | Human-readable label (not `label` — that is for components) |
 | `description` | `string` | Help text (HTML allowed, sanitized on render) |
 | `default_value` | `any` | Default when no configuration value is present |
@@ -195,6 +201,11 @@ Each form field in `configForms` follows the `FormField` interface used by `Conf
 | `token_support` | `boolean` | Whether the field accepts token drag-and-drop |
 | `min`, `max`, `step` | `number` | For `number` fields |
 | `markup` | `string` | For `markup` fields: raw HTML content |
+| `format` | `string` | Widget format from the config-schema contract: `json` or `yaml` selects the matching editor regardless of the element type |
+| `disabled` | `boolean` | Mirrors Drupal's `#disabled`: rendered but not editable |
+| `maxlength` | `number` | Mirrors Drupal's `#maxlength` for text elements |
+| `source` | `string` | For `machine_name` fields: the key of the field the machine name is derived from |
+| `children`, `open` | `FormField[]`, `boolean` | For `group` fields: child fields and whether the group starts expanded |
 
 ### Building the Standalone Viewer
 

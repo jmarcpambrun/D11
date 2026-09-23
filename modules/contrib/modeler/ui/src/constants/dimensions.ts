@@ -185,6 +185,5 @@ export const STORAGE_KEYS = {
   REPLAY_PANEL_WIDTH: 'replayPanelWidth',
   REPLAY_PANEL_COLLAPSED: 'replayPanelCollapsed',
   PROPERTY_PANEL_COLLAPSED: 'propertyPanelCollapsed',
-  REPLAY_SECTION_RATIOS: 'replaySectionRatios',
   THEME: 'modelerTheme',
 } as const;

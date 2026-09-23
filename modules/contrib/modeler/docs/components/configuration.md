@@ -38,10 +38,12 @@ title of the current entity).
 
 ### How to use tokens
 
-1. Type **`[`** in a token-supporting field to open the token picker, or load
-   replay data / run a test to see step-data tokens in **Review flow** mode.
-2. Look for token values in the **Step Data** or **Global Tokens** sections.
-3. Insert a token with the `[` picker's **Use →** action.
+1. Type **`[`** in a token-supporting field to open the token picker.
+2. Pick a category - **Step data tokens**, **Global tokens** or
+   **Template tokens**. Step data tokens become available once you load replay
+   data or run a test in **Review flow** mode, where selecting a step also
+   shows its data inline.
+3. Insert a token with the picker's **Use →** action.
 
 ### The "Replace tokens" checkbox
 

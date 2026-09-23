@@ -871,7 +871,7 @@ export function exportModelData(nodes: Node[], edges: Edge[], metadata: Record<s
       condition: edge.data?.condition || edge.label || '',
       conditionId: edge.data?.conditionId || '', // Preserve original condition ID for round-trip stability
       conditionLabel: edge.data?.conditionLabel || '',
-      conditionConfiguration: edge.data?.conditionConfiguration || {},
+      conditionConfiguration: filterInternalProperties(edge.data?.conditionConfiguration ?? undefined),
       annotation: edge.data?.annotation || '', // Include annotation in export
       controlOffset: edge.data?.controlOffset || { x: 0, y: 0 }, // Include control point offset
     })),

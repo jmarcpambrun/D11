@@ -265,6 +265,28 @@ export function createPluginApi(): ModelerPluginApi {
       return edge ? toPluginEdge(edge) : null;
     },
 
+    getSelectedNodes(): PluginNode[] {
+      const { selectedNodes } = useSelectionStore.getState();
+      const { nodes } = useGraphStore.getState();
+      const result: PluginNode[] = [];
+      for (const nodeId of selectedNodes) {
+        const node = nodes.find((candidate) => candidate.id === nodeId);
+        if (node) result.push(toPluginNode(node));
+      }
+      return result;
+    },
+
+    getSelectedEdges(): PluginEdge[] {
+      const { selectedEdges } = useSelectionStore.getState();
+      const { edges } = useGraphStore.getState();
+      const result: PluginEdge[] = [];
+      for (const edgeId of selectedEdges) {
+        const edge = edges.find((candidate) => candidate.id === edgeId);
+        if (edge) result.push(toPluginEdge(edge));
+      }
+      return result;
+    },
+
     getModelData(): PluginModelData | null {
       const data = useModelStore.getState().modelData;
       if (!data) return null;
@@ -340,14 +362,31 @@ export function createPluginApi(): ModelerPluginApi {
     onSelectionChange(callback: SelectionChangeCallback): Unsubscribe {
       let prevNodeId: string | null = null;
       let prevEdgeId: string | null = null;
+      let prevSelectedNodeIds: string[] = [];
+      let prevSelectedEdgeIds: string[] = [];
 
       return useSelectionStore.subscribe((state) => {
         const nodeId = state.selectedNode?.id ?? null;
         const edgeId = state.selectedEdge?.id ?? null;
+        // Element comparison preserves selection order without allocating a
+        // joined key or risking delimiter collisions on every notification.
+        const selectedNodesChanged =
+          state.selectedNodes.length !== prevSelectedNodeIds.length ||
+          state.selectedNodes.some((id, index) => id !== prevSelectedNodeIds[index]);
+        const selectedEdgesChanged =
+          state.selectedEdges.length !== prevSelectedEdgeIds.length ||
+          state.selectedEdges.some((id, index) => id !== prevSelectedEdgeIds[index]);
 
-        if (nodeId !== prevNodeId || edgeId !== prevEdgeId) {
+        if (
+          nodeId !== prevNodeId ||
+          edgeId !== prevEdgeId ||
+          selectedNodesChanged ||
+          selectedEdgesChanged
+        ) {
           prevNodeId = nodeId;
           prevEdgeId = edgeId;
+          prevSelectedNodeIds = [...state.selectedNodes];
+          prevSelectedEdgeIds = [...state.selectedEdges];
           try {
             callback(
               state.selectedNode ? toPluginNode(state.selectedNode) : null,

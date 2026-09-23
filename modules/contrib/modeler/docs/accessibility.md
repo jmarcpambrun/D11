@@ -16,6 +16,8 @@ Key capabilities:
 - **Arrow keys**: Navigate within panels, dropdown lists, and step lists.
 - **Enter/Space**: Activate buttons and select items.
 - **Escape**: Close dialogs, popups, and the search bar.
+- **Alt+Shift+R** (**Option+Shift+R** on macOS): Toggle the right-hand panel
+  between property mode and review mode without reaching for the mouse.
 
 ## Focus management
 
@@ -138,8 +140,8 @@ The edge order badges ("Flow 1", "Flow 2", etc.) are fully accessible:
 
 ## Scrollable regions
 
-Scrollable content areas (like the Step Data section in Review flow mode) are
-keyboard-accessible with:
+Scrollable content areas (like the inline step data that expands under the
+selected step in Review flow mode) are keyboard-accessible with:
 
 - `tabIndex="0"` for keyboard focus.
 - `role="region"` for screen reader context.

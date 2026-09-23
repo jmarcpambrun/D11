@@ -120,10 +120,28 @@ phpstan (next major):
   allow_failure: false
 phpunit (previous major):
   allow_failure: false
+# Drupal core's DrupalTestCaseTrait now raises a deprecation notice whenever
+# SYMFONY_DEPRECATIONS_HELPER is present in the environment at all (even set
+# to 'disabled', which is what .phpunit-base sets it to), since that
+# configuration mechanism is deprecated in drupal:11.5.0 and removed in
+# drupal:12.0.0 (see https://www.drupal.org/node/3594014). That self-inflicted
+# deprecation flips run-tests.sh's exit code even though all assertions pass.
+# Only the next-minor/next-major variants run core versions new enough to
+# trigger it, so unset the variable there before delegating to the shared
+# phpunit script (setting it to an empty string is not enough: PHP's
+# getenv() still returns '' which is !== FALSE).
 phpunit (next minor):
   allow_failure: false
+  script:
+    - unset SYMFONY_DEPRECATIONS_HELPER
+    - !reference [ .phpunit-base-script ]
+    - echo "Exiting with EXIT_CODE=$EXIT_CODE" && exit $EXIT_CODE
 phpunit (next major):
   allow_failure: false
+  script:
+    - unset SYMFONY_DEPRECATIONS_HELPER
+    - !reference [ .phpunit-base-script ]
+    - echo "Exiting with EXIT_CODE=$EXIT_CODE" && exit $EXIT_CODE
 upgrade status:
   allow_failure: false
 

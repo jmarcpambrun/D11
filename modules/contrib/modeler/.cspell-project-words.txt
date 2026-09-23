@@ -23,6 +23,7 @@ edgeupdater
 ellipsize
 ellipsized
 ellipsizes
+firstline
 fontawesome
 greaterthan
 handleid
