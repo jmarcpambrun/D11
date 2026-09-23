@@ -84,6 +84,11 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   private static array $originalStorageCacheBackends = [];
 
   /**
+   * How much of an exception message is kept when logging a failed chunk.
+   */
+  const MAX_LOGGED_MESSAGE_LENGTH = 4096;
+
+  /**
    * Creates a EntityUsageBatchManager object.
    */
   final public function __construct(
@@ -321,6 +326,26 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
   }
 
   /**
+   * Logs an exception thrown by a bulk chunk, without the whole failed query.
+   *
+   * A failed multi-row insert puts the full SQL and every placeholder in its
+   * message. One chunk holds hundreds of rows, so a single entry can weigh
+   * tens of MB. Keep the head of the message: that is where the error is.
+   *
+   * @param \Exception $e
+   *   The exception to log.
+   */
+  private static function logBulkException(\Exception $e): void {
+    $variables = Error::decodeException($e);
+    $length = mb_strlen($variables['@message']);
+    if ($length > static::MAX_LOGGED_MESSAGE_LENGTH) {
+      $variables['@message'] = mb_substr($variables['@message'], 0, static::MAX_LOGGED_MESSAGE_LENGTH)
+        . ' ... [cut, ' . $length . ' characters in total]';
+    }
+    \Drupal::service('logger.channel.entity_usage')->error(Error::DEFAULT_ERROR_MESSAGE, $variables);
+  }
+
+  /**
    * Batch operation worker to drop the bulk loading table.
    */
   public static function dropBulkTable(array &$context): void {
@@ -452,18 +477,23 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
       self::disableEntityPersistentCache();
       try {
         foreach ($entity_storage->loadMultipleRevisions($revision_ids) as $entity_revision) {
-          $revision_id = (int) $entity_revision->getRevisionId();
           \Drupal::service('entity_usage.entity_update_manager')->trackUpdateOnCreation($entity_revision);
-          $context['sandbox']['current_id'] = $revision_id;
         }
         $entity_usage->bulkInsert();
       }
       catch (\Exception $e) {
-        Error::logException(\Drupal::service('logger.channel.entity_usage'), $e);
+        self::logBulkException($e);
       }
       finally {
         self::restoreEntityPersistentCache();
       }
+      // The ids are sorted ASC, so the last one is the highest of the chunk.
+      // loadMultipleRevisions() gives no order, so reading the id inside the
+      // loop could leave current_id below an id already tracked, and the next
+      // query ("> current_id") would return revisions tracked already: the
+      // same primary key would be inserted twice. Setting it outside the try
+      // also keeps a failed chunk from being replayed for ever.
+      $context['sandbox']['current_id'] = end($revision_ids);
     }
     $context['sandbox']['progress'] += count($revision_ids);
 
@@ -542,13 +572,15 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         foreach ($entity_storage->loadMultiple($entity_ids) as $entity) {
           // Sources are tracked as if they were new entities.
           \Drupal::service('entity_usage.entity_update_manager')->trackUpdateOnCreation($entity);
-          $context['sandbox']['current_id'] = $entity->id();
         }
         $entity_usage->bulkInsert();
       }
       catch (\Exception $e) {
-        Error::logException(\Drupal::service('logger.channel.entity_usage'), $e);
+        self::logBulkException($e);
       }
+      // Same as in doBulkRevisionable(): loadMultiple() gives no order, so
+      // the last queried id is the only safe value here.
+      $context['sandbox']['current_id'] = end($entity_ids);
     }
     $context['sandbox']['progress'] += count($entity_ids);
 
@@ -657,7 +689,7 @@ class EntityUsageBatchManager implements LoggerAwareInterface {
         }
       }
       catch (\Exception $e) {
-        Error::logException(\Drupal::service('logger.channel.entity_usage'), $e);
+        self::logBulkException($e);
       }
 
       if (

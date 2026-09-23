@@ -5,7 +5,7 @@ package: Testing
 dependencies:
   - entity_usage:entity_usage
 
-# Information added by Drupal.org packaging script on 2026-09-07
-version: '5.0.0-beta6'
+# Information added by Drupal.org packaging script on 2026-09-15
+version: '5.0.0'
 project: 'entity_usage'
-datestamp: 1788797740
+datestamp: 1789472857
