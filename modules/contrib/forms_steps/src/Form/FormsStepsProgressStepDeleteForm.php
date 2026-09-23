@@ -79,7 +79,7 @@ class FormsStepsProgressStepDeleteForm extends ConfirmFormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, FormsStepsInterface $forms_steps = NULL, string $forms_steps_progress_step = NULL): array {
+  public function buildForm(array $form, FormStateInterface $form_state, ?FormsStepsInterface $forms_steps = NULL, ?string $forms_steps_progress_step = NULL): array {
     if (!$forms_steps->hasProgressStep($forms_steps_progress_step)) {
       throw new NotFoundHttpException();
     }

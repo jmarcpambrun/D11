@@ -68,6 +68,14 @@ interface StepInterface {
   public function url(): string;
 
   /**
+   * Gets the step's theme.
+   *
+   * @return string
+   *   The step's theme.
+   */
+  public function theme();
+
+  /**
    * Gets the submit label.
    *
    * @return string

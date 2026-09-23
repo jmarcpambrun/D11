@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\forms_steps\Form;
 
+use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Entity\EntityInterface;
@@ -212,6 +213,19 @@ class FormsStepsStepFormBase extends EntityForm {
       '#placeholder' => '/my_form/step1',
       '#default_value' => $step && $step->url() ? $step->url() : '',
       '#required' => TRUE,
+    ];
+
+//     $form['test']['#markup' => $step->theme()];
+    $options = \Drupal::service('forms_steps.helper')->getThemes();
+    $form['theme'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Theme'),
+      '#options' => $options,
+      '#description' => $this->t(
+        'Control which roles can "View the administration theme" on the <a href=":permissions">Permissions page.</a>',
+          [':permissions' => Url::fromRoute('user.admin_permissions')->toString()]
+      ),
+      '#default_value' => !is_null($step) ? $step->theme() : '',
     ];
 
     $form['submit_button'] = [
@@ -471,6 +485,8 @@ class FormsStepsStepFormBase extends EntityForm {
       if (!empty($values['url'])) {
         $entity->setStepUrl($values['id'], $values['url']);
       }
+
+      $entity->setStepTheme($values['id'], $values['theme']);
 
       if ($values['override_submit'] == 1) {
         $entity->setStepSubmitLabel($values['id'], $values['submit_label']);

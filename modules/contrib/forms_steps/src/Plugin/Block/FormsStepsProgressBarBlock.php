@@ -155,7 +155,7 @@ class FormsStepsProgressBarBlock extends BlockBase implements ContainerFactoryPl
           // @todo Manage the specific case of "No workflow instance id" for
           // the first step to avoid having no links at all on this step.
           if (empty($progress_step->link()) || $link_visibility_check || empty($instanceId)) {
-            $item['#markup'] = $this->t($progress_step->label());
+            $item['#markup'] = $progress_step->label();
           }
           else {
             $link_step = $forms_steps->getStep($progress_step->link());
@@ -164,7 +164,7 @@ class FormsStepsProgressBarBlock extends BlockBase implements ContainerFactoryPl
               $options['instance_id'] = $instanceId;
             }
             $url = Url::fromRoute($forms_steps->getStepRoute($link_step), $options);
-            $link = Link::fromTextAndUrl($this->t($progress_step->label()), $url);
+            $link = Link::fromTextAndUrl($progress_step->label(), $url);
             $toRenderable = $link->toRenderable();
             $markup = \Drupal::service('renderer')->renderPlain($toRenderable);
 

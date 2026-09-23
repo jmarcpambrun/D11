@@ -65,7 +65,7 @@ class FormsStepsController extends ControllerBase {
    *   Forms Steps id to display step from.
    * @param mixed $step
    *   Step to display.
-   * @param string $instance_id
+   * @param string|null $instance_id
    *   Instance id of the forms steps ref to load.
    *
    * @return array
@@ -76,7 +76,7 @@ class FormsStepsController extends ControllerBase {
    * @throws \Drupal\forms_steps\Exception\AccessDeniedException
    * @throws \Drupal\forms_steps\Exception\FormsStepsNotFoundException
    */
-  public function step(string $forms_steps, $step, string $instance_id = NULL): array {
+  public function step(string $forms_steps, $step, ?string $instance_id = NULL): array {
     return $this->getForm($forms_steps, $step, $instance_id);
   }
 
@@ -243,7 +243,7 @@ class FormsStepsController extends ControllerBase {
       unset($form['actions']['delete']);
     }
     elseif ($step->deleteLabel()) {
-      $form['actions']['delete']['#title'] = t($step->deleteLabel());
+      $form['actions']['delete']['#title'] = $step->deleteLabel();
     }
 
     // Return the form.

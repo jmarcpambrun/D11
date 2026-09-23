@@ -29,7 +29,7 @@ services:
 
   forms_steps.helper:
     class: Drupal\forms_steps\Service\FormsStepsHelper
-    arguments: ['@forms_steps.manager', '@current_route_match']
+    arguments: ['@forms_steps.manager', '@current_route_match', '@string_translation']
 
   forms_steps.workflow.repository:
     class: Drupal\forms_steps\Repository\WorkflowRepository

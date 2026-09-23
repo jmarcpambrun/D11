@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Drupal\forms_steps\Service;
 
 use Drupal\Core\Routing\CurrentRouteMatch;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 
 /**
  * Forms Steps helper service.
@@ -12,6 +14,8 @@ use Drupal\Core\Routing\CurrentRouteMatch;
  * @package Drupal\forms_steps\Service
  */
 class FormsStepsHelper {
+
+  use StringTranslationTrait;
 
   /**
    * FormsStepsManager.
@@ -34,13 +38,13 @@ class FormsStepsHelper {
    *   Injected FormsStepsManager instance.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $current_route_match
    *   Injected current route match instance.
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The translation service.
    */
-  public function __construct(
-    FormsStepsManager $forms_steps_manager,
-    CurrentRouteMatch $current_route_match
-  ) {
+  public function __construct(FormsStepsManager $forms_steps_manager, CurrentRouteMatch $current_route_match, TranslationInterface $translation) {
     $this->formsStepsManager = $forms_steps_manager;
     $this->currentRouteMatch = $current_route_match;
+    $this->setStringTranslation($translation);
   }
 
   /**
@@ -59,6 +63,20 @@ class FormsStepsHelper {
     }
 
     return FALSE;
+  }
+
+  /**
+   * Return the available theme types.
+   *
+   * @return array
+   *   Return an array of the available theme types.
+   */
+  public function getThemes() {
+    return [
+      -1 => $this->t('Same as collection'),
+      0 => $this->t('Default theme'),
+      1 => $this->t('Administration theme')
+    ];
   }
 
 }

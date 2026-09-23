@@ -66,6 +66,13 @@ class Step implements StepInterface {
   protected string $url;
 
   /**
+   * The step's theme type.
+   *
+   * @var string
+   */
+  protected $theme;
+
+  /**
    * The step's submit label.
    *
    * @var string
@@ -211,6 +218,13 @@ class Step implements StepInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function theme() {
+    return $this->theme;
+  }
+
+  /**
    * Return a list of form modes available for this entity bundle.
    *
    * @return array
@@ -229,6 +243,16 @@ class Step implements StepInterface {
     $result['default'] = 'Default';
 
     return $result;
+  }
+
+  /**
+   * Set the step theme.
+   *
+   * @param string $value
+   *    The selected theme type.
+   */
+  public function setTheme($value) {
+    $this->theme = $value;
   }
 
   /**

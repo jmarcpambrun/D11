@@ -50,11 +50,11 @@ class FormsStepsAlter {
   public static function setButtonLabel(Step $step, array &$form) {
     if ($step) {
       if ($step->submitLabel()) {
-        $form['actions']['submit']['#value'] = t($step->submitLabel());
+        $form['actions']['submit']['#value'] = $step->submitLabel();
       }
 
       if ($step->cancelLabel()) {
-        $form['actions']['cancel']['#value'] = t($step->cancelLabel());
+        $form['actions']['cancel']['#value'] = $step->cancelLabel();
       }
     }
   }
@@ -73,7 +73,7 @@ class FormsStepsAlter {
         $form['actions']['previous'] =
         [
           '#type' => 'submit',
-          '#value' => t($step->previousLabel()),
+          '#value' => $step->previousLabel(),
           '#name' => 'previous_action',
           '#submit' => [
             ['Drupal\forms_steps\Form\FormsStepsAlter', 'setPreviousRoute'],

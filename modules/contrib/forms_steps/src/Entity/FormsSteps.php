@@ -47,6 +47,7 @@ use Drupal\forms_steps\StepInterface;
  *     "progress_steps_links_saved_only_next",
  *     "redirection_policy",
  *     "redirection_target",
+ *     "theme",
  *     "steps",
  *     "progress_steps",
  *   },
@@ -120,6 +121,13 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
   protected string $redirection_target = '';
 
   /**
+   * The theme setting of the FormSteps Collection.
+   *
+   * @var string
+   */
+  protected $theme = FALSE;
+
+  /**
    * The ordered FormsSteps steps.
    *
    * Steps array. The array is numerically indexed by the step id and contains
@@ -129,6 +137,7 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
    *   - form_id: form id of the step
    *   - form_mode: form mode of the form of the step
    *   - url: url of the step.
+   *   - theme: theme setting of the step
    *
    * @var array
    */
@@ -182,6 +191,13 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
    */
   public function getRedirectionTarget(): string {
     return $this->redirection_target;
+  }
+
+  /**
+   * Returns use admin theme setting.
+   */
+  public function getTheme() {
+    return $this->theme;
   }
 
   /**
@@ -349,7 +365,7 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
   /**
    * {@inheritdoc}
    */
-  public function getSteps(array $step_ids = NULL): array {
+  public function getSteps(?array $step_ids = NULL): array {
     if ($step_ids === NULL) {
       $step_ids = array_keys($this->steps);
     }
@@ -362,7 +378,7 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
   /**
    * {@inheritdoc}
    */
-  public function getProgressSteps(array $progress_step_ids = NULL): array {
+  public function getProgressSteps(?array $progress_step_ids = NULL): array {
     if ($progress_step_ids === NULL) {
       $progress_step_ids = array_keys($this->progress_steps);
     }
@@ -372,6 +388,7 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
       $progress_step_ids,
       array_map([$this, 'getProgressStep'],
         $progress_step_ids)
+
     );
     $this->sortElements($progress_steps);
     return $progress_steps;
@@ -402,22 +419,22 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
   /**
    * {@inheritdoc}
    */
-  public function getFirstStep(string $steps = NULL): StepInterface {
+  public function getFirstStep(?string $steps = NULL): ?StepInterface {
     if ($steps === NULL) {
       $steps = $this->getSteps();
     }
-    return reset($steps);
+    return reset($steps) ?: NULL;
 
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getLastStep(string $steps = NULL): StepInterface {
+  public function getLastStep(?string $steps = NULL): ?StepInterface {
     if ($steps === NULL) {
       $steps = $this->getSteps();
     }
-    return end($steps);
+    return end($steps) ?: NULL;
 
   }
 
@@ -441,6 +458,9 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
       $this->steps[$step_id]['url']
     );
 
+    if (isset($this->steps[$step_id]['theme'])) {
+      $step->setTheme($this->steps[$step_id]['theme']);
+    }
     if (isset($this->steps[$step_id]['cancelStepMode'])) {
       $step->setCancelStepMode($this->steps[$step_id]['cancelStepMode']);
     }
@@ -581,6 +601,19 @@ class FormsSteps extends ConfigEntityBase implements FormsStepsInterface {
       );
     }
 
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setStepTheme($step_id, $theme) {
+    if (!isset($this->steps[$step_id])) {
+      throw new \InvalidArgumentException(
+        "The Step '$step_id' does not exist in forms steps '{$this->id()}'"
+      );
+    }
+    $this->steps[$step_id]['theme'] = $theme;
     return $this;
   }
 

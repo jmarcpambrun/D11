@@ -101,7 +101,7 @@ interface FormsStepsInterface extends ConfigEntityInterface {
   /**
    * Gets step objects for the provided step IDs.
    *
-   * @param string[] $step_ids
+   * @param string[]|null $step_ids
    *   A list of step IDs to get. If NULL then all steps will be returned.
    *
    * @return \Drupal\forms_steps\StepInterface[]
@@ -110,12 +110,12 @@ interface FormsStepsInterface extends ConfigEntityInterface {
    * @throws \InvalidArgumentException
    *   Thrown if $step_ids contains a step ID that does not exist.
    */
-  public function getSteps(array $step_ids = NULL): array;
+  public function getSteps(?array $step_ids = NULL): array;
 
   /**
    * Gets progress step objects for the provided progress step IDs.
    *
-   * @param string[] $progress_step_ids
+   * @param string[]|null $progress_step_ids
    *   A list of progress step IDs to get. If NULL then all progress steps will
    *   be returned.
    *
@@ -126,7 +126,7 @@ interface FormsStepsInterface extends ConfigEntityInterface {
    *   Thrown if $progress_step_ids contains a progress step ID that does not
    *   exist.
    */
-  public function getProgressSteps(array $progress_step_ids = NULL): array;
+  public function getProgressSteps(?array $progress_step_ids = NULL): array;
 
   /**
    * Retrieve the last step defined on a forms steps entity.
@@ -134,10 +134,10 @@ interface FormsStepsInterface extends ConfigEntityInterface {
    * @param string|null $steps
    *   The forms_steps steps' IDs.
    *
-   * @return \Drupal\forms_steps\StepInterface
-   *   The forms_steps step.
+   * @return \Drupal\forms_steps\StepInterface|null
+   *   The forms_steps step, or NULL if no steps are defined.
    */
-  public function getLastStep(string $steps = NULL): StepInterface;
+  public function getLastStep(?string $steps = NULL): ?StepInterface;
 
   /**
    * Retrieve the first step defined on a forms steps entity.
@@ -145,10 +145,10 @@ interface FormsStepsInterface extends ConfigEntityInterface {
    * @param string|null $steps
    *   The forms_steps steps' IDs.
    *
-   * @return \Drupal\forms_steps\StepInterface
-   *   The forms_steps step.
+   * @return \Drupal\forms_steps\StepInterface|null
+   *   The forms_steps step, or NULL if no steps are defined.
    */
-  public function getFirstStep(string $steps = NULL): StepInterface;
+  public function getFirstStep(?string $steps = NULL): ?StepInterface;
 
   /**
    * Gets a forms_steps step.
@@ -268,6 +268,19 @@ interface FormsStepsInterface extends ConfigEntityInterface {
    *   The forms_steps entity.
    */
   public function setStepUrl(string $step_id, string $url): FormsStepsInterface;
+
+  /**
+   * Sets a step's theme.
+   *
+   * @param string $step_id
+   *   The step ID to set the theme switching option for.
+   * @param bool $theme
+   *   The step's theme.
+   *
+   * @return \Drupal\forms_steps\StepInterface
+   *   The forms_steps entity.
+   */
+  public function setStepTheme($step_id, $theme);
 
   /**
    * Sets a step's submit label.

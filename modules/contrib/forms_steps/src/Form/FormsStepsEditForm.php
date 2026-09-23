@@ -37,10 +37,7 @@ class FormsStepsEditForm extends EntityForm {
   /**
    * Class constructor.
    */
-  public function __construct(
-    PathValidatorInterface $path_validator,
-    RouteProvider $route_provider
-  ) {
+  public function __construct(PathValidatorInterface $path_validator, RouteProvider $route_provider) {
     $this->pathValidator = $path_validator;
     $this->routeProvider = $route_provider;
   }
@@ -92,6 +89,7 @@ class FormsStepsEditForm extends EntityForm {
       'step' => $this->t('Step'),
       'form_id' => $this->t('Entity bundle'),
       'form_mode' => $this->t('Form mode'),
+      'theme' => $this->t('Theme'),
       'weight' => $this->t('Weight'),
       'operations' => $this->t('Operations'),
     ];
@@ -128,6 +126,9 @@ class FormsStepsEditForm extends EntityForm {
     }
 
     foreach ($steps as $step) {
+      $theme = $step->theme() > -1 ? $step->theme() : $this->entity->getTheme();
+      $overridden = $step->theme() > -1 ? ' (' . $this->t('overridden') . ')' : '';
+
       $links = [
         'edit' => [
           'title' => $this->t('Edit'),
@@ -148,11 +149,13 @@ class FormsStepsEditForm extends EntityForm {
           'attributes' => ['aria-label' => $this->t('Delete @step step', ['@step' => $step->label()])],
         ];
       }
+      $options = \Drupal::service('forms_steps.helper')->getThemes();
       $form['steps_container']['steps'][$step->id()] = [
         '#attributes' => ['class' => ['draggable']],
         'step' => ['#markup' => $step->label()],
         'form_id' => ['#markup' => $step->EntityBundle()],
         'form_mode' => ['#markup' => $step->formMode()],
+        'theme' => ['#markup' => $options[$theme] . $overridden],
         '#weight' => $step->weight(),
         'weight' => [
           '#type' => 'weight',
@@ -369,6 +372,19 @@ class FormsStepsEditForm extends EntityForm {
       ],
     ];
 
+    $options = \Drupal::service('forms_steps.helper')->getThemes();
+    unset($options[-1]);
+    $form['settings']['theme'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Theme'),
+      '#options' => $options,
+      '#description' => $this->t(
+        'Control which roles can "View the administration theme" on the <a href=":permissions">Permissions page.</a>',
+          [':permissions' => Url::fromRoute('user.admin_permissions')->toString()]
+      ),
+      '#default_value' => $this->entity->getTheme(),
+    ];
+
     $form['settings']['description'] = [
       '#type' => 'textarea',
       '#default_value' => $forms_steps->getDescription(),
@@ -402,6 +418,7 @@ class FormsStepsEditForm extends EntityForm {
     // for each step.
     /** @var \Drupal\forms_steps\FormsStepsInterface $entity */
     $values = $form_state->getValues();
+
     $entity->set('label', $values['label']);
     $entity->set('id', $values['id']);
     $entity->set('description', $values['description']);
@@ -409,6 +426,7 @@ class FormsStepsEditForm extends EntityForm {
     $entity->set('progress_steps_links_saved_only_next', $values['progress_steps_links_saved_only_next']);
     $entity->set('redirection_policy', $values['redirection_policy']);
     $entity->set('redirection_target', $values['redirection_target']);
+    $entity->set('theme', $values['theme']);
 
     if (!empty($values['steps'])) {
       foreach ($values['steps'] as $step_id => $step_values) {
@@ -433,6 +451,9 @@ class FormsStepsEditForm extends EntityForm {
     $form_state->setRedirectUrl($this->entity->toUrl('edit-form'));
 
     $this->messenger()->addMessage($this->t('Forms Steps %label has been updated.', ['%label' => $this->entity->label()]));
+
+    // Rebuild all routes to ensure the _admin_route option is properly set on Forms Steps routes.
+    \Drupal::service('router.builder')->rebuild();
   }
 
   /**

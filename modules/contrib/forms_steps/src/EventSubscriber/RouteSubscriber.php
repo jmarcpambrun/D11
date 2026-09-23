@@ -111,13 +111,12 @@ class RouteSubscriber extends RouteSubscriberBase {
       ->loadMultiple($entity_ids);
 
     $route_options = [];
-    if ($this->configFactory->get('node.settings')->get('use_admin_theme')) {
-      $route_options['_admin_route'] = TRUE;
-    }
 
     /** @var \Drupal\forms_steps\Entity\FormsSteps $form_steps */
     foreach ($forms_steps as $form_steps) {
       foreach ($form_steps->getSteps() as $step) {
+        $route_options['_admin_route'] = $step->theme() > -1 ? $step->theme() : $form_steps->getTheme();
+
         $route = new Route(
           $step->url() . '/{instance_id}',
           [
