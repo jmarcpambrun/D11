@@ -58,7 +58,7 @@ action.configuration.eca_views_query:
   label: 'Configuration for the "Views Query" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     view_id:
       type: string
@@ -88,7 +88,7 @@ action.configuration.eca_views_export:
       type: boolean
       label: 'Store results also in a token?'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     view_id:
       type: string

@@ -114,7 +114,7 @@ eca.event.plugin.content_entity:reference_selection:
       type: string
       label: 'Restrict by field (machine name)'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Token name holding the selection'
 
 eca.event.plugin.content_entity:options_selection:
@@ -125,7 +125,7 @@ eca.event.plugin.content_entity:options_selection:
       type: string
       label: 'Restrict by field (machine name)'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Token name holding the selection'
 
 eca.condition.plugin.eca_entity_field_is_accessible:
@@ -200,7 +200,7 @@ eca.condition.plugin.eca_entity_diff:
   label: 'Entity Diff'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     compare_token_name:
       type: string
@@ -388,7 +388,7 @@ action.configuration.eca_clone_entity:
   label: 'Configuration for the "Clone Entity" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     label:
       type: string
@@ -411,7 +411,7 @@ action.configuration.eca_diff_entity:
       type: boolean
       label: 'Return values'
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     compare_token_name:
       type: string
@@ -439,7 +439,7 @@ action.configuration.eca_new_entity:
   label: 'Configuration for the "New Entity" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     type:
       type: string
@@ -474,7 +474,7 @@ action.configuration.eca_get_default_field_value:
       type: string
       label: 'Field name'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     object:
       type: string
@@ -488,7 +488,7 @@ action.configuration.eca_get_field_value:
       type: string
       label: 'Field name'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     object:
       type: string
@@ -499,7 +499,7 @@ action.configuration.eca_get_bundle_list:
   label: 'Configuration for the "Get Bundle List" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     type:
       type: string
@@ -520,7 +520,7 @@ action.configuration.eca_get_entity_type_list:
   label: 'Configuration for the "Get Entity Type List" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     mode:
       type: string
@@ -535,7 +535,7 @@ action.configuration.eca_token_load_entity:
   label: 'Configuration for the "Token Load Entity" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     from:
       type: string
@@ -585,7 +585,7 @@ action.configuration.eca_token_load_entity_ref:
       type: string
       label: 'Field name entity reference'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     from:
       type: string
@@ -737,7 +737,7 @@ action.configuration.eca_list_remove_entity:
   label: 'Configuration for the "List Remove Entity" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     method:
       type: string
@@ -775,7 +775,7 @@ action.configuration.eca_trigger_content_entity_custom_event:
       type: string
       label: 'Event ID'
     tokens:
-      type: text
+      type: eca.token_list
       label: 'Tokens to forward'
     object:
       type: string

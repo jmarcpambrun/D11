@@ -30,9 +30,9 @@ class GetActiveThemeTest extends RenderActionsTestBase {
       $build = $event->getRenderArray();
     });
 
-    \Drupal::service('theme.manager')->setActiveTheme(\Drupal::service('theme.initialization')->getActiveThemeByName('olivero'));
+    \Drupal::service('theme.manager')->setActiveTheme(\Drupal::service('theme.initialization')->getActiveThemeByName('stark'));
     $this->dispatchBasicRenderEvent([]);
-    $this->assertEquals('olivero', $this->tokenService->replaceClear('[theme_name]'));
+    $this->assertEquals('stark', $this->tokenService->replaceClear('[theme_name]'));
   }
 
 }

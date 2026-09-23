@@ -322,7 +322,7 @@ action.configuration.eca_render_file_contents:
             - 'string:raw'
         NotBlank: []
     token_mime_type:
-      type: label
+      type: eca.token_name
       label: 'Token name for MIME type'
 
 action.configuration.eca_render_text:filter:

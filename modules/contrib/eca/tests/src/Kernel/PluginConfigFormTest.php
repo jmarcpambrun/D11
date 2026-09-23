@@ -33,6 +33,7 @@ class PluginConfigFormTest extends KernelTestBase {
     'views',
     'workflows',
     'content_moderation',
+    'migrate',
     'eca',
     'eca_base',
     'eca_cache',

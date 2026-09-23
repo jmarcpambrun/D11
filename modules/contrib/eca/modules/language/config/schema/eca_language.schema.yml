@@ -7,7 +7,7 @@ action.configuration.eca_get_current_langcode:
   label: 'Configuration for the "Get Current Langcode" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_set_current_langcode:

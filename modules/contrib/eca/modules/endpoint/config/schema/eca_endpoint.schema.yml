@@ -517,7 +517,7 @@ action.configuration.eca_endpoint_get_query_parameter:
       type: string
       label: 'Query parameter name'
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_client_ip:
@@ -525,7 +525,7 @@ action.configuration.eca_endpoint_get_client_ip:
   label: 'Configuration for the "Endpoint Get Client IP" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_request_content:
@@ -533,7 +533,7 @@ action.configuration.eca_endpoint_get_request_content:
   label: 'Configuration for the "Endpoint Get Request Content" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_request_content_type:
@@ -541,7 +541,7 @@ action.configuration.eca_endpoint_get_request_content_type:
   label: 'Configuration for the "Endpoint Get Request Content Type" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_request_header:
@@ -552,7 +552,7 @@ action.configuration.eca_endpoint_get_request_header:
       type: string
       label: 'Header name'
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_request_method:
@@ -560,7 +560,7 @@ action.configuration.eca_endpoint_get_request_method:
   label: 'Configuration for the "Endpoint Get Request Method" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_path_argument:
@@ -571,7 +571,7 @@ action.configuration.eca_endpoint_get_path_argument:
       type: integer
       label: 'Index position'
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_get_request_uri:
@@ -579,7 +579,7 @@ action.configuration.eca_endpoint_get_request_uri:
   label: 'Configuration for the "Endpoint Get Request URI" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_endpoint_set_response_content:

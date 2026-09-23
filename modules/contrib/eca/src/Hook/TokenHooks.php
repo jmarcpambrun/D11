@@ -12,7 +12,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\TypedData\ComplexDataInterface;
 use Drupal\Core\TypedData\ListInterface;
+use Drupal\Core\TypedData\PrimitiveInterface;
 use Drupal\Core\TypedData\TraversableTypedDataInterface;
 use Drupal\Core\TypedData\TypedDataInterface;
 use Drupal\Core\Utility\Token;
@@ -306,14 +308,22 @@ class TokenHooks {
    * The order of the checks matters: a stringable object wins over the entity
    * ID, so that entities implementing __toString() keep rendering through it.
    *
+   * Typed data values are resolved through their own ::getString() method.
+   * This deliberately only covers primitives, complex data and lists, and not
+   * TypedDataInterface as a whole: the "any" data type accepts arrays, and
+   * \Drupal\Core\TypedData\TypedData::getString() casts the raw value with
+   * (string), which would emit an "array to string conversion" notice. Do not
+   * simplify these three checks into a single TypedDataInterface check.
+   *
    * @param mixed $value
    *   The value that a root-level token resolved to.
    *
    * @return string
    *   The string form of the value, or an empty string if the value cannot be
    *   expressed as a token replacement at all. That covers NULL, arrays,
-   *   FALSE, objects without a string representation, and entities that have
-   *   no ID yet because they were never saved.
+   *   FALSE, objects without a string representation - including typed data
+   *   holding an arbitrary value - and entities that have no ID yet because
+   *   they were never saved.
    */
   private function rootTokenValueToString(mixed $value): string {
     if (is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
@@ -321,6 +331,9 @@ class TokenHooks {
     }
     if ($value instanceof EntityInterface) {
       return (string) $value->id();
+    }
+    if ($value instanceof PrimitiveInterface || $value instanceof ComplexDataInterface || $value instanceof ListInterface) {
+      return (string) $value->getString();
     }
     return '';
   }

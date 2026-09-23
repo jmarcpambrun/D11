@@ -78,7 +78,7 @@ trait FormFieldPluginTrait {
     $form['field_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Field name'),
-      '#description' => $this->t('The input name of the form field. This is mostly found in the "name" attribute of an &lt;input&gt; form element. <em>For submit buttons within content forms:</em> Use "submit" for the labeled "Save" button, and "preview" for the labeled "Preview" button.'),
+      '#description' => $this->t('The input name of the form field. This is mostly found in the "name" attribute of an &lt;input&gt; form element. <em>For submit buttons within content forms:</em> Use "submit" for the labeled "Save" button, and "preview" for the labeled "Preview" button. <em>For values nested within a form element:</em> Separate the nesting levels with a dot (or alternatively with a colon), for example "field_myfield.0.value" to address the value of the first item of a field widget.'),
       '#default_value' => $this->configuration['field_name'],
       '#required' => TRUE,
       '#weight' => -50,
@@ -268,9 +268,9 @@ trait FormFieldPluginTrait {
     }
     unset($element);
 
-    // Although not officially supported, try to get a target element using
-    // either "." or ":" as a separator for nested form elements. The official
-    // separator format is "][", which will be used for another try here.
+    // Both "." and ":" are supported separators for nested form elements.
+    // They get normalized to "][", which is the separator format used by
+    // Drupal's form API, and that normalized name is used for another try.
     // Not replacing "." and ":" at once, because there may be nested forms
     // making use of both (e.g. "configuration.plugin.type:id").
     $field_name = $this->configuration['field_name'];
@@ -436,9 +436,9 @@ trait FormFieldPluginTrait {
     }
 
     if (!$found) {
-      // Although not officially supported, try to get a submitted value using
-      // either "." or ":" as a separator for nested form elements. The official
-      // separator format is "][", which will be used for another try here.
+      // Both "." and ":" are supported separators for nested form elements.
+      // They get normalized to "][", which is the separator format used by
+      // Drupal's form API, and that normalized name is used for another try.
       // Not replacing "." and ":" at once, because there may be nested forms
       // making use of both (e.g. "configuration.plugin.type:id").
       $field_name = $this->configuration['field_name'];

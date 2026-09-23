@@ -21,7 +21,7 @@ class SetActiveThemeTest extends RenderActionsTestBase {
   public function testSetActiveTheme(): void {
     /** @var \Drupal\eca_render\Plugin\Action\SetActiveTheme $action */
     $action = $this->actionManager->createInstance('eca_set_active_theme', [
-      'theme_name' => 'claro',
+      'theme_name' => 'starterkit_theme',
     ]);
 
     $this->eventDispatcher->addListener(RenderBasicsEvents::BASIC, function (BasicRenderEvent $event) use (&$action, &$build) {
@@ -30,9 +30,9 @@ class SetActiveThemeTest extends RenderActionsTestBase {
       $build = $event->getRenderArray();
     });
 
-    \Drupal::service('theme.manager')->setActiveTheme(\Drupal::service('theme.initialization')->getActiveThemeByName('olivero'));
+    \Drupal::service('theme.manager')->setActiveTheme(\Drupal::service('theme.initialization')->getActiveThemeByName('stark'));
     $this->dispatchBasicRenderEvent([]);
-    $this->assertEquals('claro', \Drupal::theme()->getActiveTheme()->getName());
+    $this->assertEquals('starterkit_theme', \Drupal::theme()->getActiveTheme()->getName());
   }
 
 }

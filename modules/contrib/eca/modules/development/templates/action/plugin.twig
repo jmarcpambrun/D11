@@ -38,7 +38,7 @@ class {{ class }} extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function execute({% if type %}${{ type }} = NULL{% endif %}): void {
+  public function execute({% if type %}${{ type }} = NULL{% else %}?object $object = NULL{% endif %}): void {
     // @todo implement the required action.
   }
 

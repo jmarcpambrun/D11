@@ -30,7 +30,7 @@ action.configuration.eca_enqueue_task:
       type: string
       label: 'Task value (optional)'
     tokens:
-      type: text
+      type: eca.token_list
       label: 'Tokens to forward'
 
 action.configuration.eca_enqueue_task_delayed:
@@ -55,5 +55,5 @@ action.configuration.eca_enqueue_task_delayed:
       type: string
       label: 'Task value (optional)'
     tokens:
-      type: text
+      type: eca.token_list
       label: 'Tokens to forward'

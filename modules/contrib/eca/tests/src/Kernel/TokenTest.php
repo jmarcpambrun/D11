@@ -5,6 +5,7 @@ namespace Drupal\Tests\eca\Kernel;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\TypedData\DataDefinition;
 use Drupal\Core\TypedData\ListDataDefinition;
 use Drupal\Core\TypedData\Plugin\DataType\ItemList;
 use Drupal\KernelTests\KernelTestBase;
@@ -560,6 +561,62 @@ YAML;
     // Once saved, the entity resolves to its ID again.
     $node->save();
     $this->assertEquals((string) $node->id(), $token_services->replace('[unsaved]'));
+  }
+
+  /**
+   * Tests root-level tokens that address a nested path with dot notation.
+   *
+   * A token without a colon is ignored by the token scanner of Drupal core,
+   * so ECA resolves [mytoken.some.path] on its own as a root-level token. The
+   * value that such a path resolves to is a typed data object in almost every
+   * case, and it must render exactly like the equivalent colon spelling
+   * [mytoken:some:path] does.
+   *
+   * @see \Drupal\eca\Hook\TokenHooks::rootTokenValueToString()
+   * @see \Drupal\eca\Token\TokenDecoratorTrait::scanRootLevelTokens()
+   * @see \Drupal\eca\Token\TokenDecoratorTrait::normalizeKey()
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  public function testRootLevelTokenDotNotation(): void {
+    /** @var \Drupal\eca\Token\TokenInterface $token_services */
+    $token_services = \Drupal::service('eca.token_services');
+
+    // A flat DTO property, which holds a string primitive.
+    $token_services->addTokenData('foo', ['bar' => 'baz']);
+    $this->assertEquals('baz', $token_services->replace('[foo:bar]'));
+    $this->assertEquals('baz', $token_services->replace('[foo.bar]'));
+    $this->assertEquals($token_services->replace('[foo:bar]'), $token_services->replace('[foo.bar]'), 'Both spellings of the same path must render the same value.');
+
+    // A nested numeric path, like the value of a submitted managed file form
+    // field, which ends up in an integer primitive.
+    $token_services->addTokenData('pdf', [0 => ['fids' => [123], 'display' => 1]]);
+    $this->assertEquals('123', $token_services->replace('[pdf:0:fids:0]'));
+    $this->assertEquals('123', $token_services->replace('[pdf.0.fids.0]'));
+    $this->assertEquals($token_services->replace('[pdf:0:fids:0]'), $token_services->replace('[pdf.0.fids.0]'), 'Both spellings of the same path must render the same value.');
+
+    // An entity field, which resolves to a field item list.
+    $this->createContentType(['type' => 'article', 'name' => 'Article']);
+    $title = $this->randomMachineName(16);
+    /** @var \Drupal\node\NodeInterface $node */
+    $node = Node::create([
+      'type' => 'article',
+      'tnid' => 0,
+      'uid' => 0,
+      'status' => 1,
+      'title' => $title,
+    ]);
+    $node->save();
+    $token_services->addTokenData('mynode', $node);
+    $this->assertEquals($title, $token_services->replace('[mynode:title]'));
+    $this->assertEquals($title, $token_services->replace('[mynode.title]'));
+    $this->assertEquals($token_services->replace('[mynode:title]'), $token_services->replace('[mynode.title]'), 'Both spellings of the same path must render the same value.');
+
+    // Values that have no string form at all must still yield no replacement,
+    // and above all must not raise an "array to string conversion" notice.
+    $this->assertEquals('[plainArray]', $token_services->replace('[plainArray]', ['plainArray' => [1, 2, 3]]));
+    $any = \Drupal::typedDataManager()->create(DataDefinition::create('any'), ['key' => 'value']);
+    $this->assertEquals('[anyData]', $token_services->replace('[anyData]', ['anyData' => $any]));
   }
 
 }

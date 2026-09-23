@@ -69,7 +69,7 @@ abstract class RenderActionsTestBase extends KernelTestBase {
   public function setUp(): void {
     parent::setUp();
 
-    $this->container->get('theme_installer')->install(['claro', 'olivero']);
+    $this->container->get('theme_installer')->install(['stark', 'starterkit_theme']);
 
     $this->installEntitySchema('user');
     $this->installEntitySchema('node');

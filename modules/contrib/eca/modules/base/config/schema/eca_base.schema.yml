@@ -19,7 +19,7 @@ eca.event.plugin.eca_base:eca_token_generate:
   label: 'ECA Token Generate'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 eca.condition.plugin.eca_state:
@@ -99,7 +99,7 @@ eca.condition.plugin.eca_token_exists:
   label: 'Token exists condition'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 eca.condition.plugin.eca_scalar:
@@ -176,7 +176,7 @@ action.configuration.eca_keyvalueexpirablestore_read:
       type: string
       label: 'Store key'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_keyvalueexpirablestore_write:
@@ -227,7 +227,7 @@ action.configuration.eca_keyvaluestore_read:
       type: string
       label: 'Store key'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_keyvaluestore_write:
@@ -295,10 +295,8 @@ action.configuration.eca_list_compare:
           - array_diff
           - array_intersect
     result_token_name:
-      type: label
+      type: eca.token_name.required
       label: 'Name of result token'
-      constraints:
-        NotBlank: []
     list_token:
       type: string
       label: 'Token containing the primary list'
@@ -310,7 +308,7 @@ action.configuration.eca_count:
   label: 'Configuration for the "Count" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     list_token:
       type: string
@@ -346,7 +344,7 @@ action.configuration.eca_list_remove:
       type: text
       label: 'Value to remove'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     method:
       type: string
@@ -391,7 +389,7 @@ action.configuration.eca_list_sort:
           - natsort
           - natcasesort
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     list_token:
       type: string
@@ -415,7 +413,7 @@ action.configuration.eca_lock_acquire:
       type: boolean
       label: 'Wait for lock until timeout exceeded'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_state_read:
@@ -426,7 +424,7 @@ action.configuration.eca_state_read:
       type: string
       label: 'State key'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_state_write:
@@ -468,7 +466,7 @@ action.configuration.eca_privatetempstore_read:
       type: string
       label: 'Store key'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_privatetempstore_write:
@@ -525,7 +523,7 @@ action.configuration.eca_sharedtempstore_read:
       type: string
       label: 'Store key'
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
 
 action.configuration.eca_sharedtempstore_write:
@@ -553,7 +551,7 @@ action.configuration.eca_token_replace:
   label: 'Configuration for the "Token Replace" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     token_value:
       type: text
@@ -575,7 +573,7 @@ action.configuration.eca_token_set_random_value:
   label: 'Configuration for the "Token Set Random Value" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     mode:
       type: string
@@ -608,7 +606,7 @@ action.configuration.eca_token_set_value:
   label: 'Configuration for the "Token Set Value" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     token_value:
       type: text
@@ -625,7 +623,7 @@ action.configuration.eca_translate:
   label: 'Configuration for the "Translate" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     value:
       type: text
@@ -652,7 +650,7 @@ action.configuration.eca_trigger_custom_event:
       type: string
       label: 'Event ID'
     tokens:
-      type: text
+      type: eca.token_list
       label: 'Tokens to forward'
 
 action.configuration.eca_void_and_condition:

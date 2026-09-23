@@ -167,7 +167,7 @@ action.configuration.eca_token_load_query_arg:
   label: 'Configuration for the "Token Load Query Arg" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     argument_name:
       type: string
@@ -178,7 +178,7 @@ action.configuration.eca_token_load_route_param:
   label: 'Configuration for the "Token Load Route Param" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     request:
       type: integer
@@ -198,7 +198,7 @@ action.configuration.eca_build_url_from_route:
   label: 'Configuration for the "Build URL from route" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     route_name:
       type: string

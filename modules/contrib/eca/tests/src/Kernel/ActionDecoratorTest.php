@@ -5,9 +5,12 @@ namespace Drupal\Tests\eca\Kernel;
 use Drupal\Core\Action\ActionManager;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\PluginManager\Action;
+use Drupal\eca\Service\Actions;
+use Drupal\eca\Token\TokenServices;
 use Drupal\eca_content\Plugin\Action\CoreFieldUpdateAction;
 use Drupal\eca_content\Plugin\Action\SetFieldValue;
 use Drupal\eca_test_array\Plugin\Action\ArrayWrite;
+use Drupal\eca_test_circular_dependency\Hook\EntityTypeBuildHooks;
 use Drupal\node\Plugin\Action\DemoteNode;
 use Drupal\node\Plugin\Action\PromoteNode;
 use Drupal\node\Plugin\Action\StickyNode;
@@ -137,6 +140,34 @@ class ActionDecoratorTest extends KernelTestBase {
     $this->assertSame(SetFieldValue::class, $unfiltered_definitions['eca_set_field_value']['class']);
     $this->assertArrayNotHasKey('eca_original_class', $unfiltered_definitions['eca_set_field_value']);
     $this->assertArrayNotHasKey('eca_set_field_value', $action_manager->getDefinitions());
+  }
+
+  /**
+   * Tests that constructing ECA services does not build entity types.
+   *
+   * A hook_entity_type_build() implementation may depend on an ECA service. If
+   * that service built entity types while it is constructed, the
+   * implementation would be requested from inside its own construction. The
+   * guard covers the action manager decorator, the action service and, through
+   * eca.token_services, every ECA token data provider. The recorded class
+   * names also prove that the hook really ran: if it did not, the key value
+   * entries would be NULL and no assertion would pass.
+   */
+  public function testConstructionDoesNotBuildEntityTypes(): void {
+    $this->enableModules(['eca_test_circular_dependency']);
+    // The circular reference only shows while the injected ECA services have
+    // not been constructed yet, because the hook class is what constructs
+    // them.
+    $this->assertFalse($this->container->initialized('plugin.manager.eca.action'));
+    $this->assertFalse($this->container->initialized('eca.token_services'));
+    $this->assertFalse($this->container->initialized('eca.service.action'));
+    $entity_type_manager = $this->container->get('entity_type.manager');
+    $entity_type_manager->clearCachedDefinitions();
+    $entity_type_manager->getDefinitions();
+    $recorded = $this->container->get('keyvalue')->get(EntityTypeBuildHooks::COLLECTION);
+    $this->assertSame(Action::class, $recorded->get('action_manager'));
+    $this->assertSame(TokenServices::class, $recorded->get('token_services'));
+    $this->assertSame(Actions::class, $recorded->get('action_service'));
   }
 
 }

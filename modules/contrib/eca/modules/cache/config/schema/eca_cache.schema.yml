@@ -3,7 +3,7 @@ action.configuration.eca_cache_invalidate:
   label: 'Configuration for the "Cache Invalidate" action'
   mapping:
     tags:
-      type: text
+      type: eca.cache_tags
       label: 'Cache tags'
     backend:
       type: string
@@ -23,7 +23,7 @@ action.configuration.eca_cache_read:
   label: 'Configuration for the "Cache Read" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     backend:
       type: string
@@ -51,7 +51,7 @@ action.configuration.eca_cache_write:
       constraints:
         NotBlank: []
     tags:
-      type: text
+      type: eca.cache_tags
       label: 'Cache tags'
     use_yaml:
       type: boolean
@@ -82,7 +82,7 @@ action.configuration.eca_raw_cache_invalidate:
   label: 'Configuration for the "Raw Cache Invalidate" action'
   mapping:
     tags:
-      type: text
+      type: eca.cache_tags
       label: 'Cache tags'
 
 action.configuration.eca_raw_cache_read:
@@ -90,7 +90,7 @@ action.configuration.eca_raw_cache_read:
   label: 'Configuration for the "Raw Cache Read" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     backend:
       type: string
@@ -118,7 +118,7 @@ action.configuration.eca_raw_cache_write:
       constraints:
         NotBlank: []
     tags:
-      type: text
+      type: eca.cache_tags
       label: 'Cache tags'
     use_yaml:
       type: boolean

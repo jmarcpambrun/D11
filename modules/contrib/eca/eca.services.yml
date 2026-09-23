@@ -46,7 +46,6 @@ services:
     class: Drupal\eca\PluginManager\Action
     calls:
       - [setDecoratedActionManager, ['@plugin.manager.eca.action.inner']]
-      - [setEntityTypeManager, ['@entity_type.manager']]
 
   eca.service.action:
     class: Drupal\eca\Service\Actions
@@ -168,6 +167,7 @@ services:
   Drupal\Core\Logger\LoggerChannelInterface: '@logger.channel.eca'
   Drupal\eca\Event\TriggerEvent: '@eca.trigger_event'
   Drupal\eca\PluginManager\Action: '@plugin.manager.eca.action'
+  Drupal\eca\PluginManager\Condition: '@plugin.manager.eca.condition'
   Drupal\eca\Service\Actions: '@eca.service.action'
   Drupal\eca\Service\Conditions: '@eca.service.condition'
   Drupal\eca\Service\ContentEntityTypes: '@eca.service.content_entity_types'

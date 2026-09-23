@@ -188,7 +188,7 @@ abstract class StringComparisonBase extends ConditionBase {
     $form['operator'] = [
       '#type' => 'select',
       '#title' => $this->t('Comparison operator'),
-      '#description' => $this->t('The available comparison operators like <em>equals</em> or <em>less than</em>.'),
+      '#description' => $this->t('The available comparison operators like <em>equals</em> or <em>less than</em>. To check for an empty value, use <em>equals</em> and leave the second value blank; tick <em>Negate the condition</em> for the opposite. An unresolved token keeps its literal text and is never empty, so use the <em>Token: exists</em> condition when a token may be missing entirely.'),
       '#default_value' => $this->getOperator(),
       '#options' => $this->getOptions('operator'),
       '#weight' => -80,

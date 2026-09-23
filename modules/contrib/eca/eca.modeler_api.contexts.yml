@@ -55,6 +55,7 @@ eca_form:
         - eca_form_field_default_value
         - eca_form_field_disable
         - eca_form_field_get_default_value
+        - eca_form_field_get_files
         - eca_form_field_get_options
         - eca_form_field_get_value
         - eca_form_field_require

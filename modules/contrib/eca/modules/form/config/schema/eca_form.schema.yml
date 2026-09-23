@@ -215,7 +215,7 @@ action.configuration.eca_form_build_entity:
   label: 'Configuration for the "Form Build Entity" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_form_field_add_state:
@@ -271,7 +271,20 @@ action.configuration.eca_form_field_get_default_value:
   label: 'Configuration for the "Form Field Get Default Value" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
+      label: 'Name of token'
+    field_name:
+      type: string
+      label: 'Field name'
+      constraints:
+        NotBlank: []
+
+action.configuration.eca_form_field_get_files:
+  type: mapping
+  label: 'Configuration for the "Form Field Get Files" action'
+  mapping:
+    token_name:
+      type: eca.token_name.required
       label: 'Name of token'
     field_name:
       type: string
@@ -284,7 +297,7 @@ action.configuration.eca_form_field_get_options:
   label: 'Configuration for the "Form Field Get Options" action'
   mapping:
     token_name:
-      type: label
+      type: eca.token_name
       label: 'Name of token'
     field_name:
       type: string
@@ -297,7 +310,7 @@ action.configuration.eca_form_field_get_value:
   label: 'Configuration for the "Form Field Get Value" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     field_name:
       type: string
@@ -477,7 +490,7 @@ action.configuration.eca_form_state_get_property_value:
   label: 'Configuration for the "Form State Get Property Value" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
     property_name:
       type: string
@@ -739,7 +752,7 @@ action.configuration.eca_form_get_errors:
   label: 'Configuration for the "Form Get Errors" action'
   mapping:
     token_name:
-      type: required_label
+      type: eca.token_name.required
       label: 'Name of token'
 
 action.configuration.eca_form_set_action:

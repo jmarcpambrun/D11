@@ -105,6 +105,7 @@ tnid
 translationcreate
 translationdelete
 translationinsert
+uninstantiable
 updatedb
 viewmodealter
 webform

@@ -14,8 +14,11 @@ use Drupal\eca_form\Event\FormEvents;
 use Drupal\eca_form\Event\FormProcess;
 use Drupal\eca_form\Event\FormSubmit;
 use Drupal\eca_form\Event\FormValidate;
+use Drupal\eca_form\Plugin\Action\FormFieldGetFiles;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
@@ -42,6 +45,7 @@ class FormActionsTest extends KernelTestBase {
     'system',
     'user',
     'field',
+    'file',
     'filter',
     'text',
     'options',
@@ -1644,6 +1648,240 @@ YAML;
 
     $this->assertTrue($valid_access, 'Valid YAML is allowed.');
     $this->assertFalse($invalid_access, 'Malformed YAML is forbidden.');
+  }
+
+  /**
+   * Tests "eca_form_field_get_files" with a single-value file field.
+   *
+   * The plain field name is all the configuration needs: no delta and no
+   * widget internal "fids" key, and the resulting token directly holds the
+   * file entity.
+   */
+  public function testFormFieldGetFilesSingleValue(): void {
+    $this->setUpFileField('field_file_single', 1);
+    $file = $this->createUploadedFile('single.txt');
+
+    /** @var \Drupal\eca_form\Plugin\Action\FormFieldGetFiles $action */
+    $action = $this->actionManager->createInstance('eca_form_field_get_files', [
+      'field_name' => 'field_file_single',
+      'token_name' => 'uploaded',
+    ]);
+
+    $access_result = $this->executeGetFilesOnSubmit($action, [
+      'field_file_single' => [
+        0 => [
+          'fids' => [(int) $file->id()],
+          'display' => 1,
+          'description' => '',
+        ],
+      ],
+    ]);
+
+    $this->assertTrue($access_result);
+    $this->assertEquals($file->id(), $this->tokenService->replaceClear('[uploaded:fid]'));
+    $this->assertEquals($file->getFilename(), $this->tokenService->replaceClear('[uploaded:name]'));
+  }
+
+  /**
+   * Tests "eca_form_field_get_files" with a multi-value file field.
+   */
+  public function testFormFieldGetFilesMultiValue(): void {
+    $this->setUpFileField('field_file_multi', 3);
+    $first = $this->createUploadedFile('first.txt');
+    $second = $this->createUploadedFile('second.txt');
+
+    /** @var \Drupal\eca_form\Plugin\Action\FormFieldGetFiles $action */
+    $action = $this->actionManager->createInstance('eca_form_field_get_files', [
+      'field_name' => 'field_file_multi',
+      'token_name' => 'uploaded',
+    ]);
+
+    $access_result = $this->executeGetFilesOnSubmit($action, [
+      'field_file_multi' => [
+        0 => ['fids' => [(int) $first->id()], 'display' => 1, 'description' => ''],
+        1 => ['fids' => [(int) $second->id()], 'display' => 1, 'description' => ''],
+      ],
+    ], [], [
+      'field_file_multi' => [
+        ['target_id' => $first->id()],
+        ['target_id' => $second->id()],
+      ],
+    ]);
+
+    $this->assertTrue($access_result);
+    $this->assertEquals($first->id(), $this->tokenService->replaceClear('[uploaded:0:fid]'));
+    $this->assertEquals($second->id(), $this->tokenService->replaceClear('[uploaded:1:fid]'));
+    // A multi-value field always keeps the list, even for a single upload, so
+    // that the token stays predictable for the site builder.
+    $this->assertEquals('', $this->tokenService->replaceClear('[uploaded:fid]'));
+  }
+
+  /**
+   * Tests "eca_form_field_get_files" without any uploaded file.
+   *
+   * Nothing gets stored, so that a "Token: exists" condition can be used to
+   * find out whether the field is populated.
+   */
+  public function testFormFieldGetFilesWithoutUpload(): void {
+    $this->setUpFileField('field_file_single', 1);
+
+    /** @var \Drupal\eca_form\Plugin\Action\FormFieldGetFiles $action */
+    $action = $this->actionManager->createInstance('eca_form_field_get_files', [
+      'field_name' => 'field_file_single',
+      'token_name' => 'uploaded',
+    ]);
+
+    $access_result = $this->executeGetFilesOnSubmit($action);
+
+    $this->assertTrue($access_result);
+    $this->assertFalse($this->tokenService->hasTokenData('uploaded'));
+  }
+
+  /**
+   * Tests "eca_form_field_get_files" with file IDs from raw user input.
+   *
+   * A browser submits the file IDs of a managed file element as a single
+   * space-separated string, which only gets converted into an array of
+   * integers once the form element processed that input.
+   *
+   * @see \Drupal\file\Element\ManagedFile::valueCallback()
+   */
+  public function testFormFieldGetFilesFromUserInput(): void {
+    $this->setUpFileField('field_file_multi', 3);
+    $first = $this->createUploadedFile('first.txt');
+    $second = $this->createUploadedFile('second.txt');
+
+    /** @var \Drupal\eca_form\Plugin\Action\FormFieldGetFiles $action */
+    $action = $this->actionManager->createInstance('eca_form_field_get_files', [
+      'field_name' => 'field_file_multi',
+      'token_name' => 'uploaded',
+    ]);
+
+    $access_result = $this->executeGetFilesOnSubmit($action, [], [
+      'field_file_multi' => [
+        0 => ['fids' => $first->id() . ' ' . $second->id()],
+      ],
+    ], [
+      'field_file_multi' => [
+        ['target_id' => $first->id()],
+      ],
+    ]);
+
+    $this->assertTrue($access_result);
+    $this->assertEquals($first->id(), $this->tokenService->replaceClear('[uploaded:0:fid]'));
+    $this->assertEquals($second->id(), $this->tokenService->replaceClear('[uploaded:1:fid]'));
+  }
+
+  /**
+   * Creates a file field on the article content type.
+   *
+   * @param string $field_name
+   *   The name of the field to create.
+   * @param int $cardinality
+   *   The storage cardinality of the field.
+   */
+  protected function setUpFileField(string $field_name, int $cardinality): void {
+    $this->installEntitySchema('file');
+    FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'type' => 'file',
+      'entity_type' => 'node',
+      'cardinality' => $cardinality,
+    ])->save();
+    FieldConfig::create([
+      'field_name' => $field_name,
+      'label' => 'A file field.',
+      'entity_type' => 'node',
+      'bundle' => 'article',
+    ])->save();
+    $form_display = EntityFormDisplay::load('node.article.default');
+    $form_display->setComponent($field_name, ['type' => 'file_generic']);
+    $form_display->save();
+  }
+
+  /**
+   * Creates a file entity, as an upload would have left it behind.
+   *
+   * @param string $filename
+   *   The name of the file.
+   *
+   * @return \Drupal\file\FileInterface
+   *   The saved file entity.
+   */
+  protected function createUploadedFile(string $filename): FileInterface {
+    $file = File::create([
+      'uri' => 'public://' . $filename,
+      'filename' => $filename,
+      'filemime' => 'text/plain',
+    ]);
+    $file->setPermanent();
+    $file->save();
+    return $file;
+  }
+
+  /**
+   * Submits the article form and executes the given action on submit.
+   *
+   * The submitted values are being injected within the submit event, because
+   * \Drupal\file\Element\ManagedFile::valueCallback() would otherwise process
+   * them once more as if they were raw user input.
+   *
+   * @param \Drupal\eca_form\Plugin\Action\FormFieldGetFiles $action
+   *   The action to execute.
+   * @param array $values
+   *   The processed form values to inject.
+   * @param array $user_input
+   *   The raw user input to inject. The according form values are being
+   *   removed, as that is the state of a form that was not yet processed.
+   * @param array $entity_values
+   *   Field values for the node the form gets built for. A multi-value file
+   *   widget needs at least one existing item, as core does not build an
+   *   empty upload row for a programmatically submitted form.
+   *   @see \Drupal\file\Plugin\Field\FieldWidget\FileWidget::formMultipleElements()
+   *
+   * @return bool
+   *   The access result of the action.
+   */
+  protected function executeGetFilesOnSubmit(FormFieldGetFiles $action, array $values = [], array $user_input = [], array $entity_values = []): bool {
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = \Drupal::service('event_dispatcher');
+    $form_builder = \Drupal::formBuilder();
+    // Reading the properties of a file entity requires a user who is allowed
+    // to view it, both for the action itself and for the token replacement
+    // of the resulting file tokens.
+    $this->container->get('current_user')->setAccount(User::load(1));
+
+    $access_result = NULL;
+    $event_dispatcher->addListener(FormEvents::SUBMIT, function (FormSubmit $event) use (&$access_result, $action, $values, $user_input) {
+      $form_state = $event->getFormState();
+      if ($values) {
+        $form_state->setValues($values + $form_state->getValues());
+      }
+      if ($user_input) {
+        $form_state->setValues(array_diff_key($form_state->getValues(), $user_input));
+        $form_state->setUserInput($user_input + $form_state->getUserInput());
+      }
+      $action->setEvent($event);
+      $access_result = $access_result ?? $action->access(NULL);
+      if ($action->access(NULL)) {
+        $action->execute();
+      }
+    });
+
+    $form_object = \Drupal::entityTypeManager()->getFormObject('node', 'default');
+    $form_object->setEntity(Node::create([
+      'type' => 'article',
+      'title' => 'A node with uploads',
+    ] + $entity_values));
+    // The form only gets submitted, without building it upfront: a programmed
+    // submission takes the form values as its user input, and core's managed
+    // file element would then try to process the already processed file IDs
+    // of a built form once more.
+    // @see \Drupal\file\Element\ManagedFile::valueCallback()
+    $form_state = new FormState();
+    $form_builder->submitForm($form_object, $form_state);
+
+    return (bool) $access_result;
   }
 
 }

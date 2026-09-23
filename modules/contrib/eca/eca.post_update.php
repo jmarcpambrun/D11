@@ -274,3 +274,86 @@ function eca_post_update_migrate_to_v3(): string {
     ? 'No ECA models needed to be handed over to the Modeler API.'
     : sprintf('Handed %d ECA model(s) over to the Modeler API: %s.', count($migrated), implode(', ', $migrated));
 }
+
+/**
+ * Drops the translated copies of the technical identifiers of ECA models.
+ *
+ * Token names, forwarded token lists and cache tags used to be typed as
+ * "label" or "text", which offered them for translation. A translator who
+ * edited one of them there wrote a per-language copy that silently changed
+ * what the model does in that language. The schema no longer offers those
+ * keys, but an override written while it did is still stored and still wins at
+ * runtime, so it is removed here and the model falls back to its source value.
+ *
+ * Language overrides live in the "language.<langcode>" collections of the
+ * active configuration storage, which is read directly: an override left
+ * behind by a language that has since been removed has to be cleaned up too.
+ * Only the affected keys are unset, so translated labels of the same model
+ * survive.
+ *
+ * @return string
+ *   The message about which language overrides have been corrected.
+ *
+ * @see https://git.drupalcode.org/project/eca/-/work_items/3590455
+ */
+function eca_post_update_drop_translated_technical_identifiers(): string {
+  $identifiers = [
+    'token_name',
+    'result_token_name',
+    'token_mime_type',
+    'tokens',
+    'tags',
+  ];
+  $storage = \Drupal::service('config.storage');
+  $corrected = [];
+
+  foreach ($storage->getAllCollectionNames() as $collection) {
+    if (!str_starts_with($collection, 'language.')) {
+      continue;
+    }
+    $overrides = $storage->createCollection($collection);
+    foreach ($overrides->listAll('eca.eca.') as $name) {
+      $data = $overrides->read($name);
+      $changed = FALSE;
+      foreach (['events', 'conditions', 'actions'] as $componentType) {
+        foreach (array_keys($data[$componentType] ?? []) as $id) {
+          foreach ($identifiers as $identifier) {
+            if (array_key_exists($identifier, $data[$componentType][$id]['configuration'] ?? [])) {
+              unset($data[$componentType][$id]['configuration'][$identifier]);
+              $changed = TRUE;
+            }
+          }
+          // Leave no empty remains behind: an override that only carried a
+          // technical identifier has nothing left to say about the model.
+          if (($data[$componentType][$id]['configuration'] ?? NULL) === []) {
+            unset($data[$componentType][$id]['configuration']);
+          }
+          if ($data[$componentType][$id] === []) {
+            unset($data[$componentType][$id]);
+          }
+        }
+        if (($data[$componentType] ?? NULL) === []) {
+          unset($data[$componentType]);
+        }
+      }
+      if (!$changed) {
+        continue;
+      }
+      if ($data === []) {
+        $overrides->delete($name);
+      }
+      else {
+        $overrides->write($name, $data);
+      }
+      $corrected[] = $collection . ':' . $name;
+    }
+  }
+
+  if ($corrected !== []) {
+    \Drupal::configFactory()->reset();
+  }
+
+  return $corrected === []
+    ? 'No translated ECA model contained a technical identifier.'
+    : sprintf('Removed technical identifiers from %d translated ECA model(s): %s.', count($corrected), implode(', ', $corrected));
+}

@@ -80,6 +80,11 @@ eca:
       eca_form_field_get_default_value:
         - type: start
           id: form:form_build
+      eca_form_field_get_files:
+        - type: start
+          id: form:form_submit
+        - type: start
+          id: form:form_validate
       eca_form_field_get_options:
         - type: start
           id: form:form_build
