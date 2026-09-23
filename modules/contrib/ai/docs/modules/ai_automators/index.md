@@ -9,7 +9,11 @@ depending on your specific needs.
 1. The AI Core module needs to be installed and configured with a working AI
    Provider.
 2. The [Token module](https://www.drupal.org/project/token) is required to
-   assist with using tokens in prompt-based AI Automators.
+   assist with using tokens in prompt-based AI Automators. When a token
+   references a field that is empty or not available on the entity, the raw
+   token string (e.g. `[node:field_my_field:value]`) is automatically stripped
+   from the prompt rather than passed to the AI provider. Tokens that resolve
+   successfully are replaced as normal.
 3. The Field UI module needs to be enabled to add or alter AI Automators. Once
    you have your desired AI Automators in place, it can be uninstalled again so
    it will not be automatically enabled when this module is enabled.
@@ -335,3 +339,63 @@ If you use Ultimate Cron, target the `ai_automators_cron` hook rather than the
 ## Developer documentation
 Check the [developers guide](../../developers/writing_an_ai_automators_plugin.md) for
 information on how to write a third party module using the AI module.
+
+### Request tags and metadata
+
+Chat requests sent through `RuleBase::runRawChatMessage()` and the rich-text
+image description path are tagged, so event subscribers for
+`PreGenerateResponseEvent` and `PostGenerateResponseEvent` can recognize where a
+request came from. `RuleBase::getTags()` emits:
+
+| Tag | Example |
+|-----|---------|
+| `ai_automator` | Always present. |
+| `ai_automator:type:{rule}` | `ai_automator:type:llm_string` |
+| `ai_automator:id:{automator id}` | `ai_automator:id:node.article.field_summary.default` |
+| `ai_automator:entity_type:{entity type}` | `ai_automator:entity_type:node` |
+| `ai_automator:entity:{entity id}` | `ai_automator:entity:42` (empty for unsaved entities) |
+| `ai_automator:bundle:{bundle}` | `ai_automator:bundle:article` |
+| `ai_automator:field_name:{field}` | `ai_automator:field_name:field_summary` |
+
+The `ai_automator:id` tag carries the AI Automator config entity ID, which is
+unique per automator. Several automators on the same field (for example
+separate Field Widget Action buttons) share every other tag, so match on this
+tag when you need to target one specific automator.
+
+A few older rules (Boolean, Chart, VideoToText, the `LlmVideo*` family, and the
+Field Widget Action refine chat) still send untagged requests, so subscribers
+that key on these tags will not see those requests.
+
+The same tagged requests carry `entity_context` request metadata, available
+through `$event->getMetadata('entity_context')`:
+
+```php
+[
+  'entity_type' => 'node',
+  // NULL while the entity has not been saved yet (presave on an add form).
+  'entity_id' => '42',
+  'uuid' => '9d0c6b6e-1f4c-4d3a-9a6d-1c2b3d4e5f60',
+  'bundle' => 'article',
+  'field_name' => 'field_summary',
+  'automator_id' => 'node.article.field_summary.default',
+]
+```
+
+A minimal subscriber that reacts to one automator looks like this:
+
+```php
+public function onPreGenerate(PreGenerateResponseEvent $event): void {
+  if (!in_array('ai_automator:id:node.article.field_summary.default', $event->getTags(), TRUE)) {
+    return;
+  }
+  $context = $event->getMetadata('entity_context');
+  // $context['entity_id'] is NULL on presave; fall back to uuid or bundle.
+}
+```
+
+Rules extending `RuleBase` get both the tags and the metadata through
+`runRawChatMessage()`. Custom rules that build their own `ChatInput` should
+call `$this->attachEntityContext($input, $entity, $automatorConfig)` and pass
+`$this->getTags(...)` to `chat()`. Subscribers to `AutomatorConfigEvent` that
+rebuild the automator configuration array must keep its `id` key, otherwise
+the ID tag and `automator_id` are dropped for that request.

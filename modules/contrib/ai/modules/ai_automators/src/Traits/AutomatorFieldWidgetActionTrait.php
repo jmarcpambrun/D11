@@ -181,15 +181,15 @@ trait AutomatorFieldWidgetActionTrait {
    *
    * @param string $entity_type
    *   The entity type ID.
-   * @param string $bundle
-   *   The bundle ID.
+   * @param string|null $bundle
+   *   The bundle ID from the field definition, or NULL for base fields.
    * @param string $field_name
    *   The field name.
    *
    * @return array
    *   An array of automators that are enabled for the field widget.
    */
-  public function getAutomatorsOptions(string $entity_type, string $bundle, string $field_name): array {
+  public function getAutomatorsOptions(string $entity_type, ?string $bundle, string $field_name): array {
     // Get all automator rules.
     $automators = $this->automatorTypeManager->getDefinitions();
     $automator_rules = [];
@@ -207,15 +207,56 @@ trait AutomatorFieldWidgetActionTrait {
       $configured_rule = $automator->get('rule');
       $configured_field_name = $automator->get('field_name');
       if (
-        in_array($configured_rule, $automator_rules) &&
+        in_array($configured_rule, $automator_rules, TRUE) &&
         $configured_entity_type === $entity_type &&
         $configured_field_name === $field_name &&
-        ($configured_bundle === $bundle || empty($configured_bundle))
+        $this->automatorAppliesToFieldBundleContext($entity_type, $bundle, $configured_bundle)
       ) {
         $options[$automator->id()] = $automator->label();
       }
     }
     return $options;
+  }
+
+  /**
+   * Checks whether an automator's bundle scope applies to the current context.
+   *
+   * - Regular configurable fields have a per-bundle configuration and we can
+   *   simply check if the field's bundle matches the one that is configured on
+   *   the automator.
+   * - Entity base fields are bundleless since they are defined on the entity
+   *   and are available for all bundles. In this case check if the configured
+   *   bundle exists on the entity type.
+   *
+   * @param string $entity_type_id
+   *   The entity type ID for the field.
+   * @param string|null $bundle
+   *   The bundle from the field definition, or NULL for base fields.
+   * @param string $configured_bundle
+   *   The bundle stored on the automator configuration (may be empty).
+   *
+   * @return bool
+   *   TRUE if the automator applies to this field context.
+   */
+  protected function automatorAppliesToFieldBundleContext(string $entity_type_id, ?string $bundle, string $configured_bundle): bool {
+    // If the field has a bundle, check that it matches the automator bundle.
+    if (!empty($bundle)) {
+      return $configured_bundle === $bundle;
+    }
+
+    // For bundleless base fields, check that the configured bundle actually
+    // exists on the entity.
+    $definition = $this->entityTypeManager->getDefinition($entity_type_id);
+    if ($definition === NULL) {
+      return FALSE;
+    }
+    // If the entity supports bundles, check if the bundle exists.
+    $bundle_entity_type_id = $definition->getBundleEntityType();
+    if ($bundle_entity_type_id) {
+      return (bool) $this->entityTypeManager->getStorage($bundle_entity_type_id)->load($configured_bundle);
+    }
+    // Bundleless entities (e.g. "user") use the entity name as the bundle name.
+    return $configured_bundle === $entity_type_id;
   }
 
   /**

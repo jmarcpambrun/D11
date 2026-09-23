@@ -25,7 +25,7 @@
         "drupal/action": "0.2.2",
         "drupal/address": "2.0.4",
         "drupal/advancedqueue": "^1.7",
-        "drupal/ai": "^1.5-RC",
+        "drupal/ai": "^1.5@RC",
         "drupal/ai_agents": "^1.4@beta",
         "drupal/ai_ckeditor": "^1.5@beta",
         "drupal/ai_media_image": "^1.0-alpha4",

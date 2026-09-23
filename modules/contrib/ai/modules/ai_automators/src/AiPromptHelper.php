@@ -83,7 +83,7 @@ class AiPromptHelper {
     return $this->token->replace($prompt, [
       $this->getEntityTokenType($entity->getEntityTypeId()) => $entity,
       'user' => $this->currentUser,
-    ]);
+    ], ['clear' => TRUE]);
   }
 
   /**

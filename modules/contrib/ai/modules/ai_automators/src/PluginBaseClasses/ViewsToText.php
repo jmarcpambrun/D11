@@ -249,7 +249,7 @@ abstract class ViewsToText extends RuleBase {
         $value = $this->token->replace($value, [
           'entity' => $entity,
           'user' => $this->currentUser,
-        ]);
+        ], ['clear' => TRUE]);
         $view->setArguments([$argument => $value]);
       }
     }
@@ -259,7 +259,7 @@ abstract class ViewsToText extends RuleBase {
         $value = $this->token->replace($value, [
           'entity' => $entity,
           'user' => $this->currentUser,
-        ]);
+        ], ['clear' => TRUE]);
         $view->setExposedInput([$filter => $value]);
       }
     }

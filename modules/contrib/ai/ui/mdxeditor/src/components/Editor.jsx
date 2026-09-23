@@ -41,6 +41,9 @@ function getTypeaheadConfigs(variables) {
     return {
       type: variable.name,
       trigger: variable.trigger,
+      // Kept on the descriptor so TypeaheadEditor can look up the help text of
+      // an already inserted element for its hover tooltip.
+      values: variable.values,
       Editor: TypeaheadEditor,
       searchCallback: async (query) => {
         return variable.values.filter((token) =>

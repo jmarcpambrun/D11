@@ -185,7 +185,12 @@ class AiOtelSpansEventSubscriber implements
       $payload = $event->getInput();
       // @todo Remove this check when https://www.drupal.org/i/3567673 is fixed.
       if ($payload instanceof InputInterface) {
-        $span->setAttribute('input', AiObservabilityUtils::summarizeAiPayloadData($payload->toString()));
+        $summarizeOptions = AiObservabilityUtils::buildSummarizeOptions($config);
+        $span->setAttribute('input', AiObservabilityUtils::summarizeAiPayloadData(
+          AiObservabilityUtils::aiInputToString($payload, $summarizeOptions['summarize']),
+          1024,
+          $summarizeOptions,
+        ));
       }
       else {
         $span->setAttribute('input', 'Unsupported input type: ' . get_debug_type($payload));
@@ -237,8 +242,13 @@ class AiOtelSpansEventSubscriber implements
 
     if ($config->get(SettingsForm::CONFIG_KEY_OTEL_STORE_OUTPUT)) {
       $payload = $event->getOutput();
-      $payloadStringified = AiObservabilityUtils::aiOutputToString($payload);
-      $span->setAttribute('output', AiObservabilityUtils::summarizeAiPayloadData($payloadStringified));
+      $summarizeOptions = AiObservabilityUtils::buildSummarizeOptions($config);
+      $payloadStringified = AiObservabilityUtils::aiOutputToString($payload, $summarizeOptions['summarize']);
+      $span->setAttribute('output', AiObservabilityUtils::summarizeAiPayloadData(
+        $payloadStringified,
+        1024,
+        $summarizeOptions,
+      ));
     }
   }
 

@@ -233,6 +233,7 @@ trait RichTextImageDescriptionTrait {
         $input = new ChatInput([
           new ChatMessage('user', $prompt, [$image]),
         ]);
+        $this->attachEntityContext($input, $entity, $visionConfig);
         /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
         $response = $instance->chat($input, $model, $this->getTags($prompt, $visionConfig, $instance, $entity))->getNormalized();
         return $response->getText();

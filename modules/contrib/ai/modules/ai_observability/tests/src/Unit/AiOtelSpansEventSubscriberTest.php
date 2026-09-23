@@ -674,6 +674,9 @@ class AiOtelSpansEventSubscriberTest extends UnitTestCase {
 
   /**
    * Tests that spans include input/output when configured.
+   *
+   * Exercises the structured/summarized payload path that is enabled by the
+   * SettingsForm::CONFIG_KEY_SUMMARIZE_PAYLOAD opt-in.
    */
   public function testSpanWithInputOutput() {
     TestHelpers::service('config.factory')->stubSetConfig(SettingsForm::CONFIG_NAME, [
@@ -681,6 +684,7 @@ class AiOtelSpansEventSubscriberTest extends UnitTestCase {
       SettingsForm::CONFIG_KEY_OTEL_SPANS => TRUE,
       SettingsForm::CONFIG_KEY_OTEL_STORE_INPUT => TRUE,
       SettingsForm::CONFIG_KEY_OTEL_STORE_OUTPUT => TRUE,
+      SettingsForm::CONFIG_KEY_SUMMARIZE_PAYLOAD => TRUE,
     ]);
 
     $otelService = TestHelpers::service('opentelemetry', OpentelemetryService::class);
@@ -697,10 +701,47 @@ class AiOtelSpansEventSubscriberTest extends UnitTestCase {
 
     $this->assertCount(1, $this->spanStorage);
     $span = $this->spanStorage[0];
-    $this->assertEquals($span->getAttributes()->get('input'), AiObservabilityTestHelper::getInputStub()->toString());
+    $inputExpectedString = AiObservabilityUtils::aiInputToString(AiObservabilityTestHelper::getInputStub());
+    $this->assertEquals($span->getAttributes()->get('input'), $inputExpectedString);
     $outputExpected = AiObservabilityTestHelper::getOutputStub();
     $outputExpectedString = AiObservabilityUtils::aiOutputToString($outputExpected);
     $this->assertEquals($span->getAttributes()->get('output'), $outputExpectedString);
+  }
+
+  /**
+   * Tests the legacy payload path used when summarization is disabled.
+   */
+  public function testSpanWithInputOutputLegacy() {
+    TestHelpers::service('config.factory')->stubSetConfig(SettingsForm::CONFIG_NAME, [
+      SettingsForm::CONFIG_KEY_OTEL_ENABLED => TRUE,
+      SettingsForm::CONFIG_KEY_OTEL_SPANS => TRUE,
+      SettingsForm::CONFIG_KEY_OTEL_STORE_INPUT => TRUE,
+      SettingsForm::CONFIG_KEY_OTEL_STORE_OUTPUT => TRUE,
+      SettingsForm::CONFIG_KEY_SUMMARIZE_PAYLOAD => FALSE,
+    ]);
+
+    $otelService = TestHelpers::service('opentelemetry', OpentelemetryService::class);
+    $tracer = AiObservabilityTestHelper::initOtelSpanStorageStub($this->spanStorage);
+    $otelService->method('getTracer')->willReturn($tracer);
+
+    $service = $this->initAiOtelSpansEventSubscriberService();
+
+    $event = AiObservabilityTestHelper::getAiEventStub(PreGenerateResponseEvent::class);
+    TestHelpers::callEventSubscriber($service, PreGenerateResponseEvent::EVENT_NAME, $event);
+
+    $event = AiObservabilityTestHelper::getAiEventStub(PostGenerateResponseEvent::class);
+    TestHelpers::callEventSubscriber($service, PostGenerateResponseEvent::EVENT_NAME, $event);
+
+    $this->assertCount(1, $this->spanStorage);
+    $span = $this->spanStorage[0];
+    $this->assertSame(
+      AiObservabilityTestHelper::getInputStub()->toString(),
+      $span->getAttributes()->get('input'),
+    );
+    $this->assertSame(
+      AiObservabilityUtils::aiOutputToString(AiObservabilityTestHelper::getOutputStub(), FALSE),
+      $span->getAttributes()->get('output'),
+    );
   }
 
   /**

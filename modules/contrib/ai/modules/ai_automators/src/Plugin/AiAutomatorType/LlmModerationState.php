@@ -77,7 +77,13 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function checkIfEmpty($value, $automatorConfig = []) {
-    if (!empty($automatorConfig['trigger_states']) && in_array($value[0]['value'], $automatorConfig['trigger_states'])) {
+    // An unsaved node has no moderation state value yet, so
+    // $value[0] can be absent. Compare against the enabled trigger states only
+    // (checkboxes keep unselected options as 0) and treat "no current state"
+    // as a trigger so the automator runs on a fresh node form.
+    $current = $value[0]['value'] ?? NULL;
+    $triggers = array_filter($automatorConfig['trigger_states'] ?? []);
+    if (!empty($triggers) && ($current === NULL || in_array($current, $triggers, TRUE))) {
       return [];
     }
     return $value;
@@ -237,7 +243,10 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
     if (is_string($value) && !empty($value)) {
       return TRUE;
     }
-    if (is_array($value) && $value['state']) {
+    // The advanced (JSON) path returns a {state: "..."} record;
+    // check the key exists before reading it so a malformed row is rejected
+    // instead of raising a warning.
+    if (is_array($value) && !empty($value['state'])) {
       return TRUE;
     }
     return FALSE;
@@ -247,33 +256,39 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
-    foreach ($values as $value) {
-      if ($automatorConfig['store_explanation']) {
-        if ($automatorConfig['use_simple_model']) {
-          $entity->set($automatorConfig['store_explanation'], $value);
-        }
-        elseif (isset($value['reasoning'])) {
-          $entity->set($automatorConfig['store_explanation'], $value['reasoning']);
-        }
-      }
+    // Both keys are optional in the stored automator config,
+    // so read them defensively rather than assuming they are present.
+    $storeExplanation = $automatorConfig['store_explanation'] ?? '';
+    $useSimpleModel = !empty($automatorConfig['use_simple_model']);
 
-      $allowed = [];
-      foreach ($automatorConfig['trigger_lookup'] as $state => $lookup) {
-        if ($lookup) {
-          $allowed[] = $state;
+    // Checkboxes keep unselected options as 0, so filter down to the states
+    // the site builder actually enabled under "Lookup for these states".
+    $allowed = array_keys(array_filter($automatorConfig['trigger_lookup'] ?? []));
+
+    foreach ($values as $value) {
+      if ($storeExplanation) {
+        if ($useSimpleModel && is_string($value)) {
+          $entity->set($storeExplanation, $value);
+        }
+        elseif (is_array($value) && isset($value['reasoning'])) {
+          $entity->set($storeExplanation, $value['reasoning']);
         }
       }
 
       // If its simple values.
-      if ($automatorConfig['use_simple_model']) {
-        // Look for the trigger words - full words.
-        foreach ($automatorConfig['trigger_lookup'] as $state) {
+      if ($useSimpleModel) {
+        if (!is_string($value)) {
+          continue;
+        }
+        // Look for the trigger words - full words. Only the enabled lookup
+        // states are candidates.
+        foreach ($allowed as $state) {
           // Just do full words, not partials.
           $word = strtok($value, " \n\t");
           // Look to find a word.
           while ($word !== FALSE) {
             // No dots.
-            if (str_replace('.', '', $word) == $state) {
+            if (str_replace('.', '', $word) === $state) {
               $entity->set($fieldDefinition->getName(), $state);
               break;
             }
@@ -282,8 +297,12 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
         }
       }
       else {
-        if (isset($value['state']) && in_array($value['state'], $allowed)) {
-          $entity->set($fieldDefinition->getName(), $value['state']);
+        // The advanced path gets a {state: "..."} record back from
+        // decodeValueArray(). Accept a bare string too, in case a model
+        // answers with the state name only.
+        $state = is_array($value) ? ($value['state'] ?? NULL) : $value;
+        if (is_string($state) && in_array($state, $allowed, TRUE)) {
+          $entity->set($fieldDefinition->getName(), $state);
         }
       }
     }
@@ -317,7 +336,9 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    */
   protected function getFlags(ContentEntityInterface $entity) {
     $flags = [];
-    if ($this->moderationInformation->isModeratedEntityType($entity->getEntityType())) {
+    // The service is optional (see create()), so a missing
+    // content_moderation module must yield no states rather than a fatal.
+    if ($this->moderationInformation && $this->moderationInformation->isModeratedEntityType($entity->getEntityType())) {
       $workflow = $this->moderationInformation->getWorkflowForEntityTypeAndBundle($entity->getEntityTypeId(), $entity->bundle());
       $plugin = $workflow->getTypePlugin();
       $config = $plugin->getConfiguration();

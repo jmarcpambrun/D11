@@ -189,7 +189,10 @@ class AiAutomatorEntityModifier {
    *   The entity to check for modifications.
    *
    * @return array
-   *   An array with the field configs affected.
+   *   An array keyed by automator config entity ID. Each entry holds the
+   *   'fieldDefinition' and the runtime 'automatorConfig', which carries the
+   *   'id' of the automator config entity, the 'field_name' and every
+   *   plugin_config setting with its 'automator_' prefix removed.
    */
   public function entityHasConfig(EntityInterface $entity) {
     $storage = $this->entityTypeManager->getStorage('ai_automator');
@@ -217,6 +220,10 @@ class AiAutomatorEntityModifier {
           $automatorConfig[substr($key, 10)] = $setting;
         }
       }
+      // The config entity ID identifies this automator instance on outgoing
+      // AI requests (see RuleBase::getTags()). Set it after the plugin config
+      // so a stray "automator_id" setting can never override it.
+      $automatorConfig['id'] = $field->id();
       $fieldConfigs[$field->id()]['automatorConfig'] = $automatorConfig;
     }
 

@@ -101,6 +101,7 @@ visual_regression:
       when: never
     - changes:
         - ui/**/*
+        - modules/ai_ckeditor/**/*
         - tests/visual-regression/**/*
         - tests/modules/ai_test/**/*
         - src/Element/**/*
