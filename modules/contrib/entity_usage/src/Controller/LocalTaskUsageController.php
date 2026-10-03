@@ -8,6 +8,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Controller for our local tasks.
@@ -47,13 +48,15 @@ class LocalTaskUsageController extends ListUsageController {
    *
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   A RouteMatch object.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
    *
    * @return mixed[]
    *   The page build to be rendered.
    */
-  public function listUsageLocalTask(RouteMatchInterface $route_match): array {
+  public function listUsageLocalTask(RouteMatchInterface $route_match, Request $request): array {
     $entity = $this->getEntityFromRouteMatch($route_match);
-    return parent::listUsagePage($entity->getEntityTypeId(), $entity->id());
+    return parent::listUsagePage($entity->getEntityTypeId(), $entity->id(), $request);
   }
 
   /**

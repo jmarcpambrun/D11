@@ -80,10 +80,10 @@ class EntityUsageFormHooks {
     $local_task_entity_types = $config->get('local_task_enabled_entity_types');
     $usage_url = in_array($entity_type_id, $local_task_entity_types, TRUE) ? Url::fromRoute("entity.$entity_type_id.entity_usage", [
       $entity_type_id => $entity->id(),
-    ]) : Url::fromRoute('entity_usage.usage_list', [
+    ], ['query' => ['list_old_revisions' => 1]]) : Url::fromRoute('entity_usage.usage_list', [
       'entity_type' => $entity_type_id,
       'entity_id' => $entity->id(),
-    ]);
+    ], ['query' => ['list_old_revisions' => 1]]);
     // Check for the edit warning.
     if ($is_edit_form) {
       $form['entity_usage_edit_warning'] = [

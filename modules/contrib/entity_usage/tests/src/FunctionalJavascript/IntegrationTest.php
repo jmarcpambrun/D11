@@ -131,7 +131,7 @@ class IntegrationTest extends EntityUsageJavascriptTestBase {
     $usage_url = Url::fromRoute('entity_usage.usage_list', [
       'entity_type' => 'node',
       'entity_id' => $node1->id(),
-    ])->toString();
+    ], ['query' => ['list_old_revisions' => 1]])->toString();
     $assert_session->linkByHrefExists($usage_url);
     $this->drupalGet("/node/{$node1->id()}/delete");
     $assert_session->pageTextContains('There are recorded usages of this entity');
@@ -157,7 +157,7 @@ class IntegrationTest extends EntityUsageJavascriptTestBase {
     $assert_session->linkExists('existing usages');
     $usage_url = Url::fromRoute("entity.node.entity_usage", [
       'node' => $node1->id(),
-    ])->toString();
+    ], ['query' => ['list_old_revisions' => 1]])->toString();
     $assert_session->linkByHrefExists($usage_url);
     // Re-set tabs to where they were.
     $this->drupalGet('/admin/config/entity-usage/settings');

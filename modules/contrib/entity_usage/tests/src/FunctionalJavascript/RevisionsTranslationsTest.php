@@ -297,12 +297,19 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
 
     $this->drupalGet("/node/{$node1->id()}/usage");
     $assert_session->pageTextContains('Entity usage information for Node 1');
-    // Only two usages; the entity_test entity and node 2.
-    $assert_session->elementsCount('xpath', '//table/tbody/tr', 2);
+    // Node 2's usage is entirely in old revisions, hidden by default; only
+    // the entity_test entity (which has no revisions, so is always current)
+    // shows.
+    $assert_session->elementsCount('xpath', '//table/tbody/tr', 1);
     $first_row_title = $this->xpath('//table/tbody/tr[1]/td[1]')[0];
     $this->assertEquals('Test entity', $first_row_title->getText());
     $first_row_used_in = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
     $this->assertEquals('Current revision', $first_row_used_in->getText());
+
+    // Node 2 reappears once old revisions are requested.
+    $page->checkField('Show usage in old revisions');
+    $session->wait(500);
+    $assert_session->elementsCount('xpath', '//table/tbody/tr', 2);
     $second_row_title = $this->xpath('//table/tbody/tr[2]/td[1]')[0];
     $this->assertEquals('Node 2', $second_row_title->getText());
     $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
@@ -319,6 +326,15 @@ class RevisionsTranslationsTest extends EntityUsageJavascriptTestBase {
     $assert_session->elementsCount('xpath', '//table/tbody/tr', 2);
     $second_row_title = $this->xpath('//table/tbody/tr[2]/td[1]')[0];
     $this->assertEquals('Node 2', $second_row_title->getText());
+    // The row stays (the new pending revision is current usage), but the
+    // old-revision detail is hidden by default.
+    $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]')[0];
+    $this->assertEquals('Draft revision', $second_row_used_in->getText());
+
+    // Checking "Show usage in old revisions" brings the detail back. HTMX
+    // submits on change, so there is no button to press.
+    $page->checkField('Show usage in old revisions');
+    $session->wait(500);
     $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]/ul/li[1]')[0];
     $this->assertEquals('Draft revision', $second_row_used_in->getText());
     $second_row_used_in = $this->xpath('//table/tbody/tr[2]/td[5]/ul/li[2]')[0];

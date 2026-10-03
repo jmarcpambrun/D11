@@ -255,7 +255,9 @@ class ParagraphsTest extends EntityUsageJavascriptTestBase {
     $this->saveHtmlOutput();
     $assert_session->pageTextContains('paragraphed_test Node 1 has been updated.');
 
-    // Assert how orphaned paragraphs on older revisions are shown.
+    // Assert how orphaned paragraphs on older revisions are shown. The
+    // direct reference is still current, so the row stays even with old
+    // revisions hidden, but the old-revision detail itself does not.
     $this->drupalGet("/admin/content/entity-usage/media/{$media1->id()}");
     // There is one row: the paragraph references and the direct reference are
     // counted together.
@@ -271,6 +273,13 @@ class ParagraphsTest extends EntityUsageJavascriptTestBase {
     $first_row_field_label = $this->xpath('//table/tbody/tr[1]/td[4]')[0];
     $this->assertEquals('Direct media', $first_row_field_label->getText());
     $first_row_status = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
+    $this->assertEquals('Published revision', $first_row_status->getText());
+
+    // The old-revision detail is there once explicitly requested. HTMX
+    // submits on change, so there is no button to press.
+    $page->checkField('Show usage in old revisions');
+    $session->wait(500);
+    $first_row_status = $this->xpath('//table/tbody/tr[1]/td[5]')[0];
     $this->assertEquals('Published revision 1 old revision', $first_row_status->getText());
 
     // Make all the usages only in old revisions.
@@ -279,11 +288,15 @@ class ParagraphsTest extends EntityUsageJavascriptTestBase {
     $page->pressButton('Save');
     $session->wait(500);
     $this->saveHtmlOutput();
+    // With no current usage left at all, the row disappears by default.
     $this->drupalGet("/admin/content/entity-usage/media/{$media1->id()}");
-    // There is one row: the paragraph references and the direct reference are
-    // counted together.
+    $assert_session->pageTextContains('There are no recorded usages');
+    $assert_session->pageTextNotContains('Node 1');
+
+    // It reappears, with the old-revision detail, once requested.
+    $page->checkField('Show usage in old revisions');
+    $session->wait(500);
     $assert_session->elementsCount('xpath', '//table/tbody/tr', 1);
-    // The first row contains the direct reference from the host node.
     $first_row_title_link = $assert_session->elementExists('xpath', '//table/tbody/tr[1]/td[1]/a');
     $this->assertEquals('Node 1', $first_row_title_link->getText());
     $this->assertEquals($node1->toUrl()->toString(), $first_row_title_link->getAttribute('href'));
