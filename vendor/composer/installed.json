@@ -6771,18 +6771,18 @@
         },
         {
             "name": "drupal/field_validation",
-            "version": "3.0.0-rc2",
-            "version_normalized": "3.0.0.0-RC2",
+            "version": "3.0.0",
+            "version_normalized": "3.0.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/field_validation.git",
-                "reference": "3.0.0-rc2"
+                "reference": "3.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/field_validation-3.0.0-rc2.zip",
-                "reference": "3.0.0-rc2",
-                "shasum": "1441538325ce38268dfb09e981217e8274256b8f"
+                "url": "https://ftp.drupal.org/files/projects/field_validation-3.0.0.zip",
+                "reference": "3.0.0",
+                "shasum": "01cc1a1221bef003e2709e2ed455a4714d0805c0"
             },
             "require": {
                 "drupal/core": "^10.2 || ^11",
@@ -6793,11 +6793,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.0-rc2",
-                    "datestamp": "1789574788",
+                    "version": "3.0.0",
+                    "datestamp": "1790848976",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "RC releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -6818,6 +6818,10 @@
                 {
                     "name": "manuel.adan",
                     "homepage": "https://www.drupal.org/user/516420"
+                },
+                {
+                    "name": "marcus_johansson",
+                    "homepage": "https://www.drupal.org/user/385947"
                 }
             ],
             "description": "Field validation allow you add constraint to field by UI.",
