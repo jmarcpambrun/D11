@@ -28,6 +28,7 @@ return array(
     'def43f6c87e4f8dfd0c9e1b1bab14fe8' => $vendorDir . '/symfony/polyfill-iconv/bootstrap.php',
     '1052008401d4a2a5be02f7b4e274d051' => $vendorDir . '/twig/html-extra/Resources/functions.php',
     '2f69d3914119f042cca9e44442d5ce95' => $baseDir . '/core/includes/bootstrap.inc',
+    '38a4a83ee9437fa4c0c7a481bbf0d2a0' => $baseDir . '/core/includes/guzzle_file_cookie_jar_shim.php',
     '61ba3e92ef91a7a0f1cc260ebd9290e4' => $vendorDir . '/openai-php/client/src/OpenAI.php',
     '23c18046f52bef3eea034657bafda50f' => $vendorDir . '/symfony/polyfill-php81/bootstrap.php',
     '9c67151ae59aff4788964ce8eb2a0f43' => $vendorDir . '/clue/stream-filter/src/functions_include.php',
