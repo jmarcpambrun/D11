@@ -180,3 +180,103 @@ field_widget_action.plugin.automator_tagify_taxonomy:
 field_widget_action.plugin.classification_options_select:
   type: field_widget_action_automator_base
   label: 'Automator select field widget action'
+
+field_widget_action.plugin.automator_address:
+  type: field_widget_action_automator_base
+  label: 'Automator Address field widget action'
+
+field_widget_action.plugin.automator_alt_text:
+  type: field_widget_action_automator_base
+  label: 'Automator Alt Text field widget action'
+
+field_widget_action.plugin.automator_autocomplete_tags_on_taxonomy:
+  type: field_widget_action_automator_base
+  label: 'Automator Taxonomy tags field widget action'
+
+field_widget_action.plugin.automator_autocomplete_taxonomy:
+  type: field_widget_action_automator_base
+  label: 'Automator Taxonomy field widget action'
+
+field_widget_action.plugin.automator_boolean:
+  type: field_widget_action_automator_base
+  label: 'Automator Boolean field widget action'
+
+field_widget_action.plugin.automator_chart:
+  type: field_widget_action_automator_base
+  label: 'Automator Chart field widget action'
+
+field_widget_action.plugin.automator_email:
+  type: field_widget_action_automator_base
+  label: 'Automator Email field widget action'
+
+field_widget_action.plugin.automator_faqfield:
+  type: field_widget_action_automator_base
+  label: 'Automator FAQ Field field widget action'
+
+field_widget_action.plugin.automator_file:
+  type: field_widget_action_automator_base
+  label: 'Automator File field widget action'
+
+field_widget_action.plugin.automator_image_filename_rewrite:
+  type: field_widget_action_automator_base
+  label: 'Automator Image Filename Rewrite field widget action'
+
+field_widget_action.plugin.automator_json:
+  type: field_widget_action_automator_base
+  label: 'Automator JSON field widget action'
+
+field_widget_action.plugin.automator_list_float:
+  type: field_widget_action_automator_base
+  label: 'Automator List Float field widget action'
+
+field_widget_action.plugin.automator_list_integer:
+  type: field_widget_action_automator_base
+  label: 'Automator List Integer field widget action'
+
+field_widget_action.plugin.automator_list_string:
+  type: field_widget_action_automator_base
+  label: 'Automator List String field widget action'
+
+field_widget_action.plugin.automator_metatag:
+  type: field_widget_action_automator_base
+  label: 'Automator Metatag field widget action'
+
+field_widget_action.plugin.automator_moderation_state:
+  type: field_widget_action_automator_base
+  label: 'Automator Moderation State field widget action'
+
+field_widget_action.plugin.automator_office_hours:
+  type: field_widget_action_automator_base
+  label: 'Automator Office Hours field widget action'
+
+field_widget_action.plugin.automator_telephone:
+  type: field_widget_action_automator_base
+  label: 'Automator Telephone field widget action'
+
+field_widget_action.plugin.automator_text:
+  type: field_widget_action_automator_base
+  label: 'Automator Text Suggestion field widget action'
+
+field_widget_action.plugin.llm_link_link_default:
+  type: field_widget_action_automator_base
+  label: 'LLM Link Generator field widget action'
+
+field_widget_action.plugin.llm_number_number_default:
+  type: field_widget_action_automator_base
+  label: 'LLM Number Generator field widget action'
+
+field_widget_action.plugin.summary_textarea_with_summary:
+  type: field_widget_action_automator_base
+  label: 'Generate Summary (Textarea with Summary) field widget action'
+
+field_widget_action.plugin.text_to_audio_media_library:
+  type: field_widget_action_automator_base
+  label: 'Text to Audio Media Library field widget action'
+
+field_widget_action.plugin.text_to_image:
+  type: field_widget_action_automator_base
+  label: 'Text to Image field widget action'
+
+field_widget_action.plugin.text_to_image_media_library:
+  type: field_widget_action_automator_base
+  label: 'Text to Image Media Library field widget action'

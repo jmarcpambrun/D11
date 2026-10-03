@@ -287,16 +287,19 @@ final class Tone extends AiCKEditorPluginBase {
       if ($this->configuration['use_description'] && !empty($term->getDescription())) {
         $toneDescription = strip_tags($term->getDescription());
       }
+
+      // Use Twig to render the prompt with conditional logic for
+      // the use_description setting. This must happen before the
+      // placeholders are replaced, so that the selected text, the tone name
+      // and the tone description are never evaluated as a Twig template.
+      $promptText = (string) $this->twig->renderInline($promptText, [
+        'use_description' => (bool) $this->configuration['use_description'],
+      ]);
+
       $promptText = strtr($promptText, [
         '{tone}' => $term->label(),
         '{toneDescription}' => $toneDescription,
         '{inputText}' => $values['plugin_config']['selected_text'],
-      ]);
-
-      // Use Twig to render the prompt with conditional logic for
-      // the use_description setting.
-      $promptText = (string) $this->twig->renderInline($promptText, [
-        'use_description' => (bool) $this->configuration['use_description'],
       ]);
 
       $response = new AjaxResponse();

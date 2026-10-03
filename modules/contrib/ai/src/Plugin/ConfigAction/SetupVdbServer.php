@@ -117,14 +117,15 @@ final class SetupVdbServer implements ConfigActionPluginInterface, ContainerFact
       throw new \Exception('The default embeddings model is not supported.');
     }
 
-    // Load the provider.
+    // Get the vector size. This asks the provider for an actual vector, so it
+    // fails when the provider server is unreachable as well as when the model
+    // is unsupported.
     $vector_size = NULL;
     try {
-      $provider = $this->aiProviderPluginManager->createInstance($defaults['provider_id']);
       $vector_size = $provider->embeddingsVectorSize($defaults['model_id']);
     }
     catch (\Exception $e) {
-      throw new \Exception('The provider ' . $defaults['provider'] . ' is not supported.');
+      throw new \Exception('Could not get a vector from the provider ' . $defaults['provider_id'] . ' using the model ' . $defaults['model_id'] . '. The provider server might be down or the model might not be supported. The error was: ' . $e->getMessage(), $e->getCode(), $e);
     }
     // Set the embeddings engine & configuration.
     $value['backend_config']['embeddings_engine'] = $defaults['provider_id'] . '__' . $defaults['model_id'];

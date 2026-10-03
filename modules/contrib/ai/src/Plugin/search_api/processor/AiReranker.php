@@ -106,13 +106,29 @@ class AiReranker extends ProcessorPluginBase implements PluginFormInterface, Con
       $saved_key = $this->configuration['provider_id'] . '__' . $this->configuration['model_id'];
     }
 
+    // Search API builds this configuration form for every processor that
+    // supports the index, whether enabled or not (see
+    // \Drupal\search_api\Form\IndexProcessorsForm::form()), but only
+    // validates it for enabled processors (see
+    // IndexProcessorsForm::validateForm()). Marking these elements
+    // #required would therefore block saving the Processors form for the
+    // whole index whenever AI Reranker is disabled. Required-ness is
+    // enforced in ::validateConfigurationForm() instead, which only runs
+    // when the processor is actually enabled. The #states binding below
+    // keeps the visual "required" asterisk tied to that same enabled state.
+    $status_selector = ':input[name="status[' . $this->getPluginId() . ']"]';
+
     $form['provider_model'] = [
       '#type' => 'select',
       '#title' => $this->t('AI provider and model'),
       '#description' => $this->t('Select the reranking provider and model. Only providers that support the rerank operation are listed.'),
       '#options' => $provider_model_options,
       '#default_value' => $saved_key,
-      '#required' => TRUE,
+      '#states' => [
+        'required' => [
+          $status_selector => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     $form['top_n'] = [
@@ -134,7 +150,11 @@ class AiReranker extends ProcessorPluginBase implements PluginFormInterface, Con
       '#description' => $this->t('Select which fields to concatenate as the document text sent to the reranker. At least one field is required. Choose the fields that best represent the content (for example Title and Body).'),
       '#options' => $field_options,
       '#default_value' => $this->configuration['source_fields'] ?? [],
-      '#required' => TRUE,
+      '#states' => [
+        'required' => [
+          $status_selector => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     return $form;

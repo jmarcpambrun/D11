@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ea20126616fd0ce74b2cf7fa0ecc19ba",
+    "content-hash": "fcad4cf33fcfe475754ce8183de95ce6",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -2656,17 +2656,17 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.5.0-rc4",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.5.0-rc4"
+                "reference": "1.5.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.5.0-rc4.zip",
-                "reference": "1.5.0-rc4",
-                "shasum": "117a3791a0964be1abad9272b37971d57b4504f4"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.5.0.zip",
+                "reference": "1.5.0",
+                "shasum": "9675eb1dba3e597b92b5cede66c1971d9684bd53"
             },
             "require": {
                 "drupal/ai_content_suggestions": "^1.5",
@@ -2706,11 +2706,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.0-rc4",
-                    "datestamp": "1789645830",
+                    "version": "1.5.0",
+                    "datestamp": "1790327388",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "RC releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -2764,6 +2764,10 @@
                     "homepage": "https://www.drupal.org/user/385947"
                 },
                 {
+                    "name": "markusa",
+                    "homepage": "https://www.drupal.org/user/142798"
+                },
+                {
                     "name": "michaellander",
                     "homepage": "https://www.drupal.org/user/636494"
                 },
@@ -2794,10 +2798,6 @@
                 {
                     "name": "wouters_f",
                     "homepage": "https://www.drupal.org/user/721548"
-                },
-                {
-                    "name": "yautja_cetanu",
-                    "homepage": "https://www.drupal.org/user/626050"
                 }
             ],
             "description": "AI module for Drupal",
@@ -22593,7 +22593,6 @@
     "aliases": [],
     "minimum-stability": "RC",
     "stability-flags": {
-        "drupal/ai": 5,
         "drupal/ai_agents": 10,
         "drupal/ai_ckeditor": 10,
         "drupal/ai_media_image": 15,

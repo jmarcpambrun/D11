@@ -199,17 +199,17 @@ trait AutomatorFieldWidgetActionTrait {
     $options = [];
     // Load all automator configurations.
     /** @var \Drupal\ai_automators\AiAutomatorInterface[] $automator_configurations */
-    $automator_configurations = $this->entityTypeManager->getStorage('ai_automator')->loadMultiple();
+    $automator_configurations = $this->entityTypeManager->getStorage('ai_automator')->loadByProperties([
+      'status' => TRUE,
+      'entity_type' => $entity_type,
+      'field_name' => $field_name,
+    ]);
     foreach ($automator_configurations as $automator) {
-      // Check so the entity type, bundle and rule match.
-      $configured_entity_type = $automator->get('entity_type');
+      // Check so the rule and bundle match.
       $configured_bundle = $automator->get('bundle');
       $configured_rule = $automator->get('rule');
-      $configured_field_name = $automator->get('field_name');
       if (
         in_array($configured_rule, $automator_rules, TRUE) &&
-        $configured_entity_type === $entity_type &&
-        $configured_field_name === $field_name &&
         $this->automatorAppliesToFieldBundleContext($entity_type, $bundle, $configured_bundle)
       ) {
         $options[$automator->id()] = $automator->label();

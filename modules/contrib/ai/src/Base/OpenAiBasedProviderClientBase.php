@@ -110,7 +110,11 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    * {@inheritdoc}
    */
   public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
-    if (!$this->hasAuthentication() && !$this->getConfig()->get('api_key')) {
+    // A provider that requires authentication is not usable until it has
+    // either a configured Key reference or runtime authentication.
+    if ($this->hasAuthentication()
+      && empty($this->apiKey)
+      && !$this->getConfig()->get('api_key')) {
       return FALSE;
     }
     if ($operation_type) {

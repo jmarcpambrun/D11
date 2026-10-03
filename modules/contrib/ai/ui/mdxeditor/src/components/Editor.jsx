@@ -98,6 +98,7 @@ function Editor({
         markdown={markdown}
         onChange={handleChange}
         className={isDarkMode ? 'dark' : ''}
+        contentEditableClassName="mdxeditor-root-editable"
         plugins={[
           headingsPlugin(),
           listsPlugin(),
