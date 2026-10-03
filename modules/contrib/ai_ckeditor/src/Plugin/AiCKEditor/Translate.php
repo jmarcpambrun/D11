@@ -333,16 +333,18 @@ final class Translate extends AiCKEditorPluginBase {
         }
       }
 
+      // Use Twig to render the prompt with conditional logic for
+      // the use_description setting. This must happen before the
+      // placeholders are replaced, so that the selected text, the language
+      // name and the context are never evaluated as a Twig template.
+      $promptText = (string) $this->twig->renderInline($promptText, [
+        'use_description' => (bool) $this->configuration['use_description'],
+      ]);
+
       $promptText = strtr($promptText, [
         '{lang}' => $promptLanguage,
         '{context}' => $promptContext,
         '{inputText}' => $values['plugin_config']['selected_text'],
-      ]);
-
-      // Use Twig to render the prompt with conditional logic for
-      // the use_description setting.
-      $promptText = (string) $this->twig->renderInline($promptText, [
-        'use_description' => (bool) $this->configuration['use_description'],
       ]);
 
       assert(is_array($this->pluginDefinition));

@@ -27,12 +27,20 @@
     const form = document.querySelector('.ckeditor5-ai-ckeditor-dialog-form');
     if (form) {
       const entityType = form.querySelector('input[name="entity_type"]');
+      const entityBundle = form.querySelector('input[name="entity_bundle"]');
       const entityId = form.querySelector('input[name="entity_id"]');
+      const pagePath = form.querySelector('input[name="page_path"]');
       if (entityType) {
         parameters.entity_type = entityType.value;
       }
+      if (entityBundle) {
+        parameters.entity_bundle = entityBundle.value;
+      }
       if (entityId) {
         parameters.entity_id = entityId.value;
+      }
+      if (pagePath) {
+        parameters.page_path = pagePath.value;
       }
     }
 

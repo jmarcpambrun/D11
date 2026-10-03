@@ -39,7 +39,17 @@ Scope subscriptions that filter by entity type, taxonomy terms, or a specific en
 
 ## Entity context for other modules
 
-When the editor is on an entity form, `ai_ckeditor_form_alter()` records the editing entity's type and id in `drupalSettings`, keyed by the form's HTML id. The `AiRequest` controller reads that, loads the entity, and attaches it to the chat request as metadata under `entity_context`. Any subscriber to the AI module's `PreGenerateResponseEvent` can read `$event->getMetadata('entity_context')` to do bundle-scoped context injection without wiring anything specific to this module.
+When the editor is on an entity form, `ai_ckeditor_form_alter()` records the editing entity's type, bundle, and id in `drupalSettings`, keyed by the form's HTML id. The dialog JS forwards those values, plus the current page path, to the `AiRequest` controller, which validates them and attaches the result to the chat request as metadata under `entity_context`. Any subscriber to the AI module's `PreGenerateResponseEvent` can read `$event->getMetadata('entity_context')` to do bundle-scoped context injection without wiring anything specific to this module.
+
+<!-- cspell:ignore über -->
+The `entity_context` array has these keys:
+
+- `entity_type`: the entity type id.
+- `bundle`: for a saved entity, the bundle of the loaded entity (the client value is ignored). For an unsaved entity on an add form, the client bundle after checking that the type is a content entity, the bundle exists, and the user may create it.
+- `id`: the entity id, or an empty string for an unsaved entity.
+- `path`: the path of the page the editor is on. The browser sends `window.location.pathname` unchanged and the controller normalizes it in one place: the query string, fragment, site base path, and a leading `/index.php` (no-clean-URL front controller) are removed, and percent-encoded segments are decoded. The result is the decoded Drupal path, for example `/node/add/pirate post` or `/über-uns`, which is the form Site Sections patterns are written in. Note that Symfony's `getPathInfo()` keeps percent-encoding, so this value can differ from it on non-ASCII paths. Present when the browser supplied one.
+
+A saved entity is only attached when the current user can view it. All values are untrusted hints for matching; they never grant access. AI Context reads the same shape, see its `context_delivery.md`.
 
 ## Prompts
 

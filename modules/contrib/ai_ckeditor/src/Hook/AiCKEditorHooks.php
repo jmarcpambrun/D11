@@ -5,9 +5,12 @@ namespace Drupal\ai_ckeditor\Hook;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Hook\Attribute\Hook;
+use Drupal\Core\Hook\Order\OrderAfter;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_ckeditor\Plugin\ConfigAction\AddItemsToToolbar;
 
 /**
  * Contains ai_ckeditor module hooks implementations.
@@ -21,6 +24,28 @@ class AiCKEditorHooks {
     protected AccountProxyInterface $accountProxy,
     protected KeyValueExpirableFactoryInterface $keyValueExpirableFactory,
   ) {
+  }
+
+  /**
+   * Implements hook_config_action_alter().
+   */
+  #[Hook('config_action_alter', order: new OrderAfter(['ckeditor5']))]
+  public function configActionAlter(array &$definitions): void {
+    // Drupal core is expected to ship its own pluralized
+    // editor:addItemsToToolbar config action (see
+    // https://www.drupal.org/i/3507570). Only register the ai_ckeditor
+    // implementation when core has not defined it, so recipes can use
+    // addItemsToToolbar on any supported core version and the core
+    // implementation wins once it exists.
+    if (empty($definitions['editor:addItemsToToolbar'])) {
+      $definitions['editor:addItemsToToolbar'] = [
+        'id' => 'editor:addItemsToToolbar',
+        'class' => AddItemsToToolbar::class,
+        'provider' => 'ai_ckeditor',
+        'admin_label' => new TranslatableMarkup('Add multiple items to a CKEditor 5 toolbar'),
+        'entity_types' => ['editor'],
+      ];
+    }
   }
 
   /**

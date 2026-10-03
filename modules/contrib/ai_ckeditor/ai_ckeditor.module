@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai_ckeditor\PreRender\PreRender;
 use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\Core\Hook\Attribute\LegacyModuleImplementsAlter;
 
 /**
  * Implements hook_element_info_alter().
@@ -27,6 +28,7 @@ function ai_ckeditor_element_info_alter(array &$info): void {
 /**
  * Implements hook_module_implements_alter().
  */
+#[LegacyModuleImplementsAlter]
 function ai_ckeditor_module_implements_alter(&$implementations, $hook): void {
   if (isset($implementations['ai_ckeditor'])) {
     $implementation = $implementations['ai_ckeditor'];
@@ -38,13 +40,14 @@ function ai_ckeditor_module_implements_alter(&$implementations, $hook): void {
 /**
  * Implements hook_form_alter().
  *
- * Attaches the editing entity's type and id to drupalSettings for any
- * entity form that may render a CKEditor field. The client-side
+ * Attaches the editing entity's type, bundle, and id to drupalSettings
+ * for any entity form that may render a CKEditor field. The client-side
  * AiDrupalDialog command reads this registry (keyed by form HTML id)
  * to populate the entity context payload sent to the AiRequest
- * controller, which loads the entity server-side (deriving the bundle
- * from it) and stores the result on ChatInput metadata for event
- * subscribers (e.g. ai_context) to consume.
+ * controller, which loads the entity server-side (re-deriving the
+ * bundle from it) and stores the result on ChatInput metadata for event
+ * subscribers (e.g. ai_context) to consume. The bundle is sent so an
+ * unsaved entity, which has no id yet, can still be scoped by bundle.
  *
  * This avoids URL parsing entirely, handles nested and AJAX-loaded forms,
  * and works for any entity type that uses a standard form controller.
@@ -64,8 +67,17 @@ function ai_ckeditor_form_alter(array &$form, FormStateInterface $form_state, st
   }
   $form['#attached']['drupalSettings']['aiCkeditor']['entityContext'][$html_id] = [
     'entity_type' => $entity->getEntityTypeId(),
+    'bundle' => $entity->bundle(),
     'id' => (string) ($entity->id() ?? ''),
   ];
+}
+
+/**
+ * Implements hook_config_action_alter().
+ */
+#[LegacyHook]
+function ai_ckeditor_config_action_alter(array &$definitions): void {
+  \Drupal::service(AiCKEditorHooks::class)->configActionAlter($definitions);
 }
 
 /**

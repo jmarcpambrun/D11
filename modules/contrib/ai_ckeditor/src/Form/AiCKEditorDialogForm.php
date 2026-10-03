@@ -60,11 +60,15 @@ class AiCKEditorDialogForm extends FormBase {
     $request = $this->getRequest();
     $payload = $request->getPayload();
 
-    // Extract entity context from the payload. The bundle is intentionally
-    // omitted: the AiRequest controller derives it from the loaded entity
-    // in validateEntityContext(), so passing it from the client is redundant.
+    // Extract entity context from the payload. The bundle lets an unsaved
+    // entity (no id yet) still be scoped by type and bundle. When an id is
+    // present the AiRequest controller re-derives the bundle from the
+    // loaded entity and ignores the client value. The page path is the
+    // page the editor is embedded in, used only as a matching hint.
     $entity_type = $payload->get('entity_type') ?? '';
+    $entity_bundle = (string) ($payload->get('entity_bundle') ?? '');
     $entity_id = $payload->get('entity_id') ?? '';
+    $page_path = (string) ($payload->get('page_path') ?? '');
 
     // Ensure 'editor_id' is provided.
     $editor_id = $payload->get('editor_id');
@@ -143,7 +147,9 @@ class AiCKEditorDialogForm extends FormBase {
           'plugin_id' => $plugin_id,
           'selected_text' => $selected_text,
           'entity_type' => $entity_type,
+          'entity_bundle' => $entity_bundle,
           'entity_id' => $entity_id,
+          'page_path' => $page_path,
         ]);
         $form['plugin_config']['#tree'] = TRUE;
 
@@ -164,9 +170,17 @@ class AiCKEditorDialogForm extends FormBase {
           '#type' => 'hidden',
           '#value' => $entity_type,
         ];
+        $form['entity_bundle'] = [
+          '#type' => 'hidden',
+          '#value' => $entity_bundle,
+        ];
         $form['entity_id'] = [
           '#type' => 'hidden',
           '#value' => $entity_id,
+        ];
+        $form['page_path'] = [
+          '#type' => 'hidden',
+          '#value' => $page_path,
         ];
       }
       catch (\Exception $exception) {

@@ -3,6 +3,8 @@
 namespace Drupal\ai_ckeditor\Controller;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -52,6 +54,8 @@ class AiRequest implements ContainerInjectionInterface {
    *   Logger factory.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   Messenger service.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $bundleInfo
+   *   The entity type bundle info service.
    */
   public function __construct(
     protected readonly AiCKEditorPluginManager $pluginManager,
@@ -60,6 +64,7 @@ class AiRequest implements ContainerInjectionInterface {
     protected readonly AccountProxyInterface $account,
     LoggerChannelFactoryInterface $logger_factory,
     protected readonly MessengerInterface $messenger,
+    protected readonly EntityTypeBundleInfoInterface $bundleInfo,
   ) {
     $this->logger = $logger_factory->get('ai_ckeditor');
   }
@@ -75,6 +80,7 @@ class AiRequest implements ContainerInjectionInterface {
       $container->get('current_user'),
       $container->get('logger.factory'),
       $container->get('messenger'),
+      $container->get('entity_type.bundle.info'),
     );
   }
 
@@ -97,11 +103,22 @@ class AiRequest implements ContainerInjectionInterface {
     // Extract and validate entity context from the request payload. The
     // editor's dialog JS sets these from drupalSettings, which is populated
     // server-side via hook_form_alter on the host entity form. This avoids
-    // fragile URL parsing and handles nested/AJAX-loaded forms.
+    // fragile URL parsing and handles nested/AJAX-loaded forms. The bundle
+    // only matters for an unsaved entity, which has no id yet. The page
+    // path is where the editor is embedded; the request itself hits this
+    // API endpoint, so subscribers cannot read it from the route.
     $entity_context = $this->validateEntityContext(
       (string) ($data->entity_type ?? ''),
       (string) ($data->entity_id ?? ''),
+      (string) ($data->entity_bundle ?? ''),
     );
+    $page_path = $this->normalizePagePath(
+      (string) ($data->page_path ?? ''),
+      $request->getBasePath(),
+    );
+    if ($page_path !== NULL) {
+      $entity_context = ($entity_context ?? []) + ['path' => $page_path];
+    }
 
     try {
       $settings = $editor->getSettings();
@@ -200,19 +217,26 @@ class AiRequest implements ContainerInjectionInterface {
    *   The submitted entity type id.
    * @param string $entity_id
    *   The submitted entity id (integer for content entities, string for
-   *   config entities).
+   *   config entities). Empty for an entity that is not saved yet.
+   * @param string $bundle
+   *   The submitted bundle. Only used when $entity_id is empty; for a
+   *   saved entity the bundle is read from the loaded entity instead.
    *
    * @return array|null
    *   An array with entity_type, bundle, and id keys, or NULL if nothing
-   *   valid was submitted. Bundle is read from the loaded entity, not
-   *   from the client payload.
+   *   valid was submitted. For an unsaved entity the id is an empty
+   *   string, the type must be a content entity, and the bundle must
+   *   exist and be creatable by the user.
    */
-  protected function validateEntityContext(string $entity_type, string $entity_id): ?array {
-    if ($entity_type === '' || $entity_id === '') {
+  protected function validateEntityContext(string $entity_type, string $entity_id, string $bundle = ''): ?array {
+    if ($entity_type === '') {
       return NULL;
     }
     if (!$this->entityTypeManager->hasDefinition($entity_type)) {
       return NULL;
+    }
+    if ($entity_id === '') {
+      return $this->validateUnsavedEntityContext($entity_type, $bundle);
     }
     // Validate by loading instead of checking ID format. This supports
     // both content entities (integer IDs) and config entities (string IDs)
@@ -227,6 +251,123 @@ class AiRequest implements ContainerInjectionInterface {
       'bundle' => $entity->bundle(),
       'id' => $entity_id,
     ];
+  }
+
+  /**
+   * Validates entity context for an entity that has no id yet.
+   *
+   * On an add form there is nothing to load, so the bundle is checked
+   * against bundle info and against create access for the current user.
+   * Config entity types are rejected. The result is a matching hint
+   * only; it never grants access.
+   *
+   * @param string $entity_type
+   *   A known entity type id.
+   * @param string $bundle
+   *   The submitted bundle.
+   *
+   * @return array|null
+   *   An array with entity_type, bundle, and an empty id, or NULL when
+   *   the type is not a content entity, the bundle is unknown, or the
+   *   user may not create it.
+   *
+   * @internal
+   */
+  protected function validateUnsavedEntityContext(string $entity_type, string $bundle): ?array {
+    if ($bundle === '') {
+      return NULL;
+    }
+    $definition = $this->entityTypeManager->getDefinition($entity_type);
+    if (!$definition instanceof ContentEntityTypeInterface) {
+      return NULL;
+    }
+    $bundles = $this->bundleInfo->getBundleInfo($entity_type);
+    if (!isset($bundles[$bundle])) {
+      return NULL;
+    }
+    $access_bundle = $definition->hasKey('bundle') ? $bundle : NULL;
+    $access = $this->entityTypeManager
+      ->getAccessControlHandler($entity_type)
+      ->createAccess($access_bundle, $this->account);
+    if (!$access) {
+      return NULL;
+    }
+    return [
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
+      'id' => '',
+    ];
+  }
+
+  /**
+   * Normalizes the page path hint sent by the editor.
+   *
+   * The value is untrusted client input used only for string matching
+   * by subscribers. It is never used to load anything or to redirect.
+   * The editor sends window.location.pathname unchanged and this is
+   * the only place the hint is normalized, so the site base path is
+   * never removed twice. Percent-encoded segments are decoded so the
+   * result matches the decoded Drupal path that Site Sections patterns
+   * are written against. The site base path and a leading /index.php
+   * (no-clean-URL front controller) are removed so those patterns
+   * still match on subdirectory installs and sites without clean URLs.
+   *
+   * Structural checks run again after decoding. Encoded NUL (%00)
+   * and encoded slashes that would become "//" are rejected.
+   *
+   * @param string $path
+   *   The submitted path.
+   * @param string $base_path
+   *   The request base path, such as "/sub". Empty or "/" is ignored.
+   *
+   * @return string|null
+   *   A path beginning with a single "/", without query string,
+   *   fragment, site base path, or /index.php, or NULL when the
+   *   value is not usable.
+   *
+   * @internal
+   */
+  protected function normalizePagePath(
+    string $path,
+    string $base_path = '',
+  ): ?string {
+    $path = trim($path);
+    if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
+      return NULL;
+    }
+    $path = explode('?', $path, 2)[0];
+    $path = explode('#', $path, 2)[0];
+    // Bound the raw hint before decode so a huge payload is dropped.
+    if ($path === '' || strlen($path) > 2048) {
+      return NULL;
+    }
+    $path = rawurldecode($path);
+    $path = explode('?', $path, 2)[0];
+    $path = explode('#', $path, 2)[0];
+    if (
+      $path === ''
+      || $path[0] !== '/'
+      || str_starts_with($path, '//')
+      || str_contains($path, "\0")
+      || strlen($path) > 2048
+    ) {
+      return NULL;
+    }
+    if ($base_path !== '' && $base_path !== '/') {
+      if ($path === $base_path) {
+        $path = '/';
+      }
+      elseif (str_starts_with($path, $base_path . '/')) {
+        $path = substr($path, strlen($base_path)) ?: '/';
+      }
+    }
+    if ($path === '/index.php') {
+      return '/';
+    }
+    if (str_starts_with($path, '/index.php/')) {
+      $path = substr($path, strlen('/index.php')) ?: '/';
+    }
+    return $path;
   }
 
 }
