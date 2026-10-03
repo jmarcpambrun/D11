@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_search\Plugin\EmbeddingStrategy;
 
+use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionInput;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\ai\AiVdbProviderInterface;
@@ -67,6 +69,28 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   }
 
   /**
+   * Returns extra per-chunk metadata field names this strategy adds.
+   *
+   * A strategy that stores additional metadata on each chunk (for example a
+   * "half_life" decay tier used for reranking) overrides this to list those
+   * keys, so SearchApiAiSearchBackend::search() can include them in the VDB
+   * query's output_fields. Providers that treat output_fields as a real
+   * field-selection list (Milvus confirmed) otherwise silently drop metadata
+   * that is not explicitly requested there.
+   *
+   * This method is on EmbeddingBase only — not on EmbeddingStrategyInterface —
+   * to avoid a breaking interface change in 1.0.x. The backend guards its call
+   * with method_exists() so strategies that do not extend EmbeddingBase degrade
+   * gracefully (they contribute no additional output fields).
+   *
+   * @return string[]
+   *   The additional metadata field names, if any. Empty by default.
+   */
+  public function getAdditionalMetadataFieldNames(): array {
+    return [];
+  }
+
+  /**
    * Computes chunks for a full search API item, for use by the tracker.
    *
    * This method is on EmbeddingBase only — not on EmbeddingStrategyInterface —
@@ -77,7 +101,8 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @param string $embedding_engine
    *   The embedding engine.
    * @param array $configuration
-   *   The strategy configuration (chunk_size, overlap, etc.).
+   *   The strategy configuration (chunk_size, overlap, etc.). The optional
+   *   chat_model key selects the tokenizer used to count chunks.
    * @param array $fields
    *   The Search API fields.
    * @param \Drupal\search_api\Item\ItemInterface $search_api_item
@@ -95,10 +120,8 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     ItemInterface $search_api_item,
     IndexInterface $index,
   ): array {
-    // $configuration is the strategy configuration, not the backend
-    // configuration, so chat_model is never present in it. 'gpt-3.5' is used
-    // as the tokenizer model — the difference is marginal for chunk counting.
-    $this->init($embedding_engine, 'gpt-3.5', $configuration);
+    $chat_model = $configuration['chat_model'] ?? 'gpt-3.5';
+    $this->init($embedding_engine, $chat_model, $configuration);
     [$title, $contextual_content, $main_content] = $this->groupFieldData($fields, $index);
     $title = $this->resolveEntityTitle($title, $fields, $search_api_item);
     $title_in_contextual = $this->isTitleInContextual($fields, $index);
@@ -199,6 +222,10 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   /**
    * Get the raw embeddings.
    *
+   * Uses multi embedding when supported by the provider to reduce API calls.
+   * Multiple chunks are sent in a single request when possible. Large numbers
+   * of chunks are split into smaller batches to avoid API limits.
+   *
    * @param array $chunks
    *   The text chunks.
    *
@@ -210,7 +237,12 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
 
     /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embedding_llm */
     $embedding_llm = $this->embeddingLlm;
-    foreach ($chunks as $chunk) {
+
+    // First pass: validate and convert chunks to UTF-8.
+    $valid_chunks = [];
+    $chunk_index_map = [];
+
+    foreach ($chunks as $original_index => $chunk) {
       // If not already UTF8, attempt to convert.
       if (!Unicode::validateUtf8($chunk)) {
         if ($encoding = Unicode::encodingFromBOM($chunk)) {
@@ -235,9 +267,9 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         else {
 
           // Failed to determine encoding to convert from.
-          $this->messenger->addWarning($this->t('Failed to determine non-UTF8 encoding to attempt to auto-convert chunk: @chunk'), [
+          $this->messenger->addWarning($this->t('Failed to determine non-UTF8 encoding to attempt to auto-convert chunk: @chunk', [
             '@chunk' => $chunk,
-          ]);
+          ]));
           $logger = $this->loggerChannelFactory->get('ai_search');
           $logger->warning('Failed to determine non-UTF8 encoding to attempt to auto-convert chunk: @chunk', [
             '@chunk' => $chunk,
@@ -248,19 +280,97 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
 
       // Only proceed if we have a valid chunk.
       if ($chunk) {
-        // Normalize the chunk before embedding it.
-        $input = new EmbeddingsInput($chunk);
-        $tags = ['ai_search'];
-        if ($this->skipModeration) {
-          $tags[] = 'skip_moderation';
-        }
-        $raw_embeddings[] = $embedding_llm->embeddings(
-          $input,
-          $this->modelId,
-          $tags,
-        )->getNormalized();
+        $chunk_index_map[count($valid_chunks)] = $original_index;
+        $valid_chunks[] = $chunk;
       }
     }
+
+    // If no valid chunks, return empty array.
+    if (empty($valid_chunks)) {
+      return [];
+    }
+    $tags = ['ai_search', 'indexing'];
+    if ($this->skipModeration) {
+      $tags[] = 'skip_moderation';
+    }
+
+    // Use multi embedding for multiple chunks when the provider opts in by
+    // implementing EmbeddingsCollectionInterface. instanceof safely returns
+    // FALSE on older drupal/ai releases where the interface does not exist, so
+    // we transparently fall through to single-chunk processing.
+    if (count($valid_chunks) > 1 && $embedding_llm->getPlugin() instanceof EmbeddingsCollectionInterface) {
+      $batches = array_chunk($valid_chunks, $this->embeddingCollectionSize, TRUE);
+
+      foreach ($batches as $batch_chunks) {
+        try {
+          // Re-index batch chunks to 0-based for this batch.
+          $batch_texts = array_values($batch_chunks);
+          $batch_keys = array_keys($batch_chunks);
+
+          $input = new EmbeddingsCollectionInput($batch_texts);
+          $result = $embedding_llm->embeddingsCollection(
+            $input,
+            $this->modelId,
+            $tags,
+          );
+          $batch_embeddings = $result->getNormalized();
+
+          // Map embeddings back to original chunk indices.
+          foreach ($batch_embeddings as $batch_index => $embedding) {
+            $valid_chunk_index = $batch_keys[$batch_index] ?? NULL;
+            if ($valid_chunk_index !== NULL && isset($chunk_index_map[$valid_chunk_index])) {
+              $raw_embeddings[$chunk_index_map[$valid_chunk_index]] = $embedding;
+            }
+          }
+        }
+        catch (\Exception $e) {
+          // If batch embedding fails, fall back to single-chunk processing
+          // for this batch only.
+          $logger = $this->loggerChannelFactory->get('ai_search');
+          $logger->warning('Batch embedding failed for @count chunks, falling back to single-chunk processing: @message', [
+            '@count' => count($batch_chunks),
+            '@message' => $e->getMessage(),
+          ]);
+
+          foreach ($batch_chunks as $valid_chunk_index => $chunk) {
+            $input = new EmbeddingsInput($chunk);
+            try {
+              $raw_embeddings[$chunk_index_map[$valid_chunk_index]] = $embedding_llm->embeddings(
+                $input,
+                $this->modelId,
+                $tags,
+              )->getNormalized();
+            }
+            catch (\Exception $e) {
+              $logger->warning('Failed to embed chunk: @message', [
+                '@message' => $e->getMessage(),
+              ]);
+            }
+          }
+        }
+      }
+    }
+    else {
+      // Single chunk - embed directly without batching.
+      foreach ($valid_chunks as $batch_index => $chunk) {
+        // Normalize the chunk before embedding it.
+        $input = new EmbeddingsInput($chunk);
+        try {
+          $raw_embeddings[$chunk_index_map[$batch_index]] = $embedding_llm->embeddings(
+            $input,
+            $this->modelId,
+            $tags,
+          )->getNormalized();
+        }
+        catch (\Exception $e) {
+          $logger = $this->loggerChannelFactory->get('ai_search');
+          $logger->warning('Failed to embed chunk: @message', [
+            '@message' => $e->getMessage(),
+          ]);
+        }
+      }
+    }
+
     return array_filter($raw_embeddings);
   }
 
@@ -397,27 +507,62 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         }
       }
       else {
-        // Both contextual content and main fields need chunking.
+        // Both contextual content and main fields need chunking. Use one
+        // bounded contextual prefix per main chunk, rather than pairing
+        // every main chunk with every contextual chunk: that Cartesian
+        // product scales output quadratically (M main chunks x C contextual
+        // chunks) and dilutes vector search relevance with arbitrary
+        // pairings. It also let the contextual share of the budget grow
+        // without bound as "Contextual content maximum percentage" was
+        // raised, which could shrink the main chunk size to at or below
+        // chunkMinOverlap and make TextChunker::chunkText() throw. Reserving
+        // a minimum main chunk size up front keeps that invariant.
         $title_tokens = !empty($title) ? $this->tokenizer->countTokens($title) : 0;
         $available_chunk_size = $this->chunkSize - $title_tokens;
-        $contextual_chunk_size = (int) ($available_chunk_size * $max_contextual_content);
-        $main_chunk_size = (int) ($available_chunk_size * $max_main_fields);
-        $contextual_min_overlap = max(1, intval($this->chunkMinOverlap * $max_contextual_content));
+        $minimum_main_chunk_size = $this->chunkMinOverlap + 1;
 
-        $contextual_chunks = $this->textChunker->chunkText(
-          $contextual_content,
-          $contextual_chunk_size,
-          $contextual_min_overlap
+        if ($available_chunk_size <= $minimum_main_chunk_size) {
+          throw new \LogicException('The configured chunk size leaves no valid capacity for main content after deducting title tokens.');
+        }
+
+        // Compute the contextual share of the budget, but never let it push
+        // the main chunk below $minimum_main_chunk_size.
+        $requested_contextual_chunk_size = (int) ($available_chunk_size * $max_contextual_content);
+        $main_chunk_size = max(
+          $minimum_main_chunk_size,
+          $available_chunk_size - $requested_contextual_chunk_size
         );
+        $contextual_chunk_size = $available_chunk_size - $main_chunk_size;
+
+        // Symmetric guard for the opposite extreme: a low percentage against
+        // large contextual content can leave $contextual_chunk_size at or
+        // near 0, which would make TextChunker throw the same way. Skip
+        // contextual chunking entirely in that case rather than fail.
+        $contextual_chunk = '';
+        if ($contextual_chunk_size > 0) {
+          $contextual_min_overlap = min(
+            max(1, (int) ($this->chunkMinOverlap * $max_contextual_content)),
+            max(1, $contextual_chunk_size - 1)
+          );
+          $contextual_chunks = $this->textChunker->chunkText(
+            $contextual_content,
+            $contextual_chunk_size,
+            $contextual_min_overlap
+          );
+          $contextual_chunk = reset($contextual_chunks) ?: '';
+        }
+
         $main_chunks = $this->textChunker->chunkText(
           $main_content,
           $main_chunk_size,
           $this->chunkMinOverlap
         );
+
+        // Use the primary contextual chunk as a prefix for every main chunk,
+        // keeping output at M chunks rather than M x C. Contextual content
+        // beyond what fits in that first chunk is intentionally dropped.
         foreach ($main_chunks as $main_chunk) {
-          foreach ($contextual_chunks as $contextual_chunk) {
-            $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk);
-          }
+          $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk);
         }
       }
     }
@@ -441,7 +586,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     $parts = [];
     // Only render the title if it is not empty.
     if (!empty($title)) {
-      $parts[] = '# ' . strtoupper($title);
+      $parts[] = '# ' . $title;
     }
     $parts[] = $main_chunk;
     if (!empty($contextual_chunk)) {

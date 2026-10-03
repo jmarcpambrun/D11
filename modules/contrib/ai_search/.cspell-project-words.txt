@@ -10,6 +10,7 @@ Initialise
 Pinecone
 Providerid
 TCHA
+Über
 autocompleteclose
 automator
 chatbots
@@ -47,3 +48,6 @@ seogow
 yautja
 unhex
 rerank
+reranking
+davinci
+unconfigured

@@ -75,6 +75,18 @@ class AiLogFormSettings extends ConfigFormBase {
       ],
     ];
 
+    $form['prompt_logging_excluded_tags'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Exclude automated logging by request tags'),
+      '#description' => $this->t('Comma-separated list of tags to exclude from logging. If a request has any of these tags, it will not be logged, regardless of the included tags setting above.'),
+      '#default_value' => $config->get('prompt_logging_excluded_tags'),
+      '#states' => [
+        'visible' => [
+          ':input[name="prompt_logging"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $form['prompt_logging_max_messages'] = [
       '#type' => 'number',
       '#title' => $this->t('Maximum number messages to keep stored in the log'),
@@ -89,6 +101,27 @@ class AiLogFormSettings extends ConfigFormBase {
       '#default_value' => $config->get('prompt_logging_max_age'),
     ];
 
+    $form['threads'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Conversation threads'),
+      '#open' => TRUE,
+    ];
+
+    $form['threads']['thread_tag_prefixes'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Thread tag prefixes'),
+      '#description' => $this->t('One request tag prefix per line. Logs whose tags start with one of these prefixes are grouped into conversation threads by the rest of the tag, the thread ID. Leave empty to turn the thread pages off.'),
+      '#default_value' => implode("\n", $config->get('thread_tag_prefixes') ?? []),
+      '#rows' => 3,
+    ];
+
+    $form['threads']['thread_primary_tag_pattern'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Primary turn tag pattern'),
+      '#description' => $this->t('A thread is labeled with the first user message of its earliest chat call carrying a tag that matches this pattern, which skips helper calls (such as guardrails) that joined the thread before its first real turn. Use % as a wildcard. Leave empty to use the earliest chat call.'),
+      '#default_value' => $config->get('thread_primary_tag_pattern'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -96,13 +129,21 @@ class AiLogFormSettings extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $thread_tag_prefixes = array_values(array_unique(array_filter(
+      array_map('trim', preg_split('/\R/', (string) $form_state->getValue('thread_tag_prefixes'))),
+      static fn(string $prefix): bool => $prefix !== '',
+    )));
+
     // Retrieve the configuration.
     $this->config(static::CONFIG_NAME)
       ->set('prompt_logging', $form_state->getValue('prompt_logging'))
       ->set('prompt_logging_tags', $form_state->getValue('prompt_logging_tags'))
+      ->set('prompt_logging_excluded_tags', $form_state->getValue('prompt_logging_excluded_tags'))
       ->set('prompt_logging_output', (bool) $form_state->getValue('prompt_logging_output'))
       ->set('prompt_logging_max_messages', $form_state->getValue('prompt_logging_max_messages'))
       ->set('prompt_logging_max_age', $form_state->getValue('prompt_logging_max_age'))
+      ->set('thread_tag_prefixes', $thread_tag_prefixes)
+      ->set('thread_primary_tag_pattern', trim((string) $form_state->getValue('thread_primary_tag_pattern')))
       ->save();
 
     parent::submitForm($form, $form_state);

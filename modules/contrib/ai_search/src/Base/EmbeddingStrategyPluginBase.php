@@ -3,7 +3,7 @@
 namespace Drupal\ai_search\Base;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -54,6 +54,17 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
   protected bool $skipModeration;
 
   /**
+   * Maximum number of texts to send in a single embeddings collection request.
+   *
+   * Used only when the provider supports multi embeddings. Providers have
+   * different limits on the number of inputs per request, so this is
+   * configurable per strategy with a conservative default.
+   *
+   * @var int
+   */
+  protected int $embeddingCollectionSize = 50;
+
+  /**
    * The chunk minimum overlap.
    *
    * @var int
@@ -87,7 +98,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *   The html to markdown converter.
    * @param \Drupal\ai\Utility\TextChunker $textChunker
    *   The text chunker.
-   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extensionList
    *   The module extension list.
@@ -104,7 +115,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     protected AiProviderPluginManager $aiProviderManager,
     protected HtmlConverter $converter,
     protected TextChunker $textChunker,
-    protected EntityTypeManager $entityTypeManager,
+    protected EntityTypeManagerInterface $entityTypeManager,
     protected ModuleExtensionList $extensionList,
     protected ConfigFactoryInterface $configFactory,
     protected LoggerChannelFactoryInterface $loggerChannelFactory,
@@ -141,6 +152,9 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embeddingLlm */
     $this->embeddingLlm = $this->aiProviderManager->createInstance($this->providerId);
     $this->skipModeration = !empty($configuration['skip_moderation']);
+    if (!empty($configuration['embedding_collection_size']) && is_numeric($configuration['embedding_collection_size'])) {
+      $this->embeddingCollectionSize = max(1, (int) $configuration['embedding_collection_size']);
+    }
     if (!empty($configuration['chunk_size']) && is_numeric($configuration['chunk_size'])) {
       $this->chunkSize = (int) $configuration['chunk_size'];
     }
@@ -227,6 +241,14 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     $form['chunk_size_details']['content'] = [
       '#markup' => file_get_contents($file),
     ];
+    $form['embedding_collection_size'] = [
+      '#title' => $this->t('Embedding Collection size'),
+      '#description' => $this->t('When the embeddings provider supports multi embeddings, this many text chunks are sent per request to reduce the number of API calls during indexing. Providers limit how many inputs they accept per request, so lower this if you hit request-size or rate limits. Ignored by providers that do not support multi embeddings.'),
+      '#required' => TRUE,
+      '#type' => 'number',
+      '#min' => 1,
+      '#default_value' => $configuration['embedding_collection_size'] ?? 50,
+    ];
     $form['chunk_min_overlap'] = [
       '#title' => $this->t("Minimum chunk overlap for 'Main Content'"),
       '#description' => $this->t('When breaking apart the content into smaller chunks, copy a bit of the content from the previous chunk to avoid anything important being missed overall by inadvertently splitting for example mid-concept. This specifies the number of tokens to retrieve from the preceding chunk to provide that overlapping content.'),
@@ -248,6 +270,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     return [
       'chunk_size' => 500,
       'chunk_min_overlap' => 100,
+      'embedding_collection_size' => 50,
     ];
   }
 

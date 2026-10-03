@@ -7,6 +7,7 @@
 
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\ai_logging\Entity\AiLog;
 
 /**
  * Removed updated hook now that entity structure has changed.
@@ -141,12 +142,16 @@ function ai_logging_update_10305() {
 function ai_logging_update_10306() {
   $update_manager = \Drupal::entityDefinitionUpdateManager();
   $entity_type_manager = \Drupal::entityTypeManager();
-  $update_manager->installEntityType(
-    $entity_type_manager->getDefinition('ai_log_type')
-  );
-  $update_manager->installEntityType(
-    $entity_type_manager->getDefinition('ai_log')
-  );
+  foreach (['ai_log_type', 'ai_log'] as $entity_type_id) {
+    // A site moving from the AI Logging submodule bundled with AI core
+    // already has these. Installing an existing entity type again would
+    // record every current field as installed without adding its column,
+    // so later updates would skip fields such as the token usage ones.
+    if ($update_manager->getEntityType($entity_type_id)) {
+      continue;
+    }
+    $update_manager->installEntityType($entity_type_manager->getDefinition($entity_type_id));
+  }
 }
 
 /**
@@ -265,4 +270,53 @@ function ai_logging_update_10309() {
     $config->set('display.default.display_options.sorts', $sorts);
     $config->save();
   }
+}
+
+/**
+ * Add the reply field, and repair token usage fields missing their columns.
+ */
+function ai_logging_update_10310() {
+  // Before ai_logging_update_10306() was fixed, a site moving from the AI
+  // Logging submodule bundled with AI core had the token usage fields
+  // recorded as installed without their columns, so ai_logging_update_10307()
+  // skipped them.
+  $storage_definitions = [
+    'response_text' => AiLog::responseTextFieldDefinition(),
+  ];
+  $token_labels = [
+    'tokens_input' => t('Input Tokens'),
+    'tokens_output' => t('Output Tokens'),
+    'tokens_total' => t('Total Tokens'),
+    'tokens_reasoning' => t('Reasoning Tokens'),
+    'tokens_cached' => t('Cached Tokens'),
+  ];
+  foreach ($token_labels as $field_name => $label) {
+    $storage_definitions[$field_name] = BaseFieldDefinition::create('integer')
+      ->setLabel($label)
+      ->setDescription(t('Token usage data captured from the AI provider response.'))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+  }
+
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $database_schema = \Drupal::database()->schema();
+  $installed_fields = [];
+  foreach ($storage_definitions as $field_name => $storage_definition) {
+    if ($database_schema->fieldExists('ai_log', $field_name)) {
+      continue;
+    }
+    $last_installed_definition = $update_manager->getFieldStorageDefinition($field_name, 'ai_log');
+    if ($last_installed_definition) {
+      // Recorded as installed without a column: forget the record so the
+      // field can be installed properly.
+      \Drupal::service('entity.last_installed_schema.repository')->deleteLastInstalledFieldStorageDefinition($last_installed_definition);
+    }
+    $update_manager->installFieldStorageDefinition($field_name, 'ai_log', 'ai_logging', $storage_definition);
+    $installed_fields[] = $field_name;
+  }
+
+  if (!$installed_fields) {
+    return t('The AI Log reply and token usage fields already exist, skipping.');
+  }
+  return t('Installed the AI Log fields: @fields.', ['@fields' => implode(', ', $installed_fields)]);
 }

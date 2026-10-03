@@ -27,6 +27,13 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
   public array $options = [];
 
   /**
+   * Total chunks generated for the current preview item.
+   *
+   * @var int
+   */
+  protected int $checkerTotalChunks = 0;
+
+  /**
    * Build the select indexing options.
    *
    * @return array
@@ -273,9 +280,19 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
               '#type' => 'html_tag',
               '#tag' => 'h3',
               '#value' => $this->t('Total chunks for this content: @count', [
-                '@count' => count($embeddings),
+                '@count' => $this->checkerTotalChunks,
               ]),
             ];
+            if (count($embeddings) < $this->checkerTotalChunks) {
+              $form['checker']['embeddings_displayed_count'] = [
+                '#type' => 'html_tag',
+                '#tag' => 'p',
+                '#value' => $this->t('Showing the first @displayed of @total chunks.', [
+                  '@displayed' => count($embeddings),
+                  '@total' => $this->checkerTotalChunks,
+                ]),
+              ];
+            }
             foreach (array_values($embeddings) as $number => $embedding) {
               $form = $this->buildCheckerChunkTable($form, $number, $embedding);
             }
@@ -302,6 +319,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
     DatasourceInterface $current_data_source,
     EntityInterface $check_entity,
   ): array {
+    $this->checkerTotalChunks = 0;
     $backend_config = $this->entity->getServerInstance()->getBackendConfig();
 
     // Ignore static Drupal Service call: we do this to make it easier to keep
@@ -320,7 +338,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
           ->get('search_api.fields_helper')
           ->createItemFromObject($this->entity, $item, $item_id, $current_data_source);
         if ($search_item instanceof ItemInterface) {
-          return $embedding_strategy->getEmbedding(
+          $embeddings = $embedding_strategy->getEmbedding(
             $backend_config['embeddings_engine'],
             $backend_config['chat_model'],
             $backend_config['embedding_strategy_configuration'],
@@ -328,6 +346,14 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
             $search_item,
             $this->entity,
           );
+          $this->checkerTotalChunks = count($embeddings);
+          if (method_exists($embedding_strategy, 'getLastTotalChunks')) {
+            $this->checkerTotalChunks = max(
+              $this->checkerTotalChunks,
+              $embedding_strategy->getLastTotalChunks(),
+            );
+          }
+          return $embeddings;
         }
       }
     }

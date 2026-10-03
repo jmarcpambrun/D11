@@ -188,6 +188,8 @@ class AiLog extends ContentEntityBase implements AiLogInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['response_text'] = static::responseTextFieldDefinition();
+
     $fields['configuration'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Configuration'))
       ->setDescription(t('The configuration for the ai log.'))
@@ -300,6 +302,32 @@ class AiLog extends ContentEntityBase implements AiLogInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     return $fields;
+  }
+
+  /**
+   * Builds the field definition for the normalized reply text.
+   *
+   * Shared with ai_logging_update_10310() so that existing sites get exactly
+   * the same field storage as a fresh install.
+   *
+   * @return \Drupal\Core\Field\BaseFieldDefinition
+   *   The response text base field definition.
+   */
+  public static function responseTextFieldDefinition(): BaseFieldDefinition {
+    return BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Reply'))
+      ->setDescription(t('The text the model replied with, as normalized by the AI module. A structured (JSON schema) call stores its JSON answer here.'))
+      ->setDisplayOptions('form', [
+        'type' => 'string_textarea',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
   }
 
   /**

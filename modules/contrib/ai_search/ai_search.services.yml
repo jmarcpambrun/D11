@@ -11,3 +11,8 @@ services:
     tags:
       - { name: event_subscriber }
     arguments: ['@ai.vdb_provider']
+  ai_search.event_subscriber.chunk_tracking_reset:
+    class: Drupal\ai_search\EventSubscriber\ChunkTrackingResetEventSubscriber
+    tags:
+      - { name: event_subscriber }
+    arguments: ['@database']

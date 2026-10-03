@@ -291,6 +291,13 @@ function ai_search_update_10005() {
  * Update AI Search indexes to include exclude_title setting.
  */
 function ai_search_update_10006(): void {
+  _ai_search_set_exclude_title_default();
+}
+
+/**
+ * Sets the exclude_title default on any AI Search index missing it.
+ */
+function _ai_search_set_exclude_title_default(): void {
   $config_factory = \Drupal::configFactory();
   $indexes = $config_factory->listAll('ai_search.index.');
   foreach ($indexes as $index) {
@@ -383,4 +390,11 @@ function ai_search_update_10009(): string {
   }
 
   return (string) t('Updated @count Search API index(es) with the max_pager_iterations setting.', ['@count' => $updated]);
+}
+
+/**
+ * Reruns the exclude_title migration maybe skipped due to submodule collision.
+ */
+function ai_search_update_10010(): void {
+  _ai_search_set_exclude_title_default();
 }

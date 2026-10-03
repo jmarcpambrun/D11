@@ -4,6 +4,7 @@ namespace Drupal\ai_search\Plugin\search_api\processor;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
+use Drupal\ai_search\Utility\SearchKeysHelper;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Entity\Server;
 use Drupal\search_api\Plugin\PluginFormTrait;
@@ -118,7 +119,7 @@ abstract class BoostByAiSearchBase extends ProcessorPluginBase implements Plugin
     $form['pass_conditions_fields'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Pass conditions from parent query'),
-      '#description' => $this->t('Select which indexed fields from this index should have their top-level conditions copied to the AI Search query. This allows the AI Search to respect certain filters applied on the primary search (e.g. content type, status). Only simple top-level conditions are supported; nested condition groups are ignored.'),
+      '#description' => $this->t('Select which indexed fields from this index should have their conditions copied to the AI Search query. This allows the AI Search to respect certain filters applied on the primary search (e.g. content type, status). Conditions are copied at any nesting depth, preserving their original AND/OR grouping; only conditions on fields not selected here are dropped.'),
       '#options' => $field_options,
       '#default_value' => $this->configuration['pass_conditions_fields'] ?? [],
     ];
@@ -208,10 +209,7 @@ abstract class BoostByAiSearchBase extends ProcessorPluginBase implements Plugin
    */
   protected function determineLimit(string|array $keywords): int {
     if ($this->supportsExactPhraseSearch()) {
-      if (!is_array($keywords)) {
-        $keywords = [$keywords];
-      }
-      foreach ($keywords as $keyword) {
+      foreach (SearchKeysHelper::flatten($keywords) as $keyword) {
 
         // If there are at least 2 quotations, follow the exact phrase action
         // that the site builder selected.
@@ -306,9 +304,11 @@ abstract class BoostByAiSearchBase extends ProcessorPluginBase implements Plugin
   /**
    * Copy configured field conditions from the parent query to the AI query.
    *
-   * Only simple top-level conditions on fields selected by the site builder
-   * are copied. Nested condition groups are intentionally skipped because the
-   * AI Search backend supports only a limited subset of condition types.
+   * Conditions are copied preserving the parent's own group nesting and
+   * AND/OR conjunctions, rather than flattened into top-level AND
+   * conditions - flattening an OR group silently turns an "either/or" into
+   * "both at once", which two conditions meant as alternatives can rarely
+   * both satisfy, making the AI query wrongly return nothing.
    *
    * @param \Drupal\search_api\Query\QueryInterface $ai_query
    *   The AI Search query being built.
@@ -320,28 +320,51 @@ abstract class BoostByAiSearchBase extends ProcessorPluginBase implements Plugin
     if (empty($configured_fields)) {
       return;
     }
-    $this->applyConditionsFromGroup($ai_query, $parent_query->getConditionGroup(), $configured_fields);
+    $filtered_group = $this->filterConditionGroup($ai_query, $parent_query->getConditionGroup(), $configured_fields);
+    if ($filtered_group !== NULL) {
+      $ai_query->addConditionGroup($filtered_group);
+    }
   }
 
   /**
-   * Recursively copies leaf conditions from a group to the AI query.
+   * Rebuilds a condition group containing only conditions on configured fields.
+   *
+   * Mirrors the original group's own conjunction (AND/OR) and nesting, so an
+   * AND group's copy still requires all of its (configured) conditions and an
+   * OR group's copy still accepts any one of them. Dropping unconfigured
+   * conditions can only ever loosen an AND group; for an OR group, dropping
+   * a whole branch narrows what it accepts, but that is an accepted
+   * consequence of only some fields being configured for pass-through —
+   * never a wrongly-ANDed pair of exclusive alternatives.
    *
    * @param \Drupal\search_api\Query\QueryInterface $ai_query
-   *   The AI Search query being built.
+   *   The AI Search query being built - used only to create new groups.
    * @param \Drupal\search_api\Query\ConditionGroupInterface $group
    *   The condition group to inspect.
    * @param array $configured_fields
    *   Allowed list of field IDs whose conditions should be forwarded.
+   *
+   * @return \Drupal\search_api\Query\ConditionGroupInterface|null
+   *   A new group with the matching conditions/subgroups, or NULL if none
+   *   of $group's conditions (at any depth) are on a configured field.
    */
-  private function applyConditionsFromGroup(QueryInterface $ai_query, ConditionGroupInterface $group, array $configured_fields): void {
+  private function filterConditionGroup(QueryInterface $ai_query, ConditionGroupInterface $group, array $configured_fields): ?ConditionGroupInterface {
+    $new_group = $ai_query->createConditionGroup($group->getConjunction());
+    $has_content = FALSE;
     foreach ($group->getConditions() as $condition) {
       if ($condition instanceof ConditionGroupInterface) {
-        $this->applyConditionsFromGroup($ai_query, $condition, $configured_fields);
+        $sub_group = $this->filterConditionGroup($ai_query, $condition, $configured_fields);
+        if ($sub_group !== NULL) {
+          $new_group->addConditionGroup($sub_group);
+          $has_content = TRUE;
+        }
       }
       elseif ($condition instanceof ConditionInterface && isset($configured_fields[$condition->getField()])) {
-        $ai_query->addCondition($condition->getField(), $condition->getValue(), $condition->getOperator());
+        $new_group->addCondition($condition->getField(), $condition->getValue(), $condition->getOperator());
+        $has_content = TRUE;
       }
     }
+    return $has_content ? $new_group : NULL;
   }
 
 }

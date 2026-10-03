@@ -7,6 +7,7 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldConfigInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\WidgetInterface;
@@ -32,12 +33,36 @@ class FieldWidgetAction {
    *   The field widget actions manager.
    * @param \Drupal\Component\Uuid\UuidInterface $uuid
    *   The uuid service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The module handler.
    */
   public function __construct(
     protected FieldWidgetActionManagerInterface $fieldWidgetActionManager,
     protected UuidInterface $uuid,
+    protected ModuleHandlerInterface $moduleHandler,
   ) {
 
+  }
+
+  /**
+   * Returns the list of widget plugin IDs that do not render child elements.
+   *
+   * Widgets in this list are wrapped in a container by the form alter hooks so
+   * that Field Widget Action buttons can appear alongside them. Contrib modules
+   * can extend the list via
+   * hook_field_widget_actions_childless_widgets_alter().
+   *
+   * @return string[]
+   *   An array of widget plugin IDs.
+   */
+  public function getChildlessWidgets(): array {
+    $childless_widgets = [
+      'tagify_select_widget',
+      'select2',
+      'options_select',
+    ];
+    $this->moduleHandler->alter('field_widget_actions_childless_widgets', $childless_widgets);
+    return $childless_widgets;
   }
 
   /**
@@ -271,7 +296,7 @@ class FieldWidgetAction {
             '#type' => 'button',
             '#name' => $field_definition->getName() . '_remove_field_widget_action_' . $action_id,
             '#value' => $this->t('Remove Action'),
-            '#input' => FALSE,
+            '#after_build' => [[static::class, 'removeButtonAfterBuild']],
             '#ajax' => [
               'callback' => [static::class, 'removeAction'],
               'event' => 'click',
@@ -305,6 +330,40 @@ class FieldWidgetAction {
       ];
     }
     return $element;
+  }
+
+  /**
+   * Implements hook_field_widget_settings_summary_alter().
+   */
+  #[Hook('field_widget_settings_summary_alter')]
+  public function fieldWidgetSettingsSummaryAlter(array &$summary, array $context) {
+    /** @var \Drupal\Core\Field\WidgetInterface $widget */
+    $widget = $context['widget'];
+    $enabled_plugins = $widget->getThirdPartySettings('field_widget_actions') ?? [];
+    $labels = [];
+
+    foreach ($enabled_plugins as $configuration) {
+      if (empty($configuration['plugin_id']) || empty($configuration['enabled'])) {
+        continue;
+      }
+
+      try {
+        $action = $this->fieldWidgetActionManager->createInstance($configuration['plugin_id'], $configuration);
+      }
+      catch (PluginNotFoundException $e) {
+        continue;
+      }
+
+      $title = $action->getButtonLabel();
+      if ($title != $action->getLabel()) {
+        $title .= ' (' . $action->getLabel() . ')';
+      }
+      $labels[] = $title;
+    }
+
+    if (!empty($labels)) {
+      $summary[] = $this->formatPlural(count($labels), 'Action: @labels', 'Actions: @labels', ['@labels' => implode(', ', $labels)]);
+    }
   }
 
   /**
@@ -346,6 +405,32 @@ class FieldWidgetAction {
   }
 
   /**
+   * After-build callback for the "Remove Action" button.
+   *
+   * The button lives inside the third-party settings sub-form, so the Form API
+   * stores its value next to the action settings. Field UI copies those
+   * settings verbatim into the form display when "Update" is pressed, without
+   * calling \Drupal\Core\Form\FormState::cleanValues(), which is what
+   * normally strips button values. Unsetting the value here keeps a 'remove'
+   * key out of the saved configuration. Declaring the button with
+   * '#input' => FALSE is not an option: the Form API then never detects it as
+   * the triggering element and attributes the click to the first button in the
+   * form instead.
+   *
+   * @param array $element
+   *   The button element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The unchanged button element.
+   */
+  public static function removeButtonAfterBuild(array $element, FormStateInterface $form_state): array {
+    $form_state->unsetValue($element['#parents']);
+    return $element;
+  }
+
+  /**
    * Implements hook_field_widget_complete_form_alter().
    */
   #[Hook('field_widget_complete_form_alter')]
@@ -378,11 +463,7 @@ class FieldWidgetAction {
     // in a container.
     $widget_id = $context['widget']->getPluginId();
     $element_type = $field_widget_complete_form['#type'] ?? '';
-    $known_childless_widgets = [
-      'tagify_select_widget',
-      'select2',
-    ];
-    if ($element_type === 'select' || in_array($widget_id, $known_childless_widgets)) {
+    if ($element_type === 'select' || in_array($widget_id, $this->getChildlessWidgets())) {
 
       // Find all field widget action buttons.
       $actions_found = [];
@@ -446,12 +527,7 @@ class FieldWidgetAction {
 
     // Move known childless widgets into a container.
     $widget_id = $context['widget']->getPluginId();
-    $known_childless_widgets = [
-      'tagify_select_widget',
-      'select2',
-      'options_select',
-    ];
-    if (in_array($widget_id, $known_childless_widgets) || (isset($element['#type']) && $element['#type'] === 'select')) {
+    if (in_array($widget_id, $this->getChildlessWidgets()) || (isset($element['#type']) && $element['#type'] === 'select')) {
       $actions_found = [];
       foreach ($element as $key => $child) {
         if (is_array($child) && !empty($child['#field_widget_action_field_name'])) {

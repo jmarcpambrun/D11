@@ -5,8 +5,6 @@ namespace Drupal\ai_search\Plugin\search_api\backend;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
 use Drupal\Core\Link;
@@ -19,10 +17,12 @@ use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
+use Drupal\ai_search\Utility\SearchKeysHelper;
 use Drupal\search_api\Backend\BackendSpecificInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\Query\QueryInterface;
+use Drupal\search_api\Utility\Utility;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -81,11 +81,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   protected EntityFieldManagerInterface $entityFieldManager;
 
   /**
-   * The entity type manager.
+   * Local cache for pre-loaded search items.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var array
    */
-  protected $entityTypeManager;
+  protected array $loadedItems = [];
 
   /**
    * The current account, proxy interface.
@@ -132,7 +132,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $instance->embeddingStrategyProviderManager = $container->get('ai_search.embedding_strategy');
     $instance->entityFieldManager = $container->get('entity_field.manager');
     $instance->messenger = $container->get('messenger');
-    $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->currentUser = $container->get('current_user');
     $instance->tokenizer = $container->get('ai.tokenizer');
     $instance->database = $container->get('database');
@@ -229,7 +228,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $form['include_raw_embedding_vector'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Include raw embedding vector in results'),
-      '#description' => $this->t("If checked, the raw embedding vector will be fetched from the VDB and added to the search result item's extra data. This is useful for features like re-ranking but may have a minor performance impact."),
+      '#description' => $this->t("If checked, the raw embedding vector will be fetched from the VDB and added to the search result item's extra data. This is useful for features like re-ranking but may have a minor performance impact, as well as a bandwidth cost on Vector Databases billed on egress. An individual query can override this either way with the <code>search_api_ai_include_raw_embedding_vector</code> query option."),
       '#default_value' => $this->configuration['include_raw_embedding_vector'] ?? FALSE,
       '#weight' => 2.5,
     ];
@@ -237,7 +236,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $chosen_database = $this->configuration['database'] ?? NULL;
     if (!$chosen_database) {
       // Try to get from form state.
-      $chosen_database = $form_state->get('database') ?? NULL;
+      $chosen_database = $form_state->get('database');
     }
 
     $form['database'] = [
@@ -254,6 +253,15 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         'wrapper' => 'database-settings-wrapper',
       ],
       '#weight' => 3,
+    ];
+
+    $form['negated_terms_notice_label'] = [
+      '#markup' => '<div class="form-item__label">' . $this->t('Negated search terms') . '</div>',
+      '#weight' => 3.1,
+    ];
+    $form['negated_terms_notice'] = [
+      '#markup' => '<div class="form-item__description">' . $this->t('Negated search terms (e.g. <code>-foo</code>) are excluded from semantic ranking, since embedding models cannot reliably represent "not X" as a vector. They can still be enforced as exclusions by a traditional keyword search layer when combining via "Boost" plugins.') . '</div>',
+      '#weight' => 3.1,
     ];
 
     // Container for database-specific settings.
@@ -330,7 +338,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function setConfiguration(array $configuration) {
     $this->configuration = $configuration + $this->defaultConfiguration();
-    if ($this->configuration['embedding_strategy_container']) {
+    if (!empty($this->configuration['embedding_strategy_container'])) {
       $this->configuration = array_merge($this->configuration, $this->configuration['embedding_strategy_container']);
       unset($this->configuration['embedding_strategy_container']);
     }
@@ -486,9 +494,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $embedding_strategy->setChunkOffset($offset);
 
       // Compute total chunks to know if this batch completes the item.
+      $chunk_configuration = $this->configuration['embedding_strategy_configuration'];
+      $chunk_configuration['chat_model'] = $this->configuration['chat_model'];
       $all_chunks = $embedding_strategy->computeItemChunks(
         $this->configuration['embeddings_engine'],
-        $this->configuration['embedding_strategy_configuration'],
+        $chunk_configuration,
         $item->getFields(),
         $item,
         $index,
@@ -602,14 +612,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $vdb_client = $this->getClient();
 
     // Check if we need to include the raw embedding vector.
-    if (!empty($this->configuration['include_raw_embedding_vector'])) {
-      $raw_embedding_field_name = $vdb_client->getRawEmbeddingFieldName();
-      if (!empty($raw_embedding_field_name)) {
-        $params['output_fields'][] = $raw_embedding_field_name;
-        // Store for extractMetadata to use, without changing its signature.
-        $query->setOption('search_api_ai_retrieved_embedding_field_name', $raw_embedding_field_name);
-      }
-    }
+    $this->addRawEmbeddingVectorOutputField($query, $params);
+
+    // Let the configured embedding strategy request any additional metadata
+    // fields it stores per chunk.
+    $this->addEmbeddingStrategyOutputFields($params);
 
     if ($filters = $vdb_client->prepareFilters($query)) {
       $params['filters'] = $filters;
@@ -781,10 +788,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Track excluded IDs for NOT IN filtering in subsequent iterations.
     // The key we use depends on whether we're getting chunked results or not.
     $local_excluded_ids = [];
+    $this->loadedItems = [];
 
     // Conduct the search. Each raw fetch is doubled when access checks are
     // in play, since some fraction of every batch is expected to be
-    // rejected by checkEntityAccess(). The offset must advance past
+    // rejected by checkItemAccess(). The offset must advance past
     // whatever was already fetched on every iteration regardless of
     // $bypass_access: a retry can also be triggered by duplicate/chunked
     // entities being excluded via $excluded_entity_ids, which happens
@@ -828,6 +836,24 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $response = $vdb_client->querySearch(...$params);
     }
 
+    // Pre-load all non-excluded items to avoid N+1 query problem.
+    if (!$bypass_access && !empty($response)) {
+      $items_to_preload = [];
+      foreach ($response as $match) {
+        if (is_object($match)) {
+          $match = (array) $match;
+        }
+        $exclusion_id = $get_chunked ? $match['drupal_long_id'] : $match['drupal_entity_id'];
+        if (in_array($exclusion_id, $excluded_entity_ids) || in_array($exclusion_id, $local_excluded_ids)) {
+          continue;
+        }
+        $items_to_preload[] = $match['drupal_entity_id'];
+      }
+      if (!empty($items_to_preload)) {
+        $this->preloadItems($items_to_preload, $query->getIndex());
+      }
+    }
+
     // Obtain results.
     $i = 0;
     foreach ($response as $match) {
@@ -848,9 +874,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         continue;
       }
 
-      // Do access checks.
-      if (!$bypass_access && !$this->checkEntityAccess($match['drupal_entity_id'])) {
-        // If we are not allowed to view this entity, we can skip it.
+      // Perform access checks on the items.
+      if (!$bypass_access && !$this->checkItemAccess($match['drupal_entity_id'], $query->getIndex())) {
+        // If we are not allowed to view this item, skip it.
         continue;
       }
       // Passed.
@@ -923,27 +949,119 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // provided.
     $search_words = $query->getKeys();
     if (!empty($search_words) && is_array($search_words)) {
+      $prompt = $this->buildSearchPromptText($search_words);
 
-      // Search words are sent to Search API as separate terms. For semantic
-      // vector search however, we want to just pass the full input as a string
-      // to retrieve a single vector input based on the complete input content.
-      if (isset($search_words['#conjunction'])) {
-        unset($search_words['#conjunction']);
-      }
-      // Final check that it's still not empty after removing conjunction, as
+      // Final check that it's still not empty after flattening, as
       // embeddings input must receive a string.
-      if (!empty($search_words)) {
-        $search_words = implode(' ', $search_words);
-
+      if ($prompt !== '') {
         // Convert the search terms to vector input.
         [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
         $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
-        $input = new EmbeddingsInput($search_words, NULL);
+        $input = new EmbeddingsInput($prompt, NULL);
         return $embedding_llm->embeddings($input, $model_id)->getNormalized();
       }
     }
 
     return [];
+  }
+
+  /**
+   * Add the raw embedding vector field to the output fields, if it is wanted.
+   *
+   * Allow control per query over whether raw vectors are included, overriding
+   * the Search API Server configuration defaults. Use the
+   * "search_api_ai_include_raw_embedding_vector" to override.
+   *
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The search query.
+   * @param array $params
+   *   The search parameters, passed by reference.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  protected function addRawEmbeddingVectorOutputField(QueryInterface $query, array &$params): void {
+    $include_raw_embedding_vector = (bool) $query->getOption(
+      'search_api_ai_include_raw_embedding_vector',
+      !empty($this->configuration['include_raw_embedding_vector'])
+    );
+    if (!$include_raw_embedding_vector) {
+      return;
+    }
+
+    $raw_embedding_field_name = $this->getClient()->getRawEmbeddingFieldName();
+    if (empty($raw_embedding_field_name)) {
+      return;
+    }
+
+    $params['output_fields'][] = $raw_embedding_field_name;
+    $query->setOption('search_api_ai_retrieved_embedding_field_name', $raw_embedding_field_name);
+  }
+
+  /**
+   * Merges any additional metadata field names the embedding strategy needs.
+   *
+   * This method (getAdditionalMetadataFieldNames()) is not part of
+   * EmbeddingStrategyInterface on this branch, to avoid a breaking interface
+   * change in 1.0.x, so this guards the call with method_exists(): a
+   * strategy that does not implement it, or does not extend EmbeddingBase,
+   * simply contributes no additional fields.
+   *
+   * @param array $params
+   *   The search parameters, passed by reference; 'output_fields' is
+   *   extended in place.
+   */
+  protected function addEmbeddingStrategyOutputFields(array &$params): void {
+    if (empty($this->configuration['embedding_strategy'])) {
+      return;
+    }
+
+    try {
+      $embedding_strategy = $this->embeddingStrategyProviderManager->createInstance($this->configuration['embedding_strategy']);
+    }
+    catch (PluginException $e) {
+      $this->logger->warning('Failed to load embedding strategy @strategy_id while preparing output fields: @message', [
+        '@strategy_id' => $this->configuration['embedding_strategy'],
+        '@message' => $e->getMessage(),
+      ]);
+      return;
+    }
+
+    if (!method_exists($embedding_strategy, 'getAdditionalMetadataFieldNames')) {
+      return;
+    }
+
+    $additional_field_names = $embedding_strategy->getAdditionalMetadataFieldNames();
+    if (empty($additional_field_names)) {
+      return;
+    }
+
+    $params['output_fields'] = array_values(array_unique(array_merge($params['output_fields'], $additional_field_names)));
+  }
+
+  /**
+   * Builds the flattened prompt text used to generate vector input.
+   *
+   * Search API represents search words as separate terms, potentially
+   * nested inside '#'-prefixed metadata (e.g. negated or grouped terms). For
+   * semantic vector search however, we want to just pass the full input as a
+   * string to retrieve a single vector input based on the complete input
+   * content.
+   *
+   * Negated terms are deliberately excluded: embedding models cannot
+   * reliably represent "not X" as a vector, so including them risks pulling
+   * in more of the excluded concept rather than less. Exclusion of negated
+   * terms is instead left to the traditional keyword layer, which already
+   * handles it correctly.
+   *
+   * @param array $search_words
+   *   The (possibly nested) search keys array from the query.
+   *
+   * @return string
+   *   The flattened keyword text, or an empty string if there were no actual
+   *   (non-negated) keyword terms after flattening.
+   */
+  protected function buildSearchPromptText(array $search_words): string {
+    return implode(' ', SearchKeysHelper::flatten($search_words, FALSE));
   }
 
   /**
@@ -990,34 +1108,89 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   }
 
   /**
-   * Check entity access.
+   * Check access for a search item.
    *
-   * @param string $drupal_id
-   *   The Drupal entity ID.
+   * @param string $item_id
+   *   The combined Search API item ID (e.g., 'entity:node/1:en' or 'custom/1').
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The search index.
    *
    * @return bool
-   *   If the entity is accessible.
+   *   TRUE if the item is accessible, FALSE otherwise.
    */
-  private function checkEntityAccess(string $drupal_id): bool {
-    [$entity_type, $id_lang] = explode('/', str_replace('entity:', '', $drupal_id));
-    [$id, $lang] = explode(':', $id_lang);
-    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-    $entity = $this->entityTypeManager->getStorage($entity_type)->load($id);
-
-    // If the entity fails to load, assume false.
-    if (!$entity instanceof EntityInterface) {
+  private function checkItemAccess(string $item_id, IndexInterface $index): bool {
+    [$datasource_id, $raw_id] = Utility::splitCombinedId($item_id);
+    if (!$datasource_id) {
       return FALSE;
     }
 
-    // Get the entity translation if a specific language is requested so long
-    // as the entity is translatable in the first place.
-    if (
-      $entity instanceof TranslatableInterface
-      && $entity->hasTranslation($lang)
-    ) {
-      $entity = $entity->getTranslation($lang);
+    $datasource = $index->getDatasourceIfAvailable($datasource_id);
+    if (!$datasource) {
+      // The datasource might not exist on the index anymore, for example
+      // after a stale item lingers in the vector database following a
+      // configuration change. Deny access rather than risk exposing it.
+      return FALSE;
     }
-    return $entity->access('view', $this->currentUser);
+
+    try {
+      $item = $this->loadedItems[$item_id] ?? $datasource->load($raw_id);
+    }
+    catch (\Exception $e) {
+      $this->logger->warning('Failed to load search item @item_id for an access check: @message', [
+        '@item_id' => $item_id,
+        '@message' => $e->getMessage(),
+      ]);
+      return FALSE;
+    }
+
+    if (!$item) {
+      return FALSE;
+    }
+
+    return $datasource->getItemAccessResult($item, $this->currentUser)->isAllowed();
+  }
+
+  /**
+   * Pre-loads search items in bulk from their datasources.
+   *
+   * @param array $item_ids
+   *   The combined Search API item IDs.
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The search index.
+   */
+  protected function preloadItems(array $item_ids, IndexInterface $index): void {
+    $grouped_ids = [];
+    foreach ($item_ids as $item_id) {
+      [$datasource_id, $raw_id] = Utility::splitCombinedId($item_id);
+      if ($datasource_id) {
+        $grouped_ids[$datasource_id][$raw_id] = $item_id;
+      }
+    }
+
+    foreach ($grouped_ids as $datasource_id => $raw_ids_map) {
+      $datasource = $index->getDatasourceIfAvailable($datasource_id);
+      if (!$datasource) {
+        continue;
+      }
+
+      try {
+        $loaded = $datasource->loadMultiple(array_keys($raw_ids_map));
+      }
+      catch (\Exception $e) {
+        $this->logger->warning('Failed to preload search items for datasource @datasource_id: @message', [
+          '@datasource_id' => $datasource_id,
+          '@message' => $e->getMessage(),
+        ]);
+        continue;
+      }
+
+      foreach ($loaded as $raw_id => $item) {
+        if (isset($raw_ids_map[$raw_id])) {
+          $combined_id = $raw_ids_map[$raw_id];
+          $this->loadedItems[$combined_id] = $item;
+        }
+      }
+    }
   }
 
   /**

@@ -3,7 +3,7 @@ description: Provides easy way to attach actions to field widgets, for example f
 type: module
 core_version_requirement: ^10.3 || ^11.1 || ^12
 
-# Information added by Drupal.org packaging script on 2026-07-21
-version: '1.4.1'
+# Information added by Drupal.org packaging script on 2026-09-25
+version: '1.5.0'
 project: 'field_widget_actions'
-datestamp: 1784640645
+datestamp: 1790334353

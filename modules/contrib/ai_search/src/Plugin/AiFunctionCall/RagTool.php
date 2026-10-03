@@ -114,6 +114,7 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
     $min_score = $this->getContextValue('min_score');
 
     $end_results = [];
+    $this->results = [];
 
     /** @var \Drupal\search_api\Entity\Index */
     $index = $this->entityTypeManager->getStorage('search_api_index')->load($this->index);
@@ -137,7 +138,16 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
         if ($min_score > $result->getScore()) {
           continue;
         }
-        $end_results[] = "Search result: #$i:\n```\n" . $result->getExtraData('content') . "\n```\n\n";
+        $content = (string) $result->getExtraData('content');
+        $end_results[] = "Search result: #$i:\n```\n" . $content . "\n```\n\n";
+        [$entityType, $entityId, $langcode] = $this->parseDrupalEntityId((string) $result->getExtraData('drupal_entity_id'));
+        $this->results[] = [
+          'entity_type' => $entityType,
+          'entity_id' => $entityId,
+          'langcode' => $langcode,
+          'score' => $result->getScore(),
+          'content' => $content,
+        ];
         $i++;
       }
     }
@@ -153,6 +163,28 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
     else {
       $this->setOutput("No results were found when searching in the rag index " . $this->index . " for the following prompt: " . $this->searchString . ".\n");
     }
+  }
+
+  /**
+   * Parses a chunked result's drupal_entity_id into its parts.
+   *
+   * The value is shaped `prefix:entity_type/id:langcode` (see
+   * SearchApiAiSearchBackend::checkEntityAccess() for the same parsing).
+   *
+   * @param string $drupalEntityId
+   *   The raw drupal_entity_id extra-data value.
+   *
+   * @return array{0: string, 1: string, 2: string}
+   *   Tuple of [entity type, entity id, langcode], each '' when the value
+   *   cannot be parsed.
+   */
+  protected function parseDrupalEntityId(string $drupalEntityId): array {
+    $parts = explode(':', $drupalEntityId);
+    if (count($parts) < 3 || !str_contains($parts[1], '/')) {
+      return ['', '', ''];
+    }
+    [$entityType, $entityId] = explode('/', $parts[1], 2);
+    return [$entityType, $entityId, $parts[2]];
   }
 
   /**

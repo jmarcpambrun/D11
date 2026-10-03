@@ -21,6 +21,9 @@
 /Method "Twig\\Extension\\ExtensionInterface::getTokenParsers\(\)" might add "array" as a native return type declaration in the future\. Do the same in implementation "Drupal\\Core\\Template\\TwigExtension" now to avoid errors or add an explicit @return annotation to suppress this message\./
 /Method "Twig\\Loader\\FilesystemLoader::findTemplate\(\)" might add "\?string" as a native return type declaration in the future\. Do the same in child class "Drupal\\Core\\Template\\Loader\\FilesystemLoader" now to avoid errors or add an explicit @return annotation to suppress this message\./
 /Method "Twig\\Loader\\LoaderInterface::exists\(\)" might add "bool" as a native return type declaration in the future\. Do the same in implementation "Drupal\\Core\\Template\\Loader\\StringLoader" now to avoid errors or add an explicit @return annotation to suppress this message\./
+# Twig return-type deprecations for core Template classes, triggered as soon as a
+# template renders (e.g. the image widget rendering its upload help).
+/Method "Twig\\[^"]+" might add "[^"]+" as a native return type declaration in the future\. Do the same in (implementation|child class) "Drupal\\Core\\Template\\[^"]+" now to avoid errors or add an explicit @return annotation to suppress this message\./
 /The "Drupal\\Core\\Database\\Query\\Select::hasAllTags\(\)" method will require a new "string \.\.\. \$tags" argument in the next major version of its interface "Drupal\\Core\\Database\\Query\\AlterableInterface", not defining it is deprecated\./
 /The "Drupal\\Core\\Database\\Query\\Select::hasAnyTag\(\)" method will require a new "string \.\.\. \$tags" argument in the next major version of its interface "Drupal\\Core\\Database\\Query\\AlterableInterface", not defining it is deprecated\./
 /The "cache\.static" service is deprecated in drupal:11\.3\.0 and is removed from drupal:13\.0\.0\. Use the cache\.memory bin instead\. See https:\/\/www\.drupal\.org\/node\/3546856/

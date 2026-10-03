@@ -38,6 +38,7 @@ commands:
     js/commands.fill_editor.js: {  }
     js/commands.fill_simple_field.js: {  }
     js/commands.fill_select.js: {  }
+    js/commands.fill_checkboxes_or_radios.js: {  }
   dependencies:
     - core/drupal.dialog.ajax
     - core/drupalSettings

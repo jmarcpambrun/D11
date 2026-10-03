@@ -10,9 +10,39 @@ in the base class:
   cases the plugin can overwrite the method to use its own logic.
 - `getTargetElementDelta` - that gets the delta for the field widget form element.
 - `getTargetElementFieldName` - that gets the corresponding field name of the form element.
+- `fieldValuesDiffer`, `reportProducedValue` and `reportNoValueProduced` - that report the outcome of the
+  action to the author. See below.
 
-The methods are protected ones, therefore, they are not part of the interface (as not all actions
-provide suggestions).
+The methods are protected ones, therefore, they are not part of the interface (as not every action
+needs them).
+
+### Reporting the result to the author
+
+An action that returns nothing replaces the field widget with identical markup, so the click is
+indistinguishable from no click at all. The module therefore reports the outcome of the action to the
+author, using messages that a site builder can configure per action on the form display.
+
+For an action whose AJAX callback returns an `AjaxResponse` with a `Fill*` command, the command payload
+decides the outcome and the plugin needs no code for this. For an action that fills the field during the
+submit phase and returns a render array, nothing in the return value describes the outcome, so the plugin
+reports it with three helper methods in the base class:
+
+- `fieldValuesDiffer` - that compares the field value before and after the action ran, and handles the
+  type differences that would otherwise read as a change;
+- `reportProducedValue` - that reports that the action produced a value for the field;
+- `reportNoValueProduced` - that reports that the action ran but produced nothing.
+
+The question is whether the action itself produced something, not whether the field holds a value, as a
+field the author filled in earlier is populated before the action is ever run. Therefore the plugin reads
+the field value off the entity before doing its work:
+```php
+$values_before = $entity->get($field_name)->getValue();
+```
+reads it again the same way afterwards, and passes both to `fieldValuesDiffer` to decide which of the two
+report methods to call. Both values should be read from the entity rather than the form so that the two
+sides have the same shape. An action that bails out early calls neither method, in which case the module
+shows no message at all. See `RebuildFillTestAction` in the `field_widget_actions_test` module for a
+complete example.
 
 ### Actions with interactive refinement
 

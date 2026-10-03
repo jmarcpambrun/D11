@@ -57,6 +57,12 @@ phpstan:
     - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
     # Show the configuration for debugging purposes.
     - php --ri ffi
+    # Pre-warm the tiktoken vocab cache sequentially, before run-tests.sh
+    # starts its concurrent workers. yethee/tiktoken's vocab downloader has
+    # no locking, so parallel Kernel test processes racing to download and
+    # cache the same vocab file on a cold cache intermittently corrupt it,
+    # causing "Could not decode token" ParseErrors in EmbeddingBase tests.
+    - php -r 'require "vendor/autoload.php"; $provider = new Yethee\Tiktoken\EncoderProvider(); $provider->setVocabCache(sys_get_temp_dir()); foreach (array_keys(Yethee\Tiktoken\EncoderProvider::ENCODINGS) as $encoding) { $provider->get($encoding); echo "Warmed tiktoken vocab cache for $encoding\n"; }'
   variables:
     SYMFONY_DEPRECATIONS_HELPER: "disabled"
 

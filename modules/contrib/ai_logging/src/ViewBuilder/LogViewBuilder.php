@@ -4,12 +4,31 @@ namespace Drupal\ai_logging\ViewBuilder;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
+use Drupal\ai_logging\ResponseTextFormatter;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Prepare json fields for rendering.
  */
 class LogViewBuilder extends EntityViewBuilder {
+
+  /**
+   * The reply text formatter.
+   *
+   * @var \Drupal\ai_logging\ResponseTextFormatter
+   */
+  protected ResponseTextFormatter $responseTextFormatter;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    $instance = parent::createInstance($container, $entity_type);
+    $instance->responseTextFormatter = $container->get('ai_logging.response_text_formatter');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -48,6 +67,14 @@ class LogViewBuilder extends EntityViewBuilder {
             }
           }
         }
+      }
+
+      // Pretty-print a structured result and label it as such.
+      $response_text = $entity->hasField('response_text') ? $entity->get('response_text')->value : NULL;
+      if (!empty($response_text) && isset($build['response_text'][0]['#context'])) {
+        $formatted = $this->responseTextFormatter->format($response_text);
+        $build['response_text']['#title'] = $formatted['label'];
+        $build['response_text'][0]['#context']['value'] = $formatted['text'];
       }
     }
 

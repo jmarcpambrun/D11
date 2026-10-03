@@ -9,6 +9,9 @@ use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PostStreamingResponseEvent;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\OutputInterface;
 use Drupal\ai_logging\AiLogInterface;
@@ -89,11 +92,13 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         'configuration' => json_encode($event->getConfiguration()),
         'bundle' => 'generic',
         'tags' => $event->getTags(),
-        'prompt' => $this->getInputText($event->getInput()),
+        'prompt' => $this->getPromptText($event->getInput()),
         'extra_data' => json_encode($event->getDebugData()),
       ]);
       if ($this->aiSettings->get('prompt_logging_output')) {
         $log->set('output_text', json_encode($event->getOutput()->getRawOutput()));
+        // A streamed reply is not known yet, logPostStream() sets it.
+        $log->set('response_text', $this->getResponseText($event->getOutput()));
       }
       // Token usage is already final for non-streamed responses. For
       // streamed ones it is only final once logPostStream() runs, so this
@@ -137,11 +142,39 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     // If response logging is enabled, add the streamed response.
     if ($this->aiSettings->get('prompt_logging_output')) {
       $log->set('output_text', json_encode($event->getOutput()->getRawOutput()));
+      $log->set('response_text', $this->getResponseText($event->getOutput()));
       $changed = TRUE;
     }
     if ($changed) {
       $log->save();
     }
+  }
+
+  /**
+   * Gets the text the model replied with.
+   *
+   * Unlike the raw output, the normalized text reads the same for every
+   * provider. The prompt only records what a call saw, so without this the
+   * reply to a call that nothing continues (a structured JSON schema call, or
+   * the final turn of an agent) is not visible anywhere.
+   *
+   * @param \Drupal\ai\OperationType\OutputInterface $output
+   *   The output to read the reply from.
+   *
+   * @return string|null
+   *   The reply text, or NULL for a call that is not chat, a streamed reply
+   *   that is not assembled yet, or a turn that only calls tools.
+   */
+  protected function getResponseText(OutputInterface $output): ?string {
+    if (!$output instanceof ChatOutput) {
+      return NULL;
+    }
+    $message = $output->getNormalized();
+    if (!$message instanceof ChatMessage) {
+      return NULL;
+    }
+    $text = $message->getText();
+    return $text === '' ? NULL : $text;
   }
 
   /**
@@ -181,6 +214,11 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
   /**
    * Function to check if logging should happen.
    *
+   * Excluded tags take precedence: if a request carries any excluded tag it is
+   * never logged, regardless of the allow list. Otherwise an empty allow list
+   * logs everything and a non-empty one requires at least one matching tag.
+   * Tags are compared case-insensitively, ignoring surrounding whitespace.
+   *
    * @param string $operation_type
    *   The operation type.
    * @param array $tags
@@ -193,14 +231,32 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     if (empty($this->aiSettings->get('prompt_logging'))) {
       return FALSE;
     }
-    // Check if the tags are empty.
-    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
-    if (empty($prompt_logging_tags)) {
-      return TRUE;
-    }
+
+    // Normalize tags for comparison.
     $normalized_tags = [];
     foreach ($tags as $tag) {
       $normalized_tags[] = strtolower(trim($tag));
+    }
+
+    // Check excluded tags first - if any match, don't log.
+    $prompt_logging_excluded_tags = $this->aiSettings->get('prompt_logging_excluded_tags');
+    if (!empty($prompt_logging_excluded_tags)) {
+      $excluded_tags = array_filter(
+        array_map(
+          static fn(string $tag): string => strtolower(trim($tag)),
+          explode(',', $prompt_logging_excluded_tags)
+        ),
+        static fn(string $tag): bool => $tag !== '',
+      );
+      if (array_intersect($excluded_tags, $normalized_tags)) {
+        return FALSE;
+      }
+    }
+
+    // Check if the included tags are empty.
+    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
+    if (empty($prompt_logging_tags)) {
+      return TRUE;
     }
     $compare_tags = explode(',', $prompt_logging_tags);
     foreach ($compare_tags as $tag) {
@@ -275,6 +331,65 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
       return $input->toString();
     }
     return json_encode($input);
+  }
+
+  /**
+   * Builds the transcript stored as a log entry's prompt.
+   *
+   * ChatInput::toString() renders every message as "role\ntext", which
+   * drops all tool use: an assistant turn that only calls tools has no
+   * text of its own, so it logs as a bare "assistant" line with nothing
+   * under it, and each tool result logs under an equally bare "tool" line
+   * with no indication of which tool produced it. A turn calling several
+   * tools therefore reads back as a run of identical, unlabeled blocks
+   * that can only be told apart by guessing from their content.
+   *
+   * The messages themselves carry what's missing - the requested calls and
+   * their arguments on the assistant message (ChatMessage::getTools()),
+   * and the id of the call each result answers
+   * (ChatMessage::getToolsId()) - so name each call and attribute each
+   * result to it here.
+   *
+   * @param mixed $input
+   *   The input to build the transcript from.
+   *
+   * @return string
+   *   The transcript.
+   */
+  protected function getPromptText($input): string {
+    if (!$input instanceof ChatInput) {
+      return $this->getInputText($input);
+    }
+
+    // Tool results arrive as their own later messages carrying only the id
+    // of the call they answer, so map id => name off the assistant
+    // messages as they go past, before any result needs looking up.
+    $tool_names = [];
+    $transcript = '';
+    foreach ($input->getMessages() as $message) {
+      if (!$message instanceof ChatMessage) {
+        continue;
+      }
+
+      $role = $message->getRole();
+      $tool_id = $message->getToolsId();
+      if ($role === 'tool' && $tool_id !== NULL && isset($tool_names[$tool_id])) {
+        $role .= ' (' . $tool_names[$tool_id] . ')';
+      }
+      $transcript .= $role . "\n";
+
+      foreach ($message->getTools() ?? [] as $tool) {
+        $rendered = $tool->getOutputRenderArray();
+        $name = $rendered['function']['name'] ?? '';
+        if (isset($rendered['id'])) {
+          $tool_names[$rendered['id']] = $name;
+        }
+        $transcript .= '[calls ' . $name . '] ' . ($rendered['function']['arguments'] ?? '') . "\n";
+      }
+
+      $transcript .= $message->getText() . "\n";
+    }
+    return $transcript;
   }
 
 }

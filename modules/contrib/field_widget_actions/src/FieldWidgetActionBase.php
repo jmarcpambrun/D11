@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\field_widget_actions;
 
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
@@ -32,6 +34,45 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    * The target property of the form element.
    */
   const FORM_ELEMENT_PROPERTY = 'value';
+
+  /**
+   * Form state key prefix under which a plugin reports what it produced.
+   *
+   * Combined with the plugin id and the field name by resultKey(), so that two
+   * action buttons on the same field cannot overwrite each other's result.
+   */
+  const RESULT_KEY = 'field_widget_actions_result__';
+
+  /**
+   * Element types recognized as direct fill targets.
+   *
+   * Used as a fallback when a form element has not been processed yet and
+   * therefore does not carry the #input flag. Only actual input element types
+   * belong here; structural types (container, details, fieldset, …) and button
+   * types are deliberately absent.
+   */
+  private const TARGET_INPUT_TYPES = [
+    'checkboxes',
+    'checkbox',
+    'color',
+    'date',
+    'datetime',
+    'email',
+    'entity_autocomplete',
+    'language_select',
+    'machine_name',
+    'managed_file',
+    'number',
+    'password',
+    'radios',
+    'range',
+    'search',
+    'select',
+    'tel',
+    'textfield',
+    'textarea',
+    'url',
+  ];
 
   /**
    * The widget plugin instance.
@@ -86,6 +127,9 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
       'automatic' => FALSE,
       'button_label' => $this->getLabel(),
       'multiple' => $this->getMultiple(),
+      'show_result_message' => FALSE,
+      'message_success' => NULL,
+      'message_empty' => NULL,
     ];
   }
 
@@ -100,7 +144,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    * {@inheritdoc}
    */
   public function getDescription(): string {
-    return $this->getPluginDefinition()['description'] ?? '';
+    return (string) ($this->getPluginDefinition()['description'] ?? '');
   }
 
   /**
@@ -158,6 +202,47 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
       '#description' => $this->t('If checked, an action button will appear for each item in the field. If not, an action will be performed for the entire field.'),
       '#default_value' => $configuration['multiple'] ?? $this->getMultiple(),
       '#access' => $multiple,
+    ];
+    $enabled_selector = $action_id
+      ? ':input[name*="[' . $action_id . '][enabled]"]'
+      : ':input[name*="[enabled]"]';
+    $element['show_result_message'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show a message with the result'),
+      '#description' => $this->t('Tell the author what the action produced. Without this, an action that returns nothing looks identical to one that was never clicked.'),
+      '#default_value' => $configuration['show_result_message'] ?? TRUE,
+      '#states' => [
+        'visible' => [
+          $enabled_selector => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $message_selector = $action_id
+      ? ':input[name*="[' . $action_id . '][show_result_message]"]'
+      : ':input[name*="[show_result_message]"]';
+    $element['message_success'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Message when a value is returned'),
+      '#default_value' => $configuration['message_success'] ?? '',
+      '#placeholder' => $this->t('A suggestion was added to @field.'),
+      '#description' => $this->t('Leave empty to use the default shown above. The token @field is replaced with the field label.'),
+      '#states' => [
+        'visible' => [
+          $message_selector => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $element['message_empty'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Message when nothing is returned'),
+      '#default_value' => $configuration['message_empty'] ?? '',
+      '#placeholder' => $this->t('No suggestion was returned for @field.'),
+      '#description' => $this->t('Leave empty to use the default shown above. The token @field is replaced with the field label.'),
+      '#states' => [
+        'visible' => [
+          $message_selector => ['checked' => TRUE],
+        ],
+      ],
     ];
     $element['plugin_id'] = [
       '#type' => 'value',
@@ -449,8 +534,11 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
       if (!empty($form['#group'])) {
         $fieldName = $form['#group'];
       }
+      // Route the AJAX response through the base class so the outcome of the
+      // action can be reported to the author. The plugin's own callback is
+      // still what does the work; see reportResultAjax().
       $form[$widgetId]['#ajax'] = [
-        'callback' => [$this, $this->getAjaxCallback()],
+        'callback' => [$this, 'reportResultAjax'],
         'wrapper' => 'field-widget-action-' . $fieldName,
         'prevent' => 'submit',
       ];
@@ -507,6 +595,172 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
         $form_state->setErrorByName($name, $message);
       }
     }
+  }
+
+  /**
+   * AJAX callback wrapper that reports the outcome of the action.
+   *
+   * Drupal calls this instead of the plugin's own AJAX callback (see
+   * actionButton()). It runs the plugin callback, inspects what came back, and
+   * queues a status message so the author is told whether the click produced
+   * anything. Without it an action that returns nothing is indistinguishable
+   * from one that was never clicked: the widget is simply replaced with
+   * identical markup.
+   *
+   * The message is queued through the messenger rather than added as a
+   * command, so it renders inline above the replaced element — AjaxRenderer
+   * prepends status messages to every AJAX response. For a response the plugin
+   * built itself, the commands are inspected instead, because those bypass the
+   * renderer.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array|\Drupal\Core\Ajax\AjaxResponse
+   *   Whatever the plugin's callback returned.
+   */
+  public function reportResultAjax(array &$form, FormStateInterface $form_state) {
+    // This assumes getAjaxCallback() names a real method on the plugin, which
+    // is the same assumption the form API made when it invoked that method
+    // directly. A plugin naming a method that does not exist raises an Error
+    // here rather than the form API's callback-not-found handling.
+    $callback = $this->getAjaxCallback();
+    $result = $this->{$callback}($form, $form_state);
+
+    if (empty($this->configuration['show_result_message'])) {
+      return $result;
+    }
+    // A plugin that already spoke to the author is not second-guessed: it
+    // knows more about what happened than this generic check does.
+    if ($this->messengerHasMessages()) {
+      return $result;
+    }
+
+    $produced = $this->actionProducedValue($result, $form, $form_state);
+    // NULL means the outcome could not be determined; stay silent rather than
+    // risk telling the author something untrue.
+    if ($produced === NULL) {
+      return $result;
+    }
+
+    $field_label = (string) ($this->getFieldDefinition()?->getLabel() ?? $this->t('the field'));
+    // Configured text is admin-entered config, so it is escaped here before
+    // substitution: FormattableMarkup escapes the @field replacement but NOT
+    // the template string it is given. It is also not passed through t(), as a
+    // non-literal string cannot be extracted for translation; such text is
+    // translatable as configuration instead, via the 'label' type in the config
+    // schema. Only the built-in defaults are literals the extractor picks up.
+    if ($produced) {
+      $custom = $this->configuration['message_success'] ?? '';
+      $this->messenger->addStatus($custom
+        ? new FormattableMarkup(Html::escape($custom), ['@field' => $field_label])
+        : $this->t('A suggestion was added to @field.', ['@field' => $field_label]));
+    }
+    else {
+      $custom = $this->configuration['message_empty'] ?? '';
+      $this->messenger->addWarning($custom
+        ? new FormattableMarkup(Html::escape($custom), ['@field' => $field_label])
+        : $this->t('No suggestion was returned for @field.', ['@field' => $field_label]));
+    }
+
+    // A response the plugin built itself bypasses AjaxRenderer, so the queued
+    // message would never be rendered. Attach it as a command instead.
+    if ($result instanceof AjaxResponse) {
+      foreach ($this->messenger->all() as $type => $items) {
+        foreach ($items as $item) {
+          $result->addCommand(new MessageCommand($item, NULL, ['type' => $type]));
+        }
+      }
+      $this->messenger->deleteAll();
+    }
+
+    return $result;
+  }
+
+  /**
+   * Checks whether anything is already queued for the author.
+   *
+   * This is request-scoped rather than action-scoped: a message queued earlier
+   * in the same request by unrelated code also suppresses the result message.
+   * That is broader than the intended case (the plugin reported its own
+   * outcome, so it is not second-guessed), but an action button request is
+   * short-lived and carries little else, so the trade is worth the simplicity.
+   *
+   * @return bool
+   *   TRUE if the messenger holds at least one message.
+   */
+  protected function messengerHasMessages(): bool {
+    foreach ($this->messenger->all() as $items) {
+      if (!empty($items)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Determines whether the action produced a value for the field.
+   *
+   * Plugins report their result in two incompatible ways, so both are handled:
+   *
+   * - Command based: the value travels in a fill command on an AjaxResponse
+   *   and never touches the entity. The command payload is the answer.
+   * - Rebuild based: the plugin writes the value into the entity and user
+   *   input during the submit phase and returns a render array (see the AI
+   *   Automators actions). Nothing in the return value describes the outcome.
+   *   The field could be read back off the rebuilt entity, but that answers
+   *   the wrong question: it says whether the field holds a value, not whether
+   *   this action is what put it there — a field the author filled in earlier
+   *   is populated either way. Only the plugin knows, so it reports its own
+   *   outcome through reportProducedValue() / reportNoValueProduced().
+   *
+   * @param array|\Drupal\Core\Ajax\AjaxResponse $result
+   *   Whatever the plugin's AJAX callback returned.
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return bool|null
+   *   TRUE if a value was produced, FALSE if the action came back empty, or
+   *   NULL if the outcome cannot be determined and no message should be shown.
+   */
+  protected function actionProducedValue($result, array &$form, FormStateInterface $form_state): ?bool {
+    if ($result instanceof AjaxResponse) {
+      return $this->responseCarriesValue($result);
+    }
+    return $this->getReportedResult($form, $form_state);
+  }
+
+  /**
+   * Checks whether a response carries a fill command with a value.
+   *
+   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   *   The response returned by the plugin.
+   *
+   * @return bool|null
+   *   TRUE if a fill command carries a non-empty payload, FALSE if every fill
+   *   command is empty, or NULL if the response contains no fill command at
+   *   all (the plugin is doing something this check does not model, such as
+   *   opening a dialog).
+   */
+  protected function responseCarriesValue(AjaxResponse $response): ?bool {
+    $seen_fill_command = FALSE;
+    foreach ($response->getCommands() as $command) {
+      // Commands are already rendered to arrays at this point.
+      $name = $command['command'] ?? '';
+      if (!str_starts_with($name, 'fieldWidgetActionsFill')) {
+        continue;
+      }
+      $seen_fill_command = TRUE;
+      $payload = $command['data'] ?? $command['values'] ?? NULL;
+      if (is_array($payload) ? !empty($payload) : (string) $payload !== '') {
+        return TRUE;
+      }
+    }
+    return $seen_fill_command ? FALSE : NULL;
   }
 
   /**
@@ -612,23 +866,113 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
     $delta = $this->getTargetElementDelta($form, $form_state);
     $array_parents = $triggering_element['#array_parents'];
 
-    // Remove the button key.
+    // Remove the button key to reach the container the button lives in.
     array_pop($array_parents);
 
-    // Identify the correct property name (default to 'value').
-    if ($delta !== NULL) {
-      $array_parents[] = static::FORM_ELEMENT_PROPERTY;
+    $element = NestedArray::getValue($form, $array_parents) ?? [];
+
+    // Childless widgets (select, tagify, select2) are wrapped in containers by
+    // the module's form alters, so the input element can sit one or two
+    // 'widget' levels below the button's container. Descend through those
+    // wrappers until the input itself is reached.
+    while (is_array($element) && !$this->isTargetElementInput($element) && isset($element['widget']) && is_array($element['widget'])) {
+      $element = $element['widget'];
     }
-    // Force the first element when no delta is present.
-    else {
-      $array_parents = [
-        $this->getTargetElementFieldName($form, $form_state),
-        'widget',
-        0,
-        static::FORM_ELEMENT_PROPERTY,
-      ];
+
+    // For a whole-field action (no delta), the field_multiple_value_form
+    // wrapper keys the widgets by numeric delta; enter the first one.
+    if ($delta === NULL && is_array($element) && !$this->isTargetElementInput($element)) {
+      foreach (Element::children($element) as $child) {
+        if (is_numeric($child)) {
+          $element = $element[$child];
+          break;
+        }
+      }
     }
-    return NestedArray::getValue($form, $array_parents) ?? [];
+
+    // An explicit FORM_ELEMENT_PROPERTY override names a property child of the
+    // element, and that child wins even when the element reached is itself an
+    // input: the image widget element is a managed_file input whose 'alt' and
+    // 'title' text fields are children of it.
+    if ($this->hasTargetElementPropertyOverride() && is_array($element) && isset($element[static::FORM_ELEMENT_PROPERTY])) {
+      return $element[static::FORM_ELEMENT_PROPERTY];
+    }
+
+    // Return the input element itself when the lookup reached it directly.
+    if ($this->isTargetElementInput($element)) {
+      return $element;
+    }
+
+    // Otherwise the input is a property child of the element, named after the
+    // field storage's main property ('target_id', 'uri', …) with 'value' as
+    // fallback.
+    $property = $this->getTargetElementProperty();
+    return is_array($element) && isset($element[$property]) ? $element[$property] : [];
+  }
+
+  /**
+   * Determines whether a form element is itself a fillable input.
+   *
+   * A processed form marks input elements with #input = TRUE; for render
+   * arrays that have not been processed yet, a positive list of element types
+   * is consulted instead. Action buttons (which live inside the widget tree
+   * next to the real input) and submit/button types are never inputs.
+   *
+   * @param array $element
+   *   The form element.
+   *
+   * @return bool
+   *   TRUE if the element is a fillable input, FALSE otherwise.
+   */
+  protected function isTargetElementInput(array $element): bool {
+    // Action buttons are not fill targets even though they sit in the widget.
+    if (!empty($element['#field_widget_action_field_name'])) {
+      return FALSE;
+    }
+    $type = $element['#type'] ?? NULL;
+    // Submit/button elements are not fill targets.
+    if (in_array($type, ['button', 'submit', 'image_button'], TRUE)) {
+      return FALSE;
+    }
+    // A processed form marks inputs with #input = TRUE.
+    if (!empty($element['#input'])) {
+      return TRUE;
+    }
+    // Fall back to a positive list of input types for unprocessed render
+    // arrays.
+    return $type !== NULL && in_array($type, self::TARGET_INPUT_TYPES, TRUE);
+  }
+
+  /**
+   * Gets the property of the form element used as the fill target.
+   *
+   * A subclass overriding FORM_ELEMENT_PROPERTY targets a specific property
+   * (e.g. 'summary' for text_with_summary or 'alt' for image widgets), and that
+   * override always wins over the field storage's main property. Otherwise the
+   * field storage's main property is used (entity reference 'target_id', link
+   * 'uri', …), falling back to the generic 'value' property.
+   *
+   * @return string
+   *   The property name.
+   */
+  protected function getTargetElementProperty(): string {
+    if ($this->hasTargetElementPropertyOverride()) {
+      return static::FORM_ELEMENT_PROPERTY;
+    }
+    $main_property = $this->fieldDefinition
+      ? $this->fieldDefinition->getFieldStorageDefinition()->getMainPropertyName()
+      : NULL;
+    return $main_property ?: static::FORM_ELEMENT_PROPERTY;
+  }
+
+  /**
+   * Determines whether the plugin class overrides FORM_ELEMENT_PROPERTY.
+   *
+   * @return bool
+   *   TRUE if a subclass targets a specific property instead of the default.
+   */
+  protected function hasTargetElementPropertyOverride(): bool {
+    return static::FORM_ELEMENT_PROPERTY !== self::FORM_ELEMENT_PROPERTY;
   }
 
   /**
@@ -662,6 +1006,109 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
   protected function getTargetElementFieldName(array &$form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
     return $triggering_element['#field_widget_action_field_name'] ?? '';
+  }
+
+  /**
+   * Reports that the action produced a value for a field.
+   *
+   * Call this from a plugin that fills the field during the submit phase
+   * rather than through a fill command, at the point where it knows what it
+   * produced. Nothing in such an action's AJAX return value distinguishes a
+   * successful run from an empty one, so the base class cannot work the
+   * outcome out on its own and stays silent unless it is told.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $field_name
+   *   The field the action filled.
+   *
+   * @see ::reportNoValueProduced()
+   */
+  protected function reportProducedValue(FormStateInterface $form_state, string $field_name): void {
+    $form_state->set($this->resultKey($field_name), TRUE);
+  }
+
+  /**
+   * Reports that the action ran but produced nothing for a field.
+   *
+   * The counterpart to reportProducedValue(). Reporting the empty case is what
+   * turns a click that changed nothing from an apparently broken button into a
+   * message telling the author there was no suggestion; a plugin that calls
+   * neither method produces no message at all.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $field_name
+   *   The field the action was run against.
+   *
+   * @see ::reportProducedValue()
+   */
+  protected function reportNoValueProduced(FormStateInterface $form_state, string $field_name): void {
+    $form_state->set($this->resultKey($field_name), FALSE);
+  }
+
+  /**
+   * Returns what the plugin reported about the field it acted on.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return bool|null
+   *   TRUE or FALSE as reported by the plugin, or NULL if it reported nothing
+   *   and no message should be shown.
+   */
+  protected function getReportedResult(array &$form, FormStateInterface $form_state): ?bool {
+    $field_name = $this->getTargetElementFieldName($form, $form_state);
+    if (!$field_name) {
+      return NULL;
+    }
+    $reported = $form_state->get($this->resultKey($field_name));
+    return is_bool($reported) ? $reported : NULL;
+  }
+
+  /**
+   * Compares a field's value before and after an action ran.
+   *
+   * Plugins that fill the field during the submit phase decide their own
+   * outcome by asking whether they changed anything, so the comparison lives
+   * here rather than being rewritten in each of them.
+   *
+   * The comparison is deliberately loose. The same entity reference arrives as
+   * the string '3' from user input and as the integer 3 from other paths, and
+   * an untouched text field can round-trip through the widget as '' in one
+   * read and NULL in the other. A strict comparison would call those a change
+   * and report a suggestion the author never received — the failure this
+   * reporting exists to prevent.
+   *
+   * @param array $before
+   *   The field value before the action ran, as returned by
+   *   FieldItemListInterface::getValue().
+   * @param array $after
+   *   The field value afterwards, read the same way.
+   *
+   * @return bool
+   *   TRUE if the action changed the field.
+   */
+  protected function fieldValuesDiffer(array $before, array $after): bool {
+    return $before != $after;
+  }
+
+  /**
+   * Builds the form state key holding a plugin's reported result.
+   *
+   * Keyed by plugin as well as field so that two action buttons on the same
+   * field do not overwrite each other's result.
+   *
+   * @param string $field_name
+   *   The field the action acted on.
+   *
+   * @return string
+   *   The form state key.
+   */
+  protected function resultKey(string $field_name): string {
+    return static::RESULT_KEY . $this->getPluginId() . '__' . $field_name;
   }
 
   /**
@@ -712,7 +1159,7 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
     }
     $response->addCommand(new OpenModalDialogCommand($this->t('Suggestions'), $message, [
       'width' => '80%',
-      'dialogClass' => 'ui-dialog-fwa-suggestions',
+      'classes' => ['ui-dialog' => 'ui-dialog-fwa-suggestions'],
     ]));
     return $response;
   }
