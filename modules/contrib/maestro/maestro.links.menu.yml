@@ -20,3 +20,38 @@ entity.maestro_template.add:
   description: 'Add a new maestro workflow templates.'
   parent: entity.maestro_template.list
   route_name: entity.maestro_template.add
+
+# The following links populate the top-level Navigation "Maestro" entry.
+maestro.navigation_menu:
+  title: Maestro
+  parent: system.admin
+  route_name: maestro.navigation_root
+  weight: 10
+  options:
+    icon:
+      pack_id: maestro
+      icon_id: maestro
+
+maestro.navigation_menu.orchestrator:
+  title: 'Run Orchestrator'
+  parent: maestro.navigation_menu
+  route_name: maestro.navigation_run_orchestrator
+  weight: 2
+
+maestro.navigation_menu.outstanding_tasks:
+  title: 'Outstanding Tasks'
+  parent: maestro.navigation_menu
+  route_name: view.maestro_outstanding_tasks.maestro_outstanding_tasks
+  weight: 3
+
+maestro.navigation_menu.active_tasks:
+  title: 'All Active Tasks'
+  parent: maestro.navigation_menu
+  route_name: view.maestro_all_in_production_tasks.maestro_all_active_tasks_lean
+  weight: 4
+
+maestro.navigation_menu.workflow_history:
+  title: 'Workflow History'
+  parent: maestro.navigation_menu
+  route_name: view.maestro_all_flows.all_flows_full
+  weight: 5

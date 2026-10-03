@@ -16,6 +16,7 @@ use Drupal\maestro\Engine\MaestroEngine;
 function maestro_utilities_maestro_batch_handlers() {
   return [
     'maestro_dummy_batch_function' => t('Dummy Batch Function. Does nothing. Simulates NOOP.'),
+    'maestro_set_process_name' => t('Set a Maestro Process Name to the value stored in the "process_name" variable.'),
   ];
 }
 
@@ -146,5 +147,27 @@ function maestro_dummy_batch_function($processID, $queueID) {
    * the engine that this task is complete.
    */
 
+  return TRUE;
+}
+
+/**
+ * Sets the process name to the value of the process variable "process_name".
+ * If no process variable by that name exists, nothing is done.
+ *
+ * @param int $processID
+ *   The Maestro process ID.
+ * @param int $queueID
+ *   The Maestro queue ID.
+ */
+function maestro_set_process_name($processID, $queueID) {
+  $process_name = MaestroEngine::getProcessVariable('process_name', $processID);
+  if($process_name) {
+    // Trim the name.
+    $trimmed = substr($process_name, 0, 250);
+    if(strlen($process_name) > 250) {
+      $trimmed .= "...";
+    }
+    MaestroEngine::setProcessLabel($processID, $trimmed);
+  }
   return TRUE;
 }

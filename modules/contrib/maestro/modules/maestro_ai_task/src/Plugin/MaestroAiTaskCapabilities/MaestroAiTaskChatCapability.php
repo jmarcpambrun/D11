@@ -73,6 +73,8 @@ class MaestroAiTaskChatCapability extends MaestroAiTaskCapabilitiesPluginBase im
     $messages = new ChatInput([
       new ChatMessage('user', $this->prompt),
     ]);
+    // Tell the model that the <maestro_data> delimited token values are data, not instructions.
+    $messages->setSystemPrompt($this->getUntrustedDataSystemPrompt());
     $message = $provider->chat($messages, $sets['model_id'], ['maestro-ai-task-chat'])->getNormalized();
     $responseText = Xss::filter($message->getText()) ?? NULL;
     return $responseText;
@@ -97,6 +99,13 @@ class MaestroAiTaskChatCapability extends MaestroAiTaskCapabilitiesPluginBase im
    */
   public function allowConfigurableReturnFormat() : bool {
     // For pure chat, we do allow for a customizable return format.
+    return TRUE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function delimitsUntrustedData() : bool {
     return TRUE;
   }
 }

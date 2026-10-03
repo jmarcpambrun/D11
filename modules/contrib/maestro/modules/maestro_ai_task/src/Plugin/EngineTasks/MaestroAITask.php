@@ -120,21 +120,8 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
       $hold_task_on_null = $taskData['hold_task_on_null'] ?? FALSE;
       $initiator = MaestroEngine::getProcessVariable('initiator', $this->processID);
 
-      // Run the instructions through the token processor.
-      $tokenService = \Drupal::token();
-      $prompt = $tokenService->replace(
-        $prompt,
-        [
-          'maestro' => 
-            [
-              'task' => $task, 
-              'queueID' => $this->queueID,
-              'processID' => $this->processID,
-            ]
-        ]
-      );
-      // Make sure the whitespace trimmed $ai_instructions ends with a period.
-      $prompt = trim($prompt);
+      // The prompt is run through the token processor once the capability is known (see below),
+      // as chat-style capabilities have their token values delimited as untrusted data.
       $return_data_as_prompt = '';
       switch ($return_data_as) {
         case 'json_yes_no':
@@ -173,7 +160,8 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
           $responseValue = NULL;
           $configured_provider = $taskData['ai_provider'] ?? NULL;
           
-          // Create an instance of this capability, sending the task array, template machine name, queue ID, process ID and the configured prompt to the constructor.
+          // Create an instance of this capability, sending the task array, template machine name, queue ID and process ID to the constructor.
+          // The prompt is set once tokens have been replaced below.
           /** @var MaestroAiTaskCapabilitiesPluginBase $maestro_capability */
           $maestro_capability = MaestroAiTaskAPI::createMaestroAiTaskCapabilityPlugin(
             $configured_provider, 
@@ -182,17 +170,21 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
               'templateMachineName' => $templateMachineName, 
               'queueID' => $this->queueID, 
               'processID' => $this->processID, 
-              'prompt' => $prompt,
             ]
           );
 
           if($maestro_capability) {
+            // Token values are workflow data (often user supplied). Chat-style capabilities have them
+            // delimited so the model can be told to treat them as data and never as instructions.
+            $delimit_data = $maestro_capability instanceof MaestroAiTaskCapabilitiesPluginBase && $maestro_capability->delimitsUntrustedData();
+            $prompt = $this->replacePromptTokens($prompt, $task, $delimit_data);
             // We have a valid Maestro AI Task capability.  Let's execute.
             // Does this capability allow for a customizable return data prompt?
+            // The return format goes after the workflow data so that it's the last instruction the model reads.
             if($maestro_capability->allowConfigurableReturnFormat()) {
-              $prompt = $prompt . $return_data_as_prompt;
-              $maestro_capability->setPrompt($prompt); // Reset the prompt before execution.
+              $prompt = $prompt . "\n\n" . $return_data_as_prompt;
             }
+            $maestro_capability->setPrompt($prompt);
             
             $responseValue = $maestro_capability->execute(); // $responseValue can be a string or NULL.
             // Now set the execution status of this task based on the Maestro AI Task Capability's execution.
@@ -761,6 +753,46 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
    */
   public function getTemplateBuilderCapabilities() {
     return ['edit', 'drawlineto', 'removelines', 'remove'];
+  }
+
+  /**
+   * Runs the configured prompt through the token processor.
+   *
+   * @param string $prompt
+   *   The prompt as configured in the task.
+   * @param array $task
+   *   The template task.
+   * @param bool $delimit_data
+   *   When TRUE, each token value is wrapped in <maestro_data> tags (see
+   *   MaestroAiTaskCapabilitiesPluginBase::delimitUntrustedData()). Token
+   *   values are already HTML escaped by the token service at that point, so
+   *   the data cannot contain a literal closing tag.
+   *
+   * @return string
+   *   The trimmed prompt with tokens replaced.
+   */
+  protected function replacePromptTokens(string $prompt, array $task, bool $delimit_data): string {
+    $options = [];
+    if ($delimit_data) {
+      $options['callback'] = static function (array &$replacements) {
+        foreach ($replacements as $token => $value) {
+          $replacements[$token] = MaestroAiTaskCapabilitiesPluginBase::delimitUntrustedData((string) $value);
+        }
+      };
+    }
+    $prompt = \Drupal::token()->replace(
+      $prompt,
+      [
+        'maestro' =>
+          [
+            'task' => $task,
+            'queueID' => $this->queueID,
+            'processID' => $this->processID,
+          ],
+      ],
+      $options
+    );
+    return trim($prompt);
   }
 
   /**

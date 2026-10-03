@@ -292,7 +292,9 @@ class MaestroAiTaskAssistantCapability extends MaestroAiTaskCapabilitiesPluginBa
    *   The reshaped answer.
    */
   protected function postProcess(string $answer, string $instructions): string {
-    $post_process_prompt = $instructions . "\n\n" . 'Answer: ' . $answer;
+    // The Assistant's answer can echo untrusted workflow data, so it's delimited
+    // as data and the system prompt tells the model not to take instructions from it.
+    $post_process_prompt = $instructions . "\n\n" . 'Answer: ' . self::delimitUntrustedData($answer);
 
     /** @var \Drupal\ai\AiProviderPluginManager $service */
     $service = \Drupal::service('ai.provider');
@@ -302,6 +304,7 @@ class MaestroAiTaskAssistantCapability extends MaestroAiTaskCapabilitiesPluginBa
     $messages = new ChatInput([
       new ChatMessage('user', $post_process_prompt),
     ]);
+    $messages->setSystemPrompt($this->getUntrustedDataSystemPrompt());
     $message = $provider->chat($messages, $sets['model_id'], ['maestro-ai-task-assistant-post-process'])->getNormalized();
     return Xss::filter($message->getText());
   }

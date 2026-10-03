@@ -1,0 +1,14 @@
+{#
+/**
+ * @file
+ * Displays a single Maestro process variable's value alongside a node view.
+ *
+ * Available variables:
+ * - variable_name: The process variable's machine name.
+ * - variable_value: The process variable's current value.
+ */
+#}
+<div class="maestro-pv-info">
+  <span class="maestro-pv-info-label">{{ variable_name }}:</span>
+  <span class="maestro-pv-info-value">{{ variable_value }}</span>
+</div>

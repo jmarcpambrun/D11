@@ -9,7 +9,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManager;
-use Drupal\file\Entity\File;
 use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\maestro_ai_task\MaestroAiTaskAPI\MaestroAiTaskAPI;
 use Drupal\maestro_ai_task\MaestroAiTaskCapabilitiesInterface;
@@ -175,7 +174,7 @@ class MaestroAiSpeechToText extends MaestroAiTaskCapabilitiesPluginBase implemen
       $options[$variableName] = $variableName;
     }
 
-    $default_value = $this->task['ai_speech_to_text_source_pv'] ?? '';
+    $default_value = $this->task['data']['ai']['ai_speech_to_text_source_pv'] ?? '';
     $form['ai_speech_to_text_source_pv'] = [
       '#type' => 'select',
       '#title' => $this->t('Maestro Process Variable'),
@@ -189,7 +188,7 @@ class MaestroAiSpeechToText extends MaestroAiTaskCapabilitiesPluginBase implemen
       ],
     ];
 
-    $default_value = $this->task['ai_speech_to_text_source_file'] ?? '';
+    $default_value = $this->task['data']['ai']['ai_speech_to_text_source_file'] ?? '';
     $form['ai_speech_to_text_source_file'] = [
       '#type' => 'textfield',
       '#title' => $this->t('A local file.'),
@@ -275,28 +274,36 @@ class MaestroAiSpeechToText extends MaestroAiTaskCapabilitiesPluginBase implemen
     $sets = $service->getDefaultProviderForOperationType('speech_to_text');
     /** @var \Drupal\ai_provider_openai\Plugin\AiProvider\OpenAiProvider $provider */
     $provider = $service->createInstance($sets['provider_id']);
-    $language = $task['data']['ai']['ai_speech_to_text_language'] ?? 'en';
-    $missing_language = $task['data']['ai']['ai_speech_to_text_language_missing'] ?? NULL;
+    // The capability's settings are saved under the task's data/ai key (see prepareTaskForSave()).
+    $task_ai = $this->task['data']['ai'] ?? [];
+    $language = $task_ai['ai_speech_to_text_language'] ?? 'en';
+    $missing_language = $task_ai['ai_speech_to_text_language_missing'] ?? NULL;
     if($missing_language) {
       $language = $missing_language;
     }
-    $source = $this->task['ai_speech_to_text_source'] ?? NULL;
+    $source = $task_ai['ai_speech_to_text_source'] ?? NULL;
     $audio = NULL;
     $mime = '';
+    // Audio and video containers are both accepted by speech to text providers.
+    $allowed_media = ['audio/', 'video/'];
     if($source) {
       switch($source) {
         case 'manual_url':
-          $url = $this->task['ai_speech_to_text_source_url'] ?? NULL;
-          if($url) {
-            $audio = file_get_contents($url);
-            // Not setting the mime type as we'd have to set it locally.  Let's see if AI can figure it out.
+          $url = $task_ai['ai_speech_to_text_source_url'] ?? NULL;
+          // Fetched through the API: https only, public hosts, size capped, type detected.
+          $media = (is_string($url) && str_starts_with(strtolower($url), 'https://'))
+            ? MaestroAiTaskAPI::loadProcessVariableMedia($url, $this->processID, $allowed_media)
+            : NULL;
+          if($media) {
+            $audio = $media['binary'];
+            $mime = $media['mime'];
           }
           break;
 
         case 'maestro_ai_entity':
           // Store the entity in the private files.
-          $source_entity = $this->task['ai_speech_to_text_source_entity'];
-          $manual_entity = $this->task['ai_speech_to_text_source_entity_manual'] ?? NULL;
+          $source_entity = $task_ai['ai_speech_to_text_source_entity'] ?? NULL;
+          $manual_entity = $task_ai['ai_speech_to_text_source_entity_manual'] ?? NULL;
           // The manual entity takes precedence over the selected entity.
           // This is useful for programmatically created entities that are not in the template.
           if($manual_entity) {
@@ -307,38 +314,21 @@ class MaestroAiSpeechToText extends MaestroAiTaskCapabilitiesPluginBase implemen
 
         case 'process_variable':
           // PV can be a url or perhaps, a file ID.
-          $pv = $this->task['ai_speech_to_text_source_pv'] ?? NULL;
+          $pv = $task_ai['ai_speech_to_text_source_pv'] ?? NULL;
           if($pv) {
+            // The PV value can be user supplied, so it's only accepted as a file ID the
+            // process initiator can access or a public https:// URL, and must be audio/video.
             $pv_value = MaestroEngine::getProcessVariable($pv, $this->processID);
-            if(intval($pv_value) == $pv_value) { // File ID?  It's an integer, so must be
-              $file = File::load($pv_value);
-              if($file) {
-                $file_uri = $file->getFileUri();
-                $file_path = \Drupal::service('file_system')->realpath($file_uri);
-                if (file_exists($file_path)) {
-                  $audio = file_get_contents($file_path);
-                  $mime = mime_content_type($file_path);
-                }
-                else {
-                  \Drupal::logger('MaestroAiTaskSpeechToText')->error($this->t('Unable to load process variable file id: :id.', [':id' => $pv_value]));
-                  $responseText .= 'Unable to load process variable file id: '. $pv_value . '.';
-                }
-              }
-              else {
-                \Drupal::logger('MaestroAiTaskSpeechToText')->error($this->t('Unable to load process variable file id: :id.', [':id' => $pv_value]));
-                $responseText .= 'Unable to load process variable file id: '. $pv_value . '.';
-              }
-            }
-            else { // String URL.
-              // Just set it to the PV value.
-              $audio = file_get_contents($pv_value);
-              $mime = mime_content_type($pv_value);
+            $media = MaestroAiTaskAPI::loadProcessVariableMedia($pv_value, $this->processID, $allowed_media);
+            if($media) {
+              $audio = $media['binary'];
+              $mime = $media['mime'];
             }
           }
           break;
 
         case 'local_file':
-          $local_file = $this->task['ai_speech_to_text_source_file'] ?? NULL;
+          $local_file = $task_ai['ai_speech_to_text_source_file'] ?? NULL;
           if($local_file) {
             if(file_exists($local_file)) {
               $audio = file_get_contents($local_file);

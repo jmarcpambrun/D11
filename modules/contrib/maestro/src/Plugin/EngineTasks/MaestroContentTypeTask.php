@@ -6,6 +6,7 @@ use Drupal\Core\Plugin\PluginBase;
 use Drupal\maestro\MaestroEngineTaskInterface;
 use Drupal\maestro\MaestroTaskTrait;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\maestro\Form\MaestroExecuteInteractive;
 
 /**
@@ -150,6 +151,20 @@ class MaestroContentTypeTask extends PluginBase implements MaestroEngineTaskInte
       '#required' => FALSE,
     ];
 
+    $variables = MaestroEngine::getTemplateVariables($templateMachineName);
+    $options = ['' => $this->t('- None -')];
+    foreach ($variables as $variableName => $arr) {
+      $options[$variableName] = $variableName;
+    }
+    $form['show_maestro_pv_info'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Show Process Variable Information'),
+      '#description' => $this->t('If set, the process variable information will be shown to the end user on page display.'),
+      '#required' => FALSE,
+      '#default_value' => $task['data']['show_maestro_pv_info'] ?? '',
+      '#options' => $options,
+    ];
+
     $form['view_buttons'] = [
       '#type' => 'fieldset',
       '#states' => [
@@ -249,6 +264,7 @@ class MaestroContentTypeTask extends PluginBase implements MaestroEngineTaskInte
     $task['data']['accept_redirect_to'] = $form_state->getValue('accept_redirect_to');
     $task['data']['reject_redirect_to'] = $form_state->getValue('reject_redirect_to');
     $task['data']['supply_maestro_ids_in_url'] = $form_state->getValue('supply_maestro_ids_in_url');
+    $task['data']['show_maestro_pv_info'] = $form_state->getValue('show_maestro_pv_info');
 
     $redirect = $form_state->getValue('redirect_to');
     if (isset($redirect)) {

@@ -52,16 +52,20 @@ class TaskHandler {
    */
   public static function getHandlerURL($queueID) {
     global $base_url;
+    $config = \Drupal::config('maestro.settings');
     $url = FALSE;
     $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
     $templateMachineName = MaestroEngine::getTemplateIdFromProcessId($queueRecord->process_id->getString());
     //Do We have a token?  If so, let's use that in place of the direct QueueID.
     $queueToken = MaestroEngine::getTokenFromQueueId($queueID);
+    
+    $sitewide_token = $config->get('maestro_sitewide_token') ?? 'queueid_or_token';
+    
     if($queueToken !== FALSE && $queueToken !== '') {
-      $query_options = ['queueid_or_token' => $queueToken];
+      $query_options = [$sitewide_token => $queueToken];
     }
     else {
-      $query_options = ['queueid_or_token' => $queueID];
+      $query_options = [$sitewide_token => $queueID];
     }
     
 

@@ -6,6 +6,22 @@ maestro.maestro_admin_settings:
   requirements:
     _permission: 'administer site configuration'
 
+maestro.navigation_root:
+  path: '/maestro'
+  defaults:
+    _controller: '\Drupal\maestro\Controller\MaestroNavigationController::overview'
+    _title: 'Maestro'
+  requirements:
+    _permission: 'view maestro task console'
+
+maestro.navigation_run_orchestrator:
+  path: '/maestro/orchestrator/run'
+  defaults:
+    _controller: '\Drupal\maestro\Controller\MaestroNavigationController::runOrchestrator'
+    _title: 'Run Orchestrator'
+  requirements:
+    _permission: 'administer maestro queue entities'
+
 maestro.autocomplete.roles:
   path: '/maestro/autocomplete/roles'
   defaults:

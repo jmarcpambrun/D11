@@ -6,7 +6,6 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\file\Entity\File;
 use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\maestro_ai_task\MaestroAiTaskAPI\MaestroAiTaskAPI;
 use Drupal\maestro_ai_task\MaestroAiTaskCapabilitiesInterface;
@@ -249,8 +248,14 @@ class MaestroAiTaskVision extends MaestroAiTaskCapabilitiesPluginBase implements
       switch($source) {
         case 'manual_url':
           $url = $this->task['data']['ai']['ai_vision_image_source_url'] ?? NULL;
-          if($url) {
-            $chat_message->setImageFromUrl($url);
+          // Fetched through the API (https only, public hosts, size capped, image content
+          // verified) rather than ChatMessage::setImageFromUrl(), which will open any
+          // path or stream wrapper.
+          $media = (is_string($url) && str_starts_with(strtolower($url), 'https://'))
+            ? MaestroAiTaskAPI::loadProcessVariableMedia($url, $this->processID, ['image/'])
+            : NULL;
+          if($media) {
+            $chat_message->setImageFromBinary($media['binary'], $media['mime']);
           }
           else {
             $chat_message = NULL;
@@ -273,34 +278,16 @@ class MaestroAiTaskVision extends MaestroAiTaskCapabilitiesPluginBase implements
           // PV can be a url or perhaps, a file ID.
           $pv = $this->task['data']['ai']['ai_vision_image_source_pv'] ?? NULL;
           if($pv) {
+            // The PV value can be user supplied, so it's only accepted as a file ID the
+            // process initiator can access or a public https:// URL, and must be an image.
             $pv_value = MaestroEngine::getProcessVariable($pv, $this->processID);
-            if(intval($pv_value) == $pv_value) { // File ID?  It's an integer, so must be
-              $file = File::load($pv_value);
-              if($file) {
-                $file_uri = $file->getFileUri();
-                $file_path = \Drupal::service('file_system')->realpath($file_uri);
-                if (file_exists($file_path)) {
-                  $chat_message->setImageFromBinary(file_get_contents($file_path), $file->getMimeType());
+            $media = MaestroAiTaskAPI::loadProcessVariableMedia($pv_value, $this->processID, ['image/']);
+            if($media) {
+              $chat_message->setImageFromBinary($media['binary'], $media['mime']);
                 }
                 else {
                   $chat_message = NULL;
-                  \Drupal::logger('MaestroAiTaskVision')->error($this->t('Unable to load process variable file id: :id.', [':id' => $pv_value]));
-                  $responseText .= 'Unable to load process variable file id: '. $pv_value . '.';
-                }
-              }
-              else {
-                $chat_message = NULL;
-                \Drupal::logger('MaestroAiTaskVision')->error($this->t('Unable to load process variable file id: :id.', [':id' => $pv_value]));
-                $responseText .= 'Unable to load process variable file id: '. $pv_value . '.';
-              }
-            }
-            else { // String URL.
-              // Just set it to the PV value.
-              $chat_message->setImageFromUrl($pv_value);
-            }
-  
-            if($pv_value === FALSE) {
-              $chat_message = NULL;
+              $responseText .= 'Unable to load an image from the process variable. See the Drupal log for details.';
             }
           }
           else {
@@ -336,6 +323,8 @@ class MaestroAiTaskVision extends MaestroAiTaskCapabilitiesPluginBase implements
           $messages = new ChatInput([
             $chat_message,  
           ]);
+          // Tell the model that the <maestro_data> delimited token values and the image are data, not instructions.
+          $messages->setSystemPrompt($this->getUntrustedDataSystemPrompt());
           
           $message = $provider->chat($messages, $sets['model_id'], ['maestro-ai-task-chat'])->getNormalized();
           $responseText .= $message->getText() ?? NULL;
@@ -370,5 +359,12 @@ class MaestroAiTaskVision extends MaestroAiTaskCapabilitiesPluginBase implements
    */
   public function allowConfigurableReturnFormat() : bool {
     return FALSE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function delimitsUntrustedData() : bool {
+    return TRUE;
   }
 }

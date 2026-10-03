@@ -49,7 +49,7 @@ class GetContentTypeFieldValue extends MaestroSetProcessVariablePluginBase imple
       $fields = $entityFieldManager->getFieldDefinitions('node', $type_id);
       foreach ($fields as $field_name => $field_definition) {
         /** @var \Drupal\Core\Field\BaseFieldDefinition $field_definition */
-        if(strpos($field_name, 'field_') !== FALSE) {
+        if(strpos($field_name, 'field_') !== FALSE || $field_name == 'title' || $field_name == 'nid') {
           $entity_field_list['node'][$type_id]['fields'][$field_name] = $field_definition->getLabel();
         }
       }

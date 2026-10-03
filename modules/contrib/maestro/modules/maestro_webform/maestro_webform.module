@@ -259,7 +259,7 @@ function maestro_webform_menu_local_tasks_alter(&$data, $route_name) {
 /**
  * Implements hook_token_info().
  *
- * Declares the 'maestro-webform' token type � a global type with no 'needs-data'
+ * Declares the 'maestro-webform' token type a global type with no 'needs-data'
  * requirement so it appears in the Webform element editor token browser.
  *
  * Tokens resolve entity identifier field values by reading the Maestro sitewide

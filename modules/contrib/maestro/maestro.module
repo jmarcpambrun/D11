@@ -58,6 +58,12 @@ function maestro_theme($existing, $type, $theme, $path) {
         'current_stage_message' => '',
       ],
     ],
+    'maestro_pv_info' => [
+      'variables' => [
+        'variable_name' => '',
+        'variable_value' => '',
+      ],
+    ],
   ];
 }
 
@@ -333,6 +339,11 @@ function maestro_form_alter(&$form, FormStateInterface $form_state, $form_id) {
           '#tree' => TRUE,
         ];
 
+        $pvInfo = maestro_pv_info_render_array($templateTask, $queueID, -99);
+        if (!empty($pvInfo)) {
+          $form['maestro_pv_info'] = $pvInfo;
+        }
+
         $form['maestro']['type'] = [
           '#type' => 'hidden',
           '#default_value' => $thisForm,
@@ -367,6 +378,48 @@ function maestro_form_alter(&$form, FormStateInterface $form_state, $form_id) {
       }
     }
   }
+}
+
+/**
+ * Builds the render array that displays a content type task's chosen
+ * process variable value, if any is configured and has a value.
+ *
+ * Shared by maestro_node_view_alter() and maestro_form_alter() so the
+ * viewing and editing contexts show the same information the same way.
+ *
+ * @param array $task
+ *   The template task array, as returned by
+ *   MaestroEngine::getTemplateTaskByQueueID().
+ * @param int $queueID
+ *   The queue ID of the content type task being viewed or edited.
+ * @param int $weight
+ *   The #weight to apply to the render array.
+ *
+ * @return array
+ *   The themed render array, or an empty array if no process variable is
+ *   configured for display or it has no value yet.
+ */
+function maestro_pv_info_render_array(array $task, $queueID, $weight = 0) {
+  $variableName = $task['data']['show_maestro_pv_info'] ?? '';
+  if ($task['tasktype'] != 'MaestroContentType' || $variableName == '') {
+    return [];
+  }
+
+  $processID = MaestroEngine::getProcessIdFromQueueId($queueID);
+  $variableValue = MaestroEngine::getProcessVariable($variableName, $processID);
+  if ($variableValue === FALSE) {
+    return [];
+  }
+
+  return [
+    '#theme' => 'maestro_pv_info',
+    '#variable_name' => $variableName,
+    '#variable_value' => $variableValue,
+    '#weight' => $weight,
+    '#attached' => [
+      'library' => ['maestro/maestro-engine-css'],
+    ],
+  ];
 }
 
 /**
@@ -414,6 +467,11 @@ function maestro_node_view_alter(array &$build, EntityInterface $entity, EntityV
     if ($task['tasktype'] == 'MaestroContentType' && isset($task['data']['show_maestro_buttons_on_view']) && $task['data']['show_maestro_buttons_on_view'] == 1) {
       $build['maestro_form'] = \Drupal::formBuilder()->getForm('Drupal\maestro\Form\MaestroContentTypeCompleteTask', $queueID);
       $build['maestro_form']['#weight'] = 1000;
+    }
+
+    $pvInfo = maestro_pv_info_render_array($task, $queueID, -1000);
+    if (!empty($pvInfo)) {
+      $build['maestro_pv_info'] = $pvInfo;
     }
   }
 
