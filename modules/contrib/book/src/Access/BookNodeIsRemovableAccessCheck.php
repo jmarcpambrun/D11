@@ -5,6 +5,7 @@ namespace Drupal\book\Access;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\book\BookInterface;
 use Drupal\book\BookManagerInterface;
 use Drupal\node\NodeInterface;
 
@@ -32,6 +33,11 @@ class BookNodeIsRemovableAccessCheck implements AccessInterface {
    *   The access result.
    */
   public function access(NodeInterface $node): AccessResultInterface {
+    // Nodes with a custom bundle class may not implement BookInterface.
+    if (!$node instanceof BookInterface) {
+      return AccessResult::forbidden();
+    }
+
     return AccessResult::allowedIf($this->bookManager->checkNodeIsRemovable($node))->addCacheableDependency($node);
   }
 

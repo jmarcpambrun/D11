@@ -42,6 +42,9 @@ book.settings:
     use_alternative_form:
       type: boolean
       label: 'Use alternative form (Experimental)'
+    update_child_aliases:
+      type: boolean
+      label: 'Update descendant page URL aliases'
 
 block.settings.book_navigation:
   type: block_settings

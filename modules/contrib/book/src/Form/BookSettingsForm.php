@@ -6,6 +6,7 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Site\Settings;
@@ -35,8 +36,9 @@ class BookSettingsForm extends ConfigFormBase {
   public function __construct(
     ConfigFactoryInterface $config_factory,
     protected TypedConfigManagerInterface $typedConfigManager,
-    protected readonly EntityTypeBundleInfoInterface $entityTypeBundleInfo,
-    protected readonly CacheBackendInterface $cache,
+    protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
+    protected CacheBackendInterface $cache,
+    protected ModuleHandlerInterface $moduleHandler,
   ) {
     parent::__construct($config_factory, $typedConfigManager);
   }
@@ -50,6 +52,7 @@ class BookSettingsForm extends ConfigFormBase {
       $container->get('config.typed'),
       $container->get('entity_type.bundle.info'),
       $container->get('cache.default'),
+      $container->get('module_handler'),
     );
   }
 
@@ -138,6 +141,16 @@ class BookSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('use_alternative_form'),
       '#config_target' => 'book.settings:use_alternative_form',
     ];
+
+    if ($this->moduleHandler->moduleExists('pathauto')) {
+      $form['update_child_aliases'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Update descendant page URL aliases'),
+        '#description' => $this->t('When a book page is updated, regenerate Pathauto URL aliases for all descendant pages. Warning: this may be slow for books with many pages.'),
+        '#default_value' => $config->get('update_child_aliases'),
+        '#config_target' => 'book.settings:update_child_aliases',
+      ];
+    }
 
     return parent::buildForm($form, $form_state);
   }

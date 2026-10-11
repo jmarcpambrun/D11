@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManager;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -19,6 +20,7 @@ use Drupal\Tests\UnitTestCase;
 use Drupal\book\BookManager;
 use Drupal\book\BookOutlineStorageInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -118,17 +120,17 @@ class BookManagerTest extends UnitTestCase {
     $this->entityRepository = $this->createMock('Drupal\Core\Entity\EntityRepositoryInterface');
     $this->routeMatch = $this->createMock(RouteMatchInterface::class);
     $this->loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $moduleHandler = $this->createMock(ModuleHandlerInterface::class);
     // Used for both book manager cache services: backend chain and memory.
     $cache = $this->createMock(CacheBackendInterface::class);
     $cacheContextsManager = $this->createMock(CacheContextsManager::class);
-    $this->bookManager = new BookManager($this->entityTypeManager, $this->translation, $this->configFactory, $this->bookOutlineStorage, $this->renderer, $this->languageManager, $this->entityRepository, $cache, $cache, $this->routeMatch, $this->loggerFactory, $cacheContextsManager);
+    $this->bookManager = new BookManager($this->entityTypeManager, $this->translation, $this->configFactory, $this->bookOutlineStorage, $this->renderer, $this->languageManager, $this->entityRepository, $cache, $cache, $this->routeMatch, $this->loggerFactory, $moduleHandler, $cacheContextsManager);
   }
 
   /**
    * Tests the getBookParents() method.
-   *
-   * @dataProvider providerTestGetBookParents
    */
+  #[DataProvider('providerTestGetBookParents')]
   public function testGetBookParents($book, $parent, $expected): void {
     $this->assertEquals($expected, $this->bookManager->getBookParents($book, $parent));
   }

@@ -187,7 +187,7 @@ class BookHooks {
         break;
       }
     }
-    if ($field_key) {
+    if ($field_key && $node instanceof BookInterface) {
       $book = $node->getBook();
 
       // Not all data is available in preview mode, load it here if needed.
@@ -305,6 +305,7 @@ class BookHooks {
     if ($node instanceof BookInterface) {
       $book_manager = $this->bookManager;
       $book_manager->updateOutline($node);
+      $book_manager->updateDescendantAliases($node);
     }
   }
 

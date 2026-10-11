@@ -7,7 +7,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Block\Attribute\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -28,31 +28,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 )]
 class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
-  /**
-   * Constructs a new BookNavigationBlock instance.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
-   *   The current route match.
-   * @param \Drupal\book\BookManagerInterface $bookManager
-   *   The book manager.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $nodeStorage
-   *   The node storage.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
     protected RouteMatchInterface $routeMatch,
     protected BookManagerInterface $bookManager,
-    protected EntityStorageInterface $nodeStorage,
+    protected EntityTypeManagerInterface $entityTypeManager,
     protected AccountProxyInterface $currentUser,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -68,7 +50,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
       $plugin_definition,
       $container->get('current_route_match'),
       $container->get('book.manager'),
-      $container->get('entity_type.manager')->getStorage('node'),
+      $container->get('entity_type.manager'),
       $container->get('current_user'),
     );
   }
@@ -236,7 +218,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
           // is no reason to run an additional menu tree query for each book.
           $book['in_active_trail'] = FALSE;
           // Check whether user can access the book link.
-          $book_node = $this->nodeStorage->load($book['nid']);
+          $book_node = $this->entityTypeManager->getStorage('node')->load($book['nid']);
           $book['access'] = $book_node->access('view');
           $pseudo_tree[0]['link'] = $book;
           $book_menus[$book_id] = $this->bookManager->bookTreeOutput($pseudo_tree);
@@ -255,7 +237,7 @@ class BookNavigationBlock extends BlockBase implements ContainerFactoryPluginInt
 
       // Only display this block when the user is browsing a book
       // and included unpublished books if the user has access.
-      $query = $this->nodeStorage->getQuery()
+      $query = $this->entityTypeManager->getStorage('node')->getQuery()
         ->accessCheck()
         ->condition('nid', $book['bid'], '=');
       $nid = $query->execute();

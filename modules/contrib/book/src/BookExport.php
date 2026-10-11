@@ -3,9 +3,7 @@
 namespace Drupal\book;
 
 use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityViewBuilderInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\node\NodeInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -19,38 +17,11 @@ class BookExport {
 
   use MessengerTrait;
 
-  /**
-   * The node storage.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected EntityStorageInterface $nodeStorage;
-
-  /**
-   * The node view builder.
-   *
-   * @var \Drupal\Core\Entity\EntityViewBuilderInterface
-   */
-  protected EntityViewBuilderInterface $viewBuilder;
-
-  /**
-   * Constructs a BookExport object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\book\BookManagerInterface $bookManager
-   *   The book manager.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   *   The entity repository service.
-   */
   public function __construct(
-    EntityTypeManagerInterface $entity_type_manager,
+    protected EntityTypeManagerInterface $entityTypeManager,
     protected BookManagerInterface $bookManager,
     protected EntityRepositoryInterface $entityRepository,
-  ) {
-    $this->nodeStorage = $entity_type_manager->getStorage('node');
-    $this->viewBuilder = $entity_type_manager->getViewBuilder('node');
-  }
+  ) {}
 
   /**
    * Generates HTML for export when invoked by book_export().
@@ -82,7 +53,13 @@ class BookExport {
     $tree = $this->bookManager->bookSubtreeData($book);
     $contents = $this->exportTraverse($tree, [$this, 'bookNodeExport']);
     $node = $this->entityRepository->getTranslationFromContext($node);
-    $book_title = $this->nodeStorage->load($book['bid'])->label();
+    // The top-level book node may have been deleted while children still
+    // reference its bid. Bail with a 404 rather.
+    $book_node = $this->entityTypeManager->getStorage('node')->load($book['bid']);
+    if (!$book_node) {
+      throw new NotFoundHttpException();
+    }
+    $book_title = $book_node->label();
     return [
       '#theme' => 'book_export_html',
       '#title' => $node->label(),
@@ -117,7 +94,7 @@ class BookExport {
     foreach ($tree as $data) {
       // Defense-in-depth: verify both publish status and the current user's
       // view access. The cached tree may have been built for a different user.
-      if ($node = $this->nodeStorage->load($data['link']['nid'])) {
+      if ($node = $this->entityTypeManager->getStorage('node')->load($data['link']['nid'])) {
         if ($node->isPublished() && $node->access('view')) {
           $node = $this->entityRepository->getTranslationFromContext($node);
           $children = $data['below'] ? $this->exportTraverse($data['below'], $callable) : '';
@@ -144,7 +121,7 @@ class BookExport {
    * @see \Drupal\book\BookExport::exportTraverse()
    */
   protected function bookNodeExport(NodeInterface $node, array|string $children = ''): array {
-    $build = $this->viewBuilder->view($node, 'print');
+    $build = $this->entityTypeManager->getViewBuilder('node')->view($node, 'print');
     return [
       '#theme' => 'book_node_export_html',
       '#content' => $build,

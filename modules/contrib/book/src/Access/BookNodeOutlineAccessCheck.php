@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\book\BookHelperTrait;
+use Drupal\book\BookInterface;
 use Drupal\node\NodeInterface;
 
 /**
@@ -38,13 +39,23 @@ class BookNodeOutlineAccessCheck implements AccessInterface {
    *   The access result.
    */
   public function access(NodeInterface $node): AccessResultInterface {
+    // Nodes with a custom bundle class may not implement BookInterface.
+    if (!$node instanceof BookInterface) {
+      return AccessResult::forbidden();
+    }
+
     // If content type is allowed book type, then check for 'add content to
     // books' permission.
     $allowed_types_config = $this->configFactory->get('book.settings')->get('allowed_types') ?? [];
     $allowed_types = $this->getBookContentTypes($allowed_types_config);
     if (in_array($node->getType(), $allowed_types, TRUE)) {
-      return AccessResult::allowedIfHasPermission($this->currentUser, 'add content to books')
-        ->orif(AccessResult::allowedIfHasPermission($this->currentUser, 'administer book outlines'));
+      $bookPerms = AccessResult::allowedIfHasPermission($this->currentUser, 'add content to books')
+        ->orIf(AccessResult::allowedIfHasPermission($this->currentUser, 'administer book outlines'));
+      // New nodes have no update access yet.
+      if ($node->isNew()) {
+        return $bookPerms;
+      }
+      return $node->access('update', $this->currentUser, TRUE)->andIf($bookPerms);
     }
     return AccessResult::forbidden();
   }

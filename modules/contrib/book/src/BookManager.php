@@ -11,6 +11,7 @@ use Drupal\Core\Cache\Context\CacheContextsManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
@@ -24,6 +25,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 // cspell:ignore plid autocompleteclose
 
@@ -54,16 +56,21 @@ class BookManager implements BookManagerInterface {
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'string_translation')]
     protected TranslationInterface $translation,
     protected ConfigFactoryInterface $configFactory,
     protected BookOutlineStorageInterface $bookOutlineStorage,
     protected RendererInterface $renderer,
     protected LanguageManagerInterface $languageManager,
     protected EntityRepositoryInterface $entityRepository,
+    #[Autowire(service: 'book.backend_chained_cache')]
     protected CacheBackendInterface $backendChainedCache,
+    #[Autowire(service: 'cache.book_memory')]
     protected CacheBackendInterface $memoryCache,
+    #[Autowire(service: 'current_route_match')]
     protected RouteMatchInterface $route_match,
     protected LoggerChannelFactoryInterface $loggerFactory,
+    protected ModuleHandlerInterface $moduleHandler,
     protected ?CacheContextsManager $cacheContextsManager = NULL,
   ) {
     $this->stringTranslation = $translation;
@@ -311,10 +318,8 @@ class BookManager implements BookManagerInterface {
       '#description' => $this->t('Pages at a given level are ordered first by weight and then by title.'),
       '#states' => [
         'visible' => [
-          ':input[name="book[create_new_book]"]' => ['checked' => TRUE],
-        ],
-        [
-          ':input[name="bid"]' => ['filled' => TRUE],
+          [':input[name="book[create_new_book]"]' => ['checked' => TRUE]],
+          [':input[name="book[bid]"]' => ['filled' => TRUE, '!value' => 0]],
         ],
       ],
     ];
@@ -383,7 +388,9 @@ class BookManager implements BookManagerInterface {
     // default revision.
     $updated = FALSE;
     if (!$new && $original = $this->loadBookLink($node->id(), FALSE)) {
-      if ($book['bid'] != $original['bid'] || $book['pid'] != $original['pid'] || $book['weight'] != $original['weight']) {
+      if ($book['bid'] != $original['bid'] ||
+        $book['pid'] != $original['pid'] ||
+        (isset($book['weight']) && $book['weight'] != $original['weight'])) {
         $updated = TRUE;
       }
     }
@@ -1307,6 +1314,59 @@ class BookManager implements BookManagerInterface {
     $this->backendChainedCache->set($cid, $data['tree'], Cache::PERMANENT, ['bid:' . $link['bid']]);
 
     return $data['tree'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function updateDescendantAliases(BookInterface $node): void {
+    if (!$this->moduleHandler->moduleExists('pathauto')) {
+      return;
+    }
+    if (!$this->configFactory->get('book.settings')->get('update_child_aliases')) {
+      return;
+    }
+
+    // Only update descendants if the title or hierarchy changed.
+    $original = $node->original ?? NULL;
+    if ($original instanceof BookInterface) {
+      $title_changed = $node->label() !== $original->label();
+      $book = $node->getBook();
+      $original_book = $original->getBook();
+      $book_changed = ($book['pid'] ?? 0) !== ($original_book['pid'] ?? 0)
+        || ($book['bid'] ?? 0) !== ($original_book['bid'] ?? 0);
+      if (!$title_changed && !$book_changed) {
+        return;
+      }
+    }
+
+    $book_link = $this->loadBookLink((int) $node->id(), FALSE);
+    if (empty($book_link) || empty($book_link['has_children'])) {
+      return;
+    }
+
+    $subtree = $this->bookOutlineStorage->getBookSubtree($book_link, static::BOOK_MAX_DEPTH);
+
+    $descendant_nids = [];
+    foreach ($subtree as $link) {
+      if ($link['nid'] !== $node->id()) {
+        $descendant_nids[] = $link['nid'];
+      }
+    }
+
+    if (empty($descendant_nids)) {
+      return;
+    }
+
+    // @phpstan-ignore globalDrupalDependencyInjection.useDependencyInjection
+    $pathauto_generator = \Drupal::service('pathauto.generator');
+    $node_storage = $this->entityTypeManager->getStorage('node');
+    foreach (array_chunk($descendant_nids, 50) as $chunk) {
+      $descendant_nodes = $node_storage->loadMultiple($chunk);
+      foreach ($descendant_nodes as $descendant_node) {
+        $pathauto_generator->updateEntityAlias($descendant_node, 'update');
+      }
+    }
   }
 
 }

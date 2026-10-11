@@ -250,6 +250,20 @@ class BookTest extends BookTestBase {
     $this->assertSession()->statusCodeEquals(404);
     $this->assertSession()->pageTextContains('Book-not-in-book is not in a book and cannot be exported');
 
+    // Exporting a child whose top-level book node has been deleted should 404
+    // rather than fatal on a null node load. Use a fresh book so the assertions
+    // below that rely on $this->book still work.
+    $this->drupalLogin($this->adminUser);
+    $child = $this->createBookNode($this->book->id(), $this->book->getBook()['nid']);
+    $missing_bid = ((int) $this->book->id()) + 99999;
+    $this->container->get('database')->update('book')
+      ->fields(['bid' => $missing_bid])
+      ->condition('nid', $child->id())
+      ->execute();
+    Cache::invalidateTags(['node:' . $child->id(), 'bid:' . $this->book->id()]);
+    $this->drupalGet('book/export/html/' . $child->id());
+    $this->assertSession()->statusCodeEquals(404);
+
     // Make sure an anonymous user cannot view printer-friendly version.
     $this->drupalLogout();
 
@@ -441,6 +455,27 @@ class BookTest extends BookTestBase {
     $this->assertSession()->pageTextContains('This is the top-level page in this book');
     // We can edit the outline.
     $this->assertSession()->linkByHrefExists('node/' . $non_book_node_in_outline->id() . '/outline');
+
+    // A user with 'administer book outlines' and 'reorder book pages' but only
+    // 'edit own book content' must not access another user's book outline or
+    // child-ordering page.
+    $this->drupalLogin($this->adminUser);
+    $admin_book = $this->createBookNode('new');
+    $this->createBookNode($admin_book->id(), $admin_book->id());
+
+    $non_owner = $this->drupalCreateUser([
+      'create book content',
+      'edit own book content',
+      'add content to books',
+      'administer book outlines',
+      'reorder book pages',
+      'node test view',
+    ]);
+    $this->drupalLogin($non_owner);
+    $this->drupalGet('node/' . $admin_book->id() . '/outline');
+    $this->assertSession()->statusCodeEquals(403);
+    $this->drupalGet('node/' . $admin_book->id() . '/child-ordering');
+    $this->assertSession()->statusCodeEquals(403);
   }
 
   /**

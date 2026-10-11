@@ -7,7 +7,9 @@
 
 namespace Drupal\book\ProxyClass {
 
-    /**
+  use Drupal\book\BookInterface;
+
+  /**
      * Provides a proxy class for \Drupal\book\BookManager.
      *
      * @see \Drupal\Component\ProxyBuilder
@@ -235,6 +237,13 @@ namespace Drupal\book\ProxyClass {
         public function setStringTranslation(\Drupal\Core\StringTranslation\TranslationInterface $translation)
         {
             return $this->lazyLoadItself()->setStringTranslation($translation);
+        }
+
+        /**
+         * {@inheritdoc }
+         */
+        public function updateDescendantAliases(BookInterface $node): void {
+          $this->lazyLoadItself()->updateDescendantAliases($node);
         }
 
     }

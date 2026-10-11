@@ -4,7 +4,7 @@ namespace Drupal\book\Form;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
@@ -25,24 +25,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class BookAdminEditForm extends FormBase {
 
-  /**
-   * Constructs a new BookAdminEditForm.
-   *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $nodeStorage
-   *   The content block storage.
-   * @param \Drupal\book\BookManagerInterface $bookManager
-   *   The book manager.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   *   The entity repository service.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   Gets the current active user.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $current_route_match
-   *   Gets current route.
-   */
   public function __construct(
-    protected EntityStorageInterface $nodeStorage,
+    protected EntityTypeManagerInterface $entityTypeManager,
     protected BookManagerInterface $bookManager,
     protected EntityRepositoryInterface $entityRepository,
     protected AccountProxyInterface $currentUser,
@@ -55,9 +39,8 @@ class BookAdminEditForm extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): static {
-    $entity_type_manager = $container->get('entity_type.manager');
     return new static(
-      $entity_type_manager->getStorage('node'),
+      $container->get('entity_type.manager'),
       $container->get('book.manager'),
       $container->get('entity.repository'),
       $container->get('current_user'),
@@ -110,7 +93,7 @@ class BookAdminEditForm extends FormBase {
       }
 
       /** @var \Drupal\node\NodeInterface $node */
-      $node = $this->nodeStorage->load($book['nid']);
+      $node = $this->entityTypeManager->getStorage('node')->load($book['nid']);
       $node->setTitle($book['title']);
       $violations = $node->validate();
 
@@ -151,7 +134,7 @@ class BookAdminEditForm extends FormBase {
 
           // Update the title if changed.
           if ($row['title']['#default_value'] != $values['title']) {
-            $node = $this->nodeStorage->load($values['nid']);
+            $node = $this->entityTypeManager->getStorage('node')->load($values['nid']);
             $node = $this->entityRepository->getTranslationFromContext($node);
             $node->revision_log = $this->t('Title changed from %original to %current.', [
               '%original' => $node->label(),
@@ -269,7 +252,7 @@ class BookAdminEditForm extends FormBase {
       }
 
       /** @var \Drupal\node\NodeInterface $node */
-      $node = $this->nodeStorage->load($nid);
+      $node = $this->entityTypeManager->getStorage('node')->load($nid);
       $field_name = 'title';
       $field_items = $node->get($field_name);
       if ($field_items->access('edit')) {

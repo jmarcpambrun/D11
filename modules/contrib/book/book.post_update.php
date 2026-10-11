@@ -144,7 +144,7 @@ function book_post_update_6allowed_child_type_default(array &$sandbox = []): voi
   $config = $config_factory->getEditable('book.settings');
   $updated = FALSE;
 
-  $allowed_types = $config->get('allowed_types');
+  $allowed_types = $config->get('allowed_types') ?? [];
   foreach ($allowed_types as &$type) {
     if (empty($type['child_type'])) {
       $type['child_type'] = $type['content_type'];

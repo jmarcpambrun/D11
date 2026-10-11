@@ -338,4 +338,15 @@ interface BookManagerInterface {
    */
   public function checkNodeIsRemovable(NodeInterface $node): bool;
 
+  /**
+   * Regenerates pathauto aliases for descendant book pages.
+   *
+   * Only acts when pathauto is installed and the update_child_aliases
+   * setting is enabled.
+   *
+   * @param \Drupal\book\BookInterface $node
+   *   The book node that was updated.
+   */
+  public function updateDescendantAliases(BookInterface $node): void;
+
 }

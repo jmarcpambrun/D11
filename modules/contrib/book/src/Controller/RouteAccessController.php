@@ -59,7 +59,8 @@ class RouteAccessController extends ControllerBase implements ContainerInjection
     // Checks if book has children.
     $haveChildren = $this->checkIfBookHasChildren($node);
 
-    return AccessResult::allowedIf($hasAccess && $haveChildren);
+    return AccessResult::allowedIf($hasAccess && $haveChildren)
+      ->andIf($node->access('update', $account, TRUE));
   }
 
   /**
