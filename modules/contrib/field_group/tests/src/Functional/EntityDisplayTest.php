@@ -180,6 +180,69 @@ class EntityDisplayTest extends BrowserTestBase {
   }
 
   /**
+   * Tests that disabled (hidden) field groups are not rendered.
+   *
+   * @see https://www.drupal.org/project/field_group/issues/3537082
+   */
+  public function testDisabledGroupIsNotRendered() {
+    $data = [
+      'label' => 'Wrapper',
+      'children' => [
+        0 => 'field_test',
+      ],
+      'format_type' => 'html_element',
+      'format_settings' => [
+        'element' => 'div',
+        'id' => 'wrapper-id',
+      ],
+    ];
+    $group = $this->createGroup('node', $this->type, 'view', 'default', $data);
+
+    // The enabled group wraps its child field.
+    $this->drupalGet($this->node->toUrl());
+    $this->assertCount(1, $this->xpath("//div[@id = 'wrapper-id']"), 'Enabled group is rendered.');
+    $this->assertNotEmpty($this->xpath("//div[@id = 'wrapper-id']//*[contains(@class, 'field--name-field-test')]"), 'Child field is rendered inside the enabled group.');
+
+    // Disable the group. Its wrapper must be gone, the field must still show.
+    $group->region = 'hidden';
+    field_group_group_save($group);
+
+    $this->drupalGet($this->node->toUrl());
+    $this->assertEmpty($this->xpath("//div[@id = 'wrapper-id']"), 'Disabled group is not rendered.');
+    $this->assertNotEmpty($this->xpath("//*[contains(@class, 'field--name-field-test')]"), 'Field of the disabled group is still rendered.');
+  }
+
+  /**
+   * Tests that disabled groups are not rendered, even if empty ones are shown.
+   *
+   * @see https://www.drupal.org/project/field_group/issues/3537082
+   */
+  public function testDisabledEmptyGroupIsNotRendered() {
+    $data = [
+      'label' => 'Wrapper',
+      'children' => [],
+      'region' => 'hidden',
+      'format_type' => 'html_element',
+      'format_settings' => [
+        'element' => 'div',
+        'id' => 'wrapper-id',
+        'show_empty_fields' => TRUE,
+      ],
+    ];
+    $group = $this->createGroup('node', $this->type, 'view', 'default', $data);
+
+    $this->drupalGet($this->node->toUrl());
+    $this->assertEmpty($this->xpath("//div[@id = 'wrapper-id']"), 'Disabled empty group is not rendered.');
+
+    // Enabling the group renders the empty wrapper.
+    $group->region = 'content';
+    field_group_group_save($group);
+
+    $this->drupalGet($this->node->toUrl());
+    $this->assertCount(1, $this->xpath("//div[@id = 'wrapper-id']"), 'Enabled empty group is rendered.');
+  }
+
+  /**
    * Test the html element formatter.
    */
   public function testHtmlElement() {

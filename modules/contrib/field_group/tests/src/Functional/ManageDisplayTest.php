@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\field_group\Functional;
 
+use Drupal\Core\Entity\Entity\EntityFormMode;
+use Drupal\Core\Entity\Entity\EntityViewMode;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Tests\BrowserTestBase;
 
@@ -107,6 +109,60 @@ class ManageDisplayTest extends BrowserTestBase {
     // Test if group is in the $groups array.
     $loaded_group = field_group_load_field_group($group_name, 'node', $this->type, 'view', 'default');
     $this->assertNotNull($loaded_group, 'Group was loaded');
+  }
+
+  /**
+   * Test creating a group on a non-default form mode and view mode.
+   */
+  public function testCreateGroupOnNonDefaultMode() {
+    $display_repository = \Drupal::service('entity_display.repository');
+
+    // Create a custom form mode and enable it for the bundle.
+    EntityFormMode::create([
+      'id' => 'node.beta',
+      'targetEntityType' => 'node',
+      'label' => 'Beta',
+    ])->save();
+    $display_repository->getFormDisplay('node', $this->type, 'beta')->save();
+
+    // Create a custom view mode and enable it for the bundle.
+    EntityViewMode::create([
+      'id' => 'node.gamma',
+      'targetEntityType' => 'node',
+      'label' => 'Gamma',
+    ])->save();
+    $display_repository->getViewDisplay('node', $this->type, 'gamma')->save();
+
+    $group = [
+      'group_formatter' => 'details',
+      'label' => $this->randomString(8),
+      'group_name' => mb_strtolower($this->randomMachineName()),
+    ];
+    $group_name = 'group_' . $group['group_name'];
+
+    // Add a group on the custom form mode.
+    $this->drupalGet('admin/structure/types/manage/' . $this->type . '/form-display/beta/add-group');
+    $this->submitForm($group, 'Save and continue');
+    $this->submitForm([], 'Create group');
+
+    // The group must exist on the form mode it was created on, not on the
+    // default form mode.
+    $loaded_group = field_group_load_field_group($group_name, 'node', $this->type, 'form', 'beta');
+    $this->assertNotNull($loaded_group, 'Group was created on the current form mode');
+    $loaded_group = field_group_load_field_group($group_name, 'node', $this->type, 'form', 'default');
+    $this->assertNull($loaded_group, 'Group was not added to the default form mode');
+
+    // Add a group on the custom view mode.
+    $this->drupalGet('admin/structure/types/manage/' . $this->type . '/display/gamma/add-group');
+    $this->submitForm($group, 'Save and continue');
+    $this->submitForm([], 'Create group');
+
+    // The group must exist on the view mode it was created on, not on the
+    // default view mode.
+    $loaded_group = field_group_load_field_group($group_name, 'node', $this->type, 'view', 'gamma');
+    $this->assertNotNull($loaded_group, 'Group was created on the current view mode');
+    $loaded_group = field_group_load_field_group($group_name, 'node', $this->type, 'view', 'default');
+    $this->assertNull($loaded_group, 'Group was not added to the default view mode');
   }
 
   /**

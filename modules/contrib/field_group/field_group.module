@@ -829,6 +829,11 @@ function field_group_pre_render(array &$element, $group, &$render_array) {
     return;
   }
 
+  // Skip rendering if the field group is disabled (region = 'hidden'):
+  if (isset($group->region) && $group->region === 'hidden') {
+    return;
+  }
+
   // Let modules define their wrapping element.
   // Note that the group element has no properties, only elements.
   // The intention here is to have the opportunity to alter the

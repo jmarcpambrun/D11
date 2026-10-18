@@ -124,10 +124,10 @@ class FieldGroupAddForm extends FormBase {
     $this->context = $context;
 
     if ($context == 'form') {
-      $this->mode = $this->getRequest()->request->get('form_mode_name');
+      $this->mode = $this->getRequest()->attributes->get('form_mode_name');
     }
     else {
-      $this->mode = $this->getRequest()->request->get('view_mode_name');
+      $this->mode = $this->getRequest()->attributes->get('view_mode_name');
     }
 
     if (empty($this->mode)) {

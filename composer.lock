@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53f3f4f55c7a97f9bae113a82b7196b4",
+    "content-hash": "57e2f11767c094a77e75c2e77ad79ccf",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -6424,17 +6424,17 @@
         },
         {
             "name": "drupal/field_group",
-            "version": "4.1.0-alpha4",
+            "version": "4.1.0-beta1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/field_group.git",
-                "reference": "4.1.0-alpha4"
+                "reference": "4.1.0-beta1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/field_group-4.1.0-alpha4.zip",
-                "reference": "4.1.0-alpha4",
-                "shasum": "1f8e8c5a1dbf97e89b1c4801a083316538980acb"
+                "url": "https://ftp.drupal.org/files/projects/field_group-4.1.0-beta1.zip",
+                "reference": "4.1.0-beta1",
+                "shasum": "6dcaa99e66166bf957ded9f4805a7c07de502a7c"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11"
@@ -6445,11 +6445,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.1.0-alpha4",
-                    "datestamp": "1785336527",
+                    "version": "4.1.0-beta1",
+                    "datestamp": "1791901605",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "message": "Beta releases are not covered by Drupal security advisories."
                     }
                 }
             },
@@ -22487,7 +22487,7 @@
         "drupal/content_access": 5,
         "drupal/eu_cookie_compliance": 5,
         "drupal/feeds_ex": 10,
-        "drupal/field_group": 15,
+        "drupal/field_group": 10,
         "drupal/fullcalendar_view": 15,
         "drupal/gitlab_api": 15,
         "drupal/group": 15,

@@ -63,15 +63,18 @@ details_validation:
     js/field_group.details_validation.js: {}
   dependencies:
     - core/jquery
+    - core/once
 
 tab_validation:
   js:
     js/field_group.tab_validation.js: {}
   dependencies:
     - core/jquery
+    - core/once
 
 tabs_validation:
   js:
     js/field_group.tabs_validation.js: {}
   dependencies:
     - core/jquery
+    - core/once

@@ -50,7 +50,7 @@ trait FieldGroupTestTrait {
       'label' => $data['label'] ?? $this->randomString(8),
       'format_type' => $data['format_type'],
       'format_settings' => $data['format_settings'],
-      'region' => 'content',
+      'region' => $data['region'] ?? 'content',
     ];
 
     field_group_group_save($field_group);
