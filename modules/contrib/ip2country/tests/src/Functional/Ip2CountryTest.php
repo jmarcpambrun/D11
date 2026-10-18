@@ -66,6 +66,7 @@ class Ip2CountryTest extends BrowserTestBase {
     // Explicitly install the module so that it will have access
     // to the configuration variable we set above.
     $status = \Drupal::service('module_installer')->install(['ip2country'], FALSE);
+    \Drupal::service('module_installer')->install(['ip2country_test_fetch'], FALSE);
     $this->resetAll();  // The secret ingredient.
 
     $this->assertTrue($status, 'Module ip2country enabled.');
@@ -97,13 +98,13 @@ class Ip2CountryTest extends BrowserTestBase {
     $count = \Drupal::service('ip2country.manager')->getRowCount();
     $this->assertNotEquals(0, $count, 'Database has been updated with ' . $count . ' rows.');
 
-    // Real working IPs.
+    // Synthetic allocations exercise first, last and interior range addresses.
     $ip_array = [
-      '125.29.33.201' => 'JP',
-      '212.58.224.138' => 'GB',
-      '184.51.240.110' => 'US',
-      '210.87.9.66' => 'AU',
-      '93.184.216.119' => 'EU',
+      '192.0.2.7' => 'ZA',
+      '192.0.2.31' => 'AU',
+      '192.0.2.32' => 'US',
+      '192.0.2.48' => 'BR',
+      '192.0.2.79' => 'NL',
     ];
     foreach ($ip_array as $ip_address => $country) {
       // Test dotted quad string form of address.
@@ -150,6 +151,10 @@ class Ip2CountryTest extends BrowserTestBase {
    * Tests module permissions / access to configuration page.
    */
   public function testUserAccess(): void {
+    // Test permissions, parsing, database replacement and logging with stable
+    // responses. Live registry availability must not determine UI test results.
+    $this->config('ip2country.settings')->set('md5_checksum', TRUE)->save();
+
     /** @var \Drupal\Tests\WebAssert $assert */
     $assert = $this->assertSession();
 
@@ -185,12 +190,12 @@ class Ip2CountryTest extends BrowserTestBase {
     $this->drupalLogin($this->adminUser);
     $this->drupalGet('admin/config');
     $assert->statusCodeEquals(200);
-    $assert->pageTextContains('User location');
+    $assert->pageTextContains('IP2country settings');
     $assert->pageTextContains('Settings for determining user location from IP address.');
 
     $this->drupalGet('admin/config/people/ip2country');
     $assert->statusCodeEquals(200);
-    $assert->pageTextContains('User location');
+    $assert->pageTextContains('IP2country settings');
     // This is output by ip2country_help().
     $assert->pageTextContains('Configuration settings for the ip2country module.');
     $assert->pageTextContains('Database is empty.');
@@ -198,33 +203,50 @@ class Ip2CountryTest extends BrowserTestBase {
     $assert->fieldValueEquals('ip2country_watchdog', 1);
     // Check that database updates are using 'all' by default.
     $assert->fieldValueEquals('ip2country_rir', 'all');
+    $assert->pageTextContains('ARIN (uses all registries)');
 
-    // Update database via UI - choose a random RIR.
-    // (Actually short-circuiting the UI here because of the Ajax call).
-    $rir = array_rand([
-      'afrinic' => 'AFRINIC',
-      'arin'    => 'ARIN',
-      'apnic'   => 'APNIC',
-      'lacnic'  => 'LACNIC',
-      'ripe'    => 'RIPE',
-    ]);
-    $this->drupalGet('admin/config/people/ip2country/update/' . $rir);
-    $assert->pageTextContains(
-      'The IP to Country database has been updated from ' . mb_strtoupper($rir) . '.'
-    );
-    $rows = \Drupal::service('ip2country.manager')->getRowCount();
+    // Exercise every registry choice through the update route, including RIPE.
+    foreach (['afrinic' => 1, 'arin' => 5, 'apnic' => 5, 'lacnic' => 4, 'ripe' => 5, 'all' => 5] as $rir => $rows) {
+      $this->drupalGet('admin/config/people/ip2country/update/' . $rir);
+      $assert->statusCodeEquals(200);
+      $assert->pageTextContains(
+        'The IP to Country database has been updated from ' . mb_strtoupper($rir) . '.'
+      );
+      $this->assertSame($rows, \Drupal::service('ip2country.manager')->getRowCount());
 
-    // Check watchdog.
+      // Existing ARIN selections must retain coverage from all five registries.
+      if ($rir === 'arin') {
+        $countries = [
+          '192.0.2.0' => 'ZA',
+          '192.0.2.16' => 'AU',
+          '192.0.2.32' => 'US',
+          '192.0.2.48' => 'BR',
+          '192.0.2.64' => 'NL',
+        ];
+        foreach ($countries as $ip => $country) {
+          $this->assertSame($country, \Drupal::service('ip2country.lookup')->getCountry($ip));
+        }
+      }
+
+      // Check watchdog and the details of each successful update.
+      $message = 'Manual database update from ' . mb_strtoupper($rir) . ' server. Table contains ' . $rows . ' rows.';
+      $this->drupalGet('admin/reports/dblog');
+      $assert->pageTextContains('Recent log messages');
+      $assert->linkExists($message);
+      $this->clickLink($message);
+      $assert->pageTextContains('Details');
+      $assert->pageTextContains('ip2country');
+      $assert->pageTextContains($message);
+    }
+
+    // A failed refresh reports failure and preserves the last usable database.
+    \Drupal::state()->set('ip2country_test_fetch.fail', TRUE);
+    $this->drupalGet('admin/config/people/ip2country/update/ripe');
+    $assert->pageTextContains('The IP to Country database update failed.');
+    $this->assertSame(5, \Drupal::service('ip2country.manager')->getRowCount());
+    $this->assertSame('NL', \Drupal::service('ip2country.lookup')->getCountry('192.0.2.64'));
     $this->drupalGet('admin/reports/dblog');
-    $assert->pageTextContains('Recent log messages');
-    $assert->pageTextContains('ip2country');
-    $assert->linkExists('Manual database update from ' . mb_strtoupper($rir) . ' server. Table contains ' . $rows . ' rows.');
-
-    // Drill down.
-    $this->clickLink('Manual database update from ' . mb_strtoupper($rir) . ' server. Table contains ' . $rows . ' rows.');
-    $assert->pageTextContains('Details');
-    $assert->pageTextContains('ip2country');
-    $assert->pageTextContains('Manual database update from ' . mb_strtoupper($rir) . ' server. Table contains ' . $rows . ' rows.');
+    $assert->linkExists('Manual database update from RIPE server FAILED.');
 
     $this->drupalLogout();
   }

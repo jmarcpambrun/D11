@@ -1,27 +1,25 @@
 About
 =====
-This module uses a visitor's IP address to identify the geographical location
-(country) of the user.  The module makes this determination and stores the
-result as an ISO 3166-1 2-character country code in the Drupal $user object,
-but otherwise has no effect on the operation of your site.  The intent is
-simply to provide the information for use by other modules.  Anonymous users
-are not identified by country.  An API is also provided so that you can lookup
-IP-Country information in your own code.
-
-
+This module looks up the country associated with a visitor's IPv4 address. The
+module makes this determination and stores the result as an ISO 3166
+2-character country code in the Drupal $user object, but otherwise has no
+effect on the operation of your site. The country is stored for authenticated
+users at login; the lookup service also supports anonymous visitors.
+An API is also provided so that you can lookup IP-Country information in your
+own code.
 
 Installation
 ============
-Check requirements:  Drupal 8.x, nothing more.
+Check requirements:  Drupal 10 (10.3 or later) or Drupal 11
 
-Copy ip2country.tar.gz into your sites/all/modules directory and unzip/untar it.
+Installation: composer require drupal/ip2country
 
 In your web browser, navigate to admin/modules and enable the following
 module: IP-based determination of Country
 
 NOTE!  When ip2country is installed, it downloads a large amount of
 data off the Internet to build a table in your Drupal database.  This
-process can take up to 30 seconds, so please be patient and WAIT until
+process takes time, so please be patient and WAIT until
 the page loads!  You can verify a correct install by looking into your
 Drupal database for the ip2country table and verifying that it is full
 of data.
@@ -38,7 +36,7 @@ preferences in the "Troubleshooting" section below.
 
 Finally, cron needs to be running for automatic database updates.  If you
 haven't set up cron for your Drupal site, refer to
-https://www.drupal.org/docs/8/cron-automated-tasks/cron-automated-tasks-overview
+https://www.drupal.org/docs/administering-a-drupal-site/cron-automated-tasks
 for instructions.
 
 Everything should now work.  If it doesn't, read the rest of this document
@@ -79,6 +77,13 @@ from within your own code, for your own use.  The way to use this is:
   $ip = \Drupal::request()->getClientIp();
   $country_code = \Drupal::service('ip2country.lookup')->getCountry($ip);
 
+This lookup service also works for anonymous visitors. It does not require a
+logged-in account. Automatic country storage happens at login, so it should not
+be confused with a lookup for the current request. Do not store a visitor's
+country against the shared anonymous user ID. Integrations that personalize
+anonymous responses must also account for page and render caching so one
+visitor's result is not served to another.
+
 Drupal core provides a function which can transform this $country_code into
 a country name.  Use it like this:
 
@@ -86,13 +91,13 @@ a country name.  Use it like this:
   $country_name = $country_list[$country_code];
 
 
-The database used by this module is maintained by ARIN, the American Registry
-for Internet Numbers (http://www.arin.net/about_us/index.html), which is one of
-the five official Regional Internet Registries (RIR) responsible for assigning
-IP addresses.  The claim is the database is 98% accurate, with most of the
-problems coming from users in less-developed countries.  Regardless, there's
-no more-authoritative source of this information.  Although the default RIR
-used is ARIN, an admin menu allows you to choose any of the five.
+The database uses extended allocation statistics published by the five Regional
+Internet Registries (RIRs). By default, "Use all registries" downloads each
+registry's current HTTPS feed directly. The ARIN selection uses the same direct
+feeds to preserve global coverage because ARIN's mirrors of the other registries
+are obsolete. Existing ARIN settings do not need to be changed. Other selections
+may use registry mirrors or cover fewer regions. Allocation data is not a
+guarantee of a visitor's physical location.
 
 If you have cron set up for your Drupal site, this IP to Country database will
 be automatically updated at a frequency determined by the admin menu at
@@ -103,16 +108,14 @@ of data during the update and because the database is very stable, shorter
 database update times are not needed.
 
 Database updates may also be performed manually by pressing the button at
-admin/config/people/ip2country.  Note this can take up to 30 seconds to
+admin/config/people/ip2country.  Note this will take time to
 complete - do not interrupt the update process or the update will fail and you
 will have to do it again.  (A failed update does *not* corrupt the database.)
 
 
 Drush support
 =============
-Support for both Drush 8 and Drush 9+ has been added. There are three drush
-commands provided by this module (use a '-' instead of the ':' in the command
-name if you are using Drush 8):
+There are three drush commands provided by this module:
 
   drush ip2country:update --registry=<registry>
       Updates the ip2country database from the specified registry, or from
@@ -144,12 +147,7 @@ More help may be found using drush help --filter=ip2country
 
 Requirements
 ============
-This module is tested to work with Drupal 8.x.  There is a separate version
-specifically for Drupal 7.x (and for Drupal 6.x and for Drupal 5.x too, if you
-still need that).  Future version of this module will be backwards compatible
-with this release.
-
-
+This module is tested to work with Drupal 10 (10.3 or later) or Drupal 11.
 
 Troubleshooting
 ===============
@@ -163,12 +161,6 @@ simulate or an IP to simulate.  A notification will be printed across the top
 of the page when you submit the form, letting you know that the debug feature
 has successfully been turned on (or off).  The simulated Country or IP will be
 used for the administrator until this feature is turned off in the admin menu.
-
-If your dblog indicates that the database update is failing due to timeouts,
-you may have to increase Drupal's allowed cron run time.  This requires editing
-core/lib/Drupal/Core/Cron.php and changing the time in the function run()
-from 240 a larger number.  Note that this problem is extremely unlikely if
-you have a version of this module >=8.x-1.9.
 
 When all else fails, read the comments in the code - there are some debugging
 print statements left in that can be uncommented to see what is going on, and

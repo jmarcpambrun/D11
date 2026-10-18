@@ -1,4 +1,4 @@
 ip2country.settings:
   route_name: ip2country.settings
-  title: 'User location'
+  title: 'IP2country settings'
   base_route: user.admin_index

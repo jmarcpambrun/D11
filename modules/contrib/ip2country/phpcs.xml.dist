@@ -14,6 +14,8 @@
   <exclude-pattern>vendor</exclude-pattern>
   <exclude-pattern>\/_+ignore</exclude-pattern>
   <exclude-pattern>interdif</exclude-pattern>
+  <!-- Generated CI template metadata is not module source. -->
+  <exclude-pattern>gitlab_templates_version.txt</exclude-pattern>
 
   <!-- Include all Drupal and DrupalPractice sniffs by default, then adjust. -->
   <rule ref="Drupal"/>

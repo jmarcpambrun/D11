@@ -38,7 +38,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 #[Condition(
   id: "ip2country_user_country",
   label: new TranslatableMarkup("User is in country (based on IP address)"),
-  description: new TranslatableMarkup("Uses the ip2country module to determine if the user is located in one of the selected countries."),
   category: new TranslatableMarkup("User"),
   context_definitions: [
     "countries" => new ContextDefinition(

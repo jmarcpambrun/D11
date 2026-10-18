@@ -91,70 +91,62 @@ class Ip2CountryManager implements Ip2CountryManagerInterface {
   public function updateDatabase(string $registry = 'all', bool $md5_checksum = FALSE, int $batch_size = 200): int|false {
     $registry = mb_strtolower(trim($registry));
 
-    // Assembly the list of FTP files to use.
+    // Assemble the list of HTTPS registry files to use.
     // Unfortunately, all the registries do things a little differently.
     switch ($registry) {
       case 'afrinic':
         // AFRINIC only holds its own data, unlike every other NIC.
         $ftp_urls = [
-          'ftp://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
+          'https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
         ];
         break;
 
       case 'apnic':
         // APNIC uses ripe-ncc instead of ripencc to hold data for RIPE.
         $ftp_urls = [
-          'ftp://ftp.apnic.net/pub/stats/arin/delegated-arin-extended-latest',
-          'ftp://ftp.apnic.net/pub/stats/apnic/delegated-apnic-extended-latest',
-          'ftp://ftp.apnic.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
-          'ftp://ftp.apnic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
-          'ftp://ftp.apnic.net/pub/stats/ripe-ncc/delegated-ripencc-extended-latest',
-        ];
-        break;
-
-      case 'arin':
-        // ARIN only hosts 'extended data for itself.
-        $ftp_urls = [
-          'ftp://ftp.arin.net/pub/stats/afrinic/delegated-afrinic-latest',
-          'ftp://ftp.arin.net/pub/stats/apnic/delegated-apnic-latest',
-          'ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
-          'ftp://ftp.arin.net/pub/stats/lacnic/delegated-lacnic-latest',
-          'ftp://ftp.arin.net/pub/stats/ripencc/delegated-ripencc-latest',
+          'https://ftp.apnic.net/stats/arin/delegated-arin-extended-latest',
+          'https://ftp.apnic.net/stats/apnic/delegated-apnic-extended-latest',
+          'https://ftp.apnic.net/stats/lacnic/delegated-lacnic-extended-latest',
+          'https://ftp.apnic.net/stats/afrinic/delegated-afrinic-extended-latest',
+          'https://ftp.apnic.net/stats/ripe-ncc/delegated-ripencc-extended-latest',
         ];
         break;
 
       case 'lacnic':
         // LACNIC doesn't keep a 'latest' file for ARIN.
         $ftp_urls = [
-          'ftp://ftp.lacnic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
-          'ftp://ftp.lacnic.net/pub/stats/apnic/delegated-apnic-extended-latest',
-          'ftp://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
-          'ftp://ftp.lacnic.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
+          'https://ftp.lacnic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
+          'https://ftp.lacnic.net/pub/stats/apnic/delegated-apnic-extended-latest',
+          'https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
+          'https://ftp.lacnic.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
         ];
         break;
 
       case 'ripe':
         // RIPE seems to be the only registry that has everything these days.
         $ftp_urls = [
-          'ftp://ftp.ripe.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
-          'ftp://ftp.ripe.net/pub/stats/apnic/delegated-apnic-extended-latest',
-          'ftp://ftp.ripe.net/pub/stats/arin/delegated-arin-extended-latest',
-          'ftp://ftp.ripe.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
-          'ftp://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
+          'https://ftp.ripe.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
+          'https://ftp.ripe.net/pub/stats/apnic/delegated-apnic-extended-latest',
+          'https://ftp.ripe.net/pub/stats/arin/delegated-arin-extended-latest',
+          'https://ftp.ripe.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
+          'https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
         ];
         break;
 
+      // ARIN's non-ARIN mirrors are obsolete. Keep global coverage for existing
+      // ARIN selections by using each registry's current direct feed.
+      case 'arin':
       case 'all':
       default:
         // If 'all' is set or if a particular registry isn't specified, then
         // ask each registry to provide its own data. This is the preferred
         // way to fill the database.
         $ftp_urls = [
-          'ftp://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
-          'ftp://ftp.apnic.net/pub/stats/apnic/delegated-apnic-extended-latest',
-          'ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
-          'ftp://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
-          'ftp://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
+          'https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-extended-latest',
+          'https://ftp.apnic.net/stats/apnic/delegated-apnic-extended-latest',
+          'https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
+          'https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-extended-latest',
+          'https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-extended-latest',
         ];
         break;
     }

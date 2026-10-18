@@ -23,7 +23,19 @@ class Ip2CountryDrushCommandsTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['ip2country'];
+  protected static $modules = [];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    \Drupal::state()->set('ip2country_populate_database_on_install', FALSE);
+    \Drupal::service('module_installer')->install(['ip2country'], FALSE);
+    \Drupal::service('module_installer')->install(['ip2country_test_fetch'], FALSE);
+    $this->resetAll();
+    $this->assertSame(5, \Drupal::service('ip2country.manager')->updateDatabase('all', TRUE));
+  }
 
   /**
    * Tests the Drush ip2country:status command.
@@ -45,28 +57,28 @@ class Ip2CountryDrushCommandsTest extends BrowserTestBase {
    * Tests the Drush ip2country:lookup command.
    */
   public function testLookupCommand(): void {
-    // Looks up the IP address for www.drupal.org.
+    // Looks up a synthetic allocation in a reserved documentation range.
     // Output defaults to table format.
-    $this->drush('ip2country:lookup', ['151.101.22.217']);
+    $this->drush('ip2country:lookup', ['192.0.2.32']);
 
     // phpcs:disable Drupal.Strings.UnnecessaryStringConcat.Found
     $expected_output =
-      "---------------- --------------- -------------- \n" .
-      "  IP address       Country         Country code  \n" .
-      " ---------------- --------------- -------------- \n" .
-      "  151.101.22.217   United States   US            \n" .
-      " ---------------- --------------- --------------";
+      "------------ --------------- -------------- \n" .
+      "  IP address   Country         Country code  \n" .
+      " ------------ --------------- -------------- \n" .
+      "  192.0.2.32   United States   US            \n" .
+      " ------------ --------------- --------------";
     // phpcs:enable Drupal.Strings.UnnecessaryStringConcat.Found
     $this->assertEquals($expected_output, $this->getOutput());
 
-    // Looks up the IP address for www.drupal.org.
+    // Looks up the same synthetic allocation.
     // Specify YAML format output.
-    $this->drush('ip2country:lookup', ['151.101.22.217'], ['format' => 'yaml']);
+    $this->drush('ip2country:lookup', ['192.0.2.32'], ['format' => 'yaml']);
 
     // phpcs:disable Drupal.Strings.UnnecessaryStringConcat.Found
     $expected_output =
-      "151.101.22.217:\n" .
-      "  ip_address: 151.101.22.217\n" .
+      "192.0.2.32:\n" .
+      "  ip_address: 192.0.2.32\n" .
       "  name: 'United States'\n" .
       "  country_code_iso2: US";
     // phpcs:enable Drupal.Strings.UnnecessaryStringConcat.Found
@@ -83,7 +95,7 @@ class Ip2CountryDrushCommandsTest extends BrowserTestBase {
     $rows = \Drupal::service('ip2country.manager')->getRowCount();
     // phpcs:disable Drupal.Strings.UnnecessaryStringConcat.Found
     $expected_output =
-      "Updating ... Completed." . "\n" .
+      "Updating ... Completed.\n" .
       "Database updated from ALL server. Table contains $rows rows.";
     // phpcs:enable Drupal.Strings.UnnecessaryStringConcat.Found
     $this->assertEquals($expected_output, $this->getOutput());

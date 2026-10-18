@@ -87,7 +87,7 @@
         "drupal/h5p": "2.0-beta1",
         "drupal/imce": "^3.1.5",
         "drupal/inline_entity_form": "^3.0.0",
-        "drupal/ip2country": "2.1.1",
+        "drupal/ip2country": "^2.1",
         "drupal/jquery_ui_accordion": "2.1",
         "drupal/key": "1.22",
         "drupal/klaro": "^3.1",

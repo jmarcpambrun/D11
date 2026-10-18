@@ -100,14 +100,14 @@ class SetUserCountry extends RulesActionBase implements ContainerFactoryPluginIn
   /**
    * Sets the country_iso_code_2 property of the global $user object.
    *
-   * @param \Drupal\Core\Session\AccountInterface $account
+   * @param \Drupal\Core\Session\AccountInterface $user
    *   User object.
    * @param string $country_code
    *   A 2-character ISO 3166-2 country code.
    */
-  protected function doExecute(AccountInterface $account, string $country_code): void {
+  protected function doExecute(AccountInterface $user, string $country_code): void {
     // Store the ISO country code in the $user object.
-    $account = $this->entityTypeManager->getStorage('user')->load($account->id());
+    $account = $this->entityTypeManager->getStorage('user')->load($user->id());
     $account->country_iso_code_2 = $country_code;
     $this->userData->set('ip2country', $account->id(), 'country_iso_code_2', $country_code);
   }

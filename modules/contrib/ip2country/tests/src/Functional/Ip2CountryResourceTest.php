@@ -36,13 +36,19 @@ class Ip2CountryResourceTest extends ResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['rest', 'ip2country'];
+  protected static $modules = ['rest'];
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
+
+    \Drupal::state()->set('ip2country_populate_database_on_install', FALSE);
+    \Drupal::service('module_installer')->install(['ip2country'], FALSE);
+    \Drupal::service('module_installer')->install(['ip2country_test_fetch'], FALSE);
+    $this->resetAll();
+    $this->assertSame(5, \Drupal::service('ip2country.manager')->updateDatabase('all', TRUE));
 
     $auth = isset(static::$auth) ? [static::$auth] : [];
     $this->provisionResource([static::$format], $auth);
@@ -52,13 +58,13 @@ class Ip2CountryResourceTest extends ResourceTestBase {
    * Makes REST API requests to lookup known-good IP addresses.
    */
   public function testIpLookup(): void {
-    // Real working IPs that are in the database.
+    // Synthetic allocations in reserved documentation ranges.
     $ip_array = [
-      '125.29.33.201' => 'JP',
-      '212.58.224.138' => 'GB',
-      '184.51.240.110' => 'US',
-      '210.87.9.66' => 'AU',
-      '158.67.0.0' => 'EU',
+      '192.0.2.0' => 'ZA',
+      '192.0.2.16' => 'AU',
+      '192.0.2.32' => 'US',
+      '192.0.2.48' => 'BR',
+      '192.0.2.64' => 'NL',
     ];
 
     // Test authentication.

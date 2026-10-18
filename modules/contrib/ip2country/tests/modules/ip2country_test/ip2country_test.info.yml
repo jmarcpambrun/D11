@@ -5,7 +5,7 @@ package: Testing
 dependencies:
   - ip2country:ip2country
 
-# Information added by Drupal.org packaging script on 2025-02-05
-version: '2.1.1'
+# Information added by Drupal.org packaging script on 2026-10-17
+version: '2.1.2'
 project: 'ip2country'
-datestamp: 1738792298
+datestamp: 1792268277

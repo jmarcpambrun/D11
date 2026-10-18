@@ -157,14 +157,14 @@ class Ip2CountrySettingsForm extends ConfigFormBase {
         'all' => 'Use all registries',
         'afrinic' => 'AFRINIC',
         'apnic' => 'APNIC',
-        'arin' => 'ARIN',
+        'arin' => $this->t('ARIN (uses all registries)'),
         'lacnic' => 'LACNIC',
         'ripe' => 'RIPE',
       ],
       // cspell:ignore Tfor
       // phpcs:enable DrupalPractice.General.OptionsT.TforValue
       '#default_value' => $ip2country_config->get('rir'),
-      '#description' => $this->t('It is recommended to "Use all registries", which allows each regional registry to supply its own data. You may alternatively select one specific RIR. You may find that the regional server nearest you has the best response time, but note that most of these have data that is incomplete or out-of-date to some extent.'),
+      '#description' => $this->t('It is recommended to "Use all registries", which allows each regional registry to supply its own data. The ARIN selection also uses these direct feeds because its mirrors of other registries are obsolete. Other selections may use mirrors or cover fewer registries.'),
     ];
 
     // Form element to enable MD5 checksum of downloaded databases.
@@ -523,9 +523,8 @@ class Ip2CountrySettingsForm extends ConfigFormBase {
 
     // Finally, save country, if it has been determined.
     if ($country_code) {
-      // Store the ISO country code in the $user object.
+      // Store the ISO country code using the persistent user.data service.
       $account = $this->currentUser();
-      $account->country_iso_code_2 = $country_code;
       $this->userData->set('ip2country', $account->id(), 'country_iso_code_2', $country_code);
     }
 
