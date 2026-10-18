@@ -2657,17 +2657,17 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.5.0",
+            "version": "1.5.1",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.5.0"
+                "reference": "1.5.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.5.0.zip",
-                "reference": "1.5.0",
-                "shasum": "9675eb1dba3e597b92b5cede66c1971d9684bd53"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.5.1.zip",
+                "reference": "1.5.1",
+                "shasum": "a1526a41a697c4c5ccfac671a7d05a070f718d75"
             },
             "require": {
                 "drupal/ai_content_suggestions": "^1.5",
@@ -2707,8 +2707,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.0",
-                    "datestamp": "1790327388",
+                    "version": "1.5.1",
+                    "datestamp": "1791992201",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
