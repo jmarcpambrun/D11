@@ -55,6 +55,7 @@ services:
       - '@entity_type.manager'
       - '@eca.token_services'
       - '@extension.list.module'
+      - '@cache.memory'
   eca.service.condition:
     class: Drupal\eca\Service\Conditions
     arguments:
@@ -64,12 +65,14 @@ services:
       - '@language_manager'
       - '@eca.service.token'
       - '@extension.list.module'
+      - '@cache.memory'
   eca.service.event:
     class: Drupal\eca\Service\Events
     arguments:
       - '@plugin.manager.eca.event'
       - '@logger.channel.eca'
       - '@extension.list.module'
+      - '@cache.memory'
   eca.service.yaml_parser:
     class: Drupal\eca\Service\YamlParser
     arguments:

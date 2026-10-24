@@ -2,6 +2,7 @@
 
 namespace Drupal\eca\Service;
 
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\eca\ErrorHandlerTrait;
@@ -38,6 +39,13 @@ class Events {
   protected ModuleExtensionList $extensionManager;
 
   /**
+   * The memory cache backend.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected CacheBackendInterface $cache;
+
+  /**
    * Events constructor.
    *
    * @param \Drupal\eca\PluginManager\Event $event_manager
@@ -46,51 +54,51 @@ class Events {
    *   Logger channel service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extension_manager
    *   The module extension manager.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   The memory cache backend.
    */
-  public function __construct(Event $event_manager, LoggerChannelInterface $logger, ModuleExtensionList $extension_manager) {
+  public function __construct(Event $event_manager, LoggerChannelInterface $logger, ModuleExtensionList $extension_manager, CacheBackendInterface $cache) {
     $this->eventManager = $event_manager;
     $this->logger = $logger;
     $this->extensionManager = $extension_manager;
+    $this->cache = $cache;
   }
 
   /**
    * Returns a sorted list of event plugins.
    *
+   * Successfully collected plugins are cached for the current request by the
+   * "cache.memory" service under "eca_events". Delete that item to force a
+   * rebuild.
+   *
    * @return \Drupal\eca\Plugin\ECA\Event\EventInterface[]
    *   The sorted list of events.
    */
   public function events(): array {
-    $events = &drupal_static('eca_events');
-    if ($events === NULL) {
-      $this->enableExtendedErrorHandling('Collecting all available events');
-      // Collect into a local list rather than into the static cache slot.
-      // ::drupal_static() hands out a reference, so populating the slot in
-      // place would publish a partial, unsorted list the moment a throwable
-      // escapes the loop below. Every later call in the request would then
-      // find a non-NULL cache, skip re-collection and silently return that
-      // incomplete list, which makes real plugins look like plugins that do
-      // not exist. Publishing only after sorting succeeded keeps the cache
-      // NULL on failure, so the next caller retries and either succeeds or
-      // throws again.
-      $collected = [];
-      try {
-        foreach ($this->eventManager->getDefinitions() as $plugin_id => $definition) {
-          if ($plugin = $this->createInstance($plugin_id)) {
-            $collected[] = $plugin;
-          }
+    $cached = $this->cache->get('eca_events');
+    if ($cached !== FALSE) {
+      return $cached->data;
+    }
+
+    $this->enableExtendedErrorHandling('Collecting all available events');
+    $collected = [];
+    try {
+      foreach ($this->eventManager->getDefinitions() as $plugin_id => $definition) {
+        if ($plugin = $this->createInstance($plugin_id)) {
+          $collected[] = $plugin;
         }
       }
-      finally {
-        // Without this, a throwable from anywhere inside the loop - including
-        // the ::getDefinitions() call itself - would leave error reporting
-        // suppressed and the echoing shutdown function armed for the rest of
-        // the request.
-        $this->resetExtendedErrorHandling();
-      }
-      $this->sortPlugins($collected, $this->extensionManager);
-      $events = $collected;
     }
-    return $events;
+    finally {
+      // Without this, a throwable from anywhere inside the loop - including
+      // the ::getDefinitions() call itself - would leave error reporting
+      // suppressed and the echoing shutdown function armed for the rest of
+      // the request.
+      $this->resetExtendedErrorHandling();
+    }
+    $this->sortPlugins($collected, $this->extensionManager);
+    $this->cache->set('eca_events', $collected);
+    return $collected;
   }
 
   /**

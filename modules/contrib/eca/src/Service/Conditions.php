@@ -4,6 +4,7 @@ namespace Drupal\eca\Service;
 
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Plugin\Exception\PluginException;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Language\LanguageManagerInterface;
@@ -65,6 +66,13 @@ class Conditions {
   protected ModuleExtensionList $extensionManager;
 
   /**
+   * The memory cache backend.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected CacheBackendInterface $cache;
+
+  /**
    * Conditions constructor.
    *
    * @param \Drupal\eca\PluginManager\Condition $condition_manager
@@ -79,54 +87,54 @@ class Conditions {
    *   The ECA token service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extension_manager
    *   The module extension manager.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   The memory cache backend.
    */
-  public function __construct(Condition $condition_manager, LoggerChannelInterface $logger, EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager, TokenInterface $token, ModuleExtensionList $extension_manager) {
+  public function __construct(Condition $condition_manager, LoggerChannelInterface $logger, EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager, TokenInterface $token, ModuleExtensionList $extension_manager, CacheBackendInterface $cache) {
     $this->conditionManager = $condition_manager;
     $this->logger = $logger;
     $this->entityTypeManager = $entity_type_manager;
     $this->languageManager = $language_manager;
     $this->token = $token;
     $this->extensionManager = $extension_manager;
+    $this->cache = $cache;
   }
 
   /**
    * Returns a sorted list of condition plugins.
    *
+   * Successfully collected plugins are cached for the current request by the
+   * "cache.memory" service under "eca_conditions". Delete that item to force a
+   * rebuild.
+   *
    * @return \Drupal\eca\Plugin\ECA\Condition\ConditionInterface[]
    *   The sorted list of conditions.
    */
   public function conditions(): array {
-    $conditions = &drupal_static('eca_conditions');
-    if ($conditions === NULL) {
-      $this->enableExtendedErrorHandling('Collecting all available conditions');
-      // Collect into a local list rather than into the static cache slot.
-      // ::drupal_static() hands out a reference, so populating the slot in
-      // place would publish a partial, unsorted list the moment a throwable
-      // escapes the loop below. Every later call in the request would then
-      // find a non-NULL cache, skip re-collection and silently return that
-      // incomplete list, which makes real plugins look like plugins that do
-      // not exist. Publishing only after sorting succeeded keeps the cache
-      // NULL on failure, so the next caller retries and either succeeds or
-      // throws again.
-      $collected = [];
-      try {
-        foreach ($this->conditionManager->getDefinitions() as $plugin_id => $definition) {
-          if ($condition = $this->createInstance($plugin_id)) {
-            $collected[] = $condition;
-          }
+    $cached = $this->cache->get('eca_conditions');
+    if ($cached !== FALSE) {
+      return $cached->data;
+    }
+
+    $this->enableExtendedErrorHandling('Collecting all available conditions');
+    $collected = [];
+    try {
+      foreach ($this->conditionManager->getDefinitions() as $plugin_id => $definition) {
+        if ($condition = $this->createInstance($plugin_id)) {
+          $collected[] = $condition;
         }
       }
-      finally {
-        // Without this, a throwable from anywhere inside the loop - including
-        // the ::getDefinitions() call itself - would leave error reporting
-        // suppressed and the echoing shutdown function armed for the rest of
-        // the request.
-        $this->resetExtendedErrorHandling();
-      }
-      $this->sortPlugins($collected, $this->extensionManager);
-      $conditions = $collected;
     }
-    return $conditions;
+    finally {
+      // Without this, a throwable from anywhere inside the loop - including
+      // the ::getDefinitions() call itself - would leave error reporting
+      // suppressed and the echoing shutdown function armed for the rest of
+      // the request.
+      $this->resetExtendedErrorHandling();
+    }
+    $this->sortPlugins($collected, $this->extensionManager);
+    $this->cache->set('eca_conditions', $collected);
+    return $collected;
   }
 
   /**

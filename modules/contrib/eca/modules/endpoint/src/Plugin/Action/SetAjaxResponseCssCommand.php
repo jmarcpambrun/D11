@@ -46,7 +46,7 @@ class SetAjaxResponseCssCommand extends ResponseAjaxCommandBase {
   protected function getAjaxCommand(): CommandInterface {
     $selector = (string) $this->tokenService->replaceClear($this->configuration['selector']);
     try {
-      $css = $this->yamlParser->parse((string) $this->tokenService->replaceClear($this->configuration['css'])) ?? [];
+      $css = $this->yamlParser->parse((string) $this->configuration['css']) ?? [];
     }
     catch (ParseException) {
       $this->logger->error('Tried parsing settings in action "@id" as YAML format, but parsing failed.', [
@@ -83,7 +83,7 @@ class SetAjaxResponseCssCommand extends ResponseAjaxCommandBase {
     $form['css'] = [
       '#type' => 'textarea',
       '#title' => $this->t('CSS'),
-      '#description' => $this->t('An array of CSS properties and values in YAML format.'),
+      '#description' => $this->t('An array of CSS properties and values in YAML format. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>color: "[color]"</em>'),
       '#default_value' => $this->configuration['css'],
       '#weight' => -40,
       '#eca_token_replacement' => TRUE,

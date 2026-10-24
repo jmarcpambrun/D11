@@ -15,10 +15,12 @@ trait ServiceTrait {
   /**
    * Helper function to sort plugins by their label.
    *
-   * @param \Drupal\Component\Plugin\PluginInspectionInterface[] $plugins
+   * @param T[] $plugins
    *   The list of plugin to be sorted.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extensions
    *   The module extension manager.
+   *
+   * @template T of \Drupal\Component\Plugin\PluginInspectionInterface
    */
   public function sortPlugins(array &$plugins, ModuleExtensionList $extensions): void {
     usort($plugins, static function ($p1, $p2) use ($extensions) {

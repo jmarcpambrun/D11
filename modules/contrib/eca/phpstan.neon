@@ -1,6 +1,10 @@
 parameters:
   level: 6
   reportUnmatchedIgnoredErrors: false
+  # ECA supports Guzzle 7 (Drupal 11) and Guzzle 8 (Drupal 12), so the
+  # installed major version is only known at runtime.
+  dynamicConstantNames:
+    - GuzzleHttp\ClientInterface::MAJOR_VERSION
   scanDirectories:
     - ../../../../vendor/drush/drush/src-symfony-compatibility
   ignoreErrors:

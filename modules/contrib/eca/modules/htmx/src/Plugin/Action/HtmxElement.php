@@ -323,7 +323,7 @@ class HtmxElement extends RenderElementActionBase {
    *   value cannot be parsed as YAML.
    */
   protected function parseVals(): array {
-    $vals = trim((string) $this->tokenService->replaceClear($this->configuration['vals']));
+    $vals = trim((string) $this->configuration['vals']);
     if ($vals === '') {
       return [];
     }

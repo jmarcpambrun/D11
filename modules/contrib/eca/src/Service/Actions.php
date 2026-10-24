@@ -5,6 +5,7 @@ namespace Drupal\eca\Service;
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Core\Action\ActionInterface as CoreActionInterface;
 use Drupal\Core\Action\ActionManager;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormStateInterface;
@@ -68,6 +69,13 @@ class Actions {
   protected ModuleExtensionList $extensionManager;
 
   /**
+   * The memory cache backend.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected CacheBackendInterface $cache;
+
+  /**
    * Actions constructor.
    *
    * @param \Drupal\eca\PluginManager\Action $action_manager
@@ -80,62 +88,62 @@ class Actions {
    *   The Token services.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extension_manager
    *   The module extension manager.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   The memory cache backend.
    */
-  public function __construct(Action $action_manager, LoggerChannelInterface $logger, EntityTypeManagerInterface $entity_type_manager, TokenInterface $token_service, ModuleExtensionList $extension_manager) {
+  public function __construct(Action $action_manager, LoggerChannelInterface $logger, EntityTypeManagerInterface $entity_type_manager, TokenInterface $token_service, ModuleExtensionList $extension_manager, CacheBackendInterface $cache) {
     $this->actionManager = $action_manager->getDecoratedActionManager();
     $this->logger = $logger;
     $this->entityTypeManager = $entity_type_manager;
     $this->tokenService = $token_service;
     $this->extensionManager = $extension_manager;
+    $this->cache = $cache;
   }
 
   /**
    * Returns a sorted list of action plugins.
    *
+   * Successfully collected plugins are cached for the current request by the
+   * "cache.memory" service under "eca_actions". Delete that item to force a
+   * rebuild.
+   *
    * @return \Drupal\Core\Action\ActionInterface[]
    *   The sorted list of actions.
    */
   public function actions(): array {
-    $actions = &drupal_static('eca_actions');
-    if ($actions === NULL) {
-      $this->enableExtendedErrorHandling('Collecting all available actions');
-      // Collect into a local list rather than into the static cache slot.
-      // ::drupal_static() hands out a reference, so populating the slot in
-      // place would publish a partial, unsorted list the moment a throwable
-      // escapes the loop below. Every later call in the request would then
-      // find a non-NULL cache, skip re-collection and silently return that
-      // incomplete list, which makes real plugins look like plugins that do
-      // not exist. Publishing only after sorting succeeded keeps the cache
-      // NULL on failure, so the next caller retries and either succeeds or
-      // throws again.
-      $collected = [];
-      try {
-        foreach ($this->actionManager->getDefinitions() as $plugin_id => $definition) {
-          if (!empty($definition['confirm_form_route_name'])) {
-            // We cannot support actions that redirect to a confirmation form.
-            // @see https://www.drupal.org/project/eca/issues/3279483
-            continue;
-          }
-          if ($definition['id'] === 'entity:save_action') {
-            // We replace all save actions by one generic "Entity: save" action.
-            continue;
-          }
-          if ($action = $this->createInstance($plugin_id)) {
-            $collected[] = $action;
-          }
+    $cached = $this->cache->get('eca_actions');
+    if ($cached !== FALSE) {
+      return $cached->data;
+    }
+
+    $this->enableExtendedErrorHandling('Collecting all available actions');
+    $collected = [];
+    try {
+      foreach ($this->actionManager->getDefinitions() as $plugin_id => $definition) {
+        if (!empty($definition['confirm_form_route_name'])) {
+          // We cannot support actions that redirect to a confirmation form.
+          // @see https://www.drupal.org/project/eca/issues/3279483
+          continue;
+        }
+        if ($definition['id'] === 'entity:save_action') {
+          // We replace all save actions by one generic "Entity: save" action.
+          continue;
+        }
+        if ($action = $this->createInstance($plugin_id)) {
+          $collected[] = $action;
         }
       }
-      finally {
-        // Without this, a throwable from anywhere inside the loop - including
-        // the ::getDefinitions() call itself - would leave error reporting
-        // suppressed and the echoing shutdown function armed for the rest of
-        // the request.
-        $this->resetExtendedErrorHandling();
-      }
-      $this->sortPlugins($collected, $this->extensionManager);
-      $actions = $collected;
     }
-    return $actions;
+    finally {
+      // Without this, a throwable from anywhere inside the loop - including
+      // the ::getDefinitions() call itself - would leave error reporting
+      // suppressed and the echoing shutdown function armed for the rest of
+      // the request.
+      $this->resetExtendedErrorHandling();
+    }
+    $this->sortPlugins($collected, $this->extensionManager);
+    $this->cache->set('eca_actions', $collected);
+    return $collected;
   }
 
   /**

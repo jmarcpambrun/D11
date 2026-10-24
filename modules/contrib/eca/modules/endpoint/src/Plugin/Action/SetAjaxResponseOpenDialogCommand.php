@@ -54,11 +54,11 @@ class SetAjaxResponseOpenDialogCommand extends ResponseAjaxCommandBase {
       $content = $this->tokenService->replaceClear($content);
     }
     try {
-      $options = $this->yamlParser->parse((string) $this->tokenService->replaceClear($this->configuration['options'])) ?? [];
-      $settingsString = (string) $this->tokenService->replaceClear($this->configuration['settings']);
-      $settings = $settingsString === '' ?
-        NULL :
-        $this->yamlParser->parse($settingsString);
+      $options = $this->yamlParser->parse((string) $this->configuration['options']) ?? [];
+      // Settings that are empty or not a map are passed as NULL, so that Drupal
+      // populates them from the current request.
+      $settings = $this->yamlParser->parse((string) $this->configuration['settings']);
+      $settings = is_array($settings) ? $settings : NULL;
     }
     catch (ParseException) {
       $this->logger->error('Tried parsing options and settings in action "@id" as YAML format, but parsing failed.', [
@@ -140,7 +140,7 @@ class SetAjaxResponseOpenDialogCommand extends ResponseAjaxCommandBase {
     $form['options'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Dialog options'),
-      '#description' => $this->t('Options in YAML format to be passed to the dialog implementation. Any jQuery UI option can be used. See https://api.jqueryui.com/dialog.'),
+      '#description' => $this->t('Options in YAML format to be passed to the dialog implementation. Any jQuery UI option can be used. See https://api.jqueryui.com/dialog. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>width: "[dialog_width]"</em>'),
       '#default_value' => $this->configuration['options'],
       '#weight' => -30,
       '#eca_token_replacement' => TRUE,
@@ -148,7 +148,7 @@ class SetAjaxResponseOpenDialogCommand extends ResponseAjaxCommandBase {
     $form['settings'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Settings'),
-      '#description' => $this->t('Custom settings in YAML format that will be passed to the Drupal behaviors on the content of the dialog. If left empty, the settings will be populated automatically from the current request.'),
+      '#description' => $this->t('Custom settings in YAML format that will be passed to the Drupal behaviors on the content of the dialog. If left empty, the settings will be populated automatically from the current request. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>title: "[node:title]"</em>'),
       '#default_value' => $this->configuration['settings'],
       '#weight' => -25,
       '#eca_token_replacement' => TRUE,

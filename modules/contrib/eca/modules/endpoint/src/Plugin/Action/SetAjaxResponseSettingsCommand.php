@@ -45,7 +45,7 @@ class SetAjaxResponseSettingsCommand extends ResponseAjaxCommandBase {
    */
   protected function getAjaxCommand(): CommandInterface {
     try {
-      $settings = $this->yamlParser->parse((string) $this->tokenService->replaceClear($this->configuration['settings'])) ?? [];
+      $settings = $this->yamlParser->parse((string) $this->configuration['settings']) ?? [];
     }
     catch (ParseException) {
       $this->logger->error('Tried parsing settings in action "@id" as YAML format, but parsing failed.', [
@@ -74,7 +74,7 @@ class SetAjaxResponseSettingsCommand extends ResponseAjaxCommandBase {
     $form['settings'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Settings'),
-      '#description' => $this->t('An array of key/value pairs of JavaScript settings in YAML format.'),
+      '#description' => $this->t('An array of key/value pairs of JavaScript settings in YAML format. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>title: "[node:title]"</em>'),
       '#default_value' => $this->configuration['settings'],
       '#weight' => -45,
       '#required' => TRUE,

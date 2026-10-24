@@ -57,7 +57,7 @@ class SetAjaxResponseInsertCommand extends ResponseAjaxCommandBase {
       $content = $content->getString();
     }
     try {
-      $settings = $this->yamlParser->parse((string) $this->tokenService->replaceClear($this->configuration['settings'])) ?? NULL;
+      $settings = $this->yamlParser->parse((string) $this->configuration['settings']) ?? NULL;
     }
     catch (ParseException) {
       $this->logger->error('Tried parsing settings in action "@id" as YAML format, but parsing failed.', [
@@ -122,7 +122,7 @@ class SetAjaxResponseInsertCommand extends ResponseAjaxCommandBase {
     $form['settings'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Settings'),
-      '#description' => $this->t('An array of JavaScript settings in YAML format to be passed to any attached behaviors.'),
+      '#description' => $this->t('An array of JavaScript settings in YAML format to be passed to any attached behaviors. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>title: "[node:title]"</em>'),
       '#default_value' => $this->configuration['settings'],
       '#weight' => -35,
       '#eca_token_replacement' => TRUE,

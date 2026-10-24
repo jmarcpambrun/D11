@@ -11,6 +11,7 @@ bundledelete
 conditionid
 conditionlabel
 cplain
+curlauth
 customprop
 danse
 dedup
@@ -70,6 +71,7 @@ nico
 nodelist
 nodocs
 nonexistentfield
+ntlm
 nwdug
 optionsfield
 pasteable

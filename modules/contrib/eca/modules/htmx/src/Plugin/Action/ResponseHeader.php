@@ -352,7 +352,7 @@ class ResponseHeader extends ResponseActionBase {
    *   or the value cannot be parsed as YAML.
    */
   protected function parseKeyValue(string $config): array {
-    $value = trim((string) $this->tokenService->replaceClear($config));
+    $value = trim($config);
     if ($value === '') {
       return [];
     }

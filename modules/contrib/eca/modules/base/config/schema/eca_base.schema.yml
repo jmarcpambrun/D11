@@ -154,6 +154,90 @@ action.configuration.eca_error_message:
       type: boolean
       label: 'Replace tokens'
 
+action.configuration.eca_http_request:
+  type: mapping
+  label: 'Configuration for the "HTTP: send request" action'
+  mapping:
+    method:
+      type: string
+      label: 'Method'
+      constraints:
+        NotBlank: []
+        EcaChoice:
+          choices:
+            - get
+            - post
+            - put
+            - patch
+            - delete
+            - head
+    url:
+      type: string
+      label: 'URL'
+    query:
+      type: text
+      label: 'Query parameters'
+    headers:
+      type: text
+      label: 'Headers'
+    body:
+      type: text
+      label: 'Body'
+    use_yaml:
+      type: boolean
+      label: 'Interpret the body as YAML format'
+    validate_yaml:
+      type: boolean
+      label: 'Validate YAML to prevent this from being executed when invalid'
+    body_format:
+      type: string
+      label: 'Body format'
+      constraints:
+        NotBlank: []
+        EcaChoice:
+          choices:
+            - raw
+            - json
+            - form
+    auth_type:
+      type: string
+      label: 'Authentication'
+      constraints:
+        NotBlank: []
+        EcaChoice:
+          choices:
+            - none
+            - basic
+            - digest
+    auth_username:
+      type: string
+      label: 'Username'
+    auth_password:
+      type: string
+      label: 'Password'
+    timeout:
+      type: integer
+      label: 'Timeout in seconds per attempt'
+      constraints:
+        Range:
+          min: 1
+    retries:
+      type: integer
+      label: 'Retries'
+      constraints:
+        Range:
+          min: 0
+          max: 3
+    max_response_size:
+      type: integer
+      label: 'Maximum response size in bytes'
+      constraints:
+        Range:
+          min: 1
+    token_name:
+      type: eca.token_name
+      label: 'Name of response token'
+
 action.configuration.eca_keyvalueexpirablestore_delete:
   type: mapping
   label: 'Configuration for the "Keyvalue Expirable Store Delete" action'

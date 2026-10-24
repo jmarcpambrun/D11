@@ -3,6 +3,7 @@
 namespace Drupal\Tests\eca_endpoint\Kernel;
 
 use Drupal\Core\Action\ActionManager;
+use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Form\FormState;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\eca\Token\TokenInterface;
@@ -447,12 +448,85 @@ class EndpointActionsTest extends KernelTestBase {
   }
 
   /**
-   * Dispatches an endpoint response event.
+   * Tests single token replacement in YAML fields of Ajax response actions.
+   *
+   * A quoted token must be replaced, but a token value that itself contains
+   * token syntax must arrive literally in the resulting Ajax command.
+   *
+   * @see https://git.drupalcode.org/project/eca/-/work_items/3590474
    */
-  protected function dispatchEndpointResponseEvent(): void {
+  public function testAjaxCommandYamlTokensReplacedOnce(): void {
+    $this->tokenService->addTokenData('color', 'red');
+    $this->tokenService->addTokenData('nested', '[color]');
+    $yaml_map = "color: \"[color]\"\nbackground: \"[nested]\"";
+    $expected_map = ['color' => 'red', 'background' => '[color]'];
+
+    $actions = [
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_css', [
+        'selector' => '#css',
+        'css' => $yaml_map,
+      ]),
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_insert', [
+        'selector' => '#insert',
+        'content' => 'Inserted',
+        'settings' => $yaml_map,
+      ]),
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_invoke', [
+        'selector' => '#invoke',
+        'method' => 'addClass',
+        'arguments' => "- \"[color]\"\n- \"[nested]\"",
+      ]),
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_open_dialog', [
+        'selector' => '#dialog',
+        'title' => 'Dialog',
+        'content' => 'Dialog content',
+        'options' => "width: \"[color]\"\nposition: \"[nested]\"",
+        'settings' => $yaml_map,
+      ]),
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_open_dialog', [
+        'selector' => '#dialog-empty',
+        'title' => 'Dialog',
+        'content' => 'Dialog content',
+        'options' => '',
+        'settings' => '',
+      ]),
+      $this->actionManager->createInstance('eca_endpoint_set_ajax_response_settings', [
+        'settings' => $yaml_map,
+        'merge' => FALSE,
+      ]),
+    ];
+
+    $this->eventDispatcher->addListener(EndpointEvents::RESPONSE, function (EndpointResponseEvent $event) use ($actions) {
+      foreach ($actions as $action) {
+        $action->setEvent($event);
+        $action->execute();
+      }
+    });
+
+    $response = new AjaxResponse();
+    $this->dispatchEndpointResponseEvent($response);
+    [$css, $insert, $invoke, $dialog, $dialog_empty, $settings] = $response->getCommands();
+
+    $this->assertSame($expected_map, $css['argument']);
+    $this->assertSame($expected_map, $insert['settings']);
+    $this->assertSame(['red', '[color]'], $invoke['args']);
+    $this->assertSame('red', $dialog['dialogOptions']['width']);
+    $this->assertSame('[color]', $dialog['dialogOptions']['position']);
+    $this->assertSame($expected_map, $dialog['settings']);
+    $this->assertNull($dialog_empty['settings'], 'Empty dialog settings are populated from the request.');
+    $this->assertSame($expected_map, $settings['settings']);
+  }
+
+  /**
+   * Dispatches an endpoint response event.
+   *
+   * @param \Symfony\Component\HttpFoundation\Response|null $response
+   *   (optional) The response to pass along, defaults to a new response.
+   */
+  protected function dispatchEndpointResponseEvent(?Response $response = NULL): void {
     $path_arguments = ['first', 'second'];
     $request = \Drupal::requestStack()->getCurrentRequest();
-    $response = new Response();
+    $response ??= new Response();
     $account = \Drupal::currentUser();
     $build = [];
     $event = new EndpointResponseEvent($path_arguments, $request, $response, $account, $build);

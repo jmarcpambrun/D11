@@ -21,7 +21,8 @@
   "extra": {
     "patches": {
       "drupal/project_browser": {
-        "#3622921 Implement getModulesToInstall in TestModuleInstaller": "https://git.drupalcode.org/issue/project_browser-3622921/-/commit/9afcce0676ca61ca1514a14b6d882cbd081c0045.diff"
+        "#3622921 Implement getModulesToInstall in TestModuleInstaller": "https://git.drupalcode.org/issue/project_browser-3622921/-/commit/9afcce0676ca61ca1514a14b6d882cbd081c0045.diff",
+        "#3631657 Implement getModulesToUninstall in TestModuleInstaller": "https://git.drupalcode.org/issue/project_browser-3631657/-/commit/1c06d55c8c1ec8983d2ddd74542dee125102a378.diff"
       }
     }
   }

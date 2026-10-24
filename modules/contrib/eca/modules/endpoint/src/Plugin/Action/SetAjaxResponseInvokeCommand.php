@@ -47,7 +47,7 @@ class SetAjaxResponseInvokeCommand extends ResponseAjaxCommandBase {
     $selector = (string) $this->tokenService->replaceClear($this->configuration['selector']);
     $method = (string) $this->tokenService->replaceClear($this->configuration['method']);
     try {
-      $arguments = $this->yamlParser->parse((string) $this->tokenService->replaceClear($this->configuration['arguments'])) ?? [];
+      $arguments = $this->yamlParser->parse((string) $this->configuration['arguments']) ?? [];
     }
     catch (ParseException) {
       $this->logger->error('Tried parsing settings in action "@id" as YAML format, but parsing failed.', [
@@ -94,7 +94,7 @@ class SetAjaxResponseInvokeCommand extends ResponseAjaxCommandBase {
     $form['arguments'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Arguments'),
-      '#description' => $this->t('An array of arguments in YAML format that will be passed to the method.'),
+      '#description' => $this->t('An array of arguments in YAML format that will be passed to the method. When using tokens and YAML altogether, make sure that tokens are wrapped as a string. Example: <em>- "[node:title]"</em>'),
       '#default_value' => $this->configuration['arguments'],
       '#weight' => -35,
       '#eca_token_replacement' => TRUE,
