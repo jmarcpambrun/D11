@@ -6,6 +6,7 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\node\Entity\NodeType;
+use Drupal\node\NodeInterface;
 
 /**
  * Provides a base class for Fullcalendar view JavaScript tests.
@@ -138,15 +139,18 @@ abstract class FullcalendarViewJavascriptTestBase extends WebDriverTestBase {
    *   The start date of the event in 'Y-m-d\TH:i:s' format.
    * @param string $end
    *   The end date of the event in 'Y-m-d\TH:i:s' format.
+   *
+   * @return \Drupal\node\NodeInterface
+   *   The created event node.
    */
-  protected function createEvent($title, $start, $end) {
+  protected function createEvent($title, $start, $end): NodeInterface {
     $event = [
       'type' => 'event',
       'title' => $title,
       'field_start_date' => $start,
       'field_end_date' => $end,
     ];
-    $this->drupalCreateNode($event);
+    return $this->drupalCreateNode($event);
   }
 
   /**
@@ -158,15 +162,18 @@ abstract class FullcalendarViewJavascriptTestBase extends WebDriverTestBase {
    *   The start date of the event in 'Y-m-d' format.
    * @param string $end
    *   The end date of the event in 'Y-m-d' format.
+   *
+   * @return \Drupal\node\NodeInterface
+   *   The created event node.
    */
-  protected function createAllDayEvent($title, $start, $end) {
+  protected function createAllDayEvent($title, $start, $end): NodeInterface {
     $event = [
       'type' => 'event',
       'title' => $title,
       'field_all_day_start_date' => $start,
       'field_all_day_end_date' => $end,
     ];
-    $this->drupalCreateNode($event);
+    return $this->drupalCreateNode($event);
   }
 
   /**
@@ -236,21 +243,33 @@ abstract class FullcalendarViewJavascriptTestBase extends WebDriverTestBase {
    * mousedown/mousemove/mouseup events directly in the browser,
    * which FullCalendar correctly responds to.
    *
+   * If the drop opens a modal dialog, call captureBrowserDialogs() before
+   * this method. A native dialog raised while this command is still in
+   * flight aborts it with UnexpectedAlertOpen.
+   *
    * @param string $source_css
    *   A CSS selector for the element to drag.
    * @param string $target_css
    *   A CSS selector for the drop target element.
    */
   protected function jsDragTo($source_css, $target_css) {
-    $source_css = addslashes($source_css);
-    $target_css = addslashes($target_css);
+    // json_encode() produces a complete JavaScript string literal, quotes
+    // included. addslashes() would leave any character it does not escape,
+    // a newline for instance, to break the script.
+    $source_js = json_encode($source_css);
+    $target_js = json_encode($target_css);
     $js = <<<JS
 (function() {
-  var src = document.querySelector('$source_css');
-  var tgt = document.querySelector('$target_css');
+  var src = document.querySelector($source_js);
+  var tgt = document.querySelector($target_js);
   if (!src || !tgt) {
     throw new Error('Source or target not found');
   }
+  // Measure only once the source is on screen. Coordinates outside the
+  // viewport make document.elementFromPoint() return null, which drops the
+  // intermediate mousemove events on the target instead of the element
+  // under the pointer.
+  src.scrollIntoView({block: 'nearest', inline: 'nearest'});
   var srcRect = src.getBoundingClientRect();
   var tgtRect = tgt.getBoundingClientRect();
   var srcX = Math.round(
@@ -287,7 +306,61 @@ JS;
   }
 
   /**
+   * Replaces the browser's modal dialogs with in-page recorders.
+   *
+   * The calendar confirms a drag or a resize with window.confirm(), and
+   * reports a refused save with window.alert(). A native dialog that opens
+   * while a WebDriver command is still in flight aborts that command with
+   * UnexpectedAlertOpen, and whether it does depends on how quickly the
+   * driver completes the command. That varies with the machine, the driver
+   * version and the load, so a test that races it is not portable.
+   *
+   * Recording the calls takes the dialog out of the picture altogether and
+   * lets a test assert what the page asked and what it reported. Call this
+   * after the last page load and before the interaction, then read the
+   * result with getCapturedDialogs().
+   *
+   * @param bool $confirm
+   *   What window.confirm() returns. TRUE proceeds with the change.
+   */
+  protected function captureBrowserDialogs(bool $confirm = TRUE) {
+    $return = $confirm ? 'true' : 'false';
+    $this->getSession()->executeScript(<<<JS
+window.fullcalendarViewDialogs = {confirm: [], alert: []};
+window.confirm = function (message) {
+  window.fullcalendarViewDialogs.confirm.push(String(message));
+  return $return;
+};
+window.alert = function (message) {
+  window.fullcalendarViewDialogs.alert.push(String(message));
+};
+JS);
+  }
+
+  /**
+   * Returns the dialog messages recorded since captureBrowserDialogs().
+   *
+   * @return array
+   *   An array with a 'confirm' and an 'alert' key, each holding the
+   *   messages in the order the page raised them.
+   */
+  protected function getCapturedDialogs() {
+    $json = $this->getSession()->evaluateScript(
+      'JSON.stringify(window.fullcalendarViewDialogs'
+      . ' || {confirm: [], alert: []})'
+    );
+    return json_decode($json, TRUE);
+  }
+
+  /**
    * Waits for a JavaScript alert and accepts it.
+   *
+   * Not suitable for a calendar drag or resize. Those open the dialog while
+   * the WebDriver command that triggered them is still in flight, which
+   * aborts the command before this method can run. Use
+   * captureBrowserDialogs() for them.
+   *
+   * @see self::captureBrowserDialogs()
    *
    * @param int $timeout
    *   The timeout in seconds.

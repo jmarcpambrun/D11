@@ -3,12 +3,14 @@
 namespace Drupal\Tests\fullcalendar_view\FunctionalJavascript;
 
 use Drupal\node\Entity\Node;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the Fullcalendar View JavaScript functionality.
  *
  * @group fullcalendar_view
  */
+#[RunTestsInSeparateProcesses]
 class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase {
 
   /**
@@ -54,7 +56,12 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     $bundle_field->setValue('event');
     $dialog_buttons = $page->find('css', '.ui-dialog-buttonset');
     $dialog_buttons->pressButton('Apply');
+    // The dialog applies over AJAX. Saving the view before it closes races
+    // the request that carries the setting.
+    $assert->assertWaitOnAjaxRequest();
+    $assert->waitForElementRemoved('css', '.ui-dialog');
     $page->findButton('Save')->click();
+
     // Go to the calendar view.
     $this->drupalGet('/fullcalendar-view-page');
     $assert->waitForLink('Add event');
@@ -64,9 +71,9 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     $assert->buttonExists('Save');
   }
 
-/**
- * Tests if times appear correctly.
- */
+  /**
+   * Tests if times appear correctly.
+   */
   public function testTimes() {
 
     // Set timezone for UTC to make sure the test is consistent.
@@ -127,8 +134,16 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     $calendar->find('css', '.fc-next-button')->click();
 
     // Wait for the month to change. The default format is 'Month Year'.
-    $next_month_string = date('F Y', strtotime('+1 month'));
-    $this->assertSession()->waitForText($next_month_string, 10000, '.block-views-block-fullcalendar-view-page-block-1 .fc-center h2');
+    // Step from the first of the month, because '+1 month' from the 31st
+    // lands two months out.
+    $next_month_string = date('F Y', strtotime('first day of next month'));
+    // Scope the wait to this block's calendar. waitForText() takes only a
+    // string and a timeout, so a selector passed to it would be ignored and
+    // the wait would match the month name anywhere on the page.
+    $this->assertNotNull($assert_session->waitForElement(
+      'css',
+      '[data-calendar-display="block_1"] .fc-center h2:contains("' . $next_month_string . '")'
+    ), 'The block calendar moved to ' . $next_month_string . '.');
     $next_month_text = $calendar->find('css', $month_header_selector)->getText();
     $this->assertNotSame($initial_month, $next_month_text);
 
@@ -153,15 +168,13 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     // Date format for all-day events.
     $date_format = 'Y-m-d';
 
-    // Create an event for a known date. Using a future date avoids issues with
-    // the current date being at the end of a month.
-    $start_date = date($date_format);
-    $end_date = date($date_format, strtotime('+1 day'));
+    // Create the event mid-month, so that moving it a day forward stays
+    // inside the month the calendar renders.
+    $start_date = date('Y-m-15');
+    $end_date = date($date_format, strtotime('+1 day', strtotime($start_date)));
 
     // For a single all-day event, start and end dates are the same.
-    $this->createAllDayEvent('Draggable Event', $start_date, $end_date);
-    $node = $this->drupalGetNodeByTitle('Draggable Event');
-    $this->assertNotNull($node, 'Event node created.');
+    $node = $this->createAllDayEvent('Draggable Event', $start_date, $end_date);
     $nid = $node->id();
 
     // Go to the calendar page, with the correct date displayed.
@@ -181,22 +194,34 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     $this->assertStringContainsString('Draggable Event', $event_element->getText());
 
     // Find the drop target cell. We'll move the event 1 day forward.
-    $target_date = date($date_format, strtotime('+1 day'));
+    $target_date = date($date_format, strtotime('+1 day', strtotime($start_date)));
     // In FullCalendar v4, the data-date attribute is on the td.
     $target_cell_selector = 'td[data-date="' . $target_date . '"]';
     $target_cell = $page->find('css', $target_cell_selector);
     $this->assertNotNull($target_cell, "Target cell for {$target_date} not found.");
 
+    // Record the calendar's confirmation instead of letting the browser open
+    // a native dialog, which would abort the drag command.
+    $this->captureBrowserDialogs();
+
     // Use JavaScript-based drag simulation because Selenium's
     // native dragTo() silently fails in headless Chrome.
     $this->jsDragTo($event_selector, $target_cell_selector);
 
-    // Wait for the alert to appear and then accept it.
-    $this->waitForAlertAndAccept();
+    // The calendar asks for confirmation before it saves.
+    $dialogs = $this->getCapturedDialogs();
+    $this->assertCount(1, $dialogs['confirm'], 'The calendar asked for confirmation once.');
+    $this->assertStringContainsString('Draggable Event', $dialogs['confirm'][0]);
+    $this->assertStringContainsString($target_date, $dialogs['confirm'][0]);
 
     $assert->assertWaitOnAjaxRequest(5000, 'AJAX request did not complete in time.');
+
+    // A save the endpoint refuses is reported through window.alert().
+    $dialogs = $this->getCapturedDialogs();
+    $this->assertSame([], $dialogs['alert'],
+      'The calendar reported an error: ' . implode(' ', $dialogs['alert']));
     
-    $expected_end_date = date($date_format, strtotime('+2 day'));
+    $expected_end_date = date($date_format, strtotime('+2 day', strtotime($start_date)));
 
     // Verify the change in the database.
     $this->container->get('entity_type.manager')->getStorage('node')->resetCache([$nid]);
@@ -221,15 +246,13 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     // Date format for all-day events.
     $date_format = 'Y-m-d';
 
-    // Create an event for a known date. Using a future date avoids issues with
-    // the current date being at the end of a month.
-    $start_date = date($date_format);
-    $end_date = date($date_format, strtotime('+1 day'));
+    // Create the event mid-month, so that resizing it two days out stays
+    // inside the month the calendar renders.
+    $start_date = date('Y-m-15');
+    $end_date = date($date_format, strtotime('+1 day', strtotime($start_date)));
 
     // For a single all-day event, the end date is the day after the start date.
-    $this->createAllDayEvent('Resizable Event', $start_date, $end_date);
-    $node = $this->drupalGetNodeByTitle('Resizable Event');
-    $this->assertNotNull($node, 'Event node created.');
+    $node = $this->createAllDayEvent('Resizable Event', $start_date, $end_date);
     $nid = $node->id();
 
     // Go to the calendar page, with the correct date displayed.
@@ -251,7 +274,7 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     $this->assertNotNull($resize_handle, 'Resize handle found.');
 
     // Find the drop target cell. We'll resize the event to end two days later.
-    $target_date_string = date($date_format, strtotime('+2 day'));
+    $target_date_string = date($date_format, strtotime('+2 day', strtotime($start_date)));
     $target_cell_selector = 'td[data-date="' . $target_date_string . '"]';
     $target_cell = $page->find('css', $target_cell_selector);
     $this->assertNotNull($target_cell, "Target cell for {$target_date_string} not found.");
@@ -259,13 +282,25 @@ class FullcalendarViewJavascriptTest extends FullcalendarViewJavascriptTestBase 
     // Use JavaScript-based drag simulation because Selenium's
     // native dragTo() silently fails in headless Chrome.
     $resize_selector = '.fc-event.fc-end .fc-end-resizer';
+
+    // Record the calendar's confirmation instead of letting the browser open
+    // a native dialog, which would abort the resize command.
+    $this->captureBrowserDialogs();
     $this->jsDragTo($resize_selector, $target_cell_selector);
 
-    // Wait for the alert to appear and then accept it.
-    $this->waitForAlertAndAccept();
+    // The calendar asks for confirmation before it saves.
+    $dialogs = $this->getCapturedDialogs();
+    $this->assertCount(1, $dialogs['confirm'], 'The calendar asked for confirmation once.');
+    $this->assertStringContainsString('Resizable Event', $dialogs['confirm'][0]);
+    $this->assertStringContainsString($target_date_string, $dialogs['confirm'][0]);
 
     // Wait for the AJAX request that saves the event to complete.
     $assert->assertWaitOnAjaxRequest(5000, 'AJAX request did not complete in time.');
+
+    // A save the endpoint refuses is reported through window.alert().
+    $dialogs = $this->getCapturedDialogs();
+    $this->assertSame([], $dialogs['alert'],
+      'The calendar reported an error: ' . implode(' ', $dialogs['alert']));
 
     // Verify the change in the database.
     $this->container->get('entity_type.manager')->getStorage('node')->resetCache([$nid]);

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9b343796341af80c09c8eeff9721154d",
+    "content-hash": "6a2ec067bf427806e0542b6c99502ccf",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -6729,17 +6729,17 @@
         },
         {
             "name": "drupal/fullcalendar_view",
-            "version": "5.3.0-alpha1",
+            "version": "5.3.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/fullcalendar_view.git",
-                "reference": "5.3.0-alpha1"
+                "reference": "5.3.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/fullcalendar_view-5.3.0-alpha1.zip",
-                "reference": "5.3.0-alpha1",
-                "shasum": "77dc2d7cdc396abf33fb12833d9a0b43b60b1387"
+                "url": "https://ftp.drupal.org/files/projects/fullcalendar_view-5.3.0.zip",
+                "reference": "5.3.0",
+                "shasum": "18e007aa440cc5d307619bab5d7cced06f032aba"
             },
             "require": {
                 "drupal/core": "^9.2.0 || ^10 || ^11"
@@ -6747,11 +6747,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "5.3.0-alpha1",
-                    "datestamp": "1772764047",
+                    "version": "5.3.0",
+                    "datestamp": "1792713631",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -22504,7 +22504,6 @@
         "drupal/eu_cookie_compliance": 5,
         "drupal/feeds_ex": 10,
         "drupal/field_group": 10,
-        "drupal/fullcalendar_view": 15,
         "drupal/gitlab_api": 15,
         "drupal/group": 15,
         "drupal/h5p": 10,

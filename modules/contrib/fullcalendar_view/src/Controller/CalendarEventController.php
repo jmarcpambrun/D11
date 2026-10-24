@@ -2,8 +2,10 @@
 
 namespace Drupal\fullcalendar_view\Controller;
 
+use Drupal\Component\Render\PlainTextOutput;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +16,18 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  * Calendar Event Controller.
  */
 class CalendarEventController extends ControllerBase {
+
+  /**
+   * Field types this endpoint may write.
+   *
+   * The calendar only moves or resizes dates, so writes are limited to date
+   * field types. The 'created' type is included so that calendars keyed on
+   * an entity's authored date stay editable for users who may edit that
+   * field.
+   *
+   * @var string[]
+   */
+  const ALLOWED_FIELD_TYPES = ['datetime', 'daterange', 'timestamp', 'created'];
 
   /**
    * CSRF Token.
@@ -73,10 +87,17 @@ class CalendarEventController extends ControllerBase {
 
         if (!empty($entity) && $entity->access('update')) {
           if ($entity->hasField($start_field)) {
+            // Check the field type and field level edit access before writing.
+            if (!$this->isWritableDateField($entity, $start_field)) {
+              return new Response($this->t('Access denied!'));
+            }
             // Field definitions.
             $fields_def = $entity->getFieldDefinition($start_field);
             $start_type = $fields_def->getType();
             if (isset($entity->$end_field) && !empty($end_date)) {
+              if (!$this->isWritableDateField($entity, $end_field)) {
+                return new Response($this->t('Access denied!'));
+              }
               $fields_def = $entity->getFieldDefinition($end_field);
               $end_type = $fields_def->getType();
             }
@@ -199,6 +220,28 @@ class CalendarEventController extends ControllerBase {
               }
             }
 
+            // Validate the entity so that field constraints and workflow rules
+            // are enforced before saving.
+            $entity->setValidationRequired(TRUE);
+            $violations = $entity->validate();
+            // Ignore violations on fields the current user cannot edit and on
+            // fields this request does not touch. The moderation state is
+            // always treated as touched because every save re-asserts it.
+            $violations->filterByFieldAccess();
+            $touched = array_filter([$start_field, $end_field]);
+            if ($entity->hasField('moderation_state')) {
+              $touched[] = 'moderation_state';
+            }
+            $violations->filterByFields(array_diff(array_keys($entity->getFieldDefinitions()), $touched));
+            if ($violations->count() > 0) {
+              // Report the remaining violations so the calendar can show why
+              // the change was refused.
+              $messages = [];
+              foreach ($violations as $violation) {
+                $messages[] = PlainTextOutput::renderFromHtml($violation->getMessage());
+              }
+              return new Response(implode("\n", $messages));
+            }
             $entity->save();
             // Log the content changed.
             $this->loggerFactory->get($entity_type)->notice('%entity_type: updated %title', [
@@ -221,6 +264,33 @@ class CalendarEventController extends ControllerBase {
     else {
       return new Response($this->t('Invalid User!'));
     }
+  }
+
+  /**
+   * Checks whether a field may be written by this endpoint.
+   *
+   * The field must exist on the entity, be one of the supported date field
+   * types, and be editable by the current user.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity being updated.
+   * @param string $field_name
+   *   The field name.
+   *
+   * @return bool
+   *   TRUE when the field may be written by the current user.
+   */
+  protected function isWritableDateField(FieldableEntityInterface $entity, $field_name) {
+    if (empty($field_name) || !$entity->hasField($field_name)) {
+      return FALSE;
+    }
+
+    $field_definition = $entity->getFieldDefinition($field_name);
+    if (!in_array($field_definition->getType(), self::ALLOWED_FIELD_TYPES, TRUE)) {
+      return FALSE;
+    }
+
+    return $entity->get($field_name)->access('edit');
   }
 
   /**
