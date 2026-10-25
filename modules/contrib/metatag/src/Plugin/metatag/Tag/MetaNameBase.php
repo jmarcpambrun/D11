@@ -7,6 +7,7 @@ namespace Drupal\metatag\Plugin\metatag\Tag;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Component\Render\PlainTextOutput;
 use Drupal\Component\Utility\Random;
+use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -162,8 +163,6 @@ abstract class MetaNameBase extends PluginBase {
     // @todo Should we have setProperty() methods for each of these?
     $this->id = $plugin_definition['id'];
     $this->name = $plugin_definition['name'];
-    $this->label = $plugin_definition['label'];
-    $this->description = $plugin_definition['description'] ?? '';
     $this->group = $plugin_definition['group'];
     $this->weight = $plugin_definition['weight'];
     $this->type = $plugin_definition['type'];
@@ -176,6 +175,22 @@ abstract class MetaNameBase extends PluginBase {
 
     // @todo Is there a DI-friendly way of doing this?
     $this->configFactory = \Drupal::service('config.factory');
+
+    // If this was loaded via an Annotation, unwrap the Translation object.
+    // Otherwise it was an Attribute, so 'label' is already a
+    // TranslatableMarkup.
+    $this->label = $plugin_definition['label'] instanceof Translation
+      ? $plugin_definition['label']->get()
+      : $plugin_definition['label'];
+    // Now do the same for description, if it was set.
+    if (!empty($configuration['description'])) {
+      $this->description = $configuration['description'] instanceof Translation
+        ? $configuration['description']->get()
+        : $configuration['description'];
+    }
+    else {
+      $this->description = NULL;
+    }
 
     // Set an initial value.
     $this->value = '';
@@ -220,17 +235,17 @@ abstract class MetaNameBase extends PluginBase {
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The label.
    */
-  public function label(): TranslatableMarkup|string {
+  public function label(): TranslatableMarkup {
     return $this->label;
   }
 
   /**
    * The meta tag's description.
    *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
    *   This meta tag's description.
    */
-  public function description(): TranslatableMarkup|string {
+  public function description(): ?TranslatableMarkup {
     return $this->description;
   }
 
@@ -497,8 +512,14 @@ abstract class MetaNameBase extends PluginBase {
     }
 
     $value = str_replace(["\r\n", "\n", "\r", "\t"], ' ', $value);
-    $value = preg_replace('/\s+/u', ' ', $value);
-    return trim($value);
+
+    // Be careful with the return value from preg_replace() as it may return
+    // NULL in certain circumstances, e.g. invalid UTF-8 characters.
+    // @see https://www.php.net/preg_replace
+    // @see https://www.php.net/manual/en/reference.pcre.pattern.modifiers.php
+    $replaced_value = preg_replace('/\s+/u', ' ', $value);
+
+    return trim($replaced_value ?? $value);
   }
 
   /**
@@ -539,6 +560,15 @@ abstract class MetaNameBase extends PluginBase {
     $elements = [];
     foreach ($values as $value) {
       $value = $this->tidy($value);
+
+      // For multi-value tags, skip empty values so they don't produce empty
+      // meta tags, e.g. when one of several tokens resolves to nothing. The
+      // value "0" is not empty and must be kept, so compare strictly against
+      // the empty string rather than relying on a loose/empty() check.
+      if ($this->multiple() && $value === '') {
+        continue;
+      }
+
       if ($value != '' && $this->requiresAbsoluteUrl()) {
         // Relative URL.
         if (parse_url($value, PHP_URL_HOST) == NULL) {
@@ -709,34 +739,33 @@ abstract class MetaNameBase extends PluginBase {
    *   An array containing a normal string.
    */
   public function getTestFormData(): array {
-    $random = new Random();
-
     // Provide a default value.
     if ($this->isImage()) {
       // @todo Add proper validation of image meta values.
       return [
-        $this->id => 'https://www.example.com/images/' . $random->word(6) . '-' . $random->word(6) . '.png',
+        $this->id => $this->generateAbsoluteTestUrl('png'),
       ];
     }
     // Absolute URLs that are specifically secure.
     elseif ($this->isSecure()) {
       return [
-        $this->id => 'https://www.example.com/' . $random->word(6) . '-' . $random->word(6) . '.html',
+        $this->id => $this->generateAbsoluteTestUrl(),
       ];
     }
     // Absolute URLs that are not necessarily secure.
     elseif ($this->requiresAbsoluteUrl()) {
       return [
-        $this->id => 'http://www.example.com/' . $random->word(6) . '-' . $random->word(6) . '.html',
+        $this->id => $this->generateAbsoluteTestUrl('html', FALSE),
       ];
     }
     // Relative URLs.
     elseif ($this->isUrl()) {
       return [
-        $this->id => '/' . $random->word(6) . '/' . $random->word(6) . '.html',
+        $this->id => $this->generateRelativeTestUrl(),
       ];
     }
     else {
+      $random = new Random();
       return [
         // Use three alphanumeric strings joined with spaces.
         $this->id => $random->word(6) . ' ' . $random->word(6) . ' ' . $random->word(6),
@@ -769,6 +798,39 @@ abstract class MetaNameBase extends PluginBase {
       $xpath_strings[] = "//" . $this->htmlTag . "[@" . $this->htmlNameAttribute . "='{$this->name}' and @" . $this->htmlValueAttribute . "='{$value}']";
     }
     return $xpath_strings;
+  }
+
+  /**
+   * Generate a relative URL string based on certain options.
+   *
+   * @param string $extension
+   *   The file extension tho use in the URL. Defaults to 'html'.
+   *
+   * @return string
+   *   The requested URL.
+   */
+  protected function generateRelativeTestUrl($extension = 'html') {
+    $random = new Random();
+    return '/' . $random->word(6) . '/' . $random->word(6) . '.' . $extension;
+  }
+
+  /**
+   * Generate an absolute URL string based on certain options.
+   *
+   * @param string $extension
+   *   The file extension tho use in the URL. Defaults to 'html'.
+   * @param bool $secure
+   *   Whether the URL will use the https or http scheme; defaults to https.
+   *
+   * @return string
+   *   The requested URL.
+   */
+  protected function generateAbsoluteTestUrl($extension = 'html', $secure = TRUE) {
+    $random = new Random();
+    $path = $random->word(6) . '/' . $random->word(6);
+    $prefix = $secure ? 'https' : 'http';
+
+    return $prefix . '://www.example.com/' . $path . '.' . $extension;
   }
 
 }

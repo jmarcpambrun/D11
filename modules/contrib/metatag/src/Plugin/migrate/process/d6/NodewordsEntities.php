@@ -3,6 +3,7 @@
 namespace Drupal\metatag\Plugin\migrate\process\d6;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\migrate\Attribute\MigrateProcess;
 use Drupal\migrate\MigrateException;
 use Drupal\migrate\MigrateExecutableInterface;
 use Drupal\migrate\ProcessPluginBase;
@@ -10,12 +11,11 @@ use Drupal\migrate\Row;
 
 /**
  * Migrate entity data from Nodewords on D6.
- *
- * @MigrateProcessPlugin(
- *   id = "d6_nodewords_entities",
- *   handle_multiples = TRUE
- * )
  */
+#[MigrateProcess(
+  id: 'd6_nodewords_entities',
+  handle_multiples: TRUE,
+)]
 class NodewordsEntities extends ProcessPluginBase {
 
   /**

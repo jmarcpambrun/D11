@@ -3,6 +3,7 @@
 namespace Drupal\Tests\metatag\Functional;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -43,15 +44,24 @@ class DisabledDefaultTags extends BrowserTestBase {
   protected $defaultTheme = 'stark';
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
 
+    $this->entityTypeManager = $this->container->get('entity_type.manager');
+    $config_factory = $this->container->get('config.factory');
+
     // Set the front page to the main /node page, so that the front page is not
     // just the login page.
-    \Drupal::configFactory()
-      ->getEditable('system.site')
+    $config_factory->getEditable('system.site')
       ->set('page.front', '/node')
       ->save(TRUE);
   }
@@ -70,7 +80,7 @@ class DisabledDefaultTags extends BrowserTestBase {
    */
   protected function loadMetatagDefault($id): EntityInterface|NULL {
     /** @var \Drupal\Core\Entity\EntityStorageInterface $global_metatag_manager */
-    $global_metatag_manager = \Drupal::entityTypeManager()
+    $global_metatag_manager = $this->entityTypeManager
       ->getStorage('metatag_defaults');
     return $global_metatag_manager->load($id);
   }
@@ -205,7 +215,7 @@ class DisabledDefaultTags extends BrowserTestBase {
     // Will be inherited by node:page, as normally neither has canonical filled
     // in and inherit it anyway from Global.
     /** @var \Drupal\Core\Entity\EntityStorageInterface $global_metatag_manager */
-    $global_metatag_manager = \Drupal::entityTypeManager()
+    $global_metatag_manager = $this->entityTypeManager
       ->getStorage('metatag_defaults');
     /** @var \Drupal\metatag\Entity\MetatagDefaults $entity_metatags */
     $entity_metatags = $global_metatag_manager->load('node');
@@ -252,7 +262,7 @@ class DisabledDefaultTags extends BrowserTestBase {
 
     // Change the node bundle's default's canonical to a hardcoded test string.
     /** @var \Drupal\Core\Entity\EntityStorageInterface $global_metatag_manager */
-    $global_metatag_manager = \Drupal::entityTypeManager()
+    $global_metatag_manager = $this->entityTypeManager
       ->getStorage('metatag_defaults');
     /** @var \Drupal\metatag\Entity\MetatagDefaults $entity_metatags */
     $entity_metatags = $global_metatag_manager->create(['id' => 'node__metatag_test']);
@@ -281,6 +291,100 @@ class DisabledDefaultTags extends BrowserTestBase {
     $xpath = $this->xpath("//link[@rel='canonical']");
     // Should now match global or content one, which is node URL.
     $this->assertEquals((string) $xpath[0]->getAttribute('href'), $this_page_url);
+  }
+
+  /**
+   * Tests setting canonical_url or shortlink to <none> suppresses Core tags.
+   */
+  public function testEntityCanonicalAndShortlinkNone() {
+    $node = $this->createContentTypeNode();
+    $this_page_url = $node->toUrl('canonical', ['absolute' => TRUE])
+      ->toString();
+
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $global_metatag_manager */
+    $global_metatag_manager = $this->entityTypeManager
+      ->getStorage('metatag_defaults');
+    /** @var \Drupal\metatag\Entity\MetatagDefaults $entity_metatags */
+    $entity_metatags = $global_metatag_manager->load('node');
+
+    // 1. Verify that a normal canonical_url value overrides Core canonical.
+    $entity_metatags->overwriteTags(['canonical_url' => 'https://test.canonical']);
+    $entity_metatags->save();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertCount(1, $xpath);
+    $this->assertEquals('https://test.canonical', (string) $xpath[0]->getAttribute('href'));
+
+    // 2. Set canonical_url to <none> and verify Core canonical is suppressed
+    // while shortlink remains.
+    $entity_metatags->overwriteTags(['canonical_url' => '<none>']);
+    $entity_metatags->save();
+    drupal_flush_all_caches();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertEmpty($xpath, 'Canonical link tag is suppressed when set to <none>.');
+    $xpath = $this->xpath("//link[@rel='shortlink']");
+    $this->assertCount(1, $xpath, 'Core shortlink remains when only canonical is set to <none>.');
+
+    // 3. Set shortlink to a normal value and verify it appears.
+    $entity_metatags->overwriteTags([
+      'canonical_url' => '<none>',
+      'shortlink' => 'https://test.shortlink',
+    ]);
+    $entity_metatags->save();
+    drupal_flush_all_caches();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertEmpty($xpath);
+    $xpath = $this->xpath("//link[@rel='shortlink']");
+    $this->assertCount(1, $xpath);
+    $this->assertEquals('https://test.shortlink', (string) $xpath[0]->getAttribute('href'));
+
+    // 4. Set both canonical_url and shortlink to <none> and verify both are
+    // suppressed.
+    $entity_metatags->overwriteTags([
+      'canonical_url' => '<none>',
+      'shortlink' => '<none>',
+    ]);
+    $entity_metatags->save();
+    drupal_flush_all_caches();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertEmpty($xpath, 'Canonical link tag is suppressed when set to <none>.');
+    $xpath = $this->xpath("//link[@rel='shortlink']");
+    $this->assertEmpty($xpath, 'Shortlink link tag is suppressed when set to <none>.');
+
+    // 5. Set canonical_url to a normal value and shortlink to <none>.
+    $entity_metatags->overwriteTags([
+      'canonical_url' => 'https://test.canonical',
+      'shortlink' => '<none>',
+    ]);
+    $entity_metatags->save();
+    drupal_flush_all_caches();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertCount(1, $xpath);
+    $this->assertEquals('https://test.canonical', (string) $xpath[0]->getAttribute('href'));
+    $xpath = $this->xpath("//link[@rel='shortlink']");
+    $this->assertEmpty($xpath, 'Shortlink link tag is suppressed when set to <none>.');
+
+    // 6. Set shortlink to <none> with default canonical_url and verify
+    // canonical remains while shortlink is suppressed.
+    $entity_metatags->overwriteTags(['shortlink' => '<none>']);
+    $entity_metatags->save();
+    drupal_flush_all_caches();
+    $this->drupalGet($this_page_url);
+    $this->assertSession()->statusCodeEquals(200);
+    $xpath = $this->xpath("//link[@rel='canonical']");
+    $this->assertCount(1, $xpath, 'Canonical link tag remains when only shortlink is set to <none>.');
+    $this->assertEquals($this_page_url, (string) $xpath[0]->getAttribute('href'));
+    $xpath = $this->xpath("//link[@rel='shortlink']");
+    $this->assertEmpty($xpath, 'Shortlink link tag is suppressed when set to <none>.');
   }
 
 }

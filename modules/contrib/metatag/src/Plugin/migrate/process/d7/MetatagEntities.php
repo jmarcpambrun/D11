@@ -4,6 +4,7 @@ namespace Drupal\metatag\Plugin\migrate\process\d7;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\metatag\Plugin\migrate\MigrateMetatagD7Trait;
+use Drupal\migrate\Attribute\MigrateProcess;
 use Drupal\migrate\MigrateExecutableInterface;
 use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\Row;
@@ -26,12 +27,11 @@ use Drupal\migrate\Row;
  *         - '\Drupal\Component\Serialization\Json'
  *         - 'decode'
  * @endcode
- *
- * @MigrateProcessPlugin(
- *   id = "d7_metatag_entities",
- *   handle_multiples = TRUE
- * )
  */
+#[MigrateProcess(
+  id: 'd7_metatag_entities',
+  handle_multiples: TRUE,
+)]
 class MetatagEntities extends ProcessPluginBase {
 
   use MigrateMetatagD7Trait;
@@ -49,7 +49,7 @@ class MetatagEntities extends ProcessPluginBase {
     $old_tags = $this->decodeValue($value);
 
     // Offload the transformation logic.
-    $new_tags = $this->transformTags($old_tags, FALSE);
+    $new_tags = $this->transformTags($old_tags);
 
     // For entity data this needs to be in a JSON encoded string.
     return Json::encode($new_tags);

@@ -99,7 +99,7 @@
         "drupal/masquerade": "^2.2",
         "drupal/message": "^1.9",
         "drupal/message_notify": "1.5",
-        "drupal/metatag": "2.2",
+        "drupal/metatag": "^2.2",
         "drupal/modeler": "^1.0",
         "drupal/modeler_api": "^1.1",
         "drupal/multivalue_form_element": "1.0.0-beta8",
