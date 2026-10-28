@@ -393,10 +393,8 @@ class BurndownHooks1 {
     $form['relationships']['widget']['#title'] = $this->t('Tasks that this task is related to:');
     // Hide miscellaneous items.
     $form['ticket_id']['#access'] = FALSE;
-    $form['project']['#access'] = FALSE;
     $form['revision_log']['#access'] = FALSE;
     $form['status']['#access'] = FALSE;
-    $form['sprint']['#access'] = FALSE;
     $form['backlog_sort']['#access'] = FALSE;
     $form['board_sort']['#access'] = FALSE;
     $form['watch_list']['#access'] = FALSE;

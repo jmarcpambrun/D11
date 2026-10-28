@@ -48,7 +48,6 @@ class SprintForm extends ContentEntityForm {
     // Hide miscellaneous items.
     $form['revision_log']['#access'] = FALSE;
     $form['user_id']['#access'] = FALSE;
-    $form['sort_order']['#access'] = FALSE;
     $form['start_date']['#access'] = FALSE;
     $form['end_date']['#access'] = FALSE;
 

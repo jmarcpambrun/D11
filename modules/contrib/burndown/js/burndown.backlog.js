@@ -148,6 +148,9 @@
             group: 'swimlane',
             animation: 150,
             fallbackOnBody: true,
+            forceAutoScrollFallback: true,
+            scrollSpeed: 15,
+            scrollSensitivity: 45,
             swapThreshold: 0.65,
             onSort() {
               reorder();

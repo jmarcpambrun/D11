@@ -2,6 +2,7 @@
 
 namespace Drupal\burndown\Entity;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EditorialContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityPublishedTrait;
@@ -10,10 +11,10 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\link\LinkItemInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * Defines the Task entity.
@@ -487,23 +488,55 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     // Ensure a swimlane is set before saving.
     $project = $this->getProject();
-    if (!is_null($project) && empty($this->get('swimlane')->target_id)) {
+    $original = !$this->isNew() ? $this->getOriginal() : NULL;
+    if (!$original && !$this->isNew()) {
+      $original = $storage->loadUnchanged($this->id());
+    }
+    $original_project_id = $original instanceof ContentEntityInterface
+      ? $original->get('project')->target_id
+      : NULL;
+    $project_changed = $project && $project->id() != $original_project_id;
+
+    $get_default_swimlane = function () use ($project) {
       $shortcode = $project->getShortcode();
       $backlog = Swimlane::getBacklogFor($shortcode);
       if ($backlog !== FALSE) {
-        $this->set('swimlane', $backlog->id());
+        return $backlog;
       }
-      else {
-        $project_swimlanes = Swimlane::loadForProject($shortcode);
-        if (!empty($project_swimlanes)) {
-          usort($project_swimlanes, function ($a, $b) {
-            return $a->getSortOrder() <=> $b->getSortOrder();
-          });
-          $first_swimlane = reset($project_swimlanes);
-          if ($first_swimlane !== FALSE) {
-            $this->set('swimlane', $first_swimlane->id());
-          }
-        }
+
+      $project_swimlanes = Swimlane::loadForProject($shortcode);
+      if (!empty($project_swimlanes)) {
+        usort($project_swimlanes, function ($a, $b) {
+          return $a->getSortOrder() <=> $b->getSortOrder();
+        });
+        return reset($project_swimlanes) ?: FALSE;
+      }
+
+      return FALSE;
+    };
+
+    if ($project_changed) {
+      if (!$project->isSprint()) {
+        $this->set('sprint', NULL);
+      }
+
+      $previous_swimlane = $this->getSwimlane();
+      if (!$previous_swimlane instanceof SwimlaneInterface && $original instanceof ContentEntityInterface) {
+        $previous_swimlane_id = $original->get('swimlane')->target_id;
+        $previous_swimlane = $previous_swimlane_id ? Swimlane::load($previous_swimlane_id) : NULL;
+      }
+      $swimlane = $previous_swimlane instanceof SwimlaneInterface
+        ? Swimlane::getSwimlane($project->getShortcode(), $previous_swimlane->getName())
+        : FALSE;
+      $swimlane = $swimlane ?: $get_default_swimlane();
+      if ($swimlane !== FALSE) {
+        $this->set('swimlane', $swimlane->id());
+      }
+    }
+    elseif (!is_null($project) && empty($this->get('swimlane')->target_id)) {
+      $swimlane = $get_default_swimlane();
+      if ($swimlane !== FALSE) {
+        $this->set('swimlane', $swimlane->id());
       }
     }
 
@@ -519,9 +552,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
 
     $ticket_id = '';
 
-    // On ticket creation (but not edit), we need to obtain a unique
-    // id from the project.
-    if ($this->isNew()) {
+    // Obtain a new unique ID when creating a task or changing its project.
+    if ($this->isNew() || $project_changed) {
       // Get the project.
       if (is_null($project)) {
         throw new \Exception('Task does not have a Project');
@@ -547,7 +579,7 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
       }
 
       // Set the task id field value.
-      if ($this->isNew()) {
+      if ($this->isNew() || $project_changed) {
         $translation->setTicketId($ticket_id);
       }
     }
@@ -1502,14 +1534,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
         'weight' => 0,
       ])
       ->setDisplayOptions('form', [
-        'region' => 'hidden',
-        'weight' => 0,
-        'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => '60',
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
-        ],
+        'type' => 'options_select',
+        'weight' => 1,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE)
@@ -1546,7 +1572,8 @@ class Task extends EditorialContentEntityBase implements TaskInterface {
         'weight' => 3,
       ])
       ->setDisplayOptions('form', [
-        'region' => 'hidden',
+        'type' => 'options_select',
+        'weight' => 2,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

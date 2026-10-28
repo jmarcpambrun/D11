@@ -2,6 +2,8 @@
 
 namespace Drupal\burndown\Form;
 
+use Drupal\burndown\Entity\Project;
+use Drupal\burndown\Entity\Sprint;
 use Drupal\burndown\Entity\Swimlane;
 use Drupal\burndown\Entity\Task;
 use Drupal\Core\Entity\ContentEntityForm;
@@ -79,10 +81,57 @@ class TaskForm extends ContentEntityForm {
     // Set estimate options based on project.
     /** @var \Drupal\burndown\Entity\Task $task */
     $task = $this->entity;
-    $project = $task->getProject();
+    $project_id = $form_state->getValue('project');
+    if (is_array($project_id)) {
+      $project_id = $project_id[0]['target_id'] ?? $project_id['target_id'] ?? $project_id[0] ?? NULL;
+    }
+    $project = is_scalar($project_id) && $project_id !== '' && $project_id !== '_none'
+      ? Project::load($project_id)
+      : $task->getProject();
     $options = [];
     if (!is_null($project)) {
       $options = $project->getEstimateSizes();
+    }
+
+    if (isset($form['project']['widget'])) {
+      $ajax = [
+        'callback' => '::updateSprintField',
+        'event' => 'change',
+        'wrapper' => 'burndown-task-sprint-wrapper',
+      ];
+      if (isset($form['project']['widget'][0]['target_id'])) {
+        $form['project']['widget'][0]['target_id']['#ajax'] = $ajax;
+      }
+      else {
+        $form['project']['widget']['#ajax'] = $ajax;
+      }
+    }
+
+    if (isset($form['sprint'])) {
+      $form['sprint']['#prefix'] = '<div id="burndown-task-sprint-wrapper">';
+      $form['sprint']['#suffix'] = '</div>';
+      $form['sprint']['#access'] = TRUE;
+      $sprint_options = [
+        '_none' => $this->t('- None -'),
+      ];
+      if (is_null($project) || !$project->isSprint()) {
+        $form['sprint']['#attributes']['hidden'] = TRUE;
+      }
+      else {
+        unset($form['sprint']['#attributes']['hidden']);
+        $sprints = Sprint::getSprintsFor($project->getShortcode());
+        if ($sprints !== FALSE) {
+          foreach ($sprints as $sprint) {
+            $sprint_options[$sprint->id()] = $sprint->label();
+          }
+        }
+      }
+      if (isset($form['sprint']['widget'][0]['target_id'])) {
+        $form['sprint']['widget'][0]['target_id']['#options'] = $sprint_options;
+      }
+      else {
+        $form['sprint']['widget']['#options'] = $sprint_options;
+      }
     }
 
     // Remove delete button (too easy to accidentally press).
@@ -295,10 +344,8 @@ class TaskForm extends ContentEntityForm {
 
       // Hide miscellaneous items.
       $form['ticket_id']['#access'] = FALSE;
-      $form['project']['#access'] = FALSE;
       $form['revision_log']['#access'] = FALSE;
       $form['status']['#access'] = FALSE;
-      $form['sprint']['#access'] = FALSE;
       $form['backlog_sort']['#access'] = FALSE;
       $form['board_sort']['#access'] = FALSE;
       $form['completed']['#access'] = FALSE;
@@ -423,6 +470,13 @@ class TaskForm extends ContentEntityForm {
     $form['#attached']['library'][] = 'burndown/drupal.burndown.task_edit';
 
     return $form;
+  }
+
+  /**
+   * Returns the sprint field after the selected project changes.
+   */
+  public function updateSprintField(array &$form, FormStateInterface $form_state) {
+    return $form['sprint'];
   }
 
   /**

@@ -7,7 +7,7 @@ dependencies:
   - drupal:burndown
   - drupal:views
 
-# Information added by Drupal.org packaging script on 2026-09-06
-version: '1.0.78'
+# Information added by Drupal.org packaging script on 2026-10-26
+version: '1.0.80'
 project: 'burndown'
-datestamp: 1788726484
+datestamp: 1792980394

@@ -195,7 +195,6 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
     if ($project !== FALSE) {
       $sprint_ids = \Drupal::entityQuery('burndown_sprint')
         ->condition('project', $project->id())
-        ->condition('status', 'completed')
         ->sort('sort_order', 'DESC')
         ->range(0, 1)
         ->accessCheck(FALSE)
@@ -632,7 +631,8 @@ class Sprint extends EditorialContentEntityBase implements SprintInterface {
         'weight' => 5,
       ])
       ->setDisplayOptions('form', [
-        'region' => 'hidden',
+        'type' => 'number',
+        'weight' => 2,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE)
