@@ -1,25 +1,6 @@
 CHANGELOG
 =========
 
-8.0
----
-
- * Remove the `WorkflowDumpCommand` class; the `workflow:dump` command works the same as before but its class is now defined in the Workflow component
- * Remove `errors.xml` and `webhook.xml` routing configuration files (use their PHP equivalent instead)
- * Enable the property info constructor extractor by default
- * Remove deprecated `Symfony\Bundle\FrameworkBundle\Console\Application::add()` method in favor of `Symfony\Bundle\FrameworkBundle\Console\Application::addCommand()`
- * Make `Router` class `final`
- * Make `SerializerCacheWarmer` class `final`
- * Make `Translator` class `final`
- * Make `TranslationsCacheWarmer` class `final`
- * Make `ValidatorCacheWarmer` class `final`
- * Remove autowiring aliases for `RateLimiterFactory`; use `RateLimiterFactoryInterface` instead
- * Remove `session.sid_length` and `session.sid_bits_per_character` config options
- * Remove the `router.cache_dir` config option
- * Remove the `validation.cache` option
- * Remove `TranslationUpdateCommand` in favor of `TranslationExtractCommand`
- * Remove `ConfigBuilderCacheWarmer`, return PHP arrays from your config instead
-
 7.4
 ---
 

@@ -127,6 +127,10 @@ interface AiVdbProviderSearchApiInterface extends PluginInspectionInterface {
   /**
    * Prepare the filters for the specific VDB Provider.
    *
+   * Called again before each retry fetch. To skip already examined entities,
+   * exclude the "search_api_ai_excluded_entity_ids" query option here only;
+   * the backend treats changed filters as the exclusion being applied.
+   *
    * @param \Drupal\search_api\Query\QueryInterface $query
    *   The Search API Query.
    *

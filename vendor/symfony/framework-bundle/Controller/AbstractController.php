@@ -232,8 +232,13 @@ abstract class AbstractController implements ServiceSubscriberInterface
      */
     protected function denyAccessUnlessGranted(mixed $attribute, mixed $subject = null, string $message = 'Access Denied.'): void
     {
-        $accessDecision = $this->getAccessDecision($attribute, $subject);
-        $isGranted = $accessDecision->isGranted;
+        if (class_exists(AccessDecision::class)) {
+            $accessDecision = $this->getAccessDecision($attribute, $subject);
+            $isGranted = $accessDecision->isGranted;
+        } else {
+            $accessDecision = null;
+            $isGranted = $this->isGranted($attribute, $subject);
+        }
 
         if (!$isGranted) {
             $e = $this->createAccessDeniedException(3 > \func_num_args() && $accessDecision ? $accessDecision->getMessage() : $message);

@@ -10,7 +10,9 @@
  * @{
  */
 
+use Drupal\ai_search\Plugin\AiFunctionCall\FilterableRagTool;
 use Drupal\search_api\IndexInterface;
+use Drupal\search_api\Query\QueryInterface;
 
 /**
  * Allows other modules to alter or re-rank AI search results.
@@ -52,6 +54,23 @@ function hook_ai_search_boost_results_alter(array &$results, mixed $keywords, In
 
   // Sort the results by updated score in descending order.
   arsort($results);
+}
+
+/**
+ * Alter the Search API query before execution in FilterableRagTool.
+ *
+ * Called after attribute filters have been applied as query conditions but
+ * before the query is executed. Use this to add complex condition groups,
+ * sorts, or provider-specific query options.
+ *
+ * @param \Drupal\search_api\Query\QueryInterface $query
+ *   The Search API query object, with attribute conditions already applied.
+ * @param \Drupal\ai_search\Plugin\AiFunctionCall\FilterableRagTool $plugin
+ *   The FilterableRagTool plugin instance. Use $plugin->getDerivativeId()
+ *   to get the index ID, or $plugin->getContextValue() to read context
+ *   values provided by the LLM.
+ */
+function hook_ai_search_filterable_rag_query_alter(QueryInterface &$query, FilterableRagTool $plugin) {
 }
 
 /**

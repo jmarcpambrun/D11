@@ -21,8 +21,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Generates the catalogues for translations.
  *
  * @author Xavier Leune <xavier.leune@gmail.com>
+ *
+ * @final since Symfony 7.1
  */
-final class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriberInterface
+class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriberInterface
 {
     private TranslatorInterface $translator;
 

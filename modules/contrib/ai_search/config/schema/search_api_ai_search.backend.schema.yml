@@ -56,6 +56,12 @@ plugin.plugin_configuration.search_api_backend.search_api_ai_search:
         skip_moderation:
           type: boolean
           label: 'Whether to skip moderation'
+        heading_levels:
+          type: sequence
+          label: 'Heading levels to split on'
+          sequence:
+            type: integer
+            label: 'Heading level'
     embedding_strategy_details:
       type: string
       label: 'Additional details for the embedding strategy'

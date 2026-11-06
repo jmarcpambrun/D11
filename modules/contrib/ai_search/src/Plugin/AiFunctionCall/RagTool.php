@@ -10,6 +10,7 @@ use Drupal\ai\Attribute\FunctionCall;
 use Drupal\ai\Base\FunctionCallBase;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\StructuredExecutableFunctionCallInterface;
+use Drupal\ai_search\Trait\DrupalEntityIdParserTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -51,6 +52,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   ],
 )]
 class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCallInterface {
+
+  use DrupalEntityIdParserTrait;
 
 
   /**
@@ -163,28 +166,6 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
     else {
       $this->setOutput("No results were found when searching in the rag index " . $this->index . " for the following prompt: " . $this->searchString . ".\n");
     }
-  }
-
-  /**
-   * Parses a chunked result's drupal_entity_id into its parts.
-   *
-   * The value is shaped `prefix:entity_type/id:langcode` (see
-   * SearchApiAiSearchBackend::checkEntityAccess() for the same parsing).
-   *
-   * @param string $drupalEntityId
-   *   The raw drupal_entity_id extra-data value.
-   *
-   * @return array{0: string, 1: string, 2: string}
-   *   Tuple of [entity type, entity id, langcode], each '' when the value
-   *   cannot be parsed.
-   */
-  protected function parseDrupalEntityId(string $drupalEntityId): array {
-    $parts = explode(':', $drupalEntityId);
-    if (count($parts) < 3 || !str_contains($parts[1], '/')) {
-      return ['', '', ''];
-    }
-    [$entityType, $entityId] = explode('/', $parts[1], 2);
-    return [$entityType, $entityId, $parts[2]];
   }
 
   /**

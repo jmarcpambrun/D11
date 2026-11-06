@@ -14,6 +14,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\Utility\TokenizerInterface;
+use Drupal\ai_search\AiVdbProviderSearchApiInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
@@ -21,6 +22,8 @@ use Drupal\ai_search\Utility\SearchKeysHelper;
 use Drupal\search_api\Backend\BackendSpecificInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\ItemInterface;
+use Drupal\search_api\Query\ConditionGroupInterface;
+use Drupal\search_api\Query\ConditionInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Drupal\search_api\Utility\Utility;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -154,6 +157,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'tokenizer',
       // Boosting does not apply here.
       'type_boost',
+      // Access is checked per result instead, as these filter on fields that
+      // are not stored in the vector database. Their conditions are ignored.
+      // @see ::removeUnsupportedAccessConditions()
+      'content_access',
+      'role_access',
     ];
   }
 
@@ -618,6 +626,10 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // fields it stores per chunk.
     $this->addEmbeddingStrategyOutputFields($params);
 
+    // Drop conditions from access processors that cannot work here, so they do
+    // not filter out every result. Access is checked per result instead.
+    $this->removeUnsupportedAccessConditions($query->getConditionGroup(), $this->getRoleAccessFieldIds($index));
+
     if ($filters = $vdb_client->prepareFilters($query)) {
       $params['filters'] = $filters;
     }
@@ -746,6 +758,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   /**
    * Search implementation with iteration for VDBs without advanced features.
    *
+   * Examined entities are passed to the VDB provider on each retry via the
+   * "search_api_ai_excluded_entity_ids" option so it can filter them out.
+   *
    * @param \Drupal\search_api\Query\QueryInterface $query
    *   The search query.
    * @param array $params
@@ -766,6 +781,10 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    *   Current iteration number for recursive calls.
    * @param array $excluded_entity_ids
    *   Entity IDs to exclude from results.
+   * @param int $rows_examined
+   *   Rows returned by previous fetches of this search.
+   * @param bool $exclusions_filtered
+   *   Whether the provider filters out $excluded_entity_ids.
    *
    * @return array
    *   Metadata about the search including offset, reason, and vector score.
@@ -783,6 +802,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     int $start_offset,
     int $iteration = 0,
     array $excluded_entity_ids = [],
+    int $rows_examined = 0,
+    bool $exclusions_filtered = FALSE,
   ): array {
 
     // Track excluded IDs for NOT IN filtering in subsequent iterations.
@@ -790,20 +811,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $local_excluded_ids = [];
     $this->loadedItems = [];
 
-    // Conduct the search. Each raw fetch is doubled when access checks are
-    // in play, since some fraction of every batch is expected to be
-    // rejected by checkItemAccess(). The offset must advance past
-    // whatever was already fetched on every iteration regardless of
-    // $bypass_access: a retry can also be triggered by duplicate/chunked
-    // entities being excluded via $excluded_entity_ids, which happens
-    // independently of access checks. Previously the offset was only
-    // advanced in the !$bypass_access branch, so a bypass_access search
-    // that needed to retry (e.g. because the index stores multiple chunks
-    // per entity) re-fetched the exact same window every time and always
-    // ran to $maxAccessRetries.
+    // Over-fetch when items may be rejected. If the provider filters out
+    // examined entities, unseen rows start at the original offset again.
     $batch_limit = $bypass_access ? $start_limit : $start_limit * 2;
     $params['limit'] = $batch_limit;
-    $params['offset'] = $start_offset + ($iteration * $batch_limit);
+    $params['offset'] = $exclusions_filtered ? $start_offset : $start_offset + ($iteration * $batch_limit);
 
     try {
       $vdb_client = $this->getClient();
@@ -874,6 +886,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         continue;
       }
 
+      // Exclude denied entities too, so they are not checked again.
+      $local_excluded_ids[] = $exclusion_id;
+
       // Perform access checks on the items.
       if (!$bypass_access && !$this->checkItemAccess($match['drupal_entity_id'], $query->getIndex())) {
         // If we are not allowed to view this item, skip it.
@@ -881,12 +896,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       }
       // Passed.
       $results[] = $match;
-      $local_excluded_ids[] = $exclusion_id;
 
       // If we found enough items, we can stop.
       if (count($results) == $start_limit) {
         return [
-          'real_offset' => $start_offset + ($iteration * $batch_limit) + $i,
+          'real_offset' => $start_offset + $rows_examined + $i,
           'reason' => 'limit',
           'vector_score' => $match['distance'] ?? 0,
         ];
@@ -896,7 +910,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // If we reach max retries, we can stop.
     if ($iteration == $this->maxAccessRetries) {
       return [
-        'real_offset' => $iteration * $batch_limit + $i,
+        'real_offset' => $start_offset + $rows_examined + $i,
         'reason' => 'max_retries',
         'vector_score' => $match['distance'] ?? 0,
       ];
@@ -904,7 +918,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // If we got less then limit back, it reached the end.
     if (count($response) < $start_limit) {
       return [
-        'real_offset' => $iteration * $batch_limit + $i,
+        'real_offset' => $start_offset + $rows_examined + $i,
         'reason' => 'reached_end',
         'vector_score' => $match['distance'] ?? 0,
       ];
@@ -912,12 +926,26 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Else we need to continue.
     $combined_excluded_ids = array_merge($excluded_entity_ids, $local_excluded_ids);
 
-    // Update the exclusions when we are not getting chunks.
+    // Rebuild the filters so the provider can apply the exclusions; changed
+    // filters mean it did.
+    $exclusions_filtered = FALSE;
     if (!empty($combined_excluded_ids) && !$get_chunked) {
       $query->setOption('search_api_ai_excluded_entity_ids', $combined_excluded_ids);
+      if ($vdb_client instanceof AiVdbProviderSearchApiInterface) {
+        $previous_filters = $params['filters'] ?? NULL;
+        $filters = $vdb_client->prepareFilters($query);
+        if (!empty($filters)) {
+          $params['filters'] = $filters;
+        }
+        else {
+          // Leave the provider's own default filters in place.
+          unset($params['filters']);
+        }
+        $exclusions_filtered = !empty($filters) && $filters !== $previous_filters;
+      }
     }
 
-    return $this->doSearchWithIteration($query, $params, $bypass_access, $use_grouping, $get_chunked, $results, $start_limit, $start_offset, $iteration + 1, $combined_excluded_ids);
+    return $this->doSearchWithIteration($query, $params, $bypass_access, $use_grouping, $get_chunked, $results, $start_limit, $start_offset, $iteration + 1, $combined_excluded_ids, $rows_examined + $i, $exclusions_filtered);
   }
 
   /**
@@ -1105,6 +1133,69 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $this->vdbClient = $this->vdbProviderManager->createInstance($this->configuration['database']);
     }
     return $this->vdbClient;
+  }
+
+  /**
+   * Get the Vector DB client instance.
+   *
+   * @return \Drupal\ai\AiVdbProviderInterface
+   *   The Vector DB object.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  public function getVectorDb(): object {
+    return $this->getClient();
+  }
+
+  /**
+   * Removes conditions added by the unsupported access processors.
+   *
+   * The "Content access" and "Role-based access" processors filter on hidden
+   * fields which are never stored in the vector database, so their conditions
+   * would match nothing.
+   *
+   * @param \Drupal\search_api\Query\ConditionGroupInterface $condition_group
+   *   The condition group to clean up, including nested groups.
+   * @param string[] $role_access_field_ids
+   *   The IDs of index fields holding role-based access information.
+   */
+  protected function removeUnsupportedAccessConditions(ConditionGroupInterface $condition_group, array $role_access_field_ids): void {
+    $conditions = &$condition_group->getConditions();
+    foreach ($conditions as $key => $condition) {
+      if ($condition instanceof ConditionGroupInterface) {
+        // @see \Drupal\search_api\Plugin\search_api\processor\ContentAccess::addNodeAccess()
+        foreach (['content_access', 'content_access_enabled', 'content_access_grants'] as $tag) {
+          if ($condition->hasTag($tag)) {
+            unset($conditions[$key]);
+            continue 2;
+          }
+        }
+        $this->removeUnsupportedAccessConditions($condition, $role_access_field_ids);
+      }
+      elseif ($condition instanceof ConditionInterface && in_array($condition->getField(), $role_access_field_ids, TRUE)) {
+        unset($conditions[$key]);
+      }
+    }
+  }
+
+  /**
+   * Gets the IDs of index fields added by the "Role-based access" processor.
+   *
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The search index.
+   *
+   * @return string[]
+   *   The field IDs.
+   */
+  protected function getRoleAccessFieldIds(IndexInterface $index): array {
+    $field_ids = [];
+    foreach ($index->getFields() as $field_id => $field) {
+      // @see \Drupal\search_api\Plugin\search_api\processor\RoleAccess::ROLE_ACCESS_FIELD
+      if ($field->getDatasourceId() === NULL && $field->getPropertyPath() === 'search_api_role_access') {
+        $field_ids[] = $field_id;
+      }
+    }
+    return $field_ids;
   }
 
   /**

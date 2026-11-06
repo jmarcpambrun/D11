@@ -7,11 +7,13 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsCollectionInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\ai\AiVdbProviderInterface;
+use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\EmbeddingStrategyCapability;
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai_search\Base\EmbeddingStrategyPluginBase;
 use Drupal\ai_search\EmbeddingStrategyInterface;
+use Drupal\ai_search\Plugin\search_api\backend\SearchApiAiSearchBackend;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Item\ItemInterface;
@@ -687,8 +689,22 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    */
   protected function getValue(FieldInterface $field, bool $convert_to_label): int|array|string|bool|float {
     $values = $field->getValues();
+    // Let the VDB provider decide by cardinality, so a multi-value field with
+    // one value is still an array (strict schemas reject scalars there). Never
+    // drop values though: nested paths like "field_author:entity:field_tags"
+    // can be reported as single-value yet hold several.
+    $is_multiple = count($values) > 1;
     try {
-
+      $server = $field->getIndex()->getServerInstanceIfAvailable();
+      $backend = $server?->getBackend();
+      if ($backend instanceof SearchApiAiSearchBackend) {
+        // AI Core's base class provides isMultiple() in 1.x; it is not part of
+        // the provider interface here, so check for it rather than require it.
+        $vdb_client = $backend->getVectorDb();
+        if ($vdb_client instanceof AiVdbProviderClientBase) {
+          $is_multiple = $is_multiple || $vdb_client->isMultiple($field);
+        }
+      }
       // If the field type is a reference field and its intended to be rendered
       // as fulltext or a string.
       $definition = $field->getDataDefinition();
@@ -719,28 +735,30 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       // Do nothing, we can just index the values for this type of field.
     }
 
+    // Nothing to index: an empty list for multi-value fields, an empty string
+    // for single-value fields.
+    if ($values === []) {
+      return $is_multiple ? [] : '';
+    }
+
     // Always composite if field supports multiple. Otherwise, if the field is
     // a single value, we can choose base on the field type At some point we
     // probably need to consider what field types the Vector Database supports
     // as metadata, but for now let's assume, strings, floats, integers, and
     // boolean values are fine for all.
-    if (in_array($field->getType(), ['date', 'boolean', 'integer']) && count($values) === 1) {
+    if (in_array($field->getType(), ['date', 'boolean', 'integer']) && !$is_multiple) {
       return (int) reset($values);
     }
-    elseif (in_array($field->getType(), ['boolean']) && count($values) === 1) {
-      return (bool) reset($values);
-    }
-    elseif (in_array($field->getType(), ['decimal']) && count($values) === 1) {
+    elseif (in_array($field->getType(), ['decimal']) && !$is_multiple) {
       return (float) reset($values);
     }
-    elseif (count($values) == 1) {
+    elseif (!$is_multiple) {
       if ($convert_to_label) {
         return $this->converter->convert((string) reset($values));
       }
       return (string) reset($values);
     }
-    elseif (count($values) > 1) {
-
+    else {
       // Some Vector Databases support arrays, return that in the metadata
       // and leave it to the Provider to flatten if needed.
       $parts = [];
@@ -750,7 +768,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         }
         else {
           if ($convert_to_label) {
-            $parts[] = $this->converter->convert((string) reset($values));
+            $parts[] = $this->converter->convert((string) $value);
           }
           else {
             $parts[] = (string) $value;
@@ -759,7 +777,6 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       }
       return $parts;
     }
-    return '';
   }
 
   /**

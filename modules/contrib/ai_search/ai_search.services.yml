@@ -16,3 +16,11 @@ services:
     tags:
       - { name: event_subscriber }
     arguments: ['@database']
+  ai_search.event_subscriber.function_call_definitions:
+    class: Drupal\ai_search\EventSubscriber\FunctionCallDefinitionsEventSubscriber
+    tags:
+      - { name: event_subscriber }
+    arguments: ['@plugin.manager.ai.function_calls']
+  ai_search.results_cache_variation:
+    class: Drupal\ai_search\ResultsCacheVariation
+    arguments: ['@config.factory', '@current_user']
