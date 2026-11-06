@@ -96,3 +96,17 @@ function ai_ckeditor_update_10001() {
       ->save(TRUE);
   }
 }
+
+/**
+ * Update the default summarize prompt to forbid translation.
+ */
+function ai_ckeditor_update_10002() {
+  $storage = \Drupal::entityTypeManager()->getStorage('ai_prompt');
+  /** @var \Drupal\ai\Entity\AiPromptInterface $prompt */
+  $prompt = $storage->load('ai_ckeditor_summarize__default');
+  $old_prompt = "Summarize the following text in the same language,\ndo not return the original text or restate it word-for-word.\nHere is the original text:\n{inputText}\n";
+  if ($prompt && $prompt->getPrompt() === $old_prompt) {
+    $prompt->setPrompt("Summarize the following text. The summary MUST be written in the exact same language as the original text - do not translate it to any other language. Do not return the original text or restate it word-for-word.\nHere is the original text:\n{inputText}\n");
+    $prompt->save();
+  }
+}

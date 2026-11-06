@@ -3013,18 +3013,18 @@
         },
         {
             "name": "drupal/ai_ckeditor",
-            "version": "1.5.0-beta4",
-            "version_normalized": "1.5.0.0-beta4",
+            "version": "1.5.0-beta5",
+            "version_normalized": "1.5.0.0-beta5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_ckeditor.git",
-                "reference": "1.5.0-beta4"
+                "reference": "1.5.0-beta5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.5.0-beta4.zip",
-                "reference": "1.5.0-beta4",
-                "shasum": "cc0cc865ddf123d5320f832e4a1c31b9e2202180"
+                "url": "https://ftp.drupal.org/files/projects/ai_ckeditor-1.5.0-beta5.zip",
+                "reference": "1.5.0-beta5",
+                "shasum": "4387e729ec85a422226f9c7acda5b1c5bed6ea3e"
             },
             "require": {
                 "drupal/ai": "^1.5",
@@ -3039,8 +3039,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.0-beta4",
-                    "datestamp": "1790184529",
+                    "version": "1.5.0-beta5",
+                    "datestamp": "1793203291",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
