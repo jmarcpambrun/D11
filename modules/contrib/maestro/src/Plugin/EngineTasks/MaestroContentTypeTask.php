@@ -135,6 +135,56 @@ class MaestroContentTypeTask extends PluginBase implements MaestroEngineTaskInte
       '#required' => FALSE,
     ];
 
+    // Button labels, used only on this task's own content form (see maestro_form_alter()).
+    $form['save_label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Save button label'),
+      '#description' => $this->t('The label of the content form\'s Save button when it is opened from this task. Saving completes the task. Leave empty to keep "@default".', ['@default' => $this->t('Save')]),
+      '#default_value' => $task['data']['save_label'] ?? '',
+      '#maxlength' => 64,
+      '#required' => FALSE,
+    ];
+
+    $form['save_edit_later_label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Save and Edit Later button label'),
+      '#description' => $this->t('Leave empty to keep "@default".', ['@default' => $this->t('Save and Edit Later')]),
+      '#default_value' => $task['data']['save_edit_later_label'] ?? '',
+      '#maxlength' => 64,
+      '#required' => FALSE,
+      '#states' => [
+        'visible' => [':input[name="save_edit_later"]' => ['checked' => TRUE]],
+      ],
+    ];
+
+    $form['hide_delete'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Hide the Delete link on the content form.'),
+      '#description' => $this->t('Only on the form opened from this task. This hides the link, it does not remove permission: people allowed to delete the content can still do so elsewhere, such as its Delete tab.'),
+      '#default_value' => $task['data']['hide_delete'] ?? 0,
+      '#required' => FALSE,
+    ];
+
+    $form['reject_on_edit'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show a Reject button on the content edit form.'),
+      '#description' => $this->t('Only on the edit form of existing content opened from this task. Rejecting does not save the content: it completes the task with a cancelled status, the same as the Reject button shown when viewing, and redirects to the Reject Redirect To Location if set, otherwise to the Default Return Path.'),
+      '#default_value' => $task['data']['reject_on_edit'] ?? 0,
+      '#required' => FALSE,
+    ];
+
+    $form['reject_on_edit_label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Reject button label (edit form)'),
+      '#description' => $this->t('Leave empty to keep "@default".', ['@default' => $this->t('Reject')]),
+      '#default_value' => $task['data']['reject_on_edit_label'] ?? '',
+      '#maxlength' => 64,
+      '#required' => FALSE,
+      '#states' => [
+        'visible' => [':input[name="reject_on_edit"]' => ['checked' => TRUE]],
+      ],
+    ];
+
     $form['link_to_edit'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Link to the Edit page of the content in the task console.'),
@@ -247,7 +297,26 @@ class MaestroContentTypeTask extends PluginBase implements MaestroEngineTaskInte
    * {@inheritDoc}
    */
   public function validateTaskEditForm(array &$form, FormStateInterface $form_state) {
-
+    // Drupal tells the content form's buttons apart partly by their label, so the labels
+    // shown on that form must all differ.
+    $save = trim((string) $form_state->getValue('save_label')) ?: (string) $this->t('Save');
+    $taken = [mb_strtolower((string) $this->t('Preview')), mb_strtolower((string) $this->t('Delete'))];
+    if (in_array(mb_strtolower($save), $taken, TRUE)) {
+      $form_state->setErrorByName('save_label', $this->t('The Save button label cannot be "@label": the content form already has a button with that label.', ['@label' => $save]));
+    }
+    if ($form_state->getValue('save_edit_later')) {
+      $later = trim((string) $form_state->getValue('save_edit_later_label')) ?: (string) $this->t('Save and Edit Later');
+      if (in_array(mb_strtolower($later), array_merge($taken, [mb_strtolower($save)]), TRUE)) {
+        $form_state->setErrorByName('save_edit_later_label', $this->t('The Save and Edit Later button label must be different from the other buttons on the content form, including the Save button ("@save").', ['@save' => $save]));
+      }
+      $taken[] = mb_strtolower($later);
+    }
+    if ($form_state->getValue('reject_on_edit')) {
+      $reject = trim((string) $form_state->getValue('reject_on_edit_label')) ?: (string) $this->t('Reject');
+      if (in_array(mb_strtolower($reject), array_merge($taken, [mb_strtolower($save)]), TRUE)) {
+        $form_state->setErrorByName('reject_on_edit_label', $this->t('The Reject button label must be different from the other buttons on the content form, including the Save button ("@save").', ['@save' => $save]));
+      }
+    }
   }
 
   /**
@@ -257,6 +326,11 @@ class MaestroContentTypeTask extends PluginBase implements MaestroEngineTaskInte
     $task['data']['unique_id'] = $form_state->getValue('unique_id');
     $task['data']['content_type'] = $form_state->getValue('content_type');
     $task['data']['save_edit_later'] = $form_state->getValue('save_edit_later');
+    $task['data']['save_label'] = trim((string) $form_state->getValue('save_label'));
+    $task['data']['save_edit_later_label'] = trim((string) $form_state->getValue('save_edit_later_label'));
+    $task['data']['hide_delete'] = (int) $form_state->getValue('hide_delete');
+    $task['data']['reject_on_edit'] = (int) $form_state->getValue('reject_on_edit');
+    $task['data']['reject_on_edit_label'] = trim((string) $form_state->getValue('reject_on_edit_label'));
     $task['data']['link_to_edit'] = $form_state->getValue('link_to_edit');
     $task['data']['show_maestro_buttons_on_view'] = $form_state->getValue('show_maestro_buttons_on_view');
     $task['data']['accept_label'] = $form_state->getValue('accept_label');

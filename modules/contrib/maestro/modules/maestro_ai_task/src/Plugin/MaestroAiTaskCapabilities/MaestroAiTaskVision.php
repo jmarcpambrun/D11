@@ -327,19 +327,24 @@ class MaestroAiTaskVision extends MaestroAiTaskCapabilitiesPluginBase implements
           $messages->setSystemPrompt($this->getUntrustedDataSystemPrompt());
           
           $message = $provider->chat($messages, $sets['model_id'], ['maestro-ai-task-chat'])->getNormalized();
-          $responseText .= $message->getText() ?? NULL;
+          // A guardrail stop comes back as an ordinary reply holding the guardrail's message.
+          if ($this->stoppedByGuardrail($messages)) {
+            return NULL;
+          }
+          // Filtered like the chat capability's response.
+          $responseText .= Xss::filter($message->getText() ?? '');
         }
         catch(\Exception $e) {
-          // Response text could go into a PV or entity.  So not much use in translating it.
-          \Drupal::logger('MaestroAiTaskVision')->error($e->getMessage());
+          // An error, not a rejection: the task is aborted and the AI task stores nothing.
+          \Drupal::logger('MaestroAiTaskVision')->error('The Vision AI call failed: @message', ['@message' => $e->getMessage()]);
           $responseText .= 'There was an issue in the Maestro AI Task LLM call for Vision.';
-          $this->taskStatus = TASK_STATUS_CANCEL;
+          $this->taskStatus = TASK_STATUS_ABORTED;
         }
         
       }
       else {
-        // Well, we have a serious issue.  No Chat message, so we set the status of this task.
-        $this->taskStatus = TASK_STATUS_CANCEL;
+        // Well, we have a serious issue.  No Chat message, so we abort this task.
+        $this->taskStatus = TASK_STATUS_ABORTED;
         $responseText .= 'There is an issue with the source image configuration of your Maestro AI Task configuration for Vision.';
       }
     }

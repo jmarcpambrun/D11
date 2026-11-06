@@ -1,0 +1,29 @@
+maestro_reactflow_template_builder.builder:
+  path: '/admin/structure/maestro/reactflow-builder/{templateMachineName}'
+  defaults:
+    _form: '\Drupal\maestro_reactflow_template_builder\Form\MaestroReactFlowBuilderForm'
+    _title: 'ReactFlow Template Builder'
+  options:
+    no_cache: TRUE
+  requirements:
+    _permission: 'administer maestro templates'
+
+maestro_reactflow_template_builder.edit_task:
+  path: '/admin/structure/maestro/reactflow-builder/{templateMachineName}/edit-task'
+  defaults:
+    _form: '\Drupal\maestro_reactflow_template_builder\Form\MaestroReactFlowEditTaskForm'
+    _title: 'Edit Task'
+  options:
+    no_cache: TRUE
+  requirements:
+    _permission: 'administer maestro templates'
+
+maestro_reactflow_template_builder.validity_check:
+  path: '/admin/structure/maestro/reactflow-builder/{templateMachineName}/validity-check'
+  defaults:
+    _form: '\Drupal\maestro_reactflow_template_builder\Form\MaestroReactFlowValidityCheckForm'
+    _title: 'Validity Check'
+  options:
+    no_cache: TRUE
+  requirements:
+    _permission: 'administer maestro templates'

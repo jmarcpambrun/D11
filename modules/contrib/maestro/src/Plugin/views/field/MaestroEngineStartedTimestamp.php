@@ -23,6 +23,15 @@ class MaestroEngineStartedTimestamp extends FieldPluginBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function clickSort($order) {
+    // The displayed field is virtual; sort by its underlying timestamp.
+    $this->ensureMyTable();
+    $this->query->addOrderBy($this->tableAlias, 'started_date', $order);
+  }
+
+  /**
    * Define the available options.
    *
    * @return array

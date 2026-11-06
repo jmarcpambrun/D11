@@ -1,0 +1,261 @@
+<?php
+
+/**
+ * @file
+ * Hooks for the Maestro Trace Archive module.
+ */
+
+use Drupal\maestro\Engine\MaestroEngine;
+use Drupal\maestro_trace_archive\Entity\MaestroTraceSnapshot;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\RevisionableInterface;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Number of snapshots deleted per chunk when pruning.
+ */
+const MAESTRO_TRACE_ARCHIVE_PRUNE_CHUNK = 500;
+
+/**
+ * Maximum number of snapshots pruned in a single cron run, so a large
+ * backlog is worked off over several runs instead of timing out cron.
+ */
+const MAESTRO_TRACE_ARCHIVE_PRUNE_MAX_PER_RUN = 25000;
+
+/**
+ * Returns the units the prune age can be expressed in.
+ */
+function _maestro_trace_archive_prune_units() {
+  return [
+    'hours' => t('Hours'),
+    'days' => t('Days'),
+    'weeks' => t('Weeks'),
+    'months' => t('Months'),
+  ];
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the main Maestro settings form.
+ */
+function maestro_trace_archive_form_maestro_admin_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $config = \Drupal::config('maestro_trace_archive.settings');
+
+  $form['maestro_trace_archive'] = [
+    '#type' => 'details',
+    '#title' => t('Maestro Trace Archive'),
+    '#open' => TRUE,
+    '#description' => t('Trace snapshots are captured before and after every task executes and can grow the database quickly. Snapshots older than the age below are deleted on cron. Set the number to 0 to keep snapshots forever. <b>Trace snapshots can consume a great deal of database space if kept for long periods of time!</b>'),
+  ];
+
+  $form['maestro_trace_archive']['container'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['container-inline']],
+  ];
+
+  $form['maestro_trace_archive']['container']['maestro_trace_archive_prune_age_value'] = [
+    '#type' => 'number',
+    '#title' => t('Delete trace snapshots older than'),
+    '#min' => 0,
+    '#step' => 1,
+    '#size' => 5,
+    '#default_value' => $config->get('prune_age_value') ?? 1,
+    '#required' => TRUE,
+  ];
+
+  $form['maestro_trace_archive']['container']['maestro_trace_archive_prune_age_unit'] = [
+    '#type' => 'select',
+    '#title' => t('Unit'),
+    '#title_display' => 'invisible',
+    '#options' => _maestro_trace_archive_prune_units(),
+    '#default_value' => $config->get('prune_age_unit') ?? 'weeks',
+  ];
+
+  $form['#submit'][] = '_maestro_trace_archive_settings_submit';
+}
+
+/**
+ * Submit handler that saves the trace archive pruning settings.
+ */
+function _maestro_trace_archive_settings_submit(&$form, FormStateInterface $form_state) {
+  \Drupal::configFactory()->getEditable('maestro_trace_archive.settings')
+    ->set('prune_age_value', (int) $form_state->getValue('maestro_trace_archive_prune_age_value'))
+    ->set('prune_age_unit', $form_state->getValue('maestro_trace_archive_prune_age_unit'))
+    ->save();
+}
+
+/**
+ * Implements hook_cron().
+ */
+function maestro_trace_archive_cron() {
+  $deleted = _maestro_trace_archive_prune();
+  if ($deleted) {
+    \Drupal::logger('maestro_trace_archive')->info('Pruned @count trace snapshots.', ['@count' => $deleted]);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for maestro_process.
+ */
+function maestro_trace_archive_maestro_process_delete(EntityInterface $entity) {
+  _maestro_trace_archive_delete_process_snapshots($entity->id());
+}
+
+/**
+ * Deletes every trace snapshot belonging to a process.
+ *
+ * Called from MaestroEngine::deleteProcess() as well as the process delete
+ * hook, so snapshots are cleaned up even if the process record is already
+ * gone.
+ *
+ * @param int $processID
+ *   The maestro_process entity ID.
+ */
+function _maestro_trace_archive_delete_process_snapshots($processID) {
+  if (!$processID) {
+    return;
+  }
+  while (_maestro_trace_archive_delete_chunk('process_id', $processID, '=')) {
+  }
+}
+
+/**
+ * Deletes trace snapshots older than the configured prune age.
+ *
+ * @return int
+ *   The number of snapshots deleted.
+ */
+function _maestro_trace_archive_prune() {
+  $config = \Drupal::config('maestro_trace_archive.settings');
+  $value = (int) $config->get('prune_age_value');
+  $unit = $config->get('prune_age_unit');
+  if ($value <= 0 || !array_key_exists($unit, _maestro_trace_archive_prune_units())) {
+    return 0;
+  }
+
+  $cutoff = strtotime("-{$value} {$unit}", \Drupal::time()->getRequestTime());
+  $deleted = 0;
+  while ($deleted < MAESTRO_TRACE_ARCHIVE_PRUNE_MAX_PER_RUN) {
+    $count = _maestro_trace_archive_delete_chunk('created', $cutoff, '<');
+    if (!$count) {
+      break;
+    }
+    $deleted += $count;
+  }
+  return $deleted;
+}
+
+/**
+ * Deletes one chunk of trace snapshots matching a condition.
+ *
+ * Snapshots can number in the hundreds of thousands, so rows are removed with
+ * a single SQL delete per chunk rather than loading and deleting each entity.
+ * The entity caches and cache tags are then cleared for exactly the deleted
+ * IDs, the same invalidation the entity API performs on delete, so nothing
+ * stale is left behind. Snapshots have no delete hooks to skip.
+ *
+ * @return int
+ *   The number of snapshots deleted.
+ */
+function _maestro_trace_archive_delete_chunk($field, $value, $operator) {
+  $storage = \Drupal::entityTypeManager()->getStorage('maestro_trace_snapshot');
+  $ids = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition($field, $value, $operator)
+    ->sort('id')
+    ->range(0, MAESTRO_TRACE_ARCHIVE_PRUNE_CHUNK)
+    ->execute();
+  if (empty($ids)) {
+    return 0;
+  }
+
+  \Drupal::database()->delete($storage->getEntityType()->getBaseTable())
+    ->condition('id', array_values($ids), 'IN')
+    ->execute();
+
+  $storage->resetCache($ids);
+  $tags = $storage->getEntityType()->getListCacheTags();
+  foreach ($ids as $id) {
+    $tags[] = 'maestro_trace_snapshot:' . $id;
+  }
+  Cache::invalidateTags($tags);
+
+  return count($ids);
+}
+
+/**
+ * Implements hook_maestro_pre_task_execute().
+ */
+function maestro_trace_archive_maestro_pre_task_execute($queueID, $processID, $taskID) {
+  _maestro_trace_archive_take_snapshot($queueID, $processID, $taskID, 'before');
+}
+
+/**
+ * Implements hook_maestro_post_task_execute().
+ */
+function maestro_trace_archive_maestro_post_task_execute($queueID, $processID, $taskID) {
+  _maestro_trace_archive_take_snapshot($queueID, $processID, $taskID, 'after');
+}
+
+/**
+ * Builds and saves one snapshot row of every process variable and entity
+ * identifier currently on the process.
+ */
+function _maestro_trace_archive_take_snapshot($queueID, $processID, $taskID, $snapshotPoint) {
+  MaestroTraceSnapshot::create([
+    'queue_id' => $queueID,
+    'process_id' => $processID,
+    'task_id' => $taskID,
+    'snapshot_point' => $snapshotPoint,
+    'data' => [
+      'process_variables' => _maestro_trace_archive_collect_process_variables($processID),
+      'entity_identifiers' => _maestro_trace_archive_collect_entity_identifiers($processID),
+    ],
+  ])->save();
+}
+
+/**
+ * Collects all process variables for a process into a name => value map.
+ */
+function _maestro_trace_archive_collect_process_variables($processID) {
+  $variables = [];
+  $query = \Drupal::entityTypeManager()->getStorage('maestro_process_variables')->getQuery();
+  $query->condition('process_id', $processID)->accessCheck(FALSE);
+  $ids = $query->execute();
+  foreach ($ids as $id) {
+    $record = \Drupal::entityTypeManager()->getStorage('maestro_process_variables')->load($id);
+    if ($record) {
+      $variables[$record->variable_name->getString()] = $record->variable_value->getString();
+    }
+  }
+  return $variables;
+}
+
+/**
+ * Collects all entity identifiers for a process, enriched with the
+ * referenced entity's current revision ID where the entity type supports
+ * revisions.
+ */
+function _maestro_trace_archive_collect_entity_identifiers($processID) {
+  $identifiers = MaestroEngine::getAllEntityIdentifiersForProcess($processID);
+  $result = [];
+  foreach ($identifiers as $identifier) {
+    $identifier['revision_id'] = NULL;
+    if (!empty($identifier['entity_type']) && !empty($identifier['entity_id'])) {
+      try {
+        $entity = \Drupal::entityTypeManager()
+          ->getStorage($identifier['entity_type'])
+          ->load($identifier['entity_id']);
+        if ($entity instanceof RevisionableInterface) {
+          $identifier['revision_id'] = $entity->getRevisionId();
+        }
+      }
+      catch (\Exception $e) {
+        // Entity type doesn't exist or storage failed to load -- leave
+        // revision_id as NULL, don't let a bad reference break the snapshot.
+      }
+    }
+    $result[] = $identifier;
+  }
+  return $result;
+}

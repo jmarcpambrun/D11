@@ -1,3 +1,5 @@
 maestro_task_console.menu:
   title: Task Console
   route_name: maestro_taskconsole.taskconsole
+  parent: maestro.navigation_menu
+  weight: 0

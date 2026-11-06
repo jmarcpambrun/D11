@@ -2,30 +2,245 @@
 
 /**
  * @file
- * Maestro Task Console module file. Provides Drupal Hook implementations.
+ * Theme and form integration for the Maestro Task Console.
  */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\maestro\Form\MaestroInteractiveFormBase;
 
 /**
  * Implements hook_theme().
  */
 function maestro_taskconsole_theme($existing, $type, $theme, $path) {
   return [
+    'maestro_exposed_form' => [
+      'render element' => 'form',
+    ],
+    // Retained for existing theme overrides.
     'taskconsole_status_bar' => [
-      'variables' => [
-        'stage_count' => 0,
-        'stage_messages' => [],
-        'current_stage' => 0,
-        'current_stage_message' => '',
-      ],
+      'variables' => ['stage_count' => 0, 'stage_messages' => [], 'current_stage' => 0, 'current_stage_message' => ''],
     ],
-
     'taskconsole_views' => [
-      'variables' => [
-    // The html string of task information.
-        'task_information' => '',
-        'title' => '',
-      ],
+      'variables' => ['task_information' => '', 'title' => '', 'view_id' => '', 'item_count' => NULL],
     ],
-
+    'maestro_taskconsole_milestones' => [
+      'variables' => ['steps' => [], 'summary' => ''],
+    ],
+    'maestro_taskconsole_execution' => [
+      'render element' => 'element',
+    ],
   ];
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function maestro_taskconsole_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Run after all form alters, including the Maestro Webform integration.
+  $form['#after_build'][] = 'maestro_taskconsole_execution_after_build';
+}
+
+/**
+ * Wraps an authorized Maestro form without moving its original elements.
+ */
+function maestro_taskconsole_execution_after_build(array $form, FormStateInterface $form_state): array {
+  if (!empty($form['#maestro_taskconsole_context']) || !empty($form['#maestro_taskconsole_disable'])) {
+    return $form;
+  }
+  $object = $form_state->getFormObject();
+  $interactive = $object instanceof MaestroInteractiveFormBase;
+  // Other forms qualify only when Maestro itself has associated the form.
+  $queue_id = $interactive ? $object->queueID : ($form['maestro']['queue_id']['#default_value'] ?? 0);
+  if (!$queue_id || isset($form['error'])) {
+    return $form;
+  }
+  $presentation = \Drupal::service('maestro_taskconsole.presentation');
+  $context = $presentation->context($queue_id);
+  if (!$context) {
+    return $form;
+  }
+  // Keep the example request focused, without changing other workflow forms.
+  // Use the authorized queue context, never unvalidated URL parameters.
+  if ($context['template_id'] === 'form_approval_flow'
+      && $context['queue']->task_id->value === 'submit_request'
+      && $object instanceof \Drupal\Core\Entity\EntityFormInterface
+      && $object->getEntity() instanceof \Drupal\node\NodeInterface
+      && $object->getEntity()->bundle() === 'approval_form') {
+    foreach (['meta', 'menu', 'revision_information', 'revision', 'revision_log'] as $key) {
+      if (isset($form[$key])) {
+        $form[$key]['#access'] = FALSE;
+      }
+    }
+    // Claro uses a two-column node template even with an empty sidebar.
+    // Fall back to normal Form API rendering, keeping fields and callbacks.
+    if (($form['#theme'] ?? NULL) === 'node_edit_form'
+        || ($form['#theme'] ?? NULL) === ['node_edit_form']) {
+      unset($form['#theme']);
+    }
+  }
+  $modal = $interactive && $object->modal === 'modal';
+  $return_path = $form['return_path']['#default_value'] ?? $context['task_definition']['data']['redirect_to'] ?? 'taskconsole';
+  try {
+    // Maestro's return paths are internal paths; retain custom destinations.
+    $return_url = Url::fromUserInput('/' . ltrim($return_path, '/'));
+  }
+  catch (\InvalidArgumentException $exception) {
+    $return_url = Url::fromRoute('maestro_taskconsole.taskconsole');
+  }
+  $console_url = Url::fromRoute('maestro_taskconsole.taskconsole')->toString();
+  $return_link = [
+    '#type' => 'link',
+    '#title' => $return_url->toString() === $console_url ? t('Return to Task Console') : t('Return'),
+    '#url' => $return_url,
+    '#attributes' => ['class' => ['maestro-leave-task']],
+  ];
+  $form['#maestro_taskconsole_context'] = array_intersect_key($context, array_flip(['task', 'flow', 'assigned', 'stage']));
+  $form['#maestro_taskconsole_modal'] = $modal;
+  $form['#maestro_taskconsole_return'] = $return_link;
+  $form['#maestro_taskconsole_milestones'] = $presentation->milestones($context['process_id'], $context['stage']);
+  $form['#theme_wrappers'][] = 'maestro_taskconsole_execution';
+  $form['#attributes']['class'][] = 'maestro-task-form';
+  $form['#attached']['library'][] = 'maestro_taskconsole/maestro_taskconsole_css';
+  $form['#cache']['max-age'] = 0;
+  if (isset($form['actions'])) {
+    $form['actions']['#attributes']['class'][] = 'maestro-form-actions';
+    // The base interactive form uses an untyped actions array. Add only a
+    // rendering wrapper, keeping input parents and handler callbacks intact.
+    if (empty($form['actions']['#type']) && empty($form['actions']['#theme_wrappers'])) {
+      $form['actions']['#theme_wrappers'] = ['container'];
+    }
+    if (isset($form['actions']['submit']) && !isset($form['actions']['submit']['#button_type'])) {
+      $form['actions']['submit']['#attributes']['class'][] = 'button--primary';
+    }
+  }
+  // Preserve all handler-defined action elements, weights, and callbacks.
+  // This link does not submit or change the task status.
+  if (isset($form['actions']) && !isset($form['actions']['cancel'])) {
+    $form['actions']['maestro_console_cancel'] = $modal ? [
+      '#type' => 'html_tag',
+      '#tag' => 'button',
+      '#value' => t('Cancel'),
+      '#attributes' => ['type' => 'button', 'class' => ['maestro-dialog-cancel', 'button']],
+    ] : $return_link + ['#weight' => 1000];
+    $form['actions']['maestro_console_cancel']['#weight'] = 1000;
+    $form['actions']['maestro_console_cancel']['#parents'] = ['actions', 'maestro_console_cancel'];
+    $form['actions']['maestro_console_cancel']['#array_parents'] = ['actions', 'maestro_console_cancel'];
+    if (!$modal) {
+      $form['actions']['maestro_console_cancel']['#title'] = t('Cancel');
+    }
+  }
+  return $form;
+}
+
+/**
+ * Prepares the execution wrapper around the already rendered original form.
+ */
+function template_preprocess_maestro_taskconsole_execution(array &$variables) {
+  $element = $variables['element'];
+  $variables['children'] = $element['#children'];
+  $variables['task_context'] = $element['#maestro_taskconsole_context'];
+  $variables['modal'] = $element['#maestro_taskconsole_modal'];
+  $variables['return_link'] = $element['#maestro_taskconsole_return'];
+  $variables['milestones'] = $element['#maestro_taskconsole_milestones'];
+}
+
+
+/**
+ * Implements hook_preprocess_views_view().
+ */
+function maestro_taskconsole_preprocess_views_view(array &$variables) {
+  $reports = [
+    'maestro_outstanding_tasks' => ['maestro_outstanding_tasks'],
+    'maestro_all_in_production_tasks' => ['maestro_all_active_tasks_lean', 'maestro_all_active_tasks_full'],
+  ];
+  $view_id = $variables['view']->id();
+  if (isset($reports[$view_id]) && in_array($variables['view']->current_display, $reports[$view_id], TRUE)) {
+    $variables['attributes']['class'][] = 'maestro-task-report';
+    $variables['attributes']['class'][] = $view_id === 'maestro_outstanding_tasks' ? 'maestro-outstanding-tasks' : 'maestro-active-workflows';
+    $variables['view']->element['#attached']['library'][] = 'maestro_taskconsole/outstanding_tasks';
+    return;
+  }
+  if ($view_id === 'maestro_all_flows') {
+    $variables['attributes']['class'][] = 'maestro-all-flows';
+    $variables['attributes']['class'][] = 'maestro-task-report';
+    $variables['view']->element['#attached']['library'][] = 'maestro_taskconsole/outstanding_tasks';
+  }
+  if (!in_array($view_id, ['maestro_views_based_task_console', 'maestro_all_flows'], TRUE)) {
+    return;
+  }
+  $variables['attributes']['class'][] = 'maestro-views-taskconsole';
+  $variables['view']->element['#attached']['library'][] = 'maestro_taskconsole/views_taskconsole';
+  // Respect empty-state content configured by site builders.
+  if (empty($variables['rows']) && empty($variables['empty'])) {
+    $variables['empty'] = ['#markup' => $view_id === 'maestro_all_flows' ? t('No processes to display. Try changing your filters.') : t('No tasks to display. Try changing your filters.')];
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_view_table().
+ */
+function maestro_taskconsole_preprocess_views_view_table(array &$variables) {
+  $view = $variables['view'];
+  $displays = [
+    'maestro_outstanding_tasks' => ['maestro_outstanding_tasks'],
+    'maestro_all_in_production_tasks' => ['maestro_all_active_tasks_lean', 'maestro_all_active_tasks_full'],
+  ];
+  if ($view->id() === 'maestro_all_flows' || (isset($displays[$view->id()]) && in_array($view->current_display, $displays[$view->id()], TRUE))) {
+    $variables['attributes']['class'][] = 'maestro-report-table';
+  }
+  if (in_array($view->id(), ['maestro_views_based_task_console', 'maestro_all_flows'], TRUE) || (isset($displays[$view->id()]) && in_array($view->current_display, $displays[$view->id()], TRUE))) {
+    $variables['attributes']['class'][] = 'maestro-sortable-table';
+  }
+  if ($view->id() === 'maestro_completed_tasks') {
+    $variables['attributes']['class'][] = 'maestro-detail-table';
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for views_exposed_form.
+ */
+function maestro_taskconsole_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state) {
+  $view = $form_state->get('view');
+  if (!$view) {
+    return;
+  }
+  $reports = [
+    'maestro_outstanding_tasks' => ['maestro_outstanding_tasks'],
+    'maestro_all_in_production_tasks' => ['maestro_all_active_tasks_lean', 'maestro_all_active_tasks_full'],
+  ];
+  $report = isset($reports[$view->id()]) && in_array($view->current_display, $reports[$view->id()], TRUE);
+  if ($report || in_array($view->id(), ['maestro_views_based_task_console', 'maestro_all_flows'], TRUE)) {
+    $form['#theme'] = 'maestro_exposed_form';
+    $form['#attributes']['class'][] = 'maestro-filters';
+    if ($report) {
+      $form['#attributes']['class'][] = 'maestro-filters--report';
+    }
+    $form['#attached']['library'][] = 'maestro_taskconsole/view_filters';
+    if ($report || $view->id() === 'maestro_all_flows') {
+      // Use the display URL rather than the current request, which may be
+      // /views/ajax after filtering. Omit filters, sorting, and pager arguments.
+      $form['actions']['reset'] = [
+        '#type' => 'link',
+        '#title' => t('Reset'),
+        '#url' => $view->getUrl()->setOption('query', []),
+        '#attributes' => ['class' => ['maestro-filters__reset']],
+        '#weight' => 10,
+      ];
+    }
+  }
+}
+
+/**
+ * Prepares the shared filter template without theme-specific layout wrappers.
+ */
+function maestro_taskconsole_preprocess_maestro_exposed_form(array &$variables) {
+  // Preserve the labels and help text configured by Views.
+  foreach ($variables['form']['#info'] ?? [] as $info) {
+    foreach (['label' => '#title', 'description' => '#description'] as $key => $property) {
+      if (!empty($info[$key])) {
+        $variables['form'][$info['value']][$property] = $info[$key];
+      }
+    }
+  }
 }

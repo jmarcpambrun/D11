@@ -982,6 +982,25 @@ class MaestroEngine {
       }
 
     }
+    // Only one task per stage should provide the stage's default label.
+    $default_stage_tasks = [];
+    foreach ($template->tasks as $task) {
+      if (!empty($task['participate_in_workflow_status_stage']) && !empty($task['workflow_status_stage_default']) && !empty($task['workflow_status_stage_number'])) {
+        $default_stage_tasks[$task['workflow_status_stage_number']][] = $task;
+      }
+    }
+    foreach ($default_stage_tasks as $stage_number => $tasks) {
+      if (count($tasks) > 1) {
+        foreach ($tasks as $task) {
+          $validation_information_tasks[] = [
+            'taskID' => $task['id'],
+            'taskLabel' => $task['label'],
+            'reason' => t("Several tasks on stage @stage are set to provide the stage's default label. The last one in the template is used.", ['@stage' => $stage_number]),
+          ];
+        }
+      }
+    }
+
     // Now we check to see if an end task exists...
     if (!$endTaskExists) {
       $validation_failure_tasks[] = [
@@ -1229,6 +1248,7 @@ class MaestroEngine {
       if ($record) {
         $retArray[$record->stage_number->getString()] = [
           'message' => $record->stage_message->getString(),
+          'status' => $record->stage_status->getString(),
           'completed' => $record->completed->getString(),
           'stage_number' => $record->stage_number->getString(),
         ];
@@ -1236,6 +1256,38 @@ class MaestroEngine {
     }
 
     return $retArray;
+  }
+
+  /**
+   * The predefined workflow stage statuses offered on the task editor.
+   *
+   * A task may also set a custom status machine name.
+   *
+   * @return array
+   *   Labels keyed by status machine name.
+   */
+  public static function getWorkflowStageStatusOptions() {
+    return [
+      'success' => t('Success'),
+      'failure' => t('Failure'),
+      'warning' => t('Warning'),
+      'info' => t('Info'),
+      'neutral' => t('Neutral'),
+    ];
+  }
+
+  /**
+   * Cleans a workflow stage status into a machine name.
+   *
+   * @param string $status
+   *   The status as entered.
+   *
+   * @return string
+   *   Lowercase letters, numbers and underscores only; empty for no status.
+   */
+  public static function cleanWorkflowStageStatus($status) {
+    $status = preg_replace('/[^a-z0-9_]+/', '_', strtolower(trim((string) $status)));
+    return substr(trim($status, '_'), 0, 64);
   }
 
   /**
@@ -1300,6 +1352,28 @@ class MaestroEngine {
       if ($record) {
         $record->delete();
       }
+    }
+
+    // Delete the Maestro AI Task storage entities, when that module is enabled.
+    // Done here rather than relying only on maestro_ai_task's hook_entity_delete(),
+    // which never fires if the process record is already gone.
+    if (\Drupal::entityTypeManager()->hasDefinition('maestro_ai_storage')) {
+      $query = \Drupal::entityQuery('maestro_ai_storage')
+        ->condition('process_id', $processID)
+        ->accessCheck(FALSE);
+      $entityIDs = $query->execute();
+      foreach ($entityIDs as $entityID) {
+        $record = \Drupal::entityTypeManager()->getStorage('maestro_ai_storage')->load($entityID);
+        if ($record) {
+          $record->delete();
+        }
+      }
+    }
+
+    // Delete the Maestro Trace Archive snapshots, when that module is enabled.
+    // Same reasoning as above: don't rely only on the module's process delete hook.
+    if (\Drupal::moduleHandler()->moduleExists('maestro_trace_archive')) {
+      _maestro_trace_archive_delete_process_snapshots($processID);
     }
 
     // finally, delete the process.
@@ -1578,11 +1652,19 @@ class MaestroEngine {
         // we do this by looping through the tasks and creating an array of values for which we then set
         // the maestro_process_status entity.
         $status_message_array = [];
+        $default_stages = [];
         foreach ($template->tasks as $task) {
           // Relates to the checkbox on the task editor.
           if (isset($task['participate_in_workflow_status_stage']) && $task['participate_in_workflow_status_stage'] == 1) {
             if (isset($task['workflow_status_stage_number'])) {
-              $status_message_array[$task['workflow_status_stage_number']] = $task['workflow_status_stage_message'];
+              $stage = $task['workflow_status_stage_number'];
+              $is_default = !empty($task['workflow_status_stage_default']);
+              if ($is_default || !isset($default_stages[$stage])) {
+                $status_message_array[$stage] = $task['workflow_status_stage_message'];
+              }
+              if ($is_default) {
+                $default_stages[$stage] = TRUE;
+              }
             }
           }
         }
@@ -2272,6 +2354,27 @@ class MaestroEngine {
         }
         if (isset($nextTask['workflow_status_stage_message'])) {
           $this->setProcessVariable('workflow_current_stage_message', $nextTask['workflow_status_stage_message'], $processID);
+        }
+        // The process's status entries are seeded at process creation, where
+        // several tasks sharing a stage leave only one of their messages.
+        // Record this task's message on its stage so the status reflects the
+        // path the process actually took.
+        if (isset($nextTask['workflow_status_stage_number']) && isset($nextTask['workflow_status_stage_message'])) {
+          $stage_status = $nextTask['workflow_status_stage_status'] ?? '';
+          $query = \Drupal::entityQuery('maestro_process_status')
+            ->condition('process_id', $processID)
+            ->condition('stage_number', $nextTask['workflow_status_stage_number'])
+            ->accessCheck(FALSE);
+          $statusEntityIDs = $query->execute();
+          foreach ($statusEntityIDs as $entity_id) {
+            $statusRecord = \Drupal::entityTypeManager()->getStorage('maestro_process_status')->load($entity_id);
+            if ($statusRecord && ($statusRecord->stage_message->getString() !== $nextTask['workflow_status_stage_message']
+                || $statusRecord->stage_status->getString() !== $stage_status)) {
+              $statusRecord->set('stage_message', $nextTask['workflow_status_stage_message']);
+              $statusRecord->set('stage_status', $stage_status);
+              $statusRecord->save();
+            }
+          }
         }
       }
     }

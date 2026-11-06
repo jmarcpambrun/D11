@@ -129,6 +129,47 @@ trait MaestroTaskTrait {
         ],
       ],
     ];
+
+    $form['status_and_stage_fieldset']['workflow_status_stage_default'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t("Use this message as the stage's label until the workflow reaches it."),
+      '#description' => $this->t('When several tasks share a stage (for example, the branches of an If task), the stage is labelled with this task\'s message until one of them runs. When no task on the stage is flagged, the last one in the template is used.'),
+      '#default_value' => $task['workflow_status_stage_default'] ?? 0,
+      '#states' => [
+        'visible' => [
+          ':input[name="participate_in_workflow_status_stage"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
+    $status = $task['workflow_status_stage_status'] ?? '';
+    $predefined = MaestroEngine::getWorkflowStageStatusOptions();
+    $form['status_and_stage_fieldset']['workflow_status_stage_status'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Stage status.'),
+      '#description' => $this->t('What reaching this stage through this task means. Status bars add it as a CSS class (maestro-stage-status--STATUS) and a data-stage-status attribute, so a theme can style the outcome.'),
+      '#options' => ['' => $this->t('- None -')] + $predefined + ['_custom' => $this->t('Custom...')],
+      '#default_value' => ($status === '' || isset($predefined[$status])) ? $status : '_custom',
+      '#states' => [
+        'visible' => [
+          ':input[name="participate_in_workflow_status_stage"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
+    $form['status_and_stage_fieldset']['workflow_status_stage_status_custom'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Custom stage status machine name.'),
+      '#description' => $this->t('Lowercase letters, numbers and underscores. Anything else is converted to an underscore.'),
+      '#default_value' => isset($predefined[$status]) ? '' : $status,
+      '#maxlength' => 64,
+      '#states' => [
+        'visible' => [
+          ':input[name="participate_in_workflow_status_stage"]' => ['checked' => TRUE],
+          ':input[name="workflow_status_stage_status"]' => ['value' => '_custom'],
+        ],
+      ],
+    ];
     return $form;
   }
 
@@ -520,6 +561,8 @@ trait MaestroTaskTrait {
       'participate_in_workflow_status_stage' => 0,
       'workflow_status_stage_number' => 0,
       'workflow_status_stage_message' => '',
+      'workflow_status_stage_default' => 0,
+      'workflow_status_stage_status' => '',
     ];
     $missingKeys = array_diff_key($requiredKeys, $task);
     foreach ($missingKeys as $key => $val) {
@@ -531,6 +574,12 @@ trait MaestroTaskTrait {
     $task['participate_in_workflow_status_stage'] = $form_state->getValue('participate_in_workflow_status_stage');
     $task['workflow_status_stage_number'] = $form_state->getValue('workflow_status_stage_number');
     $task['workflow_status_stage_message'] = $form_state->getValue('workflow_status_stage_message');
+    $task['workflow_status_stage_default'] = (int) $form_state->getValue('workflow_status_stage_default');
+    $status = (string) $form_state->getValue('workflow_status_stage_status');
+    if ($status === '_custom') {
+      $status = (string) $form_state->getValue('workflow_status_stage_status_custom');
+    }
+    $task['workflow_status_stage_status'] = MaestroEngine::cleanWorkflowStageStatus($status);
 
     // Now the assignments.
     $executableTask = MaestroEngine::getPluginTask($task['tasktype']);

@@ -65,7 +65,7 @@ class MaestroAiTaskChatCapability extends MaestroAiTaskCapabilitiesPluginBase im
   /**
    * {@inheritDoc}
    */
-  public function execute() : string {
+  public function execute() : ?string {
     /** @var \Drupal\ai\AiProviderPluginManager $service */
     $service = \Drupal::service('ai.provider');
     $sets = $service->getDefaultProviderForOperationType('chat');
@@ -76,6 +76,10 @@ class MaestroAiTaskChatCapability extends MaestroAiTaskCapabilitiesPluginBase im
     // Tell the model that the <maestro_data> delimited token values are data, not instructions.
     $messages->setSystemPrompt($this->getUntrustedDataSystemPrompt());
     $message = $provider->chat($messages, $sets['model_id'], ['maestro-ai-task-chat'])->getNormalized();
+    // A guardrail stop comes back as an ordinary reply holding the guardrail's message.
+    if ($this->stoppedByGuardrail($messages)) {
+      return NULL;
+    }
     $responseText = Xss::filter($message->getText()) ?? NULL;
     return $responseText;
   }

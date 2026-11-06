@@ -1,0 +1,4 @@
+review_task:
+  css:
+    theme:
+      css/review-task.css: {}

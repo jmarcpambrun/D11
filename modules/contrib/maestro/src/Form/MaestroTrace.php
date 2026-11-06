@@ -30,23 +30,35 @@ class MaestroTrace extends FormBase {
     if ($processRecord) {
       // Now we get all of the queue entries that belong to this process and display them in a simple list.
       $form = [];
-      $form['#markup'] = '<div id="maestro-trace-heading">' . t('For the process') . ': ' . $processRecord->process_name->getString() . '</div>';
+      $form['#attributes']['class'][] = 'maestro-trace';
+      $form['#title'] = $this->t('Trace: @process', ['@process' => $processRecord->process_name->getString()]);
+      $form['summary'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['maestro-trace__summary']],
+        'process' => ['#plain_text' => $this->t('Process #@id', ['@id' => $processID])],
+        'state' => [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#attributes' => ['class' => ['maestro-trace__state']],
+          '#value' => $processRecord->complete->value ? $this->t('Completed') : $this->t('Active'),
+        ],
+      ];
 
       $form['tasks_table'] = [
         '#type' => 'table',
-        '#caption' => $this->t('Tasks in this Process'),
+        '#caption' => $this->t('Tasks'),
         '#header' => [
           [
             'data' => $this->t('Change'),
             'class' => 'maestro_hide_col',
           ],
           $this->t('Queue ID'),
-          $this->t('Label'),
+          $this->t('Task'),
           $this->t('Status'),
           $this->t('Completed'),
-          $this->t('By Whom'),
+          $this->t('Completed by'),
           $this->t('Archived'),
-          $this->t('Operation'),
+          $this->t('Delete task'),
         ],
         '#empty' => $this->t('There are no tasks in this process!'),
         // This really shouldn't happen, but it's a catch all.
@@ -84,6 +96,8 @@ class MaestroTrace extends FormBase {
 
         $form['tasks_table'][$queueRecord->id->getString()]['status'] = [
           '#type' => 'select',
+          '#title' => $this->t('Status for task @id', ['@id' => $queueID]),
+          '#title_display' => 'invisible',
           '#options' => $statusArray,
           '#default_value' => $queueRecord->status->getString(),
           '#attributes' => [
@@ -101,16 +115,18 @@ class MaestroTrace extends FormBase {
         }
         else {
           $form['tasks_table'][$queueRecord->id->getString()]['completed'] = [
-            '#plain_text' => $this->t('Active'),
+            '#plain_text' => '—',
           ];
         }
 
         $form['tasks_table'][$queueRecord->id->getString()]['by_whom'] = [
-          '#plain_text' => $username,
+          '#plain_text' => !empty($completedTime) ? $username : '—',
         ];
 
         $form['tasks_table'][$queueRecord->id->getString()]['archived'] = [
           '#type' => 'select',
+          '#title' => $this->t('Archive state for task @id', ['@id' => $queueID]),
+          '#title_display' => 'invisible',
           '#options' => $archiveArray,
           '#default_value' => $queueRecord->archived->getString(),
           '#attributes' => [
@@ -121,7 +137,8 @@ class MaestroTrace extends FormBase {
 
         $form['tasks_table'][$queueRecord->id->getString()]['delete'] = [
           '#type' => 'checkbox',
-          '#title' => $this->t('Delete'),
+          '#title' => $this->t('Delete task @id', ['@id' => $queueID]),
+          '#title_display' => 'invisible',
           '#attributes' => [
             'onchange' => 'turn_on_changed_flag("' . $queueRecord->id->getString() . '");',
           ],
@@ -130,14 +147,14 @@ class MaestroTrace extends FormBase {
       // Now show the template variables with an editable interface.
       $form['vars_table'] = [
         '#type' => 'table',
-        '#caption' => $this->t('Variables in this Process'),
+        '#caption' => $this->t('Process variables'),
         '#header' => [
           [
             'data' => $this->t('Change'),
             'class' => 'maestro_hide_col',
           ],
-          $this->t('Var ID'),
-          $this->t('Var Name'),
+          $this->t('ID'),
+          $this->t('Variable name'),
           $this->t('Value'),
         ],
         '#empty' => $this->t('There are no variables in this process!'),
@@ -170,6 +187,8 @@ class MaestroTrace extends FormBase {
         ];
         $form['vars_table'][$varRecord->id->getString()]['variable_value'] = [
           '#type' => 'textfield',
+          '#title' => $this->t('Value for @variable', ['@variable' => $varRecord->variable_name->getString()]),
+          '#title_display' => 'invisible',
           '#default_value' => $varRecord->variable_value->getString(),
           '#maxlength' => NULL,
           '#attributes' => [
@@ -185,7 +204,8 @@ class MaestroTrace extends FormBase {
 
       $form['entity_identifiers'] = [
         '#type' => 'table',
-        '#caption' => $this->t('Entity Identifiers'),
+        '#caption' => $this->t('Linked entities'),
+        '#empty' => $this->t('No entities linked to this process.'),
         '#header' => [
           $this->t('Unique ID'),
           $this->t('Entity Type'),
@@ -210,6 +230,23 @@ class MaestroTrace extends FormBase {
         ];
       }
 
+      foreach (['tasks_table' => $this->t('Tasks'), 'vars_table' => $this->t('Process variables'), 'entity_identifiers' => $this->t('Linked entities')] as $key => $label) {
+        $form[$key]['#attributes']['class'][] = 'maestro-trace__table--' . $key;
+        foreach (\Drupal\Core\Render\Element::children($form[$key]) as $row_key) {
+          foreach (\Drupal\Core\Render\Element::children($form[$key][$row_key]) as $column_key) {
+            $form[$key][$row_key][$column_key]['#wrapper_attributes']['class'][] = 'maestro-trace-column--' . str_replace('_', '-', $column_key);
+          }
+        }
+        $form[$key]['#theme_wrappers'] = [
+          'container' => ['#id' => 'maestro-trace-section-' . $key, '#attributes' => [
+            'class' => ['maestro-trace__section'],
+            'role' => 'region',
+            'aria-label' => $label,
+            'tabindex' => 0,
+          ]],
+        ];
+      }
+
       $form['process_id'] = [
         '#type' => 'hidden',
         '#default_value' => $processID,
@@ -221,16 +258,17 @@ class MaestroTrace extends FormBase {
 
       $form['actions']['submit'] = [
         '#type' => 'submit',
-        '#value' => $this->t('Save'),
+        '#value' => $this->t('Save changes'),
         '#button_type' => 'primary',
         '#name' => 'save',
       ];
 
       $form['actions']['delete-process'] = [
         '#type' => 'submit',
-        '#value' => $this->t('Delete Process'),
+        '#value' => $this->t('Delete process'),
         '#button_type' => 'danger',
         '#name' => 'deleteprocess',
+        '#attributes' => ['class' => ['maestro-trace__delete']],
       ];
 
       $form['#attached'] = [

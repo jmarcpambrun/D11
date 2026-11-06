@@ -1,0 +1,5 @@
+{# Shared native disclosure markup, independent of theme form-details wrappers. #}
+<details{{ create_attribute(element['#attributes']) }}{% if element['#open'] %} open{% endif %}>
+  <summary class="maestro-detail-panel__summary">{{ element['#title'] }}</summary>
+  <div class="maestro-detail-panel__body">{{ element['#children'] }}</div>
+</details>

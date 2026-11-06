@@ -6,3 +6,12 @@ services:
   plugin.manager.set_process_variable_plugins:
     class: Drupal\maestro\MaestroSetProcessVariablePluginManager
     arguments: ['@container.namespaces', '@cache.default', '@module_handler']
+
+  logger.channel.maestro:
+    parent: logger.channel_base
+    arguments: ['maestro']
+
+  maestro.orchestration_runner:
+    class: Drupal\maestro\Engine\MaestroOrchestrationRunner
+    arguments: ['@config.factory', '@lock', '@account_switcher', '@current_user', '@entity_type.manager', '@logger.channel.maestro']
+  Drupal\maestro\Engine\MaestroOrchestrationRunner: '@maestro.orchestration_runner'

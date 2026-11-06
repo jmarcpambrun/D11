@@ -5,15 +5,14 @@ namespace Drupal\maestro_taskconsole\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\maestro\Utility\TaskHandler;
-use Drupal\maestro\Utility\MaestroStatus;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Component\Serialization\Json;
-use Drupal\maestro\Controller\MaestroOrchestrator;
 use Drupal\views\Views;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Ajax\CssCommand;
+use Drupal\Core\Ajax\InvokeCommand;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\maestro\Engine\Exception\MaestroGeneralException;
 
 /**
@@ -30,40 +29,65 @@ class MaestroTaskConsoleController extends ControllerBase {
     global $base_url;
     $config = \Drupal::config('maestro.settings');
     $sitewideToken = $config->get('maestro_sitewide_token');
-    if(empty($sitewideToken) || $sitewideToken == '') {
+    if (empty($sitewideToken) || $sitewideToken == '') {
       // We throw an error here.  We must have a sitewide token.
       throw new MaestroGeneralException($this->t('You must have a site-wide token enabled. Please go to the Maestro Admin Settings and set a sitewide token.'));
     }
-    
+
     // Before we do anything, let's see if we should be running the orchestrator through task console refreshes:
     if ($config->get('maestro_orchestrator_task_console')) {
-      $orchestrator = new MaestroOrchestrator();
-      $orchestrator->orchestrate($config->get('maestro_orchestrator_token'));
+      \Drupal::service('maestro.orchestration_runner')->run();
     }
     $engine = new MaestroEngine();
 
-    $build = [];
+    $presentation = \Drupal::service('maestro_taskconsole.presentation');
+    $build = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['maestro-console']],
+      '#cache' => ['max-age' => 0, 'contexts' => ['user']],
+    ];
+    $task_count = 0;
+    $stages = [];
     $build['task_console_table'] = [
       '#type' => 'table',
-      '#header' => [$this->t('Task'),
-        $this->t('Flow'),
-        $this->t('Assigned'),
-        $this->t('Actions'),
-        $this->t('Details'),
+      // Keep wide task tables inside their column, including in sidebar layouts.
+      '#theme_wrappers' => [
+        'container' => [
+          '#attributes' => [
+            'class' => ['taskconsole-table-wrapper'],
+            'role' => 'region',
+            'aria-label' => $this->t('Workflow tasks'),
+            'tabindex' => 0,
+          ],
+        ],
+      ],
+      '#header' => [
+        ['data' => $this->t('Task'), 'class' => ['maestro-column--task'], 'data-maestro-sort' => 'text'],
+        ['data' => $this->t('Flow'), 'class' => ['maestro-column--flow'], 'data-maestro-sort' => 'text'],
+        ['data' => $this->t('Assigned'), 'class' => ['maestro-column--assigned'], 'data-maestro-sort' => 'number', 'aria-sort' => 'descending'],
+        ['data' => $this->t('Stage'), 'class' => ['maestro-column--stage'], 'data-maestro-sort' => 'number'],
+        ['data' => $this->t('Actions'), 'class' => ['maestro-column--actions']],
+        ['data' => $this->t('Details'), 'class' => ['maestro-column--details']],
       ],
       '#empty' => $this->t('You have no tasks.'),
       '#attributes' => [
         'class' => ['taskconsole-tasks'],
+        'aria-label' => $this->t('Your workflow tasks'),
       ],
     ];
 
     // Fetch the user's queue items.
     $queueIDs = MaestroEngine::getAssignedTaskQueueIds(\Drupal::currentUser()->id());
 
-    foreach ($queueIDs as $queueID) {
+    if ($queueIDs) {
+      $queueIDs = \Drupal::entityTypeManager()->getStorage('maestro_queue')->getQuery()
+        ->accessCheck(FALSE)->condition('id', array_unique($queueIDs), 'IN')
+        ->sort('created', 'DESC')->sort('id', 'DESC')->execute();
+    }
+
+    foreach (array_unique($queueIDs) as $queueID) {
       $highlight = '';
-      $url_from_route = FALSE;
-      
+
       /*
        *  Reset the internal static cache for this queue record and then reload it
        *  Doing this because we found in certain cases it was not reflecting actual queue record
@@ -71,8 +95,14 @@ class MaestroTaskConsoleController extends ControllerBase {
       \Drupal::entityTypeManager()->getStorage('maestro_queue')->resetCache([$queueID]);
       $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
 
+      if (!$queueRecord || $queueRecord->is_interactive->getString() !== '1') {
+        continue;
+      }
       $processID = MaestroEngine::getProcessIdFromQueueId($queueID);
       $processRecord = MaestroEngine::getProcessEntryById($processID);
+      if (!$processRecord) {
+        continue;
+      }
       $queueToken = MaestroEngine::getTokenFromQueueId($queueID);
 
       if ($highlightQueueID == $queueToken) {
@@ -80,9 +110,7 @@ class MaestroTaskConsoleController extends ControllerBase {
         $highlight = 'maestro-highlight-task';
       }
 
-
-
-      $build['task_console_table'][$queueID]['#attributes'] = ['class' => ['task-record', $highlight]];
+      $build['task_console_table'][$queueID]['#attributes'] = ['class' => ['task-record', $highlight], 'id' => 'maestro-task-' . $queueID];
 
       $build['task_console_table'][$queueID]['task'] = [
         '#plain_text' => $this->t($queueRecord->task_label->getString()),
@@ -93,18 +121,29 @@ class MaestroTaskConsoleController extends ControllerBase {
       ];
 
       $build['task_console_table'][$queueID]['assigned'] = [
-        '#plain_text' => \Drupal::service('date.formatter')->format($queueRecord->created->getString(), 'custom', 'Y-m-d H:i:s'),
+        '#wrapper_attributes' => ['data-sort-value' => (int) $queueRecord->created->getString()],
+        '#plain_text' => \Drupal::service('date.formatter')->format($queueRecord->created->getString(), 'custom', 'j M Y · H:i'),
       ];
 
       $templateMachineName = $engine->getTemplateIdFromProcessId($queueRecord->process_id->getString());
       $taskTemplate = $engine->getTemplateTaskByID($templateMachineName, $queueRecord->task_id->getString());
       $template = MaestroEngine::getTemplate($templateMachineName);
+      $stage = $stages[$processID] ??= $presentation->stage($processID);
+      $build['task_console_table'][$queueID]['stage'] = $stage ? [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['maestro-stage-badge']],
+        'summary' => ['#plain_text' => $stage['summary']],
+        'message' => ['#plain_text' => $stage['message'] ? ': ' . $stage['message'] : ''],
+      ] : ['#plain_text' => '—'];
+      $build['task_console_table'][$queueID]['stage']['#wrapper_attributes'] = [
+        'data-sort-value' => $stage && $stage['current'] ? $stage['current'] : '',
+      ];
       // Default link title.
       $link = 'Execute';
       $use_modal = FALSE;
-      
+
       $query_options = ['queueid_or_token' => $queueToken];
-      
+
       if (is_array($taskTemplate) && is_array($taskTemplate['data'])) {
         if (array_key_exists('data', $taskTemplate) && array_key_exists('modal', $taskTemplate['data']) && $taskTemplate['data']['modal'] == 'modal') {
           $use_modal = TRUE;
@@ -117,11 +156,6 @@ class MaestroTaskConsoleController extends ControllerBase {
        *
        * We need to determine if we have any special handling for this interactive task. It could be
        * a link to an external system.
-       */
-
-      /*
-       * Test to see if this is a URL that can be deduced from a Drupal route or not.
-       * if it's not a route, then $url_from_route will be FALSE
        */
 
       $handler = $queueRecord->handler->getString();
@@ -173,7 +207,7 @@ class MaestroTaskConsoleController extends ControllerBase {
 
           $build['task_console_table'][$queueID]['execute'] = [
             'data' => [
-              '#type' => 'operations',
+              '#theme' => 'maestro_actions',
               '#links' => [
                 'maestro_link' => [
                   'title' => $this->t($link),
@@ -206,7 +240,8 @@ class MaestroTaskConsoleController extends ControllerBase {
                 'class' => ['use-ajax'],
                 'data-dialog-type' => 'modal',
                 'data-dialog-options' => Json::encode([
-                  'width' => '700',
+                  'width' => '960',
+                  'dialogClass' => 'maestro-task-dialog',
                 ]),
               ],
             ];
@@ -221,7 +256,7 @@ class MaestroTaskConsoleController extends ControllerBase {
 
           $build['task_console_table'][$queueID]['execute'] = [
             'data' => [
-              '#type' => 'operations',
+              '#theme' => 'maestro_actions',
               '#links' => $links,
             ],
           ];
@@ -241,49 +276,37 @@ class MaestroTaskConsoleController extends ControllerBase {
           [&$build['task_console_table'][$queueID]['execute'], $taskTemplate, $queueRecord, $templateMachineName]
       );
 
-      $build['task_console_table'][$queueID]['expand'] = [
-        '#wrapper_attributes' => ['class' => ['maestro-expand-wrapper']],
-        '#plain_text' => '',
-      ];
+      // Visible labels keep stacked narrow-layout cells understandable.
+      foreach (['task' => $this->t('Task'), 'flow' => $this->t('Flow'), 'assigned' => $this->t('Assigned'), 'stage' => $this->t('Stage'), 'execute' => $this->t('Actions')] as $column => $label) {
+        $build['task_console_table'][$queueID][$column]['#wrapper_attributes']['data-label'] = $label;
+        $build['task_console_table'][$queueID][$column]['#wrapper_attributes']['class'][] = 'maestro-column--' . ($column === 'execute' ? 'actions' : $column);
+      }
 
-      $var_workflow_stage_count = intval(MaestroEngine::getProcessVariable('workflow_timeline_stage_count', $processID));
-      // If the show details is on OR the status bar is on, we'll show the toggler.
-      if ((isset($template->show_details) && $template->show_details) ||
-            (isset($template->default_workflow_timeline_stage_count)
-            && intval($template->default_workflow_timeline_stage_count) > 0
-            && $var_workflow_stage_count > 0)) {
-        // Provide details expansion column.  Clicking on it will show the status and/or the task detail information via ajax.
-        $build['task_console_table'][$queueID]['expand'] = [
-          '#wrapper_attributes' => ['class' => ['maestro-expand-wrapper', 'maestro-status-toggle-' . $queueID]],
-          '#attributes' => [
-            'class' => ['maestro-timeline-status', 'maestro-status-toggle'],
-            'title' => $this->t('Open Details'),
+      $task_count++;
+      $build['task_console_table'][$queueID]['expand'] = ['#plain_text' => ''];
+      if ((!empty($template->show_details)) || $stage) {
+        $build['task_console_table'][$queueID]['expand'] = $this->detailsToggle($processID, $queueID, FALSE);
+        $build['task_console_table'][$queueID . '_ajax'] = [
+          '#attributes' => ['id' => $queueID . '_ajax', 'class' => ['maestro-ajax-row']],
+          'task' => [
+            '#wrapper_attributes' => ['colspan' => 6],
+            '#type' => 'container',
+            '#attributes' => ['id' => 'maestro-ajax-' . $queueID, 'class' => ['maestro-detail-content']],
           ],
-          '#type' => 'link',
-          '#id' => 'maestro-id-ajax-' . $queueID,
-          '#url' => Url::fromRoute('maestro_taskconsole.status_ajax_open', ['processID' => $processID, 'queueID' => $queueID]),
-          '#title' => $this->t('Open Details'),
-          '#ajax' => [
-            'progress' => [
-              'type' => 'throbber',
-              'message' => NULL,
-            ],
-          ],
-        ];
-
-        // Gives the <tr> tag an ID we can target.
-        $build['task_console_table'][$queueID . '_ajax']['#attributes']['id'] = $queueID . '_ajax';
-        $build['task_console_table'][$queueID . '_ajax']['#attributes']['class'] = ['maestro-ajax-row'];
-        $build['task_console_table'][$queueID . '_ajax']['task'] = [
-          '#wrapper_attributes' => ['colspan' => count($build['task_console_table'][$queueID]) - 1],
-          '#prefix' => '<div id="maestro-ajax-' . $queueID . '">',
-          '#suffix' => '</div>',
         ];
       }
+      $build['task_console_table'][$queueID]['expand']['#wrapper_attributes']['class'][] = 'maestro-column--details';
+      $build['task_console_table'][$queueID]['expand']['#wrapper_attributes']['data-label'] = $this->t('Details');
     }
+    $build['summary'] = [
+      '#type' => 'container',
+      '#weight' => -10,
+      '#attributes' => ['class' => ['maestro-console__summary']],
+      'count' => ['#plain_text' => $this->formatPlural($task_count, '1 task available to you', '@count tasks available to you')],
+    ];
     $build['#attached']['library'][] = 'maestro_taskconsole/maestro_taskconsole_css';
     // Css for the status bar.
-    $build['#attached']['library'][] = 'maestro/maestro-engine-css';
+    $build['#attached']['library'][] = 'core/drupal.dialog.ajax';
     $build['#attached']['drupalSettings'] = [
       'baseURL' => base_path(),
     ];
@@ -295,125 +318,105 @@ class MaestroTaskConsoleController extends ControllerBase {
    * Method to fetch the status of a process.
    */
   public function getStatus($processID, $queueID) {
-    $build = [];
-    $replace = [];
-    $status_bar = '';
-
-    $canExecute = MaestroEngine::canUserExecuteTask($queueID, \Drupal::currentUser()->id());
-    if ($canExecute) {
-      $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
-      $templateMachineName = MaestroEngine::getTemplateIdFromProcessId($processID);
-      $taskTemplate = MaestroEngine::getTemplateTaskByID($templateMachineName, $queueRecord->task_id->getString());
-      $template = MaestroEngine::getTemplate($templateMachineName);
-      $var_workflow_stage_count = intval(MaestroEngine::getProcessVariable('workflow_timeline_stage_count', $processID));
-
-      $build = MaestroStatus::getMaestroStatusBar($processID, $queueID, FALSE);
-
-      // Now determine if we should show the views attached.
-      $taskDetails = '';
-      $customInformation = '';
-      if (isset($template->show_details) && $template->show_details) {
-        // We provide an invokation here to allow other modules to inject their own
-        // custom information into the task display.
-        \Drupal::moduleHandler()->invokeAll('maestro_task_console_custominformation_alter',
-            [&$customInformation, $taskTemplate, $queueRecord, $templateMachineName]
-        );
-
-        // Lets see if there's any views attached that we should be showing.
-        if (isset($template->views_attached)) {
-          foreach ($template->views_attached as $machine_name => $arr) {
-            $view = Views::getView($machine_name);
-            if ($view) {
-              $display = explode(';', $arr['view_display']);
-              $display_to_use = isset($display[0]) ? $display[0] : 'default';
-              $render_build = $view->buildRenderable($display_to_use, [$processID, $queueID], FALSE);
-              if ($render_build) {
-                $thisViewOutput = \Drupal::service('renderer')->render($render_build);
-                if ($thisViewOutput) {
-                  $task_information_render_array = [
-                    '#theme' => 'taskconsole_views',
-                    '#task_information' => $thisViewOutput,
-                    '#title' => $view->storage->label(),
-                  ];
-                  $taskDetails .= (\Drupal::service('renderer')->render($task_information_render_array));
-                }
-              }
-            }
-          }
-        }
-
-        // Anyone want to override the task details display?
-        \Drupal::moduleHandler()->invokeAll('maestro_task_console_taskdetails_alter',
-            [&$taskDetails, $taskTemplate, $queueRecord, $templateMachineName]
-        );
-
-        $build['custom_information_bar'] = [
-          '#children' => '<div class="custom-information">' . $customInformation . '</div>',
-        ];
-
-        $build['views_bar'] = [
-          '#children' => '<div class="maestro-task-details">' . $taskDetails . '</div>',
-        ];
-
-        $replace['expand'] = [
-          '#attributes' => [
-            'class' => ['maestro-timeline-status', 'maestro-status-toggle-up'],
-            'title' => $this->t('Close Details'),
-          ],
-          '#type' => 'link',
-          '#id' => 'maestro-id-ajax-' . $queueID,
-          '#url' => Url::fromRoute('maestro_taskconsole.status_ajax_close', ['processID' => $processID, 'queueID' => $queueID]),
-          '#title' => $this->t('Close Details'),
-          '#ajax' => [
-            'progress' => [
-              'type' => 'throbber',
-              'message' => NULL,
-            ],
-          ],
-
-        ];
-      }
+    $presentation = \Drupal::service('maestro_taskconsole.presentation');
+    $context = $presentation->context($queueID, $processID);
+    if (!$context) {
+      throw new AccessDeniedHttpException();
     }
-    // We can target the ID of DIV within the table row associated to the expanded task's information as we're able to inject a DIV via the #prefix/#suffix
-    // However, we can only inject CSS as a #wrapper_attribute for the "link" and as such, we target the unique class wrapper TD element for the link for replacement.
+    $template = $context['template'];
+    $queueRecord = $context['queue'];
+    $taskTemplate = $context['task_definition'];
+    $templateMachineName = $context['template_id'];
+    $build = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['maestro-workflow-details']],
+      '#cache' => ['max-age' => 0],
+      'milestones' => $presentation->milestones($processID, $context['stage']),
+      'assignment_context' => \Drupal\maestro\Utility\TaskAssignmentDetails::build($queueRecord),
+    ];
+    $build['task_summary'] = $build['assignment_context']['summary'];
+    $build['task_summary']['#weight'] = -20;
+    unset($build['assignment_context']['summary']);
+    if (!empty($template->show_details)) {
+      $customInformation = '';
+      \Drupal::moduleHandler()->invokeAll('maestro_task_console_custominformation_alter',
+        [&$customInformation, $taskTemplate, $queueRecord, $templateMachineName]);
+      $taskDetails = '';
+      // Preserve arbitrary attached Views, their titles, and the existing hook contract.
+      foreach ($template->views_attached ?? [] as $machine_name => $attached) {
+        $view = Views::getView($machine_name);
+        $display = explode(';', $attached['view_display'] ?? 'default')[0];
+        if (!$view || !$view->access($display)) {
+          continue;
+        }
+        $view_build = $view->buildRenderable($display, [$processID, $queueID], FALSE);
+        if ($view_build) {
+          $render = [
+            '#theme' => 'taskconsole_views',
+            '#task_information' => \Drupal::service('renderer')->render($view_build),
+            '#title' => $view->storage->label(),
+            '#view_id' => $machine_name,
+            '#item_count' => count($view->result ?? []),
+          ];
+          $taskDetails .= \Drupal::service('renderer')->render($render);
+        }
+      }
+      \Drupal::moduleHandler()->invokeAll('maestro_task_console_taskdetails_alter',
+        [&$taskDetails, $taskTemplate, $queueRecord, $templateMachineName]);
+      $build['custom_information'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['custom-information']],
+        'content' => ['#children' => $customInformation],
+      ];
+      $build['views'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['maestro-task-details']],
+        'content' => ['#children' => $taskDetails],
+      ];
+    }
     $response = new AjaxResponse();
-    // Row.
     $response->addCommand(new HtmlCommand('#maestro-ajax-' . $queueID, $build));
-    // Wrapper attribute TD tag.
-    $response->addCommand(new HtmlCommand('.maestro-status-toggle-' . $queueID . '', $replace['expand']));
-    $response->addCommand(new CssCommand('#' . $queueID . '_ajax', ['display' => 'table-row']));
+    $response->addCommand(new HtmlCommand('.maestro-status-toggle-' . $queueID, $this->detailsToggle($processID, $queueID, TRUE)));
+    $response->addCommand(new InvokeCommand('#' . $queueID . '_ajax', 'addClass', ['maestro-ajax-row--expanded']));
+    $response->addCommand(new InvokeCommand('#maestro-task-' . $queueID, 'addClass', ['maestro-task--expanded']));
+    $response->addCommand(new InvokeCommand('#maestro-id-ajax-' . $queueID, 'focus'));
     return $response;
   }
 
   /**
-   * Internal method to close the project status.
+   * Closes workflow details without changing the task.
    */
   public function closeStatus($processID, $queueID) {
-    $build = [];
-    $build['expand'] = [
-      '#attributes' => [
-        'class' => ['maestro-timeline-status', 'maestro-status-toggle'],
-        'title' => $this->t('Open Details'),
-      ],
-      '#type' => 'link',
-      '#id' => 'maestro-id-ajax-' . $queueID,
-      '#url' => Url::fromRoute('maestro_taskconsole.status_ajax_open', ['processID' => $processID, 'queueID' => $queueID]),
-      '#title' => $this->t('Open Details'),
-      '#ajax' => [
-        'progress' => [
-          'type' => 'throbber',
-          'message' => NULL,
-        ],
-      ],
-
-    ];
-
+    if (!\Drupal::service('maestro_taskconsole.presentation')->context($queueID, $processID)) {
+      throw new AccessDeniedHttpException();
+    }
     $response = new AjaxResponse();
     $response->addCommand(new HtmlCommand('#maestro-ajax-' . $queueID, ''));
-    $response->addCommand(new HtmlCommand('.maestro-status-toggle-' . $queueID, $build['expand']));
-    $response->addCommand(new CssCommand('#' . $queueID . '_ajax', ['display' => 'none']));
-
+    $response->addCommand(new HtmlCommand('.maestro-status-toggle-' . $queueID, $this->detailsToggle($processID, $queueID, FALSE)));
+    $response->addCommand(new InvokeCommand('#' . $queueID . '_ajax', 'removeClass', ['maestro-ajax-row--expanded']));
+    $response->addCommand(new InvokeCommand('#maestro-task-' . $queueID, 'removeClass', ['maestro-task--expanded']));
+    $response->addCommand(new InvokeCommand('#maestro-id-ajax-' . $queueID, 'focus'));
     return $response;
+  }
+
+  /**
+   * Builds an accessible AJAX toggle, retaining the existing routes and IDs.
+   */
+  protected function detailsToggle($processID, $queueID, bool $expanded): array {
+    return [
+      '#type' => 'link',
+      '#title' => $expanded ? $this->t('Hide details') : $this->t('Details'),
+      '#id' => 'maestro-id-ajax-' . $queueID,
+      '#wrapper_attributes' => ['class' => ['maestro-expand-wrapper', 'maestro-status-toggle-' . $queueID]],
+      '#attributes' => [
+        'class' => ['maestro-details-toggle'],
+        'role' => 'button',
+        'aria-expanded' => $expanded ? 'true' : 'false',
+        'aria-controls' => 'maestro-ajax-' . $queueID,
+      ],
+      '#url' => Url::fromRoute($expanded ? 'maestro_taskconsole.status_ajax_close' : 'maestro_taskconsole.status_ajax_open', ['processID' => $processID, 'queueID' => $queueID]),
+      '#ajax' => ['progress' => ['type' => 'throbber', 'message' => NULL]],
+    ];
   }
 
 }

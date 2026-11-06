@@ -36,6 +36,17 @@ class MaestroAiTaskAssistantCapability extends MaestroAiTaskCapabilitiesPluginBa
     }
     $task_ai = $this->task['data']['ai'] ?? [];
     return [
+      // The Assistant's tools and agents are configured outside Maestro, but a Maestro task runs
+      // them unattended on workflow data, so the template builder needs to know what that implies.
+      'assistant_security_notice' => [
+        '#markup' => '<div class="messages messages--warning">' .
+          $this->t('<strong>This Assistant runs unattended on workflow data.</strong> Tokens in the prompt bring in data such as form submissions, uploaded documents or earlier AI responses, which may have been written by an untrusted person. Text in that data can try to instruct the Assistant (prompt injection), and no one reviews the Assistant\'s answer or actions before the workflow continues.') .
+          '<br><br>' .
+          $this->t('Anything the Assistant can do, workflow data may be able to make it do: every tool and action enabled on the Assistant, every tool of its AI agent, and every tool of any sub-agent that agent can call. These run with the permissions of the account the orchestrator runs as (see the Run-as setting in the Maestro engine settings), not the person who submitted the data.') .
+          '<br><br>' .
+          $this->t('Use an Assistant whose tools are safe for this data to trigger. Prefer tools that only read, avoid tools that create, edit or delete content or configuration, and run the orchestrator as an account with only the permissions your workflows need.') .
+          '</div>',
+      ],
       'assistant_id' => [
         '#type' => 'select',
         '#title' => $this->t('AI Assistant'),
@@ -154,14 +165,14 @@ class MaestroAiTaskAssistantCapability extends MaestroAiTaskCapabilitiesPluginBa
     $task_ai = $this->task['data']['ai'] ?? [];
     $assistant_id = $task_ai['assistant_id'] ?? NULL;
     if (!$assistant_id) {
-      $this->taskStatus = TASK_STATUS_CANCEL;
+      $this->taskStatus = TASK_STATUS_ABORTED;
       \Drupal::logger('maestro_ai_task_assistant')->error('No AI Assistant configured for this task.');
       return NULL;
     }
 
     $assistant = AiAssistant::load($assistant_id);
     if (!$assistant) {
-      $this->taskStatus = TASK_STATUS_CANCEL;
+      $this->taskStatus = TASK_STATUS_ABORTED;
       \Drupal::logger('maestro_ai_task_assistant')->error('AI Assistant "@id" no longer exists.', ['@id' => $assistant_id]);
       return NULL;
     }
@@ -201,7 +212,7 @@ class MaestroAiTaskAssistantCapability extends MaestroAiTaskCapabilitiesPluginBa
       $response = $runner->process();
     }
     catch (\Exception $e) {
-      $this->taskStatus = TASK_STATUS_CANCEL;
+      $this->taskStatus = TASK_STATUS_ABORTED;
       \Drupal::logger('maestro_ai_task_assistant')->error('AI Assistant call failed: @message', ['@message' => $e->getMessage()]);
       return NULL;
     }

@@ -670,6 +670,28 @@ display:
             group_items: {  }
       style:
         type: table
+        options:
+          columns:
+            id: id
+            task_label: task_label
+            process_name: process_name
+            created: created
+            active_handler: active_handler
+            process_details: process_details
+          default: id
+          info:
+            id:
+              sortable: true
+              default_sort_order: desc
+            task_label:
+              sortable: true
+              default_sort_order: asc
+            process_name:
+              sortable: true
+              default_sort_order: asc
+            created:
+              sortable: true
+              default_sort_order: desc
       row:
         type: fields
       query:
@@ -721,6 +743,9 @@ display:
     display_plugin: page
     position: 1
     display_options:
+      use_ajax: true
+      defaults:
+        use_ajax: false
       display_extenders: {  }
       path: maestro-views-based-task-console
     cache_metadata:

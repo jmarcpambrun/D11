@@ -1,0 +1,181 @@
+/**
+ * Shared detail panels for task consoles and process reports.
+ * Explicit component classes keep theme overrides independent of page structure.
+ */
+/* The second selector overrides theme sizing for details inside table cells. */
+.maestro-detail-panel,
+.maestro-assignment-context > .maestro-detail-panel {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 0 !important;
+  border: 1px solid var(--maestro-border);
+  border-radius: var(--maestro-radius);
+  background: var(--maestro-surface);
+  box-shadow: none;
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 18px 20px;
+  line-height: 20px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--maestro-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary::marker {
+  content: '';
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary::-webkit-details-marker {
+  display: none;
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary::before {
+  content: none;
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary::after {
+  content: '';
+  position: static;
+  inset: auto;
+  float: none;
+  display: block;
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  margin: 0 14px 3px auto;
+  border: 0;
+  border-inline-end: 2px solid var(--maestro-accent);
+  border-block-end: 2px solid var(--maestro-accent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  opacity: 1;
+  transform: rotate(45deg);
+}
+
+.maestro-detail-panel[open] > .maestro-detail-panel__summary::after {
+  transform: rotate(225deg);
+  margin-block: 3px 0;
+}
+
+.maestro-detail-panel > .maestro-detail-panel__summary:focus-visible {
+  outline: 2px solid var(--maestro-focus);
+  outline-offset: 3px;
+}
+
+.maestro-console .maestro-detail-panel--attached > summary::before {
+  content: '';
+  flex: 0 0 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  background: var(--mc-accent);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Cpath d='m8 12 5-5a3 3 0 0 1 4 4l-7 7a5 5 0 0 1-7-7l8-8M6 14l7-7'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.maestro-console .maestro-details-tasks-wrapper--maestro-completed-tasks .maestro-detail-panel > .maestro-detail-panel__summary::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Cpath d='M3 10a9 9 0 1 1 2 8M3 4v6h6M12 7v6l4 2'/%3E%3C/svg%3E");
+}
+
+.maestro-details__title {
+  margin-inline-end: auto;
+}
+
+.maestro-details__count {
+  margin-inline-start: 0;
+  color: var(--maestro-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.maestro-assignment-context {
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.maestro-assignment-context__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-bottom: 16px;
+}
+
+.maestro-detail-panel > :is(.details-wrapper, .claro-details__wrapper, .olivero-details__wrapper) {
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.maestro-attached-view {
+  margin-block-start: 16px;
+  overflow-x: auto;
+}
+
+.maestro-attached-view a {
+  color: var(--maestro-accent);
+}
+
+.maestro-views-taskconsole .maestro-details-tasks-wrapper > .maestro-detail-panel {
+  margin-bottom: 16px;
+}
+
+.maestro-views-taskconsole .maestro-details-tasks-wrapper:last-child > .maestro-detail-panel {
+  margin-bottom: 0;
+}
+
+:is(.maestro-detail-table, .maestro-attached-view table) {
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+  margin: 0;
+  border-collapse: collapse;
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  line-height: 1.5;
+}
+
+:is(.maestro-detail-table, .maestro-attached-view table) > :is(thead, tbody) > tr > :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--maestro-border);
+  text-align: start;
+  font-size: var(--maestro-font-size, 14px);
+}
+
+:is(.maestro-detail-table, .maestro-attached-view table) > :is(thead, tbody) > tr > th {
+  padding: 10px;
+  background: var(--maestro-background);
+  color: var(--maestro-muted);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+:is(.maestro-detail-table, .maestro-attached-view table) > :is(thead, tbody) > tr > td {
+  padding: 12px 10px;
+}
+
+:is(.maestro-detail-table, .maestro-attached-view table) > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+
+
+.maestro-detail-panel > .maestro-detail-panel__body {
+  margin: 0;
+  padding: 0 20px 20px;
+}
+
+.maestro-detail-panel > .maestro-attached-view {
+  margin: 0;
+  padding: 0 20px 20px;
+}

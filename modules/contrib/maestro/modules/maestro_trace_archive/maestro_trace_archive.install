@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Maestro Trace Archive module.
+ */
+
+/**
+ * Add the trace snapshot pruning settings, defaulting to 1 week.
+ */
+function maestro_trace_archive_update_10001() {
+  $config = \Drupal::configFactory()->getEditable('maestro_trace_archive.settings');
+  if ($config->isNew()) {
+    $config
+      ->set('prune_age_value', 1)
+      ->set('prune_age_unit', 'weeks')
+      ->save();
+  }
+}

@@ -1,0 +1,19 @@
+/**
+ * Shared Maestro presentation defaults.
+ * Loaded as a base library dependency; themes may override these properties.
+ * Keep component dimensions and typography in the component stylesheets.
+ */
+:root {
+  --maestro-surface: #fff;
+  --maestro-background: #f3f6fa;
+  --maestro-selected: #edf5ff;
+  --maestro-border: #d9e2ee;
+  --maestro-text: #172b49;
+  --maestro-muted: #536782;
+  --maestro-accent: #005cbb;
+  --maestro-accent-hover: #004b99;
+  --maestro-on-accent: #fff;
+  --maestro-focus: #005cbb;
+  --maestro-progress: #87add9;
+  --maestro-radius: 6px;
+}

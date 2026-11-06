@@ -2,7 +2,6 @@
 
 namespace Drupal\maestro_ai_task\Plugin\EngineTasks;
 
-use Drupal\Component\Serialization\Exception\InvalidDataTypeException;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\maestro\MaestroEngineTaskInterface;
@@ -192,7 +191,12 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
           }
           
           if ($log_return) {
-            \Drupal::logger('maestro_ai_task')->info($responseValue);
+            // The response is passed as a placeholder value, never as the log message itself.
+            \Drupal::logger('maestro_ai_task')->info('AI response for process @pid, queue @qid: @response', [
+              '@pid' => $this->processID,
+              '@qid' => $this->queueID,
+              '@response' => $responseValue ?? 'NULL',
+            ]);
           }
         }
         else {
@@ -206,30 +210,45 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
           }
         }
 
+        // A capability that aborted, for example because an AI guardrail stopped the call, has no answer.
+        // Store nothing and complete the task as aborted so an IF task can branch on it. Holding the
+        // task open instead would only repeat the same stopped call on every orchestrator run.
+        if ($this->executionStatus == TASK_STATUS_ABORTED) {
+          return TRUE;
+        }
+
         // Now, where to store the data.
         switch ($return_into) {
           case 'process_in_task':
-            try {
-              $json = Json::decode($responseValue);
-              $result = $json['result'] ?? 'false';
-              // $returnValue is already set to false, no need to set it again.
-              if (strtolower($result) == 'true' || strtolower($result) == 'yes') {
+            // Json::decode() returns NULL for anything that isn't JSON rather than throwing, and the
+            // reply may be a JSON scalar or have a non-string "result", so check the shape before reading it.
+            $json = is_string($responseValue) ? Json::decode($responseValue) : NULL;
+            $result = is_array($json) ? ($json['result'] ?? NULL) : NULL;
+            // Models sometimes answer with a JSON boolean rather than the requested string.
+            if (is_bool($result)) {
+              $result = $result ? 'true' : 'false';
+            }
+            $result = is_string($result) ? strtolower(trim($result)) : NULL;
+            if ($result === 'true' || $result === 'yes') {
+              // AI has completed the task for us by returning true/yes.
                 $returnValue = TRUE;
               }
+            elseif ($result === 'false' || $result === 'no') {
+              // A rejection. Set the status to cancelled so that we can use an IF task after this one to branch.
+              $this->executionStatus = TASK_STATUS_CANCEL;
+              $returnValue = TRUE;
+            }
               else {
-                // False/No or something completely different.  Let's set the status to cancelled so that we
-                // can use an IF task after this one to branch if required.
-                $this->executionStatus = TASK_STATUS_CANCEL;
+              // Not an answer at all. That's an error rather than a rejection, so the task is aborted,
+              // which an IF task can branch on separately.
+              \Drupal::logger('maestro_ai_task')->warning('The AI response for process @pid, queue @qid was not JSON with a "result" of true/false or yes/no, so the task was aborted. Response: @response', [
+                  '@pid' => $this->processID,
+                  '@qid' => $this->queueID,
+                  '@response' => is_string($responseValue) ? mb_substr($responseValue, 0, 500) : var_export($responseValue, TRUE),
+                ]);
+              $this->executionStatus = TASK_STATUS_ABORTED;
                 $returnValue = TRUE;
               }
-            }
-            catch (InvalidDataTypeException $e) {
-              // We can't finish this task.  Drop an error in the log.  Setting to false to be sure.
-              $returnValue = FALSE;
-              \Drupal::messenger()->addError($this->t('Error:  Unable to complete the task due to the return not being able to decode the JSON response.'));
-              throw new MaestroGeneralException('Unable to complete the task due to the return not being able to decode the JSON response');
-            }
-            // And that's it!  AI has completed the task for us by returning true/yes.
             break;
 
           case 'process_variable':
@@ -572,17 +591,10 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
     ];
 
     // Cycle through any existing configurations in the template for ai task storage entity references.
-    $options = ['' => $this->t('No entity storage chosen')];
-    $template = MaestroEngine::getTemplate($templateMachineName);
-    foreach ($template->tasks as $templateTask) {
-      $tasktype = $templateTask['tasktype'] ?? NULL;
-      if ($tasktype == 'MaestroAITask') {
+    $options = ['' => $this->t('No entity storage chosen')] + MaestroAiTaskAPI::getAiStorageEntityDefinitionsInTemplate($templateMachineName);
         // See if there's any other entities already set.
-        $ai_var = $templateTask['ai_return_into_ai_variable'] ?? NULL;
-        if ($ai_var) {
-          $options[strval($ai_var)] = $ai_var;
-        }
-      }
+    if (!empty($task_ai['ai_return_into_ai_variable'])) {
+      $options[strval($task_ai['ai_return_into_ai_variable'])] = $task_ai['ai_return_into_ai_variable'];
     }
     $form['ai_return_into_ai_variable'] = [
       '#type' => 'select',

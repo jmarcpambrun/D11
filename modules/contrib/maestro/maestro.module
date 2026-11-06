@@ -50,6 +50,12 @@ const MAESTRO_ALLOW_SUSPENDED_COMPLETION = 2;
  */
 function maestro_theme($existing, $type, $theme, $path) {
   return [
+    'maestro_assignment_panel' => [
+      'render element' => 'element',
+    ],
+    'maestro_actions' => [
+      'variables' => ['links' => []],
+    ],
     'maestro_status_bar' => [
       'variables' => [
         'stage_count' => 0,
@@ -141,7 +147,6 @@ function hook_maestro_post_variable_save($variableName, $variableValue, $process
  * Implements hook_maestro_post_production_assignments().
  */
 function maestro_maestro_post_production_assignments($templateMachineName, $taskID, $queueID) {
-  global $base_url;
 
   // For our Maestro implementation, we are concerned only with the content type task
   // We need to detect if there is an already existing task that has created a piece of content
@@ -160,10 +165,12 @@ function maestro_maestro_post_production_assignments($templateMachineName, $task
       // We have a match.  adjust the queue item's handler to suit.
       $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
       if (isset($task['data']['link_to_edit']) && $task['data']['link_to_edit'] == 1) {
-        $queueRecord->set('handler', $base_url . '/node/' . intval($entityIdentifier) . '/edit?maestro=1&queueid=' . $queueID);
+        // Stored relative to the site, not with $base_url: when the orchestrator runs under drush or cron,
+        // $base_url is not the site's address (e.g. http://default). The task console links it correctly.
+        $queueRecord->set('handler', '/node/' . intval($entityIdentifier) . '/edit?maestro=1&queueid=' . $queueID);
       }
       else {
-        $queueRecord->set('handler', $base_url . '/node/' . intval($entityIdentifier) . '?maestro=1');
+        $queueRecord->set('handler', '/node/' . intval($entityIdentifier) . '?maestro=1');
       }
 
       $queueRecord->save();
@@ -368,11 +375,38 @@ function maestro_form_alter(&$form, FormStateInterface $form_state, $form_id) {
         $form['actions']['unpublish']['#submit'][] = 'maestro_content_type_task_submit';
         // Now we add our own button that helps signify if we want to NOT end this task, only if the template says so.
         $task = MaestroEngine::getTemplateTaskByQueueID($queueID);
+        // The task's own Save label. This only runs for the form opened from this
+        // Content Type task (gated above), never for ordinary content editing.
+        if (!empty($task['data']['save_label']) && isset($form['actions']['submit'])) {
+          $form['actions']['submit']['#value'] = $task['data']['save_label'];
+        }
+        // Hide the Delete link on this task's form when the task says so (a UI choice, not a permission).
+        if (!empty($task['data']['hide_delete']) && isset($form['actions']['delete'])) {
+          $form['actions']['delete']['#access'] = FALSE;
+        }
         if (array_key_exists('save_edit_later', $task['data']) && $task['data']['save_edit_later'] == 1) {
           $form['actions']['save_edit_later'] = [
             '#type' => 'submit',
-            '#value' => t('Save and Edit Later'),
+            '#value' => !empty($task['data']['save_edit_later_label']) ? $task['data']['save_edit_later_label'] : t('Save and Edit Later'),
+            // Its own name, so Drupal never confuses it with the Save button whatever the labels.
+            // maestro_content_type_task_submit() recognises it by its element ID, not its label.
+            '#name' => 'maestro_save_edit_later',
             '#submit' => $form['actions']['submit']['#submit'],
+          ];
+        }
+        // Reject button, only when editing existing content: there is nothing to reject on node/add.
+        $formObject = $form_state->getFormObject();
+        $isExistingContent = method_exists($formObject, 'getEntity') && !$formObject->getEntity()->isNew();
+        if (!empty($task['data']['reject_on_edit']) && $isExistingContent) {
+          $form['actions']['maestro_reject'] = [
+            '#type' => 'submit',
+            '#value' => !empty($task['data']['reject_on_edit_label']) ? $task['data']['reject_on_edit_label'] : t('Reject'),
+            // Own name so Drupal never confuses it with the Save button whatever the labels.
+            '#name' => 'maestro_reject',
+            // Rejecting discards the edits, so skip the content form's validation and saving.
+            '#limit_validation_errors' => [],
+            '#submit' => ['maestro_content_type_task_reject_submit'],
+            '#weight' => 50,
           ];
         }
       }
@@ -427,6 +461,23 @@ function maestro_pv_info_render_array(array $task, $queueID, $weight = 0) {
  */
 function maestro_node_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
   $config = \Drupal::config('maestro.settings');
+  // Plain content and workflow views must never share a render-cache entry.
+  // Declare the contexts even on plain views, which may be cached first.
+  $cache = \Drupal\Core\Cache\CacheableMetadata::createFromRenderArray($build);
+  $contexts = ['url.query_args:maestro', 'url.query_args:queueid'];
+  $tokenParameter = $config->get('maestro_sitewide_token');
+  if ($tokenParameter != '') {
+    $contexts[] = 'url.query_args:' . $tokenParameter;
+  }
+  $cache->addCacheContexts($contexts)->addCacheableDependency($config);
+  $query = \Drupal::request()->query;
+  if ($query->has('maestro') || $query->has('queueid') || ($tokenParameter != '' && $query->has($tokenParameter))) {
+    // Assignment and task status may change independently of the node.
+    // Rebuild workflow controls and recheck access on every workflow visit.
+    $cache->setCacheMaxAge(0);
+  }
+  $cache->applyTo($build);
+
   $queueID = intval(\Drupal::request()->query->get('queueid', 0));
   $isMaestro = intval(\Drupal::request()->query->get('maestro', 0));
   
@@ -507,7 +558,6 @@ function maestro_menu_local_tasks_alter(&$data, $route_name) {
  *   The formstate information from the form.
  */
 function maestro_content_type_task_submit(array &$form, FormStateInterface $form_state) {
-  global $base_url;
   $trigger = $form_state->getTriggeringElement();
   $maestroElements = $form_state->getValue('maestro');
   $queueID = $maestroElements['queue_id'];
@@ -526,7 +576,8 @@ function maestro_content_type_task_submit(array &$form, FormStateInterface $form
       MaestroEngine::createEntityIdentifier($processID, 'node', $contentType, $uniqueIdentifier, $storage['nid']);
       // Since we don't have this combo set in our entity identifiers, we then need to set the handler too to point to the content.
       $queueRecord = \Drupal::entityTypeManager()->getStorage('maestro_queue')->load($queueID);
-      $queueRecord->set('handler', $base_url . '/node/' . $storage['nid'] . '/edit?maestro=1');
+      // Relative to the site, as in maestro_maestro_post_production_assignments().
+      $queueRecord->set('handler', '/node/' . $storage['nid'] . '/edit?maestro=1');
       $queueRecord->save();
     }
 
@@ -549,6 +600,41 @@ function maestro_content_type_task_submit(array &$form, FormStateInterface $form
       }
     }
   }
+}
+
+/**
+ * Handles the Reject button on a content type task's edit form.
+ *
+ * The content is not saved. The task is completed and flagged as cancelled,
+ * the same outcome as the Reject button in MaestroContentTypeCompleteTask.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The formstate information from the form.
+ */
+function maestro_content_type_task_reject_submit(array &$form, FormStateInterface $form_state) {
+  // Validation is skipped for this button, so the submitted values are empty: read the
+  // queue ID from the form as it was built, which maestro_form_alter() access-checked.
+  $queueID = intval($form['maestro']['queue_id']['#default_value'] ?? 0);
+  if ($queueID <= 0 || !MaestroEngine::canUserExecuteTask($queueID, \Drupal::currentUser()->id())) {
+    return;
+  }
+  $task = MaestroEngine::getTemplateTaskByQueueID($queueID);
+  if ($task['tasktype'] != 'MaestroContentType') {
+    return;
+  }
+
+  MaestroEngine::completeTask($queueID, \Drupal::currentUser()->id());
+  MaestroEngine::setTaskStatus($queueID, TASK_STATUS_CANCEL);
+  \Drupal::messenger()->addMessage(t('The content was not saved and your task has been rejected.'));
+
+  $redirect = !empty($task['data']['reject_redirect_to']) ? $task['data']['reject_redirect_to'] : ($task['data']['redirect_to'] ?? '');
+  $options = [];
+  if (!empty($task['data']['supply_maestro_ids_in_url'])) {
+    $options['query'] = ['maestro' => 1, 'queueid' => $queueID];
+  }
+  $form_state->setRedirectUrl(Url::fromUserInput('/' . ltrim($redirect, '/'), $options));
 }
 
 /**
@@ -929,8 +1015,10 @@ function maestro_tokens($type, $tokens, array $data, array $options, BubbleableM
                         ->getViewBuilder($entity_type)
                         ->view($entity, $view_mode);
                 
-                    // Render output (if needed for immediate HTML output)
-                    $replace = \Drupal::service('renderer')->render($render_array);
+                    // Render output (if needed for immediate HTML output).
+                    // renderInIsolation() brings its own render context, so this also works when the
+                    // orchestrator runs under drush or cron, where render() throws "Render context is empty".
+                    $replace = \Drupal::service('renderer')->renderInIsolation($render_array);
                   }
                 }
               }
@@ -1000,7 +1088,7 @@ function maestro_tokens($type, $tokens, array $data, array $options, BubbleableM
 function maestro_theme_suggestions_views_view_table_alter(array &$suggestions, array $variables) {
   // We are adding our own suggestion ONLY if the current view is our all flows view AND the current display is the all_flows_full.
   $view = $variables['view'];
-  if ($view->current_display == 'all_flows_full' && $view->id() == 'maestro_all_flows') {
+  if ($view->current_display == 'all_flows_full' && $view->id() == 'maestro_all_flows' && !\Drupal::moduleHandler()->moduleExists('maestro_taskconsole')) {
     $display_id = $view->current_display;
     $suggestions[] = 'views_view_table__maestro__' . $display_id;
   }
@@ -1054,3 +1142,21 @@ whoPointsToMe is in the MaestroTaskTrait
 
 
  */
+
+/**
+ * Prepares action links without invoking the site theme's dropbutton templates.
+ */
+function template_preprocess_maestro_actions(array &$variables) {
+  $variables['actions'] = [];
+  $variables['menu_id'] = \Drupal\Component\Utility\Html::getUniqueId('maestro-actions');
+  foreach ($variables['links'] as $key => $link) {
+    $action = [
+      '#type' => 'link',
+      '#title' => $link['title'],
+      '#url' => $link['url'],
+      '#attributes' => $link['attributes'] ?? [],
+    ];
+    $action['#attributes']['class'][] = 'maestro-actions__link';
+    $variables['actions'][$key] = $action;
+  }
+}

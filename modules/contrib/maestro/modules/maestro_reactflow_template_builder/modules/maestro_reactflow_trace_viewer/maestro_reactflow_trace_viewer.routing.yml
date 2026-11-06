@@ -1,0 +1,20 @@
+maestro_reactflow_trace_viewer.view:
+  path: '/maestro/trace/{processID}/visual'
+  defaults:
+    _controller: '\Drupal\maestro_reactflow_trace_viewer\Controller\MaestroTraceViewerController::view'
+    _title: 'Visual Trace'
+  options:
+    no_cache: TRUE
+  requirements:
+    _permission: 'administer maestro templates'
+
+# Trace data as JSON, polled by the viewer when auto-refresh is on.
+maestro_reactflow_trace_viewer.data:
+  path: '/maestro/trace/{processID}/visual/data'
+  defaults:
+    _controller: '\Drupal\maestro_reactflow_trace_viewer\Controller\MaestroTraceViewerController::data'
+  options:
+    no_cache: TRUE
+  requirements:
+    _permission: 'administer maestro templates'
+    processID: \d+

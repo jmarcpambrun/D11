@@ -86,6 +86,7 @@ display:
             task_id: task_id
             created: created
             changed: changed
+            started_time: started_time
             is_interactive: is_interactive
             active_handler: active_handler
             admin_operations: admin_operations
@@ -119,22 +120,22 @@ display:
               empty_column: false
               responsive: ''
             task_class_name:
-              sortable: false
+              sortable: true
               default_sort_order: asc
               align: ''
               separator: ''
               empty_column: false
               responsive: ''
             task_id:
-              sortable: false
+              sortable: true
               default_sort_order: asc
               align: ''
               separator: ''
               empty_column: false
               responsive: ''
             created:
-              sortable: false
-              default_sort_order: asc
+              sortable: true
+              default_sort_order: desc
               align: ''
               separator: ''
               empty_column: false
@@ -167,6 +168,9 @@ display:
               separator: ''
               empty_column: false
               responsive: ''
+            started_time:
+              sortable: true
+              default_sort_order: desc
           default: id
           empty_table: false
       row:
@@ -815,6 +819,8 @@ display:
           hide_alter_empty: true
           entity_type: maestro_queue
           plugin_id: maestro_active_handler
+          show_as_link: true
+          link_text: 'Open task'
         handler:
           id: handler
           table: maestro_queue
@@ -1220,48 +1226,6 @@ display:
           entity_type: maestro_queue
           entity_field: archived
           plugin_id: numeric
-        process_name:
-          id: process_name
-          table: maestro_process
-          field: process_name
-          relationship: process_id
-          group_type: group
-          admin_label: ''
-          operator: word
-          value: ''
-          group: 1
-          exposed: true
-          expose:
-            operator_id: process_name_op
-            label: 'Process Name'
-            description: 'Filter on process name'
-            use_operator: false
-            operator: process_name_op
-            identifier: process_name
-            required: false
-            remember: false
-            multiple: false
-            remember_roles:
-              authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              maestro_example: '0'
-              maestro_admin: '0'
-          is_grouped: false
-          group_info:
-            label: ''
-            description: ''
-            identifier: ''
-            optional: true
-            widget: select
-            multiple: false
-            remember: false
-            default_group: All
-            default_group_multiple: {  }
-            group_items: {  }
-          entity_type: maestro_process
-          entity_field: process_name
-          plugin_id: string
         task_label:
           id: task_label
           table: maestro_queue
@@ -1303,6 +1267,48 @@ display:
             group_items: {  }
           entity_type: maestro_queue
           entity_field: task_label
+          plugin_id: string
+        process_name:
+          id: process_name
+          table: maestro_process
+          field: process_name
+          relationship: process_id
+          group_type: group
+          admin_label: ''
+          operator: word
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: process_name_op
+            label: 'Process Name'
+            description: 'Filter on process name'
+            use_operator: false
+            operator: process_name_op
+            identifier: process_name
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              administrator: '0'
+              maestro_example: '0'
+              maestro_admin: '0'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          entity_type: maestro_process
+          entity_field: process_name
           plugin_id: string
       sorts: {  }
       title: 'All Active Maestro Workflow Tasks'
@@ -1365,6 +1371,7 @@ display:
     display_title: 'Full View'
     position: 1
     display_options:
+      use_ajax: true
       display_extenders: {  }
       path: maestro-all-in-production-tasks-full
       display_description: ''
@@ -1996,6 +2003,8 @@ display:
           hide_alter_empty: true
           entity_type: maestro_queue
           plugin_id: maestro_active_handler
+          show_as_link: true
+          link_text: 'Open task'
         handler:
           id: handler
           table: maestro_queue
@@ -2360,6 +2369,7 @@ display:
           entity_type: maestro_queue
           plugin_id: maestro_admin_operations
       defaults:
+        use_ajax: false
         fields: false
     cache_metadata:
       max-age: 0
@@ -2377,10 +2387,12 @@ display:
     display_title: 'Lean View'
     position: 1
     display_options:
+      use_ajax: true
       display_extenders: {  }
       path: maestro-all-in-production-tasks
       display_description: ''
       defaults:
+        use_ajax: false
         fields: false
       menu:
         type: normal
@@ -3071,6 +3083,8 @@ display:
           hide_alter_empty: true
           entity_type: maestro_queue
           plugin_id: maestro_active_handler
+          show_as_link: true
+          link_text: 'Open task'
         admin_operations:
           id: admin_operations
           table: maestro_queue

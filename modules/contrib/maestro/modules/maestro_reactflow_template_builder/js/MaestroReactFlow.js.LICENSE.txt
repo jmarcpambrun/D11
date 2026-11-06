@@ -1,0 +1,92 @@
+ MaestroReactFlow.js.LICENSE.txt.
+
+  /*!
+        Copyright (c) 2026 Randy Kolenko.
+        Licensed under the MIT License (MIT), see
+        https://github.com/oknelok/maestro_reactflow_template_builder_and_trace
+  */
+
+  /*!
+  * @xyflow/react 12.11.0
+  * @license MIT, https://github.com/xyflow/xyflow/blob/main/LICENSE
+  */
+
+  /*!
+  * @xyflow/system 0.0.77
+  * @license MIT, https://github.com/xyflow/xyflow/blob/main/LICENSE
+  */
+
+  /*!
+  * react 18.3.1
+  * @license MIT, https://github.com/facebook/react/blob/main/LICENSE
+  */
+
+  /*!
+  * react-dom 18.3.1
+  * @license MIT, https://github.com/facebook/react/blob/main/LICENSE
+  */
+
+  /*!
+  * scheduler 0.23.2
+  * @license MIT, https://github.com/facebook/react/blob/main/LICENSE
+  */
+
+  /*!
+  * use-sync-external-store 1.6.0
+  * @license MIT, https://github.com/facebook/react/blob/main/LICENSE
+  */
+
+  /*!
+  * zustand 4.5.7
+  * @license MIT, https://github.com/pmndrs/zustand/blob/main/LICENSE
+  */
+
+  /*!
+  * classcat 5.0.5
+  * @license MIT, https://github.com/jorgebucaran/classcat/blob/main/LICENSE.md
+  */
+
+  /*!
+  * d3-color 3.1.0
+  * @license ISC, https://github.com/d3/d3-color/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-dispatch 3.0.1
+  * @license ISC, https://github.com/d3/d3-dispatch/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-drag 3.0.0
+  * @license ISC, https://github.com/d3/d3-drag/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-ease 3.0.1
+  * @license BSD-3-Clause, https://github.com/d3/d3-ease/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-interpolate 3.0.1
+  * @license ISC, https://github.com/d3/d3-interpolate/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-selection 3.0.0
+  * @license ISC, https://github.com/d3/d3-selection/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-timer 3.0.1
+  * @license ISC, https://github.com/d3/d3-timer/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-transition 3.0.1
+  * @license ISC, https://github.com/d3/d3-transition/blob/main/LICENSE
+  */
+
+  /*!
+  * d3-zoom 3.0.0
+  * @license ISC, https://github.com/d3/d3-zoom/blob/main/LICENSE
+  */

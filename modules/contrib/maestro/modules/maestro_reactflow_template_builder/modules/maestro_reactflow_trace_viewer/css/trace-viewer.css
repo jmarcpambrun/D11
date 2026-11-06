@@ -1,0 +1,246 @@
+#maestro_trace_viewer_canvas {
+  display: block;
+}
+
+.maestro-trace-layout {
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+}
+
+.maestro-trace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Auto-refresh on/off switch, interval and last-updated status. */
+.maestro-trace-autorefresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.maestro-trace-autorefresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.maestro-trace-autorefresh-status {
+  color: #555;
+}
+
+.maestro-trace-autorefresh-status.is-error {
+  color: #a51b00;
+}
+
+.maestro-trace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.maestro-trace-canvas-wrapper {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.maestro-trace-side-panel {
+  width: 380px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 8px;
+  border-left: 1px solid #ccc;
+}
+
+.maestro-trace-side-panel h4 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+}
+
+.maestro-trace-side-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.maestro-trace-side-panel th,
+.maestro-trace-side-panel td {
+  border: 1px solid #ddd;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: left;
+}
+
+/* Node hover tooltip. TaskNode.jsx is shared with the ReactFlow template
+   editor, but this read-only viewer's library doesn't load the editor's
+   template.css (which owns .maestro-node-tooltip there) -- without this,
+   the tooltip renders as unstyled text with no visual elevation. Ported
+   here with extra prominence (larger, stronger shadow, explicit z-index)
+   per request. */
+.maestro-node-tooltip {
+  position: relative;
+  z-index: 1000;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  white-space: normal;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  max-width: 280px;
+}
+
+.maestro-node-tooltip-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.maestro-node-tooltip-meta {
+  opacity: 0.85;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Edge hover tooltip for untraversed (grey dashed) routes -- reuses the
+   node tooltip's look but stays on one line since its text is short. */
+.maestro-edge-tooltip {
+  white-space: nowrap;
+}
+
+/* Before/after snapshot diff tables ("Changes During This Step"). */
+.maestro-diff-added td {
+  background: #e6f7ec;
+}
+
+.maestro-diff-updated td,
+.maestro-diff-changed td {
+  background: #fff6da;
+}
+
+.maestro-diff-removed td {
+  background: #fdecea;
+  text-decoration: line-through;
+  text-decoration-color: #c0392b;
+}
+
+.maestro-diff-unchanged td {
+  color: #888;
+}
+
+.maestro-diff-empty {
+  color: #aaa;
+  font-style: italic;
+}
+
+.maestro-diff-note {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+  margin-top: -8px;
+}
+
+/* Mobile: the fixed 380px side-by-side panel doesn't fit next to the canvas,
+   so below 768px the panel moves into a draggable bottom sheet (see
+   MobileBottomSheet.jsx) triggered by tapping a node or the toolbar's
+   "Details" button, instead of always being visible. */
+@media (max-width: 768px) {
+  .maestro-trace-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .maestro-trace-details-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .maestro-bottom-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    z-index: 2000;
+  }
+
+  .maestro-bottom-sheet {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 100%;
+    background: #fff;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    min-height: 15vh;
+    max-height: 92vh;
+    transition: height 0.2s ease-out;
+    touch-action: none;
+  }
+
+  .maestro-bottom-sheet-handle {
+    width: 100%;
+    padding: 10px 0 6px;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .maestro-bottom-sheet-handle::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: #ccc;
+  }
+
+  .maestro-bottom-sheet-header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 0 10px 6px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .maestro-bottom-sheet-expand,
+  .maestro-bottom-sheet-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: #555;
+    font-size: 18px;
+    line-height: 1;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .maestro-bottom-sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .maestro-bottom-sheet-body .maestro-trace-side-panel {
+    width: 100%;
+    border-left: none;
+  }
+}

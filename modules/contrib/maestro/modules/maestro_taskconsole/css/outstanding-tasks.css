@@ -1,0 +1,325 @@
+/* Shared Maestro administrative reports, scoped independently of consoles. */
+main:has(.maestro-task-report) .layout--pass--content-medium > .block-system-main-block,
+main:has(.maestro-task-report) .layout--pass--content-medium > .block-page-title-block {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.maestro-task-report {
+  --mot-border: var(--maestro-border);
+  --mot-background: var(--maestro-background);
+  --mot-accent: var(--maestro-accent);
+  color: var(--maestro-text);
+  font-size: 15px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+/* Own vertical spacing instead of adding margins to the theme's grid gaps. */
+.maestro-task-report.view {
+  row-gap: 20px;
+}
+
+.maestro-task-report > .view-header {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  margin-block: 0;
+  padding-block: 0;
+  hyphens: none;
+}
+
+.maestro-task-report > .view-header > :first-child {
+  margin-block-start: 0;
+}
+
+.maestro-task-report > .view-header > :last-child {
+  margin-block-end: 0;
+}
+
+.maestro-task-report > .view-filters .maestro-filters {
+  margin-block: 0;
+}
+
+.maestro-task-report > .view-content,
+.maestro-report-region {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--mot-border);
+  border-radius: 6px;
+}
+
+.maestro-report-table {
+  width: 100%;
+  min-width: 1050px;
+  margin: 0;
+  border-collapse: collapse;
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.maestro-report-table > :is(thead, tbody) > tr > th {
+  padding: 14px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--mot-border);
+  background: var(--mot-background);
+  color: var(--maestro-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+}
+
+.maestro-report-table > :is(thead, tbody) > tr > td {
+  padding: 16px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--mot-border);
+  background: transparent;
+  vertical-align: middle;
+}
+
+.maestro-report-table > tbody > tr {
+  background: var(--maestro-surface);
+}
+
+.maestro-report-table > tbody > tr:hover {
+  background: var(--mot-background);
+}
+
+.maestro-report-table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+.maestro-report-table > tbody > tr > td.views-field-task-label {
+  width: 18%;
+  min-width: 160px;
+  font-weight: 600;
+}
+
+.maestro-report-table > tbody > tr > td.views-field-process-name {
+  width: 20%;
+  min-width: 170px;
+}
+
+.maestro-report-table > tbody > tr > td.views-field-assign-id {
+  min-width: 130px;
+  overflow-wrap: anywhere;
+}
+
+.maestro-report-table > tbody > tr > td:is(.views-field-created, .views-field-created-1) {
+  min-width: 140px;
+  font-size: var(--maestro-font-size, 14px);
+  font-variant-numeric: tabular-nums;
+}
+
+.maestro-report-table > tbody > tr > td.views-field-admin-operations {
+  min-width: 150px;
+}
+
+.maestro-task-report .views-field-active-handler a {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--mot-accent);
+  border-radius: 4px;
+  background: var(--mot-accent);
+  color: var(--maestro-on-accent);
+  font: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.maestro-task-report :is(a, button, input):focus-visible {
+  outline: 2px solid var(--mot-accent);
+  outline-offset: 3px;
+}
+
+.maestro-report-table > :is(thead, tbody) > tr > :is(th, td) {
+  hyphens: none;
+  word-break: normal;
+}
+
+/* Keep wide administrative tables inside the content area, including grid themes. */
+main:has(.maestro-task-report) {
+  min-width: 0;
+}
+
+main:has(.maestro-task-report) .block-page-title-block {
+  margin-block-end: 20px;
+}
+
+main:has(.maestro-task-report) .block-page-title-block .page-title {
+  margin-block-end: 0;
+  max-width: none;
+  hyphens: none;
+}
+
+.maestro-report-table > :is(thead, tbody) > tr > th a {
+  color: inherit;
+}
+
+.maestro-report-table > :is(thead, tbody) > tr > td.views-field-active-handler {
+  min-width: 100px;
+}
+
+.maestro-task-report .view-footer {
+  margin-block-start: 1rem;
+  font-size: 13px;
+}
+
+.maestro-active-workflows .maestro-report-table {
+  min-width: 1380px;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td.views-field-task-label {
+  width: auto;
+  min-width: 175px;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td.views-field-process-name {
+  width: auto;
+  min-width: 160px;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td.views-field-active-assignments {
+  min-width: 140px;
+  overflow-wrap: anywhere;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td:is(.views-field-task-id, .views-field-task-class-name) {
+  min-width: 120px;
+  max-width: 180px;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td:is(.views-field-created, .views-field-started-time) {
+  min-width: 125px;
+  font-size: var(--maestro-font-size, 14px);
+  font-variant-numeric: tabular-nums;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td.views-field-admin-operations {
+  min-width: 125px;
+}
+
+.maestro-task-report .views-field-active-handler a {
+  color: var(--maestro-on-accent) !important;
+}
+
+.maestro-active-workflows .maestro-report-table > tbody > tr > td:is(.views-field-task-id, .views-field-task-class-name, .views-field-active-assignments) {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.maestro-report-table > tbody > tr > td:is(.views-field-id, .views-field-queue-id, .views-field-queue-id-1) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible navigation for tables even when the OS hides overlay scrollbars. */
+.maestro-task-report .maestro-report-scroll {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-block: 0 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--maestro-muted);
+}
+
+.maestro-task-report .maestro-report-scroll[hidden] {
+  display: none !important;
+}
+
+.maestro-task-report .maestro-report-scroll__hint {
+  margin-inline-end: 4px;
+}
+
+.maestro-task-report .maestro-report-scroll__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--mot-border);
+  border-radius: 4px;
+  background: var(--maestro-surface);
+  color: var(--mot-accent);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.maestro-task-report .maestro-report-scroll__button::before,
+.maestro-task-report .maestro-report-scroll__button::after {
+  content: none;
+}
+
+.maestro-task-report .maestro-report-scroll__button:hover:not(:disabled) {
+  background: var(--mot-background);
+}
+
+.maestro-task-report .maestro-report-scroll__button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.maestro-task-report .maestro-report-scroll-frame {
+  position: relative;
+  min-width: 0;
+}
+
+.maestro-task-report .maestro-report-scroll-frame::before,
+.maestro-task-report .maestro-report-scroll-frame::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 16px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+.maestro-task-report .maestro-report-scroll-frame::before {
+  left: 1px;
+  background: linear-gradient(to right, rgb(23 43 73 / 18%), transparent);
+}
+
+.maestro-task-report .maestro-report-scroll-frame::after {
+  right: 1px;
+  background: linear-gradient(to left, rgb(23 43 73 / 18%), transparent);
+}
+
+.maestro-task-report .maestro-report-scroll-frame.has-columns-left::before,
+.maestro-task-report .maestro-report-scroll-frame.has-columns-right::after {
+  opacity: 1;
+}
+
+.maestro-task-report .maestro-report-scroll-shell {
+  min-width: 0;
+}
+
+/* Keep the Queue ID label and its sort indicator on one line. */
+.maestro-report-table > thead > tr > :is(.views-field-id, .views-field-queue-id, .views-field-queue-id-1),
+.maestro-report-table > thead > tr > :is(.views-field-id, .views-field-queue-id, .views-field-queue-id-1) a {
+  white-space: nowrap;
+}

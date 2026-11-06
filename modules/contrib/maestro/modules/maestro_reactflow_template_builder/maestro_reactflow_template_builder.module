@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * @file
+ * Maestro ReactFlow Template Builder submodule.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_entity_operation().
+ *
+ * Adds a "React Editor" operation to every maestro_template entity row on the
+ * /maestro/templates/list page, alongside the "Task Editor" link of the
+ * diagram-js builder when maestro_template_builder is installed.
+ */
+function maestro_reactflow_template_builder_entity_operation(EntityInterface $entity) {
+  $operations = [];
+
+  if ($entity->getEntityTypeId() !== 'maestro_template') {
+    return $operations;
+  }
+
+  if (!\Drupal::currentUser()->hasPermission('administer maestro templates')) {
+    return $operations;
+  }
+
+  $operations['reactflow_tasks'] = [
+    'title'  => t('React Flow Editor'),
+    'url'    => Url::fromRoute('maestro_reactflow_template_builder.builder', ['templateMachineName' => $entity->id()]),
+    'weight' => 0,
+  ];
+
+  return $operations;
+}

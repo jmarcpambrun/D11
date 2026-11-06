@@ -1,8 +1,10 @@
-<div class="maestro-details-tasks-wrapper">
-<details>
-<summary>{{ title }}</summary>
-  <div>
-    {{ task_information }}
-  </div>
-</details>
+{# Keep arbitrary Views, adding only an identifiable presentation wrapper. #}
+<div class="maestro-details-tasks-wrapper{% if view_id %} maestro-details-tasks-wrapper--{{ view_id|clean_class }}{% endif %}">
+  <details class="maestro-detail-panel maestro-detail-panel--attached" open>
+    <summary class="maestro-detail-panel__summary">
+      <span class="maestro-details__title">{{ title }}</span>
+      {% if item_count is not null %}<span class="maestro-details__count">{% if item_count == 1 %}{{ '1 item'|t }}{% else %}{{ '@count items'|t({'@count': item_count}) }}{% endif %}</span>{% endif %}
+    </summary>
+    <div class="maestro-attached-view">{{ task_information }}</div>
+  </details>
 </div>

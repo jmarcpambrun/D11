@@ -1,0 +1,6 @@
+services:
+  maestro_review_task.uninstall_validator:
+    class: Drupal\maestro_review_task\MaestroReviewTaskUninstallValidator
+    tags:
+      - { name: module_install.uninstall_validator }
+    arguments: ['@string_translation']

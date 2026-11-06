@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Hooks for the Maestro ReactFlow Trace Viewer module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_form_FORM_ID_alter() for maestro_trace_form.
+ *
+ * Adds a link to the visual (ReactFlow-overlaid) trace view alongside the
+ * existing HTML-table trace, without modifying contrib's MaestroTrace.php.
+ */
+function maestro_reactflow_trace_viewer_form_maestro_trace_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $processID = $form['process_id']['#default_value'] ?? NULL;
+  if (!$processID) {
+    return;
+  }
+  $form['maestro_reactflow_trace_viewer_link'] = [
+    '#type' => 'link',
+    '#title' => t('View Visual Trace'),
+    '#url' => Url::fromRoute('maestro_reactflow_trace_viewer.view', ['processID' => $processID]),
+    '#attributes' => ['class' => ['button']],
+    '#weight' => -100,
+  ];
+}

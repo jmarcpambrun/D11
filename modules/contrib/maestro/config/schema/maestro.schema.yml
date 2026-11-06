@@ -1,5 +1,38 @@
 # Schema for the configuration files of the Maestro Engine module.
 
+maestro.settings:
+  type: config_object
+  label: 'Maestro settings'
+  mapping:
+    maestro_redirect_location:
+      type: string
+      label: 'URI used in notifications to redirect the recipient to'
+    maestro_send_notifications:
+      type: boolean
+      label: 'Send out notifications'
+    maestro_orchestrator_task_console:
+      type: boolean
+      label: 'Run the orchestrator on Task Console refreshes'
+    maestro_orchestrator_token:
+      type: string
+      label: 'Token that must be appended to the /orchestrator URL'
+    maestro_orchestrator_run_as:
+      type: integer
+      label: 'User ID the orchestrator runs as'
+      nullable: true
+    maestro_orchestrator_lock_execution_time:
+      type: integer
+      label: 'Number of seconds the orchestrator locks for'
+    maestro_orchestrator_development_mode:
+      type: boolean
+      label: 'Maestro development mode during orchestrator execution'
+    maestro_sitewide_token:
+      type: string
+      label: 'Site-wide URL token key'
+    maestro_token_zero_user:
+      type: boolean
+      label: 'Enable the Zero-User notification mechanism'
+
 block.settings.maestro_process_status_block:
   type: block_settings
   label: 'Maestro status block settings'
@@ -147,6 +180,12 @@ maestro.maestro_template.*:
           workflow_status_stage_message:
             type: string
             label: 'Workflow Status Stage Message'
+          workflow_status_stage_default:
+            type: boolean
+            label: "Use the message as the stage's default label"
+          workflow_status_stage_status:
+            type: string
+            label: 'Workflow Status Stage Status machine name'
           raphael:
             type: string
             label: 'Raphael'
@@ -374,6 +413,24 @@ maestro.task.MaestroContentType:
     save_edit_later:
       type: integer
       label: 'Save and edit later'
+    save_label:
+      type: label
+      label: 'Save button label'
+    save_edit_later_label:
+      type: label
+      label: 'Save and Edit Later button label'
+    hide_delete:
+      type: integer
+      label: 'Hide the Delete link on the content form'
+    reject_on_edit:
+      type: integer
+      label: 'Show a Reject button on the content edit form'
+    reject_on_edit_label:
+      type: label
+      label: 'Reject button label on the content edit form'
+    show_maestro_pv_info:
+      type: string
+      label: 'Process variable to show with the content'
     link_to_edit:
       type: integer
       label: 'Link to edit'
@@ -485,6 +542,17 @@ views.field.maestro_process_initiator_user:
     show_as_link:
       type: boolean
       label: 'Display link to user account'
+
+views.relationship.maestro_process_variable:
+  type: views_relationship
+  label: 'Maestro process variable'
+  mapping:
+    template_id:
+      type: string
+      label: "Template the variable belongs to ('*' for any template)"
+    variable_name:
+      type: string
+      label: 'Process variable name'
 
 views.field.maestro_process_process_details:
   type: views_field

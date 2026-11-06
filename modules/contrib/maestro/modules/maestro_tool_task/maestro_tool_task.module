@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ * Hooks for the Maestro Tool Task module.
+ */
+
+use Drupal\Core\Render\Markup;
+use Drupal\maestro\Engine\MaestroEngine;
+
+/**
+ * Implements hook_maestro_template_validation_check().
+ *
+ * Reports Tool tasks that pass an AI task's answer into a tool that changes
+ * data or starts something. Workflow data can steer an AI task's answer
+ * (prompt injection), and the Tool task then runs the tool with that answer
+ * without anyone reviewing it. This is information only: whether that's
+ * acceptable is the template builder's decision.
+ */
+function maestro_tool_task_maestro_template_validation_check($templateMachineName, &$validation_failure_tasks, &$validation_information_tasks) {
+  $template = MaestroEngine::getTemplate($templateMachineName);
+  if (!$template || !\Drupal::hasService('plugin.manager.tool')) {
+    return;
+  }
+
+  // Where each AI task in the template stores its answer.
+  $ai_variables = [];
+  $ai_storage = [];
+  foreach ($template->tasks as $task) {
+    if (($task['tasktype'] ?? '') !== 'MaestroAITask') {
+      continue;
+    }
+    $ai = $task['data']['ai'] ?? [];
+    $return_into = $ai['ai_return_into'] ?? '';
+    if ($return_into === 'process_variable' && !empty($ai['ai_return_into_process_variable'])) {
+      $ai_variables[$ai['ai_return_into_process_variable']][] = $task['label'];
+    }
+    elseif ($return_into === 'ai_task_entity' && !empty($ai['ai_return_into_ai_variable'])) {
+      $ai_storage[$ai['ai_return_into_ai_variable']][] = $task['label'];
+    }
+  }
+  if (!$ai_variables && !$ai_storage) {
+    return;
+  }
+
+  /** @var \Drupal\tool\Tool\ToolManager $tool_manager */
+  $tool_manager = \Drupal::service('plugin.manager.tool');
+  foreach ($template->tasks as $task) {
+    if (($task['tasktype'] ?? '') !== 'MaestroToolTask') {
+      continue;
+    }
+    $tool_id = $task['data']['tool']['tool_id'] ?? '';
+    if (!$tool_id || !$tool_manager->hasDefinition($tool_id)) {
+      continue;
+    }
+    /** @var \Drupal\tool\Tool\ToolDefinition $definition */
+    $definition = $tool_manager->getDefinition($tool_id);
+    if (!$definition->isDestructive()) {
+      continue;
+    }
+
+    foreach (($task['data']['tool']['inputs'] ?? []) as $input_name => $value) {
+      $sources = [];
+      preg_match_all('/\[maestro:process-variable-value:([a-zA-Z0-9_]+)\]/', (string) $value, $matches);
+      foreach (array_unique($matches[1]) as $variable) {
+        foreach ($ai_variables[$variable] ?? [] as $ai_task_label) {
+          $sources[] = t('process variable "@variable" (written by AI task "@ai_task")', ['@variable' => $variable, '@ai_task' => $ai_task_label]);
+        }
+      }
+      preg_match_all('/\[maestro:render_ai_task_entity:([a-z0-9_]+)[:\]]/', (string) $value, $matches);
+      foreach (array_unique($matches[1]) as $storage_id) {
+        foreach ($ai_storage[$storage_id] ?? [] as $ai_task_label) {
+          $sources[] = t('AI storage entity "@storage" (written by AI task "@ai_task")', ['@storage' => $storage_id, '@ai_task' => $ai_task_label]);
+        }
+      }
+      if (!$sources) {
+        continue;
+      }
+      $validation_information_tasks[] = [
+        'taskID' => $task['id'],
+        'taskLabel' => $task['label'],
+        'reason' => t('Input "@input" of the @operation tool "@tool" comes from @sources. Workflow data can steer an AI answer (prompt injection), and this task runs the tool with that answer without anyone reviewing it. Consider an interactive review task before this one.', [
+          '@input' => $input_name,
+          '@operation' => $definition->getOperation()->getLabel(),
+          '@tool' => (string) $definition->getLabel(),
+          // Each source is translated markup with its own placeholders already escaped.
+          '@sources' => Markup::create(implode(', ', array_map('strval', $sources))),
+        ]),
+      ];
+    }
+  }
+}

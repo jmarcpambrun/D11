@@ -65,9 +65,9 @@ class MaestroContentTypeCompleteTask extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $queueID = $form_state->getValue('queueid', 0);
     $triggeringElement = $form_state->getTriggeringElement();
-    (isset($task['data']['redirect_to']) && $task['data']['redirect_to'] != '') ? $base_redirect_url = $task['data']['redirect_to'] : $base_redirect_url = '/';
     if ($queueID) {
       $task = MaestroEngine::getTemplateTaskByQueueID($queueID);
+      $base_redirect_url = !empty($task['data']['redirect_to']) ? $task['data']['redirect_to'] : '/';
       // Just a failsafe.
       if ($task['tasktype'] == 'MaestroContentType' && MaestroEngine::canUserExecuteTask($queueID, \Drupal::currentUser()->id())) {
         if (strstr($triggeringElement['#id'], 'edit-submit') !== FALSE && $queueID > 0) {
@@ -81,6 +81,8 @@ class MaestroContentTypeCompleteTask extends FormBase {
           $redirect_url = (isset($task['data']['reject_redirect_to']) && $task['data']['reject_redirect_to'] != '') ? $redirect_url = $task['data']['reject_redirect_to'] : $redirect_url = $base_redirect_url;
         }
       }
+      // Default return paths may be stored without a leading slash.
+      $redirect_url = '/' . ltrim($redirect_url, '/');
       if (isset($task['data']['supply_maestro_ids_in_url']) && $task['data']['supply_maestro_ids_in_url'] == 1) {
         $url = Url::fromUserInput($redirect_url,
             ['query' => ['maestro' => 1, 'queueid' => $form_state->getValue('queueid', 0)]]);

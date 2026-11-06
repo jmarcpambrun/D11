@@ -32,6 +32,18 @@ maestro.navigation_menu:
       pack_id: maestro
       icon_id: maestro
 
+maestro.navigation_menu.views_task_console:
+  title: 'Views-based Task Console'
+  parent: maestro.navigation_menu
+  route_name: view.maestro_views_based_task_console.page_1
+  weight: 0
+
+maestro.navigation_menu.templates:
+  title: 'Maestro Templates'
+  parent: maestro.navigation_menu
+  route_name: entity.maestro_template.list
+  weight: 1
+
 maestro.navigation_menu.orchestrator:
   title: 'Run Orchestrator'
   parent: maestro.navigation_menu

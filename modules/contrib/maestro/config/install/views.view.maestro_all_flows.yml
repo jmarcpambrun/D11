@@ -64,6 +64,36 @@ display:
             next: ??
       style:
         type: table
+        options:
+          columns:
+            process_id: process_id
+            process_name: process_name
+            template_id: template_id
+            initiator_username: initiator_username
+            created: created
+            completed: completed
+            admin_operations: admin_operations
+            process_details: process_details
+          default: process_id
+          info:
+            process_id:
+              sortable: true
+              default_sort_order: desc
+            process_name:
+              sortable: true
+              default_sort_order: asc
+            template_id:
+              sortable: true
+              default_sort_order: asc
+            initiator_username:
+              sortable: true
+              default_sort_order: asc
+            created:
+              sortable: true
+              default_sort_order: desc
+            completed:
+              sortable: true
+              default_sort_order: desc
       row:
         type: fields
       fields:
@@ -74,7 +104,7 @@ display:
           relationship: none
           group_type: group
           admin_label: ''
-          label: ProcessID
+          label: 'Process ID'
           exclude: false
           alter:
             alter_text: false
@@ -205,7 +235,7 @@ display:
           relationship: none
           group_type: group
           admin_label: ''
-          label: 'Template Machine Name/ID'
+          label: Template
           exclude: false
           alter:
             alter_text: false
@@ -270,7 +300,7 @@ display:
           relationship: none
           group_type: group
           admin_label: ''
-          label: 'The initiator of the process.'
+          label: Initiator
           exclude: false
           alter:
             alter_text: false
@@ -504,7 +534,7 @@ display:
           relationship: none
           group_type: group
           admin_label: ''
-          label: 'Process Details'
+          label: Details
           exclude: false
           alter:
             alter_text: false
@@ -556,7 +586,7 @@ display:
           relationship: none
           group_type: group
           admin_label: ''
-          operator: '='
+          operator: contains
           value: ''
           group: 1
           exposed: true
@@ -604,14 +634,14 @@ display:
           exposed: true
           expose:
             operator_id: template_id_filter_op
-            label: 'Template Name'
+            label: Template
             description: ''
             use_operator: false
             operator: template_id_filter_op
             identifier: template_id_filter
             required: false
             remember: false
-            multiple: true
+            multiple: false
             remember_roles:
               authenticated: authenticated
               anonymous: '0'
@@ -661,6 +691,9 @@ display:
     display_title: Page
     position: 1
     display_options:
+      use_ajax: true
+      defaults:
+        use_ajax: false
       display_extenders: {  }
       path: maestro-all-flows
     cache_metadata:

@@ -1,0 +1,218 @@
+/* Trace is a workspace. Scope all overrides to its form and containing blocks. */
+.layout--pass--content-medium:has(.maestro-trace) > :is(.block-system-main-block, .block-page-title-block) {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* Olivero places the title in a separate region above the form. */
+main:has(.maestro-trace) .layout--pass--content-medium > .block-page-title-block {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-block-end: 1.5rem;
+}
+
+main:has(.maestro-trace) .block-page-title-block .page-title {
+  max-width: none;
+  hyphens: none;
+}
+
+.maestro-trace {
+  --mt-border: var(--maestro-border);
+  --mt-surface: var(--maestro-surface);
+  --mt-background: var(--maestro-background);
+  --mt-text: var(--maestro-text);
+  --mt-muted: var(--maestro-muted);
+  --mt-accent: var(--maestro-accent);
+  color: var(--mt-text);
+  font-size: 15px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.maestro-trace *,
+.maestro-trace *::before,
+.maestro-trace *::after {
+  box-sizing: border-box;
+}
+
+.maestro-trace__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: var(--mt-muted);
+  font-size: 13px;
+}
+
+.maestro-trace__state {
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--maestro-selected);
+  color: var(--mt-text);
+}
+
+.maestro-trace__section {
+  margin-block: 0 24px;
+  overflow-x: auto;
+  border: 1px solid var(--mt-border);
+  border-radius: 6px;
+  background: var(--mt-surface);
+}
+
+.maestro-trace .maestro-trace__section table {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  background: var(--mt-surface);
+}
+
+.maestro-trace .maestro-trace__section caption {
+  padding: 16px;
+  text-align: start;
+  color: var(--mt-text);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.maestro-trace .maestro-trace__section th {
+  padding: 12px 16px;
+  border: 0;
+  border-block: 1px solid var(--mt-border);
+  background: var(--mt-background);
+  color: var(--mt-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 600;
+  text-align: start;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.maestro-trace .maestro-trace__section td {
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--mt-border);
+  vertical-align: middle;
+  background: transparent;
+}
+
+.maestro-trace .maestro-trace__section tr:last-child td {
+  border-bottom: 0;
+}
+
+.maestro-trace .maestro-trace__section tbody tr {
+  background: var(--mt-surface);
+}
+
+.maestro-trace .maestro-trace__section tbody tr:hover {
+  background: var(--mt-background);
+}
+
+.maestro-trace .form-item {
+  margin: 0;
+}
+
+.maestro-trace :is(input.form-text, select) {
+  width: 100%;
+  min-height: 40px;
+  height: 40px;
+  margin: 0;
+  border: 1px solid var(--mt-border);
+  border-radius: 4px;
+  background-color: var(--mt-surface);
+  color: var(--mt-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.maestro-trace input.form-text {
+  padding: 0 12px;
+}
+
+.maestro-trace select {
+  padding-block: 0;
+  padding-inline-start: 12px;
+  padding-inline-end: 36px;
+}
+
+.maestro-trace .maestro-trace__table--tasks_table {
+  min-width: 1050px;
+}
+
+.maestro-trace__table--tasks_table .maestro-trace-column--queue-id {
+  width: 6%;
+  color: var(--mt-muted);
+  font-size: 13px;
+}
+
+.maestro-trace__table--tasks_table .maestro-trace-column--label {
+  width: 24%;
+  min-width: 180px;
+  font-weight: 600;
+}
+
+.maestro-trace__table--tasks_table .maestro-trace-column--status {
+  min-width: 250px;
+}
+
+.maestro-trace__table--tasks_table .maestro-trace-column--completed {
+  min-width: 150px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.maestro-trace__table--tasks_table .maestro-trace-column--archived {
+  min-width: 150px;
+}
+
+.maestro-trace .maestro-trace__table--vars_table {
+  min-width: 650px;
+}
+
+.maestro-trace__table--vars_table .maestro-trace-column--id {
+  width: 7%;
+  font-size: 13px;
+  color: var(--mt-muted);
+}
+
+.maestro-trace__table--vars_table .maestro-trace-column--var-name {
+  width: 38%;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  hyphens: none;
+  overflow-wrap: anywhere;
+}
+
+.maestro-trace .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-block: 8px 24px;
+  padding: 0;
+}
+
+.maestro-trace .form-actions input[type='submit'] {
+  min-height: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0 18px;
+  border: 1px solid var(--mt-accent);
+  border-radius: 4px;
+  background: var(--mt-accent);
+  color: var(--maestro-on-accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.maestro-trace .form-actions input.maestro-trace__delete {
+  margin-inline-start: auto;
+  color: #b42318;
+  border-color: #b42318;
+  background: var(--mt-surface);
+}
+
+.maestro-trace :is(input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--mt-accent);
+  outline-offset: 3px;
+}

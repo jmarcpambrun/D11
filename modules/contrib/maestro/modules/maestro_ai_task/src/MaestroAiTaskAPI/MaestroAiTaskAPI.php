@@ -45,25 +45,77 @@ class MaestroAiTaskAPI {
    *   Empty array on failure or absence of storage entities.  Success will be an array with count > 0.  
    */
   public static function getAiStorageEntityDefinitionsInTemplate($templateMachineName, $return_as_options_array = TRUE) {
-    $definitions = [];
+    $ai_vars = [];
     $template = MaestroEngine::getTemplate($templateMachineName);
-    foreach ($template->tasks as $templateTask) {
+    foreach (($template->tasks ?? []) as $templateTask) {
       $tasktype = $templateTask['tasktype'] ?? NULL;
       if ($tasktype == 'MaestroAITask') {
         // See if there's any other entities already set.
-        $ai_var = $templateTask['ai_return_into_ai_variable'] ?? NULL;
-        if ($ai_var && $ai_var != 'maestro_ai_task_history') {
+        $ai_vars[] = $templateTask['data']['ai']['ai_return_into_ai_variable'] ?? $templateTask['ai_return_into_ai_variable'] ?? NULL;
+      }
+      elseif ($tasktype == 'MaestroToolTask') {
+        // Tool tasks can store each tool output into a storage entity.
+        foreach (($templateTask['data']['tool']['output_storage'] ?? []) as $storage_id) {
+          $ai_vars[] = $storage_id;
+        }
+      }
+    }
+
+    $definitions = [];
+    foreach (array_unique(array_filter(array_map('strval', array_filter($ai_vars)))) as $ai_var) {
+      if ($ai_var != 'maestro_ai_task_history') {
           if($return_as_options_array) {
-            $definitions[strval($ai_var)] = $ai_var;
+          $definitions[$ai_var] = $ai_var;
           }
           else {
             $definitions[] = $ai_var;
           }
-          
-        }
       }
     }
     return $definitions;
+  }
+          
+  /**
+   * saveAiStorageValue
+   *   Stores a value into this process's Maestro AI Storage entity with the given unique ID.
+   *   The entity is only created when one doesn't already exist for this process. Otherwise the
+   *   existing entity is updated, which is the same behaviour as the Maestro AI Task.
+   *
+   * @param string $unique_id
+   *   The unique ID/machine_name of the AI Storage entity.
+   * @param int $process_id
+   *   The process ID the entity belongs to.
+   * @param int $queue_id
+   *   The queue ID of the task storing the value.
+   * @param string $task_id
+   *   The ID of the task storing the value.
+   * @param mixed $value
+   *   The value to store. It is saved under the 'response' key.
+   *
+   * @return bool
+   *   TRUE on success.
+   */
+  public static function saveAiStorageValue($unique_id, $process_id, $queue_id, $task_id, $value) {
+    $existing_entity = self::getAiStorageEntityByUniqueId($unique_id, $process_id);
+    if ($existing_entity && count($existing_entity)) {
+      /** @var \Drupal\maestro_ai_task\Entity\MaestroAIStorage $entity */
+      $entity = current($existing_entity);
+      $entity->set('queue_id', $queue_id);
+      $entity->set('ai_storage', ['response' => $value]);
+        }
+    else {
+      $entity = MaestroAIStorage::create([
+        'machine_name' => $unique_id,
+        'task_id' => $task_id,
+        'queue_id' => $queue_id,
+        'process_id' => $process_id,
+        'ai_storage' => ['response' => $value],
+        // We don't have any context for who the user is.
+        'uid' => 0,
+        'created' => time(),
+      ]);
+      }
+    return (bool) $entity->save();
   }
 
 

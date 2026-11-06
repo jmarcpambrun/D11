@@ -4,7 +4,9 @@ namespace Drupal\maestro\Controller;
 
 use Drupal\Core\Url;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\maestro\Engine\MaestroEngine;
+use Drupal\maestro\Engine\MaestroOrchestrationRunner;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -13,12 +15,25 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 class MaestroOrchestrator extends ControllerBase {
 
+  use AutowireTrait;
+
+  /**
+   * Constructs a MaestroOrchestrator controller.
+   *
+   * @param \Drupal\maestro\Engine\MaestroOrchestrationRunner $orchestrationRunner
+   *   The orchestration runner.
+   */
+  public function __construct(
+    protected readonly MaestroOrchestrationRunner $orchestrationRunner,
+  ) {
+  }
+
   /**
    * Orchestrator method
    * This method is called by the menu router for /orchestrator
    * This runs the Maestro Engine.
    */
-  public function orchestrate($token = '', $skip_response = FALSE) {
+  public function orchestrate($token = '') {
     if ($token == '') {
       // bad!  must have a value.
       return new Response('Missing Orchestrator Token', 500);
@@ -29,36 +44,14 @@ class MaestroOrchestrator extends ControllerBase {
       return new Response('Wrong Orchestrator Token', 500);
     }
 
-    $engine = new MaestroEngine();
-    $lockDurationTime = $config->get('maestro_orchestrator_lock_execution_time');
-    if (intval($lockDurationTime) <= 0) {
-      $lockDurationTime = 30;
-    }
-
-    $lock = \Drupal::lock();
-    if ($lock->acquire('maestro_orchestrator', $lockDurationTime)) {
       // TODO: Handle exceptions being thrown.
       // leaving it like this will simply stall the orchestrator execution for the time being
       // How to gracefully continue?  One process failing will stall the entire engine.
-      // Check if dev mode option is enabled.
-      if ($config->get('maestro_orchestrator_development_mode') == '1') {
-        // Does a cache reset before loading entities during orchestration.
-        $engine->enableDevelopmentMode();
-      }
-      $engine->cleanQueue();
-      $lock->release('maestro_orchestrator');
-    }
+    $this->orchestrationRunner->run();
 
-    if ($engine->getDebug()) {
-      return ['#markup' => 'debug orchestrator done'];
-    }
-    else {
       // See CronController::run as we do the same thing to return a 204 with no content to satisfy the return response.
-      if (!$skip_response) {
         return new Response('', 204);
       }
-    }
-  }
 
   /**
    * Method used to start a process.
@@ -70,9 +63,8 @@ class MaestroOrchestrator extends ControllerBase {
       $pid = $engine->newProcess($templateMachineName);
       if ($pid) {
         \Drupal::messenger()->addMessage(t('Process Started'));
-        $config = $this->config('maestro.settings');
         // Run the orchestrator for us once on process kickoff.
-        $this->orchestrate($config->get('maestro_orchestrator_token'), TRUE);
+        $this->orchestrationRunner->run();
       }
       else {
         \Drupal::messenger()->addError(t('Error!  Process unable to start!'));

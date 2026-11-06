@@ -1,0 +1,12 @@
+name: 'Maestro Trace Archive'
+type: module
+description: 'Captures a snapshot of process variables and entity identifiers immediately before and after each task executes, for historical trace reporting. Requires Maestro v.4.5.1 or above.'
+core_version_requirement: ^10 || ^11
+package: Maestro
+dependencies:
+  - maestro:maestro
+
+# Information added by Drupal.org packaging script on 2026-11-04
+version: '4.6.0'
+project: 'maestro'
+datestamp: 1793815091

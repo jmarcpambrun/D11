@@ -438,6 +438,8 @@ display:
           hide_alter_empty: true
           entity_type: maestro_queue
           plugin_id: maestro_active_handler
+          show_as_link: true
+          link_text: 'Open task'
         handler:
           id: handler
           table: maestro_queue
@@ -770,46 +772,6 @@ display:
           entity_type: maestro_queue
           entity_field: status
           plugin_id: numeric
-        process_name:
-          id: process_name
-          table: maestro_process
-          field: process_name
-          relationship: process_id
-          group_type: group
-          admin_label: ''
-          operator: word
-          value: ''
-          group: 1
-          exposed: true
-          expose:
-            operator_id: process_name_op
-            label: 'Process Name'
-            description: 'Filter on process name'
-            use_operator: false
-            operator: process_name_op
-            identifier: process_name
-            required: false
-            remember: false
-            multiple: false
-            remember_roles:
-              authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-          is_grouped: false
-          group_info:
-            label: 'Process Name'
-            description: null
-            identifier: process_name
-            optional: true
-            widget: select
-            multiple: false
-            remember: false
-            default_group: All
-            default_group_multiple: {  }
-            group_items: {  }
-          entity_type: maestro_process
-          entity_field: process_name
-          plugin_id: string
         task_label:
           id: task_label
           table: maestro_queue
@@ -849,6 +811,46 @@ display:
             group_items: {  }
           entity_type: maestro_queue
           entity_field: task_label
+          plugin_id: string
+        process_name:
+          id: process_name
+          table: maestro_process
+          field: process_name
+          relationship: process_id
+          group_type: group
+          admin_label: ''
+          operator: word
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: process_name_op
+            label: 'Process Name'
+            description: 'Filter on process name'
+            use_operator: false
+            operator: process_name_op
+            identifier: process_name
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              administrator: '0'
+          is_grouped: false
+          group_info:
+            label: 'Process Name'
+            description: null
+            identifier: process_name
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          entity_type: maestro_process
+          entity_field: process_name
           plugin_id: string
       sorts: {  }
       header:
@@ -922,6 +924,83 @@ display:
     display_title: 'Outstanding Tasks'
     position: 1
     display_options:
+      use_ajax: true
+      defaults:
+        use_ajax: false
+        sorts: false
+        style: false
+      sorts: {  }
+      style:
+        type: table
+        options:
+          grouping: {  }
+          row_class: ''
+          default_row_class: true
+          override: true
+          sticky: false
+          caption: ''
+          summary: ''
+          description: ''
+          columns:
+            rendered_entity: rendered_entity
+            by_variable: by_variable
+            assign_id: assign_id
+            id: id
+            queue_id_1: queue_id_1
+            task_label: task_label
+            process_name: process_name
+            created_1: created_1
+            created: created
+          info:
+            rendered_entity:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            by_variable:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            assign_id:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            id:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            queue_id_1:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            task_label:
+              sortable: true
+              default_sort_order: asc
+            process_name:
+              sortable: true
+              default_sort_order: asc
+            created_1:
+              sortable: true
+              default_sort_order: desc
+            created:
+              sortable: true
+              default_sort_order: desc
+          default: queue_id_1
+          empty_table: false
       display_extenders: {  }
       path: outstanding-tasks
       menu:

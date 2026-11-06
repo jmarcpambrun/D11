@@ -1,0 +1,15 @@
+maestro_reactflow_builder:
+  js:
+    js/MaestroReactFlow.js: {}
+    js/template_bridge.js: {}
+  css:
+    theme:
+      css/reactflow-canvas.css: {}
+      css/template.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal.ajax
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.dialog
+    - core/once

@@ -1,117 +1,875 @@
-table.taskconsole-tasks {
-  margin-bottom: 50px;
+/**
+ * Maestro UI components. Public --maestro-* properties inherit from the theme.
+ * Scope overrides to these components, including when Claro loads after them.
+ */
+.maestro-console,
+.maestro-milestones,
+.maestro-execution,
+.maestro-task-dialog {
+  --mc-surface: var(--maestro-surface);
+  --mc-background: var(--maestro-background);
+  --mc-selected: var(--maestro-selected);
+  --mc-border: var(--maestro-border);
+  --mc-text: var(--maestro-text);
+  --mc-muted: var(--maestro-muted);
+  --mc-accent: var(--maestro-accent);
+  --mc-on-accent: var(--maestro-on-accent);
+  --mc-focus: var(--maestro-focus);
+  --mc-progress: var(--maestro-progress);
+  --mc-radius: var(--maestro-radius);
+  color: var(--mc-text);
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 15px);
+  line-height: 1.5;
 }
 
-.taskconsole-tasks table {
-  table-layout: fixed;
+.maestro-console *,
+.maestro-execution * {
+  box-sizing: border-box;
+}
+
+.maestro-console__summary {
+  width: fit-content;
+  margin-block-end: 1.25rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 1rem;
+  background: var(--mc-selected);
+  color: var(--mc-text);
+  font-size: 13px;
+}
+
+/* Adapt to the containing block, including sidebars and narrow theme regions. */
+.maestro-console {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: maestro-console;
+}
+
+/* Olivero reserves article margins by default. The console is a workspace. */
+.path-taskconsole .layout--pass--content-medium > .block-system-main-block,
+.path-taskconsole .layout--pass--content-medium > .block-page-title-block {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.taskconsole-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.maestro-console .taskconsole-table-wrapper {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.maestro-console table.taskconsole-tasks {
+  /* Reserve both controls before distributing space to the data columns. */
+  --mc-actions-width: 14rem;
+  --mc-details-width: 8rem;
   width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 400;
+  line-height: 1.5;
 }
 
-.taskconsole-tasks td {
-  white-space: nowrap;
-  width: 20%;
+.maestro-console .taskconsole-tasks > thead > tr > th {
+  padding: 0.875rem 10px;
+  border: 0;
+  border-block-end: 1px solid var(--mc-border);
+  background: var(--mc-background);
+  color: var(--mc-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-align: start;
+  text-transform: none;
 }
 
-.taskconsole-tasks td:last-child {
-  white-space: nowrap;
-  width: 25%;
+.maestro-console .taskconsole-tasks > tbody > tr.task-record > td {
+  padding: 0.875rem 10px;
+  border: 0;
+  border-block-end: 1px solid var(--mc-border);
+  background: transparent;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.maestro-highlight-task {
-  background-color: #32cd32 !important;
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--task {
+  width: auto;
 }
 
-.maestro-highlight-task > td > a {
-  color: white;
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--flow {
+  width: auto;
 }
 
-.maestro-status-toggle {
-  background-image: url('../images/chevron-down.png');
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  cursor: pointer;
-  color: transparent;
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--assigned {
+  width: auto;
 }
 
-.maestro-status-toggle-up {
-  background-image: url('../images/chevron-up.png');
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  cursor: pointer;
-  color: transparent;
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--stage {
+  width: auto;
 }
 
-.maestro-expand-wrapper,
-.maestro-expand-wrapper > a,
-.maestro-expand-wrapper > a:hover,
-.maestro-expand-wrapper > a:active,
-.maestro-expand-wrapper > a:visited,
-.maestro-expand-wrapper > a:link {
-  color: transparent;
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--actions {
+  width: var(--mc-actions-width);
 }
 
-.maestro-ajax-row {
+.maestro-console .taskconsole-tasks > thead > tr > th.maestro-column--details {
+  width: var(--mc-details-width);
+}
+
+.maestro-console .task-record {
+  background: var(--mc-surface);
+}
+
+.maestro-console .task-record:hover {
+  background: var(--mc-background);
+}
+
+.maestro-console .task-record > td.maestro-column--task {
+  width: auto;
+  font-weight: 600;
+}
+
+.maestro-console .task-record > td.maestro-column--flow {
+  width: auto;
+}
+
+.maestro-console .task-record > td.maestro-column--assigned {
+  width: auto;
+  color: var(--mc-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-variant-numeric: tabular-nums;
+}
+
+.maestro-console .task-record > td.maestro-column--stage {
+  width: auto;
+}
+
+.maestro-console .task-record > td.maestro-column--actions {
+  width: var(--mc-actions-width);
+  min-width: 0;
+}
+
+.maestro-console .task-record > td.maestro-column--details {
+  width: var(--mc-details-width);
+  min-width: 0;
+}
+
+.maestro-console .task-record.maestro-task--expanded,
+.maestro-console .task-record.maestro-highlight-task {
+  background: var(--mc-selected);
+  box-shadow: inset 3px 0 var(--mc-accent);
+}
+
+.maestro-console .task-record.maestro-task--expanded > td.maestro-column--task {
+  color: var(--mc-accent);
+}
+
+.maestro-console .maestro-stage-badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--mc-border);
+  border-radius: 1rem;
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  font-size: var(--maestro-font-size, 14px);
+  line-height: 1.5;
+}
+
+.maestro-console .maestro-details-toggle {
+  display: inline-flex;
+  gap: 0.625rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.375rem;
+  color: var(--mc-accent);
+  font-size: var(--maestro-font-size, 14px);
+  text-decoration: none;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.maestro-details-toggle::after {
+  flex-shrink: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  content: '';
+  /* Center the visible V, rather than the rotated square it is drawn on. */
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.maestro-details-toggle[aria-expanded='true']::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.maestro-console .taskconsole-tasks > tbody > .maestro-ajax-row {
   display: none;
 }
 
-.maestro-ajax-row > td {
-  background-color: #f0f0f0;
+.maestro-console .taskconsole-tasks > tbody > .maestro-ajax-row--expanded {
+  display: table-row;
 }
 
-.maestro-expand-wrapper .ajax-progress-throbber {
+.maestro-console .maestro-ajax-row > td {
+  padding: 1.25rem;
+  border: 0;
+  border-block-end: 1px solid var(--mc-border);
+  background: var(--mc-background);
+}
+
+.maestro-workflow-details,
+.maestro-task-details {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.maestro-workflow-details .custom-information:empty {
+  display: none;
+}
+
+.maestro-milestones {
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.maestro-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 1.25rem;
+}
+
+.maestro-section-heading h3 {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+  margin: 0;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.maestro-section-heading h3::before {
+  content: '';
+  width: 1.125rem;
+  height: 1.125rem;
+  background: var(--mc-accent);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Ccircle cx='4' cy='7' r='2'/%3E%3Ccircle cx='20' cy='17' r='2'/%3E%3Cpath d='M6 7h7a4 4 0 0 1 0 8h-2a2 2 0 0 0 0 4h5M18 17h-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.maestro-muted {
+  color: var(--mc-muted);
+  font-size: 12px;
+}
+
+/* Numbers indicate stage position; an earlier stage is not a success claim. */
+.maestro-milestones__list {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0.25rem 0.25rem 0.5rem;
+  list-style: none;
+}
+
+.maestro-milestones__step {
+  position: relative;
+  display: flex;
+  flex: 1 0 10rem;
+  flex-direction: column;
+  gap: 0.625rem;
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  padding: 0 1rem 0 0;
+}
+
+.maestro-milestones__step:last-child {
+  flex: 0 0 10rem;
+  padding-inline-end: 0;
+}
+
+.maestro-milestones__step:not(:last-child)::after {
+  content: '';
   position: absolute;
-  margin-left: -20px;
+  inset-block-start: 1rem;
+  inset-inline-start: 2.75rem;
+  inset-inline-end: 0.75rem;
+  border-block-start: 2px solid var(--mc-border);
+}
+
+.maestro-milestones__step--previous:not(:last-child)::after {
+  border-color: var(--mc-progress);
+}
+
+.maestro-milestones__number {
+  display: flex;
+  flex: 0 0 2rem;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mc-border);
+  border-radius: 50%;
+  background: var(--mc-background);
+  color: var(--mc-muted);
+  font-size: 14px;
+  line-height: 1;
+  text-align: center;
+  font-weight: 600;
+}
+
+.maestro-milestones__step--previous .maestro-milestones__number {
+  border-color: var(--mc-progress);
+  background: var(--mc-selected);
+  color: var(--mc-accent);
+}
+
+.maestro-milestones__step--current .maestro-milestones__number {
+  border-color: var(--mc-accent);
+  background: var(--mc-accent);
+  color: var(--mc-on-accent);
+  box-shadow: 0 0 0 3px var(--mc-selected);
+}
+
+.maestro-milestones__label {
+  display: block;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.maestro-milestones__step--current .maestro-milestones__label {
+  color: var(--mc-accent);
+}
+
+.maestro-milestones__state {
+  display: block;
+  color: var(--mc-muted);
+  font-size: 12px;
+}
+
+/* Present the bundled entity-identifiers grid as attachment rows. */
+.maestro-console .view-maestro-entity-identifiers.view-display-id-default .views-row {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.maestro-console .view-maestro-entity-identifiers.view-display-id-default .views-col {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: auto !important;
+  /* The bundled Views grid emits a 50% inline width. */
+  float: none;
+  margin-block-end: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--mc-radius);
+  background: var(--mc-background);
+}
+
+.maestro-console .view-maestro-entity-identifiers .views-field-entity-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.maestro-console .view-maestro-entity-identifiers .views-field-entity-label a {
+  color: var(--mc-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+:is(.maestro-console, .maestro-views-taskconsole) .view-maestro-entity-identifiers .views-field-entity-edit-link a {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--maestro-border);
+  border-radius: var(--maestro-radius);
+  background: var(--maestro-surface);
+  color: var(--maestro-accent);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+:is(.maestro-console, .maestro-outstanding-tasks) :is(a, button, summary, [tabindex]):focus-visible,
+.maestro-execution :is(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+/* A shared execution shell for modal and full-page handlers. */
+.maestro-return {
+  margin-block-end: 1rem;
+}
+
+.maestro-return a::before {
+  content: '← ';
+}
+
+.maestro-execution__header {
+  margin-block-end: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--mc-radius);
+  background: var(--mc-background);
+}
+
+.maestro-execution__context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin: 0;
+}
+
+.maestro-execution__context > div {
+  min-width: 0;
+}
+
+.maestro-execution__context dt {
+  color: var(--mc-muted);
+  font-size: 12px;
+}
+
+.maestro-execution__context dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.maestro-execution__stage {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+  margin-block-start: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: 4px;
+  background: var(--mc-surface);
+  font-size: 13px;
+}
+
+.maestro-execution__stage-number {
+  display: grid;
+  flex: 0 0 1.5rem;
+  place-items: center;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--mc-accent);
+  color: var(--mc-on-accent);
+}
+
+.maestro-execution__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.maestro-execution__layout--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.maestro-execution__main {
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.maestro-execution__aside .maestro-milestones__list {
+  display: block;
+  overflow: visible;
   padding: 0;
 }
 
-.maestro-timeline-status {
-  text-align: center;
-  width: 5%;
+.maestro-execution__aside .maestro-milestones__step {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.875rem;
+  padding: 0 0 1.75rem;
 }
 
-.maestro-timeline {
-  text-align: center;
+.maestro-execution__aside .maestro-milestones__step:last-child {
+  padding-block-end: 0;
 }
 
-.taskconsole-tasks td:last-child {
-  width: 5%;
+.maestro-execution__aside .maestro-milestones__step:not(:last-child)::after {
+  inset-block-start: 2.5rem;
+  inset-block-end: 0.5rem;
+  inset-inline-start: 1rem;
+  inset-inline-end: auto;
+  border-block-start: 0;
+  border-inline-start: 2px solid var(--mc-progress);
 }
 
-.maestro-task-details {
-  padding-bottom: 0px;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-block: 1.5rem 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--mc-border);
 }
 
-.taskconsole-details-task-label {
-  font-weight: bold;
-  padding-right: 30px;
-  padding-left: 20px;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) > :is(input, button, a) {
+  min-height: 2.5rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--mc-border);
+  border-radius: 4px;
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: normal;
+  cursor: pointer;
 }
 
-.maestro-details-entities-wrapper details summary {
-  display: list-item;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) > .button--primary {
+  border-color: var(--mc-accent);
+  background: var(--mc-accent);
+  color: var(--mc-on-accent);
 }
 
-.maestro-details-tasks-wrapper details summary {
-  display: list-item;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) > :is(.maestro-leave-task, .maestro-dialog-cancel) {
+  margin-inline-start: auto;
+  border-color: transparent;
+  background: transparent;
+  font-weight: 400;
 }
 
-.maestro-details-tasks-wrapper details summary:focus {
-  outline: 0;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) > :is(input, button, a):hover {
+  filter: brightness(0.94);
 }
 
-.maestro-details-tasks-wrapper details div {
-  margin-left: 3px;
-  margin-right: 3px;
+.maestro-execution .maestro-task-form :is(.form-actions, .maestro-form-actions) > :disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
-
-.views-field-entity-label {
-  font-weight: bold;
-  float: left;
+/* The shipped approval example supplies its own older ID-based stylesheet. */
+.maestro-execution .maestro-task-form #manager-approval-node {
+  padding: 1.25rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
 }
 
-.views-field-entity-edit-link span {
-  margin-left: 20px;
+.maestro-execution .maestro-task-form #manager-approval-node > article > header {
+  margin: -1.25rem -1.25rem 1rem;
+  padding: 1rem 1.25rem;
+  border-block-end: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius) var(--mc-radius) 0 0;
+  background: var(--mc-background);
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node > article > h2,
+.maestro-execution .maestro-task-form #manager-approval-node > article > header > h2 {
+  margin: 0;
+  color: var(--mc-text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node > article > h2 {
+  margin: -1.25rem -1.25rem 1rem;
+  padding: 1rem 1.25rem;
+  border-block-end: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius) var(--mc-radius) 0 0;
+  background: var(--mc-background);
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node a {
+  color: var(--mc-text);
+  font-weight: 600;
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node .node__meta {
+  margin-block: 0.75rem;
+  color: var(--mc-muted);
+  font-size: 13px;
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node .field__label {
+  margin-block-end: 0.5rem;
+  color: var(--mc-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.maestro-execution .maestro-task-form #manager-approval-node .field p:last-child {
+  margin-block-end: 0;
+}
+
+.maestro-execution .maestro-task-form > a[data-drupal-selector="edit-url"] {
+  display: inline-block;
+  margin-block-start: 0.75rem;
+  color: var(--mc-accent);
+  font-size: 13px;
+  text-underline-offset: 0.2em;
+}
+
+.maestro-execution .maestro-task-form > a[data-drupal-selector="edit-url"] ~ br {
+  display: none;
+}
+
+/* Higher specificity than Claro's theme CSS, without changing other dialogs. */
+.maestro-task-dialog.ui-dialog {
+  max-width: calc(100vw - 3rem);
+  padding: 0;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  box-shadow: 0 20px 60px rgb(16 32 58 / 24%);
+}
+
+.maestro-task-dialog.ui-dialog:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 2px;
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar {
+  padding: 1.25rem 3.5rem 1rem 1.5rem;
+  border: 0;
+  border-radius: var(--mc-radius) var(--mc-radius) 0 0;
+  background: var(--mc-background);
+  color: var(--mc-text);
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-title {
+  margin: 0;
+  color: var(--mc-text);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close {
+  inset-inline-end: 0.875rem;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--mc-muted);
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close:hover {
+  border-color: var(--mc-border);
+  background: var(--mc-surface);
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close:focus-visible {
+  border-color: var(--mc-focus);
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 2px;
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close .ui-icon.ui-icon-closethick {
+  background: var(--mc-muted);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center / 1.25rem no-repeat;
+}
+
+.maestro-task-dialog.ui-dialog .ui-dialog-content {
+  padding: 0;
+  max-height: calc(90vh - 5rem) !important;
+  overflow-y: auto;
+}
+
+.maestro-execution--modal .maestro-execution__header {
+  margin: 0;
+  padding: 0 1.5rem 1.25rem;
+  border-block-end: 1px solid var(--mc-border);
+  border-radius: 0;
+}
+
+.maestro-execution--modal .maestro-execution__main {
+  padding: 1.5rem;
+  border: 0;
+  border-radius: 0 0 var(--mc-radius) var(--mc-radius);
+}
+
+.maestro-execution--modal .maestro-task-form :is(.form-actions, .maestro-form-actions) {
+  margin: 1.5rem -1.5rem -1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--mc-background);
+}
+
+/* Keep the existing Views console's legacy expand controls available. */
+.maestro-expand-wrapper .maestro-status-toggle,
+.maestro-expand-wrapper .maestro-status-toggle-up {
+  display: inline-block;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  background: center / 1rem no-repeat url('../images/chevron-down.png');
+  font-size: 0;
+}
+
+.maestro-expand-wrapper .maestro-status-toggle-up {
+  background-image: url('../images/chevron-up.png');
+}
+
+@media (max-width: 1000px) {
+  .maestro-execution__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maestro-execution__aside {
+    grid-row: 1;
+  }
+
+}
+
+@media (forced-colors: active) {
+  .maestro-milestones__step::after {
+    border-color: CanvasText;
+  }
+
+  .maestro-task-dialog.ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close .ui-icon.ui-icon-closethick {
+    background: ButtonText;
+  }
+
+}
+
+/* Keep actions visible when the available content width cannot fit six columns. */
+@container maestro-console (max-width: 44rem) {
+  .maestro-console table.taskconsole-tasks,
+  .maestro-console .taskconsole-tasks > tbody {
+    display: block;
+  }
+
+  .maestro-console .taskconsole-tasks > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .maestro-console .task-record {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maestro-console .taskconsole-tasks > tbody > tr.task-record > td {
+    display: block;
+    width: auto;
+    min-width: 0;
+    padding: 0.75rem 10px;
+  }
+
+  .maestro-console .task-record > td::before {
+    content: attr(data-label);
+    display: block;
+    margin-block-end: 0.375rem;
+    color: var(--mc-muted);
+    font-size: var(--maestro-font-size, 14px);
+    font-weight: 600;
+    text-transform: none;
+  }
+
+  .maestro-console .maestro-ajax-row > td {
+    display: block;
+    width: 100%;
+  }
+
+  .maestro-console .taskconsole-tasks > tbody > .maestro-ajax-row--expanded {
+    display: block;
+  }
+
+  .maestro-console .maestro-ajax-row {
+    width: 100%;
+  }
+
+}
+
+/* Native buttons keep sorting available to keyboard and assistive technology. */
+.maestro-console .taskconsole-tasks .maestro-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  margin: -0.375rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.maestro-console .taskconsole-tasks .maestro-sort:hover,
+.maestro-console .taskconsole-tasks th[aria-sort] .maestro-sort {
+  color: var(--mc-accent);
+}
+
+.maestro-console .taskconsole-tasks .maestro-sort:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 4px;
+}
+
+.maestro-sort__indicator {
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+/* Keep each attached content title and its Edit action together in both consoles. */
+:is(.maestro-console, .maestro-views-taskconsole) .view-maestro-entity-identifiers.view-display-id-default :is(.views-col, .views-view-grid__item-inner) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+:is(.maestro-console, .maestro-views-taskconsole) .view-maestro-entity-identifiers .views-field-entity-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:is(.maestro-console, .maestro-views-taskconsole) .view-maestro-entity-identifiers .views-field-entity-edit-link {
+  flex: 0 0 auto;
+}
+
+:is(.maestro-console, .maestro-views-taskconsole) .view-maestro-entity-identifiers .views-field-entity-edit-link a:is(:hover, :focus-visible) {
+  background: var(--maestro-accent);
+  border-color: var(--maestro-accent);
+  color: var(--maestro-on-accent);
+  text-decoration: none;
+}
+
+.maestro-views-taskconsole .maestro-milestones {
+  margin-block-end: 20px;
 }

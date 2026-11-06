@@ -1,0 +1,13 @@
+name: 'Maestro ReactFlow Trace Viewer'
+type: module
+description: 'Read-only visual trace overlay for a Maestro process instance, superimposed on the ReactFlow template diagram.'
+core_version_requirement: ^10 || ^11
+package: Maestro
+dependencies:
+  - maestro:maestro
+  - maestro_reactflow_template_builder
+
+# Information added by Drupal.org packaging script on 2026-11-04
+version: '4.6.0'
+project: 'maestro'
+datestamp: 1793815091

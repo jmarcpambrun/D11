@@ -1,0 +1,77 @@
+/**
+ * Theme-independent sorting controls for Maestro Views tables.
+ * aria-sort describes the current order; the arrow shows the next action,
+ * matching Drupal's accessible "Sort ascending/descending" link label.
+ */
+table.maestro-sortable-table > thead > tr > th > a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  color: var(--maestro-muted);
+  font: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  background: none;
+  box-shadow: none;
+}
+
+table.maestro-sortable-table > thead > tr > th > a::before {
+  content: none;
+}
+
+table.maestro-sortable-table > thead > tr > th > a::after {
+  position: static;
+  display: inline-block;
+  width: 14px;
+  height: auto;
+  margin: 0;
+  content: '↕' / '';
+  color: currentColor;
+  background: none;
+  mask: none;
+  opacity: 0.65;
+  transform: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+table.maestro-sortable-table > thead > tr > th[aria-sort] > a {
+  color: var(--maestro-accent);
+  box-shadow: 0 3px 0 currentColor;
+}
+
+table.maestro-sortable-table > thead > tr > th[aria-sort="descending"] > a::after {
+  content: '↑' / '';
+  opacity: 1;
+}
+
+table.maestro-sortable-table > thead > tr > th[aria-sort="ascending"] > a::after {
+  content: '↓' / '';
+  opacity: 1;
+}
+
+table.maestro-sortable-table > thead > tr > th > a:hover {
+  color: var(--maestro-accent);
+  box-shadow: 0 3px 0 currentColor;
+}
+
+table.maestro-sortable-table > thead > tr > th > a:focus-visible {
+  outline: 2px solid var(--maestro-focus);
+  outline-offset: 4px;
+}
+
+/* Keep Drupal's accessible sort label while replacing its theme icon. */
+table.maestro-sortable-table > thead .tablesort {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  background: none;
+}

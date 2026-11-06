@@ -2,6 +2,7 @@
 
 namespace Drupal\maestro\Plugin\views\field;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\maestro\Engine\MaestroEngine;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
@@ -65,17 +66,26 @@ class MaestroEngineProcessDetails extends FieldPluginBase {
       $processID = $item->process_id->getString();
     }
 
+    // Several assignment rows can refer to the same process. Each Details
+    // control needs its own AJAX binding and response target.
+    $target = $processID;
+    $urlOptions = [];
+    if (in_array($this->view->id(), ['maestro_views_based_task_console', 'maestro_all_flows'], TRUE)) {
+      $target = Html::getUniqueId('maestro-process-details-' . $processID);
+      $queueID = $item->getEntityTypeId() === 'maestro_queue' ? $item->id() : ($item->getEntityTypeId() === 'maestro_production_assignments' ? $item->queue_id->getString() : 0);
+      $urlOptions = ['query' => ['details_target' => $target, 'queue_id' => $queueID]];
+    }
     $build = [];
     $build['details'][$processID]['expand'] = [
-      '#prefix' => '<div class="maestro-process-details-expand-wrapper maestro-expand-wrapper maestro-status-toggle-' . $processID . '">',
+      '#prefix' => '<div class="maestro-process-details-expand-wrapper maestro-expand-wrapper maestro-status-toggle-' . $target . '">',
       '#suffix' => '</div>',
       '#attributes' => [
         'class' => ['maestro-timeline-status', 'maestro-status-toggle'],
         'title' => $this->t('Open Details'),
       ],
       '#type' => 'link',
-      '#id' => 'maestro-id-ajax-' . $processID,
-      '#url' => Url::fromRoute('maestro.process_details_ajax_open', ['processID' => $processID]),
+      '#id' => 'maestro-id-ajax-' . $target,
+      '#url' => Url::fromRoute('maestro.process_details_ajax_open', ['processID' => $processID], $urlOptions),
       '#title' => $this->t('Open Details'),
       '#ajax' => [
         'progress' => [
@@ -88,7 +98,7 @@ class MaestroEngineProcessDetails extends FieldPluginBase {
       '#type' => 'container',
       '#attributes' => [
         'class' => ['maestro-process-details'],
-        'id' => 'details_replace_column_' . $processID,
+        'id' => 'details_replace_column_' . $target,
       ],
       
     ];

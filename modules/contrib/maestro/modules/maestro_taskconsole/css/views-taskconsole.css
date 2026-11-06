@@ -1,0 +1,269 @@
+/* Scoped to this View, including details returned through Maestro AJAX. */
+.maestro-views-taskconsole {
+  --mvc-border: var(--maestro-border);
+  --mvc-text: var(--maestro-text);
+  --mvc-muted: var(--maestro-muted);
+  --mvc-accent: var(--maestro-accent);
+  --mvc-background: var(--maestro-background);
+  --mvc-selected: var(--maestro-selected);
+  color: var(--mvc-text);
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  line-height: 1.5;
+}
+
+.maestro-views-taskconsole .views-field-active-handler a {
+  display: inline-flex;
+  box-sizing: border-box;
+  font-family: inherit;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid var(--mvc-accent);
+  border-radius: 4px;
+  background: var(--mvc-accent);
+  color: var(--maestro-on-accent);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.maestro-views-taskconsole .views-field-active-handler a:hover {
+  background: var(--maestro-accent-hover);
+}
+
+.maestro-views-taskconsole :is(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--mvc-accent);
+  outline-offset: 3px;
+}
+
+.maestro-views-taskconsole .maestro-views-console-summary {
+  display: inline-block;
+  width: fit-content;
+  margin: 0 0 16px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--mvc-selected);
+  font-size: var(--maestro-font-size, 14px);
+}
+
+/* Keep the process count compact inside the report frame. */
+.maestro-all-flows .view-content.maestro-report-region {
+  row-gap: 0;
+}
+
+.maestro-all-flows .maestro-views-console-summary {
+  margin: 10px;
+}
+
+.maestro-views-taskconsole .maestro-views-console-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--mvc-border);
+  border-radius: 6px;
+}
+
+.maestro-views-taskconsole table.maestro-views-console-table {
+  width: 100%;
+  min-width: 850px;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  font-family: inherit;
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.maestro-views-taskconsole .maestro-views-console-table > thead > tr > th {
+  padding: 14px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--mvc-border);
+  background: var(--mvc-background);
+  color: var(--mvc-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.maestro-views-taskconsole .maestro-views-console-table > tbody > .maestro-views-console-task > td {
+  padding: 18px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--mvc-border);
+  background: transparent;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task {
+  background: #fff;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task:hover {
+  background: var(--mvc-background);
+}
+
+.maestro-views-taskconsole .maestro-views-console-task--expanded {
+  background: var(--mvc-selected);
+  box-shadow: inset 3px 0 var(--mvc-accent);
+}
+
+.maestro-views-taskconsole .maestro-views-console-task > .views-field-task-label {
+  width: 24%;
+  font-weight: 600;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task > .views-field-process-name {
+  width: 32%;
+  overflow-wrap: anywhere;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task > .views-field-created {
+  width: 18%;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task > :is(.views-field-created, .views-field-completed) {
+  color: var(--mvc-muted);
+  font-size: var(--maestro-font-size, 14px);
+  font-variant-numeric: tabular-nums;
+}
+
+.maestro-views-taskconsole .maestro-views-console-task > .views-field-id {
+  font-variant-numeric: tabular-nums;
+  color: var(--mvc-muted);
+  font-size: var(--maestro-font-size, 14px);
+}
+
+.maestro-views-taskconsole .maestro-expand-wrapper {
+  margin: 0;
+  padding: 0;
+}
+
+.maestro-views-taskconsole .maestro-expand-wrapper a {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: auto;
+  min-height: 38px;
+  padding: 6px 0;
+  background: none;
+  color: var(--mvc-accent);
+  font-size: var(--maestro-font-size, 14px);
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.maestro-views-taskconsole .maestro-expand-wrapper a::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  /* Center the visible V, rather than the rotated square it is drawn on. */
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.maestro-views-taskconsole .maestro-expand-wrapper a[aria-expanded='true']::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.maestro-views-taskconsole .maestro-views-console-details-row > td {
+  padding: 24px;
+  border: 0;
+  border-bottom: 1px solid var(--mvc-border);
+  background: var(--mvc-background);
+}
+
+.maestro-views-taskconsole .maestro-block-process:has(.maestro-timeline-wrapper) {
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid var(--mvc-border);
+  border-radius: 6px;
+  background: var(--maestro-surface);
+  overflow-x: auto;
+}
+
+.maestro-views-taskconsole .maestro-status-circle-current {
+  background: var(--mvc-accent);
+  color: #fff;
+}
+
+.maestro-views-taskconsole .maestro-status-circle-complete {
+  background: #dceafb;
+  color: var(--mvc-accent);
+}
+
+.maestro-views-taskconsole .maestro-status-circle-incomplete {
+  background: #e5ebf2;
+  color: var(--mvc-muted);
+}
+
+.maestro-views-taskconsole .maestro-status-circle-complete-bar {
+  background: #87add9;
+}
+
+.maestro-views-taskconsole :is(.maestro-status-circle-current-bar, .maestro-status-circle-incomplete-bar) {
+  background: var(--mvc-border);
+}
+
+.maestro-views-taskconsole > .view-empty {
+  padding: 24px;
+  border: 1px solid var(--mvc-border);
+  border-radius: 6px;
+  background: var(--mvc-background);
+}
+
+/* Give the page the same workspace width as the standard Task Console. */
+.path-maestro-views-based-task-console .layout--pass--content-medium > .block-system-main-block,
+.path-maestro-views-based-task-console .layout--pass--content-medium > .block-page-title-block {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.maestro-views-taskconsole {
+  min-width: 0;
+}
+
+/* All Flows uses the same console and full-width detail components. */
+.maestro-all-flows table.maestro-views-console-table {
+  min-width: 1050px;
+}
+
+.maestro-all-flows .maestro-views-console-table > tbody > .maestro-views-console-task > td {
+  padding: 12px 10px;
+}
+
+.maestro-all-flows .maestro-views-console-table > thead > tr > th {
+  padding: 14px 10px;
+}
+
+.maestro-all-flows .maestro-views-console-task > .views-field-process-name {
+  font-weight: 600;
+}
+
+.maestro-all-flows .maestro-views-console-task > :is(.views-field-template-id, .views-field-initiator-username) {
+  hyphens: none;
+  overflow-wrap: normal;
+}
+
+.maestro-all-flows .maestro-views-console-task > .views-field-process-details {
+  min-width: 128px;
+}
+
+.maestro-all-flows .maestro-views-console-task > .views-field-admin-operations {
+  min-width: 110px;
+}
+
+/* Sortable headers retain the shared table typography and colour. */
+.maestro-views-console-table > thead > tr > th a {
+  color: inherit;
+  font: inherit;
+}

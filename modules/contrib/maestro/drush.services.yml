@@ -1,5 +1,0 @@
-services:
-  maestro_drush_commands.commands:
-    class: \Drupal\maestro\Commands\MaestroCommands
-    tags:
-      - { name: drush.command }

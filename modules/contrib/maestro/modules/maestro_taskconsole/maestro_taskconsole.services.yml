@@ -1,0 +1,4 @@
+services:
+  maestro_taskconsole.presentation:
+    class: Drupal\maestro_taskconsole\Service\TaskConsolePresentation
+    arguments: ['@entity_type.manager', '@current_user', '@date.formatter', '@renderer', '@module_handler', '@string_translation']

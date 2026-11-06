@@ -60,3 +60,34 @@ function maestro_form_approval_example_uninstall() {
     $role->delete();
   }
 }
+
+/**
+ * Remove the repeated fixed admin assignment from the example manager task.
+ */
+function maestro_form_approval_example_update_10001() {
+  $config = \Drupal::configFactory()->getEditable('maestro.maestro_template.form_approval_flow');
+  $key = 'tasks.manager_approval.assigned';
+  $assigned = $config->get($key);
+  if (!is_string($assigned) || $assigned === '') {
+    return t('No Form Approval Flow manager assignment needs updating.');
+  }
+
+  // Preserve custom assignments and ordering; only remove repeated fixed admin.
+  $seen_admin = FALSE;
+  $assignments = [];
+  foreach (explode(',', $assigned) as $assignment) {
+    if (trim($assignment) === 'user:fixed:admin') {
+      if ($seen_admin) {
+        continue;
+      }
+      $seen_admin = TRUE;
+    }
+    $assignments[] = $assignment;
+  }
+  $updated = implode(',', $assignments);
+  if ($updated !== $assigned) {
+    $config->set($key, $updated)->save(TRUE);
+    return t('Removed the duplicate admin assignment from the Form Approval Flow manager task.');
+  }
+  return t('The Form Approval Flow manager task already has no duplicate admin assignment.');
+}

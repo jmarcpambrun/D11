@@ -31,6 +31,24 @@ class MaestroProcessViewsData extends EntityViewsData implements EntityViewsData
       'label' => $this->t('Initiator user'),
     ];
 
+    // The reverse of maestro_process_variables.process_id: from a process to
+    // one of its variables. A process has many variables, so the
+    // maestro_process_variable plugin also joins on the chosen variable's
+    // name, keeping one row per process.
+    $data['maestro_process']['process_variable'] = [
+      'title' => $this->t('Maestro Process Variable'),
+      'help' => $this->t('Relate the process to one of its process variables, chosen by name.'),
+      'relationship' => [
+        'title' => $this->t('Maestro Process Variable'),
+        'help' => $this->t('Relate the process to one of its process variables, chosen by name, for its value as a field, filter or sort.'),
+        'id' => 'maestro_process_variable',
+        'base' => 'maestro_process_variables',
+        'base field' => 'process_id',
+        'field' => 'process_id',
+        'label' => $this->t('Process variable'),
+      ],
+    ];
+
     return $data;
   }
 

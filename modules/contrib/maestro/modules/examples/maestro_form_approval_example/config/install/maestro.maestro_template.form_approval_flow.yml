@@ -113,7 +113,7 @@ tasks:
     left: '430'
     assignby: fixed
     assignto: ''
-    assigned: 'user:fixed:maestro_manager,user:fixed:admin,user:fixed:admin'
+    assigned: 'user:fixed:maestro_manager,user:fixed:admin'
     handler: maestro_form_approval_example_manager_approval_form
     showindetail: true
     participate_in_workflow_status_stage: true

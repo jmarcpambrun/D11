@@ -2,13 +2,38 @@
 
 namespace Drupal\maestro\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\DependencyInjection\AutowireTrait;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Configure settings for this site.
  */
 class MaestroEngineSettingsForm extends ConfigFormBase {
+
+  use AutowireTrait;
+
+  /**
+   * Constructs a MaestroEngineSettingsForm.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
+   *   The typed config manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager, used to load the run-as user.
+   */
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typedConfigManager,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
+  ) {
+    parent::__construct($config_factory, $typedConfigManager);
+  }
 
   /**
    * {@inheritdoc}
@@ -65,6 +90,18 @@ class MaestroEngineSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $run_as_uid = $config->get('maestro_orchestrator_run_as');
+    $form['maestro_orchestrator_run_as'] = [
+      '#type' => 'entity_autocomplete',
+      '#target_type' => 'user',
+      '#selection_settings' => ['include_anonymous' => FALSE],
+      '#title' => $this->t('Run the orchestrator as'),
+      '#default_value' => $run_as_uid ? $this->entityTypeManager->getStorage('user')->load($run_as_uid) : NULL,
+      '#description' => $this->t('Leave empty to run the orchestrator as whoever triggers it: the user refreshing the Task Console, anonymous for the /orchestrator URL, or the Drush user. ') .
+        $this->t('When set, every orchestrator run executes its tasks as this user, and tasks that check permissions, such as Tool tasks, are checked against this account. Drush --user still overrides it. ') .
+        $this->t('Anyone holding the orchestrator token can then run tasks as this user, so choose an account with only the permissions your workflows need, not an administrator.'),
+    ];
+
     $default = $config->get('maestro_orchestrator_lock_execution_time');
     $form['maestro_orchestrator_lock_execution_time'] = [
       '#type' => 'number',
@@ -116,7 +153,25 @@ class MaestroEngineSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $uid = $form_state->getValue('maestro_orchestrator_run_as');
+    if ($uid) {
+      $user = $this->entityTypeManager->getStorage('user')->load($uid);
+      if ($user instanceof UserInterface && $user->isBlocked()) {
+        $form_state->setErrorByName('maestro_orchestrator_run_as', $this->t('The user %user is blocked and cannot run the orchestrator.', ['%user' => $user->getAccountName()]));
+      }
+    }
+    parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $this->config('maestro.settings')
+      ->set('maestro_orchestrator_run_as', $form_state->getValue('maestro_orchestrator_run_as') ? (int) $form_state->getValue('maestro_orchestrator_run_as') : NULL)
+      ->save();
+
     $this->config('maestro.settings')
       ->set('maestro_send_notifications', $form_state->getValue('maestro_send_notifications'))
       ->save();

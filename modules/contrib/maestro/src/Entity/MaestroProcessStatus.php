@@ -146,6 +146,16 @@ class MaestroProcessStatus extends ContentEntityBase implements MaestroProcessIn
         'text_processing' => 0,
       ]);
 
+    // The status machine name of the task that last set this stage.
+    $fields['stage_status'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Stage Status'))
+      ->setDescription(t('The status machine name (e.g. success, failure) set by the task that reached this stage.'))
+      ->setSettings([
+        'default_value' => '',
+        'max_length' => 64,
+        'text_processing' => 0,
+      ]);
+
     // Completion time stamp.
     $fields['completed'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Completed'))

@@ -1,0 +1,46 @@
+# The "data" of a Review Task inside a Maestro template.
+maestro.task.MaestroReviewTask:
+  type: mapping
+  label: 'Maestro Review Task settings'
+  mapping:
+    modal:
+      type: string
+      label: 'Task presentation: modal or notmodal'
+    redirect_to:
+      type: string
+      label: 'Return path after completing the task'
+    review:
+      type: mapping
+      label: 'Review settings'
+      mapping:
+        preamble:
+          type: text_format
+          label: 'Instructions shown to the person doing the task'
+        accept_label:
+          type: label
+          label: 'Accept button label'
+        show_reject:
+          type: boolean
+          label: 'Show a Reject button'
+        reject_label:
+          type: label
+          label: 'Reject button label'
+        new_tab:
+          type: boolean
+          label: 'Open entity links in a new browser tab'
+        identifiers:
+          type: sequence
+          label: 'Entity identifiers'
+          sequence:
+            type: mapping
+            label: 'Entity identifier'
+            mapping:
+              unique_id:
+                type: string
+                label: 'Unique ID'
+              show:
+                type: boolean
+                label: 'Show'
+              mode:
+                type: string
+                label: 'Links: view or view_edit'

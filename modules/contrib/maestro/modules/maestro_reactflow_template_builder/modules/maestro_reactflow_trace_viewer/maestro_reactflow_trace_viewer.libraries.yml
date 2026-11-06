@@ -1,0 +1,12 @@
+maestro_reactflow_trace_viewer:
+  js:
+    js/MaestroTraceViewer.js: {}
+    js/trace_bridge.js: {}
+  css:
+    theme:
+      css/trace-viewer-canvas.css: {}
+      css/trace-viewer.css: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once

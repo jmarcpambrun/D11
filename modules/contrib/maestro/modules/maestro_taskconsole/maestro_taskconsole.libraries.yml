@@ -2,3 +2,38 @@ maestro_taskconsole_css:
   css:
     theme:
       css/taskconsole.css: {}
+      css/task-details.css: {}
+      css/sortable-table.css: {}
+  js:
+    js/taskconsole.js: {}
+  dependencies:
+    - maestro/maestro-tokens
+    - core/drupal
+    - core/once
+    - core/jquery
+    - core/drupal.dialog.ajax
+
+views_taskconsole:
+  css:
+    theme:
+      css/views-taskconsole.css: {}
+  js:
+    js/views-taskconsole.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - maestro_taskconsole/maestro_taskconsole_css
+
+outstanding_tasks:
+  css:
+    theme:
+      css/outstanding-tasks.css: {}
+  dependencies:
+    - maestro_taskconsole/maestro_taskconsole_css
+
+view_filters:
+  css:
+    theme:
+      css/view-filters.css: {}
+  dependencies:
+    - maestro/maestro-tokens

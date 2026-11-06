@@ -97,7 +97,12 @@ class TaskHandler {
         break;
 
       case 'function':
-        $url = Url::fromRoute('maestro.execute', $query_options, ['absolute' => TRUE])->toString();
+        // This route has a fixed parameter name, independent of the configured
+        // query parameter used by internal and external task handlers.
+        $route_parameters = $query_options;
+        unset($route_parameters[$sitewide_token]);
+        $route_parameters['queueid_or_token'] = $query_options[$sitewide_token];
+        $url = Url::fromRoute('maestro.execute', $route_parameters, ['absolute' => TRUE])->toString();
         break;
 
       default:

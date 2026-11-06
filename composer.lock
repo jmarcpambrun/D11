@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "14323436c429b659bfa616f612455d7c",
+    "content-hash": "8d68eed50b78d0d39475242a533f985a",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
@@ -7920,20 +7920,20 @@
         },
         {
             "name": "drupal/maestro",
-            "version": "4.5.2",
+            "version": "4.6.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/maestro.git",
-                "reference": "4.5.2"
+                "reference": "4.6.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/maestro-4.5.2.zip",
-                "reference": "4.5.2",
-                "shasum": "a9c0f083be24dfab9703589ce368e6fdaf26c991"
+                "url": "https://ftp.drupal.org/files/projects/maestro-4.6.0.zip",
+                "reference": "4.6.0",
+                "shasum": "8b021fb972e0b5a6c6c97faf1fc9afc0132cf1af"
             },
             "require": {
-                "drupal/core": "^10 || ^11"
+                "drupal/core": "^10.3 || ^11"
             },
             "require-dev": {
                 "drupal/ai": "*",
@@ -7943,6 +7943,7 @@
                 "drupal/eca_log-eca_log": "*",
                 "drupal/key": "*",
                 "drupal/maestro_ai_task-maestro_ai_task": "*",
+                "drupal/maestro_reactflow_template_builder": "*",
                 "drupal/maestro_taskconsole": "*",
                 "drupal/tool": "*",
                 "drupal/webform": "*"
@@ -7950,8 +7951,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.5.2",
-                    "datestamp": "1790190001",
+                    "version": "4.6.0",
+                    "datestamp": "1793815089",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"

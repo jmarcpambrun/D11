@@ -97,7 +97,7 @@ class MaestroEngineAdminOperations extends FieldPluginBase {
 
     $rows[] = [
       'data' => [
-        '#type' => 'operations',
+        '#theme' => 'maestro_actions',
         '#links' => $links,
       ],
     ];

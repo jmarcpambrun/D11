@@ -81,14 +81,18 @@ class MaestroProcess extends ContentEntityBase implements MaestroProcessInterfac
    * {@inheritdoc}
    */
   public function getOwner() {
-    return $this->get('initiator_uid')->entity;
+    // initiator_uid is an integer field, not an entity reference, so it has no ->entity.
+    $uid = $this->getOwnerId();
+    return $uid !== NULL ? \Drupal::entityTypeManager()->getStorage('user')->load($uid) : NULL;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getOwnerId() {
-    return $this->get('initiator_uid')->target_id;
+   // initiator_uid is an integer field, not an entity reference, so it has no ->target_id.
+    $uid = $this->get('initiator_uid')->value;
+    return $uid !== NULL ? (int) $uid : NULL;
   }
 
   /**

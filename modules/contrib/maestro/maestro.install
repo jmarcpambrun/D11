@@ -578,3 +578,357 @@ function maestro_update_10009() {
 
   
 }
+
+/**
+ * Update the shipped workflow Views for the modern Maestro UI.
+ */
+function maestro_update_10010() {
+  $factory = \Drupal::configFactory();
+  $reports = [
+    'maestro_outstanding_tasks' => ['default', 'maestro_outstanding_tasks'],
+    'maestro_all_in_production_tasks' => ['default', 'maestro_all_active_tasks_lean', 'maestro_all_active_tasks_full'],
+  ];
+  foreach ($reports as $view_id => $displays) {
+    $config = $factory->getEditable('views.view.' . $view_id);
+    if ($config->isNew()) {
+      continue;
+    }
+    $changed = FALSE;
+    foreach ($displays as $display) {
+      $key = 'display.' . $display . '.display_options.fields';
+      foreach ($config->get($key) ?? [] as $field_id => $field) {
+        if (($field['plugin_id'] ?? '') !== 'maestro_active_handler') {
+          continue;
+        }
+        // Update existing handlers only; never restore removed fields/displays.
+        if (empty($field['show_as_link'])) {
+          $config->set($key . '.' . $field_id . '.show_as_link', TRUE);
+          $changed = TRUE;
+        }
+        if (!isset($field['link_text']) || in_array($field['link_text'], ['', 'Link'], TRUE)) {
+          $config->set($key . '.' . $field_id . '.link_text', 'Open task');
+          $changed = TRUE;
+        }
+      }
+    }
+    if ($changed) {
+      $config->save(TRUE);
+    }
+  }
+
+  $config = $factory->getEditable('views.view.maestro_all_flows');
+  if (!$config->isNew()) {
+    $changes = [
+      'fields.process_id.label' => ['ProcessID', 'Process ID'],
+      'fields.template_id.label' => ['Template Machine Name/ID', 'Template'],
+      'fields.initiator_username.label' => ['The initiator of the process.', 'Initiator'],
+      'fields.process_details.label' => ['Process Details', 'Details'],
+      'filters.process_name.operator' => ['=', 'contains'],
+      'filters.template_id_filter.expose.label' => ['Template Name', 'Template'],
+      'filters.template_id_filter.expose.multiple' => [TRUE, FALSE],
+    ];
+    $changed = FALSE;
+    foreach (['default', 'all_flows_full'] as $display) {
+      foreach ($changes as $path => [$old, $new]) {
+        $key = 'display.' . $display . '.display_options.' . $path;
+        // Preserve customized labels/operators and inherited display settings.
+        if ($config->get($key) === $old) {
+          $config->set($key, $new);
+          $changed = TRUE;
+        }
+      }
+    }
+    if ($changed) {
+      $config->save(TRUE);
+    }
+  }
+  return t('Updated the existing Maestro workflow Views for the modern UI.');
+}
+
+/**
+ * Place Task Name before Process Name in the task report filters.
+ */
+function maestro_update_10011() {
+  foreach (['maestro_outstanding_tasks', 'maestro_all_in_production_tasks'] as $view_id) {
+    $config = \Drupal::configFactory()->getEditable('views.view.' . $view_id);
+    $changed = FALSE;
+    foreach ($config->get('display') ?? [] as $display_id => $display) {
+      $filters = $display['display_options']['filters'] ?? [];
+      if (!isset($filters['task_label'], $filters['process_name'])) {
+        continue;
+      }
+      $keys = array_keys($filters);
+      $task_position = array_search('task_label', $keys, TRUE);
+      $process_position = array_search('process_name', $keys, TRUE);
+      if ($task_position < $process_position) {
+        continue;
+      }
+      // Swap only these positions; preserve other filters and their settings.
+      $keys[$process_position] = 'task_label';
+      $keys[$task_position] = 'process_name';
+      $ordered = [];
+      foreach ($keys as $key) {
+        $ordered[$key] = $filters[$key];
+      }
+      $config->set('display.' . $display_id . '.display_options.filters', $ordered);
+      $changed = TRUE;
+    }
+    if ($changed) {
+      $config->save(TRUE);
+    }
+  }
+  return t('Placed Task Name before Process Name in the Maestro task report filters.');
+}
+
+/**
+ * Sort Outstanding Tasks by its clickable Queue ID header, descending first.
+ */
+function maestro_update_10012() {
+  $config = \Drupal::configFactory()->getEditable('views.view.maestro_outstanding_tasks');
+  $path = 'display.maestro_outstanding_tasks.display_options';
+  if ($config->isNew() || $config->get($path) === NULL) {
+    return t('The Outstanding Tasks display is not installed.');
+  }
+  $defaults = 'display.default.display_options';
+  $style = $config->get($path . '.defaults.style') === FALSE
+    ? $config->get($path . '.style')
+    : $config->get($defaults . '.style');
+  $fields = $config->get($path . '.defaults.fields') === FALSE
+    ? $config->get($path . '.fields')
+    : $config->get($defaults . '.fields');
+  if (($style['type'] ?? '') !== 'table' || empty($fields['queue_id_1']) || !empty($fields['queue_id_1']['exclude'])) {
+    return t('Skipped Queue ID header sorting because the display uses a customized layout.');
+  }
+  $style['options']['columns']['queue_id_1'] = 'queue_id_1';
+  $style['options']['info']['queue_id_1'] = array_replace(
+    $style['options']['info']['queue_id_1'] ?? [],
+    ['sortable' => TRUE, 'default_sort_order' => 'desc']
+  );
+  $style['options']['default'] = 'queue_id_1';
+  $sorts = $config->get($path . '.defaults.sorts') === FALSE
+    ? ($config->get($path . '.sorts') ?? [])
+    : ($config->get($defaults . '.sorts') ?? []);
+  // Remove the exposed Queue ID criterion from the development version.
+  // Table-header sorting supplies the primary order; other criteria remain.
+  if (($sorts['queue_id']['table'] ?? '') === 'maestro_production_assignments' && ($sorts['queue_id']['field'] ?? '') === 'queue_id') {
+    unset($sorts['queue_id']);
+  }
+  $config->set($path . '.defaults.style', FALSE)
+    ->set($path . '.style', $style)
+    ->set($path . '.defaults.sorts', FALSE)
+    ->set($path . '.sorts', $sorts)
+    ->save(TRUE);
+  return t('Outstanding Tasks now uses a clickable Queue ID header with descending order by default.');
+}
+
+/**
+ * Enable column-header sorting in the All Flows report.
+ */
+function maestro_update_10013() {
+  $config = \Drupal::configFactory()->getEditable('views.view.maestro_all_flows');
+  if ($config->isNew()) {
+    return t('The All Flows view is not installed.');
+  }
+  $orders = [
+    'process_id' => 'desc',
+    'process_name' => 'asc',
+    'template_id' => 'asc',
+    'initiator_username' => 'asc',
+    'created' => 'desc',
+    'completed' => 'desc',
+  ];
+  foreach ($config->get('display') ?? [] as $id => $display) {
+    $path = 'display.' . $id . '.display_options';
+    $style = $config->get($path . '.style');
+    // Inherited styles are updated through the default display.
+    if (($style['type'] ?? '') !== 'table') {
+      continue;
+    }
+    $fields = $config->get($path . '.fields') ?? $config->get('display.default.display_options.fields') ?? [];
+    foreach ($orders as $field => $order) {
+      if (empty($fields[$field]) || !empty($fields[$field]['exclude'])) {
+        continue;
+      }
+      $style['options']['columns'][$field] ??= $field;
+      $style['options']['info'][$field] = array_replace(
+        $style['options']['info'][$field] ?? [],
+        ['sortable' => TRUE, 'default_sort_order' => $order]
+      );
+    }
+    if (empty($style['options']['default']) || $style['options']['default'] === '-1') {
+      $style['options']['default'] = 'process_id';
+    }
+    $config->set($path . '.style', $style);
+  }
+  $config->save(TRUE);
+  return t('Enabled column-header sorting in the All Flows report.');
+}
+
+/**
+ * Enable sorting by the first four Views-based task console columns.
+ */
+function maestro_update_10014() {
+  $config = \Drupal::configFactory()->getEditable('views.view.maestro_views_based_task_console');
+  if ($config->isNew()) {
+    return t('The Views-based task console is not installed.');
+  }
+  $orders = ['id' => 'desc', 'task_label' => 'asc', 'process_name' => 'asc', 'created' => 'desc'];
+  foreach ($config->get('display') ?? [] as $id => $display) {
+    $path = 'display.' . $id . '.display_options';
+    $style = $config->get($path . '.style');
+    // Inherited styles are updated through the default display.
+    if (($style['type'] ?? '') !== 'table') {
+      continue;
+    }
+    $fields = $config->get($path . '.fields') ?? $config->get('display.default.display_options.fields') ?? [];
+    foreach ($orders as $field => $order) {
+      if (empty($fields[$field]) || !empty($fields[$field]['exclude'])) {
+        continue;
+      }
+      $style['options']['columns'][$field] ??= $field;
+      $style['options']['info'][$field] = array_replace(
+        $style['options']['info'][$field] ?? [],
+        ['sortable' => TRUE, 'default_sort_order' => $order]
+      );
+    }
+    if (empty($style['options']['default']) || $style['options']['default'] === '-1') {
+      $style['options']['default'] = 'id';
+    }
+    $config->set($path . '.style', $style);
+  }
+  $config->save(TRUE);
+  return t('Enabled Task ID, Task, Process Name, and Created header sorting in the Views-based task console.');
+}
+
+/**
+ * Enable task, process, and date header sorting in Outstanding Tasks.
+ */
+function maestro_update_10015() {
+  $config = \Drupal::configFactory()->getEditable('views.view.maestro_outstanding_tasks');
+  $path = 'display.maestro_outstanding_tasks.display_options';
+  if ($config->isNew() || $config->get($path) === NULL) {
+    return t('The Outstanding Tasks display is not installed.');
+  }
+  $defaults = 'display.default.display_options';
+  $style = $config->get($path . '.defaults.style') === FALSE
+    ? $config->get($path . '.style')
+    : $config->get($defaults . '.style');
+  if (($style['type'] ?? '') !== 'table') {
+    return t('Skipped Outstanding Tasks header sorting because the display uses a customized layout.');
+  }
+  $fields = $config->get($path . '.defaults.fields') === FALSE
+    ? $config->get($path . '.fields')
+    : $config->get($defaults . '.fields');
+  foreach (['task_label' => 'asc', 'process_name' => 'asc', 'created_1' => 'desc', 'created' => 'desc'] as $field => $order) {
+    if (empty($fields[$field]) || !empty($fields[$field]['exclude'])) {
+      continue;
+    }
+    $style['options']['columns'][$field] ??= $field;
+    $style['options']['info'][$field] = array_replace(
+      $style['options']['info'][$field] ?? [],
+      ['sortable' => TRUE, 'default_sort_order' => $order]
+    );
+  }
+  $config->set($path . '.defaults.style', FALSE)
+    ->set($path . '.style', $style)
+    ->save(TRUE);
+  return t('Enabled Task, Process Name, Task Assigned, and Process Started header sorting in Outstanding Tasks.');
+}
+
+/**
+ * Enable class, machine name, and date sorting in All Active Tasks.
+ */
+function maestro_update_10016() {
+  $config = \Drupal::configFactory()->getEditable('views.view.maestro_all_in_production_tasks');
+  if ($config->isNew()) {
+    return t('The All Active Tasks view is not installed.');
+  }
+  $defaults = 'display.default.display_options';
+  foreach (['maestro_all_active_tasks_full', 'maestro_all_active_tasks_lean'] as $display) {
+    $path = 'display.' . $display . '.display_options';
+    if ($config->get($path) === NULL) {
+      continue;
+    }
+    $style = $config->get($path . '.defaults.style') === FALSE
+      ? $config->get($path . '.style')
+      : $config->get($defaults . '.style');
+    if (($style['type'] ?? '') !== 'table') {
+      continue;
+    }
+    $fields = $config->get($path . '.defaults.fields') === FALSE
+      ? $config->get($path . '.fields')
+      : $config->get($defaults . '.fields');
+    foreach (['task_class_name' => 'asc', 'task_id' => 'asc', 'created' => 'desc', 'started_time' => 'desc'] as $field => $order) {
+      if (empty($fields[$field]) || !empty($fields[$field]['exclude'])) {
+        continue;
+      }
+      $style['options']['columns'][$field] ??= $field;
+      $style['options']['info'][$field] = array_replace(
+        $style['options']['info'][$field] ?? [],
+        ['sortable' => TRUE, 'default_sort_order' => $order]
+      );
+    }
+    $config->set($path . '.defaults.style', FALSE)->set($path . '.style', $style);
+  }
+  $config->save(TRUE);
+  return t('Enabled Class Name, Machine Name, Created, and Started Time header sorting in All Active Tasks.');
+}
+
+/**
+ * Refresh Maestro report sorting, filtering, and paging through Views AJAX.
+ */
+function maestro_update_10017() {
+  $views = [
+    'maestro_outstanding_tasks' => ['maestro_outstanding_tasks'],
+    'maestro_all_in_production_tasks' => ['maestro_all_active_tasks_full', 'maestro_all_active_tasks_lean'],
+    'maestro_all_flows' => ['all_flows_full'],
+    'maestro_views_based_task_console' => ['page_1'],
+  ];
+  foreach ($views as $view => $displays) {
+    $config = \Drupal::configFactory()->getEditable('views.view.' . $view);
+    if ($config->isNew()) {
+      continue;
+    }
+    foreach ($displays as $display) {
+      $path = 'display.' . $display . '.display_options';
+      if ($config->get($path) !== NULL) {
+        $config->set($path . '.defaults.use_ajax', FALSE)
+          ->set($path . '.use_ajax', TRUE);
+      }
+    }
+    $config->save(TRUE);
+  }
+  return t('Enabled AJAX for Maestro report sorting, filtering, and paging.');
+}
+
+/**
+ * Update 10018 - Re-save maestro.settings so its values match the new schema.
+ */
+function maestro_update_10018() {
+  $config = \Drupal::configFactory()->getEditable('maestro.settings');
+  if (!$config->isNew()) {
+    // Saving casts each value to the type declared in maestro.schema.yml.
+    $config->save();
+  }
+  return t('Cast Maestro settings to the types declared in the configuration schema.');
+}
+
+/**
+ * Update 10019 - Add the stage status field to maestro_process_status.
+ */
+function maestro_update_10019() {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if ($manager->getFieldStorageDefinition('stage_status', 'maestro_process_status')) {
+    return t('The stage status field already exists on maestro_process_status.');
+  }
+  $storage_definition = BaseFieldDefinition::create('string')
+    ->setLabel(t('Stage Status'))
+    ->setDescription(t('The status machine name (e.g. success, failure) set by the task that reached this stage.'))
+    ->setSettings([
+      'default_value' => '',
+      'max_length' => 64,
+      'text_processing' => 0,
+    ]);
+  $manager->installFieldStorageDefinition('stage_status', 'maestro_process_status', 'maestro', $storage_definition);
+  return t('Added the stage status field to maestro_process_status.');
+}

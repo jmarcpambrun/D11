@@ -1,0 +1,21 @@
+{# Preserve the original form; the console supplies only its presentation shell. #}
+<div class="maestro-execution maestro-execution--{{ modal ? 'modal' : 'page' }}">
+  {% if return_link and not modal %}<nav class="maestro-return" aria-label="{{ 'Task navigation'|t }}">{{ return_link }}</nav>{% endif %}
+  <header class="maestro-execution__header">
+    <dl class="maestro-execution__context">
+      <div><dt>{{ 'Task'|t }}</dt><dd>{{ task_context.task }}</dd></div>
+      <div><dt>{{ 'Workflow'|t }}</dt><dd>{{ task_context.flow }}</dd></div>
+      <div><dt>{{ 'Assigned'|t }}</dt><dd>{{ task_context.assigned }}</dd></div>
+    </dl>
+    {% if modal and task_context.stage %}
+      <div class="maestro-execution__stage" aria-label="{{ 'Current workflow stage'|t }}">
+        {% if task_context.stage.current %}<span class="maestro-execution__stage-number" aria-hidden="true">{{ task_context.stage.current }}</span>{% endif %}
+        <span>{{ task_context.stage.summary }}{% if task_context.stage.message %}: <strong>{{ task_context.stage.message }}</strong>{% endif %}</span>
+      </div>
+    {% endif %}
+  </header>
+  <div class="maestro-execution__layout{% if modal or not milestones %} maestro-execution__layout--wide{% endif %}">
+    <div class="maestro-execution__main">{{ children }}</div>
+    {% if milestones and not modal %}<aside class="maestro-execution__aside" aria-label="{{ 'Workflow context'|t }}">{{ milestones }}</aside>{% endif %}
+  </div>
+</div>

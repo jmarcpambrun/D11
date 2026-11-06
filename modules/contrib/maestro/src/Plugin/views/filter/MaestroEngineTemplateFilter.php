@@ -51,7 +51,10 @@ class MaestroEngineTemplateFilter extends InOperator {
   protected function generateTemplateOptions() {
     $templates = MaestroEngine::getTemplates();
     $options = [];
-    $options[0] = $this->t(' - Any -');
+    // Single-select exposed filters already receive Views' Any option.
+    if ($this->view->id() !== 'maestro_all_flows' || !empty($this->options['expose']['multiple'])) {
+      $options[0] = $this->t(' - Any -');
+    }
     foreach ($templates as $machine_name => $template) {
       $options[$machine_name] = $template->label;
     }

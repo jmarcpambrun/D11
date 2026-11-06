@@ -89,9 +89,13 @@ class MaestroTemplateBuilderForm extends FormBase {
     $templateMachineName = $form_state->getValue('template_machine_name');
     $template = MaestroEngine::getTemplate($templateMachineName);
 
+    // Only move a task that exists. Writing coordinates for an unknown ID (e.g. a task whose
+    // creation failed) would add a broken task holding nothing but top/left.
+    if (isset($template->tasks[$taskMoved]['tasktype'])) {
     $template->tasks[$taskMoved]['top'] = $top;
     $template->tasks[$taskMoved]['left'] = $left;
     $template->save();
+    }
 
     $response = new AjaxResponse();
     $response->addCommand(new FireJavascriptCommand('maestroNoOp', []));
@@ -367,6 +371,14 @@ class MaestroTemplateBuilderForm extends FormBase {
      */
     $tasks = [];
     foreach ($template->tasks as $taskID => $task) {
+      // A task without a type can't be drawn or edited; report it instead of crashing the builder.
+      if (empty($task['tasktype'])) {
+        \Drupal::messenger()->addError($this->t('Task %id has no task type, so it is not shown and cannot be edited here. Remove it from the template configuration, e.g. with: drush config:edit maestro.maestro_template.@template', [
+          '%id' => $taskID,
+          '@template' => $templateMachineName,
+        ]));
+        continue;
+      }
       // Fetch this task's template builder capabilities.
       $this_task = MaestroEngine::getPluginTask($task['tasktype']);
       if(!$this_task) {
@@ -409,6 +421,16 @@ class MaestroTemplateBuilderForm extends FormBase {
     /*
      * Run the validity checker
      */
+    $form['back_to_templates'] = [
+      '#type' => 'link',
+      '#title' => $this->t('templates'),
+      '#url' => Url::fromRoute('entity.maestro_template.list'),
+      '#attributes' => [
+        'title' => $this->t('Back to the Maestro Templates list'),
+        'class' => ['maestro-action-button'],
+      ],
+    ];
+
     $form['run_validity_check'] = [
       '#type' => 'link',
       '#title' => $this->t('validity check'),

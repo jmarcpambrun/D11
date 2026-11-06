@@ -84,6 +84,10 @@ class MaestroEngineActiveHandler extends FieldPluginBase {
       }
 
       $taskhandler = TaskHandler::getHandlerURL($queueID);
+      // Batch and conditional tasks have no interactive destination.
+      if (!$taskhandler) {
+        return ['#plain_text' => '—'];
+      }
 
       if (isset($this->options['show_as_link']) && $this->options['show_as_link'] == 1) {
         $uri = UrlHelper::isExternal($taskhandler) ? $taskhandler : 'internal:' . $taskhandler;
@@ -91,6 +95,7 @@ class MaestroEngineActiveHandler extends FieldPluginBase {
           '#type' => 'link',
           '#title' => isset($this->options['link_text']) ? $this->options['link_text'] : $this->t('Link'),
           '#url' => Url::fromUri($uri),
+          '#attributes' => ['title' => $taskhandler],
         ];
       }
       else {

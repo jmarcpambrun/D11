@@ -51,7 +51,7 @@ function maestro_ai_task_entity_presave(EntityInterface $entity) {
     // values if they've not been set.
     $tasks = $entity->get('tasks') ?? [];
     foreach ($tasks as $task_id => $task) {
-      if ($task['tasktype'] == 'MaestroAITask') {
+      if (($task['tasktype'] ?? '') == 'MaestroAITask') {
         // Check if 'ai_prompt' is set.  If not, set it to the base prompt.
         if (!isset($task['data']['ai']['ai_prompt'])) {
           $config = \Drupal::config('maestro_ai_task.settings');

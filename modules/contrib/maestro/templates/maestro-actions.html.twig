@@ -1,0 +1,15 @@
+{# Preserve all handler-provided links, including their AJAX attributes. #}
+{{ attach_library('maestro/maestro-actions') }}
+{% if actions %}
+  <div class="maestro-actions">
+    <div class="maestro-actions__primary">{{ actions|first }}</div>
+    {% if actions|length > 1 %}
+      <button class="maestro-actions__toggle" type="button" aria-expanded="false" aria-controls="{{ menu_id }}" aria-label="{{ 'Additional actions'|t }}" hidden>
+        <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true" focusable="false"><path d="m1 1 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+      <div class="maestro-actions__menu" id="{{ menu_id }}">
+        {% for action in actions|slice(1) %}{{ action }}{% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

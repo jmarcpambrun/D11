@@ -25,6 +25,22 @@ class MaestroEngineProcessInitiator extends FieldPluginBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function clickSort($order) {
+    $this->ensureMyTable();
+    $join = \Drupal::service('plugin.manager.views.join')->createInstance('standard', [
+      'table' => 'users_field_data',
+      'field' => 'uid',
+      'left_table' => $this->tableAlias,
+      'left_field' => 'initiator_uid',
+      'extra' => [['field' => 'default_langcode', 'value' => 1]],
+    ]);
+    $alias = $this->query->addTable('users_field_data', $this->relationship, $join);
+    $this->query->addOrderBy($alias, 'name', $order);
+  }
+
+  /**
    * Define the available options.
    *
    * @return array

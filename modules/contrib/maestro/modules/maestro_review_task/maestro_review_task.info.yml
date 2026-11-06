@@ -1,0 +1,13 @@
+name: 'Maestro Review Task'
+type: module
+description: 'A ready-made interactive Maestro task: instructions for the person doing the task, renameable Accept and Reject buttons, and links to the workflow''s content.'
+package: Maestro
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - drupal:filter
+  - maestro:maestro
+
+# Information added by Drupal.org packaging script on 2026-11-04
+version: '4.6.0'
+project: 'maestro'
+datestamp: 1793815091

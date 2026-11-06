@@ -1,0 +1,10 @@
+maestro_trace_archive.settings:
+  type: config_object
+  label: 'Maestro Trace Archive settings'
+  mapping:
+    prune_age_value:
+      type: integer
+      label: 'Delete trace snapshots older than this many units. 0 disables pruning.'
+    prune_age_unit:
+      type: string
+      label: 'Unit for the prune age: hours, days, weeks or months.'

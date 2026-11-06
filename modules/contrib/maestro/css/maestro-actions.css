@@ -1,0 +1,22 @@
+/** Maestro owns the complete action component; themes can set --maestro-* tokens. */
+.maestro-actions.maestro-actions { display: inline-grid; grid-template-columns: minmax(min-content, auto) auto; min-width: min-content; position: relative; max-width: 100%; vertical-align: middle; gap: 0; padding: 0; margin: 0; border: 0; font-family: inherit; font-size: var(--maestro-font-size, 14px); font-weight: 600; line-height: 1.5; }
+.maestro-actions .maestro-actions__primary { display: flex; min-width: 0; margin: 0; padding: 0; }
+.maestro-actions .maestro-actions__link,
+.maestro-actions .maestro-actions__toggle,
+.maestro-actions__menu.maestro-actions__menu .maestro-actions__link { box-sizing: border-box; float: none; position: static; margin: 0; min-height: 36px; padding: 8px 12px; border: 0; border-radius: 4px; box-shadow: none; background: var(--maestro-accent); color: var(--maestro-on-accent) !important; font: inherit; line-height: 1.4; text-decoration: none !important; text-transform: none; letter-spacing: normal; }
+.maestro-actions .maestro-actions__link { display: flex; align-items: center; width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.maestro-actions[data-enhanced] .maestro-actions__primary:has(+ .maestro-actions__toggle) .maestro-actions__link { border-start-end-radius: 0; border-end-end-radius: 0; }
+.maestro-actions .maestro-actions__toggle { display: flex; justify-content: center; align-items: center; align-self: stretch; width: 40px; height: auto; min-width: 40px; padding: 0; cursor: pointer; border-inline-start: 1px solid rgb(255 255 255 / 30%); border-start-start-radius: 0; border-end-start-radius: 0; }
+.maestro-actions .maestro-actions__toggle::before,
+.maestro-actions .maestro-actions__toggle::after { content: none; }
+.maestro-actions .maestro-actions__toggle svg { display: block; width: 12px; height: 8px; margin: 0; color: inherit; }
+.maestro-actions__menu.maestro-actions__menu { box-sizing: border-box; grid-column: 1 / -1; width: max-content; max-width: calc(100vw - 16px); max-height: min(24rem, calc(100vh - 16px)); overflow: auto; margin: 4px 0 0; padding: 4px; border: 1px solid var(--maestro-border); border-radius: 4px; background: var(--maestro-surface); color: var(--maestro-text); box-shadow: 0 4px 12px rgb(0 0 0 / 15%); font-family: inherit; font-size: var(--maestro-font-size, 14px); font-weight: 400; line-height: 1.5; }
+.maestro-actions[data-enhanced] .maestro-actions__menu { position: fixed; inset: auto; margin: 0; z-index: 1000; }
+.maestro-actions__menu.maestro-actions__menu .maestro-actions__link { display: block; background: var(--maestro-surface); color: var(--maestro-text) !important; white-space: normal; }
+.maestro-actions__menu.maestro-actions__menu .maestro-actions__link:hover { background: var(--maestro-selected); }
+.maestro-actions .maestro-actions__primary .maestro-actions__link:hover,
+.maestro-actions .maestro-actions__toggle:hover { background: var(--maestro-accent-hover); }
+.maestro-actions .maestro-actions__link:focus-visible,
+.maestro-actions .maestro-actions__toggle:focus-visible,
+.maestro-actions__menu.maestro-actions__menu .maestro-actions__link:focus-visible { outline: 2px solid var(--maestro-focus); outline-offset: 2px; }
+.maestro-actions [hidden] { display: none !important; }

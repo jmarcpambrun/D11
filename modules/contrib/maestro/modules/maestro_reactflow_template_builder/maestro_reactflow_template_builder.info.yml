@@ -1,0 +1,12 @@
+name: 'Maestro ReactFlow Template Builder'
+type: module
+description: 'ReactFlow-based visual template builder for Maestro. Alternative to the diagram-js builder.'
+core_version_requirement: ^10 || ^11
+package: Maestro
+dependencies:
+  - maestro:maestro
+
+# Information added by Drupal.org packaging script on 2026-11-04
+version: '4.6.0'
+project: 'maestro'
+datestamp: 1793815091
