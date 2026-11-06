@@ -89,7 +89,7 @@
         "drupal/inline_entity_form": "^3.0.0",
         "drupal/ip2country": "^2.1",
         "drupal/jquery_ui_accordion": "2.1",
-        "drupal/key": "1.22",
+        "drupal/key": "^1.23",
         "drupal/klaro": "^3.1",
         "drupal/ludwig": "^2.0",
         "drupal/maestro": "^4.6",
