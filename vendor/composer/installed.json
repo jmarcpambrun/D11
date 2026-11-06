@@ -10902,27 +10902,36 @@
         },
         {
             "name": "drupal/unlimited_number",
-            "version": "2.0.4",
-            "version_normalized": "2.0.4.0",
+            "version": "3.0.0",
+            "version_normalized": "3.0.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/unlimited_number.git",
-                "reference": "2.0.4"
+                "reference": "3.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/unlimited_number-2.0.4.zip",
-                "reference": "2.0.4",
-                "shasum": "fe9ff5b40478d8c379f6e3ab31945d0afb983edb"
+                "url": "https://ftp.drupal.org/files/projects/unlimited_number-3.0.0.zip",
+                "reference": "3.0.0",
+                "shasum": "78474685aae98ee0a3fb95013974ef3ab99244bc"
             },
             "require": {
-                "drupal/core": ">=9"
+                "drupal/core": "^11.4 || ^12@dev",
+                "php": ">=8.3"
+            },
+            "require-dev": {
+                "drupal/core-dev": "^11.4 || ^12@dev",
+                "phpstan/phpstan": "^2",
+                "phpstan/phpstan-deprecation-rules": "^2",
+                "phpstan/phpstan-phpunit": "^2",
+                "phpstan/phpstan-strict-rules": "^2",
+                "previousnext/coding-standard": "^1"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.4",
-                    "datestamp": "1656650316",
+                    "version": "3.0.0",
+                    "datestamp": "1793685716",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -10932,7 +10941,7 @@
             "installation-source": "dist",
             "notification-url": "https://packages.drupal.org/8/downloads",
             "license": [
-                "GPL-2.0+"
+                "GPL-2.0-or-later"
             ],
             "authors": [
                 {
@@ -10942,7 +10951,7 @@
                 }
             ],
             "description": "Provides a render element and a widget for number fields.",
-            "homepage": "http://drupal.org/project/unlimited_number",
+            "homepage": "https://www.drupal.org/project/unlimited_number",
             "keywords": [
                 "Drupal"
             ],

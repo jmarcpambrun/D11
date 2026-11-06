@@ -4,25 +4,24 @@ declare(strict_types=1);
 
 namespace Drupal\unlimited_number\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Field\Attribute\FieldWidget;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\NumberWidget;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\unlimited_number\Element\UnlimitedNumber;
 
 /**
  * Plugin implementation of the 'unlimited_number' widget.
- *
- * @FieldWidget(
- *   id = \Drupal\unlimited_number\Plugin\Field\FieldWidget\UnlimitedNumberWidget::PLUGIN_ID,
- *   label = @Translation("Unlimited or Number"),
- *   field_types = {
- *     "integer",
- *   }
- * )
  */
+#[FieldWidget(
+  id: self::PLUGIN_ID,
+  label: new TranslatableMarkup('Unlimited or Number'),
+  field_types: ['integer'],
+)]
 class UnlimitedNumberWidget extends NumberWidget {
 
-  public const PLUGIN_ID = 'unlimited_number';
+  public const string PLUGIN_ID = 'unlimited_number';
 
   /**
    * {@inheritdoc}
@@ -30,8 +29,8 @@ class UnlimitedNumberWidget extends NumberWidget {
   public static function defaultSettings(): array {
     return [
       'value_unlimited' => 0,
-      'label_unlimited' => t('Unlimited'),
-      'label_number' => t('Limited'),
+      'label_unlimited' => new TranslatableMarkup('Unlimited'),
+      'label_number' => new TranslatableMarkup('Limited'),
     ] + parent::defaultSettings();
   }
 
@@ -72,19 +71,20 @@ class UnlimitedNumberWidget extends NumberWidget {
     $field_settings = $this->getFieldSettings();
     $value_unlimited = $this->getUnlimitedValue();
 
-    $value = $items[$delta]->value ?? NULL;
+    $value = $items->get($delta)?->getValue()['value'] ?? NULL;
     if ($value !== NULL) {
-      $default_value = $value == $value_unlimited ? UnlimitedNumber::UNLIMITED : $value;
+      $default_value = (int) $value === $value_unlimited ? UnlimitedNumber::UNLIMITED : $value;
     }
     else {
       $default_value = NULL;
     }
 
+    $form_element = [];
     $form_element['unlimited_number'] = $element + [
       '#type' => 'unlimited_number',
       '#default_value' => $default_value,
-      '#min' => is_numeric($field_settings['min']) ? $field_settings['min'] : 1,
-      '#max' => is_numeric($field_settings['max']) ? $field_settings['max'] : NULL,
+      '#min' => \is_numeric($field_settings['min']) ? $field_settings['min'] : 1,
+      '#max' => \is_numeric($field_settings['max']) ? $field_settings['max'] : NULL,
       '#options' => [
         'unlimited' => $this->getSetting('label_unlimited'),
         'limited' => $this->getSetting('label_number'),
@@ -102,7 +102,7 @@ class UnlimitedNumberWidget extends NumberWidget {
     $new_values = [];
     foreach ($values as $value) {
       $number = $value['unlimited_number'];
-      if ($value['unlimited_number'] == UnlimitedNumber::UNLIMITED) {
+      if ($value['unlimited_number'] === UnlimitedNumber::UNLIMITED) {
         $number = $this->getUnlimitedValue();
       }
       $new_values[]['value'] = $number;
@@ -118,7 +118,7 @@ class UnlimitedNumberWidget extends NumberWidget {
    */
   public function getUnlimitedValue(): int {
     $value_unlimited_raw = $this->getSetting('value_unlimited');
-    return empty($value_unlimited_raw) ? 0 : (int) $value_unlimited_raw;
+    return (int) $value_unlimited_raw;
   }
 
 }

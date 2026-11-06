@@ -1,21 +1,49 @@
 {
-  "name": "drupal/unlimited_number",
-  "type": "drupal-module",
-  "description": "Provides a render element and a widget for number fields.",
-  "keywords": ["Drupal"],
-  "license": "GPL-2.0+",
-  "homepage": "http://drupal.org/project/unlimited_number",
-  "support": {
-    "issues": "https://www.drupal.org/project/issues/unlimited_number",
-    "source": "https://git.drupalcode.org/project/unlimited_number"
-  },
-  "authors": [
-    {
-      "name": "dpi",
-      "email": "pro@danielph.in"
+    "name": "drupal/unlimited_number",
+    "type": "drupal-module",
+    "description": "Provides a render element and a widget for number fields.",
+    "keywords": [
+        "Drupal"
+    ],
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/unlimited_number",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/unlimited_number",
+        "source": "https://git.drupalcode.org/project/unlimited_number"
+    },
+    "authors": [
+        {
+            "name": "dpi",
+            "email": "pro@danielph.in"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "drupal/core": "^11.4 || ^12@dev"
+    },
+    "require-dev": {
+        "drupal/core-dev": "^11.4 || ^12@dev",
+        "phpstan/phpstan": "^2",
+        "phpstan/phpstan-deprecation-rules": "^2",
+        "phpstan/phpstan-phpunit": "^2",
+        "phpstan/phpstan-strict-rules": "^2",
+        "previousnext/coding-standard": "^1"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true,
+            "tbachert/spi": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
-  ],
-  "require": {
-    "drupal/core": ">=9"
-  }
 }

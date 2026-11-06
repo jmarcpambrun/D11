@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Drupal\unlimited_number\Element;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element\FormElement;
+use Drupal\Core\Render\Attribute\FormElement;
+use Drupal\Core\Render\Element\FormElementBase;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Provides an unlimited or number radios element.
@@ -18,23 +20,22 @@ use Drupal\Core\Render\Element\FormElement;
  * - #options:
  *   - unlimited: Label for unlimited radio.
  *   - limited: Label for limited radio.
- *
- * @FormElement(\Drupal\unlimited_number\Element\UnlimitedNumber::PLUGIN_ID)
  */
-class UnlimitedNumber extends FormElement {
+#[FormElement(self::PLUGIN_ID)]
+class UnlimitedNumber extends FormElementBase {
 
-  public const PLUGIN_ID = 'unlimited_number';
+  public const string PLUGIN_ID = 'unlimited_number';
 
   /**
    * String returned by the element if the unlimited radio is checked.
    */
-  const UNLIMITED = 'unlimited';
+  public const string UNLIMITED = 'unlimited';
 
   /**
    * {@inheritdoc}
    */
   public function getInfo(): array {
-    $class = get_class($this);
+    $class = static::class;
     return [
       '#input' => TRUE,
       '#process' => [
@@ -60,7 +61,7 @@ class UnlimitedNumber extends FormElement {
       '#options' => NULL,
       '#title' => $element['#title'],
       '#description' => $element['#description'],
-      '#required' => !empty($element['#required']),
+      '#required' => (bool) ($element['#required'] ?? FALSE),
       // Kills \Drupal\Core\Render\Element\Radios::processRadios.
       '#process' => [],
     ];
@@ -71,10 +72,10 @@ class UnlimitedNumber extends FormElement {
     ];
     $element['unlimited_number']['unlimited']['radio'] = [
       '#type' => 'radio',
-      '#title' => !empty($element['#options']['unlimited']) ? $element['#options']['unlimited'] : \t('Unlimited'),
+      '#title' => (string) ($element['#options']['unlimited'] ?? '') !== '' ? $element['#options']['unlimited'] : new TranslatableMarkup('Unlimited'),
       '#return_value' => 'unlimited',
-      '#parents' => array_merge($element['#parents'], ['unlimited_number']),
-      '#default_value' => $value == static::UNLIMITED ? 'unlimited' : NULL,
+      '#parents' => \array_merge($element['#parents'], ['unlimited_number']),
+      '#default_value' => $value === static::UNLIMITED ? 'unlimited' : NULL,
       // Errors only on parent.
       '#error_no_message' => TRUE,
       '#attributes' => $element['#attributes'],
@@ -88,10 +89,10 @@ class UnlimitedNumber extends FormElement {
 
     $element['unlimited_number']['limited']['radio'] = [
       '#type' => 'radio',
-      '#title' => !empty($element['#options']['limited']) ? $element['#options']['limited'] : \t('Limited'),
+      '#title' => (string) ($element['#options']['limited'] ?? '') !== '' ? $element['#options']['limited'] : new TranslatableMarkup('Limited'),
       '#return_value' => 'limited',
-      '#parents' => array_merge($element['#parents'], ['unlimited_number']),
-      '#default_value' => is_numeric($value) ? 'limited' : NULL,
+      '#parents' => \array_merge($element['#parents'], ['unlimited_number']),
+      '#default_value' => \is_numeric($value) ? 'limited' : NULL,
       '#error_no_message' => TRUE,
       '#attributes' => $element['#attributes'],
       '#ajax' => $element['#ajax'] ?? NULL,
@@ -99,8 +100,8 @@ class UnlimitedNumber extends FormElement {
 
     $element['unlimited_number']['limited']['number'] = [
       '#type' => 'number',
-      '#parents' => array_merge($element['#parents'], ['number']),
-      '#default_value' => is_numeric($value) ? $value : NULL,
+      '#parents' => \array_merge($element['#parents'], ['number']),
+      '#default_value' => \is_numeric($value) ? $value : NULL,
       '#field_prefix' => $element['#field_prefix'] ?? NULL,
       '#field_suffix' => $element['#field_suffix'] ?? NULL,
       '#min' => $element['#min'] ?? NULL,
@@ -127,25 +128,25 @@ class UnlimitedNumber extends FormElement {
   /**
    * Form element validation handler for unlimited_number elements.
    *
-   * @see getInfo().
+   * @see getInfo()
    */
   public static function validateUnlimitedNumber(array &$element, FormStateInterface $form_state, array &$complete_form): void {
     $value = NULL;
-    if ($element['unlimited_number']['#value'] == 'unlimited') {
+    if ($element['unlimited_number']['#value'] === 'unlimited') {
       $value = static::UNLIMITED;
     }
-    elseif ($element['unlimited_number']['#value'] == 'limited') {
+    elseif ($element['unlimited_number']['#value'] === 'limited') {
       // If limited radio is checked, number field is required.
       $limited = $element['unlimited_number']['limited']['number']['#value'];
-      if (is_numeric($limited)) {
+      if (\is_numeric($limited)) {
         $value = $limited;
       }
       else {
         $form_state->setError(
           $element['unlimited_number']['limited']['number'],
-          (string) \t('A number must be entered. Otherwise choose @unlimited.', [
+          (string) new TranslatableMarkup('A number must be entered. Otherwise choose @unlimited.', [
             '@unlimited' => $element['unlimited_number']['unlimited']['radio']['#title'],
-          ])
+          ]),
         );
       }
     }
@@ -160,10 +161,10 @@ class UnlimitedNumber extends FormElement {
    * @return string|int|null
    *   The value.
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function valueCallback(&$element, $input, FormStateInterface $form_state): string|int|null {
     if ($input !== FALSE && $input !== NULL) {
-      if (!empty($input['unlimited_number'])) {
-        if ($input['unlimited_number'] == 'unlimited') {
+      if (isset($input['unlimited_number']) && $input['unlimited_number'] !== '') {
+        if ($input['unlimited_number'] === 'unlimited') {
           return static::UNLIMITED;
         }
         else {
