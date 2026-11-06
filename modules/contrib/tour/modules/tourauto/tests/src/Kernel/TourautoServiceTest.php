@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\tourauto\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\tourauto\TourautoManager;
 use Drupal\user\UserInterface;
@@ -13,6 +14,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the tourauto service functionality.
  */
 #[Group('tourauto')]
+#[RunTestsInSeparateProcesses]
 class TourautoServiceTest extends KernelTestBase {
 
   /**

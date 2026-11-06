@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\System;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\tour\Functional\TourTestBase;
 use Drupal\tour\Entity\Tour;
 use PHPUnit\Framework\Attributes\Group;
@@ -10,6 +11,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests tour functionality when using front page rout.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class FrontPageTourTest extends TourTestBase {
 
   /**

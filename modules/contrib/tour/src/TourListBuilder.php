@@ -3,10 +3,11 @@
 namespace Drupal\tour;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -16,36 +17,23 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class TourListBuilder extends EntityListBuilder {
 
-  /**
-   * Constructs a new TourListBuilder object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
-   *   The entity storage class.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user.
-   */
   public function __construct(
     EntityTypeInterface $entity_type,
-    EntityStorageInterface $storage,
+    EntityTypeManagerInterface $entityTypeManager,
     protected AccountProxyInterface $currentUser,
   ) {
-    parent::__construct($entity_type, $storage);
+    parent::__construct($entity_type, $entityTypeManager->getStorage($entity_type->id()));
 
   }
 
   /**
    * {@inheritdoc}
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type): static {
     $entity_type_manager = $container->get('entity_type.manager');
     return new static(
       $entity_type,
-      $entity_type_manager->getStorage($entity_type->id()),
+      $entity_type_manager,
       $container->get('current_user'),
     );
   }
@@ -113,8 +101,8 @@ class TourListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function getOperations(EntityInterface $entity): array {
-    $operations = parent::getOperations($entity);
+  public function getOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL): array {
+    $operations = parent::getOperations($entity, $cacheability);
 
     $operations['edit'] = [
       'title' => $this->t('Edit'),

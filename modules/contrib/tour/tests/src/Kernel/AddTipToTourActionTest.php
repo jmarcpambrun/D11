@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\tour\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Config\Action\ConfigActionException;
 use Drupal\Core\Config\Action\ConfigActionManager;
 use Drupal\FunctionalTests\Core\Recipe\RecipeTestTrait;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\Group;
  */
 #[Group('tour')]
 #[CoversClass(AddTipToTour::class)]
+#[RunTestsInSeparateProcesses]
 class AddTipToTourActionTest extends KernelTestBase {
 
   use RecipeTestTrait;

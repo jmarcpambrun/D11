@@ -6,7 +6,7 @@ core_version_requirement: ^11.3 || ^12
 dependencies:
   - tour:tour
 
-# Information added by Drupal.org packaging script on 2026-06-30
-version: '3.0.0'
+# Information added by Drupal.org packaging script on 2026-11-02
+version: '3.0.1'
 project: 'tour'
-datestamp: 1782838403
+datestamp: 1793647373

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Cache;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\Tests\system\Functional\Cache\PageCacheTagsTestBase;
 use Drupal\tour\Entity\Tour;
@@ -13,6 +14,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the Tour entity's cache tags.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourCacheTagsTest extends PageCacheTagsTestBase {
 
   /**

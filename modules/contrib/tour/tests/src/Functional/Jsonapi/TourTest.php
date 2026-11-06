@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Jsonapi;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
 use Drupal\Tests\jsonapi\Functional\ConfigEntityResourceTestBase;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\Group;
  * JSON:API integration test for the "Tour" config entity type.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourTest extends ConfigEntityResourceTestBase {
 
   /**
@@ -84,15 +86,8 @@ class TourTest extends ConfigEntityResourceTestBase {
    */
   protected function getExpectedDocument(): array {
     $self_url = Url::fromUri('base:/jsonapi/tour/tour/' . $this->entity->uuid())->setAbsolute()->toString(TRUE)->getGeneratedUrl();
-    $normalized_version = preg_replace('/x-dev$/', '0', \Drupal::VERSION);
-    if (version_compare($normalized_version, '11.2.0', '>=')) {
-      $json_href = 'http://jsonapi.org/format/1.1/';
-      $json_version = '1.1';
-    }
-    else {
-      $json_href = 'http://jsonapi.org/format/1.0/';
-      $json_version = '1.0';
-    }
+    $json_href = 'https://jsonapi.org/format/1.1/';
+    $json_version = '1.1';
     return [
       'jsonapi' => [
         'meta' => [

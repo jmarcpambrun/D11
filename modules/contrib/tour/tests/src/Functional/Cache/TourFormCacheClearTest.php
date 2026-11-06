@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Cache;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\tour\Functional\TourTestBase;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -9,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests cache clear when updating tours.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourFormCacheClearTest extends TourTestBase {
 
   /**

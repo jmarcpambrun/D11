@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Taxonomy;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Tests\tour\Functional\TourTestBase;
@@ -11,6 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests taxonomy term parameters for tour (bundle vs id).
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TaxonomyParameterTourTest extends TourTestBase {
 
   /**

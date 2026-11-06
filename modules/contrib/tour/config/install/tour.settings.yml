@@ -1,3 +1,4 @@
+langcode: en
 hide_tour_when_empty: false
 display_custom_labels: false
 tour_avail_text: ""

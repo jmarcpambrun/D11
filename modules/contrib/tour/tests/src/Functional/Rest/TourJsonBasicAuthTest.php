@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Rest;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\rest\Functional\BasicAuthResourceTestTrait;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -9,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests tour integration with restAPI, basic auth test.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourJsonBasicAuthTest extends TourResourceTestBase {
 
   use BasicAuthResourceTestTrait;

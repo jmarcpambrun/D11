@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Dashboard;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\tour\Functional\TourTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
@@ -11,6 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the Dashboard tour tips.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class DashboardTourTest extends TourTestBase {
 
   /**

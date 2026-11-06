@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Tests\BrowserTestBase;
 use PHPUnit\Framework\Attributes\Group;
@@ -10,6 +11,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the Tour UI.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourUITest extends BrowserTestBase {
 
   use StringTranslationTrait;

@@ -104,7 +104,14 @@ class TourHooks {
     $results = $this->tourHelper->loadTourEntities();
     $no_tips = empty($results);
 
-    if (!$this->tourHelper->shouldEmptyBeHidden($no_tips)) {
+    if ($this->tourHelper->shouldEmptyBeHidden($no_tips)) {
+      // Omitting the item is route-dependent, so it must carry the same cache
+      // metadata as the rendered tab; without the URL context the toolbar is
+      // cached tour-less and reused on routes that do have one.
+      $items['tour']['#cache']['contexts'][] = 'url';
+      $items['tour']['#cache']['tags'][] = 'tour_settings';
+    }
+    else {
       $items['tour'] += [
         '#type' => 'toolbar_item',
         'tab' => [

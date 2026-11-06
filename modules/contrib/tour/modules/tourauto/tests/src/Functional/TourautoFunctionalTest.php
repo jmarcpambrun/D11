@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\tourauto\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\user\UserInterface;
 use PHPUnit\Framework\Attributes\Group;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the tourauto module functionality.
  */
 #[Group('tourauto')]
+#[RunTestsInSeparateProcesses]
 class TourautoFunctionalTest extends BrowserTestBase {
 
   /**

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\Url;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\tour\Entity\Tour;
@@ -13,6 +14,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the functionality of tour tips.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourTest extends TourTestBase {
 
   /**

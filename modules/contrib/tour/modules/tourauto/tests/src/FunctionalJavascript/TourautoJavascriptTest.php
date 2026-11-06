@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\tourauto\FunctionalJavascript;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\user\UserInterface;
 use PHPUnit\Framework\Attributes\Group;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the tourauto JavaScript functionality.
  */
 #[Group('tourauto')]
+#[RunTestsInSeparateProcesses]
 class TourautoJavascriptTest extends WebDriverTestBase {
 
   /**

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Node;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\tour\Functional\TourTestBase;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -9,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the Node parameters tour.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class NodeParameterTourTest extends TourTestBase {
 
   /**

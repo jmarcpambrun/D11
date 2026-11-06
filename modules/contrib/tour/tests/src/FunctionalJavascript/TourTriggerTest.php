@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\tour\FunctionalJavascript;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -11,6 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests tour triggering functionality.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourTriggerTest extends WebDriverTestBase {
 
   /**

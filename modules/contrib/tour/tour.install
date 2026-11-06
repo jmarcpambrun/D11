@@ -209,3 +209,13 @@ function tour_update_10310(): void {
     ->set('enable_recap', FALSE)
     ->save();
 }
+
+/**
+ * Set langcode for tour settings config.
+ */
+function tour_update_10311(): void {
+  $id = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  \Drupal::configFactory()->getEditable('tour.settings')
+    ->set('langcode', $id)
+    ->save();
+}

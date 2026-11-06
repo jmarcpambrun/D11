@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Functional\Rest;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Tests\rest\Functional\BasicAuthResourceTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\XmlEntityNormalizationQuirksTrait;
 use PHPUnit\Framework\Attributes\Group;
@@ -10,6 +11,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests tour integration with restAPI, XML basic auth test.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourXmlBasicAuthTest extends TourResourceTestBase {
 
   use BasicAuthResourceTestTrait;
@@ -33,7 +35,7 @@ class TourXmlBasicAuthTest extends TourResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $mimeType = 'text/xml; charset=UTF-8';
+  protected static $mimeType = 'text/xml; charset=utf-8';
 
   /**
    * {@inheritdoc}

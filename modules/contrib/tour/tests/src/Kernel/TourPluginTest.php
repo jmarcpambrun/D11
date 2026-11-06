@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\tour\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -9,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
  * Tests the functionality of tour plugins.
  */
 #[Group('tour')]
+#[RunTestsInSeparateProcesses]
 class TourPluginTest extends KernelTestBase {
 
   /**
