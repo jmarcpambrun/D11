@@ -128,7 +128,7 @@
         "drupal/statistics": "1.0.1",
         "drupal/symfony_mailer": "^2.0",
         "drupal/tfa": "2.0-alpha5",
-        "drupal/token": "1.17",
+        "drupal/token": "^1.18",
         "drupal/tour": "^3.0",
         "drupal/triples_field": "1.0.10",
         "drupal/typed_data": "1.0-beta2|^2.1",
