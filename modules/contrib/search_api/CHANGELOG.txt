@@ -1,3 +1,7 @@
+Search API 1.43 (2026-10-28):
+-----------------------------
+- fix: Fixed cache contexts set in Views cache plugins.
+
 Search API 1.42 (2026-10-11):
 -----------------------------
 - ci: #3624636 Fixed failing pipelines.
