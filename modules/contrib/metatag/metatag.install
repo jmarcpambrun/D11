@@ -126,9 +126,10 @@ function metatag_update_8109(&$sandbox) {
         $bundle = $field->getTargetBundle();
 
         // Determine the table and "value" field names.
+        /** @var \Drupal\Core\Entity\Sql\SqlContentEntityStorage $entity_storage */
         $entity_storage = \Drupal::entityTypeManager()
           ->getStorage($field->getTargetEntityTypeId());
-        /** @var \Drupal\Core\Entity\Sql\SqlContentEntityStorage $table_mapping */
+        /** @var \Drupal\Core\Entity\Sql\DefaultTableMapping $table_mapping */
         $table_mapping = $entity_storage->getTableMapping();
         $field_table = $table_mapping->getFieldTableName($field_name);
         $field_value_field = $table_mapping->getFieldColumnName($field_storage, 'value');

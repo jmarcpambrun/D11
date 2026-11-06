@@ -42,19 +42,25 @@ function metatag_views_get_view_tags($view, $display_id = NULL, $args = []) {
   $view->setDisplay($display_id);
   $view->setArguments($args);
   $view->preExecute();
-  $view->buildTitle();
+  try {
+    $view->buildTitle();
 
-  // And get the list of extenders for this display.
-  $extenders = $view->getDisplay()->getExtenders();
-  if (!isset($extenders['metatag_display_extender'])) {
-    // If the id of the plugin is not in the list then something is wrong.
-    return;
+    // And get the list of extenders for this display.
+    $extenders = $view->getDisplay()->getExtenders();
+    if (!isset($extenders['metatag_display_extender'])) {
+      // If the id of the plugin is not in the list then something is wrong.
+      return;
+    }
+
+    // Retrieve the metatag settings from the extender.
+    /** @var \Drupal\metatag_views\Plugin\views\display_extender\MetatagDisplayExtender */
+    $extender = $extenders['metatag_display_extender'];
+    return $extender->getMetatags();
   }
-
-  // Retrieve the metatag settings from the extender.
-  /** @var \Drupal\metatag_views\Plugin\views\display_extender\MetatagDisplayExtender */
-  $extender = $extenders['metatag_display_extender'];
-  return $extender->getMetatags();
+  finally {
+    // Restore the previous current view; preExecute() made this view current.
+    $view->postExecute();
+  }
 }
 
 /**

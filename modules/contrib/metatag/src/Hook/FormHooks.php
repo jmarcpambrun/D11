@@ -19,7 +19,11 @@ class FormHooks {
   #[Hook('form_field_config_edit_form_alter')]
   public function formFieldConfigEditFormAlter(&$form, FormStateInterface $form_state) {
     // @todo Does this actually work?
-    if ($form_state->getFormObject()->getEntity()->getType() == 'metatag') {
+    /** @var \Drupal\Core\Entity\EntityFormInterface $form_object */
+    $form_object = $form_state->getFormObject();
+    /** @var \Drupal\field\FieldConfigInterface $field_config */
+    $field_config = $form_object->getEntity();
+    if ($field_config->getType() == 'metatag') {
       // Hide the required and default value fields.
       $form['required']['#access'] = FALSE;
       $form['required']['#disabled'] = TRUE;

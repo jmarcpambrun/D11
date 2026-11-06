@@ -3,7 +3,7 @@
 namespace Drupal\Tests\metatag\Functional;
 
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
+use Drupal\Core\Cache\CacheTagsInvalidator;
 use Drupal\Core\ProxyClass\Routing\RouteBuilder;
 use Drupal\rest\RestResourceConfigInterface;
 use Drupal\Tests\BrowserTestBase;
@@ -48,9 +48,9 @@ class NodeJsonOutputTest extends BrowserTestBase {
   /**
    * The cachetags invalidator service.
    *
-   * @var \Drupal\Core\Cache\CacheTagsInvalidatorInterface
+   * @var \Drupal\Core\Cache\CacheTagsInvalidator
    */
-  protected CacheTagsInvalidatorInterface $cachetagsInvalidator;
+  protected CacheTagsInvalidator $cachetagsInvalidator;
 
   /**
    * The router builder service.

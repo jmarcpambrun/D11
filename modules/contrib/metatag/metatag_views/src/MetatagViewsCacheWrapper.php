@@ -85,7 +85,7 @@ class MetatagViewsCacheWrapper extends CachePluginBase {
         'first_row_tokens' => MetatagDisplayExtender::getFirstRowTokensFromStylePlugin($view),
       ];
       $cache_set_max_age = $this->cacheSetMaxAge('results');
-      $expire = $this->cache($cache_set_max_age === Cache::PERMANENT) ? Cache::PERMANENT : (int) $view->getRequest()->server->get('REQUEST_TIME') + $cache_set_max_age;
+      $expire = $cache_set_max_age === Cache::PERMANENT ? Cache::PERMANENT : (int) $view->getRequest()->server->get('REQUEST_TIME') + $cache_set_max_age;
       $this->cache->set($plugin->generateResultsKey(), $data, $expire, $plugin->getCacheTags());
     }
     else {

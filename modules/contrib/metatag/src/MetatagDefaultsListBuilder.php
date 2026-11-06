@@ -2,10 +2,12 @@
 
 namespace Drupal\metatag;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -33,10 +35,15 @@ class MetatagDefaultsListBuilder extends ConfigEntityListBuilder {
    *   The entity storage class.
    * @param \Drupal\Core\State\StateInterface $state
    *   The system state.
+   * @param \Drupal\Core\Messenger\MessengerInterface|null $messenger
+   *   The messenger service.
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, StateInterface $state) {
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, StateInterface $state, ?MessengerInterface $messenger = NULL) {
     parent::__construct($entity_type, $storage);
     $this->state = $state;
+    if ($messenger) {
+      $this->setMessenger($messenger);
+    }
   }
 
   /**
@@ -46,7 +53,8 @@ class MetatagDefaultsListBuilder extends ConfigEntityListBuilder {
     return new static(
       $entity_type,
       $container->get('entity_type.manager')->getStorage($entity_type->id()),
-      $container->get('state')
+      $container->get('state'),
+      $container->get('messenger')
     );
   }
 
@@ -124,15 +132,15 @@ class MetatagDefaultsListBuilder extends ConfigEntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function getOperations(EntityInterface $entity) {
-    $operations = parent::getOperations($entity);
+  public function getOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
+    $operations = parent::getOperations($entity, $cacheability);
 
     // Global and entity defaults can be reverted but not deleted.
     if (in_array($entity->id(), MetatagManager::protectedDefaults())) {
       unset($operations['delete']);
       $operations['revert'] = [
         'title' => $this->t('Revert'),
-        'weight' => $operations['edit']['weight'] + 1,
+        'weight' => isset($operations['edit']['weight']) ? $operations['edit']['weight'] + 1 : 10,
         'url' => $entity->toUrl('revert-form'),
       ];
     }
@@ -201,7 +209,7 @@ class MetatagDefaultsListBuilder extends ConfigEntityListBuilder {
    */
   public function render() {
     if ($this->state->get('system.maintenance_mode')) {
-      $this->messenger->addMessage($this->t('Please note that while the site is in maintenance mode none of the usual meta tags will be output.'));
+      $this->messenger()->addMessage($this->t('Please note that while the site is in maintenance mode none of the usual meta tags will be output.'));
     }
     return parent::render();
   }

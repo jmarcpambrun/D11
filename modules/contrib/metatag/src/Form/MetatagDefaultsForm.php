@@ -255,7 +255,9 @@ class MetatagDefaultsForm extends EntityForm {
       }
 
       // Set the label to the config entity.
-      $this->entity->set('label', $entity_label);
+      /** @var \Drupal\metatag\MetatagDefaultsInterface $entity */
+      $entity = $this->entity;
+      $entity->set('label', $entity_label);
     }
 
     // Set tags within the Metatag entity.

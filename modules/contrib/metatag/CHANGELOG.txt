@@ -1,4 +1,44 @@
-Metatag 2.2.3, 2026-xx-xx
+Metatag 2.2.6, 2026-11-05
+-------------------------
+#3633574 by lorseau, DamienMcKenna: Indicate incompatibility with Schema Metatag
+  v3.0.x.
+#3349990 by glynster, DamienMcKenna, kruser, junkuncz, fago, taran2l: image_src
+  now outputs an absolute URL for consistency with other image meta tags.
+#3633336 by shubhamgoel, Liam Morland, DamienMcKenna: Don't DI entity storage
+  classes.
+
+
+Metatag 2.2.5, 2026-10-31
+-------------------------
+#3633665 by hcksharp, wkr1shna, camhoward, DamienMcKenna: addMessage() fails
+  when site is maintenance mode.
+#3626128 by ptmkenny, csakiistvan, DamienMcKenna: Fixed OOM error in
+  metatag_views.
+#3633340 by shubhamgoel, DamienMcKenna: MetatagDefaultsListBuilder::
+  getOperations() missing argument.
+#3633338 by shubhamgoel, csakiistvan, DamienMcKenna: Missing
+  PreWarmableInterface in MetatagViewsCachePluginManager.
+#3302453 by andrewsuth, damienmckenna, erik_petra, bbu23, introfini, dimas11,
+  undersound3, matdemeue, eugene bocharov, aniketto, bassline, gengo_k,
+  yukihyogo, nironan: Canonical meta tag on config entity pages (e.g. Views) no
+  longer refers to current language.
+#3633331 by shubhamgoel, DamienMcKenna: Resolve "Call to an undefined method"
+  phpstan errors.
+#3489837 by idebr, DamienMcKenna: Remove mpyw/phpunit-patch-serializable
+  -comparison dev dependency.
+
+
+Metatag 2.2.4, 2026-10-28
+-------------------------
+#3633988 by jimmb, DamienMcKenna: Fixed Shortlink URL meta tag label.
+#3633337 by shubhamgoel, DamienMcKenna, liam morland: Remove PHP limit from info
+  and composer files.
+#3633958 by bserem, DamienMcKenna: Token 8.x-1.17 is required.
+#3633739 by Jonasanne, rahulk, liam morland, DamienMcKenna: Fixed deprecated
+  services.
+
+
+Metatag 2.2.3, 2026-10-27
 -------------------------
 #3633443 by eduardo morales alberti, lmoeni, vensires, mrshowerman, johnatas,
   chemeon, damienmckenna: List of config items wasn't converted to a string in

@@ -54,6 +54,7 @@ class MetaTagCustomTagDeriver extends DeriverBase implements ContainerDeriverInt
     $config_entity = $this->entityTypeManager->getStorage('metatag_custom_tag');
     $metatag_custom_tags = $config_entity->loadMultiple() ?? [];
     // Now we loop over them and declare the derivatives.
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $metatag_custom_tag */
     foreach ($metatag_custom_tags as $id => $metatag_custom_tag) {
       // The base definition includes the annotations defined in the plugin.
       $derivative = $base_plugin_definition;

@@ -15,11 +15,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class MetatagViewsRevertForm extends ConfirmFormBase {
 
   /**
-   * Entity manager for views entities.
+   * The entity type manager interface.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected EntityTypeManagerInterface $viewsManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The view entity to revert meta tags on.
@@ -39,7 +39,7 @@ class MetatagViewsRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
-    $this->viewsManager = $entity_type_manager->getStorage('view');
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -104,7 +104,7 @@ class MetatagViewsRevertForm extends ConfirmFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $view_id = NULL, $display_id = NULL) {
     /** @var \Drupal\views\ViewExecutable $executable */
-    $executable = $this->viewsManager->load($view_id);
+    $executable = $this->entityTypeManager->getStorage('view')->load($view_id);
     $this->view = $executable;
     $this->displayId = $display_id;
 

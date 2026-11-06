@@ -7,7 +7,7 @@ dependencies:
   - metatag:metatag
   - metatag:metatag_open_graph
 
-# Information added by Drupal.org packaging script on 2026-10-27
-version: '2.2.3'
+# Information added by Drupal.org packaging script on 2026-11-05
+version: '2.2.6'
 project: 'metatag'
-datestamp: 1793108777
+datestamp: 1793891828

@@ -565,4 +565,25 @@ class MetatagAdminTest extends BrowserTestBase {
     $session->elementAttributeContains('css', 'meta[name=abstract]', 'content', 'my wonderful');
   }
 
+  /**
+   * Tests the defaults page in maintenance mode.
+   */
+  public function testDefaultsMaintenanceMode() {
+    $permissions = [
+      'administer site configuration',
+      'administer meta tags',
+      'access site in maintenance mode',
+    ];
+    $account = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($account);
+
+    \Drupal::state()->set('system.maintenance_mode', TRUE);
+
+    $this->drupalGet('admin/config/search/metatag');
+    $session = $this->assertSession();
+    $session->statusCodeEquals(200);
+    $session->pageTextContains('Please note that while the site is in maintenance mode none of the usual meta tags will be output.');
+    $session->linkByHrefExists('admin/config/search/metatag/global');
+  }
+
 }
