@@ -257,7 +257,7 @@ function openai_content_entity_adjust_tone(array &$form, FormStateInterface $for
 
     $response = $client->chat()->create(
       [
-        'model' => 'gpt-3.5-turbo',
+        'model' => 'gpt-4o-mini',
         'messages' => [
           [
             'role' => 'user',
@@ -303,7 +303,7 @@ function openai_content_entity_field_summarize(array &$form, FormStateInterface 
 
     $response = $client->chat()->create(
       [
-        'model' => 'gpt-3.5-turbo',
+        'model' => 'gpt-4o-mini',
         'messages' => [
           [
             'role' => 'user',
@@ -349,7 +349,7 @@ function openai_content_suggest_title(array &$form, FormStateInterface $form_sta
 
     $response = $client->chat()->create(
       [
-        'model' => 'gpt-3.5-turbo',
+        'model' => 'gpt-4o-mini',
         'messages' => [
           [
             'role' => 'user',
@@ -395,7 +395,7 @@ function openai_content_entity_suggest_taxonomy(array &$form, FormStateInterface
 
     $response = $client->chat()->create(
       [
-        'model' => 'gpt-3.5-turbo',
+        'model' => 'gpt-4o-mini',
         'messages' => [
           [
             'role' => 'user',
