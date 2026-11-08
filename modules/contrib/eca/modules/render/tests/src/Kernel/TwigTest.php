@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\eca_render\Kernel;
 
+use Drupal\Core\Form\FormState;
 use Drupal\eca_test_render_basics\Event\BasicRenderEvent;
 use Drupal\eca_test_render_basics\RenderBasicsEvents;
 use Drupal\user\Entity\User;
@@ -98,6 +99,38 @@ class TwigTest extends RenderActionsTestBase {
     $this->assertEquals('[my_payload]', $markup);
     // The injection payload was never evaluated as template code.
     $this->assertStringNotContainsString('49', $markup);
+  }
+
+  /**
+   * Tests that configuration validation checks the template syntax only.
+   *
+   * Validation must never render the template. Rendering it without its
+   * runtime context made valid templates fail, e.g. a division by a variable
+   * that is undefined at validation time throws a DivisionByZeroError.
+   *
+   * Like the modeler, the template is set in both the plugin configuration
+   * and the submitted form values.
+   */
+  public function testTwigValidateConfigurationForm(): void {
+    $templates = [
+      '{% set days = days_for_calc_standard.value %}{{ 600 / days }}' => FALSE,
+      '{{ 600 / }}' => TRUE,
+      '{{ x|no_such_filter }}' => TRUE,
+    ];
+    foreach ($templates as $template => $expect_error) {
+      /** @var \Drupal\eca_render\Plugin\Action\Twig $action */
+      $action = $this->actionManager->createInstance('eca_render_twig', ['template' => $template]);
+      $form = [];
+      $form_state = (new FormState())->setValues(['template' => $template]);
+      $action->validateConfigurationForm($form, $form_state);
+      $errors = $form_state->getErrors();
+      if ($expect_error) {
+        $this->assertArrayHasKey('template', $errors, sprintf('The template "%s" must be reported as invalid.', $template));
+      }
+      else {
+        $this->assertSame([], $errors, sprintf('The template "%s" must be accepted.', $template));
+      }
+    }
   }
 
 }

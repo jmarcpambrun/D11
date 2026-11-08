@@ -825,3 +825,17 @@ function eca_post_update_replace_eca_helper_http_request(): string {
   }
   return implode(' ', $messages);
 }
+
+/**
+ * Rebuild the index of subscribed events.
+ *
+ * Raw config writes to ECA models used to leave the index stale, so that
+ * disabled models kept running and enabled ones did not run at all.
+ *
+ * @see https://git.drupalcode.org/project/eca/-/work_items/3590483
+ */
+function eca_post_update_rebuild_subscribed_events(): void {
+  /** @var \Drupal\eca\Entity\EcaStorage $storage */
+  $storage = \Drupal::entityTypeManager()->getStorage('eca');
+  $storage->rebuildSubscribedEvents();
+}

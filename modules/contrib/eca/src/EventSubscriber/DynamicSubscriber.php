@@ -32,9 +32,13 @@ use Symfony\Contracts\EventDispatcher\Event;
  * - The state is rebuilt by
  *   \Drupal\eca\Entity\EcaStorage::rebuildSubscribedEvents(), which scans all
  *   enabled, non-template ECA models and collects the events they use.
- * - This happens automatically whenever an ECA config entity is saved or
- *   deleted (see EcaStorage::doPostSave() and EcaStorage::delete()), because
- *   those are the only moments at which the set of used events can change.
+ * - This happens automatically whenever an ECA model is saved or deleted
+ *   through the entity API (see EcaStorage::doPostSave() and
+ *   EcaStorage::delete()), and whenever the raw `eca.eca.*` config is saved,
+ *   deleted or renamed without the entity API, e.g. by `drush config:set`
+ *   (see EcaConfigSubscriber).
+ * - Flushing all caches, e.g. with `drush cr`, rebuilds it as well (see
+ *   \Drupal\eca\Hook\CacheHooks::rebuild()).
  * - Note that the subscription state is recomputed only from ECA *models*.
  *   Adding a new event plugin in a custom module does not change anything
  *   here; an enabled ECA model has to actually use that event before ECA
@@ -44,15 +48,13 @@ use Symfony\Contracts\EventDispatcher\Event;
  *   the same request, without requiring a container rebuild.
  *
  * Forcing a rebuild manually:
- * - In the rare case where the state has become stale (for example after a
- *   manual state edit, an interrupted save, or an inconsistent deployment),
- *   the list can be rebuilt explicitly with the Drush command
- *   `drush eca:subscriber:rebuild`, which calls
- *   EcaStorage::rebuildSubscribedEvents() directly.
- * - This command is a recovery fallback only. Under normal operation the
- *   state stays in sync automatically through the save/delete hooks above,
- *   so it should not be needed for day-to-day work.
+ * - The Drush command `drush eca:subscriber:rebuild` calls
+ *   EcaStorage::rebuildSubscribedEvents() directly, without flushing any
+ *   caches. It remains a recovery fallback, e.g. after a manual state edit.
+ * - Should the state still list a disabled model, the processor skips that
+ *   model, see \Drupal\eca\Processor::execute().
  *
+ * @see \Drupal\eca\EventSubscriber\EcaConfigSubscriber
  * @see \Drupal\eca\Entity\EcaStorage::rebuildSubscribedEvents()
  * @see \Drupal\eca\Drush\Commands\EcaCommands::rebuildSubscribedEvents()
  * @see \Drupal\eca\Processor::execute()

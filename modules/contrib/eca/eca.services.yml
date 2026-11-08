@@ -33,6 +33,12 @@ services:
 
   eca.dynamic_subscriber:
     class: Drupal\eca\EventSubscriber\DynamicSubscriber
+  eca.config_subscriber:
+    class: Drupal\eca\EventSubscriber\EcaConfigSubscriber
+    arguments:
+      - '@entity_type.manager'
+    tags:
+      - { name: event_subscriber }
 
   plugin.manager.eca.event:
     class: Drupal\eca\PluginManager\Event

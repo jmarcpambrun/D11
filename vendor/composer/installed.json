@@ -5624,18 +5624,18 @@
         },
         {
             "name": "drupal/eca",
-            "version": "3.1.10",
-            "version_normalized": "3.1.10.0",
+            "version": "3.1.11",
+            "version_normalized": "3.1.11.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/eca.git",
-                "reference": "3.1.10"
+                "reference": "3.1.11"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/eca-3.1.10.zip",
-                "reference": "3.1.10",
-                "shasum": "88a1c84a57193f87012d39734e504b2d7d14d51c"
+                "url": "https://ftp.drupal.org/files/projects/eca-3.1.11.zip",
+                "reference": "3.1.11",
+                "shasum": "98d78fa9d05ebdb6f7e23438c006485630da35df"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
@@ -5650,22 +5650,16 @@
                 "drupal/eca_render": "*",
                 "drupal/modeler": "^1.0",
                 "drupal/modeler_api": "*",
-                "drupal/project_browser": "^2.1"
+                "drupal/project_browser": "^2.1.6"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.1.10",
-                    "datestamp": "1792683726",
+                    "version": "3.1.11",
+                    "datestamp": "1794047091",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
-                    }
-                },
-                "patches": {
-                    "drupal/project_browser": {
-                        "#3622921 Implement getModulesToInstall in TestModuleInstaller": "https://git.drupalcode.org/issue/project_browser-3622921/-/commit/9afcce0676ca61ca1514a14b6d882cbd081c0045.diff",
-                        "#3631657 Implement getModulesToUninstall in TestModuleInstaller": "https://git.drupalcode.org/issue/project_browser-3631657/-/commit/1c06d55c8c1ec8983d2ddd74542dee125102a378.diff"
                     }
                 }
             },
@@ -17036,17 +17030,17 @@
         },
         {
             "name": "phpmailer/phpmailer",
-            "version": "v7.1.1",
-            "version_normalized": "7.1.1.0",
+            "version": "v7.2.0",
+            "version_normalized": "7.2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPMailer/PHPMailer.git",
-                "reference": "1bc1716a507a65e039d4ac9d9adebbbd0d346e15"
+                "reference": "f5eb50148734d03bbbb81825c722c1889636d51a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/1bc1716a507a65e039d4ac9d9adebbbd0d346e15",
-                "reference": "1bc1716a507a65e039d4ac9d9adebbbd0d346e15",
+                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/f5eb50148734d03bbbb81825c722c1889636d51a",
+                "reference": "f5eb50148734d03bbbb81825c722c1889636d51a",
                 "shasum": ""
             },
             "require": {
@@ -17061,7 +17055,7 @@
                 "php-parallel-lint/php-console-highlighter": "^1.0.0",
                 "php-parallel-lint/php-parallel-lint": "^1.3.2",
                 "phpcompatibility/php-compatibility": "^10.0.0@dev",
-                "squizlabs/php_codesniffer": "^3.13.5",
+                "squizlabs/php_codesniffer": "^3.13.6 || ^4.0.2",
                 "yoast/phpunit-polyfills": "^1.0.4"
             },
             "suggest": {
@@ -17077,7 +17071,7 @@
                 "symfony/polyfill-mbstring": "To support UTF-8 if the Mbstring PHP extension is not enabled (^1.2)",
                 "thenetworg/oauth2-azure": "Needed for Microsoft XOAUTH2 authentication"
             },
-            "time": "2026-05-18T08:06:14+00:00",
+            "time": "2026-11-07T15:15:17+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -17109,7 +17103,7 @@
             "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
             "support": {
                 "issues": "https://github.com/PHPMailer/PHPMailer/issues",
-                "source": "https://github.com/PHPMailer/PHPMailer/tree/v7.1.1"
+                "source": "https://github.com/PHPMailer/PHPMailer/tree/v7.2.0"
             },
             "funding": [
                 {
@@ -18722,17 +18716,17 @@
         },
         {
             "name": "spomky-labs/otphp",
-            "version": "11.5.0",
-            "version_normalized": "11.5.0.0",
+            "version": "11.5.1",
+            "version_normalized": "11.5.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Spomky-Labs/otphp.git",
-                "reference": "877683d6352b80cdc7020fd43a725629c2524435"
+                "reference": "16866d2206d6f0c0421294357da23a28b78852f7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Spomky-Labs/otphp/zipball/877683d6352b80cdc7020fd43a725629c2524435",
-                "reference": "877683d6352b80cdc7020fd43a725629c2524435",
+                "url": "https://api.github.com/repos/Spomky-Labs/otphp/zipball/16866d2206d6f0c0421294357da23a28b78852f7",
+                "reference": "16866d2206d6f0c0421294357da23a28b78852f7",
                 "shasum": ""
             },
             "require": {
@@ -18744,7 +18738,7 @@
             "require-dev": {
                 "symfony/error-handler": "^6.4|^7.0|^8.0"
             },
-            "time": "2026-06-06T23:41:24+00:00",
+            "time": "2026-11-07T17:39:42+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -18779,7 +18773,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Spomky-Labs/otphp/issues",
-                "source": "https://github.com/Spomky-Labs/otphp/tree/11.5.0"
+                "source": "https://github.com/Spomky-Labs/otphp/tree/11.5.1"
             },
             "funding": [
                 {

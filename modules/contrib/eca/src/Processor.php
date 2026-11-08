@@ -297,6 +297,13 @@ class Processor {
           $debugger->doesNotExist();
           continue;
         }
+        if (!$eca->status()) {
+          // The subscribed events index may still list a model that has been
+          // disabled in the meantime, so never execute a disabled model.
+          $debugger->doesNotExecute();
+          $this->logger->debug('ECA ID %ecaid is disabled, event %event will not be processed by it.', $context);
+          continue;
+        }
         $debugger->setEcaLabel($eca->label());
         $context['%ecalabel'] = $eca->label();
 

@@ -13,6 +13,8 @@ use Drupal\Core\Template\TwigEnvironment;
 use Drupal\eca\Attribute\EcaAction;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
+use Twig\Error\SyntaxError;
+use Twig\Source;
 
 /**
  * Render an inline template using the Twig engine.
@@ -76,11 +78,12 @@ class Twig extends Markup {
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state): void {
     parent::validateConfigurationForm($form, $form_state);
+    $template = (string) $form_state->getValue('template');
     try {
-      $this->twig->renderInline($this->configuration['template']);
+      $this->twig->parse($this->twig->tokenize(new Source($template, 'eca_render_twig')));
     }
-    catch (\Exception $e) {
-      $form_state->setErrorByName('template', $this->t('The provided template is not valid Twig.'));
+    catch (SyntaxError $e) {
+      $form_state->setErrorByName('template', $this->t('The provided template is not valid Twig: @message', ['@message' => $e->getRawMessage()]));
     }
   }
 
