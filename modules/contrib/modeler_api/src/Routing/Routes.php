@@ -71,7 +71,7 @@ final class Routes implements ContainerInjectionInterface {
         ],
         [
           '_permission' => ModelerApiPermissions::getPermissionKey('edit', $ownerId),
-          '_csrf_request_header_token' => 'TRUE',
+          /*JMP '_csrf_request_header_token' => 'TRUE', JMP*/
         ],
       ));
       $routes->add('entity.' . $type . '.config', new Route(
