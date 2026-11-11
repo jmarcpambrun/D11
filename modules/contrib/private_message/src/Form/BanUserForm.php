@@ -18,8 +18,8 @@ class BanUserForm extends FormBase {
   use AutowireTrait;
 
   public function __construct(
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly PrivateMessageBanManagerInterface $privateMessageBanManager,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected PrivateMessageBanManagerInterface $privateMessageBanManager,
   ) {}
 
   /**

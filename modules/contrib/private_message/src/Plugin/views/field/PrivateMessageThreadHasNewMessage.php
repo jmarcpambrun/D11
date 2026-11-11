@@ -24,8 +24,8 @@ class PrivateMessageThreadHasNewMessage extends FieldPluginBase {
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountInterface $currentUser,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
+    protected AccountInterface $currentUser,
+    protected PrivateMessageServiceInterface $privateMessageService,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

@@ -99,7 +99,7 @@ final class EntityDeleteTest extends KernelTestBase {
   /**
    * Tests that banned messages are also cleared.
    *
-   * @dataProvider testBannedMessagesProvider
+   * @dataProvider bannedMessagesProvider
    */
   public function testBannedMessages(string $logged_in): void {
     $this->setCurrentUser($this->users[$logged_in]);
@@ -127,7 +127,7 @@ final class EntityDeleteTest extends KernelTestBase {
    * @return array[]
    *   The test data.
    */
-  public static function testBannedMessagesProvider(): array {
+  public static function bannedMessagesProvider(): array {
     return [
       // User A is logged in, which is the user that created the messages.
       ['a'],

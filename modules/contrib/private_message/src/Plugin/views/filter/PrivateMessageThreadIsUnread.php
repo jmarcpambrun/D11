@@ -23,8 +23,8 @@ class PrivateMessageThreadIsUnread extends FilterPluginBase {
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountInterface $currentUser,
-    protected readonly ViewsHandlerManager $joinHandler,
+    protected AccountInterface $currentUser,
+    protected ViewsHandlerManager $joinHandler,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

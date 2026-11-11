@@ -39,11 +39,11 @@ class PrivateMessageInboxBlock extends BlockBase implements BlockPluginInterface
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly CsrfTokenGenerator $csrfToken,
-    protected readonly ConfigFactoryInterface $configFactory,
+    protected AccountProxyInterface $currentUser,
+    protected PrivateMessageServiceInterface $privateMessageService,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected CsrfTokenGenerator $csrfToken,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
@@ -79,7 +79,7 @@ class PrivateMessageInboxBlock extends BlockBase implements BlockPluginInterface
    */
   public function build(): array {
     $config = $this->getConfiguration();
-    $thread_info = $this->privateMessageService->getThreadsForUser($config['thread_count']);
+    $thread_info = $this->privateMessageService->getThreadsForUser((int) $config['thread_count']);
     $total_thread = $this->privateMessageService->getCountThreadsForUser();
     if (count($thread_info['threads'])) {
       $view_builder = $this->entityTypeManager->getViewBuilder('private_message_thread');

@@ -508,7 +508,7 @@ function template_preprocess_private_message_thread(array &$variables): void {
   $variables['private_message_thread'] = $variables['elements']['#private_message_thread'];
   /** @var \Drupal\private_message\Entity\PrivateMessageThreadInterface $private_message_thread */
   $private_message_thread = $variables['private_message_thread'];
-  $variables['last_update'] = \Drupal::service('renderer')->render($variables['elements']['updated']);
+  $variables['last_update'] = isset($variables['elements']['updated']) ? \Drupal::service('renderer')->render($variables['elements']['updated']) : '';
 
   $variables['url'] = $private_message_thread->toUrl('canonical', [
     'language' => $private_message_thread->language(),

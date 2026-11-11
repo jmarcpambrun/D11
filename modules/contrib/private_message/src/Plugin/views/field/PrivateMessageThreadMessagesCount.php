@@ -22,7 +22,7 @@ class PrivateMessageThreadMessagesCount extends FieldPluginBase {
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountInterface $currentUser,
+    protected AccountInterface $currentUser,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

@@ -38,10 +38,10 @@ class PrivateMessageNotificationBlock extends BlockBase implements BlockPluginIn
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly CsrfTokenGenerator $csrfToken,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
-    protected readonly ConfigFactoryInterface $configFactory,
+    protected AccountProxyInterface $currentUser,
+    protected CsrfTokenGenerator $csrfToken,
+    protected PrivateMessageServiceInterface $privateMessageService,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

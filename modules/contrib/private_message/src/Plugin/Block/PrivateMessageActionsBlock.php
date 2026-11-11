@@ -32,8 +32,8 @@ class PrivateMessageActionsBlock extends BlockBase implements ContainerFactoryPl
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly ConfigFactoryInterface $configFactory,
+    protected AccountProxyInterface $currentUser,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

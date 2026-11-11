@@ -22,7 +22,6 @@
         "drupal/message_notify": "^1.0"
     },
     "require-dev": {
-        "drupal/coder": "8.3.26",
         "drupal/rules": "^4.0",
         "drupal/symfony_mailer_lite": "^2.0",
         "drush/drush": "^12.5 || ^13.3"

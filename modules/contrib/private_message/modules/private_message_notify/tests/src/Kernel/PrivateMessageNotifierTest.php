@@ -46,6 +46,7 @@ class PrivateMessageNotifierTest extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
+    $this->installConfig(['system']);
     $this->config('system.site')->set('name', 'Aerosmith')->save();
 
     // Theme us needed for mail body rendering.

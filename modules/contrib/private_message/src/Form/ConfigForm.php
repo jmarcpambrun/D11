@@ -45,7 +45,7 @@ class ConfigForm extends ConfigFormBase {
   public function __construct(
     ConfigFactoryInterface $configFactory,
     TypedConfigManagerInterface $typedConfigManager,
-    protected readonly PrivateMessageConfigFormManagerInterface $privateMessageConfigFormManager,
+    protected PrivateMessageConfigFormManagerInterface $privateMessageConfigFormManager,
   ) {
     parent::__construct($configFactory, $typedConfigManager);
   }

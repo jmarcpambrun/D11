@@ -39,10 +39,10 @@ class PrivateMessageThreadMemberFormatter extends FormatterBase implements Conta
     $label,
     $view_mode,
     array $third_party_settings,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly EntityDisplayRepositoryInterface $entityDisplayRepository,
-    protected readonly RendererInterface $renderer,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected AccountProxyInterface $currentUser,
+    protected EntityDisplayRepositoryInterface $entityDisplayRepository,
+    protected RendererInterface $renderer,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
   }

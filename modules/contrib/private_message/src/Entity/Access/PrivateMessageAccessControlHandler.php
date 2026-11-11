@@ -22,7 +22,7 @@ class PrivateMessageAccessControlHandler extends EntityAccessControlHandler impl
 
   public function __construct(
     EntityTypeInterface $entity_type,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
+    protected PrivateMessageServiceInterface $privateMessageService,
   ) {
     parent::__construct($entity_type);
   }

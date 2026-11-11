@@ -7,9 +7,7 @@
 .block-private-message-inbox-block .private-message-thread:hover {
   background-color: gray;
 }
-.block-private-message-inbox-block
-  .private-message-thread
-  .private-message-inbox-thread-link {
+.block-private-message-inbox-block .private-message-thread .private-message-inbox-thread-link {
   position: absolute;
   top: 0;
   left: 0;

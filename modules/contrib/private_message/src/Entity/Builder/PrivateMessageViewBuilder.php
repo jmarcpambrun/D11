@@ -26,7 +26,7 @@ class PrivateMessageViewBuilder extends EntityViewBuilder {
     LanguageManagerInterface $language_manager,
     Registry $theme_registry,
     EntityDisplayRepositoryInterface $entity_display_repository,
-    protected readonly AccountProxyInterface $currentUser,
+    protected AccountProxyInterface $currentUser,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }

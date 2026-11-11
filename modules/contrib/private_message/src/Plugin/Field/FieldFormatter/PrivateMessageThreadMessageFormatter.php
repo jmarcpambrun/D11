@@ -42,11 +42,11 @@ class PrivateMessageThreadMessageFormatter extends FormatterBase implements Cont
     $label,
     $view_mode,
     array $third_party_settings,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly CsrfTokenGenerator $csrfTokenGenerator,
-    protected readonly ConfigFactoryInterface $configFactory,
-    protected readonly EntityDisplayRepositoryInterface $entityDisplayRepository,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected AccountProxyInterface $currentUser,
+    protected CsrfTokenGenerator $csrfTokenGenerator,
+    protected ConfigFactoryInterface $configFactory,
+    protected EntityDisplayRepositoryInterface $entityDisplayRepository,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
   }

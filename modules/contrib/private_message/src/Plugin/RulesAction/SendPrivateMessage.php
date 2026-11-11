@@ -45,7 +45,7 @@ class SendPrivateMessage extends RulesActionBase implements ContainerFactoryPlug
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
+    protected PrivateMessageServiceInterface $privateMessageService,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }

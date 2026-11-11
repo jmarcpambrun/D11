@@ -50,11 +50,11 @@ class PrivateMessageForm extends ContentEntityForm {
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
     TimeInterface $time,
     ConfigFactoryInterface $configFactory,
-    protected readonly TypedDataManagerInterface $typedDataManager,
-    protected readonly PrivateMessageServiceInterface $privateMessageService,
-    protected readonly PrivateMessageThreadManagerInterface $privateMessageThreadManager,
-    protected readonly PrivateMessageBanManagerInterface $privateMessageBanManager,
-    protected readonly FormBuilderInterface $formBuilder,
+    protected TypedDataManagerInterface $typedDataManager,
+    protected PrivateMessageServiceInterface $privateMessageService,
+    protected PrivateMessageThreadManagerInterface $privateMessageThreadManager,
+    protected PrivateMessageBanManagerInterface $privateMessageBanManager,
+    protected FormBuilderInterface $formBuilder,
   ) {
     parent::__construct($entityRepository, $entity_type_bundle_info, $time);
     $this->configFactory = $configFactory;

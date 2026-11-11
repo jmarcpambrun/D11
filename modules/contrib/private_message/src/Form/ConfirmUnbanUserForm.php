@@ -24,12 +24,12 @@ class ConfirmUnbanUserForm extends ConfirmFormBase {
   /**
    * The user to unban.
    */
-  private UserInterface $user;
+  protected UserInterface $user;
 
   public function __construct(
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly PrivateMessageBanManagerInterface $privateMessageBanManager,
+    protected AccountProxyInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected PrivateMessageBanManagerInterface $privateMessageBanManager,
   ) {}
 
   /**

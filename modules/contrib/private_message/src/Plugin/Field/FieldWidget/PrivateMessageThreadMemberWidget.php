@@ -39,9 +39,9 @@ class PrivateMessageThreadMemberWidget extends EntityReferenceAutocompleteWidget
     FieldDefinitionInterface $field_definition,
     array $settings,
     array $third_party_settings,
-    protected readonly RequestStack $requestStack,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly ConfigFactoryInterface $configFactory,
+    protected RequestStack $requestStack,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
   }

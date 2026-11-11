@@ -22,14 +22,10 @@
   color: #000;
   line-height: 26px;
 }
-.block-private-message-notification-block
-  .unread-threads
-  .private-message-notification-image {
+.block-private-message-notification-block .unread-threads .private-message-notification-image {
   right: 0;
   left: auto;
 }
-.block-private-message-notification-block
-  .unread-threads
-  .private-message-page-link {
+.block-private-message-notification-block .unread-threads .private-message-page-link {
   color: #f00;
 }
