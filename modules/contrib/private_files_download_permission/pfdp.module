@@ -111,10 +111,14 @@ function pfdp_file_download($uri) {
     // Find the directory which best matches $uri_path.
     $best_matching_length = 0;
     $best_matching_directory = NULL;
+    $uri_dir = rtrim($uri_path, '/') . '/';
     foreach (DirectoryEntity::loadMultiple() as $directory) {
-      // Search for the best matching substring.
-      $directory_path = $directory->path;
-      if (0 === stripos($uri_path, $directory_path)) {
+      if (empty($directory->path)) {
+        continue;
+      }
+      // Search for the best matching directory enforcing segment boundaries.
+      $directory_path = rtrim(str_replace('\\', '/', $directory->path), '/') . '/';
+      if (0 === stripos($uri_dir, $directory_path)) {
         if ($best_matching_length < mb_strlen($directory_path)) {
           $best_matching_length = mb_strlen($directory_path);
           $best_matching_directory = $directory;
