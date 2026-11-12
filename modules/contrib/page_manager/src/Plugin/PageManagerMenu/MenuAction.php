@@ -5,17 +5,18 @@ namespace Drupal\page_manager\Plugin\PageManagerMenu;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Menu\LocalActionManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\page_manager\Attribute\PageManagerMenu;
 use Drupal\page_manager\Plugin\MenuBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Action menu type for Page Manager.
- *
- * @PageManagerMenu(
- *   id = "menu_action",
- *   label = @Translation("Local action")
- * )
  */
+#[PageManagerMenu(
+  id: 'menu_action',
+  label: new TranslatableMarkup('Local action'),
+)]
 class MenuAction extends MenuBase implements ContainerFactoryPluginInterface {
 
   /**

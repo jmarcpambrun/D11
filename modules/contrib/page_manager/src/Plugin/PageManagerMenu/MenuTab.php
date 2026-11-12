@@ -5,17 +5,18 @@ namespace Drupal\page_manager\Plugin\PageManagerMenu;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Menu\LocalTaskManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\page_manager\Attribute\PageManagerMenu;
 use Drupal\page_manager\Plugin\MenuBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tab menu type for Page Manager.
- *
- * @PageManagerMenu(
- *   id = "menu_tab",
- *   label = @Translation("Menu tab")
- * )
  */
+#[PageManagerMenu(
+  id: 'menu_tab',
+  label: new TranslatableMarkup('Menu tab'),
+)]
 class MenuTab extends MenuBase implements ContainerFactoryPluginInterface {
 
   /**

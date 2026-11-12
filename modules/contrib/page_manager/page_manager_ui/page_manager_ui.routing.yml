@@ -54,6 +54,7 @@ entity.page.enable:
     op: 'enable'
   requirements:
     _permission: 'administer pages'
+    _csrf_token: 'TRUE'
 
 entity.page.disable:
   path: '/admin/structure/page_manager/manage/{page}/disable'
@@ -62,6 +63,7 @@ entity.page.disable:
     op: 'disable'
   requirements:
     _permission: 'administer pages'
+    _csrf_token: 'TRUE'
 
 entity.page.reorder_variants_form:
   path: '/admin/structure/page_manager/manage/{machine_name}/reorder_variants'

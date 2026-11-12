@@ -21,13 +21,6 @@ class PageGeneralForm extends FormBase {
   protected $variantManager;
 
   /**
-   * The page entity storage handler.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected $pageStorage;
-
-  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -44,7 +37,6 @@ class PageGeneralForm extends FormBase {
    */
   public function __construct(VariantManager $variant_manager, EntityTypeManagerInterface $entity_type_manager) {
     $this->variantManager = $variant_manager;
-    $this->pageStorage = $entity_type_manager->getStorage('page');
     $this->entityTypeManager = $entity_type_manager;
   }
 
@@ -222,7 +214,9 @@ class PageGeneralForm extends FormBase {
       $form_state->setValueForElement($element, $value);
 
       // Ensure each path is unique.
-      $path_query = $this->pageStorage->getQuery()
+      $path_query = $this->entityTypeManager
+        ->getStorage('page')
+        ->getQuery()
         ->accessCheck(FALSE)
         ->condition('path', $value);
       if (!$page->isNew()) {

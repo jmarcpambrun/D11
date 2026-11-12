@@ -19,6 +19,11 @@ parameters:
         # new static() is a best practice in Drupal, so we cannot fix that.
         - "#^Unsafe usage of new static#"
 
+        # The tests use PHPUnit attributes. Drupal 10 uses PHPUnit 9, which does
+        # not have these attribute classes. PHP loads an attribute class only
+        # when code reads the attribute. Thus, the tests run on Drupal 10.
+        - "#^Attribute class PHPUnit\\\\Framework\\\\Attributes\\\\\\w+ does not exist\\.$#"
+
         # page_manager_update_8002() converts Panels layout ids and loads
         # panels.install to do it. Panels is not a dependency of Page Manager,
         # so it is absent from the analysed codebase, but the call is already
@@ -38,12 +43,16 @@ parameters:
                 - src/Routing/PageManagerRoutes.php
                 - src/Routing/VariantRouteFilter.php
 
-        # PageListBuilder::getDefaultOperations() intentionally keeps the
-        # one-parameter signature and reads the Drupal 11.3 $cacheability
-        # argument with func_get_args(), exactly as Drupal core's
-        # EntityListBuilder does, so that subclasses overriding the old
-        # signature do not become fatally incompatible.
-        # @see https://www.drupal.org/node/3533080
+        # The hook classes use the #[Hook] and #[LegacyHook] attributes.
+        # Drupal 10 does not have these attribute classes. On Drupal 10, the
+        # procedural hook functions run.
+        - "#^Attribute class Drupal\\\\Core\\\\Hook\\\\Attribute\\\\\\w+ does not exist\\.$#"
+
+        # The Page and PageVariant entity types use the #[ConfigEntityType]
+        # attribute. Drupal 10 does not have this attribute class. On Drupal 10,
+        # core reads the @ConfigEntityType annotation.
         -
-            message: "#is missing the CacheableMetadata parameter added in Drupal 11\\.3#"
-            path: page_manager_ui/src/Entity/PageListBuilder.php
+            message: "#^Attribute class Drupal\\\\Core\\\\Entity\\\\Attribute\\\\ConfigEntityType does not exist\\.$#"
+            paths:
+                - src/Entity/Page.php
+                - src/Entity/PageVariant.php

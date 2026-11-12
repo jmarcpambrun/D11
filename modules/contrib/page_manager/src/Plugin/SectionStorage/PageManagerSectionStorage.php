@@ -9,9 +9,11 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContext;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\Core\Url;
+use Drupal\layout_builder\Attribute\SectionStorage;
 use Drupal\layout_builder\Entity\SampleEntityGeneratorInterface;
 use Drupal\layout_builder\Plugin\SectionStorage\SectionStorageBase;
 use Drupal\page_manager\Entity\PageVariant;
@@ -21,14 +23,13 @@ use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Defines the 'page_manager' section storage type.
- *
- * @SectionStorage(
- *   id = "page_manager",
- *   context_definitions = {
- *     "entity" = @ContextDefinition("entity:page_variant"),
- *   },
- * )
  */
+#[SectionStorage(
+  id: 'page_manager',
+  context_definitions: [
+    'entity' => new EntityContextDefinition('entity:page_variant'),
+  ],
+)]
 class PageManagerSectionStorage extends SectionStorageBase implements ContainerFactoryPluginInterface {
 
   /**

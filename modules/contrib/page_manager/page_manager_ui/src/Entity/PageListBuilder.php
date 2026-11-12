@@ -2,6 +2,7 @@
 
 namespace Drupal\page_manager_ui\Entity;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
@@ -45,18 +46,8 @@ class PageListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}
-   *
-   * Drupal 11.3 added a $cacheability parameter to this method, but declared
-   * it commented out and reads it with func_get_args() so that existing
-   * subclasses do not become signature-incompatible. Follow the same pattern
-   * here: adding the parameter outright would fatal any subclass of this class
-   * that still overrides the one-parameter signature. Forwarding the arguments
-   * to the parent keeps cacheability bubbling working on Drupal 11.3 and up,
-   * which passing only $entity would silently discard.
-   *
-   * @see https://www.drupal.org/node/3533080
    */
-  public function getDefaultOperations(EntityInterface $entity/* , ?CacheableMetadata $cacheability = NULL */) {
+  public function getDefaultOperations(EntityInterface $entity, ?CacheableMetadata $cacheability = NULL) {
     $operations = parent::getDefaultOperations(...func_get_args());
     $operations['edit']['url'] = new Url('entity.page.edit_form', [
       'machine_name' => $entity->id(),

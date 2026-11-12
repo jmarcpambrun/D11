@@ -1,0 +1,179 @@
+<?php
+
+namespace Drupal\page_manager_ui\Hook;
+
+use Drupal\Core\Hook\Attribute\Hook;
+use Drupal\Core\Url;
+use Drupal\page_manager_ui\ConfigTranslation\PageConfigMapper;
+use Drupal\page_manager_ui\ConfigTranslation\PageVariantConfigMapper;
+use Drupal\page_manager_ui\Entity\PageListBuilder;
+use Drupal\page_manager_ui\Form\PageDeleteForm;
+use Drupal\page_manager_ui\Wizard\PageAddWizard;
+use Drupal\page_manager_ui\Wizard\PageEditWizard;
+use Drupal\page_manager_ui\Wizard\PageVariantAddWizard;
+
+/**
+ * Hook implementations for page_manager_ui.
+ */
+class PageManagerUiHooks {
+
+  /**
+   * Implements hook_entity_type_build().
+   */
+  #[Hook('entity_type_build')]
+  public function entityTypeBuild(array &$entity_types) {
+    /** @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types */
+    if (isset($entity_types['page'])) {
+      $entity_types['page']
+        ->setListBuilderClass(PageListBuilder::class)
+        ->setFormClass('delete', PageDeleteForm::class)
+        ->setLinkTemplate('collection', '/admin/structure/page_manager')
+        ->setLinkTemplate('add-form', '/admin/structure/page_manager/add')
+        ->setLinkTemplate('edit-form', '/admin/structure/page_manager/manage/{machine_name}/{step}')
+        ->setLinkTemplate('delete-form', '/admin/structure/page_manager/manage/{page}/delete')
+        ->setLinkTemplate('enable', '/admin/structure/page_manager/manage/{page}/enable')
+        ->setLinkTemplate('disable', '/admin/structure/page_manager/manage/{page}/disable')
+        ->setHandlerClass('wizard', [
+          'add' => PageAddWizard::class,
+          'edit' => PageEditWizard::class,
+        ]);
+    }
+
+    if (isset($entity_types['page_variant'])) {
+      $entity_types['page_variant']
+        // The config_translation module needs the edit-form template.
+        ->setLinkTemplate('edit-form', '/admin/structure/page_manager/manage/{machine_name}/{step}')
+        ->setHandlerClass('wizard', [
+          'add_variant' => PageVariantAddWizard::class,
+        ]);
+    }
+  }
+
+  /**
+   * Implements hook_entity_type_alter().
+   */
+  #[Hook('entity_type_alter')]
+  public function entityTypeAlter(array &$entity_types) {
+    // Move the page config translation overview URL out of the wizard.
+    if ($entity_types['page']->hasLinkTemplate('config-translation-overview')) {
+      $entity_types['page']->setLinkTemplate('config-translation-overview', str_replace('manage/{machine_name}/{step}', '{page}', $entity_types['page']->getLinkTemplate('config-translation-overview')));
+    }
+
+    // Devel makes its entity debug routes from the edit-form link template.
+    // The page edit-form template has wizard parameters ({machine_name} and
+    // {step}), not the entity parameter ({page}). Thus, set the Devel link
+    // templates to use {page}. Keep the Devel route structure.
+    // @see https://www.drupal.org/project/page_manager/issues/3438993
+    $devel_link_templates = [
+      'devel-load' => '/devel/page/{page}',
+      'devel-definition' => '/devel/definition/page/{page}',
+      'devel-load-with-references' => '/devel/load-with-references/page/{page}',
+      'devel-path-alias' => '/devel/path-alias/page/{page}',
+    ];
+    foreach ($devel_link_templates as $link_template => $path) {
+      if ($entity_types['page']->hasLinkTemplate($link_template)) {
+        $entity_types['page']->setLinkTemplate($link_template, $path);
+      }
+    }
+
+    // Move the page variant config translation overview URL out of the wizard.
+    if ($entity_types['page_variant']->hasLinkTemplate('config-translation-overview')) {
+      $entity_types['page_variant']->setLinkTemplate('config-translation-overview', str_replace('manage/{machine_name}/{step}', '{page}/{page_variant}', $entity_types['page_variant']->getLinkTemplate('config-translation-overview')));
+    }
+  }
+
+  /**
+   * Implements hook_theme().
+   */
+  #[Hook('theme')]
+  public function theme() {
+    return [
+      'page_manager_wizard_form' => [
+        'render element' => 'form',
+      ],
+      'page_manager_wizard_tree' => [
+        'initial preprocess' => static::class . ':preprocessPageManagerWizardTree',
+        'variables' => [
+          'wizard' => NULL,
+          'cached_values' => [],
+          'tree' => [],
+          'divider' => ' » ',
+          'step' => NULL,
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * Implements hook_config_translation_info_alter().
+   */
+  #[Hook('config_translation_info_alter')]
+  public function configTranslationInfoAlter(&$info) {
+    // Change the config translation classes for pages and page variants.
+    if (isset($info['page'])) {
+      $info['page']['class'] = PageConfigMapper::class;
+    }
+    if (isset($info['page_variant'])) {
+      $info['page_variant']['class'] = PageVariantConfigMapper::class;
+      $info['page_variant']['base_route_name'] = 'entity.page.edit_form';
+    }
+  }
+
+  /**
+   * Implements hook_local_tasks_alter().
+   */
+  #[Hook('local_tasks_alter')]
+  public function localTasksAlter(&$local_tasks) {
+    // Remove the local tasks for the page and page variant config translation
+    // overview routes.
+    unset($local_tasks['config_translation.local_tasks:entity.page.config_translation_overview']);
+    unset($local_tasks['config_translation.local_tasks:entity.page_variant.config_translation_overview']);
+  }
+
+  /**
+   * Prepares variables for the page_manager_wizard_tree template.
+   *
+   * @param array $variables
+   *   An associative array that contains the wizard, cached_values and tree.
+   */
+  public function preprocessPageManagerWizardTree(array &$variables): void {
+    /** @var \Drupal\ctools\Wizard\FormWizardInterface|\Drupal\ctools\Wizard\EntityFormWizardInterface $wizard */
+    $wizard = $variables['wizard'];
+    $cached_values = $variables['cached_values'];
+    $tree = !empty($variables['tree']) ? $variables['tree'] : [];
+    $variables['step'] = $wizard->getStep($cached_values);
+
+    foreach ($wizard->getOperations($cached_values) as $step => $operation) {
+      $parameters = $wizard->getNextParameters($cached_values);
+      // Set the step parameter to this step.
+      $parameters['step'] = $step;
+
+      // If there are breadcrumbs, add the parent items.
+      $parent =& $tree;
+      if (is_array($parent)) {
+        if (isset($operation['breadcrumbs'])) {
+          foreach ($operation['breadcrumbs'] as $breadcrumb) {
+            $breadcrumb_string = (string) $breadcrumb;
+            if (!isset($parent[$breadcrumb_string])) {
+              $parent[$breadcrumb_string] = [
+                'title' => $breadcrumb,
+                'children' => [],
+              ];
+            }
+            $parent =& $parent[$breadcrumb_string]['children'];
+          }
+        }
+      }
+
+      $parent = ($parent === FALSE) ? [] : $parent;
+      $parent[$step] = [
+        'title' => !empty($operation['title']) ? $operation['title'] : '',
+        'url' => new Url($wizard->getRouteName(), $parameters),
+        'step' => $step,
+      ];
+    }
+
+    $variables['tree'] = $tree;
+  }
+
+}

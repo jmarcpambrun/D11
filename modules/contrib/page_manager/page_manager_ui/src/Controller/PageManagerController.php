@@ -184,6 +184,10 @@ class PageManagerController extends ControllerBase {
   public function performPageOperation(PageInterface $page, $op) {
     $page->$op()->save();
 
+    // The tempstore can keep an old copy of the page with the old status.
+    // Delete this copy. If you do not, the edit form saves the old status.
+    $this->tempstore->get('page_manager.page')->delete($page->id());
+
     if ($op == 'enable') {
       $this->messenger()->addMessage($this->t('The %label page has been enabled.', ['%label' => $page->label()]));
     }
@@ -321,6 +325,7 @@ class PageManagerController extends ControllerBase {
       '#attached' => [
         'library' => [
           'core/drupal.ajax',
+          'core/drupal.fieldgroup',
         ],
       ],
     ];
@@ -333,8 +338,9 @@ class PageManagerController extends ControllerBase {
       $category_key = 'category-' . $category;
       if (!isset($build[$category_key])) {
         $build[$category_key] = [
-          '#type' => 'fieldgroup',
+          '#type' => 'fieldset',
           '#title' => $category,
+          '#attributes' => ['class' => ['fieldgroup']],
           'content' => [
             '#theme' => 'links',
           ],

@@ -2,11 +2,13 @@
 
 namespace Drupal\page_manager\Plugin\DisplayVariant;
 
+use Drupal\Core\Display\Attribute\DisplayVariant;
 use Drupal\Core\Display\ContextAwareVariantInterface;
 use Drupal\Core\Display\VariantBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\path_alias\AliasManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,12 +16,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Provides a variant that returns a response with an HTTP status code.
- *
- * @DisplayVariant(
- *   id = "http_status_code",
- *   admin_label = @Translation("HTTP status code")
- * )
  */
+#[DisplayVariant(
+  id: 'http_status_code',
+  admin_label: new TranslatableMarkup('HTTP status code'),
+)]
 class HttpStatusCodeDisplayVariant extends VariantBase implements ContextAwareVariantInterface, ContainerFactoryPluginInterface {
 
   /**

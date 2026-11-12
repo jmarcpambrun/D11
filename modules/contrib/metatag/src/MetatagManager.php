@@ -540,10 +540,10 @@ class MetatagManager implements MetatagManagerInterface {
    *   The global meta tags or NULL.
    */
   public function getGlobalMetatags(): MetatagDefaults|NULL {
-    /** @var \Drupal\metatag\Entity\MetatagDefaults $metatags */
+    /** @var \Drupal\metatag\Entity\MetatagDefaults|null $metatags */
     $metatags = $this->entityTypeManager->getStorage('metatag_defaults')
       ->load('global');
-    return (!empty($metatags) && $metatags->status()) ? $metatags : NULL;
+    return ($metatags !== NULL && $metatags->status()) ? $metatags : NULL;
   }
 
   /**

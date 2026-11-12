@@ -17,13 +17,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class MetatagViewsTranslationController extends ControllerBase {
 
   /**
-   * The entity type manager interface.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
    * The Metatag manager.
    *
    * @var \Drupal\metatag\MetatagManagerInterface

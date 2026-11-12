@@ -7,8 +7,10 @@ use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Condition\ConditionPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Plugin\Context\Context;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\page_manager\Context\ContextDefinitionFactory;
 use Drupal\page_manager\Event\PageManagerContextEvent;
 use Drupal\page_manager\Event\PageManagerEvents;
@@ -17,6 +19,8 @@ use Drupal\page_manager\PageVariantInterface;
 
 /**
  * Defines a Page entity class.
+ *
+ * Keep the annotation until Drupal 11.1 is the minimum version.
  *
  * @ConfigEntityType(
  *   id = "page",
@@ -44,6 +48,31 @@ use Drupal\page_manager\PageVariantInterface;
  *   },
  * )
  */
+#[ConfigEntityType(
+  id: 'page',
+  label: new TranslatableMarkup('Page'),
+  entity_keys: [
+    'id' => 'id',
+    'label' => 'label',
+    'status' => 'status',
+  ],
+  handlers: [
+    'access' => PageAccess::class,
+  ],
+  admin_permission: 'administer pages',
+  config_export: [
+    'id',
+    'label',
+    'description',
+    'use_admin_theme',
+    'path',
+    'access_logic',
+    'access_conditions',
+    'parameters',
+    'menu_type',
+    'menu_settings',
+  ],
+)]
 class Page extends ConfigEntityBase implements PageInterface {
 
   /**

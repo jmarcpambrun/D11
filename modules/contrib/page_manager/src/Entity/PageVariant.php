@@ -5,14 +5,18 @@ namespace Drupal\page_manager\Entity;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Condition\ConditionPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Plugin\DefaultSingleLazyPluginCollection;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\page_manager\PageInterface;
 use Drupal\page_manager\PageVariantInterface;
 
 /**
  * Defines the page variant entity.
+ *
+ * Keep the annotation until Drupal 11.1 is the minimum version.
  *
  * @ConfigEntityType(
  *   id = "page_variant",
@@ -44,6 +48,35 @@ use Drupal\page_manager\PageVariantInterface;
  *   }
  * )
  */
+#[ConfigEntityType(
+  id: 'page_variant',
+  label: new TranslatableMarkup('Page Variant'),
+  entity_keys: [
+    'id' => 'id',
+    'label' => 'label',
+    'uuid' => 'uuid',
+  ],
+  handlers: [
+    'view_builder' => PageVariantViewBuilder::class,
+    'access' => PageVariantAccess::class,
+  ],
+  admin_permission: 'administer pages',
+  lookup_keys: [
+    'page',
+  ],
+  config_export: [
+    'id',
+    'label',
+    'uuid',
+    'variant',
+    'variant_settings',
+    'page',
+    'weight',
+    'selection_criteria',
+    'selection_logic',
+    'static_context',
+  ],
+)]
 class PageVariant extends ConfigEntityBase implements PageVariantInterface {
 
   /**

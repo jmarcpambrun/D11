@@ -4,6 +4,7 @@ namespace Drupal\page_manager\EventSubscriber;
 
 use Drupal\Core\Cache\CacheableResponseInterface;
 use Drupal\Core\Routing\StackedRouteMatchInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -26,7 +27,10 @@ class RouteNameResponseSubscriber implements EventSubscriberInterface {
    * @param \Drupal\Core\Routing\StackedRouteMatchInterface $route_match
    *   The current route match.
    */
-  public function __construct(StackedRouteMatchInterface $route_match) {
+  public function __construct(
+    #[Autowire(service: 'current_route_match')]
+    StackedRouteMatchInterface $route_match,
+  ) {
     $this->routeMatch = $route_match->getMasterRouteMatch();
   }
 

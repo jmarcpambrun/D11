@@ -172,9 +172,9 @@ class MetatagViewsTranslationForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the parameters from request.
-    $this->viewId = $this->getRequest()->get('view_id');
-    $this->displayId = $this->getRequest()->get('display_id');
-    $langcode = $this->getRequest()->get('langcode');
+    $this->viewId = $this->getRequest()->attributes->get('view_id');
+    $this->displayId = $this->getRequest()->attributes->get('display_id');
+    $langcode = $this->getRequest()->attributes->get('langcode');
 
     $this->view = $this->entityTypeManager->getStorage('view')->load($this->viewId);
     $this->language = $this->languageManager->getLanguage($langcode);

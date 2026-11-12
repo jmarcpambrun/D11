@@ -2,7 +2,7 @@
 
 namespace Drupal\page_manager\EventSubscriber;
 
-use Drupal\Core\Plugin\Context\LazyContextRepository;
+use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
 use Drupal\page_manager\Event\PageManagerContextEvent;
 use Drupal\page_manager\Event\PageManagerEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -25,7 +25,7 @@ class CurrentUserContext implements EventSubscriberInterface {
    * @param \Drupal\Core\Plugin\Context\ContextRepositoryInterface $context_repository
    *   The context repository service.
    */
-  public function __construct(LazyContextRepository $context_repository) {
+  public function __construct(ContextRepositoryInterface $context_repository) {
     $this->contextRepository = $context_repository;
   }
 

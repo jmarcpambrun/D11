@@ -5,10 +5,11 @@ namespace Drupal\page_manager\Plugin\DisplayVariant;
 use Drupal\Component\Render\HtmlEscapedText;
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Uuid\UuidInterface;
-use Drupal\Core\Block\BlockManager;
+use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Condition\ConditionManager;
+use Drupal\Core\Display\Attribute\DisplayVariant;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
@@ -17,6 +18,7 @@ use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Utility\Token;
 use Drupal\ctools\Plugin\DisplayVariant\BlockDisplayVariant;
 use Drupal\ctools\Plugin\PluginWizardInterface;
@@ -25,12 +27,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a variant plugin that simply contains blocks.
- *
- * @DisplayVariant(
- *   id = "block_display",
- *   admin_label = @Translation("Block page")
- * )
  */
+#[DisplayVariant(
+  id: 'block_display',
+  admin_label: new TranslatableMarkup('Block page'),
+)]
 class PageBlockDisplayVariant extends BlockDisplayVariant implements PluginWizardInterface, TrustedCallbackInterface {
 
   /**
@@ -57,14 +58,14 @@ class PageBlockDisplayVariant extends BlockDisplayVariant implements PluginWizar
    *   The UUID generator.
    * @param \Drupal\Core\Utility\Token $token
    *   The token service.
-   * @param \Drupal\Core\Block\BlockManager $block_manager
+   * @param \Drupal\Core\Block\BlockManagerInterface $block_manager
    *   The block manager.
    * @param \Drupal\Core\Condition\ConditionManager $condition_manager
    *   The condition manager.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ContextHandlerInterface $context_handler, AccountInterface $account, UuidInterface $uuid_generator, Token $token, BlockManager $block_manager, ConditionManager $condition_manager, ModuleHandlerInterface $module_handler) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ContextHandlerInterface $context_handler, AccountInterface $account, UuidInterface $uuid_generator, Token $token, BlockManagerInterface $block_manager, ConditionManager $condition_manager, ModuleHandlerInterface $module_handler) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $context_handler, $account, $uuid_generator, $token, $block_manager, $condition_manager);
 
     $this->moduleHandler = $module_handler;

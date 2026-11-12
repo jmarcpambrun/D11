@@ -1,3 +1,13 @@
+Metatag 2.2.7, 2026-11-11
+-------------------------
+#3636528 by DamienMcKenna: Recommend the Token Browser module.
+#3636795 by DamienMcKenna: PermissionsTest automatically determines tags.
+#3633586 by joshuaramaekers, d.steindl, DamienMcKenna: Fixed unwanted
+  translation of '<none>' in URL meta tags.
+#3635626 by DamienMcKenna: Updated README.md about supported Drupal releases.
+#3636782 by ishfaqafridi85, csakiistvan, DamienMcKenna: Resolved phpstan issues.
+
+
 Metatag 2.2.6, 2026-11-05
 -------------------------
 #3633574 by lorseau, DamienMcKenna: Indicate incompatibility with Schema Metatag

@@ -7,6 +7,10 @@ use Drupal\Component\Annotation\Plugin;
 /**
  * Defines a PageManagerMenu annotation object.
  *
+ * Plugin namespace: Plugin\PageManagerMenu.
+ *
+ * @see \Drupal\page_manager\Attribute\PageManagerMenu
+ *
  * @Annotation
  */
 class PageManagerMenu extends Plugin {

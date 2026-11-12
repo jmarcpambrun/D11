@@ -2,11 +2,13 @@
 
 namespace Drupal\page_manager\Plugin\DisplayVariant;
 
+use Drupal\Core\Display\Attribute\DisplayVariant;
 use Drupal\Core\Display\ContextAwareVariantInterface;
 use Drupal\Core\Display\VariantBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Layout\LayoutPluginManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ctools\Plugin\PluginWizardInterface;
 use Drupal\layout_builder\LayoutEntityHelperTrait;
 use Drupal\layout_builder\SectionListTrait;
@@ -16,11 +18,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a Layout Builder variant.
  *
+ * Keep the annotation until Drupal 11.1 is the minimum version.
+ *
  * @DisplayVariant(
  *   id = "layout_builder",
  *   admin_label = @Translation("Layout Builder")
  * )
  */
+#[DisplayVariant(
+  id: 'layout_builder',
+  admin_label: new TranslatableMarkup('Layout Builder'),
+)]
 class LayoutBuilderDisplayVariant extends VariantBase implements PluginWizardInterface, ContextAwareVariantInterface, ContainerFactoryPluginInterface {
 
   use SectionListTrait;

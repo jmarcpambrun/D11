@@ -6,17 +6,18 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\page_manager\Attribute\PageManagerMenu;
 use Drupal\page_manager\Plugin\MenuBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Normal menu type for Page Manager.
- *
- * @PageManagerMenu(
- *   id = "normal_menu",
- *   label = @Translation("Normal menu entry")
- * )
  */
+#[PageManagerMenu(
+  id: 'normal_menu',
+  label: new TranslatableMarkup('Normal menu entry'),
+)]
 class NormalMenu extends MenuBase implements ContainerFactoryPluginInterface {
 
   /**

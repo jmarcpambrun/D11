@@ -5,16 +5,17 @@ namespace Drupal\page_manager\Plugin\PageManagerMenu;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Menu\LocalTaskManagerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\page_manager\Attribute\PageManagerMenu;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tab menu type for Page Manager.
- *
- * @PageManagerMenu(
- *   id = "default_menu_tab",
- *   label = @Translation("Default menu tab")
- * )
  */
+#[PageManagerMenu(
+  id: 'default_menu_tab',
+  label: new TranslatableMarkup('Default menu tab'),
+)]
 class DefaultMenuTab extends MenuTab {
 
   /**
