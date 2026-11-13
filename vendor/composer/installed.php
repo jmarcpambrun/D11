@@ -3,7 +3,7 @@
         'name' => 'drupal/legacy-project',
         'pretty_version' => 'dev-D11_JMP_UBU',
         'version' => 'dev-D11_JMP_UBU',
-        'reference' => '829aefa3dc80f41b6fd85b6bf59a776f98d704e1',
+        'reference' => '6f10da073109aee3fb989be0e2e7ef6a6f30d1e3',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -1225,7 +1225,7 @@
         'drupal/legacy-project' => array(
             'pretty_version' => 'dev-D11_JMP_UBU',
             'version' => 'dev-D11_JMP_UBU',
-            'reference' => '829aefa3dc80f41b6fd85b6bf59a776f98d704e1',
+            'reference' => '6f10da073109aee3fb989be0e2e7ef6a6f30d1e3',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "429a1d4355fa788870601affa0b68bc0",
+    "content-hash": "73e9bf2bf84d6b2f9a3c7e37520742a4",
     "packages": [
         {
             "name": "albertofem/rsync-lib",
