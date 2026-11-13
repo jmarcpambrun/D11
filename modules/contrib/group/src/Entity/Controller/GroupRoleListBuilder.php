@@ -28,7 +28,6 @@ class GroupRoleListBuilder extends DraggableListBuilder {
    */
   protected $groupType;
 
-  // @phpstan-ignore-next-line drupal.entityStoragePropertyAssignment
   public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RouteMatchInterface $route_match) {
     parent::__construct($entity_type, $storage);
 

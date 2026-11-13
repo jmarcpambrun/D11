@@ -635,8 +635,7 @@ display:
           sort_desc_label: Desc
       access:
         type: group_permission
-        options:
-          group_permission: 'access group_node overview'
+        options: {  }
       cache:
         type: tag
         options: {  }
@@ -663,7 +662,7 @@ display:
           admin_label: ''
           entity_type: group_relationship
           entity_field: gid
-          plugin_id: numeric
+          plugin_id: group_id
           default_action: 'access denied'
           exception:
             value: all
@@ -683,11 +682,13 @@ display:
             sort_order: asc
             number_of_records: 0
             format: default_summary
-          specify_validation: false
+          specify_validation: true
           validate:
-            type: none
-            fail: 'not found'
-          validate_options: {  }
+            type: group_permission
+            fail: 'access denied'
+          validate_options:
+            group_types: {  }
+            group_permission: 'access group_node overview'
           break_phrase: false
           not: false
       filters:
@@ -717,9 +718,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              group_admin: '0'
           is_grouped: true
           group_info:
             label: 'Published status'
@@ -766,9 +764,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              group_admin: '0'
             reduce: false
           is_grouped: false
           group_info:
@@ -912,7 +907,6 @@ display:
       contexts:
         - 'languages:language_content'
         - 'languages:language_interface'
-        - route.group
         - url
         - url.query_args
         - user.group_permissions
@@ -936,12 +930,12 @@ display:
         menu_name: main
         parent: ''
         context: '0'
+      use_admin_theme: true
     cache_metadata:
       max-age: -1
       contexts:
         - 'languages:language_content'
         - 'languages:language_interface'
-        - route.group
         - url
         - url.query_args
         - user.group_permissions

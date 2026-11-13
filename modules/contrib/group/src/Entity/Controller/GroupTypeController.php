@@ -129,9 +129,10 @@ class GroupTypeController extends ControllerBase {
     $row = [
       'info' => [
         '#type' => 'inline_template',
-        '#template' => '<div class="description"><span class="label">{{ label }}</span>{% if description %}<br/>{{ description }}{% endif %}</div>',
+        '#template' => '<span class="label">{{ label }}</span>{% if description %}<br/><span class="description" data-admin-compact-collapsible>{{ description }}</span>{% endif %}',
         '#context' => [
           'label' => $group_relation_type->getLabel(),
+          'description' => $group_relation_type->getDescription(),
         ],
       ],
       'provider' => [
@@ -144,11 +145,6 @@ class GroupTypeController extends ControllerBase {
       'install_type' => ['#markup' => $install_type],
       'operations' => $this->buildOperations($plugin_id),
     ];
-
-    // Show the group relation description if toggled on.
-    if (!system_admin_compact_mode()) {
-      $row['info']['#context']['description'] = $group_relation_type->getDescription();
-    }
 
     return $row;
   }

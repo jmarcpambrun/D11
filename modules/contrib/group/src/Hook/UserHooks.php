@@ -7,7 +7,6 @@ namespace Drupal\group\Hook;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Hook\Attribute\Hook;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\group\Entity\GroupInterface;
@@ -32,10 +31,10 @@ final class UserHooks {
    * Implements hook_ENTITY_TYPE_update().
    */
   #[Hook('user_update')]
-  public function userUpdate(AccountInterface $account): void {
+  public function userUpdate(UserInterface $account): void {
     // If a user's roles change, we need to reset their group roles cache.
     $new = array_unique($account->getRoles());
-    $old = array_unique($account->original->getRoles());
+    $old = array_unique($account->getOriginal()->getRoles());
     sort($new);
     sort($old);
 

@@ -112,6 +112,8 @@ services:
   group.permissions:
     class: 'Drupal\group\Access\GroupPermissionHandler'
     arguments: ['@module_handler', '@string_translation', '@controller_resolver', '@group_relation_type.manager', '@extension.list.module']
+  Drupal\group\Access\GroupPermissionHandlerInterface: '@group.permissions'
+
   group_permission.hash_generator:
     class: 'Drupal\group\Access\GroupPermissionsHashGenerator'
     arguments: ['@private_key', '@cache.static', '@group_permission.calculator', '@entity_type.manager', '@database']

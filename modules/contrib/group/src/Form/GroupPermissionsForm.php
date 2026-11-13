@@ -166,7 +166,6 @@ abstract class GroupPermissionsForm extends FormBase {
     }
 
     // Render the permission as sections of rows.
-    $hide_descriptions = system_admin_compact_mode();
     foreach ($this->getPermissions() as $provider => $sections) {
       // Print a full width row containing the provider name for each provider.
       $form['permissions']['module-' . $provider] = [
@@ -193,25 +192,21 @@ abstract class GroupPermissionsForm extends FormBase {
           ],
         ];
 
-        // Then list all of the permissions for that provider and section.
+        // Then list all the permissions for that provider and section.
         foreach ($permissions as $perm => $perm_item) {
           // Create a row for the permission, starting with the description.
           $form['permissions'][$perm]['description'] = [
             '#type' => 'inline_template',
-            '#template' => '<span class="title">{{ title }}</span>{% if description or warning %}<div class="description">{% if warning %}<em class="permission-warning">{{ warning }}</em><br />{% endif %}{{ description }}</div>{% endif %}',
+            '#template' => '<span class="title">{{ title }}</span>{% if description or warning %}<div class="description" data-admin-compact-collapsible>{% if warning %}<em class="permission-warning">{{ warning }}</em><br />{% endif %}{{ description }}</div>{% endif %}',
             '#context' => [
               'title' => $perm_item['title'],
+              'description' => $perm_item['description'],
+              'warning' => $perm_item['warning'],
             ],
             '#wrapper_attributes' => [
               'class' => ['permission'],
             ],
           ];
-
-          // Show the permission description and warning if toggled on.
-          if (!$hide_descriptions) {
-            $form['permissions'][$perm]['description']['#context']['description'] = $perm_item['description'];
-            $form['permissions'][$perm]['description']['#context']['warning'] = $perm_item['warning'];
-          }
 
           // Finally build a checkbox cell for every group role.
           foreach ($role_info as $scope_info) {

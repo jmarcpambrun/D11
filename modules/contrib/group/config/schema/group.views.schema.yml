@@ -7,6 +7,8 @@ views.access.group_permission:
     group_permission:
       type: 'string'
       label: 'Group permission'
+      nullable: true
+      deprecated: 'The "Group permission" setting is deprecated in group:4.0.0 and is removed from group:5.0.0. There is no replacement. See https://www.drupal.org/node/3622022'
 
 views.argument.group_id:
   type: views_argument
@@ -22,6 +24,20 @@ views.argument_default.group_id_from_url:
   sequence:
     type: 'string'
     label: 'Group ID'
+
+views.argument_validator.group_permission:
+  type: 'mapping'
+  label: 'Group permission'
+  mapping:
+    group_types:
+      type: sequence
+      label: 'Group types'
+      sequence:
+        type: string
+        label: 'Group type'
+    group_permission:
+      type: 'string'
+      label: 'Group permission'
 
 views_relationship_with_group_plugin_filter:
   type: 'views_relationship'

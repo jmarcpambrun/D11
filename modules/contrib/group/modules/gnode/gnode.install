@@ -9,5 +9,35 @@
  * Implements hook_update_last_removed().
  */
 function gnode_update_last_removed() {
-  return 8007;
+  return 8008;
+}
+
+/**
+ * Updates group nodes view to use admin theme.
+ */
+function gnode_update_11400() {
+  if (\Drupal::moduleHandler()->moduleExists('views')) {
+    $view = \Drupal::configFactory()->getEditable('views.view.group_nodes');
+    if (!$view->isNew() && is_null($view->get('display.page_1.display_options.use_admin_theme'))) {
+      $view->set('display.page_1.display_options.use_admin_theme', TRUE);
+      $view->save();
+    }
+  }
+}
+
+/**
+ * Updates group_nodes view argument to use 'group_id' plugin.
+ */
+function gnode_update_11401() {
+  if (\Drupal::moduleHandler()->moduleExists('views')) {
+    $view = \Drupal::configFactory()->getEditable('views.view.group_nodes');
+    if (!$view->isNew()) {
+      // Only update if the view was still using the original plugin ID.
+      $config_key = 'display.default.display_options.arguments.gid.plugin_id';
+      if ($view->get($config_key) === 'numeric') {
+        $view->set($config_key, 'group_id');
+        $view->save();
+      }
+    }
+  }
 }

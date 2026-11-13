@@ -291,11 +291,11 @@ class GroupRelationship extends ContentEntityBase implements GroupRelationshipIn
 
     // If a membership gets updated, but the member's roles haven't changed, we
     // do not need to rebuild the group role cache for the member's account.
-    elseif ($rebuild_group_role_cache && isset($this->original)) {
-      assert($this->original instanceof GroupRelationshipInterface);
+    elseif ($rebuild_group_role_cache && $this->getOriginal() !== NULL) {
+      assert($this->getOriginal() instanceof GroupRelationshipInterface);
 
       $new = array_column($this->get('group_roles')->getValue(), 'target_id');
-      $old = array_column($this->original->get('group_roles')->getValue(), 'target_id');
+      $old = array_column($this->getOriginal()->get('group_roles')->getValue(), 'target_id');
       sort($new);
       sort($old);
       $rebuild_group_role_cache = ($new != $old);

@@ -1,13 +1,8 @@
-includes:
-    - phpstan-baseline.neon
-
 parameters:
   level: 2
   ignoreErrors:
     # new static() is a best practice in Drupal, so we cannot fix that.
     - "#^Unsafe usage of new static#"
-    # Entity property $original is common in Drupal.
-    - "#^Access to an undefined property [a-zA-Z0-9\\\\]+\\:\\:\\$original.#"
     # Ignore common errors for now.
     - "#Drupal calls should be avoided in classes, use dependency injection instead#"
   drupal:

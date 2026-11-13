@@ -18,12 +18,14 @@ use Symfony\Component\Routing\Route;
 /**
  * Access plugin that provides group permission-based access control.
  *
+ * @todo Remove the 'group_permission' option and its schema in Group 5.
+ *
  * @ingroup views_access_plugins
  */
 #[ViewsAccess(
   id: 'group_permission',
   title: new TranslatableMarkup('Group permission'),
-  help: new TranslatableMarkup('Access will be granted to users with the specified group permission string.'),
+  help: new TranslatableMarkup('Instructions on how to determine view access by group permission'),
 )]
 class GroupPermission extends AccessPluginBase implements CacheableDependencyInterface {
 
@@ -79,6 +81,10 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    * {@inheritdoc}
    */
   public function access(AccountInterface $account) {
+    if (!isset($this->options['group_permission'])) {
+      return TRUE;
+    }
+
     if (!empty($this->group)) {
       return $this->group->hasPermission($this->options['group_permission'], $account);
     }
@@ -89,6 +95,11 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    * {@inheritdoc}
    */
   public function alterRouteDefinition(Route $route) {
+    if (!isset($this->options['group_permission'])) {
+      $route->setRequirement('_access', 'TRUE');
+      return;
+    }
+
     $route->setRequirement('_group_permission', $this->options['group_permission']);
 
     // Upcast any %group path key the user may have configured so the
@@ -100,6 +111,10 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    * {@inheritdoc}
    */
   public function summaryTitle() {
+    if (!isset($this->options['group_permission'])) {
+      return $this->t('Informational only');
+    }
+
     $permissions = $this->permissionHandler->getPermissions(TRUE);
     if (isset($permissions[$this->options['group_permission']])) {
       return $permissions[$this->options['group_permission']]['title'];
@@ -113,7 +128,7 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    */
   protected function defineOptions() {
     $options = parent::defineOptions();
-    $options['group_permission'] = ['default' => 'view group'];
+    $options['group_permission'] = ['default' => NULL];
     return $options;
   }
 
@@ -123,26 +138,107 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
     parent::buildOptionsForm($form, $form_state);
 
-    // Get list of permissions.
-    $permissions = [];
-    foreach ($this->permissionHandler->getPermissions(TRUE) as $permission_name => $permission) {
-      $display_name = $this->moduleHandler->getName($permission['provider']);
-      $permissions[$display_name . ' : ' . $permission['section']][$permission_name] = strip_tags($permission['title']);
+    if (isset($this->options['group_permission'])) {
+      $form['deprecated'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('This functionality is deprecated, refer to the how-to below for instructions.'),
+      ];
+
+      $form['deprecated']['converted']['#markup'] = $this->t('
+        <p>When you have converted your view to use the approach outlined
+        below, select the "None, I am using contextual filters instead" option
+        in the "Group permission" dropdown below and this part of the form will
+        be hidden going forward.</p>
+      ');
+
+      // Get list of permissions.
+      $permissions = ['_none' => $this->t('None, I am using contextual filters instead')];
+      foreach ($this->permissionHandler->getPermissions(TRUE) as $permission_name => $permission) {
+        $display_name = $this->moduleHandler->getName($permission['provider']);
+        $permissions[$display_name . ' : ' . $permission['section']][$permission_name] = strip_tags($permission['title']);
+      }
+
+      $form['group_permission'] = [
+        '#type' => 'select',
+        '#fieldset' => 'deprecated',
+        '#options' => $permissions,
+        '#title' => $this->t('Group permission'),
+        '#default_value' => $this->options['group_permission'],
+        '#description' => $this->t('
+          Only users with the selected group permission will be able to access
+          this display.<br /><strong>Warning:</strong> This will only work if
+          there is a {group} parameter in the route. If not, it will always deny
+          access.
+        '),
+      ];
+
+      $how_to_intro = $this->t('
+        <p>This plugin will always try to get the group from the route:
+        Something that does not work well with modules such as Views Bulk
+        Operations, or modules such as Group Sites that try to feed a group from
+        other sources. Instead, we get the group where we can configure it: The
+        contextual filters.</p>
+      ');
+    }
+    else {
+      $how_to_intro = $this->t('
+        <p>In order to determine access based on a group permission, we first
+        need to answer one question: Which group? The "Access" part of the "Page
+        settings" on a view cannot answer this, but the "Contextual filters"
+        can.</p>
+      ');
+
+      // Replace the "Apply" and "Cancel" buttons with an "Ok" button.
+      $form_state->set('ok_button', TRUE);
     }
 
-    $form['group_permission'] = [
-      '#type' => 'select',
-      '#options' => $permissions,
-      '#title' => $this->t('Group permission'),
-      '#default_value' => $this->options['group_permission'],
-      '#description' => $this->t('Only users with the selected group permission will be able to access this display.<br /><strong>Warning:</strong> This will only work if there is a {group} parameter in the route. If not, it will always deny access.'),
+    $form['how_to'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('How to properly check for a group permission.'),
     ];
+
+    $form['how_to']['info']['#markup'] = $how_to_intro . $this->t('
+      <p><strong>What you need to do</strong> to properly check for a group
+      permission, is as follows:</p>
+    ');
+
+    $form['how_to']['instructions'] = [
+      '#theme' => 'item_list',
+      '#list_type' => 'ol',
+      '#items' => [
+        $this->t('On the right, add a contextual filter of type group. Example: "Group relationship: Parent group"'),
+        $this->t('Configure what you like for "When the filter value is <em>NOT</em> in the URL", although we advise the "Display Access Denied" option'),
+        $this->t('Under "When the filter value <em>IS</em> in the URL or a default is provided", select "Specify validation criteria"'),
+        $this->t('Select "Group permission" as the validator and configure as you see fit'),
+        $this->t('<strong>Important:</strong> Set "Action to take if filter value does not validate" to "Display Access Denied"'),
+        $this->t('In the dropdown above, select the "None, I am using contextual filters instead" to turn off this access plugin, but keep the instructions handy'),
+      ],
+    ];
+
+    $form['how_to']['benefits']['#markup'] = $this->t('
+      <p>By doing as described above, you can now check for group permissions
+      from various sources. Any view placed in a block will give the option to
+      select a context provider where you can, for instance, choose the same
+      provider you used to set up Group Sites.</p>
+    ');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitOptionsForm(&$form, FormStateInterface $form_state) {
+    if ($form_state->getValue(['access_options', 'group_permission']) === '_none') {
+      $form_state->unsetValue(['access_options', 'group_permission']);
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function getCacheMaxAge() {
+    if (!isset($this->options['group_permission'])) {
+      return Cache::PERMANENT;
+    }
     return Cache::mergeMaxAges(Cache::PERMANENT, $this->context->getCacheMaxAge());
   }
 
@@ -150,6 +246,9 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    * {@inheritdoc}
    */
   public function getCacheContexts() {
+    if (!isset($this->options['group_permission'])) {
+      return [];
+    }
     return Cache::mergeContexts(['user.group_permissions'], $this->context->getCacheContexts());
   }
 
@@ -157,6 +256,9 @@ class GroupPermission extends AccessPluginBase implements CacheableDependencyInt
    * {@inheritdoc}
    */
   public function getCacheTags() {
+    if (!isset($this->options['group_permission'])) {
+      return [];
+    }
     return $this->context->getCacheTags();
   }
 

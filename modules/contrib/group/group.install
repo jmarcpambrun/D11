@@ -9,7 +9,7 @@
  * Implements hook_update_last_removed().
  */
 function group_update_last_removed() {
-  return 10305;
+  return 10306;
 }
 
 /**
@@ -50,5 +50,35 @@ function group_update_11401() {
     $relationship_type->set('relation_type', $plugin_id);
 
     $relationship_type->save();
+  }
+}
+
+/**
+ * Updates members view to use admin theme.
+ */
+function group_update_11402() {
+  if (\Drupal::moduleHandler()->moduleExists('views')) {
+    $view = \Drupal::configFactory()->getEditable('views.view.group_members');
+    if (!$view->isNew() && is_null($view->get('display.page_1.display_options.use_admin_theme'))) {
+      $view->set('display.page_1.display_options.use_admin_theme', TRUE);
+      $view->save();
+    }
+  }
+}
+
+/**
+ * Updates group_members view argument to use 'group_id' plugin.
+ */
+function group_update_11403() {
+  if (\Drupal::moduleHandler()->moduleExists('views')) {
+    $view = \Drupal::configFactory()->getEditable('views.view.group_members');
+    if (!$view->isNew()) {
+      // Only update if the view was still using the original plugin ID.
+      $config_key = 'display.default.display_options.arguments.gid.plugin_id';
+      if ($view->get($config_key) === 'numeric') {
+        $view->set($config_key, 'group_id');
+        $view->save();
+      }
+    }
   }
 }

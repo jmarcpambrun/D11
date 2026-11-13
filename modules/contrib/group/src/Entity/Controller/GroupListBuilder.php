@@ -24,7 +24,6 @@ class GroupListBuilder extends EntityListBuilder {
 
   public function __construct(
     EntityTypeInterface $entity_type,
-    // @phpstan-ignore-next-line drupal.entityStoragePropertyAssignment
     EntityStorageInterface $storage,
     RedirectDestinationInterface $redirect_destination,
     protected AccountInterface $currentUser,
