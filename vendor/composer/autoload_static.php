@@ -147,6 +147,7 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
             'Symfony\\Bundle\\FrameworkBundle\\' => 31,
             'Symfony\\Bridge\\PsrHttpMessage\\' => 30,
             'Svg\\' => 4,
+            'SelfUpdate\\' => 11,
             'Sabberworm\\CSS\\' => 15,
         ),
         'R' =>
@@ -212,6 +213,10 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
             'Laminas\\Stdlib\\' => 15,
             'Laminas\\Feed\\' => 13,
             'Laminas\\Escaper\\' => 16,
+        ),
+        'K' =>
+        array (
+            'Kevinrob\\GuzzleCache\\' => 21,
         ),
         'J' =>
         array (
@@ -575,6 +580,10 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
         ),
+        'SelfUpdate\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/consolidation/self-update/src',
+        ),
         'Sabberworm\\CSS\\' =>
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
@@ -752,6 +761,10 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
         'Laminas\\Escaper\\' =>
         array (
             0 => __DIR__ . '/..' . '/laminas/laminas-escaper/src',
+        ),
+        'Kevinrob\\GuzzleCache\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/kevinrob/guzzle-cache-middleware/src',
         ),
         'JsonSchema\\' =>
         array (
