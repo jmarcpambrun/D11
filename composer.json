@@ -139,7 +139,7 @@
         "drupal/views_data_export": "^1.9",
         "drupal/views_rss": "^2.5",
         "drupal/views_slideshow": "5.0.1",
-        "drupal/views_templates": "1.7",
+        "drupal/views_templates": "^1.8",
         "drupal/views_timelinejs": "4.2.2",
         "drupal/webform": "^6.3",
         "drupal/webform_content_creator": "^4.0.14",
