@@ -3,7 +3,7 @@
         'name' => 'drupal/legacy-project',
         'pretty_version' => 'dev-D11_JMP_UBU',
         'version' => 'dev-D11_JMP_UBU',
-        'reference' => 'da156f50444b789ba7ce072bf5a520e84c1f3863',
+        'reference' => 'fcfc9f2d3038c7f9dc5279bb3de2306537d0bead',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -913,6 +913,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'drupal/eca_expression_language' => array(
+            'pretty_version' => '2.0.0',
+            'version' => '2.0.0.0',
+            'reference' => '2.0.0',
+            'type' => 'drupal-module',
+            'install_path' => __DIR__ . '/../../modules/contrib/eca_expression_language',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'drupal/eca_site_building' => array(
             'pretty_version' => '2.0.0',
             'version' => '2.0.0.0',
@@ -1240,7 +1249,7 @@
         'drupal/legacy-project' => array(
             'pretty_version' => 'dev-D11_JMP_UBU',
             'version' => 'dev-D11_JMP_UBU',
-            'reference' => 'da156f50444b789ba7ce072bf5a520e84c1f3863',
+            'reference' => 'fcfc9f2d3038c7f9dc5279bb3de2306537d0bead',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

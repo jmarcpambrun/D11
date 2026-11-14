@@ -1,0 +1,12 @@
+name: 'eca_expression_language'
+type: module
+description: 'Add symfony expression language support to ECA'
+package: ECA
+core_version_requirement: ^10 || ^11
+dependencies:
+  - eca:eca
+
+# Information added by Drupal.org packaging script on 2026-05-24
+version: '2.0.0'
+project: 'eca_expression_language'
+datestamp: 1779611954
