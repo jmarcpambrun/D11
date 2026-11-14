@@ -1,0 +1,14 @@
+name: 'AI Integration - ECA: Automators'
+type: module
+description: 'Provides ECA plugins for the integration with AI Automators.'
+core_version_requirement: ^10.3 || ^11 || ^12
+package: AI
+dependencies:
+  - ai_integration_eca:ai_integration_eca
+  - ai:ai_automators
+  - eca:eca_content
+
+# Information added by Drupal.org packaging script on 2026-09-21
+version: '1.0.1'
+project: 'ai_integration_eca'
+datestamp: 1789980027

@@ -1,0 +1,15 @@
+name: 'AI Integration - ECA'
+type: module
+description: 'The bridge between AI and ECA.'
+core_version_requirement: ^10.3 || ^11 || ^12
+package: AI
+
+dependencies:
+  - ai:ai
+  - drupal:file
+  - eca:eca
+
+# Information added by Drupal.org packaging script on 2026-09-21
+version: '1.0.1'
+project: 'ai_integration_eca'
+datestamp: 1789980027

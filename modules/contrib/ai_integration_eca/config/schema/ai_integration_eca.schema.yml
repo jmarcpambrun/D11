@@ -1,0 +1,32 @@
+action.configuration.ai_integration_eca_execute_chat:
+  type: mapping
+  label: 'Configuration for the "Chat" action'
+  mapping:
+    model:
+      type: string
+      label: 'Model'
+    token_result:
+      type: string
+      label: 'Token result'
+    config:
+      type: text
+      label: 'Specific configuration for the model'
+    system_prompt:
+      type: text
+      label: 'System prompt'
+    prompt:
+      type: text
+      label: 'Prompt'
+      constraints:
+        NotBlank: []
+    schema:
+      type: text
+      label: 'Schema'
+      constraints:
+        Json: []
+    files:
+      type: string
+      label: 'Files'
+    files_input_type:
+      type: string
+      label: 'Input source'

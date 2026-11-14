@@ -1,0 +1,6 @@
+ai_integration_eca_agents.ask_ai:
+  route_name: ai_integration_eca_agents.ask_ai
+  title: 'Ask AI'
+  class: '\Drupal\ai_integration_eca_agents\Plugin\Menu\LocalAction\AiEcaAgentsDialogLocalAction'
+  appears_on:
+    - entity.eca.collection

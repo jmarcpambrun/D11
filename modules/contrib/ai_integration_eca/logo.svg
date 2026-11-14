@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sparkle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C6C7E8"/>
+      <stop offset="1" stop-color="#6941C6"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="#048181"/>
+  <path d="M 256 108 A 148 148 0 0 1 256 404" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <polygon points="360.6,151.4 348.6,121.0 330.3,139.3" fill="#ffffff"/>
+  <polygon points="360.6,360.6 391.0,348.6 372.7,330.3" fill="#ffffff"/>
+  <circle cx="256" cy="108" r="30" fill="#048181" stroke="#ffffff" stroke-width="6"/>
+  <path d="M 404 210 L 450 256 L 404 302 L 358 256 Z" fill="#048181" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="218" y="366" width="76" height="76" rx="14" ry="14" fill="#048181" stroke="#ffffff" stroke-width="6"/>
+  <path d="M 256 166 C 285.7 226.3 285.7 226.3 346 256 C 285.7 285.7 285.7 285.7 256 346 C 226.3 285.7 226.3 285.7 166 256 C 226.3 226.3 226.3 226.3 256 166 Z" fill="url(#sparkle)"/>
+  <path d="M 140 128 C 147 143 147 143 162 150 C 147 157 147 157 140 172 C 133 157 133 157 118 150 C 133 143 133 143 140 128 Z" fill="url(#sparkle)"/>
+  <circle cx="165" cy="372" r="7" fill="#c6c7e8"/>
+</svg>

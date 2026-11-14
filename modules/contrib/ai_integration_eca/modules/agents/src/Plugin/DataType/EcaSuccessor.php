@@ -1,0 +1,20 @@
+<?php
+
+namespace Drupal\ai_integration_eca_agents\Plugin\DataType;
+
+use Drupal\ai_integration_eca_agents\TypedData\EcaSuccessorDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\TypedData\Attribute\DataType;
+use Drupal\Core\TypedData\Plugin\DataType\Map;
+
+/**
+ * Data type plugin of the ECA Successor data type.
+ */
+#[DataType(
+  id: 'eca_successor',
+  label: new TranslatableMarkup('ECA Successor'),
+  definition_class: EcaSuccessorDefinition::class
+)]
+class EcaSuccessor extends Map {
+
+}

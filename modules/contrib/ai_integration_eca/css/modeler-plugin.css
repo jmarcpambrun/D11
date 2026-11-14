@@ -1,0 +1,279 @@
+/**
+ * @file
+ * Styles for the AI assistant panel in the workflow modeler.
+ *
+ * The modeler exposes its own theme variables, which are used here so that the
+ * panel follows the light and dark modes of the surrounding UI.
+ */
+
+/*
+ * The modeler applies this class to its own panel content element, which is
+ * the flex item that owns scrolling for the panel. So no height is declared
+ * here: the modeler sizes that element, and declaring a height as well would
+ * mean two opinions about it. All this adds is the column layout that keeps
+ * the conversation growing and the input pinned beneath it.
+ */
+.ai-assistant-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 8px;
+}
+
+.ai-assistant-panel .ai-panel-intro {
+  margin: 0;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ai-assistant-panel .ai-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-assistant-panel .ai-clear-btn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+  background: none;
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-status {
+  min-width: 0;
+  margin: 0;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 12px;
+}
+
+/*
+ * The one scrollable area in the panel. min-height is 0 rather than a floor
+ * in pixels: a floating panel's height is capped to the room below it, and a
+ * floor tall enough to matter would push the total past that cap, which hands
+ * the overflow to the modeler's own scroller as well and leaves the user with
+ * two nested scrollbars and the input out of reach.
+ */
+.ai-assistant-panel .ai-chat-log {
+  display: flex;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+  gap: 10px;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+}
+
+/*
+ * Collapse the empty log instead of hiding it because this aria-live region
+ * must stay in the accessibility tree to announce the first assistant answer.
+ */
+.ai-assistant-panel .ai-chat-log:empty {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+}
+
+.ai-assistant-panel .ai-chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-assistant-panel .ai-chat-role {
+  text-transform: uppercase;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.ai-assistant-panel .ai-chat-text {
+  margin: 0;
+  /* The answer is inserted as text, so its line breaks need preserving. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-assistant-panel .ai-chat-message--user .ai-chat-text {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--modeler-color-surface-alt, rgb(127, 127, 127, 0.12));
+}
+
+.ai-assistant-panel .ai-suggestions {
+  display: flex;
+  flex-direction: column;
+  margin: 6px 0 0;
+  padding: 0;
+  gap: 6px;
+  list-style: none;
+}
+
+.ai-assistant-panel .ai-suggestion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 8px;
+  gap: 2px;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+}
+
+.ai-assistant-panel .ai-suggestion-label {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.ai-assistant-panel .ai-suggestion-meta {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--modeler-color-text-secondary, #666);
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.ai-assistant-panel .ai-suggestion-reason {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ai-assistant-panel .ai-add-btn {
+  margin-top: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+  background: none;
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-add-btn[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ai-assistant-panel .ai-suggestion-added {
+  margin: 4px 0 0;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-plan {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  padding: 6px 8px;
+  gap: 4px;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+}
+
+.ai-assistant-panel .ai-plan-heading {
+  margin: 0;
+  text-transform: uppercase;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.ai-assistant-panel .ai-plan-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ai-assistant-panel .ai-plan-steps li {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ai-assistant-panel .ai-plan-actions {
+  display: flex;
+  margin-top: 4px;
+  gap: 6px;
+}
+
+.ai-assistant-panel .ai-apply-btn,
+.ai-assistant-panel .ai-dismiss-btn {
+  padding: 2px 8px;
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+  background: none;
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-apply-btn[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ai-assistant-panel .ai-plan-note {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--modeler-color-text-secondary, #666);
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-plan-note--warning {
+  color: #c00;
+}
+
+.ai-assistant-panel .ai-chat-error {
+  padding: 6px 8px;
+  color: #c00;
+  border: 1px solid #c00;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.ai-assistant-panel .ai-chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-assistant-panel .ai-chat-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px;
+  resize: vertical;
+  color: inherit;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.ai-assistant-panel .ai-send-btn {
+  padding: 6px 12px;
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--modeler-color-border, #ccc);
+  border-radius: 4px;
+  background: none;
+  font-size: 13px;
+}
+
+.ai-assistant-panel .ai-send-btn[disabled],
+.ai-assistant-panel .ai-chat-input[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}

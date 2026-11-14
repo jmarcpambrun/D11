@@ -1,0 +1,24 @@
+services:
+  logger.channel.ai_eca_interceptor:
+    parent: logger.channel_base
+    arguments: ['ai_eca_interceptor']
+
+  ai_eca_interceptor.token_builder:
+    class: Drupal\ai_eca_interceptor\Service\EventTokenBuilder
+
+  ai_eca_interceptor.failover_guard:
+    class: Drupal\ai_eca_interceptor\FailoverGuard
+
+  ai_eca_interceptor.reroute_subscriber:
+    class: Drupal\ai_eca_interceptor\EventSubscriber\ProviderRerouteSubscriber
+    arguments:
+      - '@ai.provider'
+      - '@logger.channel.ai_eca_interceptor'
+    tags:
+      - { name: event_subscriber }
+
+  ai_eca_interceptor.guardrail_applier_subscriber:
+    class: Drupal\ai_eca_interceptor\EventSubscriber\GuardrailApplierSubscriber
+    arguments: ['@Drupal\ai\EventSubscriber\GuardrailsEventSubscriber']
+    tags:
+      - { name: event_subscriber }

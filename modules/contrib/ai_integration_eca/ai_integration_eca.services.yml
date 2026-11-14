@@ -1,0 +1,27 @@
+services:
+  logger.channel.ai_integration_eca:
+    parent: logger.channel_base
+    arguments:
+      - 'ai_integration_eca'
+
+  ai_integration_eca.provider_validator:
+    class: Drupal\ai_integration_eca\Service\AiProviderValidator
+    arguments: ['@validation.basic_recursive_validator_factory']
+
+  ai_integration_eca.modeler_component_catalog:
+    class: Drupal\ai_integration_eca\Service\ModelerComponentCatalog
+
+  ai_integration_eca.modeler_context_builder:
+    class: Drupal\ai_integration_eca\Service\ModelerContextBuilder
+    arguments: ['@ai_integration_eca.modeler_component_catalog']
+
+  ai_integration_eca.modeler_plan_validator:
+    class: Drupal\ai_integration_eca\Service\ModelerPlanValidator
+
+  ai_integration_eca.modeler_response_parser:
+    class: Drupal\ai_integration_eca\Service\ModelerResponseParser
+    arguments: ['@ai_integration_eca.modeler_plan_validator']
+
+  ai_integration_eca.file_helper:
+    class: Drupal\ai_integration_eca\Service\AiFileHelper
+    arguments: ['@entity_type.manager', '@file_system', '@logger.channel.ai_integration_eca', '@stream_wrapper_manager']

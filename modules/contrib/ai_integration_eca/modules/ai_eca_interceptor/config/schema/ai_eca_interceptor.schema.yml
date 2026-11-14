@@ -1,0 +1,273 @@
+# Config schema for the failover actions added for the native AiExceptionEvent.
+# These are ECA-native actions (Drupal\eca\Plugin\Action\ActionInterface), so
+# ECA does not inject a "replace_tokens" key; the keys below are the full set.
+action.configuration.ai_eca_interceptor_failover_chat_output:
+  type: mapping
+  label: 'Configuration for the "AI response failed: return chat output" action'
+  mapping:
+    text:
+      type: text
+      label: 'Output text'
+    role:
+      type: string
+      label: 'Role'
+
+action.configuration.ai_eca_interceptor_rewrite_exception_message:
+  type: mapping
+  label: 'Configuration for the "AI response failed: rewrite message" action'
+  mapping:
+    message:
+      type: text
+      label: 'Exception message'
+
+action.configuration.ai_eca_interceptor_failover_to_provider:
+  type: mapping
+  label: 'Configuration for the "AI response failed: fail over to provider/model" action'
+  mapping:
+    provider_id:
+      type: string
+      label: 'Backup provider id'
+    model_id:
+      type: string
+      label: 'Backup model id'
+
+# Config schema for the remaining ECA-augmented interceptor plugins. These are
+# eca ActionInterface / ConditionInterface / EventInterface plugins, so ECA does
+# not inject a "replace_tokens" key; the keys below are the full set. ECA's
+# ConfigSchemaHooks only augments entries that already exist, so each plugin
+# needs its own base mapping declared here.
+
+# Actions.
+action.configuration.ai_eca_interceptor_attach_guardrail_set:
+  type: mapping
+  label: 'Configuration for the "AI request: attach guardrail set" action'
+  mapping:
+    guardrail_set_id:
+      type: string
+      label: 'Guardrail set id'
+
+action.configuration.ai_eca_interceptor_block_request:
+  type: mapping
+  label: 'Configuration for the "AI request: block" action'
+  mapping:
+    mode:
+      type: string
+      label: 'Mode'
+    message:
+      type: text
+      label: 'Message'
+
+action.configuration.ai_eca_interceptor_block_response:
+  type: mapping
+  label: 'Configuration for the "AI response: block" action'
+  mapping:
+    mode:
+      type: string
+      label: 'Mode'
+    message:
+      type: text
+      label: 'Message'
+
+action.configuration.ai_eca_interceptor_chat_append_message:
+  type: mapping
+  label: 'Configuration for the "AI chat request: append message" action'
+  mapping:
+    role:
+      type: string
+      label: 'Role'
+    text:
+      type: text
+      label: 'Message text'
+
+action.configuration.ai_eca_interceptor_chat_replace_message_text:
+  type: mapping
+  label: 'Configuration for the "AI chat request: replace message text" action'
+  mapping:
+    index:
+      type: integer
+      label: 'Message index'
+    text:
+      type: text
+      label: 'Message text'
+
+action.configuration.ai_eca_interceptor_chat_set_streamed:
+  type: mapping
+  label: 'Configuration for the "AI chat request: set streamed" action'
+  mapping:
+    streamed:
+      type: boolean
+      label: 'Streamed'
+
+action.configuration.ai_eca_interceptor_chat_set_system_prompt:
+  type: mapping
+  label: 'Configuration for the "AI chat request: set system prompt" action'
+  mapping:
+    prompt:
+      type: text
+      label: 'System prompt'
+
+action.configuration.ai_eca_interceptor_count_tokens:
+  type: mapping
+  label: 'Configuration for the "AI: count tokens" action'
+  mapping:
+    text:
+      type: text
+      label: 'Text'
+    model:
+      type: string
+      label: 'Model'
+    token_name:
+      type: label
+      label: 'Name of token'
+
+action.configuration.ai_eca_interceptor_force_chat_output:
+  type: mapping
+  label: 'Configuration for the "AI request: force chat output" action'
+  mapping:
+    text:
+      type: text
+      label: 'Output text'
+    role:
+      type: string
+      label: 'Role'
+
+action.configuration.ai_eca_interceptor_replace_chat_output:
+  type: mapping
+  label: 'Configuration for the "AI response: replace chat output" action'
+  mapping:
+    text:
+      type: text
+      label: 'Output text'
+    role:
+      type: string
+      label: 'Role'
+
+action.configuration.ai_eca_interceptor_reroute:
+  type: mapping
+  label: 'Configuration for the "AI request: reroute provider/model" action'
+  mapping:
+    provider_id:
+      type: string
+      label: 'Provider id'
+    model_id:
+      type: string
+      label: 'Model id'
+
+action.configuration.ai_eca_interceptor_set_config:
+  type: mapping
+  label: 'Configuration for the "AI request: set config value" action'
+  mapping:
+    key:
+      type: string
+      label: 'Configuration key'
+    value:
+      type: text
+      label: 'Value'
+    cast:
+      type: string
+      label: 'Cast'
+
+action.configuration.ai_eca_interceptor_set_metadata:
+  type: mapping
+  label: 'Configuration for the "AI event: set metadata value" action'
+  mapping:
+    key:
+      type: string
+      label: 'Metadata key'
+    value:
+      type: text
+      label: 'Value'
+
+action.configuration.ai_eca_interceptor_set_response_text:
+  type: mapping
+  label: 'Configuration for the "AI response: set text" action'
+  mapping:
+    text:
+      type: text
+      label: 'Response text'
+
+action.configuration.ai_eca_interceptor_set_tag:
+  type: mapping
+  label: 'Configuration for the "AI event: set tag" action'
+  mapping:
+    tag:
+      type: string
+      label: 'Tag'
+
+action.configuration.ai_eca_interceptor_unset_config:
+  type: mapping
+  label: 'Configuration for the "AI request: unset config value" action'
+  mapping:
+    key:
+      type: string
+      label: 'Configuration key'
+
+# Conditions.
+eca.condition.plugin.ai_eca_interceptor_has_tag:
+  type: eca.condition.plugin
+  label: 'AI event: has tag'
+  mapping:
+    tag:
+      type: text
+      label: 'Tag'
+
+eca.condition.plugin.ai_eca_interceptor_response_failed:
+  type: eca.condition.plugin
+  label: 'AI response: failed (any exception)'
+
+# Events.
+eca.event.plugin.ai_eca_interceptor:ai_request:
+  type: eca.event.plugin
+  label: 'AI request: before provider call'
+  mapping:
+    operation_type:
+      type: string
+      label: 'Operation type filter'
+    provider_id:
+      type: string
+      label: 'Provider id filter'
+    model_id:
+      type: string
+      label: 'Model id filter'
+
+eca.event.plugin.ai_eca_interceptor:ai_response:
+  type: eca.event.plugin
+  label: 'AI response: after provider call'
+  mapping:
+    operation_type:
+      type: string
+      label: 'Operation type filter'
+    provider_id:
+      type: string
+      label: 'Provider id filter'
+    model_id:
+      type: string
+      label: 'Model id filter'
+
+eca.event.plugin.ai_eca_interceptor:ai_stream_finished:
+  type: eca.event.plugin
+  label: 'AI response: stream finished'
+  mapping:
+    operation_type:
+      type: string
+      label: 'Operation type filter'
+    provider_id:
+      type: string
+      label: 'Provider id filter'
+    model_id:
+      type: string
+      label: 'Model id filter'
+
+eca.event.plugin.ai_eca_interceptor:ai_response_failed:
+  type: eca.event.plugin
+  label: 'AI response: failed'
+  mapping:
+    operation_type:
+      type: string
+      label: 'Operation type filter'
+    provider_id:
+      type: string
+      label: 'Provider id filter'
+    model_id:
+      type: string
+      label: 'Model id filter'

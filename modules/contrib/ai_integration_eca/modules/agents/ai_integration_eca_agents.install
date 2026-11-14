@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Install file for AI Integration - ECA: Agents.
+ */
+
+use Drupal\Core\Config\FileStorage;
+
+/**
+ * Install the ECA Agent config entity that replaces the legacy agent plugin.
+ */
+function ai_integration_eca_agents_update_10001(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('ai_agent');
+  if ($storage->load('eca')) {
+    return;
+  }
+
+  $path = \Drupal::service('extension.list.module')->getPath('ai_integration_eca_agents');
+  $source = new FileStorage($path . '/config/install');
+  $values = $source->read('ai_agents.ai_agent.eca');
+  if (!is_array($values)) {
+    throw new \RuntimeException('The configuration of the ECA Agent could not be read.');
+  }
+
+  $storage->create($values)->save();
+}

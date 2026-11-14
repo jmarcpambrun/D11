@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Install file for AI Integration - ECA.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function ai_integration_eca_install(): void {
+  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $handler */
+  $handler = \Drupal::service('module_handler');
+  /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
+  $installer = \Drupal::service('module_installer');
+  // Install the agents-submodule if the original one was installed.
+  if ($handler->moduleExists('ai_eca_agents')) {
+    $installer->install(['ai_integration_eca_agents']);
+  }
+  // Uninstall the old submodule of AI core if it is still installed.
+  $installer->uninstall(['ai_eca']);
+}

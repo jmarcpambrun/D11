@@ -1,0 +1,7 @@
+{
+  "patches": {
+    "drupal/ai": {
+      "Declare void return type on constraint validators for Symfony 8 (ai#3586664)": "https://git.drupalcode.org/project/ai/-/merge_requests/1942.diff"
+    }
+  }
+}

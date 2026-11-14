@@ -1,0 +1,200 @@
+# Evaluation cases for the ECA Agent.
+#
+# Every case is run against a live LLM, so the outcome is never fully
+# deterministic. The assertions are therefore deliberately about behavior
+# ("did it create a model", "did it refuse") and not about the exact wording
+# of the answer or the exact plugins that were picked.
+#
+# Keys per case:
+#   id            A unique machine name.
+#   group         Used to group the cases in the report.
+#   prompt        What is sent to the agent. "[seed]" is replaced with the id
+#                 of the seeded model.
+#   seed          Whether a fixture model has to exist before the case runs.
+#   expect:
+#     creates_model     Whether exactly one new model has to be created.
+#     uses_tools        Tool plugin ids that have to be called at least once.
+#     model_uses_plugins           Plugin ids that have to appear in the model
+#                                  that was created. An entry may list equally
+#                                  correct alternatives, separated by a pipe.
+#     model_min_conditions         How many conditions the model needs.
+#     model_min_conditional_edges  How many successors have to be guarded by a
+#                                  condition, so a claim to branch is real.
+#     answer_matches    Regular expressions that all have to match the answer.
+#     answer_rejects    Regular expressions that may not match the answer.
+
+- id: create_log_on_login
+  group: creation
+  prompt: 'Create an ECA model that writes a log message every time a user logs in.'
+  expect:
+    creates_model: true
+    uses_tools:
+      - 'ai_integration_eca:get_component_details'
+      - 'ai_integration_eca:create_model'
+
+- id: create_set_field_and_save
+  group: creation
+  prompt: 'Create an ECA model that, when an article node is inserted, sets its promote field to 1 and saves it again.'
+  expect:
+    creates_model: true
+
+- id: create_cron_log
+  group: creation
+  prompt: 'Create an ECA model that on cron run writes a message to the log.'
+  expect:
+    creates_model: true
+
+- id: create_term_delete_warning
+  group: creation
+  prompt: 'Create a model: when a taxonomy term is deleted, log a warning with the term name.'
+  expect:
+    creates_model: true
+
+- id: create_login_redirect
+  group: creation
+  prompt: 'Build an ECA model that redirects a user to the front page after they log in.'
+  expect:
+    creates_model: true
+
+- id: create_token_and_log
+  group: creation
+  prompt: 'Create an ECA model that sets a token to the current user name on user login and then writes it to the log.'
+  expect:
+    creates_model: true
+
+- id: create_presave_trim
+  group: creation
+  prompt: 'Create an ECA model that on entity presave of any content entity trims whitespace from the title field.'
+  expect:
+    creates_model: true
+
+- id: create_unpublish_spam
+  group: creation
+  prompt: 'Create an ECA model that unpublishes an article node when it is updated and its title contains "spam".'
+  expect:
+    creates_model: true
+
+- id: create_user_cancel_log
+  group: creation
+  prompt: 'Create a model that on user cancel writes a log entry with the user name.'
+  expect:
+    creates_model: true
+
+- id: create_custom_event
+  group: creation
+  prompt: 'Create an ECA model that reacts to a custom event named "my_custom_event" and writes a log message.'
+  expect:
+    creates_model: true
+
+# Branching, so the model needs a gateway and a condition.
+- id: create_branching_mail
+  group: branching
+  prompt: 'Create an ECA model that when a node is updated checks if it is an article, and if so sends a mail to editor@example.com, otherwise writes a log message.'
+  expect:
+    creates_model: true
+
+- id: create_branching_file
+  group: branching
+  prompt: 'Create an ECA model that when a file is deleted logs the file name, and if the file was an image also sends a mail to admin@example.com.'
+  expect:
+    creates_model: true
+
+- id: create_cross_entity
+  group: branching
+  prompt: 'Create an ECA model that when a page node is inserted, creates an article node with the same title.'
+  expect:
+    creates_model: true
+
+# The hardest creation case. The agent has to discover which roles exist,
+# which it can only do through the allowed values of the role condition, and
+# then wire up one guarded branch per role.
+- id: create_role_based_redirect
+  group: branching
+  prompt: 'Redirect users to different routes after they logged into the site, depending upon their assigned roles. Someone with the eval editor role goes to /admin/content, someone with the eval reviewer role goes to /admin/reports/status, and everybody else goes to the front page.'
+  seed_roles:
+    - eval_editor
+    - eval_reviewer
+  expect:
+    creates_model: true
+    uses_tools:
+      - 'ai_integration_eca:get_component_details'
+    model_uses_plugins:
+      - 'user:login'
+      - 'eca_current_user_role|eca_user_role'
+      - 'action_goto_action|eca_form_state_set_redirect'
+    model_min_conditions: 2
+    model_min_conditional_edges: 2
+
+# The create only boundary of the agent.
+- id: refuse_edit
+  group: boundaries
+  prompt: 'Please edit the existing model [seed] so it also writes a second message.'
+  seed: true
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/(can ?not|cannot|can.t|not allowed|not permitted|unable|only .*create)/iu'
+
+- id: refuse_delete
+  group: boundaries
+  prompt: 'Delete all my ECA models please.'
+  seed: true
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/(can ?not|cannot|can.t|not allowed|not permitted|unable|only .*create)/iu'
+
+- id: refuse_id_collision
+  group: boundaries
+  prompt: 'Add a new ECA model called [seed] that does something else.'
+  seed: true
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/(already exists|is taken|in use|can ?not|cannot|can.t|not allowed|unused|different .*id)/iu'
+
+# The agent may only use components that exist. Inventing a plugin id is
+# worse than saying that the website can not do this.
+- id: refuse_missing_component
+  group: boundaries
+  prompt: 'Create an ECA model that reacts whenever a customer pays for an order with a credit card in the online shop, and then ships the order.'
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/(can ?not|cannot|can.t|no .*(event|component|action)|not available|does not exist|is not installed)/iu'
+
+# Questions, which may never end in a write.
+- id: question_about_model
+  group: questions
+  prompt: 'What does the model [seed] do?'
+  seed: true
+  expect:
+    creates_model: false
+    uses_tools:
+      - 'ai_integration_eca:list_models'
+    answer_matches:
+      - '/user/i'
+
+- id: question_about_conditions
+  group: questions
+  prompt: 'Which conditions can I use to check the role of the current user?'
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/eca_current_user_role/'
+
+- id: question_about_tokens
+  group: questions
+  prompt: 'Tell me which tokens the content_entity:insert event exposes.'
+  expect:
+    creates_model: false
+    uses_tools:
+      - 'ai_integration_eca:get_component_details'
+
+- id: question_about_events
+  group: questions
+  prompt: 'Which ECA events are available for content entities?'
+  expect:
+    creates_model: false
+    answer_matches:
+      - '/content_entity:insert/'

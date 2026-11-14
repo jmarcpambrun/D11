@@ -1,0 +1,15 @@
+name: 'AI ECA Interceptor'
+type: module
+description: 'Intercepts AI requests and responses through ECA events, conditions, and actions.'
+core_version_requirement: ^10.3 || ^11 || ^12
+package: AI
+dependencies:
+  # Failover relies on AiExceptionEvent::setForcedOutputObject(), added in
+  # ai:1.4.0.
+  - ai:ai (>=1.4)
+  - eca:eca
+
+# Information added by Drupal.org packaging script on 2026-09-21
+version: '1.0.1'
+project: 'ai_integration_eca'
+datestamp: 1789980027

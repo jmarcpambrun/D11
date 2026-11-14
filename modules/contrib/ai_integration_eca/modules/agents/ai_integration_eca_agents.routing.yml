@@ -1,0 +1,9 @@
+ai_integration_eca_agents.ask_ai:
+  path: '/api/ai-eca-agents/ask-ai'
+  defaults:
+    _title: 'Ask AI'
+    _form: '\Drupal\ai_integration_eca_agents\Form\AskAiForm'
+  options:
+    _admin_route: true
+  requirements:
+    _permission: 'administer eca'

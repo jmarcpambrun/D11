@@ -1,0 +1,9 @@
+modeler_plugin:
+  js:
+    js/modeler-plugin.js: { minified: true, preprocess: false }
+  css:
+    component:
+      css/modeler-plugin.css: { minified: true, preprocess: false }
+  dependencies:
+    - core/drupal
+    - core/once

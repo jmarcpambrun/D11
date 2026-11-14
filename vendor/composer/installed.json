@@ -3206,6 +3206,80 @@
             "install-path": "../../modules/contrib/ai_content_suggestions"
         },
         {
+            "name": "drupal/ai_integration_eca",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/ai_integration_eca.git",
+                "reference": "1.0.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/ai_integration_eca-1.0.1.zip",
+                "reference": "1.0.1",
+                "shasum": "d210034ed57286e413e8a4ac014ade32118b1dab"
+            },
+            "require": {
+                "drupal/ai": "^1.4",
+                "drupal/ai_agents": "^1.3",
+                "drupal/core": "^10.3 || ^11",
+                "drupal/eca": "^2 || ^3"
+            },
+            "replace": {
+                "drupal/ai_eca": "*"
+            },
+            "require-dev": {
+                "drupal/ai": "^1.4",
+                "drupal/ai_agents": "*",
+                "drupal/ai_automators": "*",
+                "drupal/eca": "*",
+                "drupal/eca_content": "*",
+                "drupal/eca_ui": "*",
+                "drupal/modeler_api": "^1",
+                "drupal/schemata": "^1.0",
+                "drupal/schemata_json_schema": "*",
+                "spatie/phpunit-snapshot-assertions": "^4.2 || ^5.1"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.0.1",
+                    "datestamp": "1789980025",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "jurgenhaas",
+                    "homepage": "https://www.drupal.org/user/168924"
+                },
+                {
+                    "name": "lammensj",
+                    "homepage": "https://www.drupal.org/user/1939186"
+                },
+                {
+                    "name": "marcus_johansson",
+                    "homepage": "https://www.drupal.org/user/385947"
+                }
+            ],
+            "description": "The bridge between AI and ECA.",
+            "homepage": "https://www.drupal.org/project/ai_integration_eca",
+            "support": {
+                "source": "https://drupal.org/project/ai_integration_eca",
+                "issues": "https://drupal.org/project/issues/ai_integration_eca"
+            },
+            "install-path": "../../modules/contrib/ai_integration_eca"
+        },
+        {
             "name": "drupal/ai_logging",
             "version": "1.3.3",
             "version_normalized": "1.3.3.0",

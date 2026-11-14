@@ -1,0 +1,10 @@
+ai_integration_eca.modeler_assistant.chat:
+  path: '/ai-integration-eca/modeler-assistant/chat'
+  defaults:
+    _controller: '\Drupal\ai_integration_eca\Controller\ModelerAssistantController::chat'
+  methods: [POST]
+  requirements:
+    _permission: 'use ai modeler assistant'
+    _csrf_request_header_token: 'TRUE'
+  options:
+    no_cache: 'TRUE'

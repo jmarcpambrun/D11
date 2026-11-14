@@ -1,0 +1,83 @@
+parameters:
+  level: 6
+  reportUnmatchedIgnoredErrors: false
+  scanDirectories:
+    - ../../../../vendor/drush/drush/src-symfony-compatibility
+  ignoreErrors:
+    - identifier: missingType.iterableValue
+    - identifier: missingType.generics
+    - '#^Call to an undefined method Drupal\\eca\\Entity\\Eca::getModel\(\).#'
+    - '#^Method Drupal\\eca\\Entity\\Eca::addCondition\(\) invoked with 4 parameters, 3 required.#'
+    - '#^Method Drupal\\eca\\Entity\\Eca::addCondition\(\) invoked with 3 parameters, 4 required.#'
+    - '#^Parameter \#3 \$fields of method Drupal\\eca\\Entity\\Eca::addCondition\(\) expects array, string given.#'
+    - '#^Parameter \#3 \$label of method Drupal\\eca\\Entity\\Eca::addCondition\(\) expects string, array given.#'
+    - '#^Parameter \#2 \$array of function implode expects array\|null, Symfony\\Component\\Validator\\ConstraintViolationListInterface given.#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::setConfiguration\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::chat\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::embeddings\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::moderation\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::speechToText\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::textToSpeech\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::textToImage\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::imageToImage\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::imageClassification\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::objectDetection\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::rerank\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::translateText\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::speechToSpeech\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::audioToAudio\(\).#'
+    - '#^Call to an undefined method Drupal\\ai\\Plugin\\ProviderProxy::imageToVideo\(\).#'
+    # The following identifier needs to be ignored on Drupal 10.
+    - '#^Result of && is always false.#'
+    # Drupal\Core\Hook\Attribute\Hook is the OOP hook attribute, which arrived
+    # in Drupal 11.1. This module still supports ^10.3, so on the previous
+    # major the class genuinely does not exist and phpstan says so.
+    #
+    # Nothing is broken by that. A PHP attribute is inert unless something
+    # reflects on it, so on Drupal 10 the hook is simply never discovered
+    # rather than failing. The only thing it does is attach the modeler plugin
+    # library, and the modeler module requires Drupal 11.3 regardless, so
+    # there is no modeler on Drupal 10 for it to integrate with: the
+    # integration being absent there is the correct outcome.
+    #
+    # Deliberately scoped by path to the one file that carries the attribute,
+    # so that a genuinely missing attribute class anywhere else still reports.
+    # Remove this once the module's minimum core version reaches 11.1.
+    -
+      identifier: attribute.notFound
+      paths:
+        - src/Hook/LibraryHooks.php
+    # TEMPORARY: Drupal\ai_agents\PluginBase\AiAgentBase is deprecated in
+    # ai_agents:1.3.0, which makes every use of it and of its members report a
+    # deprecation. Migrating off it is a separate issue, not something to do
+    # here: the deprecation message is an unedited placeholder ("Extend
+    # \Drupal\my_module\Plugin\NewPluginBase instead"), so no replacement base
+    # class is actually documented yet. Tracked upstream at
+    # https://git.drupalcode.org/project/ai_agents/-/work_items/3546513 —
+    # remove this whole block once that lands and the agents submodule is
+    # ported.
+    #
+    # Deliberately scoped by path to the two affected files in the agents
+    # submodule. Do NOT widen this to a project-wide deprecation ignore:
+    # ai_eca_interceptor and the rest of the module must stay strict, so that a
+    # deprecation introduced there is still reported.
+    -
+      identifier: class.extendsDeprecatedClass
+      paths:
+        - modules/agents/src/Plugin/AiAgent/Eca.php
+    -
+      identifier: method.deprecatedClass
+      paths:
+        - modules/agents/src/Form/AskAiForm.php
+        - modules/agents/src/Plugin/AiAgent/Eca.php
+    -
+      identifier: property.deprecatedClass
+      paths:
+        - modules/agents/src/Plugin/AiAgent/Eca.php
+    -
+      identifier: staticMethod.deprecatedClass
+      paths:
+        - modules/agents/src/Plugin/AiAgent/Eca.php
+  excludePaths:
+    - '*/tests/*.php'
+    - 'modules/agents/*'

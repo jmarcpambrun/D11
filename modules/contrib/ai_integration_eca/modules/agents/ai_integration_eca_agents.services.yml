@@ -1,0 +1,52 @@
+services:
+  logger.channel.ai_integration_eca_agents:
+    parent: logger.channel_base
+    arguments:
+      - 'ai_integration_eca_agents'
+
+  ai_integration_eca_agents.services.data_provider:
+    class: Drupal\ai_integration_eca_agents\Services\DataProvider\DataProvider
+    arguments:
+      - '@plugin.manager.eca.event'
+      - '@eca.service.condition'
+      - '@eca.service.action'
+      - '@entity_type.manager'
+      - '@ai_integration_eca_agents.services.model_mapper'
+
+  ai_integration_eca_agents.services.eca_repository:
+    class: Drupal\ai_integration_eca_agents\Services\EcaRepository\EcaRepository
+    arguments:
+      - '@entity_type.manager'
+      - '@ai_integration_eca_agents.services.model_mapper'
+      - '@typed_data_manager'
+      - '@logger.channel.ai_integration_eca_agents'
+
+  ai_integration_eca_agents.services.schema_provider:
+    class: Drupal\ai_integration_eca_agents\Services\SchemaProvider\SchemaProvider
+    arguments:
+      - '@serializer'
+
+  ai_integration_eca_agents.services.model_mapper:
+    class: Drupal\ai_integration_eca_agents\Services\ModelMapper\ModelMapper
+    arguments:
+      - '@typed_data_manager'
+
+  # Typed data definitions in general can take many forms. This handles final items.
+  serializer.normalizer.data_definition.schema_json_ai_integration_eca_agents.json:
+    class: Drupal\ai_integration_eca_agents\Normalizer\json\DataDefinitionNormalizer
+    decorates: serializer.normalizer.data_definition.schema_json.json
+    arguments:
+      - '@serializer.normalizer.data_definition.schema_json_ai_integration_eca_agents.json.inner'
+
+  Drupal\ai_integration_eca_agents\Hook\FormHooks:
+    class: Drupal\ai_integration_eca_agents\Hook\FormHooks
+    autowire: true
+
+  # Interface alias so autowired consumers can resolve the data provider by its
+  # interface. Drush discovers DebugDataProviderCommand from src/Command/ and its
+  # constructor is autowired; it type-hints DataProviderInterface, so without
+  # this alias container compilation fails with "Cannot autowire service ...
+  # argument $dataProvider". Only this interface is aliased on purpose:
+  # EcaRepositoryInterface and ModelMapperInterface are always resolved by their
+  # concrete service id, so aliases for them would be dead configuration.
+  Drupal\ai_integration_eca_agents\Services\DataProvider\DataProviderInterface: '@ai_integration_eca_agents.services.data_provider'

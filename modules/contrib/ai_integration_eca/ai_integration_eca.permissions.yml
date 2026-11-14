@@ -1,0 +1,4 @@
+use ai modeler assistant:
+  title: 'Use the AI assistant in the modeler'
+  description: 'Ask the configured AI provider questions about the model that is open in the modeler. The model, including the configuration of its components, is sent to that provider.'
+  restrict access: true

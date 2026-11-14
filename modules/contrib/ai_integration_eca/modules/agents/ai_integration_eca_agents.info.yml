@@ -1,0 +1,16 @@
+name: 'AI Integration - ECA: Agents'
+type: module
+description: 'Enable an LLM to answer questions about models and ECA-components.'
+core_version_requirement: ^11.3 || ^12.0
+package: AI
+dependencies:
+  - ai_integration_eca:ai_integration_eca
+  - ai_agents:ai_agents
+  - eca:eca_ui
+  - modeler_api:modeler_api
+  - schemata:schemata_json_schema
+
+# Information added by Drupal.org packaging script on 2026-09-21
+version: '1.0.1'
+project: 'ai_integration_eca'
+datestamp: 1789980027
