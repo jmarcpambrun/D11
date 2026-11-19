@@ -2,7 +2,6 @@ analyse
 analysing
 checkstyle
 codeclimate
-dekor
 deprecatedfilter
 endspaceless
 extdata
@@ -10,6 +9,8 @@ Gábor
 Hojtsy
 inspectable
 linecount
+mglaman
+mymodule
 NOSORT
 ONLYDIR
 rescan
@@ -18,5 +19,7 @@ sandboxing
 subcomponent
 subextension
 sublist
+updatedb
 updatev
 pathAliasWhitelistRebuild
+palantirnet

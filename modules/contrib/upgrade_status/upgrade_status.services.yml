@@ -2,18 +2,20 @@ services:
   upgrade_status.deprecation_analyzer:
     class: Drupal\upgrade_status\DeprecationAnalyzer
     arguments:
-      - '@keyvalue'
-      - '@logger.channel.upgrade_status'
-      - '@http_client'
-      - '@file_system'
-      - '@upgrade_status.twig_deprecation_analyzer'
-      - '@upgrade_status.library_deprecation_analyzer'
-      - '@upgrade_status.route_deprecation_analyzer'
-      - '@upgrade_status.extension_metadata_deprecation_analyzer'
-      - '@upgrade_status.config_schema_deprecation_analyzer'
-      - '@upgrade_status.css_deprecation_analyzer'
+      - '@upgrade_status.result_storage'
+      - '@upgrade_status.phpstan_analyzer'
+      - '@upgrade_status.message_categorizer'
       - '@datetime.time'
-      - '@extension.list.module'
+      - '@upgrade_status.file_finder'
+    tags:
+      - { name: service_collector, tag: upgrade_status.analyzer, call: addAnalyzer }
+  upgrade_status.phpstan_analyzer:
+    class: Drupal\upgrade_status\PhpStanAnalyzer
+    arguments: ['@logger.channel.upgrade_status', '@file_system', '@extension.list.module', '@cache.default', '@upgrade_status.file_finder']
+  upgrade_status.file_finder:
+    class: Drupal\upgrade_status\FileFinder
+  upgrade_status.message_categorizer:
+    class: Drupal\upgrade_status\MessageCategorizer
   upgrade_status.library_deprecation_analyzer:
     class: Drupal\upgrade_status\LibraryDeprecationAnalyzer
     arguments:
@@ -22,20 +24,79 @@ services:
       - '@extension.list.module'
       - '@extension.list.theme'
       - '@extension.list.profile'
-  upgrade_status.theme_function_deprecation_analyzer:
-    class: Drupal\upgrade_status\ThemeFunctionDeprecationAnalyzer
-    arguments: ['@service_container']
+      - '@upgrade_status.file_finder'
+    tags:
+      - { name: upgrade_status.analyzer, priority: 110 }
   upgrade_status.twig_deprecation_analyzer:
     class: Drupal\upgrade_status\TwigDeprecationAnalyzer
-    arguments: ['@twig']
+    arguments: ['@twig', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 120 }
   upgrade_status.route_deprecation_analyzer:
     class: Drupal\upgrade_status\RouteDeprecationAnalyzer
-  upgrade_status.css_deprecation_analyzer:
-    class: Drupal\upgrade_status\CSSDeprecationAnalyzer
+    arguments: ['@extension.list.module', '@extension.list.profile', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 100 }
+  upgrade_status.hook_deprecation_analyzer:
+    class: Drupal\upgrade_status\HookDeprecationAnalyzer
+    arguments: ['@extension.list.module', '@entity_type.manager', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 80 }
+  upgrade_status.javascript_deprecation_analyzer:
+    class: Drupal\upgrade_status\JavaScriptDeprecationAnalyzer
+    arguments: ['@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 70 }
+  upgrade_status.recipe_deprecation_analyzer:
+    class: Drupal\upgrade_status\RecipeDeprecationAnalyzer
+    arguments: ['@upgrade_status.deprecated_extension_describer', '@config.manager', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 60 }
+  upgrade_status.fetch_mode_deprecation_analyzer:
+    class: Drupal\upgrade_status\FetchModeDeprecationAnalyzer
+    arguments: ['@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 50 }
+  upgrade_status.session_deprecation_analyzer:
+    class: Drupal\upgrade_status\SessionDeprecationAnalyzer
+    arguments: ['@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 20 }
+  upgrade_status.plugin_definition_deprecation_analyzer:
+    class: Drupal\upgrade_status\PluginDefinitionDeprecationAnalyzer
+    arguments: ['@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 10 }
+  upgrade_status.service_deprecation_analyzer:
+    class: Drupal\upgrade_status\ServiceDeprecationAnalyzer
+    arguments: ['@extension.list.module', '@extension.list.profile', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 40 }
+  upgrade_status.template_deprecation_analyzer:
+    class: Drupal\upgrade_status\TemplateDeprecationAnalyzer
+    arguments:
+      - '@module_handler'
+      - '@extension.list.module'
+      - '@extension.list.theme'
+      - '@twig'
+      - '@upgrade_status.deprecated_extension_describer'
+      - '@upgrade_status.file_finder'
+      - '@?plugin.manager.sdc'
+    tags:
+      - { name: upgrade_status.analyzer, priority: 30 }
   upgrade_status.extension_metadata_deprecation_analyzer:
     class: Drupal\upgrade_status\ExtensionMetadataDeprecationAnalyzer
+    arguments: ['@upgrade_status.deprecated_extension_describer', '@upgrade_status.file_finder']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 0 }
+  upgrade_status.deprecated_extension_describer:
+    class: Drupal\upgrade_status\DeprecatedExtensionDescriber
+    arguments: ['@extension.list.module', '@extension.list.theme']
   upgrade_status.config_schema_deprecation_analyzer:
     class: Drupal\upgrade_status\ConfigSchemaDeprecationAnalyzer
+    arguments: ['@config.typed', '@upgrade_status.file_finder', '@?views.views_data']
+    tags:
+      - { name: upgrade_status.analyzer, priority: 90 }
   upgrade_status.project_collector:
     class: Drupal\upgrade_status\ProjectCollector
     arguments:
@@ -45,9 +106,26 @@ services:
       - '@keyvalue.expirable'
       - '@config.factory'
       - '%install_profile%'
+      - '@upgrade_status.result_storage'
+  upgrade_status.analysis_batch:
+    class: Drupal\upgrade_status\AnalysisBatch
+    arguments: ['@upgrade_status.project_collector', '@upgrade_status.deprecation_analyzer', '@logger.channel.upgrade_status', '@messenger']
+  upgrade_status.result_storage:
+    class: Drupal\upgrade_status\ScanResultStorage
+    arguments: ['@keyvalue', '@datetime.time', '@upgrade_status.tool_update_checker']
+  upgrade_status.tool_update_checker:
+    class: Drupal\upgrade_status\ToolUpdateChecker
+    arguments: ['@http_client', '@keyvalue.expirable', '@keyvalue', '@extension.list.module', '@config.factory', '@datetime.time']
+  Drupal\upgrade_status\ToolUpdateChecker: '@upgrade_status.tool_update_checker'
+  upgrade_status.report_builder:
+    class: Drupal\upgrade_status\ReportBuilder
+    arguments: ['@upgrade_status.project_collector', '@state', '@date.formatter', '@renderer', '@upgrade_status.result_formatter', '@upgrade_status.tool_update_checker', '@datetime.time']
+  upgrade_status.environment_checker:
+    class: Drupal\upgrade_status\EnvironmentChecker
+    arguments: ['@database', '@module_handler', '@keyvalue.expirable', '@upgrade_status.project_collector', '@request_stack', '@update.update_hook_registry', '@theme_handler', '@keyvalue', '%app.root%']
   upgrade_status.result_formatter:
     class: Drupal\upgrade_status\ScanResultFormatter
-    arguments: ['@keyvalue', '@date.formatter', '@datetime.time', '@module_handler']
+    arguments: ['@upgrade_status.result_storage', '@date.formatter', '@datetime.time', '@renderer', '@upgrade_status.project_collector', '@config.factory', '@transliteration', '@upgrade_status.tool_update_checker']
   logger.channel.upgrade_status:
     parent: logger.channel_base
     arguments: ['upgrade_status']

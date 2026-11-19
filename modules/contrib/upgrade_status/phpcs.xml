@@ -3,6 +3,9 @@
   <rule ref="Drupal"/>
   <rule ref="DrupalPractice"/>
 
+  <!-- ESLint checks the JavaScript files. -->
+  <exclude-pattern>*.js</exclude-pattern>
+
   <!-- The project key is intentionally present in these test module info files
        to simulate contrib projects for testing purposes. -->
   <rule ref="Drupal.InfoFiles.AutoAddedKeys.Project">

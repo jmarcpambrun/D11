@@ -2,5 +2,9 @@ upgrade_status.admin:
   css:
     theme:
       css/upgrade_status.admin.theme.css: {}
+  js:
+    js/upgrade_status.js: {}
   dependencies:
-    - core/drupal.dialog.ajax
+    - core/drupal
+    - core/drupal.announce
+    - core/once

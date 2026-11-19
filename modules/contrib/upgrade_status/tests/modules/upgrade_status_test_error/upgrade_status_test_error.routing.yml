@@ -1,13 +1,9 @@
-upgrade_status_test_error.node.version_history:
-  path: '/node/{node}/upgrade_status_test_error'
+upgrade_status_test_error.page:
+  path: '/upgrade-status-test-error'
   defaults:
-    _title: 'Revisions'
-    _controller: '\Drupal\node\Controller\NodeController::revisionOverview'
+    _controller: '\Drupal\upgrade_status_test_error\Controller\UpgradeStatusTestErrorController::content'
   requirements:
-    _access_node_revision: 'view'
-    node: \d+
+    _permission: 'access content'
   options:
-    _node_operation_route: TRUE
-    parameters:
-      node:
-        type: entity:node
+    # Upgrade Status reports the deprecated route name in this value.
+    upgrade_status_test_previous_route: upgrade_status_test_routes_provider.old

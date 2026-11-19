@@ -572,17 +572,17 @@
         },
         {
             "name": "commerceguys/addressing",
-            "version": "v2.3.2",
-            "version_normalized": "2.3.2.0",
+            "version": "v2.3.3",
+            "version_normalized": "2.3.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/commerceguys/addressing.git",
-                "reference": "e3ce66714cfa181b848533d926e8583261253c9e"
+                "reference": "390ebd12f93cb1c12b0f89d2bf0d6d67c29e5e99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/commerceguys/addressing/zipball/e3ce66714cfa181b848533d926e8583261253c9e",
-                "reference": "e3ce66714cfa181b848533d926e8583261253c9e",
+                "url": "https://api.github.com/repos/commerceguys/addressing/zipball/390ebd12f93cb1c12b0f89d2bf0d6d67c29e5e99",
+                "reference": "390ebd12f93cb1c12b0f89d2bf0d6d67c29e5e99",
                 "shasum": ""
             },
             "require": {
@@ -599,7 +599,7 @@
             "suggest": {
                 "symfony/validator": "to validate addresses"
             },
-            "time": "2026-10-09T10:50:35+00:00",
+            "time": "2026-11-17T19:39:57+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -633,7 +633,7 @@
             ],
             "support": {
                 "issues": "https://github.com/commerceguys/addressing/issues",
-                "source": "https://github.com/commerceguys/addressing/tree/v2.3.2"
+                "source": "https://github.com/commerceguys/addressing/tree/v2.3.3"
             },
             "install-path": "../commerceguys/addressing"
         },
@@ -1676,58 +1676,6 @@
                 "source": "https://github.com/defuse/php-encryption/tree/v2.4.0"
             },
             "install-path": "../defuse/php-encryption"
-        },
-        {
-            "name": "dekor/php-array-table",
-            "version": "2.0",
-            "version_normalized": "2.0.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/deniskoronets/php-array-table.git",
-                "reference": "ca40b21ba84eee6a9658a33fc5f897d76baaf8e5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/deniskoronets/php-array-table/zipball/ca40b21ba84eee6a9658a33fc5f897d76baaf8e5",
-                "reference": "ca40b21ba84eee6a9658a33fc5f897d76baaf8e5",
-                "shasum": ""
-            },
-            "require": {
-                "ext-mbstring": "*",
-                "php": ">=5.6.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^10"
-            },
-            "time": "2023-02-10T10:13:42+00:00",
-            "type": "library",
-            "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "dekor\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Denis Koronets",
-                    "email": "deniskoronets@woo.zp.ua",
-                    "homepage": "https://woo.zp.ua/"
-                }
-            ],
-            "description": "PHP Library for printing associative arrays as text table (similar to mysql terminal console)",
-            "keywords": [
-                "library",
-                "php"
-            ],
-            "support": {
-                "issues": "https://github.com/deniskoronets/php-array-table/issues",
-                "source": "https://github.com/deniskoronets/php-array-table/tree/2.0"
-            },
-            "install-path": "../dekor/php-array-table"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -2832,18 +2780,18 @@
         },
         {
             "name": "drupal/ai",
-            "version": "1.5.2",
-            "version_normalized": "1.5.2.0",
+            "version": "1.5.3",
+            "version_normalized": "1.5.3.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai.git",
-                "reference": "1.5.2"
+                "reference": "1.5.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai-1.5.2.zip",
-                "reference": "1.5.2",
-                "shasum": "b47b8a1bdc0ee719766cdd337cbfddd6eb0e8c70"
+                "url": "https://ftp.drupal.org/files/projects/ai-1.5.3.zip",
+                "reference": "1.5.3",
+                "shasum": "aa97498ca57273483491dc418de99037236ea8cf"
             },
             "require": {
                 "drupal/ai_content_suggestions": "^1.5",
@@ -2883,8 +2831,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.2",
-                    "datestamp": "1793214802",
+                    "version": "1.5.3",
+                    "datestamp": "1795101176",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -2984,6 +2932,10 @@
             ],
             "description": "AI module for Drupal",
             "homepage": "https://www.drupal.org/project/ai",
+            "keywords": [
+                "Actively maintained",
+                "Automation"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/ai"
             },
@@ -3146,29 +3098,29 @@
         },
         {
             "name": "drupal/ai_content_suggestions",
-            "version": "1.5.2",
-            "version_normalized": "1.5.2.0",
+            "version": "1.5.3",
+            "version_normalized": "1.5.3.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_content_suggestions.git",
-                "reference": "1.5.2"
+                "reference": "1.5.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_content_suggestions-1.5.2.zip",
-                "reference": "1.5.2",
-                "shasum": "a2f03b657f754eea5ebf305b9a8d77fc06970a05"
+                "url": "https://ftp.drupal.org/files/projects/ai_content_suggestions-1.5.3.zip",
+                "reference": "1.5.3",
+                "shasum": "2cfd41659b781abe37057bdf89f3e23a492bf7cd"
             },
             "require": {
                 "drupal/ai": "^1.4",
-                "drupal/core": "^10.4 || ^11",
+                "drupal/core": "^10.4 || ^11 || ^12",
                 "drupal/field_widget_actions": "^1.3"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.5.2",
-                    "datestamp": "1791397977",
+                    "version": "1.5.3",
+                    "datestamp": "1795035533",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3200,6 +3152,10 @@
             ],
             "description": "AI Content suggestions for fields",
             "homepage": "https://www.drupal.org/project/ai_content_suggestions",
+            "keywords": [
+                "Actively maintained",
+                "Artificial Intelligence (AI)"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/ai_content_suggestions"
             },
@@ -3281,22 +3237,23 @@
         },
         {
             "name": "drupal/ai_logging",
-            "version": "1.3.3",
-            "version_normalized": "1.3.3.0",
+            "version": "1.3.4",
+            "version_normalized": "1.3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_logging.git",
-                "reference": "1.3.3"
+                "reference": "1.3.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_logging-1.3.3.zip",
-                "reference": "1.3.3",
-                "shasum": "7d273b4ec17bed4a1a992cfe6512fc30ae4e68fe"
+                "url": "https://ftp.drupal.org/files/projects/ai_logging-1.3.4.zip",
+                "reference": "1.3.4",
+                "shasum": "fb3c69b2208ad4783fe7b2b7aade97b46a88c059"
             },
             "require": {
                 "drupal/ai": "^1.2",
-                "drupal/core": "^10.4 || ^11"
+                "drupal/core": "^10.4 || ^11 || ^12",
+                "league/commonmark": "^2.4"
             },
             "conflict": {
                 "drupal/ai": "<1.2"
@@ -3304,8 +3261,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.3.3",
-                    "datestamp": "1790178601",
+                    "version": "1.3.4",
+                    "datestamp": "1794842991",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3325,6 +3282,10 @@
             ],
             "description": "AI Logging module (formerly sub-module of AI Core)",
             "homepage": "https://www.drupal.org/project/ai_logging",
+            "keywords": [
+                "Actively maintained",
+                "Artificial Intelligence (AI)"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/ai_logging"
             },
@@ -3541,40 +3502,43 @@
         },
         {
             "name": "drupal/ai_translate",
-            "version": "1.4.4",
-            "version_normalized": "1.4.4.0",
+            "version": "1.4.5",
+            "version_normalized": "1.4.5.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_translate.git",
-                "reference": "1.4.4"
+                "reference": "1.4.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_translate-1.4.4.zip",
-                "reference": "1.4.4",
-                "shasum": "644a47d6aa7ce1f500c0f6070b382bf41110c4a0"
+                "url": "https://ftp.drupal.org/files/projects/ai_translate-1.4.5.zip",
+                "reference": "1.4.5",
+                "shasum": "6b4d657fe11b5d7185100eb202e47f000b1bd049"
             },
             "require": {
                 "drupal/ai": ">1.2.1",
-                "drupal/core": "^10.4 || ^11"
+                "drupal/core": "^10.4 || ^11 || ^12"
             },
             "conflict": {
                 "drupal/tool": "<1.0.0-beta10"
             },
             "require-dev": {
+                "drupal/ai_context": "1.0.x-dev",
+                "drupal/ai_disclosure": "^1.0@beta",
                 "drupal/layout_builder_at": "^3.0",
                 "drupal/layout_builder_st": "^2.0",
                 "drupal/tool": "^1.0.0-beta10",
                 "drush/drush": "^12 || ^13"
             },
             "suggest": {
+                "drupal/ai_context": "1.0.0-beta5 or later. Push site context into chat-proxy translations via the Context Control Center consumer type.",
                 "drupal/tool": "Install to expose AI Translate as a Tool plugin via the optional ai_translate_tool submodule."
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.4.4",
-                    "datestamp": "1793183967",
+                    "version": "1.4.5",
+                    "datestamp": "1795015812",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3620,6 +3584,10 @@
             ],
             "description": "This module provides simple one-click AI-powered translations.",
             "homepage": "https://www.drupal.org/project/ai_translate",
+            "keywords": [
+                "Actively maintained",
+                "Artificial Intelligence (AI)"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/ai_translate"
             },
@@ -3627,18 +3595,18 @@
         },
         {
             "name": "drupal/ai_validations",
-            "version": "1.4.0",
-            "version_normalized": "1.4.0.0",
+            "version": "1.4.1",
+            "version_normalized": "1.4.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/ai_validations.git",
-                "reference": "1.4.0"
+                "reference": "1.4.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/ai_validations-1.4.0.zip",
-                "reference": "1.4.0",
-                "shasum": "e325bbcd5eb34c8a9f343707c6cefc62756b6c92"
+                "url": "https://ftp.drupal.org/files/projects/ai_validations-1.4.1.zip",
+                "reference": "1.4.1",
+                "shasum": "f30e830d7403cb11283b739728bbd66204fdb547"
             },
             "require": {
                 "drupal/ai": "^1.3",
@@ -3654,8 +3622,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.4.0",
-                    "datestamp": "1792067901",
+                    "version": "1.4.1",
+                    "datestamp": "1795082573",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3691,6 +3659,10 @@
             ],
             "description": "AI support for the Field Validation module",
             "homepage": "https://www.drupal.org/project/ai_validations",
+            "keywords": [
+                "Actively maintained",
+                "Artificial Intelligence (AI)"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/ai_validations"
             },
@@ -5218,8 +5190,8 @@
         },
         {
             "name": "drupal/core-vendor-hardening",
-            "version": "10.6.21",
-            "version_normalized": "10.6.21.0",
+            "version": "10.6.22",
+            "version_normalized": "10.6.22.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core-vendor-hardening.git",
@@ -5256,7 +5228,7 @@
                 "drupal"
             ],
             "support": {
-                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.21"
+                "source": "https://github.com/drupal/core-vendor-hardening/tree/10.6.22"
             },
             "install-path": "../drupal/core-vendor-hardening"
         },
@@ -7818,23 +7790,22 @@
         },
         {
             "name": "drupal/inline_entity_form",
-            "version": "3.0.0",
-            "version_normalized": "3.0.0.0",
+            "version": "3.1.0",
+            "version_normalized": "3.1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/inline_entity_form.git",
-                "reference": "3.0.0"
+                "reference": "3.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/inline_entity_form-3.0.0.zip",
-                "reference": "3.0.0",
-                "shasum": "43417cf232df36d6a621151dffa569b77dfd9725"
+                "url": "https://ftp.drupal.org/files/projects/inline_entity_form-3.1.0.zip",
+                "reference": "3.1.0",
+                "shasum": "d6524762d106fce841d7c4913d22c06c2828acf9"
             },
             "require": {
-                "drupal/core": "^8.8 || ^9 || ^10 || ^11",
-                "drupal/rat": "^1.0.0@stable",
-                "php": ">=7.1"
+                "drupal/core": "^10.3 || ^11 || ^12",
+                "drupal/rat": "^1.0.0@stable"
             },
             "require-dev": {
                 "drupal/entity_reference_revisions": "^1.0"
@@ -7842,8 +7813,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.0",
-                    "datestamp": "1780695753",
+                    "version": "3.1.0",
+                    "datestamp": "1794999100",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -7907,6 +7878,9 @@
             ],
             "description": "Provides a widget for inline management (creation, modification, removal) of referenced entities.",
             "homepage": "https://www.drupal.org/project/inline_entity_form",
+            "keywords": [
+                "Actively maintained"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/inline_entity_form"
             },
@@ -8420,18 +8394,18 @@
         },
         {
             "name": "drupal/maestro",
-            "version": "4.6.0",
-            "version_normalized": "4.6.0.0",
+            "version": "4.6.1",
+            "version_normalized": "4.6.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/maestro.git",
-                "reference": "4.6.0"
+                "reference": "4.6.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/maestro-4.6.0.zip",
-                "reference": "4.6.0",
-                "shasum": "8b021fb972e0b5a6c6c97faf1fc9afc0132cf1af"
+                "url": "https://ftp.drupal.org/files/projects/maestro-4.6.1.zip",
+                "reference": "4.6.1",
+                "shasum": "a8057760c7f26dc80c556b96e551df62b6636b03"
             },
             "require": {
                 "drupal/core": "^10.3 || ^11"
@@ -8452,8 +8426,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.6.0",
-                    "datestamp": "1793815089",
+                    "version": "4.6.1",
+                    "datestamp": "1795023342",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -8477,6 +8451,10 @@
             ],
             "description": "Provides the engine and API for Maestro.",
             "homepage": "https://www.drupal.org/project/maestro",
+            "keywords": [
+                "Actively maintained",
+                "Artificial Intelligence (AI)"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/maestro"
             },
@@ -11192,44 +11170,37 @@
         },
         {
             "name": "drupal/upgrade_status",
-            "version": "5.0.0-alpha3",
-            "version_normalized": "5.0.0.0-alpha3",
+            "version": "5.0.0",
+            "version_normalized": "5.0.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/upgrade_status.git",
-                "reference": "5.0.0-alpha3"
+                "reference": "5.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/upgrade_status-5.0.0-alpha3.zip",
-                "reference": "5.0.0-alpha3",
-                "shasum": "31e9d34dd8d2f546eac040b0a994ed534b8e7201"
+                "url": "https://ftp.drupal.org/files/projects/upgrade_status-5.0.0.zip",
+                "reference": "5.0.0",
+                "shasum": "01bafd24c5bf6f1cf9bc928185c945f1e7c94b0c"
             },
             "require": {
-                "dekor/php-array-table": "^2.0",
                 "drupal/core": "^10.4 || ^11 || ^12",
                 "mglaman/phpstan-drupal": "^1.2.11|^2.0",
-                "nikic/php-parser": "^4.0.0|^5.0.0",
                 "phpstan/phpstan-deprecation-rules": "^1.0.0|^2.0",
-                "symfony/process": "^3.4|^4.0|^5.0|^6.0|^7.0|^8.0",
-                "webflo/drupal-finder": "^1.2"
+                "symfony/process": "^6.4|^7.0|^8.0",
+                "webflo/drupal-finder": "^1.3"
             },
             "require-dev": {
-                "drush/drush": "^11|^12|^13|^14"
+                "drush/drush": "^13|^14"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "5.0.0-alpha3",
-                    "datestamp": "1783011332",
+                    "version": "5.0.0",
+                    "datestamp": "1794828608",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Alpha releases are not covered by Drupal security advisories."
-                    }
-                },
-                "drush": {
-                    "services": {
-                        "drush.services.yml": "^9 || ^10"
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -11246,6 +11217,10 @@
             ],
             "description": "Review Drupal major upgrade readiness of the environment and components of the site.",
             "homepage": "http://drupal.org/project/upgrade_status",
+            "keywords": [
+                "Actively maintained",
+                "Administration tools"
+            ],
             "support": {
                 "source": "https://git.drupalcode.org/project/upgrade_status"
             },
@@ -12538,17 +12513,17 @@
         },
         {
             "name": "firebase/php-jwt",
-            "version": "v7.2.1",
-            "version_normalized": "7.2.1.0",
+            "version": "v7.2.2",
+            "version_normalized": "7.2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/php-jwt.git",
-                "reference": "0501f5729b9e2448516674aff07c7d1727869b8e"
+                "reference": "99efeb17d6def8c0295777f2d45b07ff4fdb4e40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/php-jwt/zipball/0501f5729b9e2448516674aff07c7d1727869b8e",
-                "reference": "0501f5729b9e2448516674aff07c7d1727869b8e",
+                "url": "https://api.github.com/repos/googleapis/php-jwt/zipball/99efeb17d6def8c0295777f2d45b07ff4fdb4e40",
+                "reference": "99efeb17d6def8c0295777f2d45b07ff4fdb4e40",
                 "shasum": ""
             },
             "require": {
@@ -12569,7 +12544,7 @@
                 "paragonie/sodium_compat": "Support EdDSA (Ed25519) signatures when libsodium is not present",
                 "phpseclib/phpseclib": "Support PS256 (RSASSA-PSS) signatures"
             },
-            "time": "2026-09-28T17:51:46+00:00",
+            "time": "2026-11-17T00:25:19+00:00",
             "type": "library",
             "extra": {
                 "component": {
@@ -12609,7 +12584,7 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/php-jwt/issues",
-                "source": "https://github.com/googleapis/php-jwt/tree/v7.2.1"
+                "source": "https://github.com/googleapis/php-jwt/tree/v7.2.2"
             },
             "install-path": "../firebase/php-jwt"
         },
@@ -12879,17 +12854,17 @@
         },
         {
             "name": "google/gax",
-            "version": "v1.51.2",
-            "version_normalized": "1.51.2.0",
+            "version": "v1.52.0",
+            "version_normalized": "1.52.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/gax-php.git",
-                "reference": "1c06ae8e829e4e56bf22d4ce32768bf2523ddf7d"
+                "reference": "3d794528520c360cda2a8de74a1dbfbd3ae63e1e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/gax-php/zipball/1c06ae8e829e4e56bf22d4ce32768bf2523ddf7d",
-                "reference": "1c06ae8e829e4e56bf22d4ce32768bf2523ddf7d",
+                "url": "https://api.github.com/repos/googleapis/gax-php/zipball/3d794528520c360cda2a8de74a1dbfbd3ae63e1e",
+                "reference": "3d794528520c360cda2a8de74a1dbfbd3ae63e1e",
                 "shasum": ""
             },
             "require": {
@@ -12912,7 +12887,7 @@
                 "phpstan/phpstan": "^2.0",
                 "phpunit/phpunit": "^9.6"
             },
-            "time": "2026-10-28T23:00:54+00:00",
+            "time": "2026-11-17T00:25:19+00:00",
             "type": "library",
             "extra": {
                 "component": {
@@ -12939,7 +12914,7 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/gax-php/issues",
-                "source": "https://github.com/googleapis/gax-php/tree/v1.51.2"
+                "source": "https://github.com/googleapis/gax-php/tree/v1.52.0"
             },
             "install-path": "../google/gax"
         },
@@ -12993,24 +12968,24 @@
         },
         {
             "name": "google/longrunning",
-            "version": "0.9.0",
-            "version_normalized": "0.9.0.0",
+            "version": "0.9.1",
+            "version_normalized": "0.9.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/php-longrunning.git",
-                "reference": "ccecf40953cefbddb569fd67b27bd0cf8a1381da"
+                "reference": "cd86d2c4bf939a74fc81cdf34a986159dcc832f7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/php-longrunning/zipball/ccecf40953cefbddb569fd67b27bd0cf8a1381da",
-                "reference": "ccecf40953cefbddb569fd67b27bd0cf8a1381da",
+                "url": "https://api.github.com/repos/googleapis/php-longrunning/zipball/cd86d2c4bf939a74fc81cdf34a986159dcc832f7",
+                "reference": "cd86d2c4bf939a74fc81cdf34a986159dcc832f7",
                 "shasum": ""
             },
             "require-dev": {
                 "google/gax": "^1.38.0",
                 "phpunit/phpunit": "^9.0"
             },
-            "time": "2026-10-28T01:51:30+00:00",
+            "time": "2026-11-17T00:25:19+00:00",
             "type": "library",
             "extra": {
                 "component": {
@@ -13034,7 +13009,7 @@
             ],
             "description": "Google LongRunning Client for PHP",
             "support": {
-                "source": "https://github.com/googleapis/php-longrunning/tree/v0.9.0"
+                "source": "https://github.com/googleapis/php-longrunning/tree/v0.9.1"
             },
             "install-path": "../google/longrunning"
         },
@@ -14965,17 +14940,17 @@
         },
         {
             "name": "m4tthumphrey/php-gitlab-api",
-            "version": "12.1.0",
-            "version_normalized": "12.1.0.0",
+            "version": "12.1.1",
+            "version_normalized": "12.1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/GitLabPHP/Client.git",
-                "reference": "45bac88ea81752b201daf542dfd65521578e2144"
+                "reference": "243ff6929ed1e955cb13ab8e7fc77132df2aae8d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GitLabPHP/Client/zipball/45bac88ea81752b201daf542dfd65521578e2144",
-                "reference": "45bac88ea81752b201daf542dfd65521578e2144",
+                "url": "https://api.github.com/repos/GitLabPHP/Client/zipball/243ff6929ed1e955cb13ab8e7fc77132df2aae8d",
+                "reference": "243ff6929ed1e955cb13ab8e7fc77132df2aae8d",
                 "shasum": ""
             },
             "require": {
@@ -14996,9 +14971,10 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "guzzlehttp/guzzle": "^7.9.2"
+                "guzzlehttp/guzzle": "^7.9.2",
+                "symfony/http-client": "^6.4 || ^7.0 || ^8.0"
             },
-            "time": "2026-05-06T21:16:45+00:00",
+            "time": "2026-11-17T23:12:55+00:00",
             "type": "library",
             "extra": {
                 "bamarni-bin": {
@@ -15045,7 +15021,7 @@
             ],
             "support": {
                 "issues": "https://github.com/GitLabPHP/Client/issues",
-                "source": "https://github.com/GitLabPHP/Client/tree/12.1.0"
+                "source": "https://github.com/GitLabPHP/Client/tree/12.1.1"
             },
             "funding": [
                 {
@@ -15484,17 +15460,17 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "3.12.1",
-            "version_normalized": "3.12.1.0",
+            "version": "3.13.0",
+            "version_normalized": "3.13.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "d7059e4c691d05ea1222b5124bed0f961be46e15"
+                "reference": "1f5f55bb4a9a230ff6d8a4ceccea31d10b0142ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/d7059e4c691d05ea1222b5124bed0f961be46e15",
-                "reference": "d7059e4c691d05ea1222b5124bed0f961be46e15",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/1f5f55bb4a9a230ff6d8a4ceccea31d10b0142ac",
+                "reference": "1f5f55bb4a9a230ff6d8a4ceccea31d10b0142ac",
                 "shasum": ""
             },
             "require": {
@@ -15543,7 +15519,7 @@
                 "rollbar/rollbar": "Allow sending log messages to Rollbar",
                 "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
             },
-            "time": "2026-09-29T19:21:12+00:00",
+            "time": "2026-11-16T10:43:05+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -15576,7 +15552,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/3.12.1"
+                "source": "https://github.com/Seldaek/monolog/tree/3.13.0"
             },
             "funding": [
                 {
@@ -15592,37 +15568,32 @@
         },
         {
             "name": "mtdowling/jmespath.php",
-            "version": "2.9.2",
-            "version_normalized": "2.9.2.0",
+            "version": "2.10.0",
+            "version_normalized": "2.10.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jmespath/jmespath.php.git",
-                "reference": "2157c5e50e813ec6a96c1eed3be7f64a20fb32a8"
+                "reference": "3fec5e616a35a06a65bc3c0b97aa6f384c218814"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jmespath/jmespath.php/zipball/2157c5e50e813ec6a96c1eed3be7f64a20fb32a8",
-                "reference": "2157c5e50e813ec6a96c1eed3be7f64a20fb32a8",
+                "url": "https://api.github.com/repos/jmespath/jmespath.php/zipball/3fec5e616a35a06a65bc3c0b97aa6f384c218814",
+                "reference": "3fec5e616a35a06a65bc3c0b97aa6f384c218814",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.2.5 || ^8.0",
-                "symfony/polyfill-mbstring": "^1.17"
+                "symfony/polyfill-mbstring": "^1.30"
             },
             "require-dev": {
                 "composer/xdebug-handler": "^3.0.3",
-                "phpunit/phpunit": "^8.5.52"
+                "phpunit/phpunit": "^8.5.57"
             },
-            "time": "2026-07-06T18:56:19+00:00",
+            "time": "2026-11-17T14:51:12+00:00",
             "bin": [
                 "bin/jp.php"
             ],
             "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.9-dev"
-                }
-            },
             "installation-source": "dist",
             "autoload": {
                 "files": [
@@ -15655,7 +15626,7 @@
             ],
             "support": {
                 "issues": "https://github.com/jmespath/jmespath.php/issues",
-                "source": "https://github.com/jmespath/jmespath.php/tree/2.9.2"
+                "source": "https://github.com/jmespath/jmespath.php/tree/2.10.0"
             },
             "install-path": "../mtdowling/jmespath.php"
         },
@@ -16298,17 +16269,17 @@
         },
         {
             "name": "paragonie/constant_time_encoding",
-            "version": "v3.1.4",
-            "version_normalized": "3.1.4.0",
+            "version": "v3.1.5",
+            "version_normalized": "3.1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/constant_time_encoding.git",
-                "reference": "5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54"
+                "reference": "ceed38ba49d98b85808edfc4f04750ff61eb9739"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/constant_time_encoding/zipball/5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54",
-                "reference": "5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54",
+                "url": "https://api.github.com/repos/paragonie/constant_time_encoding/zipball/ceed38ba49d98b85808edfc4f04750ff61eb9739",
+                "reference": "ceed38ba49d98b85808edfc4f04750ff61eb9739",
                 "shasum": ""
             },
             "require": {
@@ -16320,7 +16291,7 @@
                 "phpunit/phpunit": "^9|^10|^11",
                 "vimeo/psalm": "^4|^5|^6"
             },
-            "time": "2026-11-06T20:31:19+00:00",
+            "time": "2026-11-18T13:55:22+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -18517,17 +18488,17 @@
         },
         {
             "name": "ramsey/uuid",
-            "version": "4.9.4",
-            "version_normalized": "4.9.4.0",
+            "version": "4.10.0",
+            "version_normalized": "4.10.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ramsey/uuid.git",
-                "reference": "75d73f48d02797c2c285a7e9f348fadc0102ffe2"
+                "reference": "f9aa3efc8015fcbc013d84d699583b268ccb593a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/75d73f48d02797c2c285a7e9f348fadc0102ffe2",
-                "reference": "75d73f48d02797c2c285a7e9f348fadc0102ffe2",
+                "url": "https://api.github.com/repos/ramsey/uuid/zipball/f9aa3efc8015fcbc013d84d699583b268ccb593a",
+                "reference": "f9aa3efc8015fcbc013d84d699583b268ccb593a",
                 "shasum": ""
             },
             "require": {
@@ -18539,23 +18510,22 @@
                 "rhumsaa/uuid": "self.version"
             },
             "require-dev": {
-                "captainhook/captainhook": "^5.25",
-                "captainhook/plugin-composer": "^5.3",
-                "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-                "ergebnis/composer-normalize": "^2.47",
-                "mockery/mockery": "^1.6",
-                "paragonie/random-lib": "^2",
-                "php-mock/php-mock": "^2.6",
-                "php-mock/php-mock-mockery": "^1.5",
+                "captainhook/captainhook": "^5.29.3",
+                "captainhook/plugin-composer": "^5.3.3",
+                "dealerdirect/phpcodesniffer-composer-installer": "^1.2.1",
+                "mockery/mockery": "^1.6.15",
+                "paragonie/random-lib": "^2.0.3",
+                "php-mock/php-mock": "^2.7.0",
+                "php-mock/php-mock-mockery": "^1.5.0",
                 "php-parallel-lint/php-parallel-lint": "^1.4.0",
                 "phpbench/phpbench": "^1.2.14",
-                "phpstan/extension-installer": "^1.4",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-mockery": "^2.0",
-                "phpstan/phpstan-phpunit": "^2.0",
-                "phpunit/phpunit": "^9.6",
-                "slevomat/coding-standard": "^8.18",
-                "squizlabs/php_codesniffer": "^3.13"
+                "phpstan/extension-installer": "^1.4.3",
+                "phpstan/phpstan": "^2.3.5",
+                "phpstan/phpstan-mockery": "^2.0.0",
+                "phpstan/phpstan-phpunit": "^2.1.2",
+                "phpunit/phpunit": "^9.6.39",
+                "slevomat/coding-standard": "^8.31.3",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
                 "ext-bcmath": "Enables faster math with arbitrary-precision integers using BCMath.",
@@ -18564,7 +18534,7 @@
                 "paragonie/random-lib": "Provides RandomLib for use with the RandomLibAdapter",
                 "ramsey/uuid-doctrine": "Allows the use of Ramsey\\Uuid\\Uuid as Doctrine field type."
             },
-            "time": "2026-09-16T11:39:30+00:00",
+            "time": "2026-11-14T23:23:20+00:00",
             "type": "library",
             "extra": {
                 "captainhook": {
@@ -18592,7 +18562,7 @@
             ],
             "support": {
                 "issues": "https://github.com/ramsey/uuid/issues",
-                "source": "https://github.com/ramsey/uuid/tree/4.9.4"
+                "source": "https://github.com/ramsey/uuid/tree/4.10.0"
             },
             "install-path": "../ramsey/uuid"
         },

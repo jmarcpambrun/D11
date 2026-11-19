@@ -1,9 +1,14 @@
 parameters:
 	ignoreErrors:
-		-
-			message: "#^\\\\Drupal calls should be avoided in classes, use dependency injection instead$#"
-			count: 1
-			path: src/ProjectCollector.php
+		# These classes do not exist on Drupal 10 and PHPUnit 9, so PHPStan reports
+		# them in the previous major job. The code using them does not run there.
+		- '#^Attribute class Drupal\\Core\\Hook\\Attribute\\(Hook|LegacyHook) does not exist\.$#'
+		- '#^Attribute class PHPUnit\\Framework\\Attributes\\\w+ does not exist\.$#'
+		- '#^Access to constant Error on an unknown class Drupal\\Core\\Extension\\Requirement\\RequirementSeverity\.$#'
+		# This test module uses constants that newer Drupal versions removed.
+		- '#^Constant (REGIONS_ALL|REQUEST_TIME|REQUIREMENT_ERROR) not found\.$#'
+		- '#^Call to deprecated constant REQUEST_TIME#'
+		- '#^in drupal:8\.3\.0 and is removed from drupal:11\.0\.0#'
 		# These test module controllers intentionally call deprecated functions
 		# to verify upgrade_status detects them correctly.
 		-
@@ -84,11 +89,6 @@ parameters:
 		-
 			message: '#^Attribute class PHPUnit\\Framework\\Attributes\\RunTestsInSeparateProcesses does not exist\.$#'
 			identifier: attribute.notFound
-			path: tests/src/Kernel/CSSDeprecationAnalyzerTest.php
-			count: 1
-		-
-			message: '#^Attribute class PHPUnit\\Framework\\Attributes\\RunTestsInSeparateProcesses does not exist\.$#'
-			identifier: attribute.notFound
 			path: tests/src/Kernel/TwigDeprecationAnalyzerTest.php
 			count: 1
 		-
@@ -96,3 +96,10 @@ parameters:
 			identifier: attribute.notFound
 			path: upgrade_status.install
 			count: 1
+		# This test module calls an undefined function, which the scan reports
+		# in test classes only when PHPUnit is installed.
+		-
+			message: '#^Function upgrade_status_test_undefined_function not found\.$#'
+			identifier: function.notFound
+			path: tests/modules/upgrade_status_test_test_classes/*
+			count: 2

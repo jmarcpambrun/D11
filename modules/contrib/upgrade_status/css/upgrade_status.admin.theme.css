@@ -1,149 +1,963 @@
 /**
  * @file
- * Styles used by the Upgrade Status module.
+ * Styles of the Upgrade Status pages and their HTML exports.
+ *
+ * The tokens use the variables of Default Admin, Gin and Claro when the page
+ * has them, in that order, and fall back to Claro's colors. Status and
+ * category colors use light-dark(), which follows the color scheme of Default
+ * Admin, and of Gin through the rule below. Claro has no dark mode.
  */
 
-/* Upgrade Status summary of the whole site */
-.upgrade-status-of-site tr:hover {
-  color: inherit;
-  background-color: inherit;
-}
-.upgrade-status-of-site th {
-  width: 33%;
-}
-.upgrade-status-of-site td {
-  vertical-align: top;
-}
-/* Make space for SVG circle */
-.upgrade-status-of-site td:nth-child(3) .item-list ul li {
-  margin-right: 6em;
+.upgrade-status {
+  --us-text: var(--admin-color-text, var(--gin-color-text, var(--color-text, #222330)));
+  --us-text-soft: var(--admin-color-text-soft, var(--gin-color-text-light, var(--color-gray-800, #55565b)));
+  --us-surface: var(--admin-color-bg-surface, var(--gin-bg-layer, #fff));
+  --us-panel: var(--admin-color-bg-sunken, var(--gin-bg-layer2, #fbfbfe));
+  --us-border: var(--admin-color-border, var(--gin-border-color-layer2, #e6e6ef));
+  --us-rule: light-dark(#ececf2, rgb(255, 255, 255, 0.12));
+  --us-link: var(--admin-color-link, var(--gin-color-primary, var(--color-absolutezero, #015efe)));
+  --us-focus: var(--admin-color-focus, var(--gin-color-focus, #015efe));
+  --us-code-bg: light-dark(#f1f1f6, rgb(255, 255, 255, 0.08));
+  --us-band: light-dark(#f7f7fb, rgb(255, 255, 255, 0.05));
+  --us-shadow: 0 1px 3px rgb(34, 35, 48, 0.05);
+  --us-error-icon: light-dark(#cc3d3d, #e69e9e);
+  --us-error-text: light-dark(#b02f2f, #e69e9e);
+  --us-error-pill-bg: light-dark(#fdecec, rgb(204, 61, 61, 0.25));
+  --us-error-pill-text: light-dark(#a32b2b, #f3c2c2);
+  --us-warning-icon: light-dark(#b88a00, #e8c766);
+  --us-warning-text: light-dark(#6e5200, #e8d185);
+  --us-warning-pill-bg: light-dark(#fbf1d3, rgb(226, 151, 0, 0.22));
+  --us-warning-pill-text: light-dark(#6e5200, #f0dca0);
+  --us-ok-icon: light-dark(#068260, #6fd3ae);
+  --us-ok-text: light-dark(#05684d, #8bd3b1);
+  --us-ok-pill-bg: light-dark(#e3f3ec, rgb(6, 130, 96, 0.25));
+  --us-ok-pill-text: light-dark(#05684d, #b6e6d2);
+  --us-neutral-icon: light-dark(#8a8b94, #a6a7ae);
+  --us-neutral-pill-bg: light-dark(#efeff5, rgb(255, 255, 255, 0.1));
+  --us-neutral-pill-text: light-dark(#3b3c45, #d6d7dd);
+  --us-callout-bg: light-dark(#eef8f4, rgb(6, 130, 96, 0.15));
+  --us-callout-border: light-dark(#bfe2d4, rgb(111, 211, 174, 0.4));
+  --us-notice-bg: light-dark(#fdf6dc, rgb(226, 151, 0, 0.12));
+  --us-notice-border: light-dark(#ead9a2, rgb(232, 199, 102, 0.35));
+  --us-notice-icon: light-dark(#9a7300, #e8c766);
+  --us-cat-scan: #9fa0aa;
+  --us-cat-remove: #ecd27a;
+  --us-cat-update: #d8b234;
+  --us-cat-collaborate: #b38f12;
+  --us-cat-rector: #e06a6a;
+  --us-cat-manual: #b52f2f;
+  --us-cat-requirements: #7cc4a4;
+  --us-cat-relax: #068260;
+
+  max-width: 1280px;
+  color: var(--us-text);
 }
 
-/* Upgrade Status environment table layout */
-.upgrade-status-of-environment th.requirement-label {
-  width: 70%;
-}
-.upgrade-status-of-environment th.status-info {
-  width: 30%;
+/* Gin sets dark mode with a class, so light-dark() needs the scheme. */
+.gin--dark-mode .upgrade-status {
+  color-scheme: dark;
 }
 
-/* Upgrade Status next step table layout */
-.upgrade-status-next-step th {
-  width: 10%;
+.upgrade-status .us-cat--scan {
+  --us-cat: var(--us-cat-scan);
 }
-.upgrade-status-next-step th.project-label {
-  width: 20%;
+.upgrade-status .us-cat--remove {
+  --us-cat: var(--us-cat-remove);
 }
-.upgrade-status-next-step th.select-all {
-  width: 1px;
+.upgrade-status .us-cat--update {
+  --us-cat: var(--us-cat-update);
 }
-
-/* Remove Gin borders on these tables. TH and TR don't line up. */
-.upgrade-status-of-environment .gin-layer-wrapper tr,
-.upgrade-status-next-step .gin-layer-wrapper tr,
-.upgrade-status-project-result-group .gin-layer-wrapper tr {
-  border-left: 0;
+.upgrade-status .us-cat--collaborate {
+  --us-cat: var(--us-cat-collaborate);
 }
-
-/* Project specific results layout */
-.upgrade-status-project-result-group h3 {
-  margin: 30px 0 0 0;
+.upgrade-status .us-cat--rector {
+  --us-cat: var(--us-cat-rector);
 }
-.upgrade-status-project-result-group tr td:nth-child(1),
-.upgrade-status-project-result-group tr td:nth-child(3) {
-  width: 40%;
+.upgrade-status .us-cat--manual {
+  --us-cat: var(--us-cat-manual);
 }
-.upgrade-status-project-result-group tr td:nth-child(2) {
-  width: 10%;
+.upgrade-status .us-cat--requirements {
+  --us-cat: var(--us-cat-requirements);
+}
+.upgrade-status .us-cat--relax {
+  --us-cat: var(--us-cat-relax);
 }
 
-.upgrade-status-of-environment td.requirement-label,
-.upgrade-status-next-step td.project-label {
-  font-weight: bold;
+/* Shared pieces. */
+.upgrade-status .us-icon {
+  flex: none;
+  vertical-align: -0.15em;
+}
+.upgrade-status .us-status--error {
+  color: var(--us-error-icon);
+}
+.upgrade-status .us-status--warning {
+  color: var(--us-warning-icon);
+}
+.upgrade-status .us-status--ok {
+  color: var(--us-ok-icon);
+}
+.upgrade-status .us-status--neutral {
+  color: var(--us-neutral-icon);
 }
 
-.upgrade-status-project-result-group tr > td.status-info,
-.upgrade-status-next-step tr > td.status-info,
-.upgrade-status-of-environment tr > td.status-info {
-  padding-left: 35px; /* LTR */
-  background-repeat: no-repeat;
-  background-position-x: 10px; /* LTR */
-  background-position-y: center;
+.upgrade-status .us-mono,
+.upgrade-status code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-
-[dir="rtl"] .upgrade-status-project-result-group tr > td.status-info,
-[dir="rtl"] .upgrade-status-next-step tr > td.status-info,
-[dir="rtl"] .upgrade-status-of-environment tr > td.status-info {
-  padding-right: 35px; /* LTR */
-  padding-left: 0;
-  /* @todo x background position for RTL */
+.upgrade-status code {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--us-code-bg);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
 }
-
-.upgrade-status-project-result-group tr.color-error > td.status-info,
-.upgrade-status-of-environment tr.color-error > td.status-info {
-  background-image: url(../icons/error.svg);
-}
-
-.upgrade-status-project-result-group tr.color-warning > td.status-info,
-.upgrade-status-next-step td.status-info-incompatible,
-.upgrade-status-of-environment tr.color-warning > td.status-info {
-  background-image: url(../icons/warning.svg);
-}
-
-.upgrade-status-project-result-group tr.color-warning.known-later > td.status-info,
-.upgrade-status-next-step td.status-info-na {
-  background-image: url(../icons/ex.svg);
-}
-
-.upgrade-status-project-result-group tr.color-success > td.status-info,
-.upgrade-status-next-step td.status-info-compatible,
-.upgrade-status-of-environment tr.color-success > td.status-info {
-  background-image: url(../icons/check.svg);
-}
-
-.upgrade-status-project-result-group tr.color-warning.rector-covered > td.status-info {
-  background-image: url(../icons/wrench.svg);
-}
-
-.upgrade-status-next-step td.status-info-unchecked {
-  background-image: url(../icons/questionmark-disc.svg);
-}
-html.gin--dark-mode .upgrade-status-next-step td.status-info-unchecked {
-  background-image: url(../icons/questionmark-disc-white.svg);
-}
-
-/* Result circle styling in the status of site summary */
-.upgrade-status-of-site-circle {
+.upgrade-status .us-machine-name {
   display: block;
-  float: right;
-  height: 5em;
-  margin: 0 0 1em 1em;
-}
-.upgrade-status-of-site-circle .circle-bg {
-  fill: none;
-  stroke: #f5f5f2;
-  stroke-width: 3.8;
-}
-.upgrade-status-of-site-circle .circle {
-  fill: none;
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  animation-duration: 1s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  stroke: #325e1c;
-}
-.upgrade-status-of-site-circle .percentage {
-  font-size: 0.5em;
-  text-anchor: middle;
-  font-weight: bold;
-}
-html.gin--dark-mode .upgrade-status-of-site-circle .percentage {
-  fill: #fff;
+  color: var(--us-text-soft);
+  font-size: 12px;
+  font-weight: 400;
 }
 
-/* Gin dialog does not have top and bottom padding by default */
-.ui-dialog .ui-widget-content.ui-dialog-content {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+.upgrade-status .us-square {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--us-cat);
+}
+
+.upgrade-status .us-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 9px;
+  white-space: nowrap;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-status .us-pill--error {
+  color: var(--us-error-pill-text);
+  background: var(--us-error-pill-bg);
+}
+.upgrade-status .us-pill--warning {
+  color: var(--us-warning-pill-text);
+  background: var(--us-warning-pill-bg);
+}
+.upgrade-status .us-pill--ok {
+  color: var(--us-ok-pill-text);
+  background: var(--us-ok-pill-bg);
+}
+.upgrade-status .us-pill--neutral {
+  color: var(--us-neutral-pill-text);
+  background: var(--us-neutral-pill-bg);
+}
+
+.upgrade-status .us-card {
+  margin-block: 0 24px;
+  border: 1px solid var(--us-border);
+  border-radius: 8px;
+  background: var(--us-surface);
+  box-shadow: var(--us-shadow);
+}
+
+.upgrade-status a:focus-visible,
+.upgrade-status button:focus-visible,
+.upgrade-status summary:focus-visible,
+.upgrade-status input:focus-visible {
+  outline: 3px solid var(--us-focus);
+  outline-offset: 2px;
+}
+
+/* Header with the actions. */
+.upgrade-status .us-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-block-end: 16px;
+}
+.upgrade-status .us-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.upgrade-status .us-header__actions .form-actions,
+.upgrade-status .us-header__actions form,
+.upgrade-status .us-header__actions .button {
+  margin: 0;
+}
+
+/* Menu button, a details element that JavaScript turns into a menu. */
+.upgrade-status .us-menu {
+  position: relative;
+}
+/* The summary has the button styles of the admin theme. */
+.upgrade-status .us-menu > summary {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  list-style: none;
+  gap: 8px;
+}
+.upgrade-status .us-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.upgrade-status .us-menu__items {
+  position: absolute;
+  z-index: 20;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  /* As wide as the longest item, so items only wrap on narrow screens. */
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 290px;
+  max-width: min(480px, calc(100vw - 48px));
+  padding: 4px;
+  border: 1px solid var(--us-border);
+  border-radius: 4px;
+  background: var(--us-surface);
+  box-shadow: 0 6px 20px rgb(34, 35, 48, 0.14);
+}
+.upgrade-status .us-menu--up .us-menu__items {
+  inset-block: auto calc(100% + 4px);
+}
+.upgrade-status .us-menu__items > * {
+  margin: 0;
+}
+.upgrade-status .us-menu__items a,
+.upgrade-status .us-menu__items input.button {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: start;
+  text-decoration: none;
+  color: var(--us-link);
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  font-weight: 600;
+}
+.upgrade-status .us-menu__items a:hover,
+.upgrade-status .us-menu__items a:focus,
+.upgrade-status .us-menu__items input.button:hover,
+.upgrade-status .us-menu__items input.button:focus {
+  color: var(--us-link);
+  background: light-dark(#f0f5ff, rgb(1, 94, 254, 0.15));
+}
+
+/* Summary card. */
+.upgrade-status .us-summary__main {
+  padding: 24px;
+}
+.upgrade-status .us-summary__verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+.upgrade-status .us-summary__text {
+  flex: 1 1 420px;
+}
+.upgrade-status .us-summary__heading {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.upgrade-status .us-summary__sentence {
+  max-width: 60em;
+  margin: 0;
+  color: var(--us-text-soft);
+}
+.upgrade-status .us-summary__percent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.upgrade-status .us-summary__number {
+  color: var(--us-ok-text);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 44px;
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-status .us-summary__caption {
+  color: var(--us-text-soft);
+  font-size: 12px;
+}
+.upgrade-status .us-bar {
+  display: flex;
+  overflow: hidden;
+  height: 20px;
+  border-radius: 4px;
+  gap: 2px;
+  margin-block: 20px;
+}
+.upgrade-status .us-bar__segment {
+  position: relative;
+  overflow: hidden;
+  min-width: 6px;
+  background: var(--us-cat);
+}
+/* The share of a group that is not analyzed is hatched. */
+.upgrade-status .us-bar__hatch {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  background: repeating-linear-gradient(135deg, var(--us-cat) 0 3px, light-dark(rgb(255, 255, 255, 0.6), rgb(0, 0, 0, 0.45)) 3px 6px);
+}
+.upgrade-status .us-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+}
+.upgrade-status .us-legend__phase {
+  margin-block-end: 6px;
+  color: var(--us-text-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+.upgrade-status .us-legend__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.upgrade-status .us-legend__items > li {
+  margin: 0;
+}
+.upgrade-status .us-legend__item {
+  display: grid;
+  grid-template-columns: 12px auto;
+  align-items: center;
+  column-gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+.upgrade-status .us-legend__count {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-status .us-legend__label {
+  grid-column: 2;
+  text-decoration: underline;
+  color: var(--us-link);
+  font-size: 13px;
+  text-underline-offset: 2px;
+}
+.upgrade-status .us-legend__note {
+  grid-column: 2;
+  color: var(--us-text-soft);
+  font-size: 12px;
+}
+
+/* Sections. The details elements keep the look of the admin theme. */
+.upgrade-status .us-section-title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.upgrade-status .us-section-summary {
+  display: block;
+  margin-block-start: 4px;
+  color: var(--us-text-soft);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.upgrade-status .us-section-summary__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-end: 16px;
+}
+/* The description follows the summary line closely. Default Admin starts
+   the content left of the summary text, so it is indented to match. */
+.upgrade-status details.us-section > .details-wrapper {
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+.upgrade-status details.us-section.details > .details__wrapper {
+  padding-inline-start: 24px;
+}
+.upgrade-status details.us-section[open] > summary {
+  padding-block-end: 4px;
+}
+/* The same text style as the summary line. */
+.upgrade-status .us-description {
+  max-width: 60em;
+  margin-block: 0 16px;
+  color: var(--us-text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Tables scroll inside their section and never widen the page. */
+.upgrade-status .us-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.upgrade-status .us-table {
+  width: 100%;
+  min-width: 640px;
+  margin: 0;
+}
+.upgrade-status .us-table td {
+  vertical-align: middle;
+}
+.upgrade-status .us-table tr[class*="us-cat--"] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--us-cat);
+}
+.upgrade-status .us-table .us-mono {
+  white-space: nowrap;
+}
+.upgrade-status .us-table .us-col-arrow {
+  width: 14px;
+  padding-inline: 0;
+  color: var(--us-text-soft);
+}
+.upgrade-status .us-table .us-col-action {
+  text-align: end;
+}
+.upgrade-status .us-project-name {
+  font-weight: 600;
+}
+.upgrade-status .us-project-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.upgrade-status .us-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.upgrade-status .us-ready--ok {
+  color: var(--us-ok-text);
+}
+.upgrade-status .us-ready--warning {
+  color: var(--us-warning-text);
+}
+.upgrade-status .us-error-value {
+  color: var(--us-error-text);
+  font-weight: 600;
+}
+.upgrade-status .us-qualifier {
+  display: block;
+  color: var(--us-text-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+.upgrade-status .us-env-status {
+  width: 16px;
+}
+.upgrade-status .us-plain-list {
+  margin: 0;
+  padding-inline-start: 1.2em;
+}
+.upgrade-status .us-plain-list li {
+  margin: 0;
+}
+
+/* Compact lists of projects that share all their details. The checkboxes
+   have no form item wrappers, so the layout is the same in all themes. */
+/* The description of a section, with "Select all" of a compact list at the
+   end of the same row. The tops of the checkbox and the description align. */
+.upgrade-status .us-section-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-block-end: 16px;
+}
+.upgrade-status .us-section-intro .us-description {
+  flex: 1 1 30em;
+  margin: 0;
+}
+/* Without JavaScript, core's js-show class hides it. */
+.js .upgrade-status .us-compact__select-all {
+  display: flex;
+}
+.upgrade-status .us-compact__select-all {
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.upgrade-status .us-compact__heading {
+  margin: 16px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.upgrade-status .us-compact__list {
+  margin: 0;
+  padding: 0;
+  columns: 300px 3;
+  column-gap: 32px;
+  list-style: none;
+}
+.upgrade-status .us-compact__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 6px 0;
+  break-inside: avoid;
+}
+.upgrade-status .us-compact__item input {
+  flex: none;
+  margin: 2px 0 0;
+}
+.upgrade-status .us-compact__select-all input {
+  flex: none;
+  margin: 0;
+}
+.upgrade-status .us-compact__label {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.upgrade-status .us-compact__problems {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+/* Bulk actions bar. JavaScript hides it while nothing is selected. */
+.upgrade-status .us-bulk-bar {
+  position: sticky;
+  z-index: 10;
+  inset-block-end: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 10px clamp(16px, 3vw, 32px);
+  border-block-start: 1px solid var(--us-border);
+  background: var(--us-surface);
+  box-shadow: 0 -6px 20px rgb(34, 35, 48, 0.1);
+}
+.upgrade-status .us-bulk-bar.is-empty {
+  display: none;
+}
+.upgrade-status .us-bulk-bar__status {
+  display: flex;
+  flex-direction: column;
+}
+.upgrade-status .us-bulk-bar__count {
+  font-weight: 600;
+}
+.upgrade-status .us-bulk-bar__warning {
+  color: var(--us-warning-text);
+  font-size: 12px;
+}
+.upgrade-status .us-bulk-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.upgrade-status .us-bulk-bar .form-actions,
+.upgrade-status .us-bulk-bar .form-item,
+.upgrade-status .us-bulk-bar .button {
+  margin: 0;
+}
+.upgrade-status .us-text-button {
+  min-height: 44px;
+  padding: 0 8px;
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--us-link);
+  border: 0;
+  background: none;
+  font: inherit;
+}
+
+/* Project results page. */
+.upgrade-status .us-title {
+  margin: 0;
+}
+.upgrade-status .us-title-version {
+  color: var(--us-text-soft);
+  font-weight: 400;
+}
+.upgrade-status .us-meta {
+  margin: 4px 0 0;
+  color: var(--us-text-soft);
+  font-size: 13px;
+}
+.upgrade-status .us-meta > span + span::before {
+  padding-inline: 8px;
+  content: "·";
+}
+/* The site and the date under the title of a document. */
+.upgrade-status .us-document-meta {
+  margin: -8px 0 24px;
+  color: var(--us-text-soft);
+  font-size: 13px;
+}
+
+/* The card about the accuracy of the report. It is not collapsible, and
+   yellow when there is something to fix. */
+.upgrade-status .us-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px 16px;
+  margin-block: 0 24px;
+  padding: 16px 20px;
+  border: 1px solid var(--us-border);
+  border-radius: 8px;
+  background: var(--us-panel);
+}
+.upgrade-status .us-notice--warning {
+  border-color: var(--us-notice-border);
+  background: var(--us-notice-bg);
+}
+.upgrade-status .us-notice__icon {
+  margin-block-start: 1px;
+  color: var(--us-text-soft);
+}
+.upgrade-status .us-notice--warning .us-notice__icon,
+.upgrade-status .us-notice--warning .us-status--warning {
+  color: var(--us-notice-icon);
+}
+.upgrade-status .us-notice__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.upgrade-status .us-notice__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+.upgrade-status .us-notice__description {
+  max-width: 90ch;
+  margin: 2px 0 0;
+  color: var(--us-text-soft);
+  font-size: 13px;
+}
+.upgrade-status .us-notice__items {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.upgrade-status .us-notice--quiet .us-notice__items {
+  margin-block-start: 4px;
+  color: var(--us-text-soft);
+  font-size: 13px;
+}
+.upgrade-status .us-notice__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.upgrade-status .us-notice__item:last-child {
+  margin-block-end: 0;
+}
+.upgrade-status .us-notice__item > .us-icon {
+  margin-block-start: 2px;
+}
+.upgrade-status .us-notice__item-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.upgrade-status .us-notice__item-body p {
+  margin: 0;
+}
+/* The themes set their own table margins, so the wrapper of the module
+   sets the space around the table. */
+.upgrade-status .us-notice__item-body > .us-table-wrap {
+  margin-block: 8px 0;
+}
+.upgrade-status .us-notice .us-tool-table {
+  width: auto;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+/* Default Admin and Gin wrap tables in white layers. */
+.upgrade-status .us-notice :is(.layer-wrapper, .table-scroll-wrapper, .gin-table-scroll-wrapper) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.upgrade-status .us-tool-table :is(thead, tbody, tr, th, td) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.upgrade-status .us-tool-table th,
+.upgrade-status .us-tool-table td {
+  height: auto;
+  padding: 2px 12px 2px 0;
+  text-align: start;
+}
+/* The column labels are only for screen readers. */
+.upgrade-status .us-tool-table thead {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.upgrade-status .us-tool-table .us-tool-name {
+  padding-inline-end: 24px;
+  font-weight: 600;
+}
+.upgrade-status .us-tool-table .us-col-arrow {
+  width: 14px;
+  color: var(--us-text-soft);
+}
+.upgrade-status .us-tool-table .us-version--new {
+  font-weight: 600;
+}
+.upgrade-status .us-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.upgrade-status .us-command code {
+  display: block;
+  overflow-x: auto;
+  flex: 1 1 420px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px 12px;
+  white-space: nowrap;
+  border: 1px solid var(--us-notice-border);
+  border-radius: 4px;
+  background: var(--us-surface);
+  font-size: 12.5px;
+}
+.upgrade-status .us-command .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.upgrade-status .us-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-block: 0 24px;
+  padding: 16px 24px;
+  border: 1px solid var(--us-callout-border);
+  border-radius: 8px;
+  background: var(--us-callout-bg);
+}
+.upgrade-status .us-callout > .us-icon {
+  color: var(--us-ok-icon);
+}
+.upgrade-status .us-callout__text {
+  flex: 1 1 360px;
+}
+.upgrade-status .us-callout__heading {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.upgrade-status .us-callout p {
+  margin: 0;
+}
+.upgrade-status .us-callout__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.upgrade-status .us-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: 16px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.upgrade-status .us-tile {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--us-border);
+  border-radius: 8px;
+  background: var(--us-surface);
+  box-shadow: var(--us-shadow);
+}
+.upgrade-status .us-tile > * {
+  grid-column: 2;
+}
+.upgrade-status .us-tile > .us-icon {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+}
+.upgrade-status .us-tile__count {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 32px;
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-status .us-tile__description {
+  color: var(--us-text-soft);
+  font-size: 13px;
+}
+.upgrade-status .us-file {
+  margin-block: 0 16px;
+  overflow: hidden;
+  border: 1px solid var(--us-border);
+  border-radius: 4px;
+}
+.upgrade-status .us-file__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 16px;
+  border-block-end: 1px solid var(--us-rule);
+  background: var(--us-band);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.upgrade-status .us-file__dir {
+  color: var(--us-text-soft);
+}
+.upgrade-status .us-file__name {
+  font-weight: 600;
+}
+.upgrade-status .us-file__count {
+  margin-inline-start: auto;
+  white-space: nowrap;
+  color: var(--us-text-soft);
+  font-size: 12px;
+}
+/* Without JavaScript, core's js-show class hides it. An export has no js
+   class, and its script shows the button. */
+.js .upgrade-status .us-file__copy,
+.upgrade-status .us-file__copy--export {
+  display: inline-flex;
+}
+.upgrade-status .us-file__copy {
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-block: -6px;
+  margin-inline: auto -8px;
+  padding: 0;
+  cursor: pointer;
+  color: var(--us-text-soft);
+  border: 0;
+  border-radius: 4px;
+  background: none;
+}
+.upgrade-status .us-file__count + .us-file__copy {
+  margin-inline-start: 0;
+}
+.upgrade-status .us-file__copy:hover {
+  color: var(--us-text);
+  background: var(--us-code-bg);
+}
+.upgrade-status .us-file__copy .us-icon--copied,
+.upgrade-status .us-file__copy.is-copied .us-icon--copy {
+  display: none;
+}
+.upgrade-status .us-file__copy.is-copied .us-icon--copied {
+  display: block;
+  color: var(--us-ok-icon);
+}
+/* The script hides a copy button when the browser cannot copy. */
+.upgrade-status [data-us-copy][hidden] {
+  display: none;
+}
+.upgrade-status .us-findings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.upgrade-status .us-finding {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 14px 16px;
+}
+.upgrade-status .us-finding + .us-finding {
+  border-block-start: 1px solid var(--us-rule);
+}
+.upgrade-status .us-finding__line {
+  color: var(--us-text-soft);
+  font-size: 12px;
+}
+.upgrade-status .us-finding__message {
+  overflow-wrap: anywhere;
+}
+.upgrade-status .us-finding__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-start: 6px;
+}
+.upgrade-status .us-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+@media (max-width: 600px) {
+  .upgrade-status .us-summary__percent {
+    align-items: flex-start;
+  }
+  .upgrade-status .us-finding {
+    grid-template-columns: 1fr;
+  }
 }

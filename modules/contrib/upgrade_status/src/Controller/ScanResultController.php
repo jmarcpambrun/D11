@@ -3,13 +3,18 @@
 namespace Drupal\upgrade_status\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Extension\Exception\UnknownExtensionException;
+use Drupal\Core\Extension\Extension;
 use Drupal\upgrade_status\DeprecationAnalyzer;
+use Drupal\upgrade_status\EnvironmentChecker;
+use Drupal\upgrade_status\Form\ProjectAnalyzeForm;
 use Drupal\upgrade_status\ProjectCollector;
+use Drupal\upgrade_status\ReportBuilder;
 use Drupal\upgrade_status\ScanResultFormatter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Scan result controller.
@@ -31,13 +36,6 @@ class ScanResultController extends ControllerBase {
   protected $projectCollector;
 
   /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
    * The deprecation analyzer.
    *
    * @var \Drupal\upgrade_status\DeprecationAnalyzer
@@ -51,32 +49,35 @@ class ScanResultController extends ControllerBase {
    *   The scan result formatter service.
    * @param \Drupal\upgrade_status\ProjectCollector $project_collector
    *   The project collector service.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer service.
    * @param \Drupal\upgrade_status\DeprecationAnalyzer $deprecation_analyzer
    *   The deprecation analyzer.
+   * @param \Drupal\upgrade_status\ReportBuilder $reportBuilder
+   *   The builder of the report.
+   * @param \Drupal\upgrade_status\EnvironmentChecker $environmentChecker
+   *   The environment checker.
    */
   public function __construct(
     ScanResultFormatter $result_formatter,
     ProjectCollector $project_collector,
-    RendererInterface $renderer,
     DeprecationAnalyzer $deprecation_analyzer,
+    protected ReportBuilder $reportBuilder,
+    protected EnvironmentChecker $environmentChecker,
   ) {
     $this->resultFormatter = $result_formatter;
     $this->projectCollector = $project_collector;
-    $this->renderer = $renderer;
     $this->deprecationAnalyzer = $deprecation_analyzer;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('upgrade_status.result_formatter'),
       $container->get('upgrade_status.project_collector'),
-      $container->get('renderer'),
       $container->get('upgrade_status.deprecation_analyzer'),
+      $container->get('upgrade_status.report_builder'),
+      $container->get('upgrade_status.environment_checker'),
     );
   }
 
@@ -90,8 +91,67 @@ class ScanResultController extends ControllerBase {
    *   Build array.
    */
   public function resultPage(string $project_machine_name) {
-    $extension = $this->projectCollector->loadProject($project_machine_name);
-    return $this->resultFormatter->formatResult($extension);
+    $extension = $this->loadProject($project_machine_name);
+    $build = $this->resultFormatter->formatResult($extension);
+    $build['#actions'] = ['analyze' => $this->formBuilder()->getForm(ProjectAnalyzeForm::class, $project_machine_name)] + $build['#actions'];
+    return $build;
+  }
+
+  /**
+   * Gets the title of the result page of a project.
+   *
+   * @param string $project_machine_name
+   *   The machine name of the project.
+   *
+   * @return \Drupal\Core\Render\Markup
+   *   The project name and version.
+   */
+  public function resultTitle(string $project_machine_name) {
+    return $this->resultFormatter->getTitle($this->loadProject($project_machine_name));
+  }
+
+  /**
+   * Exports the full report, or the results of all projects.
+   *
+   * @param string $format
+   *   One of 'report-html' and 'report-markdown' for the full report, or
+   *   'codeclimate', 'checkstyle' and 'csv' for the results.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The file download.
+   */
+  public function exportAll(string $format) {
+    $projects = $this->projectCollector->collectProjects();
+    $analyzed = array_filter($projects, fn ($project) => $this->resultFormatter->getRawResult($project) !== NULL);
+    $filename = $this->resultFormatter->getExportFilename(str_starts_with($format, 'report-') ? 'report' : 'results');
+
+    if ($format === 'report-html' || $format === 'report-markdown') {
+      $environment = $this->environmentChecker->getChecks();
+      if ($format === 'report-html') {
+        $response = new Response($this->reportBuilder->renderReport($projects, ReportBuilder::SECTION_ORDER, $environment, $environment['status'], $analyzed));
+        $filename .= '.html';
+      }
+      else {
+        $sections = ['environment', ...array_keys(ReportBuilder::MARKDOWN_GROUPS)];
+        $markdown = $this->reportBuilder->formatMarkdownReport($projects, $projects, $environment, $sections);
+        if ($analyzed) {
+          $markdown .= "\n\n" . $this->resultFormatter->formatMarkdownReport($analyzed);
+        }
+        $response = new Response($markdown);
+        $response->headers->set('Content-Type', 'text/markdown; charset=utf-8');
+        $filename .= '.md';
+      }
+      $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+      return $response;
+    }
+    if (!in_array($format, ['codeclimate', 'checkstyle', 'csv'], TRUE)) {
+      throw new NotFoundHttpException();
+    }
+    $grouped = ['custom' => [], 'contrib' => []];
+    foreach ($analyzed as $name => $project) {
+      $grouped[ProjectCollector::isContributed($project) ? 'contrib' : 'custom'][$name] = $project;
+    }
+    return $this->resultFormatter->buildExportResponse($grouped, $format, $filename);
   }
 
   /**
@@ -100,35 +160,16 @@ class ScanResultController extends ControllerBase {
    * @param string $project_machine_name
    *   The machine name of the project.
    * @param string $format
-   *   The format to use when exporting the data: html or ascii.
+   *   The format: html, markdown, csv, checkstyle or codeclimate.
    *
    * @return \Symfony\Component\HttpFoundation\Response
    *   Response object.
    */
   public function resultExport(string $project_machine_name, string $format) {
-    $extension = $this->projectCollector->loadProject($project_machine_name);
-    $result = $this->resultFormatter->getRawResult($extension);
-
-    // Sanitize user input.
-    if (!in_array($format, ['html', 'ascii'])) {
-      $format = 'html';
-    }
-
-    $build = ['#theme' => 'upgrade_status_' . $format . '_export'];
-    $build['#projects'][$extension->info['upgrade_status_type'] == ProjectCollector::TYPE_CUSTOM ? 'custom' : 'contrib'] = [
-      $project_machine_name =>
-      $format == 'html' ?
-      $this->resultFormatter->formatResult($extension) :
-      $this->resultFormatter->formatAsciiResult($extension),
-    ];
-
-    $fileDate = $this->resultFormatter->formatDateTime($result['date'], 'html_datetime');
-    $extension = $format == 'html' ? '.html' : '.txt';
-    $filename = 'single-export-' . $project_machine_name . '-' . $fileDate . $extension;
-    $response = new Response($this->renderer->renderRoot($build));
-    $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-
-    return $response;
+    $extension = $this->loadProject($project_machine_name);
+    $type = $extension->info['upgrade_status_type'] == ProjectCollector::TYPE_CUSTOM ? 'custom' : 'contrib';
+    $filename = $this->resultFormatter->getExportFilename('results', $project_machine_name);
+    return $this->resultFormatter->buildExportResponse([$type => [$project_machine_name => $extension]], $format, $filename);
   }
 
   /**
@@ -150,11 +191,33 @@ class ScanResultController extends ControllerBase {
     }
     else {
       // Dealing with a real project.
-      $extension = $this->projectCollector->loadProject($project_machine_name);
+      $extension = $this->loadProject($project_machine_name);
       $this->deprecationAnalyzer->analyze($extension);
       return new JsonResponse(
-        ['message' => $this->t('Scanned @project', ['@project' => $extension->getName()])]
+        ['message' => $this->t('Analyzed @project', ['@project' => $extension->getName()])]
       );
+    }
+  }
+
+  /**
+   * Loads a project for a page.
+   *
+   * @param string $project_machine_name
+   *   The machine name of the project.
+   *
+   * @return \Drupal\Core\Extension\Extension
+   *   The project.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   If there is no project with the name, like for an old link to a project
+   *   that was removed.
+   */
+  protected function loadProject(string $project_machine_name): Extension {
+    try {
+      return $this->projectCollector->loadProject($project_machine_name);
+    }
+    catch (UnknownExtensionException) {
+      throw new NotFoundHttpException();
     }
   }
 

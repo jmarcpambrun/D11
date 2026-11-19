@@ -1,0 +1,57 @@
+{#
+/**
+ * @file
+ * The analysis results of a project.
+ *
+ * Available variables:
+ * - title: The project name and version, shown in exports. On the result
+ *   page, the page title shows it.
+ * - meta: Facts about the project and the analysis.
+ * - actions: The actions, like analyzing again and exporting.
+ * - callout: The recommendation to update first, if there is one.
+ * - tiles: The counts by category, each with an icon, a count, a label and
+ *   a description.
+ * - path_note: Where the file paths start.
+ * - notes: Other messages, like when there are no results.
+ * - sections: The details elements of the categories.
+ * - back: The link back to the report.
+ */
+#}
+<div class="upgrade-status us-project-results">
+  <div class="us-header">
+    <div>
+      {% if title %}<h2 class="us-title">{{ title }}</h2>{% endif %}
+      <p class="us-meta">
+        {%- for item in meta -%}<span>{{ item }}</span>{%- endfor -%}
+      </p>
+    </div>
+    {% if actions %}<div class="us-header__actions">{{ actions }}</div>{% endif %}
+  </div>
+
+  {% if callout %}<div class="us-callout">{{ callout }}</div>{% endif %}
+
+  {% for note in notes %}
+    <p class="us-description">{{ note }}</p>
+  {% endfor %}
+
+  {% if tiles %}
+    <ul class="us-tiles">
+      {% for tile in tiles %}
+        <li class="us-tile">
+          {{ tile.icon }}
+          <span class="us-tile__count">{{ tile.count }}</span>
+          <span class="us-tile__label">{{ tile.label }}</span>
+          <span class="us-tile__description">{{ tile.description }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if path_note %}<p class="us-description">{{ path_note }}</p>{% endif %}
+
+  {% for section in sections %}
+    {{ section }}
+  {% endfor %}
+
+  {% if back %}<p>{{ back }}</p>{% endif %}
+</div>

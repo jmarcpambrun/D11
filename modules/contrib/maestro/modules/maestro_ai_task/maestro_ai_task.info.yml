@@ -9,7 +9,7 @@ dependencies:
   - key:key
   - ai:ai
 
-# Information added by Drupal.org packaging script on 2026-11-04
-version: '4.6.0'
+# Information added by Drupal.org packaging script on 2026-11-18
+version: '4.6.1'
 project: 'maestro'
-datestamp: 1793815091
+datestamp: 1795023345

@@ -17,7 +17,19 @@ parameters:
     ignoreErrors:
         # new static() is a best practice in Drupal, so we cannot fix that.
         - "#^Unsafe usage of new static#"
+        # Test modules use attributes and classes of newer Drupal versions, to
+        # test that they are not reported. Drupal 10 doesn't have them.
+        -
+            message: "#^Attribute class Drupal\\\\Core\\\\Hook\\\\Attribute\\\\(ExtensionFileIsConverted|LegacyModuleImplementsAlter|LegacyRequirementsHook) does not exist\\.$#"
+            identifier: attribute.notFound
+            path: tests/modules/*
+        -
+            message: "#^Access to constant \\w+ on an unknown class Drupal\\\\Core\\\\Database\\\\Statement\\\\FetchAs\\.$#"
+            path: tests/modules/*
     excludePaths:
         # This file intentionally contains a PHP fatal error to test
         # upgrade_status parse error handling. It must not be analysed.
         - tests/modules/upgrade_status_test_fatal/fatal.php
+        # This file has a syntax error to test that broken *.api.php files do
+        # not affect finding deprecated hooks.
+        - tests/modules/upgrade_status_test_broken_api/upgrade_status_test_broken_api.api.php

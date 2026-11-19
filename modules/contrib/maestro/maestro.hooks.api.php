@@ -236,6 +236,12 @@ function hook_maestro_spv_get_content_type_field_value_plugin($queueID, $process
   //$returnValue passed by reference, so alter it directly in code.
 }
 
+// Fires from the **GetEntityFieldValue** SPV Plugin during execute.
+// Lets you alter or supply the value read from any entity type's property or field.
+function hook_maestro_spv_get_entity_field_value_plugin($queueID, $processID, $task, $templateMachineName, &$returnValue) {
+  //$returnValue passed by reference, so alter it directly in code.
+}
+
 
 /**************************************************
  * MaestroBatchFunctionTask Hooks

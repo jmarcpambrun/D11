@@ -73,10 +73,6 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
             'mikehaertl\\shellcommand\\' => 24,
             'mglaman\\PHPStanDrupal\\' => 22,
         ),
-        'd' =>
-        array (
-            'dekor\\' => 6,
-        ),
         'c' =>
         array (
             'cweagans\\Composer\\' => 18,
@@ -350,10 +346,6 @@ class ComposerStaticInit269e1878f352e84f776ed0fd7c1777ce
         'mglaman\\PHPStanDrupal\\' =>
         array (
             0 => __DIR__ . '/..' . '/mglaman/phpstan-drupal/src',
-        ),
-        'dekor\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/dekor/php-array-table/src',
         ),
         'cweagans\\Composer\\' =>
         array (

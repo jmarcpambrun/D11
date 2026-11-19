@@ -1,0 +1,56 @@
+{#
+/**
+ * @file
+ * The summary of how many projects are ready for the next major version.
+ *
+ * Available variables:
+ * - heading: The verdict.
+ * - sentence: The counts behind the verdict.
+ * - percent: The percentage of compatible projects.
+ * - bar_label: The counts of the bar as text.
+ * - segments: The bar segments in workflow order, each with a step, a count
+ *   and the percentage of the segment that is not analyzed.
+ * - legend: The phases, each with a label and items with a step, an anchor,
+ *   a count, a title and an optional note.
+ */
+#}
+<section class="us-card us-summary" aria-labelledby="us-summary-heading">
+  <div class="us-summary__main">
+    <div class="us-summary__verdict">
+      <div class="us-summary__text">
+        <h2 id="us-summary-heading" class="us-summary__heading">{{ heading }}</h2>
+        <p class="us-summary__sentence">{{ sentence }}</p>
+      </div>
+      <p class="us-summary__percent">
+        <span class="us-summary__number">{{ percent }}%</span>
+        <span class="us-summary__caption">{{ 'of projects compatible'|t }}</span>
+      </p>
+    </div>
+    <div class="us-bar" role="img" aria-label="{{ bar_label }}">
+      {% for segment in segments %}
+        <span class="us-bar__segment us-cat--{{ segment.step }}" style="flex: {{ segment.count }} 1 0;">
+          {% if segment.not_analyzed %}<span class="us-bar__hatch" style="width: {{ segment.not_analyzed }}%;"></span>{% endif %}
+        </span>
+      {% endfor %}
+    </div>
+    <div class="us-legend">
+      {% for group in legend %}
+        <div class="us-legend__group">
+          <div class="us-legend__phase">{{ group.label }}</div>
+          <ul class="us-legend__items">
+            {% for item in group.items %}
+              <li>
+                <a class="us-legend__item us-cat--{{ item.step }}" href="#{{ item.anchor }}">
+                  <span class="us-square" aria-hidden="true"></span>
+                  <span class="us-legend__count">{{ item.count }}</span>
+                  <span class="us-legend__label">{{ item.title }}</span>
+                  {% if item.note %}<span class="us-legend__note">{{ item.note }}</span>{% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

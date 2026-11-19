@@ -3,3 +3,7 @@ services:
     class: Drupal\upgrade_status_test_twig\TwigExtension\DeprecatedFilter
     tags:
       - { name: twig.extension }
+  upgrade_status_test_twig.broken_tag:
+    class: Drupal\upgrade_status_test_twig\TwigExtension\BrokenTag
+    tags:
+      - { name: twig.extension }

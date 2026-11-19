@@ -11,7 +11,9 @@ use Twig\Util\TemplateDirIterator;
 /**
  * Twig Deprecation Analyzer.
  */
-class TwigDeprecationAnalyzer {
+class TwigDeprecationAnalyzer implements AnalyzerInterface {
+
+  use ExtensionAnalyzerTrait;
 
   /**
    * The Twig environment.
@@ -20,8 +22,24 @@ class TwigDeprecationAnalyzer {
    */
   protected $twigEnvironment;
 
-  public function __construct(TwigEnvironment $twig_environment) {
+  /**
+   * The file finder.
+   *
+   * @var \Drupal\upgrade_status\FileFinder
+   */
+  protected $fileFinder;
+
+  /**
+   * Constructs a new Twig deprecation analyzer.
+   *
+   * @param \Drupal\Core\Template\TwigEnvironment $twig_environment
+   *   The Twig environment.
+   * @param \Drupal\upgrade_status\FileFinder $file_finder
+   *   The file finder.
+   */
+  public function __construct(TwigEnvironment $twig_environment, FileFinder $file_finder) {
     $this->twigEnvironment = $twig_environment;
+    $this->fileFinder = $file_finder;
   }
 
   /**
@@ -75,7 +93,7 @@ class TwigDeprecationAnalyzer {
     });
 
     $iterator = new TemplateDirIterator(
-      new TwigRecursiveIterator($extension->getPath())
+      new \ArrayIterator($this->fileFinder->findTemplates($extension->getPath()))
     );
     foreach ($iterator as $name => $contents) {
       try {
@@ -84,9 +102,19 @@ class TwigDeprecationAnalyzer {
       catch (SyntaxError $e) {
         // Report twig syntax error which stops us from parsing it.
         $deprecations[] = new DeprecationMessage(
-          'Twig template ' . $name . ' contains a syntax error and cannot be parsed.',
+          'Twig template ' . $name . ' contains a syntax error and cannot be parsed: ' . $e->getRawMessage(),
           $name,
           $e->getTemplateLine(),
+          'TwigDeprecationAnalyzer'
+        );
+      }
+      catch (\Throwable $e) {
+        // Other errors, like from a Twig extension of the site, stop the
+        // parsing of this template, but not the scan of the other templates.
+        $deprecations[] = new DeprecationMessage(
+          'Twig template ' . $name . ' cannot be parsed: ' . get_class($e) . ': ' . $e->getMessage(),
+          $name,
+          0,
           'TwigDeprecationAnalyzer'
         );
       }

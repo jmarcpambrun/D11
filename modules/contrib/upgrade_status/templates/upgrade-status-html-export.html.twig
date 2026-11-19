@@ -1,53 +1,95 @@
+{#
+/**
+ * @file
+ * The results of projects as an HTML document.
+ *
+ * Available variables:
+ * - meta: The site and the date of the export.
+ * - styles: The module stylesheet, inlined so the file works on its own.
+ * - projects: The results keyed by 'custom' and 'contrib', and then by the
+ *   project name.
+ */
+#}
 <!doctype html>
 
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Upgrade status report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {# The document works on its own, so it loads nothing from other places.
+     The only script that runs is the one at the end, allowed by its hash. #}
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-{{ script.hash }}'; base-uri 'none'; form-action 'none'">
+  <title>{{ 'Upgrade Status report'|t }}</title>
   <style>
     body {
-      font-family: Helvetia, Arial, sans-serif;
+      margin: 0;
+      padding: 24px clamp(16px, 3vw, 32px);
+      background: #fafaff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    a {
+      color: #015efe;
     }
     table {
       width: 100%;
+      border-collapse: collapse;
     }
     th, td {
-      border-bottom: 1px solid #cdcdcd;
+      padding: 10px 12px;
+      border-bottom: 1px solid #ececf2;
+      text-align: start;
     }
-    th:nth-child(1), td:nth-child(3) {
-      width: 40%;
+    th {
+      border-bottom: 2px solid #d3d4d9;
+      color: #55565b;
+      font-size: 12px;
+      font-weight: 600;
     }
-    th:nth-child(2) {
-      width: 10%;
+    .upgrade-status details.us-section {
+      margin: 0 0 24px;
+      padding: 0 24px 16px;
+      border: 1px solid #e6e6ef;
+      border-radius: 8px;
+      background: #fff;
     }
-    .list-description {
-      margin-bottom: 1em;
+    .upgrade-status details.us-section > summary {
+      padding: 16px 0;
+      cursor: pointer;
     }
+    .visually-hidden {
+      position: absolute !important;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      width: 1px;
+      height: 1px;
+      word-wrap: normal;
+    }
+{{ styles }}
   </style>
 </head>
 
 <body>
-<h1>Upgrade Status report</h1>
+<div class="upgrade-status">
+<h1>{{ 'Upgrade Status report'|t }}</h1>
+<p class="us-document-meta">{{ meta }}</p>
 
 {% if projects.custom %}
-  <h2>Custom projects</h2>
+  <h2>{{ 'Custom projects'|t }}</h2>
   {% for project in projects.custom %}
-    <h3>{{ project.name }}</h3>
-    {{ project.date }}
-    {{ project.summary }}
-    {{ project.groups }}
+    {{ project }}
   {% endfor %}
 {% endif %}
 
 {% if projects.contrib %}
-  <h2>Contributed projects</h2>
+  <h2>{{ 'Contributed projects'|t }}</h2>
   {% for project in projects.contrib %}
-    <h3>{{ project.name }}</h3>
-    {{ project.date }}
-    {{ project.summary }}
-    {{ project.groups }}
+    {{ project }}
   {% endfor %}
 {% endif %}
-
+</div>
+<span class="visually-hidden" role="status" data-us-copy-status="{{ 'Path copied.'|t }}"></span>
+<script>{{ script.code }}</script>
 </body>
 </html>

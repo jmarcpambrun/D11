@@ -49,7 +49,7 @@ class GetContentTypeFieldValue extends MaestroSetProcessVariablePluginBase imple
       $fields = $entityFieldManager->getFieldDefinitions('node', $type_id);
       foreach ($fields as $field_name => $field_definition) {
         /** @var \Drupal\Core\Field\BaseFieldDefinition $field_definition */
-        if(strpos($field_name, 'field_') !== FALSE || $field_name == 'title' || $field_name == 'nid') {
+        if(strpos($field_name, 'field_') !== FALSE || in_array($field_name, ['title', 'nid', 'uid'])) {
           $entity_field_list['node'][$type_id]['fields'][$field_name] = $field_definition->getLabel();
         }
       }
@@ -214,7 +214,11 @@ class GetContentTypeFieldValue extends MaestroSetProcessVariablePluginBase imple
       $field_ref = $entity->{$field};
       $returnValue = $field_ref->getValue();
       if (is_array($returnValue)) {
-        $returnValue = current($returnValue)['value'];
+        // Use the field's main property: 'value' for most fields, 'target_id'
+        // for entity references such as uid.
+        $main_property = $field_ref->getFieldDefinition()->getFieldStorageDefinition()->getMainPropertyName() ?? 'value';
+        $first = current($returnValue);
+        $returnValue = is_array($first) ? ($first[$main_property] ?? '') : '';
       }
     }
     // Fire a hook to allow devs to manage the return value if for some reason there's an entity that doesn't

@@ -253,9 +253,9 @@ class MaestroAITask extends PluginBase implements MaestroEngineTaskInterface {
 
           case 'process_variable':
             // We set the output responseValue into the provided process variable $return_into_pv.
-            // We will truncate the response value to 255 characters to avoid sql issues
-            if(strlen($responseValue) > 255) {
-              $responseValue = substr($responseValue, 0, 255);
+            // We will truncate the response value to 10000 characters to avoid sql issues
+            if(strlen($responseValue) > 10000) {
+              $responseValue = substr($responseValue, 0, 10000);
             }
             MaestroEngine::setProcessVariable($return_into_pv, $responseValue, $this->processID);
             $returnValue = TRUE;

@@ -16,3 +16,16 @@ variables:
   OPT_IN_TEST_CURRENT: 1
   OPT_IN_TEST_PREVIOUS_MAJOR: 1
   OPT_IN_TEST_NEXT_MAJOR: 1
+  DRUPAL_DEPRECATION_FILTER_CONFIG: '{"projectIgnoreFile":"$CI_PROJECT_DIR/.deprecation-ignore.txt"}'
+
+# Drupal 10 supports PHP 8.1, but the tests need Drush 13, which needs at least
+# PHP 8.2. The other previous major jobs use the environment of this one.
+composer (previous major):
+  variables:
+    PHP_VERSION: '8.2'
+  before_script:
+    # consolidation/robo 5.2.1 to 5.2.3 call Application::addCommand(), which
+    # Symfony Console 6 of Drupal 10 does not have, so Drush cannot start. Keep
+    # those releases out until a fixed one is there, then remove this. See
+    # https://github.com/consolidation/robo/issues/1197.
+    - 'composer require --dev --no-update "consolidation/robo:<5.2.1 || >=5.2.4"'

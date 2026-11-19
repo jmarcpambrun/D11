@@ -1,0 +1,25 @@
+{#
+/**
+ * @file
+ * The title of a section, inside the summary of its details element.
+ *
+ * Available variables:
+ * - step: The next step of the projects in the section, for the color
+ *   square, or empty to show the icon instead.
+ * - icon: An icon, if there is no step.
+ * - title: The title.
+ * - pill: The count, like "48 projects".
+ * - pill_variant: One of error, warning, ok or neutral.
+ * - summary: A line that summarizes the section while it is collapsed.
+ */
+#}
+<h2 class="us-section-title">
+  {%- if step -%}
+    <span class="us-square us-cat--{{ step }}" aria-hidden="true"></span>
+  {%- else -%}
+    {{ icon }}
+  {%- endif %}
+  <span>{{ title }}</span>
+  {% if pill %}<span class="us-pill us-pill--{{ pill_variant }}">{{ pill }}</span>{% endif %}
+</h2>
+{% if summary %}<span class="us-section-summary">{{ summary }}</span>{% endif %}

@@ -1,0 +1,20 @@
+# Deprecations to ignore in this project's tests.
+# See https://www.drupal.org/node/3285162 for the format.
+
+# These test modules and templates use deprecated features on purpose, so that
+# the tests can check how Upgrade Status reports them.
+%The module 'upgrade_status_test_deprecated' is deprecated%
+%Twig Filter "deprecatedfilter" is deprecated%
+# Some test modules implement hooks as functions in .module files, to test how
+# Upgrade Status finds them. Drupal 11.5 deprecates code in .module files.
+%Code in upgrade_status_test_\w+\.module is deprecated in drupal:11\.5\.0 and must be converted before drupal:13\.0\.0%
+
+# Upgrade Status also supports Drupal versions before 12.1, which only have
+# hook_system_info_alter(). Core triggers this as long as a module implements
+# it, also if the module implements hook_extension_info_alter() as well.
+%The deprecated alter hook hook_system_info_alter\(\) is implemented in these locations: Drupal\\upgrade_status\\Hook\\UpgradeStatusHooks::systemInfoAlter%
+
+# Drupal core 12 builds the user agent of its HTTP client with this function,
+# which Guzzle 8.5 deprecates. Remove this when Drupal core does not call it
+# anymore.
+%GuzzleHttp\\Utils::defaultUserAgent\(\) is deprecated%

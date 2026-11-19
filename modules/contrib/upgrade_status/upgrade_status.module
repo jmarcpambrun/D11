@@ -4,11 +4,11 @@
  * @file
  * The base module for upgrade status.
  */
+
 use Drupal\Core\Hook\Attribute\LegacyHook;
 use Drupal\upgrade_status\Hook\UpgradeStatusHooks;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\upgrade_status\ProjectCollector;
 
 /**
  * Implements hook_help().
@@ -28,37 +28,25 @@ function upgrade_status_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Preprocess project list for HTML export.
- *
- * @param array $variables
- *   Array of template variables.
- */
-function template_preprocess_upgrade_status_html_export(array &$variables) {
-  $projects = $variables['projects'];
-  $types = ['custom', 'contrib'];
-  foreach ($types as $type) {
-    if (!empty($projects[$type])) {
-      foreach ($projects[$type] as $key => $project) {
-        $variables['projects'][$type][$key]['name'] = $projects[$type][$key]['#title'];
-      }
-    }
-  }
-}
-
-/**
- * Preprocess project list for ASCII export.
- *
- * @param array $variables
- *   Array of template variables.
- */
-function template_preprocess_upgrade_status_ascii_export(array &$variables) {
-  template_preprocess_upgrade_status_html_export($variables);
-}
-
-/**
  * Implements hook_system_info_alter().
  */
 #[LegacyHook]
 function upgrade_status_system_info_alter(array &$info, Extension $extension, $type) {
   \Drupal::service(UpgradeStatusHooks::class)->systemInfoAlter($info, $extension, $type);
+}
+
+/**
+ * Implements hook_cron().
+ */
+#[LegacyHook]
+function upgrade_status_cron() {
+  \Drupal::service(UpgradeStatusHooks::class)->cron();
+}
+
+/**
+ * Implements hook_batch_alter().
+ */
+#[LegacyHook]
+function upgrade_status_batch_alter(array &$batch) {
+  \Drupal::service(UpgradeStatusHooks::class)->batchAlter($batch);
 }

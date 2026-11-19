@@ -5,7 +5,7 @@ package: Testing
 dependencies:
   - drupal:upgrade_status_test_twig
 
-# Information added by Drupal.org packaging script on 2026-07-02
-version: '5.0.0-alpha3'
+# Information added by Drupal.org packaging script on 2026-11-16
+version: '5.0.0'
 project: 'upgrade_status'
-datestamp: 1783011334
+datestamp: 1794828610

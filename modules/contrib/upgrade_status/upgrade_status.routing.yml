@@ -10,7 +10,7 @@ upgrade_status.project:
   path: '/admin/reports/upgrade-status/project/{project_machine_name}'
   defaults:
     _controller: '\Drupal\upgrade_status\Controller\ScanResultController::resultPage'
-    _title: 'Upgrade status'
+    _title_callback: '\Drupal\upgrade_status\Controller\ScanResultController::resultTitle'
   requirements:
     _permission: 'administer software updates'
 
@@ -22,12 +22,23 @@ upgrade_status.export:
   requirements:
     _permission: 'administer software updates'
 
+upgrade_status.export_all:
+  path: '/admin/reports/upgrade-status/export-all/{format}'
+  defaults:
+    _controller: '\Drupal\upgrade_status\Controller\ScanResultController::exportAll'
+  requirements:
+    _permission: 'administer software updates'
+    format: 'report-html|report-markdown|codeclimate|checkstyle|csv'
+
 upgrade_status.analyze:
   path: '/admin/reports/upgrade-status/analyze/{project_machine_name}'
   defaults:
     _controller: '\Drupal\upgrade_status\Controller\ScanResultController::analyze'
   requirements:
     _permission: 'administer software updates'
+    # The request starts an analysis, so another site must not be able to
+    # send it with the browser of an administrator.
+    _csrf_token: 'TRUE'
   # Support only POST so nothing accidental happens on GET.
   methods:
     - POST
