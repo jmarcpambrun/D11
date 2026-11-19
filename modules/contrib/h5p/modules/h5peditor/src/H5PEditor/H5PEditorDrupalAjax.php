@@ -49,6 +49,10 @@ class H5PEditorDrupalAjax implements \H5PEditorAjaxInterface {
       'has_icon',
       'restricted',
     ]);
+    // H5P editor reads patch_version_in_folder_name for each library. This
+    // module stores library folders as Name-Major.Minor (no patch version),
+    // so the value is always 0.
+    $latest->addExpression('0', 'patch_version_in_folder_name');
 
     // Join max minor versions with the latest patch version
     $latest->join($max_minor_version, 'h4', "

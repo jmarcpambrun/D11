@@ -1411,7 +1411,17 @@ class H5PDrupal implements \H5PFrameworkInterface {
   public function setContentHubMetadataChecked($time, $lang = 'en') {
     // TODO: Implement setContentHubMetadataChecked() method.
   }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Intentionally empty. H5P core calls this when the H5P Content Hub rejects
+   * the site's hub account, so the platform can forget its stored account
+   * data. This module does not store any Content Hub account data (such as a
+   * hub secret), so there is nothing to reset. Revisit this if Content Hub
+   * account support is added.
+   */
   public function resetHubOrganizationData() {
-    // TODO: Implement resetHubOrganizationData() method.
   }
+
 }

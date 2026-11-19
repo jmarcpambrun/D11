@@ -86,7 +86,7 @@
         "drupal/gitlab_api": "^3.0-alpha1",
         "drupal/google_analytics": "4.0.3",
         "drupal/group": "4.0.0-alpha3",
-        "drupal/h5p": "2.0-beta1",
+        "drupal/h5p": "^2.0@beta",
         "drupal/imce": "^3.1.5",
         "drupal/inline_entity_form": "^3.0.0",
         "drupal/ip2country": "^2.1",
